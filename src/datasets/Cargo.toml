@@ -1,0 +1,10 @@
+[package]
+name = "datasets"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+actix-web = "4"
+schemars = { package = "apistos-schemars", version = "0.8" }
+apistos = "0.4"
