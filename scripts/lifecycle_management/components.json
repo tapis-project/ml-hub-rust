@@ -1,4 +1,7 @@
 {
+  "defaultTemplateVars": {
+    "scope": "-local"
+  },
   "components": [
     {
       "name": "models",
@@ -7,7 +10,7 @@
         "start": "./burnup",
         "stop": "./burndown",
         "restart": "./burndown; ./burnup",
-        "build": "docker build -t tapis/models-api -f Dockerfile",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/models-api",
         "test": "cargo test"
       }
     },
@@ -18,7 +21,7 @@
         "start": "./burnup",
         "stop": "./burndown",
         "restart": "./burndown; ./burnup",
-        "build": "docker build -t tapis/datasets-api -f Dockerfile",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/datasets-api",
         "test": "cargo test"
       }
     },
@@ -29,7 +32,7 @@
         "start": "./burnup",
         "stop": "./burndown",
         "restart": "./burndown; ./burnup",
-        "build": "docker build -t tapis/inference-api -f Dockerfile",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/inference-api",
         "test": "cargo test"
       },
       "dependencies": ["nfs", "postgres"]
@@ -41,7 +44,7 @@
         "start": "./burnup",
         "stop": "./burndown",
         "restart": "./burndown; ./burnup",
-        "build": "docker build -t tapis/training-api -f Dockerfile",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/training-api",
         "test": "cargo test"
       },
       "dependencies": ["nfs", "postgres"]

@@ -37,6 +37,17 @@ def main():
         help="The name of one or more components upon which to perform. If no value provided, all components are selected"
     )
 
+    # The scope for which this command is running. Defaults to local. This value
+    # can be used in commands
+    parser.add_argument(
+        "-t",
+        "--template-vars",
+        metavar=("key", "value"),
+        action="append",
+        nargs=2,
+        help="A key and a value for that key. All instances of the provided key (first argument) in an lifecycle management script will be replace by the value (second argument)"
+    )
+
     # Parse the arguments
     try:
         args = parser.parse_args(args=sys.argv[1:])
@@ -55,6 +66,15 @@ def main():
         )
     )
 
+    # The template variable(s) to replace in the provided command
+    template_vars = { **config.get("defaultTemplateVars", {}) }
+    provided_template_vars = args.template_vars if args.template_vars else []
+    for template_var in provided_template_vars:
+        template_vars = {
+            **template_vars,
+            template_var[0]: template_var[1]
+        }
+
     # Run the command over all components if none provided
     if len(components) == 0:
         components = component_objects
@@ -64,6 +84,10 @@ def main():
         if command_to_run == None:
             logging.warning(f"Command '{command_name}' does not exist for component '{component.get('name')}'")
             continue
+
+        for key in template_vars:
+            print(template_vars[key])
+            command_to_run = command_to_run.replace(f"{{{{ {key} }}}}", template_vars[key])
         
         print(f"cd {component["rootDir"]} && {command_to_run}")
         # os.system(f"cd {component["rootDir"]} && {command_to_run}")
