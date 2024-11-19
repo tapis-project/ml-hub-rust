@@ -21,12 +21,14 @@ jobs:
           # If the $GITHUB_REF contains "/refs/tags/v", then the "v" needs to be
           # removed from the $GITHUB_REF_NAME to form a proper image tag
           if [[ $GITHUB_REF =~ "/refs/tags/v"  ]]; then 
-            echo version=$(echo $GITHUB_REF_NAME | sed -e 's!v-!!') >> $GITHUB_OUTPUT
+            echo version=$(echo $GITHUB_REF_NAME | sed -e 's!v!!') >> $GITHUB_OUTPUT
           else
             echo "image_tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT;
           fi
 
   Models_Compile_Test:
+    needs:
+      - Set_Image_Tag
     name: Models_Compile_Tests
     runs-on: ubuntu-latest
     steps:
@@ -36,6 +38,7 @@ jobs:
         run: rustup toolchain install stable
       - name: Compile
         run: "cd src/models && cargo install --path ."
+    
 
   Models_Build_Push_Image:
     needs:
@@ -52,6 +55,6 @@ jobs:
           username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
       - name: Build_Tapis_Workflows_Api_Image
-        run: docker build -f src/models/Dockerfile -t tapis/models-api:${{ needs.Set_Image_Tag.outputs.image_tag}} .
+        run: cd src/models && docker build -t tapis/models-api:${{ needs.Set_Image_Tag.outputs.image_tag}} .
       - name: Push_All_Tags
         run: docker push --all-tags tapis/models-api
