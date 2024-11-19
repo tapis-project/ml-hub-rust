@@ -1,0 +1,68 @@
+{
+  "components": [
+    {
+      "name": "models",
+      "rootDir": "src/models",
+      "commands": {
+        "start": "./burnup",
+        "stop": "./burndown",
+        "restart": "./burndown; ./burnup",
+        "build": "docker build -t tapis/models-api -f Dockerfile",
+        "test": "cargo test"
+      }
+    },
+    {
+      "name": "datasets",
+      "rootDir": "src/datasets",
+      "commands": {
+        "start": "./burnup",
+        "stop": "./burndown",
+        "restart": "./burndown; ./burnup",
+        "build": "docker build -t tapis/datasets-api -f Dockerfile",
+        "test": "cargo test"
+      }
+    },
+    {
+      "name": "inference",
+      "rootDir": "src/inference",
+      "commands": {
+        "start": "./burnup",
+        "stop": "./burndown",
+        "restart": "./burndown; ./burnup",
+        "build": "docker build -t tapis/inference-api -f Dockerfile",
+        "test": "cargo test"
+      },
+      "dependencies": ["nfs", "postgres"]
+    },
+    {
+      "name": "training",
+      "rootDir": "src/training",
+      "commands": {
+        "start": "./burnup",
+        "stop": "./burndown",
+        "restart": "./burndown; ./burnup",
+        "build": "docker build -t tapis/training-api -f Dockerfile",
+        "test": "cargo test"
+      },
+      "dependencies": ["nfs", "postgres"]
+    },
+    {
+      "name": "nfs",
+      "rootDir": "src/nfs",
+      "commands": {
+        "start": "./burnup",
+        "stop": "./burndown",
+        "restart": "./burndown; ./burnup"
+      }
+    },
+    {
+      "name": "postgres",
+      "rootDir": "src/postgres",
+      "commands": {
+        "start": "./burnup",
+        "stop": "./burndown",
+        "restart": "./burndown; ./burnup"
+      }
+    }
+  ]
+}

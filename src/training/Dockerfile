@@ -6,5 +6,5 @@ RUN cargo install --path .
 
 FROM debian:bookworm-slim
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/mlhub/target/release/models /usr/local/bin/mlhub
+COPY --from=builder /usr/local/mlhub/target/release/training /usr/local/bin/mlhub
 CMD ["mlhub"]

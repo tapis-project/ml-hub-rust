@@ -8,10 +8,9 @@ pub struct Model {
 #[cfg(test)]
 mod tests {
     use super::Model;
-    
     #[test]
     fn test_model () {
-        let model = super::Model {
+        let model = Model {
             model_id: String::from("test_id")
         };
 
