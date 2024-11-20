@@ -46,7 +46,7 @@ jobs:
           username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
       - name: Delete docker ignore
-        run: rm .dockerignore
+        run: rm src/models/.dockerignore
       - name: Build_Tapis_Workflows_Api_Image
         run: ./manage build models -t scope "-gh-actions"
       - name: Push_All_Tags
