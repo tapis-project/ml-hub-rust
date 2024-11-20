@@ -1,17 +1,17 @@
 {
   "defaultTemplateVars": {
-    "scope": "-local"
+    "scope": ".local"
   },
   "components": [
     {
       "name": "models",
       "rootDir": "src/models",
       "commands": {
-        "start": "./burnup",
-        "stop": "./burndown",
+        "start": "./scripts/burnup.sh",
+        "stop": "./scripts/burndown.sh",
         "install": "cargo install --path .",
-        "restart": "./burndown; ./burnup",
-        "build": "docker build -f Dockerfile{{ scope }} -t tapis/models-api",
+        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/models-api .",
         "test": "cargo test"
       }
     },
@@ -19,10 +19,10 @@
       "name": "datasets",
       "rootDir": "src/datasets",
       "commands": {
-        "start": "./burnup",
-        "stop": "./burndown",
-        "restart": "./burndown; ./burnup",
-        "build": "docker build -f Dockerfile{{ scope }} -t tapis/datasets-api",
+        "start": "./scripts/burnup.sh",
+        "stop": "./scripts/burndown.sh",
+        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/datasets-api .",
         "test": "cargo test"
       }
     },
@@ -30,10 +30,10 @@
       "name": "inference",
       "rootDir": "src/inference",
       "commands": {
-        "start": "./burnup",
-        "stop": "./burndown",
-        "restart": "./burndown; ./burnup",
-        "build": "docker build -f Dockerfile{{ scope }} -t tapis/inference-api",
+        "start": "./scripts/burnup.sh",
+        "stop": "./scripts/burndown.sh",
+        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/inference-api .",
         "test": "cargo test"
       },
       "dependencies": ["nfs", "postgres"]
@@ -42,10 +42,10 @@
       "name": "training",
       "rootDir": "src/training",
       "commands": {
-        "start": "./burnup",
-        "stop": "./burndown",
-        "restart": "./burndown; ./burnup",
-        "build": "docker build -f Dockerfile{{ scope }} -t tapis/training-api",
+        "start": "./scripts/burnup.sh",
+        "stop": "./scripts/burndown.sh",
+        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/training-api .",
         "test": "cargo test"
       },
       "dependencies": ["nfs", "postgres"]
@@ -54,18 +54,18 @@
       "name": "nfs",
       "rootDir": "src/nfs",
       "commands": {
-        "start": "./burnup",
-        "stop": "./burndown",
-        "restart": "./burndown; ./burnup"
+        "start": "./scripts/burnup.sh",
+        "stop": "./scripts/burndown.sh",
+        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh"
       }
     },
     {
       "name": "postgres",
       "rootDir": "src/postgres",
       "commands": {
-        "start": "./burnup",
-        "stop": "./burndown",
-        "restart": "./burndown; ./burnup"
+        "start": "./scripts/burnup.sh",
+        "stop": "./scripts/burndown.sh",
+        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh"
       }
     }
   ]
