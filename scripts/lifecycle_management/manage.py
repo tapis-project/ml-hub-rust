@@ -86,7 +86,6 @@ def main():
             continue
 
         for key in template_vars:
-            print(template_vars[key])
             command_to_run = command_to_run.replace(f"{{{{ {key} }}}}", template_vars[key])
         
         print(f"cd {component["rootDir"]} && {command_to_run}")

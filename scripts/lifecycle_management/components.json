@@ -9,6 +9,7 @@
       "commands": {
         "start": "./burnup",
         "stop": "./burndown",
+        "install": "cargo install --path .",
         "restart": "./burndown; ./burnup",
         "build": "docker build -f Dockerfile{{ scope }} -t tapis/models-api",
         "test": "cargo test"
