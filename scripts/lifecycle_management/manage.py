@@ -26,7 +26,6 @@ def main():
         "command",
         type=str,
         nargs=1,
-        choices=["start", "stop", "restart", "build", "test"],
         help="The command to run over the selected components"
     )
 
