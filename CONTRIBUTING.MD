@@ -49,4 +49,22 @@ We use specific design patterns to ensure consistency across the project. Here a
    ```bash
    ./test
 
+
+## Pull Request (PR) Guidelines
+
+When submitting a PR, ensure the following:
+- **Title**: Use a clear and concise title for your PR.
+- **Description**: Provide a detailed description of your changes. Reference any relevant issues (e.g., "Fixes #123").
+- **Screenshots**: If your PR involves UI changes, include screenshots.
+- **Checklist**: Before submitting your PR, check off the following:
+   - [ ] My code follows the existing style guide
+   - [ ] I have added tests for my changes
+   - [ ] I have updated the documentation as necessary
+   - [ ] I have run the tests and they are passing
+
+## License
+
+By contributing to this project, you agree that your contributions will be licensed under the project's license. For more details, see [LICENSE.md].
+
+
    
