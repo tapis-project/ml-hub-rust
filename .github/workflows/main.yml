@@ -59,7 +59,7 @@ jobs:
       #   # if: steps.git-diff.outputs.diff
       
       - name: debug
-        run: "mkdir src/models/target/release && touch src/models/target/release/models"
+        run: "mkdir -p src/models/target/release && touch src/models/target/release/models"
         # if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
