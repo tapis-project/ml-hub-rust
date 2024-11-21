@@ -41,10 +41,10 @@ jobs:
             src/models/**/*
       - name: Rust setup
         run: rustup toolchain install stable
-        if: steps.git-diff.outputs.diff
+        # if: steps.git-diff.outputs.diff
       - name: Compile
         run: "./manage install models"
-        if: steps.git-diff.outputs.diff
+        # if: steps.git-diff.outputs.diff
       - name: Test
         run: "./manage test models"
         if: steps.git-diff.outputs.diff
@@ -53,14 +53,14 @@ jobs:
         with:
           username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
-        if: steps.git-diff.outputs.diff
+        # if: steps.git-diff.outputs.diff
       - name: Delete docker ignore
         run: rm src/models/.dockerignore
-        if: steps.git-diff.outputs.diff
+        # if: steps.git-diff.outputs.diff
       - name: Build_Image
         run: ./manage build models -t scope .gh-actions
-        if: steps.git-diff.outputs.diff
+        # if: steps.git-diff.outputs.diff
       - name: Push_All_Tags
         run: docker push --all-tags tapis/models-api
-        if: steps.git-diff.outputs.diff
+        # if: steps.git-diff.outputs.diff
       
