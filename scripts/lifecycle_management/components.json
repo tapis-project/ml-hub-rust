@@ -11,7 +11,7 @@
         "stop": "./scripts/burndown.sh",
         "install": "cargo install --path .",
         "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
-        "build": "docker build -f Dockerfile{{ scope }} -t tapis/models-api .",
+        "build": "docker build -f Dockerfile{{ scope }} -t tapis/models-api:{{ tag }} .",
         "test": "cargo test"
       }
     },
