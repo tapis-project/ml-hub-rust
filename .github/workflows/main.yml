@@ -48,18 +48,14 @@ jobs:
         run: rustup toolchain install stable
         # if: steps.git-diff.outputs.diff
 
-      # # Compile and run tests
-      # - name: Test
-      #   run: "./manage test models"
-      #   # if: steps.git-diff.outputs.diff
+      # Compile and run tests
+      - name: Test
+        run: "./manage test models"
+        # if: steps.git-diff.outputs.diff
 
-      # # Compile the release of the api
-      # - name: Compile
-      #   run: "./manage install models"
-      #   # if: steps.git-diff.outputs.diff
-      
-      - name: debug
-        run: "mkdir -p src/models/target/release && touch src/models/target/release/models"
+      # Compile the release of the api
+      - name: Compile
+        run: "./manage install models"
         # if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -81,8 +77,8 @@ jobs:
         run: "./manage build models -v -t scope .gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         # if: steps.git-diff.outputs.diff
 
-      # # Push the all tags for the image
-      # - name: Push_All_Tags
-      #   run: docker push --all-tags tapis/models-api
-      #   # if: steps.git-diff.outputs.diff
+      # Push the all tags for the image
+      - name: Push_All_Tags
+        run: docker push --all-tags tapis/models-api
+        # if: steps.git-diff.outputs.diff
       
