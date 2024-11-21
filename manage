@@ -1,5 +1,3 @@
-#!bin/bash
-
 set -e
 
 python3 scripts/lifecycle_management/manage.py "${@}"
