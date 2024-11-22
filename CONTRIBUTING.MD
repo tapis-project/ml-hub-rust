@@ -64,7 +64,6 @@ When submitting a PR, ensure the following:
 
 ## License
 
-By contributing to this project, you agree that your contributions will be licensed under the project's license. For more details, see [LICENSE.md].
-
+By contributing to this project, you agree that your contributions will be licensed under the project's license. For more details, see LICENSE.md in the project root directory.
 
    

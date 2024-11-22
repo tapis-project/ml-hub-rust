@@ -1,6 +1,7 @@
 {
   "defaultTemplateVars": {
-    "scope": ".local"
+    "scope": ".local",
+    "tag": "dev"
   },
   "components": [
     {

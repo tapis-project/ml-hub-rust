@@ -21,11 +21,11 @@ jobs:
           # If the $GITHUB_REF contains "/refs/tags/v", then the "v" needs to be
           # removed from the $GITHUB_REF_NAME to form a proper image tag
           if [[ $GITHUB_REF =~ "/refs/tags/v"  ]]; then 
-            echo version=$(echo $GITHUB_REF_NAME | sed -e 's!v!!') >> $GITHUB_OUTPUT
+            echo image_tag=$(echo $GITHUB_REF_NAME | sed -e 's!v!!') >> $GITHUB_OUTPUT
           else
             echo "image_tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT;
           fi
-
+  
   Models_API:
     needs:
       - Set_Image_Tag
@@ -38,25 +38,26 @@ jobs:
 
       # Resolve all diffs if any for this api
       - id: git-diff
+        name: Check Git Diff
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
             src/models/**/*
 
       # Setup rust
-      - name: Rust setup
+      - name: Setup Rust
         run: rustup toolchain install stable
-        # if: steps.git-diff.outputs.diff
+        if: steps.git-diff.outputs.diff
 
       # Compile and run tests
       - name: Test
         run: "./manage test models"
-        # if: steps.git-diff.outputs.diff
+        if: steps.git-diff.outputs.diff
 
-      # Compile the release of the api
+      # Compile the release bindaary of the api
       - name: Compile
         run: "./manage install models"
-        # if: steps.git-diff.outputs.diff
+        if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
       - name: Login to Docker Hub
@@ -64,21 +65,191 @@ jobs:
         with:
           username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
-        # if: steps.git-diff.outputs.diff
+        if: steps.git-diff.outputs.diff
 
       # Remove the docker ignore file so that the gh actions Dockerfile will 
-      # permit the target/release/models binary to be copied into the image
+      # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore
         run: rm src/models/.dockerignore
-        # if: steps.git-diff.outputs.diff
+        if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
       - name: Build_Image
         run: "./manage build models -v -t scope .gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
-        # if: steps.git-diff.outputs.diff
+        if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
-      - name: Push_All_Tags
+      - name: Push All Tags
         run: docker push --all-tags tapis/models-api
-        # if: steps.git-diff.outputs.diff
-      
+        if: steps.git-diff.outputs.diff
+
+  Datasets_API:
+    needs:
+      - Set_Image_Tag
+    name: Datasets_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/datasets/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # Compile and run tests
+      - name: Test
+        run: "./manage test datasets"
+        if: steps.git-diff.outputs.diff
+
+      # Compile the release bindaary of the api
+      - name: Compile
+        run: "./manage install datasets"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore
+        run: rm src/datasets/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the given branch or git tag
+      - name: Build_Image
+        run: "./manage build datasets -v -t scope .gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: docker push --all-tags tapis/datasets-api
+        if: steps.git-diff.outputs.diff
+    
+  Inference_API:
+    needs:
+      - Set_Image_Tag
+    name: Inference_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/inference/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # Compile and run tests
+      - name: Test
+        run: "./manage test inference"
+        if: steps.git-diff.outputs.diff
+
+      # Compile the release bindaary of the api
+      - name: Compile
+        run: "./manage install inference"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore
+        run: rm src/inference/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the given branch or git tag
+      - name: Build_Image
+        run: "./manage build inference -v -t scope .gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: docker push --all-tags tapis/inverence-api
+        if: steps.git-diff.outputs.diff
+
+  Training_API:
+    needs:
+      - Set_Image_Tag
+    name: Training_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/training/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # Compile and run tests
+      - name: Test
+        run: "./manage test training"
+        if: steps.git-diff.outputs.diff
+
+      # Compile the release bindaary of the api
+      - name: Compile
+        run: "./manage install training"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore
+        run: rm src/training/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the given branch or git tag
+      - name: Build_Image
+        run: "./manage build training -v -t scope .gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: docker push --all-tags tapis/training-api
+        if: steps.git-diff.outputs.diff

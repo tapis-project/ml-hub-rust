@@ -1,6 +1,6 @@
 # Welcome to Tapis ML Hub! 🐂
 
-Tapis ML Hub (henceforth, ML Hub) is a suite of services designed to facilitate model and dataset discovery and download, and programatically building up and deploying inference servers and training systems for Machine Learning/Artificial Intelligence models. ML Hub is deployed as a set of 
+Tapis ML Hub is a suite of services designed to facilitate model and dataset discovery and download, and programatically building up and deploying inference servers and training systems for Machine Learning/Artificial Intelligence models.
 
 ## Local Devevelopment Setup 🚧
 
