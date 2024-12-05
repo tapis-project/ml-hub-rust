@@ -233,7 +233,7 @@ def main():
             sys.exit(1)
         
         # Add command to cd into the components root directory
-        command_to_run = f"cd {component['rootDir']} && {command}"
+        command_to_run = f"set -e; cd {component['rootDir']} && {command}"
         
         # Print the command if verbose flag used
         if args.verbose:
