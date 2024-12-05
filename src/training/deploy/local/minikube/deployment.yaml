@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: training-api-deployment
+  template:
+    metadata:
+      labels:
+        app: training-api-deployment
+    spec:
+      containers:
+      - env:
+          - name: DB_HOST
+            value: mlhub-postgres-service
+          - name: DB_NAME
+            value: mlhub
+          - name: DB_PASSWORD
+            value: dev
+          - name: DB_USER
+            value: mlhub
+          - name: RUST_LOG
+            value: debug
+        image: tapis/training-api:dev
+        imagePullPolicy: Always
+        name: training-api
+        ports:
+          - containerPort: 8000
+            name: webserver
+        resources: {}
+        tty: true

@@ -1389,6 +1389,7 @@ dependencies = [
  "actix-web",
  "apistos",
  "apistos-schemars",
+ "serde",
 ]
 
 [[package]]

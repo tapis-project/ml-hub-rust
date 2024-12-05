@@ -1,4 +1,4 @@
-# Welcome to Tapis ML Hub! 🐂
+# Welcome to Tapis ML Hub! 🤠 🐂
 
 Tapis ML Hub is a suite of services designed to facilitate model and dataset discovery and download, and programatically building up and deploying inference servers and training systems for Machine Learning/Artificial Intelligence models.
 
@@ -38,8 +38,16 @@ Now that you have all the necessary tools installed, we can start up the Tapis M
 
 This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
 
-From the project's root directory, run the following command to initalize the project and launch the services in Minikube.
+From the project's root directory, run the following commands to initalize the project and launch the services in Minikube.
 
-`./manage start`
+1. `chmod +x manage`
+
+2. `./manage start`
 
 ---
+
+## Using the Lifecycle Management CLI
+
+The Lifecycle Management CLI is a python tool that can be invoked from the command line to run commands and scripts that manage the lifecycle of the various microservices and components that comprise ML Hub. This is the same script invoked previously to initialize the ML Hub project locally.
+
+### Managing ML Hub Services and Components

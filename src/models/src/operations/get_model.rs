@@ -1,11 +1,13 @@
 use actix_web::{web, get, HttpResponse, Responder};
 use crate::models::models::Model;
 use crate::models::responses::Response;
+use log::debug;
 
 #[get("/models/{model_id}")]
 async fn get_model(
     path: web::Path<String>
 ) -> impl Responder {
+    debug!("Operation get_model");
     let model_id = path.into_inner();
     let model = Model {
         model_id

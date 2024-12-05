@@ -32,7 +32,7 @@ We use specific design patterns to ensure consistency across the project. Here a
 
 - **Singleton Pattern**: Use this pattern for structs that should only have a single instance. Examples include configurations or database connection managers.
   
-- **Factory Pattern**: Use this for complex object creation where the specific class of object created depends on runtime parameters. This pattern is particularly useful in [specific modules].
+- **Factory Pattern**: Use this for complex object creation where the specific type of object created depends on runtime parameters.
 
 - **Repository Pattern**: Use this for data access layers to abstract the business logic from database operations.
 
@@ -49,6 +49,9 @@ We use specific design patterns to ensure consistency across the project. Here a
    ```bash
    ./test
 
+## Attribution
+
+To ensure you are recognized for your contributions to ML Hub, please add a link to your Github (or equivalent) profile to the CONTRIBUTORS.md file in the projects root directory.
 
 ## Pull Request (PR) Guidelines
 
