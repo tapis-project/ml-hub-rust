@@ -194,7 +194,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: docker push --all-tags tapis/inverence-api
+        run: docker push --all-tags tapis/inference-api
         if: steps.git-diff.outputs.diff
 
   Training_API:
