@@ -1,19 +1,19 @@
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct Model {
+pub struct ModelDto {
     pub model_id: String
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Model;
+    use super::ModelDto;
     #[test]
-    fn test_model () {
-        let model = Model {
+    fn test_model_dto () {
+        let model_dto = ModelDto {
             model_id: String::from("test_id")
         };
 
-        assert_eq!(model.model_id, "test_id")
+        assert_eq!(model_dto.model_id, "test_id")
     }
 }

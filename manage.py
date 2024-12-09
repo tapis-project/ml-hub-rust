@@ -1,7 +1,8 @@
-import argparse, sys, json, logging, os, subprocess
+import argparse, sys, json, os, subprocess
+
 
 CONFIG_FILE_NAME = "components.json"
-
+CONFIG_LOCK_FILE_NAME = "components-lock.json"
 
 def prompt(message, affirmations=[], negations=[]):
     if len(affirmations) == 0 or len(negations) == 0:
@@ -29,8 +30,8 @@ def load_config():
         with open(get_config_path()) as file:
             config = json.load(file)
     except Exception as e:
-        logging.exception(f"An error has occured loading the config file: {e}")
-        raise e
+        print(f"❌ An error has occured loading the config file: {e}")
+        sys.exit(1)
 
     return config
 
@@ -40,8 +41,8 @@ def save_config(config: dict):
         with open(get_config_path(), "w") as file:
             file.write(json.dumps(config, indent=2))
     except Exception as e:
-        logging.exception(f"An error has occured updating the config file: {e}")
-        raise e
+        print(f"❌ An error has occured updating the config file: {e}")
+        sys.exit(1)
 
     return config
 
@@ -56,7 +57,7 @@ def initialize_component(component, config, skip_initialization=False):
     if init_command == None:
         return True
 
-    print(f"Initializing component '{component.get('name')}'. Running command: {init_command}")
+    print(f"🔧 Initializing component '{component.get('name')}'. Running command: {init_command}")
     result = subprocess.run(
         f"cd {component.get('rootDir')} && {init_command}",
         check=False,
@@ -70,7 +71,7 @@ def initialize_component(component, config, skip_initialization=False):
     # If the code provided is non-zero, there was an error during component
     # initialization.
     if result.returncode > 0:
-        logging.error(f"There was an error initializing component '{component.get('name')}': {result.stderr.decode('utf8')}")
+        print(f"❌ There was an error initializing component '{component.get('name')}': {result.stderr.decode('utf8')}")
         return False
     
     # Add the initlaized component name to the config file
@@ -83,7 +84,7 @@ def initialize_component(component, config, skip_initialization=False):
 
 def main():
     # Initialize the argument parser
-    parser = argparse.ArgumentParser(description="A command line tool for managing the lifecycle of ML Hub components")
+    parser = argparse.ArgumentParser(description="A command line tool for managing the lifecycle of microservice components. Components are defined in a file at the root directory of the project (components.json) that enumerate a set of commands to be run against them. These commands can call scripts (ex. ./burnup) or run a one-line bash command. This tool offers functionality akin to the `npm run` command of Node Package manager (npm)")
 
     # The command to run over the chosen components
     parser.add_argument(
@@ -153,11 +154,19 @@ def main():
         help="Skips the 'initialize' script for each component even if the component is uninitialzed"
     )
 
+    # group.add_argument(
+    #     "-c",
+    #     "--run-concurrent",
+    #     default=False,
+    #     action='store_true',
+    #     help="Runs the provided command for all components concurrently where possible"
+    # )
+
     # Parse the arguments
     try:
         args = parser.parse_args(args=sys.argv[1:])
     except Exception as e:
-        logging.exception(f"{e}")
+        print(f"❌ {e}")
         sys.exit(1)
     
     # Get the config
@@ -166,7 +175,7 @@ def main():
     # Validate the config
     all_components = config.get("components", [])
     if (len(all_components) == 0 or type(all_components) != list):
-        logging.error("Invalid configuration file. The components property of the components.json file must be a non-empty array of 'component' objects")
+        print("❌ Invalid configuration file. The components property of the components.json file must be a non-empty array of 'component' objects")
         sys.exit(1)
 
     # Validate the provided components
@@ -174,7 +183,7 @@ def main():
     selected_component_names = set(args.components)
     for selected_component_name in selected_component_names:
         if selected_component_name not in all_component_names:
-            logging.error(f"Invalid component. Expected one of: {all_component_names}. Recieved: '{selected_component_name}'")
+            print(f"❌ Invalid component. Expected one of: {all_component_names}. Recieved: '{selected_component_name}'")
             sys.exit(1)
     
     # The user provided command to be run on the selected components
@@ -202,7 +211,7 @@ def main():
     for component in components:
         command = component.get("commands", {}).get(command_name)
         if command == None:
-            logging.warning(f"Command '{command_name}' does not exist for component '{component.get('name')}'")
+            print(f"⚠️  Command '{command_name}' does not exist for component '{component.get('name')}'")
             continue
 
         # Replace component reference vars
@@ -216,9 +225,11 @@ def main():
         # Continue the loop if the user specifies a dry run
         if args.dry_run:
             continue
+        
+        # Default the initialization flag to True
+        initialized_success = True
 
         # Initialize the component if not already initialized
-        initialized_success = True
         if (
             component.get("name") not in config.get("initialized", [])
             or args.initialize
@@ -237,7 +248,7 @@ def main():
         
         # Print the command if verbose flag used
         if args.verbose:
-            print(f"Running the following command from '{component['rootDir']}': {command_to_run}")
+            print(f"🚀 Running the following command from '{component['rootDir']}':\n⚡ {command}")
 
         confirmed = True
         if args.prompt:
@@ -248,7 +259,7 @@ def main():
                     negations=["n"],
                 )
             except Exception as e:
-                logging.exception(e)
+                print(f"❌ {e}")
                 sys.exit(1)
 
         if confirmed:
@@ -259,5 +270,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        logging.exception(e.__cause__)
+        print(f"❌ {e}")
         sys.exit(1)

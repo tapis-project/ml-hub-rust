@@ -13,16 +13,16 @@ spec:
     spec:
       containers:
       - env:
-          - name: DB_HOST
-            value: mlhub-postgres-service
-          - name: DB_NAME
-            value: mlhub
-          - name: DB_PASSWORD
-            value: dev
-          - name: DB_USER
-            value: mlhub
-          - name: RUST_LOG
-            value: debug
+        - name: DB_HOST
+          value: mlhub-postgres-service
+        - name: DB_NAME
+          value: mlhub
+        - name: DB_PASSWORD
+          value: dev
+        - name: DB_USER
+          value: mlhub
+        - name: RUST_LOG
+          value: debug
         image: tapis/inference-api:dev
         imagePullPolicy: Always
         name: inference-api
@@ -31,3 +31,12 @@ spec:
             name: webserver
         resources: {}
         tty: true
+      #   volumeMounts:
+      #       - name: nfs-server-mount
+      #         mountPath: /srv/mlhub/
+      #         subPath: inference
+      # volumes:
+      #   - name: nfs-server-mount
+      #     nfs: 
+      #       server: '{{ NFS_SERVER_COMPONENT_IP }}'
+      #       path: /

@@ -11,8 +11,12 @@ spec:
       labels:
         app: mlhub-nfs-server-deployment
     spec:
+      initContainers:
+      - name: create-mount-dirs
+        image: busybox
+        command: ["sh", "-c", "mkdir -p /nfsshare/mlhub/models /nfsshare/mlhub/datasets /nfsshare/mlhub/inference /nfsshare/mlhub/training"]
       containers:
-      - name: nfsshare
+      - name: nfs-server
         image: itsthenetwork/nfs-server-alpine:latest
         securityContext:
           privileged: true

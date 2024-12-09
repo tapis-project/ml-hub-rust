@@ -44,6 +44,29 @@ From the project's root directory, run the following commands to initalize the p
 
 2. `./manage start`
 
+Congrats! You know have a fully-functional local deployment of the Tapis ML Hub Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the ML Hub components are `Running`, execute the following command:
+
+`./manage expose traefik`
+
+You can now make request to the IP address and port output by the last command. The section below will provide detailed instructions on how to make request to each service.
+
+> **Note**: If you are using a Docker driver on darwin, the terminal will need to remain open in order to make requests to ML Hub services
+
+### 3. Making requests
+
+You can use the IP address and port produced by the last command to make API calls to any service in the ML Hub suite. Your url will need to be structured as follows:
+
+`http://<ipAddress>:<port>/v3/<serviceName>`
+
+Use the tool of your choice to make https requests to one following services (in the example below, we will use `curl`):
+- models
+- datasets
+- inference
+- training
+
+Example (Returns a list of machine learning models from the Models API):
+`curl http://127.0.0.1:57783/models`
+
 ---
 
 ## Using the Lifecycle Management CLI

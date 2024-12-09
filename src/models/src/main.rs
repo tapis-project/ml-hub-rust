@@ -2,9 +2,8 @@ mod operations {
     pub mod get_model;
     pub mod list_models;
 }
-mod models { 
-    pub mod models;
-    pub mod requests;
+mod dtos { 
+    pub mod model_dto;
     pub mod responses;
 }
 mod config;

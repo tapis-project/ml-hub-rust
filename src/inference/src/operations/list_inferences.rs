@@ -1,22 +1,22 @@
 use actix_web::{get, HttpResponse, Responder};
-use crate::dtos::model_dto::ModelDto;
+use crate::dtos::inference_dto::InferenceDto;
 use crate::dtos::responses::Response;
 use log::debug;
 
-#[get("/models")]
-async fn list_models() -> impl Responder {
-    debug!("Operation list_models");
-    let mut models: Vec<ModelDto> = Vec::new();
-    let model_dto = ModelDto {
-        model_id: String::from("test")
+#[get("/inference")]
+async fn list_inferences() -> impl Responder {
+    debug!("Operation list_inferences");
+    let mut inferences: Vec<InferenceDto> = Vec::new();
+    let inference_dto = InferenceDto {
+        inference_id: String::from("test")
     };
-    models.push(model_dto);
+    inferences.push(inference_dto);
     let resp = Response::new(
         String::from("test"),
         String::from("test"),
         String::from("test"),
         String::from("test"),
-        models
+        inferences
     );
     HttpResponse::Ok()
         .content_type("application/json")

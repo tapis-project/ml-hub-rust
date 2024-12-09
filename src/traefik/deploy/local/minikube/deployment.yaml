@@ -22,8 +22,19 @@ spec:
           args:
             - --api.insecure
             - --providers.kubernetesingress
+            - --accesslog=true
+            - --providers.file.directory=/etc/traefik
+            # - --providers.file.filename=/etc/traefik/dynamic-config.yaml
           ports:
             - name: web
               containerPort: 80
             - name: dashboard
               containerPort: 8080
+          volumeMounts:
+          - name: dynamic-config
+            mountPath: /etc/traefik/dynamic-config.yaml
+            subPath: dynamic-config.yaml
+      volumes:
+      - name: dynamic-config
+        configMap:
+          name: traefik-dynamic-config

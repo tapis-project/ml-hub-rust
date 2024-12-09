@@ -1,28 +1,38 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+mod operations {
+    pub mod get_inference;
+    pub mod list_inferences;
 }
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
+mod dtos { 
+    pub mod inference_dto;
+    pub mod responses;
 }
+mod config;
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
+use config::{DEFAULT_HOST, DEFAULT_PORT};
+use std::env;
+use actix_web::{App, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Initialize the logger
+    env_logger::init();
+    
+    // Set the address from env vars HOST and PORT, fallback to default values
+    // if values for these env vars are not defined
+    let addrs = (
+        env::var("HOST").unwrap_or(DEFAULT_HOST.into()),
+        env::var("PORT")
+        .ok()
+        .and_then(|port| port.parse::<u16>().ok())
+        .unwrap_or(DEFAULT_PORT)
+    );
+
     HttpServer::new(|| {
         App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
+            .service(operations::get_inference::get_inference)
+            .service(operations::list_inferences::list_inferences)
     })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+        .bind(addrs)?
+        .run()
+        .await
 }

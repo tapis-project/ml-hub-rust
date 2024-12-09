@@ -36,6 +36,12 @@ We use specific design patterns to ensure consistency across the project. Here a
 
 - **Repository Pattern**: Use this for data access layers to abstract the business logic from database operations.
 
+- **Controller Pattern**: Use this pattern for handling HTTP requests, interpret user input, and return the appropriate response. You will find this pattern employed in <service>/src/operations. These operation functions can be viewed as controllers. These functions should only contain application logic and calls to objects in the Service Layer, and when appropriate, the Data Layer (via repositories! The Application Layer should be completely insulated from the data access logic)
+
+> **Note** See Service Pattern below
+
+- **Service Pattern** Use this pattern to encapsulate complex business logic including DTO validation, interactions with the Data Layer via repositories (mentioned above), etc.
+
 > **Note**: When adding new code, refer to existing patterns and follow them whenever applicable. If your contribution requires a new pattern, please mention it in the PR description so we can review its suitability.
 
 ---

@@ -10,7 +10,7 @@
     "inference-image": "tapis/inference-api",
     "training-deployment": "training-api-deployment",
     "training-image": "tapis/training-api",
-    "nfs-deployment": "mlhub-nfs-deployment",
+    "nfs-deployment": "mlhub-nfs-server-deployment",
     "postgres-deployment": "mlhub-postgres-deployment",
     "postgres-image": "postgres",
     "postgres-image-version": "15",
@@ -32,7 +32,8 @@
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
         "traefik"
@@ -53,7 +54,8 @@
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
         "traefik"
@@ -74,7 +76,8 @@
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
         "traefik",
@@ -97,7 +100,8 @@
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
         "traefik",
@@ -114,7 +118,8 @@
         "stop": "./scripts/burndown.sh",
         "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} --container=\"nfs-server\" -- sh"
       }
     },
     {
@@ -126,7 +131,9 @@
         "stop": "./scripts/burndown.sh",
         "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
+        "expose": "minikube service expose traefik-web-service --url"
       }
     },
     {
@@ -138,17 +145,18 @@
         "stop": "./scripts/burndown.sh",
         "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f"
+        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh"
       }
     }
   ],
   "initialized": [
-    "traefik",
-    "models",
-    "datasets",
     "nfs",
     "training",
-    "inference",
-    "postgres"
+    "postgres",
+    "traefik",
+    "datasets",
+    "models",
+    "inference"
   ]
 }

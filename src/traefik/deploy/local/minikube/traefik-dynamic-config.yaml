@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-dynamic-config
+data:
+  dynamic-config.yaml: |-
+    http:
+      routers:
+        dashboard:
+          rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+          service: api@internal
+
+        models-api:
+          rule: "PathPrefix(`/models`)"
+          service: models-api
+        
+        datasets-api:
+          rule: "PathPrefix(`/datasets`)"
+          service: datasets-api
+
+        inference-api:
+          rule: "PathPrefix(`/inference`)"
+          service: inference-api
+
+        training-api:
+          rule: "PathPrefix(`/training`)"
+          service: training-api
+
+      services:
+        models-api:
+          loadBalancer:
+            servers:
+            - url: http://models-api-service:8000
+        datasets-api:
+          loadBalancer:
+            servers:
+            - url: http://datasets-api-service:8000
+        inference-api:
+          loadBalancer:
+            servers:
+            - url: http://inference-api-service:8000
+        training-api:
+          loadBalancer:
+            servers:
+            - url: http://training-api-service:8000
+
+
+
+
+
+
+
+
+
