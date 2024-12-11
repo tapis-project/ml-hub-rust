@@ -2,6 +2,7 @@
   "defaultTemplateVars": {
     "env": "local",
     "tag": "dev",
+    "libs-dir": "src/libs",
     "models-deployment": "models-api-deployment",
     "models-image": "tapis/models-api",
     "datasets-deployment": "datasets-api-deployment",
@@ -19,20 +20,20 @@
   "components": [
     {
       "name": "models",
-      "rootDir": "src/models",
+      "rootDir": "src/apis/models",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path .",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
-        "build": "docker build -f Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} .",
-        "buildp": "cd ../../ && ./manage build {{ self.name }} && ./manage push {{ self.name }}",
-        "cycle": "cd ../../ && ./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "build": "docker build -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "buildp": "./manage build {{ self.name }} && ./manage push {{ self.name }}",
+        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
@@ -41,20 +42,20 @@
     },
     {
       "name": "datasets",
-      "rootDir": "src/datasets",
+      "rootDir": "src/apis/datasets",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path .",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "build": "docker build -f Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} .",
-        "buildp": "cd ../../ && ./manage build {{ self.name }} && ./manage push {{ self.name }}",
-        "cycle": "cd ../../ && ./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "buildp": "./manage build {{ self.name }} && ./manage push {{ self.name }}",
+        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
@@ -63,20 +64,20 @@
     },
     {
       "name": "inference",
-      "rootDir": "src/inference",
+      "rootDir": "src/apis/inference",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path .",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "build": "docker build -f Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} .",
-        "buildp": "cd ../../ && ./manage build {{ self.name }} && ./manage push {{ self.name }}",
-        "cycle": "cd ../../ && ./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "buildp": "./manage build {{ self.name }} && ./manage push {{ self.name }}",
+        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
@@ -87,20 +88,20 @@
     },
     {
       "name": "training",
-      "rootDir": "src/training",
+      "rootDir": "src/apis/training",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path .",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "build": "docker build -f Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} .",
-        "buildp": "cd ../../ && ./manage build {{ self.name }} && ./manage push {{ self.name }}",
-        "cycle": "cd ../../ && ./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "buildp": "./manage build {{ self.name }} && ./manage push {{ self.name }}",
+        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "test": "cargo test",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
       },
       "dependencies": [
@@ -111,52 +112,52 @@
     },
     {
       "name": "nfs",
-      "rootDir": "src/nfs",
+      "rootDir": "src/components/nfs",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} --container=\"nfs-server\" -- sh"
       }
     },
     {
       "name": "traefik",
-      "rootDir": "src/traefik",
+      "rootDir": "src/components/traefik",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "expose": "minikube service expose traefik-web-service --url"
       }
     },
     {
       "name": "postgres",
-      "rootDir": "src/postgres",
+      "rootDir": "src/components/postgres",
       "commands": {
-        "initialize": "chmod -R +x ./scripts",
-        "start": "./scripts/burnup.sh",
-        "stop": "./scripts/burndown.sh",
-        "restart": "./scripts/burndown.sh; ./scripts/burnup.sh",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "logsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh"
       }
     }
   ],
   "initialized": [
-    "nfs",
-    "training",
     "postgres",
+    "training",
+    "models",
     "traefik",
     "datasets",
-    "models",
+    "nfs",
     "inference"
   ]
 }

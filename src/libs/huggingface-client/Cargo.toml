@@ -1,0 +1,7 @@
+[package]
+name = "huggingface-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hf-hub = { version = "0.3.2", features = ["tokio"] }

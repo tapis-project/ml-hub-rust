@@ -58,19 +58,20 @@ You can use the IP address and port produced by the last command to make API cal
 
 `http://<ipAddress>:<port>/v3/<serviceName>`
 
-Use the tool of your choice to make https requests to one following services (in the example below, we will use `curl`):
+Use the tool of your choice to make https requests to one following services. In the example below, we will use `curl`:
 - models
 - datasets
 - inference
 - training
 
 Example (Returns a list of machine learning models from the Models API):
+
 `curl http://127.0.0.1:57783/models`
 
 ---
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a python tool that can be invoked from the command line to run commands and scripts that manage the lifecycle of the various microservices and components that comprise ML Hub. This is the same script invoked previously to initialize the ML Hub project locally.
+The Lifecycle Management CLI is a python tool that can be invoked from the command line to run bash commands and scripts that control the lifecycle of the various microservices and components of ML Hub. This is the same script invoked previously to initialize the ML Hub project locally.
 
 ### Managing ML Hub Services and Components

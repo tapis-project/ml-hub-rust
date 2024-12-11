@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  selector:
+    matchLabels:
+      app: postgres-deployment
+  template:
+    metadata:
+      labels:
+        app: postgres-deployment
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:17
+        ports:
+        - name: postgres
+          containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: dev
+        - name: POSTGRES_DB
+          value: mlhub
+        - name: POSTGRES_PASSWORD
+          value: mlhub
+        volumeMounts:
+        - name: pgdata
+          mountPath: "/var/lib/postgresql/data"
+      volumes:
+      - name: pgdata
+        persistentVolumeClaim:
+          claimName: postgres-pvc

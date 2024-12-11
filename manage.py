@@ -24,6 +24,16 @@ def get_config_path():
         CONFIG_FILE_NAME
     )
 
+# Component reference vars
+def replace_ref_vars(command, component):
+    component_template_vars = [ "name", "rootDir" ]
+    
+    # Replace component reference vars
+    for key in component_template_vars:
+        command = command.replace(f"{{{{ self.{key} }}}}", component[key])
+
+    return command
+
 def load_config():
     # Deserialize the contents of components file
     try:
@@ -59,7 +69,7 @@ def initialize_component(component, config, skip_initialization=False):
 
     print(f"🔧 Initializing component '{component.get('name')}'. Running command: {init_command}")
     result = subprocess.run(
-        f"cd {component.get('rootDir')} && {init_command}",
+        replace_ref_vars(init_command, component),
         check=False,
         capture_output=True,
         shell=True
@@ -205,22 +215,22 @@ def main():
     if len(components) == 0:
         components = all_components
 
-    # Component reference vars
-    component_template_vars = [ "self.name" ]
-
     for component in components:
         command = component.get("commands", {}).get(command_name)
         if command == None:
             print(f"⚠️  Command '{command_name}' does not exist for component '{component.get('name')}'")
             continue
-
+        
         # Replace component reference vars
-        for key in component_template_vars:
-            command = command.replace(f"{{{{ {key} }}}}", component[key.split(".")[1]])
+        command = replace_ref_vars(command, component)
 
         # Replace each template var found in the command
         for key in template_vars:
             command = command.replace(f"{{{{ {key} }}}}", template_vars[key])
+
+        # Print the command if verbose flag used
+        if args.verbose:
+            print(f"🚀 Running the following command:\n⚡ {command}")
 
         # Continue the loop if the user specifies a dry run
         if args.dry_run:
@@ -244,12 +254,8 @@ def main():
             sys.exit(1)
         
         # Add command to cd into the components root directory
-        command_to_run = f"set -e; cd {component['rootDir']} && {command}"
+        command_to_run = f"set -e; {command}"
         
-        # Print the command if verbose flag used
-        if args.verbose:
-            print(f"🚀 Running the following command from '{component['rootDir']}':\n⚡ {command}")
-
         confirmed = True
         if args.prompt:
             try:
