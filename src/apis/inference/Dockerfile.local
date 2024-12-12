@@ -1,11 +1,33 @@
+# Stage 1: Compile the code
 FROM rust:1.82.0 as builder
-RUN mkdir /usr/local/mlhub
-WORKDIR /usr/local/mlhub
-COPY . .
+
+ARG SERVICE_NAME
+ARG SERVICE_DIR
+ARG LIBS_DIR
+
+# Create 
+RUN mkdir -p /usr/local/mlhub/service/${SERVICE_NAME} /usr/local/mlhub/libs
+
+# Copy shared libraries code
+WORKDIR /usr/local/mlhub/libs
+COPY ${LIBS_DIR} .
+
+# Copy service code
+WORKDIR /usr/local/mlhub/service/${SERVICE_NAME}
+COPY ${SERVICE_DIR} .
+
+# Install
 RUN cargo install --path .
 
+
+# Stage 2: Copy the binary to a slim Linux image
 FROM debian:bookworm-slim
+
+ARG SERVICE_NAME
+
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/mlhub/target/release/inference /usr/local/bin/mlhub
+COPY --from=builder /usr/local/mlhub/service/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+
 ENV RUST_LOG=debug
+
 CMD ["mlhub"]

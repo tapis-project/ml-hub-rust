@@ -92,6 +92,13 @@ def initialize_component(component, config, skip_initialization=False):
 
     return True
 
+def all_in_list(needles: list, haystack: list):
+    for needle in needles:
+        if needle not in haystack:
+            return False
+        
+    return True
+
 def main():
     # Initialize the argument parser
     parser = argparse.ArgumentParser(description="A command line tool for managing the lifecycle of microservice components. Components are defined in a file at the root directory of the project (components.json) that enumerate a set of commands to be run against them. These commands can call scripts (ex. ./burnup) or run a one-line bash command. This tool offers functionality akin to the `npm run` command of Node Package manager (npm)")
@@ -111,8 +118,8 @@ def main():
         help="The name of one or more components upon which to run the command. If no value provided, the provided command will be run for all components"
     )
 
-    # The scope for which this command is running. Defaults to local. This value
-    # can be used in commands
+    # Replaces all instances of the provided key (first argument) in a command
+    # with the provided value (second argument)
     parser.add_argument(
         "-t",
         "--template-vars",
@@ -121,7 +128,16 @@ def main():
         nargs=2,
         help="Replaces all instances of the provided key (first argument) in a command with the provided value (second argument)"
     )
+
+    # Selects only the components that have the provided labels
+    parser.add_argument(
+        "-l",
+        "--labels",
+        nargs="+",
+        help="Selects only the components that have the provided labels"
+    )
     
+    # Shows the command to run before running it
     parser.add_argument(
         "-v",
         "--verbose",
@@ -140,6 +156,7 @@ def main():
         help="Echos all the commands that would be run during normal operation"
     )
 
+    # Prompts the user to confirm the command to be run for each component
     group.add_argument(
         "-p",
         "--prompt",
@@ -147,7 +164,8 @@ def main():
         action='store_true',
         help="Prompts the user to confirm the command to be run for each component"
     )
-
+    
+    # Forces a run the 'initialize' script for each component
     group.add_argument(
         "-i",
         "--initialize",
@@ -156,6 +174,7 @@ def main():
         help="Forces a run the 'initialize' script for each component"
     )
 
+    # Skips the 'initialize' script for each component even if the component is uninitialzed
     group.add_argument(
         "-s",
         "--skip-initialization",
@@ -214,6 +233,16 @@ def main():
     # Run the command over all components if none provided
     if len(components) == 0:
         components = all_components
+
+    # Filter the components based on labels provided. Must match all labels
+
+    if args.labels:
+        components = [
+            component for component in components
+            if all_in_list(args.labels, component.get("labels", []))
+        ]
+
+    print([component.get("name") for component in components])
 
     for component in components:
         command = component.get("commands", {}).get(command_name)
