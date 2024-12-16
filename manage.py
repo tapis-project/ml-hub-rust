@@ -24,6 +24,12 @@ def get_config_path():
         CONFIG_FILE_NAME
     )
 
+def get_lockfile_path():
+    return os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        CONFIG_LOCK_FILE_NAME
+    )
+
 # Component reference vars
 def replace_ref_vars(command, component):
     component_template_vars = [ "name", "rootDir" ]
@@ -34,32 +40,40 @@ def replace_ref_vars(command, component):
 
     return command
 
-def load_config():
+def load(path, default=None):
     # Deserialize the contents of components file
     try:
-        with open(get_config_path()) as file:
-            config = json.load(file)
+        with open(path) as file:
+            obj = json.load(file)
+    except FileNotFoundError as e:
+        if default == None:
+            raise e
+        
+        return default
     except Exception as e:
         print(f"❌ An error has occured loading the config file: {e}")
         sys.exit(1)
 
-    return config
+    return obj
 
-def save_config(config: dict):
+def save(obj: dict, path):
     # Serialize the config
     try:
-        with open(get_config_path(), "w") as file:
-            file.write(json.dumps(config, indent=2))
+        with open(path, "w") as file:
+            file.write(json.dumps(obj, indent=2))
     except Exception as e:
         print(f"❌ An error has occured updating the config file: {e}")
         sys.exit(1)
 
-    return config
+    return obj
 
-def initialize_component(component, config, skip_initialization=False):
+def initialize_component(component, skip_initialization=False):
     # Skip the initializtion
     if skip_initialization:
         return True
+    
+    # Load the lock config. If one does not exist, create it
+    lock_config = load(get_lockfile_path(), {})
     
     # The initialization command in the config file
     init_command = component.get("commands", {}).get("initialize")
@@ -85,10 +99,10 @@ def initialize_component(component, config, skip_initialization=False):
         return False
     
     # Add the initlaized component name to the config file
-    initialized_components = config.get("initialized", [])
+    initialized_components = lock_config.get("initialized", [])
     initialized_components.append(component["name"])
-    config["initialized"] = list(set(initialized_components))
-    save_config(config)
+    lock_config["initialized"] = list(set(initialized_components))
+    save(lock_config, get_lockfile_path())
 
     return True
 
@@ -199,7 +213,7 @@ def main():
         sys.exit(1)
     
     # Get the config
-    config = load_config()
+    config = load(get_config_path())
 
     # Validate the config
     all_components = config.get("components", [])
@@ -242,8 +256,6 @@ def main():
             if all_in_list(args.labels, component.get("labels", []))
         ]
 
-    print([component.get("name") for component in components])
-
     for component in components:
         command = component.get("commands", {}).get(command_name)
         if command == None:
@@ -269,13 +281,13 @@ def main():
         initialized_success = True
 
         # Initialize the component if not already initialized
+        lock_config = load(get_lockfile_path())
         if (
-            component.get("name") not in config.get("initialized", [])
+            component.get("name") not in lock_config.get("initialized", [])
             or args.initialize
         ):
             initialized_success = initialize_component(
                 component,
-                config,
                 skip_initialization=args.skip_initialization
             )
         

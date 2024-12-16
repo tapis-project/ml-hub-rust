@@ -154,14 +154,5 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh"
       }
     }
-  ],
-  "initialized": [
-    "postgres",
-    "nfs",
-    "datasets",
-    "training",
-    "models",
-    "traefik",
-    "inference"
   ]
 }
