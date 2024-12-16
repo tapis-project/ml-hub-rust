@@ -80,7 +80,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: docker push --all-tags tapis/models-api
+        run: ./manage pusht models
         if: steps.git-diff.outputs.diff
 
   Datasets_API:
@@ -137,7 +137,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: docker push --all-tags tapis/datasets-api
+        run: ./manage pusht datasets
         if: steps.git-diff.outputs.diff
     
   Inference_API:
@@ -194,7 +194,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: docker push --all-tags tapis/inference-api
+        run: ./manage pusht inference
         if: steps.git-diff.outputs.diff
 
   Training_API:
@@ -251,5 +251,5 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: docker push --all-tags tapis/training-api
+        run: ./manage pusht training
         if: steps.git-diff.outputs.diff

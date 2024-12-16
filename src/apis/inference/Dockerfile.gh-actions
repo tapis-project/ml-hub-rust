@@ -1,5 +1,13 @@
 FROM debian:bookworm-slim
+
+ARG SERVICE_NAME
+
+# Remove unnecessary bins
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
-COPY target/release/inference /usr/local/bin/mlhub
+
+# Copy the binary
+COPY src/apis/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+
 ENV RUST_LOG=debug
+
 CMD ["mlhub"]
