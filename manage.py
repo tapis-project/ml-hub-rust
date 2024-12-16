@@ -73,7 +73,7 @@ def initialize_component(component, skip_initialization=False):
         return True
     
     # Load the lock config. If one does not exist, create it
-    lock_config = load(get_lockfile_path(), {})
+    lock_config = load(get_lockfile_path(), default={})
     
     # The initialization command in the config file
     init_command = component.get("commands", {}).get("initialize")
@@ -281,7 +281,7 @@ def main():
         initialized_success = True
 
         # Initialize the component if not already initialized
-        lock_config = load(get_lockfile_path())
+        lock_config = load(get_lockfile_path(), default={})
         if (
             component.get("name") not in lock_config.get("initialized", [])
             or args.initialize
