@@ -33,6 +33,7 @@
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
         "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cyclel": "{{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
