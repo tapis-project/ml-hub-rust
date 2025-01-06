@@ -26,7 +26,7 @@
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} && echo \"{{ hello }} {{ world }}\"",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "build": "docker build -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
