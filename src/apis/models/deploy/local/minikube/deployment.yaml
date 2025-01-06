@@ -12,30 +12,30 @@ spec:
         app: models-api-deployment
     spec:
       containers:
-      - env:
-          - name: DB_HOST
-            value: mlhub-postgres-service
-          - name: DB_NAME
-            value: mlhub
-          - name: DB_PASSWORD
-            value: dev
-          - name: DB_USER
-            value: mlhub
-          - name: RUST_LOG
-            value: debug
-        image: tapis/models-api:dev
-        imagePullPolicy: Always
-        name: models-api
-        ports:
-          - containerPort: 8000
-            name: webserver
-        resources: {}
-        tty: true
+        - env:
+            - name: DB_HOST
+              value: mlhub-postgres-service
+            - name: DB_NAME
+              value: mlhub
+            - name: DB_PASSWORD
+              value: dev
+            - name: DB_USER
+              value: mlhub
+            - name: RUST_LOG
+              value: debug
+          image: tapis/models-api:local
+          imagePullPolicy: Never
+          name: models-api
+          ports:
+            - containerPort: 8000
+              name: webserver
+          resources: {}
+          tty: true
       #   volumeMounts:
       #       - name: nfs-server-mount
       #         mountPath: /srv/mlhub/
       # volumes:
       #   - name: nfs-server-mount
-      #     nfs: 
+      #     nfs:
       #       server: '{{ NFS_SERVER_COMPONENT_IP }}'
-      #       path: /   
+      #       path: /
