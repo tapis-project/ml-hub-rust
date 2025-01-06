@@ -56,7 +56,7 @@ You can now make request to the IP address and port output by the last command. 
 
 You can use the IP address and port produced by the last command to make API calls to any service in the ML Hub suite. Your url will need to be structured as follows:
 
-`http://<ipAddress>:<port>/v3/<serviceName>`
+`http://<ipAddress>:<port>/<serviceName>`
 
 Use the tool of your choice to make https requests to one following services. In the example below, we will use `curl`:
 - models

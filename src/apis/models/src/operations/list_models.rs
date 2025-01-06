@@ -17,7 +17,6 @@ async fn list_models() -> impl Responder {
             println!("{:#?}", response);
         },
         Err(err) => {
-            println!("Error: {}", err);
             println!("{:#?}", err);
         },
     }
