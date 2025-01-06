@@ -23,8 +23,8 @@ spec:
             value: mlhub
           - name: RUST_LOG
             value: debug
-        image: tapis/datasets-api:dev
-        imagePullPolicy: Always
+        image: tapis/datasets-api:local
+        imagePullPolicy: Never
         name: datasets-api
         ports:
           - containerPort: 8000

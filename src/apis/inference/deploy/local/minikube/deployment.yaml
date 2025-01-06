@@ -23,8 +23,8 @@ spec:
           value: mlhub
         - name: RUST_LOG
           value: debug
-        image: tapis/inference-api:dev
-        imagePullPolicy: Always
+        image: tapis/inference-api:local
+        imagePullPolicy: Never
         name: inference-api
         ports:
           - containerPort: 8000

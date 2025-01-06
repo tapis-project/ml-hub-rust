@@ -23,8 +23,8 @@ spec:
             value: mlhub
           - name: RUST_LOG
             value: debug
-        image: tapis/training-api:dev
-        imagePullPolicy: Always
+        image: tapis/training-api:local
+        imagePullPolicy: Never
         name: training-api
         ports:
           - containerPort: 8000
