@@ -24,7 +24,7 @@
       "rootDir": "src/apis/models",
       "labels": ["api"],
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && docker pull tapis/{{ self.name }}-api:dev && docker tag tapis/{{ self.name }}-api:dev tapis/{{ self.name }}-api:local",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path {{ self.rootDir }}",
@@ -51,7 +51,7 @@
       "rootDir": "src/apis/datasets",
       "labels": ["api"],
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && docker pull tapis/{{ self.name }}-api:dev && docker tag tapis/{{ self.name }}-api:dev tapis/{{ self.name }}-api:local",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path {{ self.rootDir }}",
@@ -78,7 +78,7 @@
       "rootDir": "src/apis/inference",
       "labels": ["api"],
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && docker pull tapis/{{ self.name }}-api:dev && docker tag tapis/{{ self.name }}-api:dev tapis/{{ self.name }}-api:local",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path {{ self.rootDir }}",
@@ -107,7 +107,7 @@
       "rootDir": "src/apis/training",
       "labels": ["api"],
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && docker pull tapis/{{ self.name }}-api:dev && docker tag tapis/{{ self.name }}-api:dev tapis/{{ self.name }}-api:local",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "install": "cargo install --path {{ self.rootDir }}",
