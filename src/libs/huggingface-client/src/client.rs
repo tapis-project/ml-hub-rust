@@ -1,17 +1,34 @@
-use hf_hub::api::sync::Api;
+#![allow(unused_imports)]
 
-pub struct HuggingFaceClient {}
+use crate::constants;
+use reqwest::Error;
+use reqwest::blocking::{Client, ClientBuilder, Response};
+
+pub struct HuggingFaceClient {
+    client: Client
+}
+
+pub struct Model {}
 
 impl HuggingFaceClient {
     pub fn new() -> Self {
-        Self {}
+        let client = Client::new();
+        Self {
+            client
+        }
     }
-    
-    pub fn call(&self) {
-        let api = Api::new().unwrap();
 
-        let repo = api.model("bert-base-uncased".to_string());
-        let _filename = repo.get("config.json").unwrap();
-        println!("Testing _filename: {}", _filename.display())
+    fn format_url(&self, url: &str) -> String {
+        format!(
+            "{}/{}",
+            constants::HUGGING_FACE_BASE_URL,
+            url.strip_prefix("/").unwrap_or(url).to_string()
+        )
+    }
+
+    pub fn list_models(&self) -> Result<Response, Error> {
+        self.client
+            .get(self.format_url("models"))
+            .send()
     }
 }

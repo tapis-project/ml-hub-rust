@@ -36,7 +36,8 @@
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}"
       },
       "dependencies": [
         "traefik"
@@ -60,7 +61,8 @@
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}"
       },
       "dependencies": [
         "traefik"
@@ -84,7 +86,8 @@
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}"
       },
       "dependencies": [
         "traefik",
@@ -110,7 +113,8 @@
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash"
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}"
       },
       "dependencies": [
         "traefik",
@@ -121,6 +125,7 @@
     {
       "name": "nfs",
       "rootDir": "src/components/nfs",
+      "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -134,6 +139,7 @@
     {
       "name": "traefik",
       "rootDir": "src/components/traefik",
+      "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -148,6 +154,7 @@
     {
       "name": "postgres",
       "rootDir": "src/components/postgres",
+      "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -156,6 +163,16 @@
         "klogs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "klogsf": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh"
+      }
+    },
+    {
+      "name": "huggingface-client",
+      "rootDir": "src/libs/huggingface-client",
+      "labels": ["lib"],
+      "commands": {
+        "initialize": "",
+        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "code": "code src/libs/{{ self.name }}"
       }
     }
   ]
