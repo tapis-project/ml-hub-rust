@@ -40,6 +40,15 @@ def replace_ref_vars(command, component):
 
     return command
 
+# Expand nested commands
+def replace_command_refs(command, component):
+    # TODO check for recursion when user specifies command to be replaced as the
+    # command being invoked
+    for key in component["commands"]:
+        command = command.replace(f"{{{{ self.commands.{key} }}}}", component["commands"][key])
+
+    return command
+
 def load(path, default=None):
     # Deserialize the contents of components file
     try:
@@ -263,7 +272,10 @@ def main():
             continue
         
         # Replace component reference vars
-        command = replace_ref_vars(command, component)
+        command = replace_ref_vars(
+            replace_command_refs(command, component),
+            component
+        )
 
         # Replace each template var found in the command
         for key in template_vars:
