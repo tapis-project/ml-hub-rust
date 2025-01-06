@@ -17,6 +17,12 @@ Please take a few minutes to review this document so you can understand the stan
 
 ---
 
+## Adding a new service
+
+## Adding a new library
+
+## Adding a new component
+
 ## Code Style and Standards 😎
 
 Please refer to the official [Rust style guide](https://doc.rust-lang.org/nightly/style-guide/) for general styling information. We follow these standards in the development of Tapis ML Hub and we would appreciate it you did too! All points below are to be used in addition to the standards from the aforementioned style guide.

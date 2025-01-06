@@ -40,6 +40,13 @@ def replace_ref_vars(command, component):
 
     return command
 
+def replace_template_vars(command, template_vars):
+    # Replace each template var found in the command
+    for key in template_vars:
+        command = command.replace(f"{{{{ {key} }}}}", template_vars[key])
+
+    return command
+
 # Expand nested commands
 def replace_command_refs(command, component):
     # TODO check for recursion when user specifies command to be replaced as the
@@ -76,7 +83,7 @@ def save(obj: dict, path):
 
     return obj
 
-def initialize_component(component, skip_initialization=False):
+def initialize_component(component, template_vars, skip_initialization=False):
     # Skip the initializtion
     if skip_initialization:
         return True
@@ -89,6 +96,14 @@ def initialize_component(component, skip_initialization=False):
 
     if init_command == None:
         return True
+    
+    init_command = replace_template_vars(
+        replace_ref_vars(
+            replace_command_refs(init_command, component),
+            component
+        ),
+        template_vars
+    )
 
     print(f"🔧 Initializing component '{component.get('name')}'. Running command: {init_command}")
     result = subprocess.run(
@@ -278,8 +293,7 @@ def main():
         )
 
         # Replace each template var found in the command
-        for key in template_vars:
-            command = command.replace(f"{{{{ {key} }}}}", template_vars[key])
+        command = replace_template_vars(command, template_vars)
 
         # Print the command if verbose flag used
         if args.verbose:
@@ -300,6 +314,7 @@ def main():
         ):
             initialized_success = initialize_component(
                 component,
+                template_vars,
                 skip_initialization=args.skip_initialization
             )
         
