@@ -11,3 +11,5 @@ schemars = { package = "apistos-schemars", version = "0.8" }
 apistos = "0.4"
 env_logger = "0.11.5"
 log = "0.4"
+serde_json = "1.0.135"
+shared = { version = "0.1.0", path = "../../libs/shared" }

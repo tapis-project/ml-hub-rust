@@ -1,6 +1,6 @@
 use actix_web::{web, get, HttpResponse, Responder};
 use crate::dtos::model_dto::ModelDto;
-use crate::dtos::responses::Response;
+use crate::dtos::responses::OkResponse;
 use log::debug;
 
 #[get("/models/{model_id}")]
@@ -14,13 +14,13 @@ async fn get_model(
         model_id
     };
 
-    let resp = Response::new(
-        String::from("test"),
-        String::from("test"),
-        String::from("test"),
-        String::from("test"),
-        model_dto
-    );
+    let resp = OkResponse {
+        status: String::from("test"),
+        message: String::from("test"),
+        result: model_dto,
+        metadata: String::from("test"),
+        version: String::from("test"),
+    };
 
     HttpResponse::Ok()
         .content_type("application/json")

@@ -38,7 +38,7 @@ We use specific design patterns to ensure consistency across the project. Here a
 
 - **Singleton Pattern**: Use this pattern for structs that should only have a single instance. Examples include configurations or database connection managers.
   
-- **Factory Pattern**: Use this for complex object creation where the specific type of object created depends on runtime parameters.
+- **Factory Pattern**: Use this for encapsulating logic for creating complex or polymorphic objects.
 
 - **Repository Pattern**: Use this for data access layers to abstract the business logic from database operations.
 

@@ -221,6 +221,14 @@ def main():
         help="Skips the 'initialize' script for each component even if the component is uninitialzed"
     )
 
+    # Arguments to be added to the end of the command
+    parser.add_argument(
+        "-a",
+        "--args",
+        nargs="+",
+        help="Arguments that will be added to the end of the command"
+    )
+
     # group.add_argument(
     #     "-c",
     #     "--run-concurrent",
@@ -273,13 +281,13 @@ def main():
         components = all_components
 
     # Filter the components based on labels provided. Must match all labels
-
     if args.labels:
         components = [
             component for component in components
             if all_in_list(args.labels, component.get("labels", []))
         ]
 
+    # Iterate over the components and run the command
     for component in components:
         command = component.get("commands", {}).get(command_name)
         if command == None:
@@ -295,6 +303,11 @@ def main():
         # Replace each template var found in the command
         command = replace_template_vars(command, template_vars)
 
+        # Add arguments the provided arguments to the end of the command
+        command_args = args.args if args.args else []
+        for command_arg in command_args:
+            command = command + f" {command_arg}"
+            
         # Print the command if verbose flag used
         if args.verbose:
             print(f"🚀 Running the following command:\n⚡ {command}")

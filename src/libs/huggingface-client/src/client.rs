@@ -1,14 +1,14 @@
-#![allow(unused_imports)]
-
 use crate::constants;
 use reqwest::Error;
-use reqwest::blocking::{Client, ClientBuilder, Response};
+use reqwest::blocking::{Client, Response};
+
+pub trait MLHubClient {
+    fn new() -> Self;
+}
 
 pub struct HuggingFaceClient {
     client: Client
 }
-
-pub struct Model {}
 
 impl HuggingFaceClient {
     pub fn new() -> Self {
@@ -30,5 +30,11 @@ impl HuggingFaceClient {
         self.client
             .get(self.format_url("models"))
             .send()
+    }
+}
+
+impl MLHubClient for HuggingFaceClient {
+    fn new() -> Self {
+        HuggingFaceClient::new()
     }
 }
