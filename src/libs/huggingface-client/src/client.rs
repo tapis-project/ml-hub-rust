@@ -1,40 +1,85 @@
 use crate::constants;
-use reqwest::Error;
+use crate::requests::{
+    GetDatasetRequest, GetModelRequest, ListDatasetsRequest, ListModelsRequest,
+};
 use reqwest::blocking::{Client, Response};
+use reqwest::Error;
+use shared::clients::{ApiClient, DatasetsClient, ModelsClient};
 
-pub trait MLHubClient {
-    fn new() -> Self;
+#[derive(Debug)]
+pub struct HuggingFaceClient {
+    client: Client,
 }
 
-pub struct HuggingFaceClient {
-    client: Client
+impl ApiClient for HuggingFaceClient {
+    fn new() -> Self {
+        let client = Client::new();
+        Self { client }
+    }
+}
+
+impl DatasetsClient for HuggingFaceClient {
+    type ListDatasetsRequest = ListDatasetsRequest;
+    type GetDatasetRequest = GetDatasetRequest;
+    type Response = Response;
+    type Err = Error;
+
+    fn list_datasets(
+        &self,
+        request: Self::ListDatasetsRequest,
+    ) -> Result<Self::Response, Self::Err> {
+        println!("{:#?}", request);
+        self.client
+            .get(self.format_url("datasets"))
+            .query(&request.query_params)
+            .send()
+    }
+
+    fn get_dataset(
+        &self,
+        request: Self::GetDatasetRequest,
+    ) -> Result<Self::Response, Self::Err> {
+        self.client
+            .get(self.format_url(
+                format!("{}/{}", "datasets", request.path.as_str()).as_str(),
+            ))
+            .query(&request.query_params)
+            .send()
+    }
+}
+
+impl ModelsClient for HuggingFaceClient {
+    type ListModelsRequest = ListModelsRequest;
+    type GetModelRequest = GetModelRequest;
+    type Response = Response;
+    type Err = Error;
+
+    fn list_models(
+        &self,
+        request: ListModelsRequest,
+    ) -> Result<Response, Error> {
+        self.client
+            .get(self.format_url("models"))
+            .query(&request.query_params)
+            .send()
+    }
+
+    fn get_model(&self, request: GetModelRequest) -> Result<Response, Error> {
+        self.client
+            .get(self.format_url(
+                format!("{}/{}", "models", request.path.as_str()).as_str(),
+            ))
+            .query(&request.query_params)
+            .send()
+    }
 }
 
 impl HuggingFaceClient {
-    pub fn new() -> Self {
-        let client = Client::new();
-        Self {
-            client
-        }
-    }
-
     fn format_url(&self, url: &str) -> String {
         format!(
             "{}/{}",
             constants::HUGGING_FACE_BASE_URL,
             url.strip_prefix("/").unwrap_or(url).to_string()
         )
-    }
-
-    pub fn list_models(&self) -> Result<Response, Error> {
-        self.client
-            .get(self.format_url("models"))
-            .send()
-    }
-}
-
-impl MLHubClient for HuggingFaceClient {
-    fn new() -> Self {
-        HuggingFaceClient::new()
     }
 }

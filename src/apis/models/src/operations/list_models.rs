@@ -1,11 +1,13 @@
-use serde_json;
+use serde_json::{Value, Map, from_str};
 use actix_web::{get, HttpResponse, Responder};
-// use crate::dtos::model_dto::ModelDto;
 use crate::config;
 use log::debug;
-use huggingface_client::HuggingFaceClient;
+use huggingface_client::client::{
+    HuggingFaceClient,
+    ListModelsRequest,
+    QueryParameters
+};
 use shared::responses::{ResponseFactory, Response};
-use shared::wrappers::{JsonObject, JsonValue};
 
 #[get("/models")]
 async fn list_models() -> impl Responder {
@@ -18,24 +20,43 @@ async fn list_models() -> impl Responder {
     let client = HuggingFaceClient::new();
 
     // Fetch the list of models
-    let result = client.list_models();
+    let result = client.list_models(
+        ListModelsRequest {
+            query_params: Some(QueryParameters {
+                search: None,
+                author: None,
+                filter: None,
+                sort: None,
+                direction: None,
+                limit: Some(10),
+                full: None,
+                config: None,
+            })
+        }
+    );
 
     // Initialize response factory
     let response_factory = ResponseFactory::new();
 
     match result {
         Ok(response) => {
-            let response_text = response.text().unwrap_or("".to_string());
-            let body: JsonValue = serde_json::from_str(&response_text).unwrap();
+            let response_text = response
+                .text()
+                .unwrap_or_default();
+
+            let body: Value = from_str(&response_text.trim())
+                .unwrap();
             
-            let resp = response_factory.build(Response {
-                success: true,
-                status: Some(200),
-                message: Some(String::from("success")),
-                result: Some(body),
-                version: Some(String::from(config::VERSION)),
-                metadata: Some(JsonObject::new()),
-            });
+            let resp = response_factory.build(
+                true,
+                Response {
+                    status: Some(200),
+                    message: Some(String::from("success")),
+                    result: Some(body),
+                    version: Some(String::from(config::VERSION)),
+                    metadata: Some(Value::Object(Map::new())),
+                }
+            );
 
             HttpResponse::Ok()
                 .content_type("application/json")
@@ -43,14 +64,16 @@ async fn list_models() -> impl Responder {
         },
 
         Err(err) => {
-            let resp = response_factory.build(Response {
-                success: false,
-                status: Some(200),
+            let resp = response_factory.build(
+                false,
+                Response {
+                status: Some(500),
                 message: Some(err.to_string()),
                 result: None,
                 version: Some(String::from(config::VERSION)),
-                metadata: Some(JsonObject::new()),
+                metadata: Some(Value::Object(Map::new())),
             });
+
             HttpResponse::InternalServerError()
                 .content_type("application/json")
                 .json(resp)

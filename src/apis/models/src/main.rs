@@ -1,5 +1,5 @@
 mod operations {
-    // pub mod get_model;
+    pub mod get_model;
     pub mod list_models;
 }
 mod dtos { 
@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            // .service(operations::get_model::get_model)
+            .service(operations::get_model::get_model)
             .service(operations::list_models::list_models)
     })
         .bind(addrs)?

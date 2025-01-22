@@ -2,10 +2,6 @@ mod operations {
     pub mod get_dataset;
     pub mod list_datasets;
 }
-mod dtos { 
-    pub mod dataset_dto;
-    pub mod responses;
-}
 mod config;
 
 use config::{DEFAULT_HOST, DEFAULT_PORT};

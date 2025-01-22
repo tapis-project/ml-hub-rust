@@ -1,39 +1,13 @@
-use serde_json::Value;
 use serde::Serialize;
-use crate::wrappers::{JsonObject, JsonValue};
-
-#[derive(Serialize)]
-pub struct OkResponse {
-    pub status: u16,
-    pub message: String,
-    pub result: JsonValue,
-    pub version: String,
-    pub metadata: JsonObject,
-}
-
-#[derive(Serialize)]
-pub struct ErrorResponse {
-    pub status: u16,
-    pub message: String,
-    pub result: JsonValue,
-    pub version: String,
-    pub metadata: JsonObject,
-}
-
-#[derive(Serialize)]
-pub enum ResponseType {
-    Ok(OkResponse),
-    Err(ErrorResponse),
-}
+use serde_json::{Map, Value};
 
 #[derive(Serialize)]
 pub struct Response {
-    pub success: bool,
     pub status: Option<u16>,
     pub message: Option<String>,
-    pub result: Option<JsonValue>,
+    pub result: Option<Value>,
     pub version: Option<String>,
-    pub metadata: Option<JsonObject>,
+    pub metadata: Option<Value>,
 }
 
 pub struct ResponseFactory {}
@@ -43,11 +17,11 @@ impl ResponseFactory {
         return ResponseFactory {};
     }
 
-    pub fn build(&self, response: Response) -> ResponseType {
+    pub fn build(&self, success: bool, response: Response) -> Response {
         // Default response field values
-        let default_metadata = JsonObject::new();
+        let default_metadata = Value::Object(Map::new());
         let default_version = String::from("unknown");
-        let default_result = JsonValue::new(Value::Null);
+        let default_result = Value::Null;
 
         // Default success response field values
         let default_message_success = String::from("success");
@@ -57,22 +31,22 @@ impl ResponseFactory {
         let default_message_failed = String::from("failed");
         let default_status_failed = 500;
 
-        if response.success {
-            ResponseType::Ok(OkResponse {
-                status: response.status.unwrap_or(default_status_success),
-                message: response.message.unwrap_or(default_message_success),
-                result: response.result.unwrap_or(default_result),
-                version: response.version.unwrap_or(default_version),
-                metadata: response.metadata.unwrap_or(default_metadata),
-            })
+        if success {
+            Response {
+                status: Some(response.status.unwrap_or(default_status_success)),
+                message: Some(response.message.unwrap_or(default_message_success)),
+                result: Some(response.result.unwrap_or(default_result)),
+                version: Some(response.version.unwrap_or(default_version)),
+                metadata: Some(response.metadata.unwrap_or(default_metadata)),
+            }
         } else {
-            ResponseType::Err(ErrorResponse {
-                status: response.status.unwrap_or(default_status_failed),
-                message: response.message.unwrap_or(default_message_failed),
-                result: default_result,
-                version: response.version.unwrap_or(default_version),
-                metadata: response.metadata.unwrap_or(default_metadata),
-            })
+            Response {
+                status: Some(response.status.unwrap_or(default_status_failed)),
+                message: Some(response.message.unwrap_or(default_message_failed)),
+                result: Some(default_result),
+                version: Some(response.version.unwrap_or(default_version)),
+                metadata: Some(response.metadata.unwrap_or(default_metadata)),
+            }
         }
     }
 }
