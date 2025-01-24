@@ -2,12 +2,10 @@ use serde_json::{Value, Map, from_str};
 use actix_web::{web, get, HttpResponse, Responder};
 use crate::config;
 use log::debug;
-use huggingface_client::client::{
-    HuggingFaceClient,
-    GetDatasetRequest,
-    QueryParameters
-};
-use shared::responses::{ResponseFactory, Response};
+use huggingface_client::client::HuggingFaceClient;
+use huggingface_client::requests:: GetDatasetRequest;
+use shared::responses::{ResponseBuilder, Response};
+use shared::clients::{ApiClient, DatasetsClient};
 
 #[get("/datasets/{dataset_id:.*}")]
 async fn get_dataset(
@@ -25,22 +23,12 @@ async fn get_dataset(
     // Fetch the list of datasets
     let result = client.get_dataset(
         GetDatasetRequest {
-            path: path.to_string(),
-            query_params: Some(QueryParameters {
-                search: None,
-                author: None,
-                filter: None,
-                sort: None,
-                direction: None,
-                limit: Some(10),
-                full: None,
-                config: None,
-            })
+            dataset_id: path.to_string()
         }
     );
 
-    // Initialize response factory
-    let response_factory = ResponseFactory::new();
+    // Initialize response builder
+    let response_builder = ResponseBuilder::new();
 
     match result {
         Ok(response) => {
@@ -51,7 +39,7 @@ async fn get_dataset(
             let body: Value = from_str(&response_text.trim())
                 .unwrap();
             
-            let resp = response_factory.build(
+            let resp = response_builder.build(
                 true,
                 Response {
                     status: Some(200),
@@ -68,7 +56,7 @@ async fn get_dataset(
         },
 
         Err(err) => {
-            let resp = response_factory.build(
+            let resp = response_builder.build(
                 false,
                 Response {
                 status: Some(500),

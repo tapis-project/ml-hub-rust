@@ -10,11 +10,11 @@ pub struct Response {
     pub metadata: Option<Value>,
 }
 
-pub struct ResponseFactory {}
+pub struct ResponseBuilder {}
 
-impl ResponseFactory {
+impl ResponseBuilder {
     pub fn new() -> Self {
-        return ResponseFactory {};
+        return ResponseBuilder {};
     }
 
     pub fn build(&self, success: bool, response: Response) -> Response {

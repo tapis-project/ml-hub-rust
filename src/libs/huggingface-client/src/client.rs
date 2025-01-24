@@ -28,11 +28,13 @@ impl DatasetsClient for HuggingFaceClient {
         &self,
         request: Self::ListDatasetsRequest,
     ) -> Result<Self::Response, Self::Err> {
-        println!("{:#?}", request);
-        self.client
+        let result = self.client
             .get(self.format_url("datasets"))
             .query(&request.query_params)
-            .send()
+            .send();
+
+        println!("{:#?}", &result);
+        return result;
     }
 
     fn get_dataset(
@@ -41,9 +43,8 @@ impl DatasetsClient for HuggingFaceClient {
     ) -> Result<Self::Response, Self::Err> {
         self.client
             .get(self.format_url(
-                format!("{}/{}", "datasets", request.path.as_str()).as_str(),
+                format!("{}/{}", "datasets", request.dataset_id.as_str()).as_str(),
             ))
-            .query(&request.query_params)
             .send()
     }
 }
@@ -67,9 +68,8 @@ impl ModelsClient for HuggingFaceClient {
     fn get_model(&self, request: GetModelRequest) -> Result<Response, Error> {
         self.client
             .get(self.format_url(
-                format!("{}/{}", "models", request.path.as_str()).as_str(),
+                format!("{}/{}", "models", request.model_id.as_str()).as_str(),
             ))
-            .query(&request.query_params)
             .send()
     }
 }

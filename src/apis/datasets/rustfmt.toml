@@ -1,0 +1,29 @@
+# General Options
+max_width = 100                       # Maximum line width, commonly used across Rust projects
+edition = "2021"                      # Default Rust edition (2018 or 2021, with 2021 being more common)
+use_small_heuristics = "Default"      # Default behavior for heuristics, prevents overly aggressive formatting
+
+# Indentation and Alignment
+tab_spaces = 4                        # 4 spaces per tab, which is the default
+indent_style = "Block"                # Block indentation style for braces
+align_comments = false                # Rust does not strictly align comments by default
+
+# Line Wrapping
+wrap_comments = true                  # Wrap comments to fit max_width
+format_strings = false                 # Prefer string formatting as is (less aggressive wrapping)
+
+# Imports
+group_imports = "Preserve"            # Keep imports grouped as per their original order
+
+# Structs and Enums
+struct_lit_style = "Block"            # Standard block-style for struct literals
+enum_discriminant_align_threshold = 4 # Align enum discriminants only if they exceed this threshold
+
+# Control Flows
+else_if_indent = "Block"              # Standard block indentation for else-if statements
+
+# Nightly-Only Options
+normalize_doc_attributes = false      # Default for nightly features, not enabled unless needed
+merge_derives = true                  # Preferred to keep #[derive(...)] on the same line if possible
+
+exclude = ["target/*"]

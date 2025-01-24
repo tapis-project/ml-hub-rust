@@ -2,12 +2,13 @@ use serde_json::{Value, Map, from_str};
 use actix_web::{get, HttpResponse, Responder};
 use crate::config;
 use log::debug;
-use huggingface_client::client::{
-    HuggingFaceClient,
+use huggingface_client::client::HuggingFaceClient;
+use huggingface_client::requests::{
     ListModelsRequest,
-    QueryParameters
+    ListModelsQueryParameters
 };
-use shared::responses::{ResponseFactory, Response};
+use shared::responses::{ResponseBuilder, Response};
+use shared::clients::{ApiClient, ModelsClient};
 
 #[get("/models")]
 async fn list_models() -> impl Responder {
@@ -22,7 +23,7 @@ async fn list_models() -> impl Responder {
     // Fetch the list of models
     let result = client.list_models(
         ListModelsRequest {
-            query_params: Some(QueryParameters {
+            query_params: Some(ListModelsQueryParameters {
                 search: None,
                 author: None,
                 filter: None,
@@ -35,8 +36,8 @@ async fn list_models() -> impl Responder {
         }
     );
 
-    // Initialize response factory
-    let response_factory = ResponseFactory::new();
+    // Initialize response builder
+    let response_builder = ResponseBuilder::new();
 
     match result {
         Ok(response) => {
@@ -47,7 +48,7 @@ async fn list_models() -> impl Responder {
             let body: Value = from_str(&response_text.trim())
                 .unwrap();
             
-            let resp = response_factory.build(
+            let resp = response_builder.build(
                 true,
                 Response {
                     status: Some(200),
@@ -64,7 +65,7 @@ async fn list_models() -> impl Responder {
         },
 
         Err(err) => {
-            let resp = response_factory.build(
+            let resp = response_builder.build(
                 false,
                 Response {
                 status: Some(500),
