@@ -7,7 +7,7 @@ use huggingface_client::{
     requests::GetModelRequest,
 };
 use shared::responses::{ResponseBuilder, Response};
-use shared::clients::{ApiClient, ModelsClient};
+use shared::clients::{Client, ModelsClient};
 
 #[get("/models/{model_id:.*}")]
 async fn get_model(

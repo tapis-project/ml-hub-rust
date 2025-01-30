@@ -1,24 +1,20 @@
 use serde_json::{Value, Map, from_str};
-use actix_web::{get, HttpResponse, Responder};
+use actix_web::{get, HttpMessage, HttpRequest, HttpResponse, Responder};
 use crate::config;
 use log::debug;
-use huggingface_client::client::HuggingFaceClient;
 use huggingface_client::requests::{
     ListModelsRequest,
     ListModelsQueryParameters
 };
 use shared::responses::{ResponseBuilder, Response};
-use shared::clients::{ApiClient, ModelsClient};
+use shared::clients::ModelsClient;
 
 #[get("/models")]
-async fn list_models() -> impl Responder {
+async fn list_models(req: HttpRequest) -> impl Responder {
     debug!("Operation list_models");
 
-    // Determine which client to use based on the user-specified model source
-    // TODO Perhaps this a job for some middleware
-
-    // Initialize a HuggingFace client
-    let client = HuggingFaceClient::new();
+    // Fetch the client for listing models
+    let mut client = req.extensions().get::<ModelsClient>().unwrap();
 
     // Fetch the list of models
     let result = client.list_models(

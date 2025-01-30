@@ -22,6 +22,11 @@ pub struct GetModelRequest {
     pub model_id: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DownloadModelRequest {
+    pub model_id: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ListDatasetsQueryParameters {
     pub search: Option<String>,
@@ -41,4 +46,9 @@ pub struct ListDatasetsRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetDatasetRequest {
     pub dataset_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DownloadDatasetRequest {
+    pub model_id: String,
 }
