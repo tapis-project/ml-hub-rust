@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Clone)]
 pub enum ClientType {
     Model,
     Dataset,
@@ -9,7 +9,7 @@ pub enum ClientType {
     Training
 }
 
-pub trait Client {}
+pub trait Client: Send {}
 
 pub trait ModelsClient: Client {
     type ListModelsRequest;
@@ -64,6 +64,7 @@ pub trait TrainingClient {
     fn start_training(&self, request: Self::StartTrainingRequest) -> Result<Self::Response, Self::Err>;
 }
 
+#[derive(Clone)]
 pub struct PlatformClientRegistrar {
     pub registries: HashMap<String, HashMap<ClientType, Arc<Mutex<Box<dyn Client>>>>>,
 }

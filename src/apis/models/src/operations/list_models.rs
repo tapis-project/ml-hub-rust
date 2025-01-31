@@ -1,20 +1,25 @@
 use serde_json::{Value, Map, from_str};
-use actix_web::{get, HttpMessage, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, HttpRequest, HttpResponse, Responder};
 use crate::config;
 use log::debug;
-use huggingface_client::requests::{
-    ListModelsRequest,
-    ListModelsQueryParameters
+use shared::{
+    responses::{ResponseBuilder, Response},
+    clients::ModelsClient
 };
-use shared::responses::{ResponseBuilder, Response};
-use shared::clients::ModelsClient;
+use huggingface_client::{
+    client::HuggingFaceClient,
+    requests::{
+        ListModelsRequest,
+        ListModelsQueryParameters
+    }
+};
 
-#[get("/models")]
-async fn list_models(req: HttpRequest) -> impl Responder {
+#[get("{platform}/models")]
+async fn list_models(_req: HttpRequest) -> impl Responder {
     debug!("Operation list_models");
 
     // Fetch the client for listing models
-    let mut client = req.extensions().get::<ModelsClient>().unwrap();
+    let client = HuggingFaceClient::new();
 
     // Fetch the list of models
     let result = client.list_models(

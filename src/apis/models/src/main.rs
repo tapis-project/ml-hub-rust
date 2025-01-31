@@ -23,7 +23,7 @@ use actix_web::{
         Service
     }
 };
-use shared::clients::{ClientType, Client, PlatformClientRegistrar};
+use shared::clients::Client;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -41,20 +41,18 @@ async fn main() -> std::io::Result<()> {
     );
 
     // Initialize the platform client registrar and register the available clients
-    let mut registrar = PlatformClientRegistrar::new();
-    let huggingface_client =
-        Arc::new(Mutex::new(Box::new(HuggingFaceClient::new()) as Box<dyn Client>));
-    registrar
-        .register(String::from("huggingface"), ClientType::Model, huggingface_client)
-        .register(String::from("huggingface"), ClientType::Dataset, huggingface_client)
-        .register(String::from("huggingface"), ClientType::Inference, huggingface_client)
-        .register(String::from("huggingface"), ClientType::Training, huggingface_client);
+    // let mut registrar = PlatformClientRegistrar::new();
+    // registrar
+    //     .register(String::from("huggingface"), ClientType::Model, Arc::new(Mutex::new(Box::new(HuggingFaceClient::new()) as Box<dyn Client>)))
+    //     .register(String::from("huggingface"), ClientType::Dataset, Arc::new(Mutex::new(Box::new(HuggingFaceClient::new()) as Box<dyn Client>)))
+    //     .register(String::from("huggingface"), ClientType::Inference, Arc::new(Mutex::new(Box::new(HuggingFaceClient::new()) as Box<dyn Client>)))
+    //     .register(String::from("huggingface"), ClientType::Training, Arc::new(Mutex::new(Box::new(HuggingFaceClient::new()) as Box<dyn Client>)));
 
     HttpServer::new(|| {
         App::new()
             .wrap_fn(|req: ServiceRequest, srv| {
                 // Add the platform client registrar to the mutable extensions
-                req.extensions_mut().insert(registrar);
+                req.extensions_mut().insert(Arc::new(Mutex::new(Box::new(HuggingFaceClient::new()) as Box<dyn Client>)));
                 
                 // Continue processing the request
                 srv.call(req)
