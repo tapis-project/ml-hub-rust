@@ -7,7 +7,7 @@ pub struct ListModelsQueryParameters {
     pub filter: Option<String>,
     pub sort: Option<String>,
     pub direction: Option<String>,
-    pub limit: Option<u64>,
+    pub limit: Option<i64>,
     pub full: Option<bool>,
     pub config: Option<bool>,
 }

@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use std::any::type_name;
 
 #[cfg(debug_assertions)]

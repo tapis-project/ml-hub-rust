@@ -1,76 +1,75 @@
-use serde_json::{Value, Map, from_str};
-use actix_web::{web, get, HttpResponse, Responder};
-use crate::config;
-use log::debug;
-use huggingface_client::{
-    client::HuggingFaceClient,
-    requests::GetModelRequest,
+use std::collections::HashMap;
+use crate::config::VERSION;
+use clients::registrars::ModelsClientRegistrar;
+use actix_web::{
+    web,
+    get,
+    HttpRequest as ActixHttpRequest,
+    HttpResponse,
+    Responder as ActixResponder
 };
-use shared::responses::{ResponseBuilder, Response};
-use shared::clients::{ModelsClient};
+use log::debug;
+use shared::requests::{GetModelPath, GetModelRequest};
+use shared::responses::Response;
 
-#[get("/models/{model_id:.*}")]
+#[get("models-api/platforms/{platform}/models/{model_id:.*}")]
 async fn get_model(
-    path: web::Path<String>
-) -> impl Responder {
-    debug!("Operation get_model");
-    debug!("Fetching model: {}", path);
+    req: ActixHttpRequest,
+    path: web::Path<GetModelPath>,
+    query: web::Query<HashMap<String, String>>,
+    body: web::Bytes,
+) -> impl ActixResponder {
+    debug!("Start operation list_models");
 
-    // Determine which client to use based on the user-specified model source
-    // TODO Perhaps this a job for some middleware
+    // Initialize the client registrar
+    let registrar = ModelsClientRegistrar::new();
 
-    // Initialize a HuggingFace client
-    let client = HuggingFaceClient::new();
+    // Get the client for the provided platform
+    let client = if let Ok(client) = registrar.get_client(&path.platform) {
+        client
+    } else {
+        return HttpResponse::InternalServerError()
+            .content_type("application/json")
+            .json(Response {
+                status: Some(500),
+                message: Some(String::from(format!("Failed to find client for platform '{}'", &path.platform))),
+                result: None,
+                metadata: None,
+                version: Some(VERSION.to_string()),
+            });
+    };
+
+    // Build the request used by the client
+    let request = GetModelRequest{
+        req,
+        path,
+        query,
+        body
+    };
 
     // Fetch the list of models
-    let result = client.get_model(
-        GetModelRequest {
-            model_id: path.to_string(),
-        }
-    );
-
-    // Initialize response builder
-    let response_builder = ResponseBuilder::new();
-
-    match result {
-        Ok(response) => {
-            let response_text = response
-                .text()
-                .unwrap_or_default();
-
-            let body: Value = from_str(&response_text.trim())
-                .unwrap();
-            
-            let resp = response_builder.build(
-                true,
-                Response {
-                    status: Some(200),
+    match client.get_model(&request) {
+        Ok(resp) => {
+            return HttpResponse::Ok()
+                .content_type("application/json")
+                .json(Response {
+                    status: Some(500),
                     message: Some(String::from("success")),
-                    result: Some(body),
-                    version: Some(String::from(config::VERSION)),
-                    metadata: Some(Value::Object(Map::new())),
-                }
-            );
-
-            HttpResponse::Ok()
-                .content_type("application/json")
-                .json(resp)
+                    result: resp.result,
+                    metadata: None,
+                    version: Some(VERSION.to_string())
+                })
         },
-
         Err(err) => {
-            let resp = response_builder.build(
-                false,
-                Response {
-                status: Some(500),
-                message: Some(err.to_string()),
-                result: None,
-                version: Some(String::from(config::VERSION)),
-                metadata: Some(Value::Object(Map::new())),
-            });
-
-            HttpResponse::InternalServerError()
+            return HttpResponse::InternalServerError()
                 .content_type("application/json")
-                .json(resp)
-        },
+                .json(Response {
+                    status: Some(500),
+                    message: Some(err.to_string()),
+                    result: None,
+                    metadata: None,
+                    version: Some(VERSION.to_string())
+                })
+        }
     }
 }

@@ -1,100 +1,59 @@
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
+use crate::requests;
+use std::error::Error;
+use std::fmt::{Display, Formatter, Result as FormatResult};
+use serde::Serialize;
+use serde_json::Value;
 
-#[derive(Eq, PartialEq, Hash, Clone)]
-pub enum ClientType {
-    Model,
-    Dataset,
-    Inference,
-    Training
+#[derive(Serialize)]
+pub struct ClientResponse {
+    pub status: Option<u16>,
+    pub message: Option<String>,
+    pub result: Option<Value>,
+    pub metadata: Option<Value>,
 }
 
-pub trait Client: Send {}
-
-pub trait ModelsClient: Client {
-    type ListModelsRequest;
-    type GetModelRequest;
-    type DownloadModelRequest;
-    type Response;
-    type Err;
-
-    fn list_models(&self, request: Self::ListModelsRequest) -> Result<Self::Response, Self::Err>;
-
-    fn get_model(&self, request: Self::GetModelRequest) -> Result<Self::Response, Self::Err>;
-
-    fn download_model(&self, request: Self::DownloadModelRequest) -> Result<Self::Response, Self::Err>;
+#[derive(Debug)]
+pub struct ClientError {
+    message: String
 }
 
-pub trait DatasetsClient: Client {
-    type ListDatasetsRequest;
-    type GetDatasetRequest;
-    type DownloadDatasetRequest;
-    type Response;
-    type Err;
+impl ClientError {
+    pub fn new(message: String) -> Self {
+        ClientError {
+            message,
+        }
+    }
+}
 
-    fn list_datasets(
-        &self,
-        request: Self::ListDatasetsRequest,
-    ) -> Result<Self::Response, Self::Err>;
+impl Display for ClientError {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult {
+        write!(f, "{}", self.message)
+    }
+}
 
-    fn get_dataset(&self, request: Self::GetDatasetRequest) -> Result<Self::Response, Self::Err>;
+impl Error for ClientError {}
 
-    fn download_dataset(&self, request: Self::DownloadDatasetRequest) -> Result<Self::Response, Self::Err>;
+pub trait ModelsClient {
+    fn list_models(&self, request: &requests::ListModelsRequest) -> Result<ClientResponse, ClientError>;
+    fn get_model(&self, request: &requests::GetModelRequest) -> Result<ClientResponse, ClientError>;
+    fn download_model(&self, request: &requests::DownloadModelRequest) -> Result<ClientResponse, ClientError>;
+}
+
+pub trait DatasetsClient {
+    fn list_datasets(&self, request: &requests::ListDatasetsRequest) -> Result<ClientResponse, ClientError>;
+    fn get_dataset(&self, request: &requests::GetDatasetRequest) -> Result<ClientResponse, ClientError>;
+    fn download_dataset(&self, request: &requests::DownloadDatasetRequest) -> Result<ClientResponse, ClientError>;
 }
 
 pub trait InferenceClient {
-    type CreateInferenceRequest;
-    type StartInferenceServerRequest;
-    type RunInferenceRequest;
-    type Response;
-    type Err;
-    
-    fn create_inference(&self, request: Self::CreateInferenceRequest) -> Result<Self::Response, Self::Err>;
-    fn start_inference_server(&self, request: Self::StartInferenceServerRequest) -> Result<Self::Response, Self::Err>;
-    fn run_inference(&self, request: Self::RunInferenceRequest) -> Result<Self::Response, Self::Err>;
+    fn create_inference(&self, request: &requests::CreateInferenceRequest) -> Result<ClientResponse, ClientError>;
+    fn start_inference_server(&self, request: &requests::StartInferenceServerRequest) -> Result<ClientResponse, ClientError>;
+    fn run_inference(&self, request: &requests::RunInferenceRequest) -> Result<ClientResponse, ClientError>;
 }
 
 pub trait TrainingClient {
-    type CreateTrainingRequest;
-    type StartTrainingRequest;
-    type Response;
-    type Err;
-    
-    fn create_training(&self, request: Self::CreateTrainingRequest) -> Result<Self::Response, Self::Err>;
-    fn start_training(&self, request: Self::StartTrainingRequest) -> Result<Self::Response, Self::Err>;
+    fn create_training(&self, request: &requests::CreateTrainingRequest) -> Result<ClientResponse, ClientError>;
+    fn start_training(&self, request: &requests::StartTrainingRequest) -> Result<ClientResponse, ClientError>;
 }
 
-#[derive(Clone)]
-pub struct PlatformClientRegistrar {
-    pub registries: HashMap<String, HashMap<ClientType, Arc<Mutex<Box<dyn Client>>>>>,
-}
 
-impl PlatformClientRegistrar {
-    pub fn new() -> Self {
-        PlatformClientRegistrar {
-            registries: HashMap::new()
-        }
-    }
-
-    pub fn register(
-        &mut self,
-        platform_name: String,
-        client_type: ClientType,
-        client: Arc<Mutex<Box<dyn Client>>>
-    ) -> &Self {
-        self.registries
-            .entry(platform_name)
-            .or_insert_with(HashMap::new)
-            .entry(client_type)
-            .or_insert( client);
-
-        self
-    }
-
-    pub fn get_client(&mut self, platform_name: String, client_type: ClientType) -> Option<&mut Arc<Mutex<Box<dyn Client>>>> {
-        self.registries
-            .entry(platform_name)
-            .or_insert_with(HashMap::new)
-            .get_mut(&client_type)
-    }
-}

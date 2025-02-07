@@ -1,0 +1,10 @@
+[package]
+name = "clients"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+huggingface-client = { version = "0.1.0", path = "../huggingface-client" }
+shared = { version = "0.1.0", path = "../shared" }
+strum = "0.26.3"
+strum_macros = "0.26.4"

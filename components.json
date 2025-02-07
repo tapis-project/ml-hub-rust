@@ -161,7 +161,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "expose": "minikube service expose traefik-web-service --url"
+        "expose": "minikube service expose traefik-web-service --url",
+        "code": "code src/components/{{ self.name }}"
       }
     },
     {
@@ -192,6 +193,18 @@
     {
       "name": "shared",
       "rootDir": "src/libs/shared",
+      "labels": ["lib"],
+      "commands": {
+        "initialize": "",
+        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "code": "code src/libs/{{ self.name }}"
+      }
+    },
+    {
+      "name": "clients",
+      "rootDir": "src/libs/clients",
       "labels": ["lib"],
       "commands": {
         "initialize": "",

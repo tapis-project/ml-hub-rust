@@ -11,19 +11,19 @@ data:
           service: api@internal
 
         models-api:
-          rule: "PathPrefix(`/models`)"
+          rule: "PathPrefix(`/models-api`)"
           service: models-api
         
         datasets-api:
-          rule: "PathPrefix(`/datasets`)"
+          rule: "PathPrefix(`/datasets-api`)"
           service: datasets-api
 
         inference-api:
-          rule: "PathPrefix(`/inference`)"
+          rule: "PathPrefix(`/inference-api`)"
           service: inference-api
 
         training-api:
-          rule: "PathPrefix(`/training`)"
+          rule: "PathPrefix(`/training-api`)"
           service: training-api
 
       services:
