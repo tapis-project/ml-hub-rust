@@ -54,7 +54,7 @@ async fn list_models(
             return HttpResponse::Ok()
                 .content_type("application/json")
                 .json(Response {
-                    status: Some(500),
+                    status: Some(200),
                     message: Some(String::from("success")),
                     result: resp.result,
                     metadata: None,

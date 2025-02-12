@@ -10,7 +10,7 @@ pub struct ListModelsPath {
 #[derive(Deserialize, Debug)]
 pub struct GetModelPath {
     pub platform: String,
-    pub  model_id: String
+    pub model_id: String
 }
 
 #[derive(Deserialize, Debug)]
