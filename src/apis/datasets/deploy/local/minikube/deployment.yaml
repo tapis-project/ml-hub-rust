@@ -31,3 +31,11 @@ spec:
             name: webserver
         resources: {}
         tty: true
+        volumeMounts:
+              - name: nfs-server-mount
+                mountPath: /srv/mlhub/
+      volumes:
+        - name: nfs-server-mount
+          nfs:
+            server: '10.110.247.173'
+            path: /

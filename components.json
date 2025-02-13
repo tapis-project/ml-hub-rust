@@ -25,8 +25,9 @@
       "labels": ["api"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
+        "get-nfs-ip": "kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $({{ self.commands.get-nfs-ip }})",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $({{ self.commands.get-nfs-ip }})",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -44,7 +45,9 @@
         "code": "code {{ self.rootDir }}"
       },
       "dependencies": [
-        "traefik"
+        "traefik",
+        "nfs",
+        "postgres"
       ]
     },
     {
@@ -53,8 +56,9 @@
       "labels": ["api"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
+        "get-nfs-ip": "kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $({{ self.commands.get-nfs-ip }})",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $({{ self.commands.get-nfs-ip }})",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -72,7 +76,9 @@
         "code": "code {{ self.rootDir }}"
       },
       "dependencies": [
-        "traefik"
+        "traefik",
+        "nfs",
+        "postgres"
       ]
     },
     {
