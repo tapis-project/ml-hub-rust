@@ -20,5 +20,25 @@ impl Display for Error {
     }
 }
 
-
 impl BaseError for Error {}
+
+#[derive(Debug)]
+pub struct ClientError {
+    message: String
+}
+
+impl ClientError {
+    pub fn new(message: String) -> Self {
+        ClientError {
+            message,
+        }
+    }
+}
+
+impl Display for ClientError {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl BaseError for ClientError {}

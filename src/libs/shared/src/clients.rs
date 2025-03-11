@@ -1,59 +1,66 @@
 use crate::requests;
-use std::error::Error;
-use std::fmt::{Display, Formatter, Result as FormatResult};
+use crate::artifacts::{StagedArtifact, ArtifactGenerator};
+// Re-exporting here to make the api cleaner and more predictable. Everything
+// clients needs to implement should come from this module. Removing the 'pub'
+// keyword below will break this modules api for consumers
+pub use crate::errors::ClientError;
 use serde::Serialize;
 use serde_json::Value;
 
 #[derive(Serialize)]
-pub struct ClientResponse {
+pub struct ClientJsonResponse {
     pub status: Option<u16>,
     pub message: Option<String>,
     pub result: Option<Value>,
-    pub metadata: Option<Value>,
+    pub metadata: Option<Value>
 }
 
-#[derive(Debug)]
-pub struct ClientError {
-    message: String
-}
-
-impl ClientError {
-    pub fn new(message: String) -> Self {
-        ClientError {
+impl ClientJsonResponse {
+    pub fn new(status: Option<u16>, message: Option<String>, result: Option<Value>, metadata: Option<Value>) -> Self {
+        return Self {
+            status,
             message,
+            result,
+            metadata
         }
     }
 }
 
-impl Display for ClientError {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        write!(f, "{}", self.message)
+pub struct ClientStagedArtifactResponse {
+    pub staged_artifact: StagedArtifact,
+    pub status: Option<u16>,
+}
+
+impl ClientStagedArtifactResponse {
+    pub fn new(staged_artifact: StagedArtifact, status: Option<u16>) -> Self {
+        return Self {
+            staged_artifact,
+            status,
+        }
     }
 }
 
-impl Error for ClientError {}
-
-pub trait ModelsClient {
-    fn list_models(&self, request: &requests::ListModelsRequest) -> Result<ClientResponse, ClientError>;
-    fn get_model(&self, request: &requests::GetModelRequest) -> Result<ClientResponse, ClientError>;
-    fn download_model(&self, request: &requests::DownloadModelRequest) -> Result<ClientResponse, ClientError>;
+pub trait ModelsClient: ArtifactGenerator {
+    fn list_models(&self, request: &requests::ListModelsRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn get_model(&self, request: &requests::GetModelRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn download_model(&self, request: &requests::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
+    fn discover_models(&self, request: &requests::DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError>;
 }
 
-pub trait DatasetsClient {
-    fn list_datasets(&self, request: &requests::ListDatasetsRequest) -> Result<ClientResponse, ClientError>;
-    fn get_dataset(&self, request: &requests::GetDatasetRequest) -> Result<ClientResponse, ClientError>;
-    fn download_dataset(&self, request: &requests::DownloadDatasetRequest) -> Result<ClientResponse, ClientError>;
+pub trait DatasetsClient: ArtifactGenerator {
+    fn list_datasets(&self, request: &requests::ListDatasetsRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn get_dataset(&self, request: &requests::GetDatasetRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn download_dataset(&self, request: &requests::DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
 }
 
 pub trait InferenceClient {
-    fn create_inference(&self, request: &requests::CreateInferenceRequest) -> Result<ClientResponse, ClientError>;
-    fn start_inference_server(&self, request: &requests::StartInferenceServerRequest) -> Result<ClientResponse, ClientError>;
-    fn run_inference(&self, request: &requests::RunInferenceRequest) -> Result<ClientResponse, ClientError>;
+    fn create_inference_server(&self, request: &requests::CreateInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn create_inference(&self, request: &requests::CreateInferenceRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn start_inference_server(&self, request: &requests::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn run_inference(&self, request: &requests::RunInferenceRequest) -> Result<ClientJsonResponse, ClientError>;
 }
 
 pub trait TrainingClient {
-    fn create_training(&self, request: &requests::CreateTrainingRequest) -> Result<ClientResponse, ClientError>;
-    fn start_training(&self, request: &requests::StartTrainingRequest) -> Result<ClientResponse, ClientError>;
+    fn create_training(&self, request: &requests::CreateTrainingRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn start_training(&self, request: &requests::StartTrainingRequest) -> Result<ClientJsonResponse, ClientError>;
 }
-
-

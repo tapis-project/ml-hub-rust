@@ -8,6 +8,7 @@ use actix_web::{
 mod operations {
     pub mod get_model;
     pub mod list_models;
+    pub mod download_model;
     pub mod index;
 }
 mod config;
@@ -32,6 +33,7 @@ async fn main() -> std::io::Result<()> {
             .service(operations::index::index)
             .service(operations::get_model::get_model)
             .service(operations::list_models::list_models)
+            .service(operations::download_model::download_model)
     })
         .bind(addrs)?
         .run()

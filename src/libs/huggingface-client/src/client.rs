@@ -11,11 +11,17 @@ use crate::requests::{
 };
 use crate::utils::derserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
+use shared::artifacts::ArtifactGenerator;
 use shared::clients::{
-    ModelsClient,
-    DatasetsClient,
-    ClientResponse,
+    ClientStagedArtifactResponse,
     ClientError,
+    ClientJsonResponse,
+    DatasetsClient,
+    ModelsClient,
+};
+use shared::git::{
+    GitLfsClient,
+    ServiceContext,
 };
 use shared::requests::{
     GetModelRequest,
@@ -23,22 +29,31 @@ use shared::requests::{
     DownloadModelRequest,
     ListDatasetsRequest,
     GetDatasetRequest,
-    DownloadDatasetRequest
+    DownloadDatasetRequest,
+    DiscoverModelsRequest,
 };
+use shared::artifacts::{
+    Artifact,
+    ArtifactStager,
+    ArtifactStagingParams,
+};
+use shared::logging::SharedLogger;
 use serde_json::{Value, Map};
-use log::{debug, error};
 
 
 #[derive(Debug)]
 pub struct HuggingFaceClient {
     client: ReqwestClient,
+    logger: SharedLogger
 }
+
+impl ArtifactGenerator for HuggingFaceClient {}
 
 impl ModelsClient for HuggingFaceClient {
     fn list_models(
         &self,
         request: &ListModelsRequest,
-    ) -> Result<ClientResponse, ClientError> {
+    ) -> Result<ClientJsonResponse, ClientError> {
         // Parse the limit from the query string
         let limit = match request.query.get("limit").cloned() {
             Some(num) => num.parse(),
@@ -62,8 +77,8 @@ impl ModelsClient for HuggingFaceClient {
         // Construct the url for the request
         let url = Self::format_url("models");
 
-        debug!("Request url: {}", url);
-        debug!("Query Params: {:#?}", &query_params);
+        self.logger.debug(format!("Request url: {}", url).as_str());
+        self.logger.debug(format!("Query Params: {:#?}", &query_params).as_str());
 
         // Make a GET request to Hugging Face to fetch the models
         let result = self.client
@@ -75,22 +90,22 @@ impl ModelsClient for HuggingFaceClient {
             Ok(response) => {
                 let body = derserialize_response_body(response)?;
                 
-                Ok(ClientResponse {
-                    status: Some(200),
-                    message: Some(String::from("success")),
-                    result: Some(body),
-                    metadata: Some(Value::Object(Map::new())),
-                })
+                Ok(ClientJsonResponse::new(
+                    Some(200),
+                    Some(String::from("success")),
+                    Some(body),
+                    Some(Value::Object(Map::new()))
+                ))
             },
             
             Err(err) => {
-                error!("{:#?}", err);
+                self.logger.error(format!("{:#?}", err).as_str());
                 return Err(ClientError::new(err.to_string()))
             },
         }
     }
     
-    fn get_model(&self, request: &GetModelRequest) -> Result<ClientResponse, ClientError> {
+    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse, ClientError> {
         let result = self.client
             .get(Self::format_url(format!("{}/{}", "models", request.path.model_id).as_str()))
             .send();
@@ -99,22 +114,78 @@ impl ModelsClient for HuggingFaceClient {
             Ok(response) => {
                 let body = derserialize_response_body(response)?;
                 
-                Ok(ClientResponse {
-                    status: Some(200),
-                    message: Some(String::from("success")),
-                    result: Some(body),
-                    metadata: Some(Value::Object(Map::new())),
-                })
+                Ok(ClientJsonResponse::new(
+                    Some(200),
+                    Some(String::from("success")),
+                    Some(body),
+                    Some(Value::Object(Map::new())),
+                ))
             },
             Err(err) => {
-                error!("{:#?}", err);
+                self.logger.error(format!("{:#?}", err).as_str());
                 return Err(ClientError::new(err.to_string()))
             }
         }
     }
 
-    fn download_model(&self, _: &DownloadModelRequest) -> Result<ClientResponse, ClientError> {
-        Err(ClientError::new(String::from("Download model not implemented")))
+    fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        // Initialize the git lfs client
+        let client = GitLfsClient::new()
+            .map_err(|err| ClientError::new(err.to_string()))?;
+
+        // Get the authorization token from the request
+        let access_token = request.req
+            .headers()
+            .get("Authroization")
+            .and_then(|header_value| header_value.to_str().ok())
+            .map(|value| String::from(value));
+
+        let files = request.body.include_files
+            .clone()
+            .unwrap_or_else(|| vec![]);
+
+        // Clone the git directory and pull the large files from the large file server
+        let cloned_dir = client.pull_large_files(
+            String::from(constants::HUGGING_FACE_BASE_URL),
+            request.path.model_id.clone(),
+            ServiceContext::Models,
+            access_token,
+            Some(files.clone())
+        ).map_err(|err| err)?;
+
+        // Resolve the filename or set a default
+        let download_filename = request.body.download_filename
+            .clone();
+
+        let artifact = Artifact {
+            path: cloned_dir.clone(),
+            include_paths: request.body.include_files.clone(),
+            exclude_paths: request.body.exclude_files.clone()
+        };
+
+        let archive_type = request.body.archive.clone();
+
+        let compression_type = request.body.compression.clone();
+
+        let params = ArtifactStagingParams {
+            artifact: &artifact,
+            staged_filename: download_filename,
+            archive: archive_type.clone(),
+            compression: compression_type
+        };
+        
+        let staged_artifact = self.stage(params)
+            .map_err(|err| ClientError::new(err.to_string()))?;
+    
+        // Create the client response
+        Ok(ClientStagedArtifactResponse::new(
+            staged_artifact,
+            Some(200),
+        ))
+    }
+
+    fn discover_models(&self, _: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
+        Err(ClientError::new(String::from("Discover models not implemented")))
     }
 }
 
@@ -122,7 +193,7 @@ impl DatasetsClient for HuggingFaceClient {
     fn list_datasets(
         &self,
         request: &ListDatasetsRequest,
-    ) -> Result<ClientResponse, ClientError> {
+    ) -> Result<ClientJsonResponse, ClientError> {
         // Parse the limit from the query string
         let limit = match request.query.get("limit").cloned() {
             Some(num) => num.parse(),
@@ -152,22 +223,22 @@ impl DatasetsClient for HuggingFaceClient {
             Ok(response) => {
                 let body = derserialize_response_body(response)?;
                 
-                Ok(ClientResponse {
-                    status: Some(200),
-                    message: Some(String::from("success")),
-                    result: Some(body),
-                    metadata: Some(Value::Object(Map::new())),
-                })
+                Ok(ClientJsonResponse::new(
+                    Some(200),
+                    Some(String::from("success")),
+                    Some(body),
+                    Some(Value::Object(Map::new())),
+                ))
             },
 
             Err(err) => {
-                error!("{:#?}", err);
+                self.logger.error(format!("{:#?}", err).as_str());
                 return Err(ClientError::new(err.to_string()))
             },
         }
     }
 
-    fn get_dataset(&self, request: &GetDatasetRequest) -> Result<ClientResponse, ClientError> {
+    fn get_dataset(&self, request: &GetDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         let result = self.client
             .get(Self::format_url(format!("{}/{}", "datasets", request.path.dataset_id).as_str()))
             .send();
@@ -176,34 +247,36 @@ impl DatasetsClient for HuggingFaceClient {
             Ok(response) => {
                 let body = derserialize_response_body(response)?;
 
-                Ok(ClientResponse {
-                    status: Some(200),
-                    message: Some(String::from("success")),
-                    result: Some(body),
-                    metadata: Some(Value::Object(Map::new())),
-                })
+                Ok(ClientJsonResponse::new(
+                    Some(200),
+                    Some(String::from("success")),
+                    Some(body),
+                    Some(Value::Object(Map::new())),
+                ))
             },
             Err(err) => {
-                error!("{:#?}", err);
+                self.logger.error(format!("{:#?}", err).as_str());
                 return Err(ClientError::new(err.to_string()))
             },
         }
     }
 
-    fn download_dataset(&self, _: &DownloadDatasetRequest) -> Result<ClientResponse, ClientError> {
+    fn download_dataset(&self, _: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         Err(ClientError::new(String::from("Download dataset not implemented")))
     }
 }
 
 impl HuggingFaceClient {
     pub fn new() -> Self {
-        let client = ReqwestClient::new();
-        Self { client }
+        Self {
+            client: ReqwestClient::new(),
+            logger: SharedLogger::new(),
+        }
     }
     
     fn format_url(url: &str) -> String {
         format!(
-            "{}/{}",
+            "{}/api/{}",
             constants::HUGGING_FACE_BASE_URL,
             url.strip_prefix("/").unwrap_or(url).to_string()
         )

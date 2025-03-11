@@ -4,16 +4,18 @@ use actix_web::{
     HttpResponse,
     Responder as ActixResponder
 };
-use log::debug;
-use shared::responses::Response;
+use shared::responses::JsonResponse;
+use shared::logging::SharedLogger;
 
 #[get("/models-api")]
 pub async fn index() -> impl ActixResponder {
-    debug!("Index operation");
+    let logger = SharedLogger::new();
+
+    logger.debug("Index operation");
 
     HttpResponse::Ok()
         .content_type("application/json")
-        .json(Response {
+        .json(JsonResponse {
             status: Some(200),
             message: Some(String::from("success")),
             result: None,

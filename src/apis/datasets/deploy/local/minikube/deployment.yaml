@@ -23,6 +23,8 @@ spec:
             value: mlhub
           - name: RUST_LOG
             value: debug
+          - name: SHARED_DATA
+            value: /srv/mlub
         image: tapis/datasets-api:local
         imagePullPolicy: Never
         name: datasets-api

@@ -8,9 +8,9 @@ use actix_web::{
     HttpResponse,
     Responder as ActixResponder
 };
-use log::debug;
+use shared::logging::SharedLogger;
 use shared::requests::{GetModelPath, GetModelRequest};
-use shared::responses::Response;
+use shared::responses::JsonResponse;
 
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]
 async fn get_model(
@@ -19,7 +19,9 @@ async fn get_model(
     query: web::Query<HashMap<String, String>>,
     body: web::Bytes,
 ) -> impl ActixResponder {
-    debug!("Start operation list_models");
+    let logger = SharedLogger::new();
+
+    logger.debug("Start operation list_models");
 
     // Initialize the client registrar
     let registrar = ModelsClientRegistrar::new();
@@ -30,7 +32,7 @@ async fn get_model(
     } else {
         return HttpResponse::InternalServerError()
             .content_type("application/json")
-            .json(Response {
+            .json(JsonResponse {
                 status: Some(500),
                 message: Some(String::from(format!("Failed to find client for platform '{}'", &path.platform))),
                 result: None,
@@ -52,7 +54,7 @@ async fn get_model(
         Ok(resp) => {
             return HttpResponse::Ok()
                 .content_type("application/json")
-                .json(Response {
+                .json(JsonResponse {
                     status: Some(200),
                     message: Some(String::from("success")),
                     result: resp.result,
@@ -63,7 +65,7 @@ async fn get_model(
         Err(err) => {
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
-                .json(Response {
+                .json(JsonResponse {
                     status: Some(500),
                     message: Some(err.to_string()),
                     result: None,
