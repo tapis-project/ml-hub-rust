@@ -9,7 +9,7 @@ use crate::requests::{
     ListDatasetsQueryParameters,
     // DownloadDatasetRequest,
 };
-use crate::utils::derserialize_response_body;
+use crate::utils::deserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
 use shared::artifacts::ArtifactGenerator;
 use shared::clients::{
@@ -88,7 +88,7 @@ impl ModelsClient for HuggingFaceClient {
         
         match result {
             Ok(response) => {
-                let body = derserialize_response_body(response)?;
+                let body = deserialize_response_body(response)?;
                 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -112,7 +112,7 @@ impl ModelsClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = derserialize_response_body(response)?;
+                let body = deserialize_response_body(response)?;
                 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -151,7 +151,10 @@ impl ModelsClient for HuggingFaceClient {
             ServiceContext::Models,
             access_token,
             Some(files.clone())
-        ).map_err(|err| err)?;
+        ).map_err(|err| {
+            self.logger.error(format!("Error pulling large files: {}", err.to_string()).as_str());
+            err
+        })?;
 
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
@@ -175,7 +178,11 @@ impl ModelsClient for HuggingFaceClient {
         };
         
         let staged_artifact = self.stage(params)
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|err| {
+                let msg = format!("Error staging artifact: {}", err.to_string());
+                self.logger.error(msg.as_str());
+                ClientError::new(msg)
+        })?;
     
         // Create the client response
         Ok(ClientStagedArtifactResponse::new(
@@ -221,7 +228,7 @@ impl DatasetsClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = derserialize_response_body(response)?;
+                let body = deserialize_response_body(response)?;
                 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -245,7 +252,7 @@ impl DatasetsClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = derserialize_response_body(response)?;
+                let body = deserialize_response_body(response)?;
 
                 Ok(ClientJsonResponse::new(
                     Some(200),

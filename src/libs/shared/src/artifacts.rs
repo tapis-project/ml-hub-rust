@@ -23,13 +23,14 @@ pub enum Compression {
 
 pub trait ArtifactGenerator {}
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Artifact {
     pub path: String,
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
 }
 
+#[derive(Debug)]
 pub struct StagedArtifact {
     pub path: PathBuf,
     pub artifact: Artifact

@@ -2,7 +2,7 @@ use shared::clients::ClientError;
 use serde_json::{Value, from_str};
 use reqwest::blocking::Response;
 
-pub(crate) fn derserialize_response_body(response: Response) -> Result<Value, ClientError> {
+pub(crate) fn deserialize_response_body(response: Response) -> Result<Value, ClientError> {
     response
         .text()
         .map_err(|err| ClientError::new(err.to_string()))

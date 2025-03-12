@@ -143,6 +143,8 @@ impl GitLfsClient {
                 ClientError::new(err.to_string())
             })?;
 
+        GlobalLogger::debug(format!("git lfs pull successfull. Cloned dir: {}", &cloned_dir).as_str());
+
         Ok(cloned_dir)
     }
 }

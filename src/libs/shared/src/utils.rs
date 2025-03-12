@@ -3,7 +3,7 @@ use crate::artifacts::Compression;
 use crate::logging::GlobalLogger;
 use std::process::Command;
 use std::path::PathBuf;
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 use zip::{ZipWriter, CompressionMethod};
 use zip::write::SimpleFileOptions;
 use zip_extensions::write::ZipWriterExtensions;
@@ -25,6 +25,14 @@ impl Env {
         
         // Cache directory
         let cache_dir = format!("{}/{}", shared_data_dir, "cache");
+
+        let dirs: Vec<&String> = vec![&shared_data_dir, &cache_dir];
+        for dir in dirs {
+            if !PathBuf::from(dir).exists() {
+                create_dir_all(dir)
+                    .map_err(|err| Error::new(err.to_string()))?;
+            }
+        }
 
         return Ok(
             Self {
@@ -71,7 +79,11 @@ pub fn validate_system_dependencies(programs: SystemPrograms) -> Result<(), Erro
 
 pub fn zip(source: &PathBuf, destination: &PathBuf, compression: Option<Compression>) -> Result<PathBuf, Error> {
     let file = File::create(&destination)
-        .map_err(|err| Error::new(err.to_string()))?;
+        .map_err(|err| {
+            let msg = err.to_string();
+            GlobalLogger::error(format!("Error creating file to zip at path '{}'", &destination.to_string_lossy()).as_str());
+            Error::new(msg)
+        })?;
 
     let zip = ZipWriter::new(file);
 

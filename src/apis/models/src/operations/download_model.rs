@@ -86,14 +86,16 @@ async fn download_model(
                 version: Some(VERSION.to_string())
             })
     }
+
     let download_filename = request.body
             .download_filename
             .clone();
 
     let staged_artifact = client_resp.staged_artifact.clone();
 
-    let archive = request.body.archive.clone();
+    logger.debug(format!("{:#?}", &staged_artifact).as_str());
 
+    let archive = request.body.archive.clone();
 
     let staged_artifact_headers = match StagedArtifactResponseHeaders::new(
         &staged_artifact,
@@ -134,6 +136,9 @@ async fn download_model(
         None => {}
     };
     
+    logger.debug(format!("Staged artifact path: {:?}", &staged_artifact_path).as_str());
+
+    // Handle single-file octect-stream and archived responses
     if staged_artifact_path.is_file() {
         match NamedFile::open(staged_artifact_path) {
             Ok(file) => {
@@ -144,7 +149,7 @@ async fn download_model(
                     resp = resp.insert_header(header);
                 }
     
-                resp
+                return resp
                     .respond_to(&req)
                     .map_into_boxed_body()
             },
@@ -160,10 +165,10 @@ async fn download_model(
                         version: Some(VERSION.to_string())
                     })
             }
-        };
+        }
     }
 
-    // TODO handle multipart/mixed type responses here
+    // TODO Handle multipart/mixed responses
     return HttpResponse::InternalServerError()
         .content_type("application/json")
         .json(JsonResponse {
