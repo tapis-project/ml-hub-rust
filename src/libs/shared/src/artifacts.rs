@@ -30,19 +30,10 @@ pub struct Artifact {
     pub exclude_paths: Option<Vec<String>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StagedArtifact {
     pub path: PathBuf,
     pub artifact: Artifact
-}
-
-impl Clone for StagedArtifact {
-    fn clone(&self) -> StagedArtifact {
-        StagedArtifact {
-            path: self.path.clone(),
-            artifact: self.artifact.clone()
-        }
-    }
 }
 
 pub struct ArtifactStagingParams<'a> {
