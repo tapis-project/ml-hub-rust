@@ -19,7 +19,6 @@ COPY ${SERVICE_DIR} .
 # Install
 RUN cargo install --path .
 
-
 # Stage 2: Copy the binary to a slim Linux image
 FROM debian:bookworm-slim
 

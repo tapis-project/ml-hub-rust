@@ -11,9 +11,34 @@ spec:
       labels:
         app: postgres-deployment
     spec:
+      # initContainers:
+      # - name: init-db
+      #   image: postgres:17
+      #   env:
+      #   - name: POSTGRES_USER
+      #     value: mlhub
+      #   - name: POSTGRES_PASSWORD
+      #     value: dev
+      #   - name: POSTGRES_DB
+      #     value: mlhub
+      #   command: ["sh", "-c", "
+      #       psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'mlhub') THEN CREATE DATABASE mydb; END IF; END \\$\\$\" ;
+      #       psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'mlhub') THEN CREATE ROLE mlhub LOGIN PASSWORD 'dev'; GRANT ALL PRIVILEGES ON DATABASE mlhub TO mlhub; END IF; END \\$\\$\" ;
+      #     "]
       containers:
       - name: postgres
         image: postgres:17
+        # readinessProbe:
+        #   exec:
+        #     command:
+        #       - "psql"
+        #       - "-U"
+        #       - "dev"
+        #       - "-c"
+        #       - "SELECT 1;"
+        #   initialDelaySeconds: 2
+        #   periodSeconds: 5
+        #   failureThreshold: 3
         ports:
         - name: postgres
           containerPort: 5432

@@ -1,12 +1,11 @@
 use crate::errors::Error;
-use crate::artifacts::Compression;
 use crate::logging::GlobalLogger;
+// Reexporting for continuity as this module is for code that accesses
+// system software. Both git and git lfs are called via Command
+pub use crate::git;
 use std::process::Command;
 use std::path::PathBuf;
-use std::fs::{File, create_dir_all};
-use zip::{ZipWriter, CompressionMethod};
-use zip::write::SimpleFileOptions;
-use zip_extensions::write::ZipWriterExtensions;
+use std::fs::create_dir_all;
 
 /// The Env struct contains data from system environment variables and vaules
 /// derived from them that are required by the various services
@@ -75,24 +74,4 @@ pub fn validate_system_dependencies(programs: SystemPrograms) -> Result<(), Erro
             Err(Error::new(err_msg))
         }
     }
-}
-
-pub fn zip(source: &PathBuf, destination: &PathBuf, compression: Option<Compression>) -> Result<PathBuf, Error> {
-    let file = File::create(&destination)
-        .map_err(|err| {
-            let msg = err.to_string();
-            GlobalLogger::error(format!("Error creating file to zip at path '{}'", &destination.to_string_lossy()).as_str());
-            Error::new(msg)
-        })?;
-
-    let zip = ZipWriter::new(file);
-
-    let compression_method = match compression.unwrap_or(Compression::Deflated) {
-        Compression::Deflated => CompressionMethod::Deflated,
-    };
-    let options = SimpleFileOptions::default().compression_method(compression_method);
-    zip.create_from_directory_with_options(&source, |_| options)
-        .map_err(|err| Error::new(err.to_string()))?;
-
-    Ok(destination.clone())
 }

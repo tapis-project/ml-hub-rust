@@ -1,5 +1,7 @@
 use crate::errors::Error;
-use crate::utils::{Env, zip};
+use crate::logging::GlobalLogger;
+use crate::system::Env;
+use crate::archive::zip;
 use std::path::PathBuf;
 use std::fs;
 use strum_macros::{EnumString, Display};
@@ -21,8 +23,6 @@ pub enum Compression {
     Deflated
 }
 
-pub trait ArtifactGenerator {}
-
 #[derive(Clone, Debug)]
 pub struct Artifact {
     pub path: String,
@@ -42,6 +42,8 @@ pub struct ArtifactStagingParams<'a> {
     pub archive: Option<Archive>,
     pub compression: Option<Compression>
 }
+
+pub trait ArtifactGenerator {}
 
 pub trait ArtifactStager {
     fn stage(&self, params: ArtifactStagingParams) -> Result<StagedArtifact, Error>;
@@ -75,9 +77,17 @@ impl<T: ArtifactGenerator> ArtifactStager for T {
                 fs::rename(&source, &destination)
                     .map_err(|err| Error::new(err.to_string()))?;
 
-                PathBuf::from("")
+                PathBuf::from(&destination)
             }
         };
+        
+        // Clean up all of the workdir
+        fs::remove_dir_all(&source)
+            .map_err(|err| {
+                let msg = format!("Error occured while attempting to remove the prestaged artifact data from path: {}", err.to_string());
+                GlobalLogger::error(&msg.as_str());
+                Error::new(msg)
+            })?;
 
         Ok(StagedArtifact {
             path: staged_path,

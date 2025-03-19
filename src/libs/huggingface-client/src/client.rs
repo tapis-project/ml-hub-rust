@@ -1,13 +1,7 @@
 use crate::constants;
 use crate::requests::{
-    // GetDatasetRequest,
-    // GetModelRequest,
-    // DownloadModelRequest,
-    // ListDatasetsRequest as HFListDatasetsRequest,
-    // ListModelsRequest as HFListModelsRequest,
     ListModelsQueryParameters,
     ListDatasetsQueryParameters,
-    // DownloadDatasetRequest,
 };
 use crate::utils::deserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
@@ -20,8 +14,9 @@ use shared::clients::{
     ModelsClient,
 };
 use shared::git::{
-    GitLfsClient,
-    ServiceContext,
+   SyncGitRepository,
+   SyncGitRepositoryImpl,
+   SyncLfsRepositoryParams
 };
 use shared::requests::{
     GetModelRequest,
@@ -38,6 +33,7 @@ use shared::artifacts::{
     ArtifactStagingParams,
 };
 use shared::logging::SharedLogger;
+use shared::constants::MODEL_DOWNLOAD_DIR_NAME;
 use serde_json::{Value, Map};
 
 
@@ -129,41 +125,32 @@ impl ModelsClient for HuggingFaceClient {
     }
 
     fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        // Initialize the git lfs client
-        let client = GitLfsClient::new()
-            .map_err(|err| ClientError::new(err.to_string()))?;
-
         // Get the authorization token from the request
         let access_token = request.req
             .headers()
-            .get("Authroization")
+            .get("Authorization")
             .and_then(|header_value| header_value.to_str().ok())
             .map(|value| String::from(value));
 
-        let files = request.body.include_files
-            .clone()
-            .unwrap_or_else(|| vec![]);
-
-        // Clone the git directory and pull the large files from the large file server
-        let cloned_dir = client.pull_large_files(
-            String::from(constants::HUGGING_FACE_BASE_URL),
-            request.path.model_id.clone(),
-            ServiceContext::Models,
-            access_token,
-            Some(files.clone())
-        ).map_err(|err| {
-            self.logger.error(format!("Error pulling large files: {}", err.to_string()).as_str());
-            err
-        })?;
+        let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
+            name: request.path.model_id.clone(),
+            remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
+            target_dir_prefix: String::from(MODEL_DOWNLOAD_DIR_NAME),
+            branch: request.body.branch.clone(),
+            access_token: access_token.clone(),
+            include_paths: request.body.include_paths.clone(),
+            exclude_paths: request.body.exclude_paths.clone()
+        })
+            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
 
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
             .clone();
 
         let artifact = Artifact {
-            path: cloned_dir.clone(),
-            include_paths: request.body.include_files.clone(),
-            exclude_paths: request.body.exclude_files.clone()
+            path: String::from(git_lfs_repo.repo.path.to_string_lossy()),
+            include_paths: request.body.include_paths.clone(),
+            exclude_paths: request.body.exclude_paths.clone()
         };
 
         let archive_type = request.body.archive.clone();
@@ -272,6 +259,8 @@ impl DatasetsClient for HuggingFaceClient {
         Err(ClientError::new(String::from("Download dataset not implemented")))
     }
 }
+
+impl SyncGitRepository for HuggingFaceClient {}
 
 impl HuggingFaceClient {
     pub fn new() -> Self {

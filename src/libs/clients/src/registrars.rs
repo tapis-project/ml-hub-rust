@@ -7,6 +7,7 @@ use shared::clients::{
     DatasetsClient,
 };
 use huggingface_client::client::HuggingFaceClient;
+use github_lfs_client::client::GithubLfsClient;
 
 /// Represents an error that occurs within the registrar. This error is returned
 /// from registrar method calls as the `Err` variant of the `Result` enum
@@ -61,7 +62,14 @@ impl Display for RegistrarError {
 pub enum Platform {
     /// This variant corresponds to the Hugging Face API client.
     #[strum(serialize="huggingface")]
-    HuggingFace
+    HuggingFace,
+    /// This variant corresponds to the Github LFS client.
+    #[strum(serialize="github-lfs")]
+    GithubLfs,
+    /// This variant corresponds to the Github LFS client.
+    #[strum(serialize="github")]
+    Github,
+    Default
 }
 
 /// A registrar for managing pre-registered model clients mapped to their respective
@@ -111,6 +119,8 @@ impl ModelsClientRegistrar {
         // Add the initialized modles clients into the clients hashmap by the
         // specific enum variant designated for the platform
         clients.insert(Platform::HuggingFace, Box::new(HuggingFaceClient::new()));
+        clients.insert(Platform::GithubLfs, Box::new(GithubLfsClient::new()));
+        clients.insert(Platform::Default, Box::new(GithubLfsClient::new()));
 
         return Self {
             clients
@@ -173,7 +183,8 @@ impl DatasetsClientRegistrar {
         // Add the initialized datasets clients into the clients hashmap by the
         // specific enum variant designated for the platform.
         clients.insert(Platform::HuggingFace, Box::new(HuggingFaceClient::new()));
-
+        clients.insert(Platform::GithubLfs, Box::new(GithubLfsClient::new()));
+        clients.insert(Platform::Default, Box::new(GithubLfsClient::new()));
         return Self {
             clients
         }

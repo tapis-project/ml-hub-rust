@@ -3,6 +3,7 @@ use config::{DEFAULT_HOST, DEFAULT_PORT};
 use actix_web::{
     App,
     HttpServer,
+    middleware::Logger
 };
 
 mod operations {
@@ -10,6 +11,7 @@ mod operations {
     pub mod list_models;
     pub mod download_model;
     pub mod index;
+    pub mod health_check;
 }
 mod config;
 
@@ -30,7 +32,9 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            .wrap(Logger::default())
             .service(operations::index::index)
+            .service(operations::health_check::health_check)
             .service(operations::get_model::get_model)
             .service(operations::list_models::list_models)
             .service(operations::download_model::download_model)

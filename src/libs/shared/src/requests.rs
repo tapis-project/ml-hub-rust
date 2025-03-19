@@ -166,11 +166,12 @@ pub struct DiscoveryCriteriaBody {
 
 #[derive(Deserialize, Debug)]
 pub struct DownloadModelBody {
-    pub include_files: Option<Vec<String>>,
-    pub exclude_files: Option<Vec<String>>,
+    pub include_paths: Option<Vec<String>>,
+    pub exclude_paths: Option<Vec<String>>,
     pub archive: Option<Archive>,
     pub compression: Option<Compression>,
-    pub download_filename: Option<String>
+    pub download_filename: Option<String>,
+    pub branch: Option<String>
 }
 
 pub struct DiscoverModelsRequest {

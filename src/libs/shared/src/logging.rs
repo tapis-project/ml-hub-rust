@@ -1,4 +1,4 @@
-use log::{debug, info, warn, error, trace};
+use log::{log, Level};
 
 #[derive(Debug, Copy, Clone)]
 pub struct SharedLogger {}
@@ -7,25 +7,25 @@ impl SharedLogger {
     pub fn new() -> Self {
         Self {}
     }
-    
+
     pub fn debug(&self, msg: &str) {
-        debug!("{}", msg)
+        log!(target: module_path!(), Level::Debug, "{}", msg);
     }
 
     pub fn info(&self, msg: &str) {
-        info!("{}", msg)
+        log!(target: module_path!(), Level::Info, "{}", msg);
     }
 
     pub fn warn(&self, msg: &str) {
-        warn!("{}", msg)
+        log!(target: module_path!(), Level::Warn, "{}", msg);
     }
 
     pub fn error(&self, msg: &str) {
-        error!("{}", msg)
+        log!(target: module_path!(), Level::Error, "{}", msg);
     }
 
     pub fn trace(&self, msg: &str) {
-        trace!("{}", msg)
+        log!(target: module_path!(), Level::Trace, "{}", msg);
     }
 }
 
@@ -34,22 +34,22 @@ pub struct GlobalLogger {}
 
 impl GlobalLogger {
     pub fn debug(msg: &str) {
-        debug!("{}", msg)
+        log!(target: module_path!(), Level::Debug, "{}", msg);
     }
 
     pub fn info(msg: &str) {
-        info!("{}", msg)
+        log!(target: module_path!(), Level::Info, "{}", msg);
     }
 
     pub fn warn(msg: &str) {
-        warn!("{}", msg)
+        log!(target: module_path!(), Level::Warn, "{}", msg);
     }
 
     pub fn error(msg: &str) {
-        error!("{}", msg)
+        log!(target: module_path!(), Level::Error, "{}", msg);
     }
 
     pub fn trace(msg: &str) {
-        trace!("{}", msg)
+        log!(target: module_path!(), Level::Trace, "{}", msg);
     }
 }
