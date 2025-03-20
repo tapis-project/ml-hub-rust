@@ -31,13 +31,13 @@ spec:
           ports:
             - containerPort: 8000
               name: webserver
-          readinessProbe:
-            httpGet:
-              path: /models-api/health-check
-              port: 8000
-            initialDelaySeconds: 2
-            periodSeconds: 15
-            failureThreshold: 5
+          # readinessProbe:
+          #   httpGet:
+          #     path: /models-api/health-check
+          #     port: 8000
+          #   initialDelaySeconds: 2
+          #   periodSeconds: 15
+          #   failureThreshold: 5
           resources: {}
           tty: true
           volumeMounts:
