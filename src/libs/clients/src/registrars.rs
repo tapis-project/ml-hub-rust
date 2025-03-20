@@ -103,7 +103,6 @@ pub struct ModelsClientRegistrar {
     pub clients: HashMap<Platform, Box<dyn ModelsClient>>,
 }
 
-
 /// Inherent implementation of ModelsClientRegistrar
 impl ModelsClientRegistrar {
     /// Creates a new ModelsClientRegistrar with pre-instantiated implementations

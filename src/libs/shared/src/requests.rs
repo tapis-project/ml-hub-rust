@@ -171,7 +171,8 @@ pub struct DownloadModelBody {
     pub archive: Option<Archive>,
     pub compression: Option<Compression>,
     pub download_filename: Option<String>,
-    pub branch: Option<String>
+    pub branch: Option<String>,
+    pub remote_base_url: Option<String>
 }
 
 pub struct DiscoverModelsRequest {
