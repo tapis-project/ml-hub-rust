@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  models-api:
+    image: tapis/models-api:local
+    container_name: models-api
+    environment:
+      DB_HOST: mlhub-postgres-service
+      DB_NAME: mlhub
+      DB_PASSWORD: dev
+      DB_USER: mlhub
+      RUST_LOG: debug
+      SHARED_DATA: /srv/mlhub
+    ports:
+      - "8000:8000"
+    volumes:
+      - nfs-server-mount:/srv/mlhub
+    networks:
+      - mlhub-net
+    tty: true
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/models-api/health-check"]
+    #   interval: 15s
+    #   retries: 5
+    #   start_period: 2s
+
+volumes:
+  nfs-server-mount:
+    driver_opts:
+      type: "nfs"
+      o: "addr=10.110.247.173,nolock,soft,rw"
+      device: ":/"
+
+networks:
+  mlhub-net:
+    driver: bridge
