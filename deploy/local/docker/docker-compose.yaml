@@ -1,0 +1,4 @@
+version: "3.8"
+
+include:
+  - ../../../src/components/networks/deploy/local/docker/docker-compose.network.yml
