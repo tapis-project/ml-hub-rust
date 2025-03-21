@@ -33,7 +33,10 @@ use shared::artifacts::{
     ArtifactStagingParams,
 };
 use shared::logging::SharedLogger;
-use shared::constants::MODEL_DOWNLOAD_DIR_NAME;
+use shared::constants::{
+    MODEL_DOWNLOAD_DIR_NAME,
+    DATASET_DOWNLOAD_DIR_NAME,
+};
 use serde_json::{Value, Map};
 
 
@@ -255,8 +258,58 @@ impl DatasetsClient for HuggingFaceClient {
         }
     }
 
-    fn download_dataset(&self, _: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        Err(ClientError::new(String::from("Download dataset not implemented")))
+    fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        // Get the authorization token from the request
+        let access_token = request.req
+            .headers()
+            .get("Authorization")
+            .and_then(|header_value| header_value.to_str().ok())
+            .map(|value| String::from(value));
+
+        let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
+            name: request.path.dataset_id.clone(),
+            remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
+            target_dir_prefix: String::from(DATASET_DOWNLOAD_DIR_NAME),
+            branch: request.body.branch.clone(),
+            access_token: access_token.clone(),
+            include_paths: request.body.include_paths.clone(),
+            exclude_paths: request.body.exclude_paths.clone()
+        })
+            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
+
+        // Resolve the filename or set a default
+        let download_filename = request.body.download_filename
+            .clone();
+
+        let artifact = Artifact {
+            path: String::from(git_lfs_repo.repo.path.to_string_lossy()),
+            include_paths: request.body.include_paths.clone(),
+            exclude_paths: request.body.exclude_paths.clone()
+        };
+
+        let archive_type = request.body.archive.clone();
+
+        let compression_type = request.body.compression.clone();
+
+        let params = ArtifactStagingParams {
+            artifact: &artifact,
+            staged_filename: download_filename,
+            archive: archive_type.clone(),
+            compression: compression_type
+        };
+        
+        let staged_artifact = self.stage(params)
+            .map_err(|err| {
+                let msg = format!("Error staging artifact: {}", err.to_string());
+                self.logger.error(msg.as_str());
+                ClientError::new(msg)
+        })?;
+    
+        // Create the client response
+        Ok(ClientStagedArtifactResponse::new(
+            staged_artifact,
+            Some(200),
+        ))
     }
 }
 

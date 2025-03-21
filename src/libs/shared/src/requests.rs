@@ -165,7 +165,7 @@ pub struct DiscoveryCriteriaBody {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct DownloadModelBody {
+pub struct DownloadArtifactBody {
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
     pub archive: Option<Archive>,
@@ -193,7 +193,7 @@ pub struct DownloadModelRequest {
     pub req: ActixHttpRequest,
     pub path: web::Path<DownloadModelPath>,
     pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Json<DownloadModelBody>,
+    pub body: web::Json<DownloadArtifactBody>,
 }
 
 pub struct ListDatasetsRequest {
@@ -214,7 +214,7 @@ pub struct DownloadDatasetRequest {
     pub req: ActixHttpRequest,
     pub path: web::Path<DownloadDatasetPath>,
     pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub body: web::Json<DownloadArtifactBody>,
 }
 
 pub struct CreateInferenceServerRequest {
