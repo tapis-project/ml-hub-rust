@@ -1,6 +1,8 @@
 mod operations {
+    pub mod health_check;
     pub mod get_dataset;
     pub mod list_datasets;
+    pub mod download_dataset;
 }
 mod config;
 
@@ -25,8 +27,10 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
+            .service(operations::health_check::health_check)
             .service(operations::get_dataset::get_dataset)
             .service(operations::list_datasets::list_datasets)
+            .service(operations::download_dataset::download_dataset)
     })
         .bind(addrs)?
         .run()

@@ -9,7 +9,7 @@ use actix_web::{
     Responder as ActixResponder
 };
 use log::debug;
-use shared::responses::Response;
+use shared::responses::JsonResponse;
 use shared::requests::{ListDatasetsPath, ListDatasetsRequest};
 
 #[get("datasets-api/platforms/{platform}/datasets")]
@@ -31,7 +31,7 @@ async fn list_datasets(
     } else {
         return HttpResponse::InternalServerError()
             .content_type("application/json")
-            .json(Response {
+            .json(JsonResponse {
                 status: Some(500),
                 message: Some(String::from(format!("Failed to find client for platform '{}'", &path.platform))),
                 result: None,
@@ -53,7 +53,7 @@ async fn list_datasets(
         Ok(resp) => {
             return HttpResponse::Ok()
                 .content_type("application/json")
-                .json(Response {
+                .json(JsonResponse {
                     status: Some(200),
                     message: Some(String::from("success")),
                     result: resp.result,
@@ -64,7 +64,7 @@ async fn list_datasets(
         Err(err) => {
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
-                .json(Response {
+                .json(JsonResponse {
                     status: Some(500),
                     message: Some(err.to_string()),
                     result: None,

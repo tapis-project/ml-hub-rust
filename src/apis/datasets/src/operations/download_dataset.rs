@@ -1,6 +1,6 @@
 use crate::config::VERSION;
 use std::collections::HashMap;
-use clients::registrars::ModelsClientRegistrar;
+use clients::registrars::DatasetsClientRegistrar;
 use actix_web::{
     web,
     post,
@@ -13,22 +13,22 @@ use shared::{
     logging::SharedLogger,
     responses::artifact_helpers::StagedArtifactResponseHeaders
 };
-use shared::requests::{DownloadModelPath, DownloadModelRequest, DownloadArtifactBody};
+use shared::requests::{DownloadDatasetPath, DownloadDatasetRequest, DownloadArtifactBody};
 use shared::responses::JsonResponse;
 
-#[post("models-api/platforms/{platform}/models/{model_id:.*}/files")]
-async fn download_model(
+#[post("datasets-api/platforms/{platform}/datasets/{dataset_id:.*}/files")]
+async fn download_dataset(
     req: ActixHttpRequest,
-    path: web::Path<DownloadModelPath>,
+    path: web::Path<DownloadDatasetPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Json<DownloadArtifactBody>,
 ) -> impl ActixResponder {
     let logger = SharedLogger::new();
     
-    logger.debug("Start download model operation");
+    logger.debug("Start download dataset operation");
 
     // Initialize the client registrar
-    let registrar = ModelsClientRegistrar::new();
+    let registrar = DatasetsClientRegistrar::new();
 
     // Get the client for the provided platform
     let client = if let Ok(client) = registrar.get_client(&path.platform) {
@@ -46,16 +46,16 @@ async fn download_model(
     };
 
     // Build the request used by the client
-    let request = DownloadModelRequest{
+    let request = DownloadDatasetRequest{
         req: req.clone(),
         path,
         query,
         body
     };
     
-    // Download the model and respond with the file contents using the provided
+    // Download the dataset and respond with the file contents using the provided
     // MIME type
-    let client_resp = match client.download_model(&request) {
+    let client_resp = match client.download_dataset(&request) {
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
