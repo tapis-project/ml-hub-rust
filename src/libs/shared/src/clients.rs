@@ -45,12 +45,14 @@ pub trait ModelsClient: ArtifactGenerator {
     fn get_model(&self, request: &requests::GetModelRequest) -> Result<ClientJsonResponse, ClientError>;
     fn download_model(&self, request: &requests::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
     fn discover_models(&self, request: &requests::DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError>;
+    fn persist_model(&self, request: &requests::PersistModelRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
 }
 
 pub trait DatasetsClient: ArtifactGenerator {
     fn list_datasets(&self, request: &requests::ListDatasetsRequest) -> Result<ClientJsonResponse, ClientError>;
     fn get_dataset(&self, request: &requests::GetDatasetRequest) -> Result<ClientJsonResponse, ClientError>;
     fn download_dataset(&self, request: &requests::DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
+    fn persist_dataset(&self, request: &requests::PersistDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
 }
 
 pub trait InferenceClient {

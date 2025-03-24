@@ -250,6 +250,30 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "code": "code src/libs/{{ self.name }}"
       }
+    },
+    {
+      "name": "tapis-client",
+      "rootDir": "src/libs/tapis-client",
+      "labels": ["lib"],
+      "commands": {
+        "initialize": "",
+        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "code": "code src/libs/{{ self.name }}"
+      }
+    },
+    {
+      "name": "s3-client",
+      "rootDir": "src/libs/s3-client",
+      "labels": ["lib"],
+      "commands": {
+        "initialize": "",
+        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "code": "code src/libs/{{ self.name }}"
+      }
     }
   ]
 }

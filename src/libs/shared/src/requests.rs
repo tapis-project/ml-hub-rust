@@ -1,7 +1,8 @@
+use crate::artifacts::{Archive, Compression};
 use serde::Deserialize;
 use std::collections::HashMap;
 use actix_web::{web, HttpRequest as ActixHttpRequest};
-use crate::artifacts::{Archive, Compression};
+use actix_multipart::Multipart;
 
 #[derive(Deserialize, Debug)]
 pub struct ListModelsPath {
@@ -21,6 +22,12 @@ pub struct DownloadModelPath {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct PersistModelPath {
+    pub platform: String,
+    pub dataset_id: String
+}
+
+#[derive(Deserialize, Debug)]
 pub struct DiscoverModelsPath {}
 
 #[derive(Deserialize, Debug)]
@@ -36,6 +43,12 @@ pub struct GetDatasetPath {
 
 #[derive(Deserialize, Debug)]
 pub struct DownloadDatasetPath {
+    pub platform: String,
+    pub dataset_id: String
+}
+
+#[derive(Deserialize, Debug)]
+pub struct PersistDatasetPath {
     pub platform: String,
     pub dataset_id: String
 }
@@ -196,6 +209,13 @@ pub struct DownloadModelRequest {
     pub body: web::Json<DownloadArtifactBody>,
 }
 
+pub struct PersistModelRequest {
+    pub req: ActixHttpRequest,
+    pub path: web::Path<PersistModelPath>,
+    pub query: web::Query<HashMap<String, String>>,
+    pub payload: Multipart,
+}
+
 pub struct ListDatasetsRequest {
     pub req: ActixHttpRequest,
     pub path: web::Path<ListDatasetsPath>,
@@ -215,6 +235,13 @@ pub struct DownloadDatasetRequest {
     pub path: web::Path<DownloadDatasetPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Json<DownloadArtifactBody>,
+}
+
+pub struct PersistDatasetRequest {
+    pub req: ActixHttpRequest,
+    pub path: web::Path<PersistDatasetPath>,
+    pub query: web::Query<HashMap<String, String>>,
+    pub payload: Multipart,
 }
 
 pub struct CreateInferenceServerRequest {
