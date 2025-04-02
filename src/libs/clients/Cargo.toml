@@ -7,6 +7,7 @@ edition = "2021"
 huggingface-client = { version = "0.1.0", path = "../huggingface-client" }
 github-lfs-client = { version = "0.1.0", path = "../github-lfs-client" }
 git-lfs-client = { version = "0.1.0", path = "../git-lfs-client" }
+patra-client = { version = "0.1.0", path = "../patra-client" }
 shared = { version = "0.1.0", path = "../shared" }
 strum = "0.26.3"
 strum_macros = "0.26.4"

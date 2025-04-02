@@ -1,8 +1,11 @@
 use crate::artifacts::{Archive, Compression};
 use serde::Deserialize;
+use serde_json::Value;
 use std::collections::HashMap;
-use actix_web::{web, HttpRequest as ActixHttpRequest};
 use actix_multipart::Multipart;
+use actix_web::web;
+// Re-export so clients can use this struct
+pub use actix_web::HttpRequest;
 
 #[derive(Deserialize, Debug)]
 pub struct ListModelsPath {
@@ -22,9 +25,10 @@ pub struct DownloadModelPath {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct PersistModelPath {
+pub struct PublishModelPath {
     pub platform: String,
-    pub dataset_id: String
+    pub model_id: String,
+    pub path: String
 }
 
 #[derive(Deserialize, Debug)]
@@ -48,7 +52,7 @@ pub struct DownloadDatasetPath {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct PersistDatasetPath {
+pub struct PublishDatasetPath {
     pub platform: String,
     pub dataset_id: String
 }
@@ -88,7 +92,7 @@ pub struct StartTrainingPath {
 }
 
 pub struct ListModelsRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<ListModelsPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
@@ -177,6 +181,8 @@ pub struct DiscoveryCriteriaBody {
     pub confidence_threshold: Option<Vec<String>>
 }
 
+pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
+
 #[derive(Deserialize, Debug)]
 pub struct DownloadArtifactBody {
     pub include_paths: Option<Vec<String>>,
@@ -184,103 +190,131 @@ pub struct DownloadArtifactBody {
     pub archive: Option<Archive>,
     pub compression: Option<Compression>,
     pub download_filename: Option<String>,
-    pub branch: Option<String>,
-    pub remote_base_url: Option<String>
+    pub params: Option<Parameters>,
 }
 
 pub struct DiscoverModelsRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<DiscoverModelsPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Json<DiscoveryCriteriaBody>
 }
 
 pub struct GetModelRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<GetModelPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct DownloadModelRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<DownloadModelPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Json<DownloadArtifactBody>,
 }
 
-pub struct PersistModelRequest {
-    pub req: ActixHttpRequest,
-    pub path: web::Path<PersistModelPath>,
+pub struct PublishModelRequest {
+    pub req: HttpRequest,
+    pub path: web::Path<PublishModelPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub payload: Multipart,
 }
 
 pub struct ListDatasetsRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<ListDatasetsPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct GetDatasetRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<GetDatasetPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct DownloadDatasetRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<DownloadDatasetPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Json<DownloadArtifactBody>,
 }
 
-pub struct PersistDatasetRequest {
-    pub req: ActixHttpRequest,
-    pub path: web::Path<PersistDatasetPath>,
+pub struct PublishDatasetRequest {
+    pub req: HttpRequest,
+    pub path: web::Path<PublishDatasetPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub payload: Multipart,
 }
 
 pub struct CreateInferenceServerRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<CreateInferenceServerPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 pub struct CreateInferenceRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<CreateInferencePath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct StartInferenceServerRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<StartInferenceServerPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct RunInferenceRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<RunInferencePath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct CreateTrainingRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<CreateTrainingPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
 
 pub struct StartTrainingRequest {
-    pub req: ActixHttpRequest,
+    pub req: HttpRequest,
     pub path: web::Path<StartTrainingPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
+}
+
+pub mod utils {
+    use actix_web::HttpRequest;
+
+    use super::Parameters;
+    use crate::errors::Error;
+    use std::collections::hash_map::HashMap;
+
+    pub fn param_to_string(params: Option<Parameters>, prop: &str) -> Result<Option<String>, Error> {
+        return params.unwrap_or_else(HashMap::new)
+            .get(prop)
+            .map(|value| {
+                if value.is_string() {
+                    return Ok(value.to_string())
+                }
+
+                Err(Error::new(String::from("Parameter 'branch' must be a string")))
+            })
+            .transpose();
+    }
+
+    pub fn get_header_value(header_key: &str, request: &HttpRequest) -> Option<String> {
+        request
+            .headers()
+            .get(header_key)
+            .and_then(|value| value.to_str().ok())
+            .map(|value| String::from(value))
+    }
 }

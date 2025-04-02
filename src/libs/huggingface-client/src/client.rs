@@ -19,13 +19,16 @@ use shared::git::{
    SyncLfsRepositoryParams
 };
 use shared::requests::{
-    GetModelRequest,
-    ListModelsRequest,
-    DownloadModelRequest,
-    ListDatasetsRequest,
-    GetDatasetRequest,
-    DownloadDatasetRequest,
     DiscoverModelsRequest,
+    DownloadDatasetRequest,
+    DownloadModelRequest,
+    GetDatasetRequest,
+    GetModelRequest,
+    ListDatasetsRequest,
+    ListModelsRequest,
+    PublishDatasetRequest,
+    PublishModelRequest,
+    utils::param_to_string
 };
 use shared::artifacts::{
     Artifact,
@@ -135,11 +138,14 @@ impl ModelsClient for HuggingFaceClient {
             .and_then(|header_value| header_value.to_str().ok())
             .map(|value| String::from(value));
 
+        let branch = param_to_string(request.body.params.clone(), "branch")
+            .map_err(|err| ClientError::new(err.to_string()))?;
+
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
             target_dir_prefix: String::from(MODEL_DOWNLOAD_DIR_NAME),
-            branch: request.body.branch.clone(),
+            branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
@@ -183,6 +189,10 @@ impl ModelsClient for HuggingFaceClient {
 
     fn discover_models(&self, _: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Discover models not implemented")))
+    }
+
+    fn publish_model(&self, _result: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        Err(ClientError::new(String::from("Not supported")))
     }
 }
 
@@ -266,11 +276,14 @@ impl DatasetsClient for HuggingFaceClient {
             .and_then(|header_value| header_value.to_str().ok())
             .map(|value| String::from(value));
 
+        let branch = param_to_string(request.body.params.clone(), "branch")
+            .map_err(|err| ClientError::new(err.to_string()))?;
+
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
             target_dir_prefix: String::from(DATASET_DOWNLOAD_DIR_NAME),
-            branch: request.body.branch.clone(),
+            branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
@@ -310,6 +323,10 @@ impl DatasetsClient for HuggingFaceClient {
             staged_artifact,
             Some(200),
         ))
+    }
+
+    fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        Err(ClientError::new(String::from("Not supported")))
     }
 }
 

@@ -27,6 +27,20 @@ async fn download_model(
     
     logger.debug("Start download model operation");
 
+    // Catch directory traversal attacks. 'model_id' may be used by clients to
+    // constuct directories in the shared file system
+    if path.model_id.contains("..") {
+        return HttpResponse::Forbidden()
+            .content_type("application/json")
+            .json(JsonResponse {
+                status: Some(403),
+                message: Some(String::from("Forbidden")),
+                result: None,
+                metadata: None,
+                version: Some(VERSION.to_string())
+            });
+    }
+
     // Initialize the client registrar
     let registrar = ModelsClientRegistrar::new();
 

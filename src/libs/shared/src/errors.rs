@@ -33,6 +33,12 @@ impl ClientError {
             message,
         }
     }
+
+    pub fn from_str(message: &str) -> Self {
+        ClientError {
+            message: message.to_string(),
+        }
+    }
 }
 
 impl Display for ClientError {

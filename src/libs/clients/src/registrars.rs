@@ -9,6 +9,7 @@ use shared::clients::{
 use huggingface_client::client::HuggingFaceClient;
 use github_lfs_client::client::GithubLfsClient;
 use git_lfs_client::client::GitLfsClient;
+use patra_client::client::PatraClient;
 
 /// Represents an error that occurs within the registrar. This error is returned
 /// from registrar method calls as the `Err` variant of the `Result` enum
@@ -70,6 +71,9 @@ pub enum Platform {
     /// This variant corresponds to the Git LFS client.
     #[strum(serialize="git")]
     Git,
+    /// This variant corresponds to the Patra client
+    #[strum(serialize="patra")]
+    Patra,
     Default
 }
 
@@ -121,6 +125,7 @@ impl ModelsClientRegistrar {
         clients.insert(Platform::HuggingFace, Box::new(HuggingFaceClient::new()));
         clients.insert(Platform::Github, Box::new(GithubLfsClient::new()));
         clients.insert(Platform::Git, Box::new(GitLfsClient::new()));
+        clients.insert(Platform::Patra, Box::new(PatraClient::new()));
         clients.insert(Platform::Default, Box::new(GithubLfsClient::new()));
 
         return Self {

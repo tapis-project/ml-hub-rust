@@ -20,6 +20,7 @@ use shared::requests::{
     GetDatasetRequest,
     DownloadDatasetRequest,
     DiscoverModelsRequest,
+    utils::param_to_string
 };
 use shared::artifacts::{
     Artifact,
@@ -58,11 +59,15 @@ impl ModelsClient for GithubLfsClient {
             .and_then(|header_value| header_value.to_str().ok())
             .map(|value| String::from(value));
 
+        // Get the branch from the request
+        let branch = param_to_string(request.body.params.clone(), "branch")
+            .map_err(|err| ClientError::new(err.to_string()))?;
+
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
             remote_base_url: String::from("https://github.com"),
             target_dir_prefix: String::from(constants::MODEL_DOWNLOAD_DIR_NAME),
-            branch: request.body.branch.clone(),
+            branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
@@ -107,6 +112,10 @@ impl ModelsClient for GithubLfsClient {
     fn discover_models(&self, _: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
+
+    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        Err(ClientError::new(String::from("Not supported")))
+    }
 }
 
 impl DatasetsClient for GithubLfsClient {
@@ -129,11 +138,15 @@ impl DatasetsClient for GithubLfsClient {
             .and_then(|header_value| header_value.to_str().ok())
             .map(|value| String::from(value));
 
+        // Get the branch from the request
+        let branch = param_to_string(request.body.params.clone(), "branch")
+            .map_err(|err| ClientError::new(err.to_string()))?;
+
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url: String::from("https://github.com"),
             target_dir_prefix: String::from(constants::MODEL_DOWNLOAD_DIR_NAME),
-            branch: request.body.branch.clone(),
+            branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
@@ -173,6 +186,10 @@ impl DatasetsClient for GithubLfsClient {
             staged_artifact,
             Some(200),
         ))
+    }
+
+    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        Err(ClientError::new(String::from("Not supported")))
     }
 }
 

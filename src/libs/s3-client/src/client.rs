@@ -15,8 +15,8 @@ use shared::requests::{
     GetDatasetRequest,
     DownloadDatasetRequest,
     DiscoverModelsRequest,
-    PersistDatasetRequest,
-    PersistModelRequest
+    PublishDatasetRequest,
+    PublishModelRequest
 };
 use shared::logging::SharedLogger;
 
@@ -48,7 +48,7 @@ impl ModelsClient for S3Client {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    fn persist_model(&self, _request: &PersistModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }
@@ -66,7 +66,7 @@ impl DatasetsClient for S3Client {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 
-    fn persist_dataset(&self, _request: &PersistDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }

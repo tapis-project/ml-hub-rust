@@ -27,6 +27,7 @@ use shared::artifacts::{
     ArtifactStagingParams,
 };
 use shared::logging::SharedLogger;
+use shared::requests::utils::param_to_string;
 
 
 #[derive(Debug)]
@@ -59,17 +60,21 @@ impl ModelsClient for GitLfsClient {
             .map(|value| String::from(value));
 
         // Get the remote base url from the request
-        let remote_base_url = request.body.remote_base_url
-            .clone()
+        let remote_base_url = param_to_string(request.body.params.clone(), "remote_base_url")
+            .map_err(|err| ClientError::new(err.to_string()))?
             .ok_or(ClientError::new(String::from("Missing field 'remote_base_url'")))?
             .trim_end_matches("/")
             .to_string();
+
+        // Get branch from the request
+        let branch = param_to_string(request.body.params.clone(), "branch")
+            .map_err(|err| ClientError::new(err.to_string()))?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
             remote_base_url,
             target_dir_prefix: String::from(constants::MODEL_DOWNLOAD_DIR_NAME),
-            branch: request.body.branch.clone(),
+            branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
@@ -109,6 +114,10 @@ impl ModelsClient for GitLfsClient {
             staged_artifact,
             Some(200),
         ))
+    }
+
+    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        Err(ClientError::new(String::from("Not supported")))
     }
 
     fn discover_models(&self, _: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
@@ -137,17 +146,21 @@ impl DatasetsClient for GitLfsClient {
             .map(|value| String::from(value));
 
         // Get the remote base url from the request
-        let remote_base_url = request.body.remote_base_url
-            .clone()
+        let remote_base_url = param_to_string(request.body.params.clone(), "remote_base_url")
+            .map_err(|err| ClientError::new(err.to_string()))?
             .ok_or(ClientError::new(String::from("Missing field 'remote_base_url'")))?
             .trim_end_matches("/")
             .to_string();
+
+        // Get the branch from the request
+        let branch = param_to_string(request.body.params.clone(), "branch")
+            .map_err(|err| ClientError::new(err.to_string()))?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url,
             target_dir_prefix: String::from(constants::MODEL_DOWNLOAD_DIR_NAME),
-            branch: request.body.branch.clone(),
+            branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
@@ -187,6 +200,10 @@ impl DatasetsClient for GitLfsClient {
             staged_artifact,
             Some(200),
         ))
+    }
+
+    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        Err(ClientError::new(String::from("Not supported")))
     }
 }
 
