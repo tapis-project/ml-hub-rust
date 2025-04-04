@@ -11,6 +11,7 @@ mod operations {
     pub mod list_models;
     pub mod download_model;
     pub mod publish_model;
+    pub mod discover_models;
     pub mod index;
     pub mod health_check;
 }
@@ -39,6 +40,7 @@ async fn main() -> std::io::Result<()> {
             .service(operations::get_model::get_model)
             .service(operations::list_models::list_models)
             .service(operations::download_model::download_model)
+            .service(operations::discover_models::discover_models)
             .service(operations::publish_model::publish_model)
     })
         .bind(addrs)?

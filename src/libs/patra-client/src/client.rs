@@ -75,8 +75,33 @@ impl ModelsClient for PatraClient {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 
-    fn discover_models(&self, _request: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
+    fn discover_models(&self, request: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
+        self.logger.debug("Discover models");
+        let mut query_params = HashMap::new();
+        if request.body.criteria.len() > 0 {
+            // We are only taking the first critera because Patra has not implemented
+            // a way to search on more than one criterion
+            let name = request.body.criteria[0].name
+                .clone()
+                .unwrap_or(String::from(""));
+            query_params.insert("q", name);
+        }
+        
+        let resp = self.client.get(PatraClient::SEARCH_MODEL_ENDPOINT)
+            .query(&query_params)
+            .send()
+            .map_err(|err| ClientError::from_str(err.to_string().as_str()))?;
+
+        let status_code = resp.status().as_u16();
+
+        let deserialized_resp = deserialize_response_body(resp)?;
+
+        return Ok(ClientJsonResponse::new(
+            Some(status_code),
+            Some(String::from("success")),
+            Some(deserialized_resp),
+            None
+        ))
     }
 
     fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
@@ -105,7 +130,7 @@ impl DatasetsClient for PatraClient {
 impl PatraClient {
     const LIST_MODELS_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/list";
     const GET_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/download_mc";
-    const _SEARCH_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/search";
+    const SEARCH_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/search";
 
     pub fn new() -> Self {
         Self {
