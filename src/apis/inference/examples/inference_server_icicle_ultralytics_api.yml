@@ -1,0 +1,354 @@
+---
+kind: InferenceServer
+metadata:
+  name: ultralytics-litserve
+  version: 0.1.0
+  description: >-
+    An inference server 
+  labels:
+    multi-model: "true"
+    model-hotloading: "true"
+spec:
+  interfaces:
+    - kind: Interface
+      type: Container
+      metadata:
+        name: ultralytics-litserve-container
+        labels:
+          something: something
+      spec:
+        image: 'https://ghcr.io/icicle-ai/ultralytics-litserve:latest'
+        ports:
+        - name: http
+          port: 8000
+          protocol: http
+        resources:
+          requests:
+            cpu: 1
+            tpu: 0
+            mps: 0
+            memory: 2Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+              amd: 0
+            # accelerators:
+          limits:
+            cpu: 2
+            tpu: 0
+            mps: 0
+            memory: 20Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+    - kind: Interface
+      type: RestApi
+      format: OpenApi3
+      metadata:
+        name: ultralytics-api
+        labels:
+          server-type: litserver
+          task-type: object-detection
+      spec:
+        endpoint_labels:
+          - operation_id: healthcheck
+            labels:
+              mlhub: healthcheck
+          - operation_id: readycheck
+            labels:
+              mlhub: readycheck
+          - operation_id: openapi3
+            labels:
+              mlhub: openapi3
+        spec:
+          openapi: 3.0.3
+          info:
+            title: Ultralytics litserver
+            version: 1.0.0
+          paths:
+            /health:
+              get:
+                summary: Returns information about the current health of the server
+                operationId: healthcheck
+                responses:
+                  '200':
+                    description: OK
+
+            /ready/{model_id}:
+              get:
+                summary: Returns information about whether or not a model is ready
+                operationId: readycheck
+                parameters:
+                  - name: model_id
+                    in: path
+                    required: true
+                    schema:
+                      type: string
+                responses:
+                  '200':
+                    description: OK
+
+            /openapi3:
+              get:
+                summary: Returns the openapiv3 spec for this api
+                operationId: openapi3
+                responses:
+                  '200':
+                    description: OK
+                    content: 
+                      application/x-yaml:
+                        schema:
+                          type: object
+            /preprocess:
+              post:
+                summary: Runs input data preprocessing
+                operationId: preprocess
+                requestBody:
+                  required: true
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        required: [image_data, stride, target_size]
+                        properties:
+                          image_data:
+                            type: string
+                            format: base64
+                            description: Base64 encoded string of the input image.
+                          stride:
+                            type: integer
+                            format: int64
+                            description: Stride of the model.
+                          target_size:
+                            type: object
+                            properties:
+                              width:
+                                type: integer
+                                format: int64
+                              height:
+                                type: integer
+                                format: int64
+                            description: Target image size.
+                responses:
+                  '200':
+                    description: Success
+                    content:
+                      application/json:
+                        schema:
+                          type: object
+
+            /postprocess:
+              post:
+                summary: Scales boxes and optionally draws labels
+                operationId: postprocess
+                requestBody:
+                  required: true
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        required: [original_image_size, augmented_image_size]
+                        properties:
+                          draw_boxes:
+                            type: boolean
+                          original_image_size:
+                            type: object
+                            properties:
+                              width:
+                                type: integer
+                                format: int64
+                              height:
+                                type: integer
+                                format: int64
+                          augmented_image_size:
+                            type: object
+                            properties:
+                              width:
+                                type: integer
+                                format: int64
+                              height:
+                                type: integer
+                                format: int64
+                responses:
+                  '200':
+                    description: Success
+                    content:
+                      application/json:
+                        schema:
+                          type: object
+                          properties:
+                            boxes:
+                              type: string
+                            boxes_shape:
+                              type: array
+                              items:
+                                type: integer
+                            labels:
+                              type: string
+                            labels_shape:
+                              type: array
+                              items:
+                                type: integer
+                            confidences:
+                              type: string
+                            confidences_shape:
+                              type: array
+                              items:
+                                type: integer
+                            annotated_image:
+                              type: string
+                              nullable: true
+                            annotated_image_shape:
+                              type: array
+                              items:
+                                type: integer
+                              nullable: true
+
+            /models/{model_id}:
+              post:
+                summary: Downloads a model from Hugging Face
+                operationId: load_model
+                parameters:
+                  - name: model_id
+                    in: path
+                    required: true
+                    schema:
+                      type: string
+                      format: utf8
+                requestBody:
+                  required: false
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          version:
+                            type: string
+                responses:
+                  '200':
+                    description: Success
+
+            /predict:
+              post:
+                summary: Run inference using default model
+                operationId: predict
+                requestBody:
+                  required: true
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        required: [image_data]
+                        properties:
+                          image_data:
+                            type: string
+                            format: base64
+                          draw_boxes:
+                            type: boolean
+                responses:
+                  '200':
+                    description: Success
+
+            /models/{model_id}/predict:
+              post:
+                summary: Run inference using a specified model
+                operationId: predict_by_model
+                parameters:
+                  - name: model_id
+                    in: path
+                    required: true
+                    schema:
+                      type: string
+                      format: utf8
+                requestBody:
+                  required: true
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        required: [image_data]
+                        properties:
+                          image_data:
+                            type: string
+                            format: base64
+                          draw_boxes:
+                            type: boolean
+                          tag:
+                            type: string
+                            default: latest
+                responses:
+                  '200':
+                    description: Success
+                          # TODO 
+#                           response = {
+#     "boxes": self._encode_tensor(boxes),
+#     "boxes_shape": list(boxes.shape),
+#     "labels": self._encode_tensor(labels),
+#     "labels_shape": list(labels.shape),
+#     "confidences": self._encode_tensor(confidences),
+#     "confidences_shape": list(confidences.shape),
+#     "annotated_image": self._encode_image(annotated_image), // nullable
+#     "annotated_image_shape": list(annotated_image.shape), // nullable
+# }
+            
+    - kind: Interface
+      type: Model
+      metadata:
+        name: model-interface
+        labels:
+          server-type: litserver
+          task-type: object-detection
+        discovery_criteria:
+          - platform: patra
+            confidence: 100
+            criteria:
+              - task-type: image-classification
+        selectors:
+          - match_server_labels:
+              server-type: image-classification-server
+            match_endpoint_labels:
+              task-type: image-classification
+      spec:
+        inputs:
+          - name: image_data
+            required: true
+            datatype: STRING
+            shape:
+              - 1
+            description: Base64 encoded string of the input image.
+            format: base64
+          - name: draw_boxes
+            required: false
+            datatype: BOOLEAN
+            shape:
+              - 1
+            description: Flag to control drawing boxes (if applicable).
+          - name: stride
+            required: true
+            datatype: INT64
+            shape:
+              - 1
+            description: Inference stride value.
+          - name: image_scale_size
+            required: true
+            datatype: INT64
+            shape:
+              - 2
+            description: >-
+              Target image size (width, height or height, width) as a
+              two-element array.
+        outputs:
+        # https://docs.ultralytics.com/reference/engine/results/#ultralytics.engine.results.BaseTensor.to
+        # Boxes.xyxy -> boxes | array of arrays of uint8/fp64
+        # Boxes.cls -> prediction_label | array of strings
+        # Boxes.conf -> confidence | array of fp64
+          - name: label
+            datatype: STRING
+            shape:
+              - 0
+            description: Predicted class label.
+          - name: probability
+            datatype: FP32
+            shape:
+              - 1
+            description: Confidence score for the predicted label (0.0-1.0).

@@ -1,12 +1,19 @@
 use crate::operations::files::{
     MkdirResponse,
     mkdir,
-    // insert
+    insert
 };
 use crate::utils::token_from_request;
 use crate::tokens::decode_jwt;
 
-use shared::artifacts::ArtifactGenerator;
+use shared::artifacts::{
+    Archive,
+    Artifact,
+    ArtifactGenerator,
+    ArtifactStager,
+    ArtifactStagingParams,
+    Compression
+};
 use shared::clients::{
     ClientStagedArtifactResponse,
     ClientError,
@@ -53,7 +60,7 @@ impl ModelsClient for TapisClient {
 
     /// Takes a single file uploaded to the Models API and upload it to a Tapis
     /// system
-    fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    async fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         self.logger.debug("Publishing model");
         let token = token_from_request(&request.req)
             .ok_or_else(|| ClientError::new(String::from("Missing tapis token in 'X-Tapis-Token' header")))?;
@@ -79,16 +86,22 @@ impl ModelsClient for TapisClient {
             return Err(ClientError::from_str("Tapis system id is missing from path. Should be the first item in the path"));
         }
 
-        let mut rest_of_path = "/";
+        let system_id = parts[0].to_string();
+
+        let model_id = request.path.model_id.clone();
+
+        let mut target_path = "/";
         if parts.len() > 1 {
-            rest_of_path = parts[1];
+            target_path = parts[1];
         }
+        let formatted_target_path = format!("{}/{}", target_path, model_id);
+        target_path = formatted_target_path.as_str();
 
         let mkdir_resp = mkdir(
             claims.tapis_tenant_id.clone(),
-            parts[0].to_string(),
-            rest_of_path.to_string(),
-            Some(token)
+            system_id.clone(),
+            target_path.to_string().clone(),
+            Some(token.clone())
         ).map_err(|err| ClientError::new(err.to_string()))?;
         
         let mkdir_status_code = mkdir_resp.status()
@@ -104,9 +117,29 @@ impl ModelsClient for TapisClient {
             return Err(ClientError::new(format!("Error making directories on the target system: {}", &deserizied_mkdir_resp.message)))
         }
 
-        // Upload the model file to the system
+        // Package the files of upload
+        
 
-        Err(ClientError::from_str(""))
+        // Upload the model file to the system
+        let resp_insert = insert(
+            claims.tapis_tenant_id.clone(),
+            system_id.clone(),
+            staged_artifact.path.to_string_lossy().to_string(),
+            target_path.to_string().clone(),
+            Some(token.clone())
+        ).await;
+
+        match resp_insert {
+            Ok(_) => {
+                Ok(ClientJsonResponse::new(
+                    Some(200),
+                    Some(String::from("Successfully uploaded model")),
+                    None,
+                    None
+                ))
+            },
+            Err(err) => Err(ClientError::new(err.to_string()))
+        }
     }
 }
 
@@ -123,7 +156,7 @@ impl DatasetsClient for TapisClient {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 
-    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }

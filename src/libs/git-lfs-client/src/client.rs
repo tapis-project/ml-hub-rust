@@ -116,7 +116,7 @@ impl ModelsClient for GitLfsClient {
         ))
     }
 
-    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    async fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 
@@ -202,7 +202,7 @@ impl DatasetsClient for GitLfsClient {
         ))
     }
 
-    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

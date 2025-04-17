@@ -57,15 +57,15 @@ pub(crate) mod files {
             .map_err(|err| Error::new(err.to_string()))
     }
 
-    pub async fn _insert(
-        base_url: String,
+    pub async fn insert(
+        tenant: String,
         system_id: String,
         source_path: String,
         target_path: String,
         token: Option<String>
     ) -> Result<Response, Error> {
         let url = build_operation_url(
-            base_url,
+            tenant,
             String::from("files"),
             Some(format!(
                 "{}/{}/{}",

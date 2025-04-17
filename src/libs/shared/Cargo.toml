@@ -6,8 +6,10 @@ edition = "2021"
 [dependencies]
 actix-multipart = "0.7.2"
 actix-web = "4"
+futures-util = "0.3"
 gix = "0.70.0"
 log = "0.4"
+openapiv3 = "2.0.0"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.135"
 strum = "0.27.0"

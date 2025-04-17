@@ -1,0 +1,215 @@
+---
+kind: InferenceServer
+metadata:
+  name: jstubbs_MegaDetector-for-Wildlife-Detection_5a-litserve
+  namespace: public
+  version: 0.1.0
+  description: >-
+    An inference server for model
+    jstubbs_MegaDetector-for-Wildlife-Detection_5a-litserve
+  labels:
+    architecture: x86_64
+    multi-model: "true"
+spec:
+  interfaces:
+    - kind: Interface
+      type: Container
+      metadata:
+        name: megadetector-container
+        label:
+          oci-compliant: "true"
+      spec:
+        image: 'iud2i/megadetector5a-litserve:0.1.0'
+        ports:
+          - name: http
+            port: 8080
+            protocol: http
+        resources:
+          requests:
+            cpu: 1
+            memory: 2Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+          limits:
+            cpu: 2
+            memory: 20Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+    - kind: Interface
+      type: RestApi
+      format: OpenApi3
+      metadata:
+        name: api
+        labels:
+          server-type: litserver
+          task-type: image-classification
+      spec:
+        securitySchemes:
+          TapisJWT:
+            type: apiKey
+            description: Tapis signed JWT token authentication
+            name: X-Tapis-Token
+            in: header
+        schemas:
+          port: 8080
+          protocol: HTTP
+          endpoints:
+            - name: healthcheck
+              route: /health
+              description: Returns information about the current health of the server
+              method: GET
+            - name: preprocess
+              route: /preprocess
+              description: Runs input data preprocessing
+              method: POST
+            - name: postprocess
+              route: /postprocess
+              description: Runs output data postprocessing
+              method: POST
+            - name: load_model
+              route: '/models/{model_id}'
+              description: >-
+                Downloads the model by id specified in the path parameters to the
+                server
+              method: GET
+              parameters:
+                - name: model_id
+                  type: string
+                  in: path
+                  required: true
+                  format: utf8
+                - name: tag
+                  type: string
+                  in: query
+                  default: latest
+            - name: predict
+              description: >-
+                Runs inference using this images default model. Takes an image as
+                input and returns a prediction about that image
+              labels:
+                task-type: image-classification
+              method: POST
+              route: /predict
+              content_type: application/json
+              request_body:
+                required: true
+                parameters:
+                  image_data:
+                    required: true
+                    type: string
+                    description: Base64 encoded string of the input image.
+                    format: base64
+                  draw_boxes:
+                    required: false
+                    type: boolean
+                    description: Flag to control drawing boxes (if applicable).
+                  stride:
+                    required: true
+                    type: integer
+                    format: int64
+                    description: Inference stride value.
+                  image_scale_size:
+                    required: true
+                    type: integer
+                    format: int64
+                    description: >-
+                      Target image size (width, height or height, width) as a
+                      two-element array.
+            - name: predict_by_model
+              description: >-
+                Runs inference using this images default model. Takes an image as
+                input and returns a prediction about that image
+              labels:
+                task-type: image-classification
+              method: POST
+              route: '/models/{model_id}/predict'
+              content_type: application/json
+              parameters:
+                - name: model_id
+                  type: string
+                  in: path
+                  required: true
+                  format: utf8
+              request_body:
+                required: true
+                parameters:
+                  image_data:
+                    required: true
+                    type: string
+                    description: Base64 encoded string of the input image.
+                    format: base64
+                  draw_boxes:
+                    required: false
+                    type: boolean
+                    description: Flag to control drawing boxes (if applicable).
+                  stride:
+                    required: true
+                    type: integer
+                    format: int64
+                    description: Inference stride value.
+                  image_scale_size:
+                    required: true
+                    type: integer
+                    format: int64
+                    description: >-
+                      Target image size (width, height or height, width) as a
+                      two-element array.
+                  tag:
+                    type: string
+                    default: latest
+    - kind: Interface
+      type: Model
+      format: PatraModelMetadata
+      metadata:
+        name: model-interface
+        selectors:
+          - match_server_labels:
+              server-type: image-classification-server
+            match_endpoint_labels:
+              task-type: image-classification
+            match_model_metadata_labels:
+              architecture: x86_64
+        metadata_discovery:
+          platform: patra
+      spec:
+        inputs:
+          - name: image_data
+            required: true
+            datatype: STRING
+            shape:
+              - 1
+            description: Base64 encoded string of the input image.
+            format: base64
+          - name: draw_boxes
+            required: false
+            datatype: BOOLEAN
+            shape:
+              - 1
+            description: Flag to control drawing boxes (if applicable).
+          - name: stride
+            required: true
+            datatype: INT64
+            shape:
+              - 1
+            description: Inference stride value.
+          - name: image_scale_size
+            required: true
+            datatype: INT64
+            shape:
+              - 2
+            description: >-
+              Target image size (width, height or height, width) as a
+              two-element array.
+        outputs:
+          - name: label
+            datatype: STRING
+            shape:
+              - 1
+            description: Predicted class label.
+          - name: probability
+            datatype: FP32
+            shape:
+              - 1
+            description: Confidence score for the predicted label (0.0-1.0).

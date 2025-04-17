@@ -1,22 +1,23 @@
-use actix_web::{get, HttpResponse, Responder};
+use actix_web::{web, get, HttpResponse, Responder};
 use crate::dtos::inference_dto::InferenceDto;
 use crate::dtos::responses::Response;
 use log::debug;
 
-#[get("/inference")]
-async fn list_inferences() -> impl Responder {
-    debug!("Operation list_inferences");
-    let mut inferences: Vec<InferenceDto> = Vec::new();
+#[get("/inference-api/{inference_server_name}/deploymets/{deployment_name}")]
+async fn get_inference_server_deployment(
+    path: web::Path<String>
+) -> impl Responder {
+    debug!("Operation get_inference");
+    let inference_id = path.into_inner();
     let inference_dto = InferenceDto {
-        inference_id: String::from("test")
+        inference_id
     };
-    inferences.push(inference_dto);
     let resp = Response::new(
         String::from("test"),
         String::from("test"),
         String::from("test"),
         String::from("test"),
-        inferences
+        inference_dto
     );
     HttpResponse::Ok()
         .content_type("application/json")

@@ -191,7 +191,7 @@ impl ModelsClient for HuggingFaceClient {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    fn publish_model(&self, _result: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    async fn publish_model(&self, _result: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }
@@ -325,7 +325,7 @@ impl DatasetsClient for HuggingFaceClient {
         ))
     }
 
-    fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

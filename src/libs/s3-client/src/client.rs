@@ -48,7 +48,7 @@ impl ModelsClient for S3Client {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    async fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }
@@ -66,7 +66,7 @@ impl DatasetsClient for S3Client {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 
-    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }

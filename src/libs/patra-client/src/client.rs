@@ -104,7 +104,7 @@ impl ModelsClient for PatraClient {
         ))
     }
 
-    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    async fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::from_str(""))
     }
 }
@@ -122,7 +122,7 @@ impl DatasetsClient for PatraClient {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 
-    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }

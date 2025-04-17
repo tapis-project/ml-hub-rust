@@ -65,7 +65,7 @@ async fn publish_model(
     };
 
     // Publish the model
-    let _client_resp = match client.publish_model(&request) {
+    let client_resp = match client.publish_model(&request).await {
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
@@ -81,13 +81,13 @@ async fn publish_model(
         }
     };
 
-    return HttpResponse::InternalServerError()
+    HttpResponse::Ok()
         .content_type("application/json")
         .json(JsonResponse {
-            status: Some(501),
-            message: Some(String::from("Artifact responses for MIME type multipart/mixed not yet implemented")),
-            result: None,
-            metadata: None,
+            status: Some(200),
+            message: client_resp.message,
+            result: client_resp.result,
+            metadata: client_resp.metadata,
             version: Some(VERSION.to_string())
         })
 }

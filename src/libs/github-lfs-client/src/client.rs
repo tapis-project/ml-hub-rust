@@ -113,7 +113,7 @@ impl ModelsClient for GithubLfsClient {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    async fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }
@@ -188,7 +188,7 @@ impl DatasetsClient for GithubLfsClient {
         ))
     }
 
-    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

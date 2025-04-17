@@ -3,8 +3,8 @@ use crate::dtos::inference_dto::InferenceDto;
 use crate::dtos::responses::Response;
 use log::debug;
 
-#[get("/inference/{inference_id}")]
-async fn get_inference(
+#[get("/inference-api/{inference_server_name}")]
+async fn get_inference_server(
     path: web::Path<String>
 ) -> impl Responder {
     debug!("Operation get_inference");

@@ -1,6 +1,9 @@
 mod operations {
-    pub mod get_inference;
-    pub mod list_inferences;
+    pub mod get_inference_server;
+    pub mod list_inference_servers;
+    pub mod get_inference_server_deployment;
+    pub mod list_inference_server_deployments;
+    pub mod get_inference_server_docs;
 }
 mod dtos { 
     pub mod inference_dto;
@@ -29,8 +32,10 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            .service(operations::get_inference::get_inference)
-            .service(operations::list_inferences::list_inferences)
+            .service(operations::get_inference_server::get_inference_server)
+            .service(operations::list_inference_servers::list_inference_servers)
+            .service(operations::get_inference_server::get_inference_server)
+            .service(operations::list_inference_servers::list_inference_servers)
     })
         .bind(addrs)?
         .run()

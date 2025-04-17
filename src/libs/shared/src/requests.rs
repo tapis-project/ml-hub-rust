@@ -1,5 +1,5 @@
 use crate::artifacts::{Archive, Compression};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use actix_multipart::Multipart;
@@ -7,87 +7,87 @@ use actix_web::web;
 // Re-export so clients can use this struct
 pub use actix_web::HttpRequest;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {
     pub platform: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct GetModelPath {
     pub platform: String,
     pub model_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadModelPath {
     pub platform: String,
     pub model_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PublishModelPath {
     pub platform: String,
     pub model_id: String,
     pub path: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DiscoverModelsPath {
     pub platform: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ListDatasetsPath {
     pub platform: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct GetDatasetPath {
     pub platform: String,
     pub dataset_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadDatasetPath {
     pub platform: String,
     pub dataset_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PublishDatasetPath {
     pub platform: String,
     pub dataset_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct StartInferenceServerPath {
     pub platform: String,
     pub inference_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RunInferencePath {
     pub platform: String,
     pub inference_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreateInferenceServerPath {
     pub platform: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreateInferencePath {
     pub inference_service_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreateTrainingPath {
     pub platform: String,
     pub training_id: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct StartTrainingPath {
     pub platform: String,
     pub training_id: String
@@ -100,13 +100,13 @@ pub struct ListModelsRequest {
     pub body: web::Bytes,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct SystemRequirement {
     pub name: String,
     pub version: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Accelerator {
     pub accelerator_type: String,
     pub memory_gb: Option<i32>,
@@ -115,7 +115,7 @@ pub struct Accelerator {
     pub system_requirements: Vec<SystemRequirement>
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
@@ -124,24 +124,26 @@ pub struct HardwareRequirements {
     pub architectures: Option<Vec<String>>
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ModelDiscoveryCriteria {
     // General fields
     pub name: Option<String>,
     pub model_type: Option<String>,
     pub version: Option<String>,
     pub framework: Option<String>,
+    pub image: Option<String>,
 
     /// Arbitrary labels
     pub labels: Option<Vec<String>>,
+    pub label_map: Option<Value>,
 
-    /// Architecture fileds
+    /// Architecture fields
     pub multi_modal: Option<bool>,
     pub model_inputs: Option<Vec<ModelIO>>,
     pub model_outputs: Option<Vec<ModelIO>>,
@@ -184,7 +186,7 @@ pub struct ModelDiscoveryCriteria {
     pub bias_evaluation_score: Option<i8>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DiscoveryCriteriaBody {
     pub criteria: Vec<ModelDiscoveryCriteria>,
     pub confidence_threshold: Option<Vec<String>>
@@ -193,7 +195,7 @@ pub struct DiscoveryCriteriaBody {
 
 pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadArtifactBody {
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
@@ -302,10 +304,10 @@ pub struct StartTrainingRequest {
 
 pub mod utils {
     use actix_web::HttpRequest;
-
     use super::Parameters;
     use crate::errors::Error;
     use std::collections::hash_map::HashMap;
+    
 
     pub fn param_to_string(params: Option<Parameters>, prop: &str) -> Result<Option<String>, Error> {
         return params.unwrap_or_else(HashMap::new)

@@ -1,0 +1,279 @@
+---
+kind: InferenceServer
+metadata:
+  name: ultralytics-litserve
+  version: 0.1.0
+  description: >-
+    An inference server 
+  labels:
+    multi-model: "true"
+    model-hotloading: "true"
+spec:
+  interfaces:
+    - kind: Interface
+      type: Container
+      metadata:
+        name: ultralytics-litserve-container
+        labels:
+          oci-compliant: "true"
+      spec:
+        image: 'https://ghcr.io/icicle-ai/ultralytics-litserve:latest'
+        ports:
+        - name: http
+          port: 8000
+          protocol: http
+        resources:
+          requests:
+            cpu: 1
+            tpu: 0
+            mps: 0
+            memory: 2Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+              amd: 0
+            # accelerators:
+          limits:
+            cpu: 2
+            tpu: 0
+            mps: 0
+            memory: 20Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+    - kind: Interface
+      type: RestApi
+      format: OpenApi3
+      metadata:
+        name: ultralytics-api
+        labels:
+          server-type: litserver
+          task-type: object-detection
+      spec:
+        securitySchemes:
+          TapisJWT:
+            type: apiKey
+            description: Access token for huggingface
+            name: HF-ACCESS-TOKEN
+            in: header
+        schemas:
+          port: 8000
+          protocol: HTTP
+          endpoints:
+            - name: healthcheck
+              route: /health
+              description: Returns information about the current health of the server
+              method: GET
+            - name: readycheck
+              route: /ready/{model_id}
+              description: Returns information about whether or not a model is loaded and ready to run inference
+              method: GET
+            - name: preprocess
+              route: /preprocess
+              description: Runs input data preprocessing
+              content_type: application/json
+              request_body:
+                required: true
+                parameters:
+                  image_data:
+                    required: true
+                    type: string
+                    description: Base64 encoded string of the input image.
+                    format: base64
+                  stride:
+                    required: true
+                    type: integer
+                    format: int64
+                    description: Stride of the model.
+                  target_size:
+                    required: true
+                    type: object
+                    description: >-
+                      Target image size (width, height or height, width) as a
+                      two-element array.
+                    properies:
+                      width: int64
+                      height: int64
+              responses:
+                '200':
+                  description: Success.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/RespBasic'
+            - name: postprocess
+              route: /postprocess
+              description: >-
+                Scales the bounding boxes to the original image size, and if draw boxes is true, then it
+                annotates the images with the class label and the confidence (probability)
+              method: POST
+              content_type: application/json
+              request_body:
+                required: true
+                parameters:
+                  draw_boxes:
+                    required: false
+                    type: boolean
+                    description: Flag to control drawing boxes (if applicable).
+                  original_image_size:
+                    required: true
+                    type: object
+                    description: >-
+                      Original image size.
+                    properies:
+                      width: int64
+                      height: int64
+                  augmented_image_size:
+                    required: true
+                    type: object
+                    description: >-
+                      Augmented image size.
+                    properies:
+                      width: int64
+                      height: int64 
+              responses:
+                '200':
+                  description: Success
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properies:
+                          # TODO 
+#                           response = {
+#     "boxes": self._encode_tensor(boxes),
+#     "boxes_shape": list(boxes.shape),
+#     "labels": self._encode_tensor(labels),
+#     "labels_shape": list(labels.shape),
+#     "confidences": self._encode_tensor(confidences),
+#     "confidences_shape": list(confidences.shape),
+#     "annotated_image": self._encode_image(annotated_image), // nullable
+#     "annotated_image_shape": list(annotated_image.shape), // nullable
+# }
+            - name: load_model
+              route: '/models/{model_id}'
+              description: >-
+                Downloads the model by id specified in the path parameters from huggingface to the
+                server
+              method: POST
+              content_type: application/json
+              parameters:
+                - name: model_id
+                  type: string
+                  in: path
+                  required: true
+                  format: utf8
+              request_body:
+                required: true
+                parameters:
+                  version:
+                    type: string
+            - name: predict
+              description: >-
+                Runs inference using this images default model. Takes an image as
+                input and returns a prediction about that image
+              labels:
+                task-type: image-classification
+              method: POST
+              route: /predict
+              content_type: application/json
+              request_body:
+                required: true
+                parameters:
+                  image_data:
+                    required: true
+                    type: string
+                    description: Base64 encoded string of the input image.
+                    format: base64
+                  draw_boxes:
+                    required: false
+                    type: boolean
+                    description: Flag to control drawing boxes (if applicable).
+            - name: predict_by_model
+              description: >-
+                Runs inference using this images default model. Takes an image as
+                input and returns a prediction about that image
+              labels:
+                task-type: image-classification
+              method: POST
+              route: '/models/{model_id}/predict'
+              content_type: application/json
+              parameters:
+                - name: model_id
+                  type: string
+                  in: path
+                  required: true
+                  format: utf8
+              request_body:
+                required: true
+                parameters:
+                  image_data:
+                    required: true
+                    type: string
+                    description: Base64 encoded string of the input image.
+                    format: base64
+                  draw_boxes:
+                    required: false
+                    type: boolean
+                    description: Flag to control drawing boxes (if applicable).
+                  tag:
+                    type: string
+                    default: latest
+    - kind: Interface
+      type: Model
+      format: PatraModelMetadata
+      metadata:
+        name: model-interface
+        selectors:
+          - match_server_labels:
+              server-type: image-classification-server
+            match_endpoint_labels:
+              task-type: image-classification
+            match_model_metadata_labels:
+              architecture: x86_64
+        metadata_discovery:
+          platform: patra
+      spec:
+        inputs:
+          - name: image_data
+            required: true
+            datatype: STRING
+            shape:
+              - 1
+            description: Base64 encoded string of the input image.
+            format: base64
+          - name: draw_boxes
+            required: false
+            datatype: BOOLEAN
+            shape:
+              - 1
+            description: Flag to control drawing boxes (if applicable).
+          - name: stride
+            required: true
+            datatype: INT64
+            shape:
+              - 1
+            description: Inference stride value.
+          - name: image_scale_size
+            required: true
+            datatype: INT64
+            shape:
+              - 2
+            description: >-
+              Target image size (width, height or height, width) as a
+              two-element array.
+        outputs:
+        # https://docs.ultralytics.com/reference/engine/results/#ultralytics.engine.results.BaseTensor.to
+        # Boxes.xyxy -> boxes | array of arrays of uint8/fp64
+        # Boxes.cls -> prediction_label | array of strings
+        # Boxes.conf -> confidence | array of fp64
+          - name: label
+            datatype: STRING
+            shape:
+              - 0
+            description: Predicted class label.
+          - name: probability
+            datatype: FP32
+            shape:
+              - 1
+            description: Confidence score for the predicted label (0.0-1.0).
