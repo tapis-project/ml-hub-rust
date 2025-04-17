@@ -1,8 +1,13 @@
 use actix_web::{web, get, HttpResponse, Responder};
+use shared::requests::GetInferenceServerDocsPath;
+use std::collections::hash_map::HashMap;
 
 #[get("/inference-api/{inference_server_name}/docs")]
 async fn get_inference_server_docs(
-    _path: web::Path<String>
+    req: ActixHttpRequest,
+    path: web::Path<GetInferenceServerDocsPath>,
+    query: web::Query<HashMap<String, String>>,
+    body: web::Bytes,
 ) -> impl Responder {
     let html = r#"
         <!DOCTYPE html>

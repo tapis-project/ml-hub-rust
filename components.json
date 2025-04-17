@@ -192,6 +192,21 @@
       }
     },
     {
+      "name": "mongo",
+      "rootDir": "src/components/mongo",
+      "labels": ["component"],
+      "commands": {
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
+        "code": "code src/components/{{ self.name }}"
+      }
+    },
+    {
       "name": "huggingface-client",
       "rootDir": "src/libs/huggingface-client",
       "labels": ["lib"],

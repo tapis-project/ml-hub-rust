@@ -60,6 +60,11 @@ pub struct PublishDatasetPath {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct GetInferenceServerDocsPath {
+    pub inference_server_name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct StartInferenceServerPath {
     pub platform: String,
     pub inference_id: String
