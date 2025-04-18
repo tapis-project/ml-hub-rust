@@ -65,7 +65,7 @@ async fn publish_model(
     };
 
     // Publish the model
-    let client_resp = match client.publish_model(&request).await {
+    let client_resp = match client.publish_model(&request) {
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
