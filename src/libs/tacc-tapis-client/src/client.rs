@@ -1,18 +1,18 @@
 use crate::operations::files::{
     MkdirResponse,
     mkdir,
-    insert
+    // insert
 };
 use crate::utils::token_from_request;
 use crate::tokens::decode_jwt;
 
 use shared::artifacts::{
-    Archive,
-    Artifact,
+    // Archive,
+    // Artifact,
     ArtifactGenerator,
-    ArtifactStager,
-    ArtifactStagingParams,
-    Compression
+    // ArtifactStager,
+    // ArtifactStagingParams,
+    // Compression
 };
 use shared::clients::{
     ClientStagedArtifactResponse,
@@ -58,9 +58,13 @@ impl ModelsClient for TapisClient {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 
+    // fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    //     Err(ClientError::new(String::from("Operation not supported")))
+    // }
+
     /// Takes a single file uploaded to the Models API and upload it to a Tapis
     /// system
-    async fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         self.logger.debug("Publishing model");
         let token = token_from_request(&request.req)
             .ok_or_else(|| ClientError::new(String::from("Missing tapis token in 'X-Tapis-Token' header")))?;
@@ -121,25 +125,27 @@ impl ModelsClient for TapisClient {
         
 
         // Upload the model file to the system
-        let resp_insert = insert(
-            claims.tapis_tenant_id.clone(),
-            system_id.clone(),
-            staged_artifact.path.to_string_lossy().to_string(),
-            target_path.to_string().clone(),
-            Some(token.clone())
-        ).await;
+        // let resp_insert = insert(
+        //     claims.tapis_tenant_id.clone(),
+        //     system_id.clone(),
+        //     staged_artifact.path.to_string_lossy().to_string(),
+        //     target_path.to_string().clone(),
+        //     Some(token.clone())
+        // ).await;
+        
+        Err(ClientError::from_str("Placholder not implemented"))
 
-        match resp_insert {
-            Ok(_) => {
-                Ok(ClientJsonResponse::new(
-                    Some(200),
-                    Some(String::from("Successfully uploaded model")),
-                    None,
-                    None
-                ))
-            },
-            Err(err) => Err(ClientError::new(err.to_string()))
-        }
+        // match resp_insert {
+        //     Ok(_) => {
+        //         Ok(ClientJsonResponse::new(
+        //             Some(200),
+        //             Some(String::from("Successfully uploaded model")),
+        //             None,
+        //             None
+        //         ))
+        //     },
+        //     Err(err) => Err(ClientError::new(err.to_string()))
+        // }
     }
 }
 

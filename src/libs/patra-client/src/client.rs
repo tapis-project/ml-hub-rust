@@ -104,7 +104,7 @@ impl ModelsClient for PatraClient {
         ))
     }
 
-    async fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::from_str(""))
     }
 }

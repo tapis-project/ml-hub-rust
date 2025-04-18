@@ -116,7 +116,7 @@ impl ModelsClient for GitLfsClient {
         ))
     }
 
-    async fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 

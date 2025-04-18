@@ -11,7 +11,11 @@ use std::fs::create_dir_all;
 /// derived from them that are required by the various services
 pub struct Env {
     pub shared_data_dir: String,
-    pub cache_dir: String
+    pub cache_dir: String,
+    pub inference_db: String,
+    pub inference_db_port: String,
+    pub inference_db_user: String,
+    pub inference_db_password: String
 }
 
 impl Env {
@@ -33,8 +37,32 @@ impl Env {
             }
         }
 
+        let inference_db: String = match std::env::var("INFERENCE_DB") {
+            Ok(var) => var,
+            Err(err) => Err(Error::new(err.to_string()))?
+        };
+
+        let inference_db_port: String = match std::env::var("INFERENCE_DB_PORT") {
+            Ok(var) => var,
+            Err(err) => Err(Error::new(err.to_string()))?
+        };
+
+        let inference_db_user: String = match std::env::var("INFERENCE_DB_USER") {
+            Ok(var) => var,
+            Err(err) => Err(Error::new(err.to_string()))?
+        };
+
+        let inference_db_password: String = match std::env::var("INFERENCE_DB_PASSWORD") {
+            Ok(var) => var,
+            Err(err) => Err(Error::new(err.to_string()))?
+        };
+
         return Ok(
             Self {
+                inference_db,
+                inference_db_port,
+                inference_db_password,
+                inference_db_user,
                 shared_data_dir,
                 cache_dir
             }

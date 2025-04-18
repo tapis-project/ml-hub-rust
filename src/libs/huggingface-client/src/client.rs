@@ -191,7 +191,7 @@ impl ModelsClient for HuggingFaceClient {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    async fn publish_model(&self, _result: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, _result: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

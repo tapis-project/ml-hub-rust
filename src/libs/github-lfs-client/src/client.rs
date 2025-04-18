@@ -113,7 +113,7 @@ impl ModelsClient for GithubLfsClient {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    async fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

@@ -13,14 +13,14 @@ spec:
     spec:
       containers:
       - env:
-        - name: DB_HOST
-          value: mlhub-postgres-service
-        - name: DB_NAME
-          value: mlhub
-        - name: DB_PASSWORD
-          value: dev
-        - name: DB_USER
-          value: mlhub
+        - name: INFERENCE_DB_HOST
+          value: mlhub-mongodb-service
+        - name: INFERENCE_DB_NAME
+          value: inference
+        - name: INFERENCE_DB_PASSWORD
+          value: password
+        - name: INFERENCE_DB_USER
+          value: admin
         - name: RUST_LOG
           value: debug
         image: tapis/inference-api:local

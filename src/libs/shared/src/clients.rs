@@ -6,7 +6,7 @@ use crate::artifacts::{ArtifactGenerator, StagedArtifact};
 pub use crate::errors::ClientError;
 use serde::Serialize;
 use serde_json::Value;
-use std::future::Future;
+// use std::future::Future;
 
 #[derive(Serialize)]
 pub struct ClientJsonResponse {
@@ -46,7 +46,8 @@ pub trait ModelsClient: ArtifactGenerator {
     fn get_model(&self, request: &requests::GetModelRequest) -> Result<ClientJsonResponse, ClientError>;
     fn download_model(&self, request: &requests::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
     fn discover_models(&self, request: &requests::DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn publish_model(&self, request: &requests::PublishModelRequest) -> impl Future<Output=Result<ClientJsonResponse, ClientError>>;
+    fn publish_model(&self, request: &requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError>;
+    // fn publish_model(&self, request: &requests::PublishModelRequest) -> impl Future<Output=Result<ClientJsonResponse, ClientError>>;
 }
 
 pub trait DatasetsClient: ArtifactGenerator {

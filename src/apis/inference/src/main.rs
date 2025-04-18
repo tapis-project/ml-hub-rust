@@ -4,12 +4,10 @@ mod operations {
     pub mod get_inference_server_deployment;
     pub mod list_inference_server_deployments;
     pub mod get_inference_server_docs;
-}
-mod dtos { 
-    pub mod inference_dto;
-    pub mod responses;
+    pub mod create_inference_server;
 }
 mod config;
+mod database;
 
 use config::{DEFAULT_HOST, DEFAULT_PORT};
 use std::env;
@@ -36,6 +34,7 @@ async fn main() -> std::io::Result<()> {
             .service(operations::list_inference_servers::list_inference_servers)
             .service(operations::get_inference_server::get_inference_server)
             .service(operations::list_inference_servers::list_inference_servers)
+            .service(operations::create_inference_server::create_inference_server)
     })
         .bind(addrs)?
         .run()

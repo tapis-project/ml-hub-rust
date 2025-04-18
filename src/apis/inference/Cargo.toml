@@ -12,3 +12,4 @@ clients = { version = "0.1.0", path = "../../libs/clients" }
 apistos = "0.4"
 env_logger = "0.11.5"
 log = "0.4"
+mongodb = "2.8"

@@ -60,7 +60,7 @@ impl Display for RegistrarError {
 /// the following APIs: Models, Datasets, Inference, Training. The strum(serialize="") 
 /// attribute corresponds to the desired "platform" path parameter passed to the 
 /// `get_client` method of a registrar.
-#[derive(Eq, Hash, PartialEq, Debug, Display, Serialize, Deserialize, EnumString)]
+#[derive(Eq, Hash, PartialEq, Debug, Display, EnumString)]
 pub enum Platform {
     /// This variant corresponds to the Hugging Face API client.
     #[strum(serialize="huggingface")]
