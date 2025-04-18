@@ -1,14 +1,25 @@
-use actix_web::{web, get, HttpResponse, Responder};
+use crate::state::AppState;
+use crate::repositories::inference_server_repository::InferenceServerRepository;
 use shared::requests::GetInferenceServerDocsPath;
 use std::collections::hash_map::HashMap;
+use actix_web::{
+    web,
+    get,
+    HttpRequest as ActixHttpRequest,
+    HttpResponse,
+    Responder as ActixResponder
+};
 
 #[get("/inference-api/inference-servers/{inference_server_name}/docs")]
 async fn get_inference_server_docs(
-    req: ActixHttpRequest,
-    path: web::Path<GetInferenceServerDocsPath>,
-    query: web::Query<HashMap<String, String>>,
-    body: web::Bytes,
-) -> impl Responder {
+    _req: ActixHttpRequest,
+    _path: web::Path<GetInferenceServerDocsPath>,
+    _query: web::Query<HashMap<String, String>>,
+    _body: web::Bytes,
+    data: web::Data<AppState>
+) -> impl ActixResponder {
+    let repo = InferenceServerRepository::new(data.db.clone());
+
     let html = r#"
         <!DOCTYPE html>
         <html lang="en">

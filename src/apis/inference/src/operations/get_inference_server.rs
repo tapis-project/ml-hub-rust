@@ -3,7 +3,7 @@ use log::debug;
 
 #[get("/inference-api/inference-servers/{inference_server_name}")]
 async fn get_inference_server(
-    path: web::Path<String>
+    _path: web::Path<String>
 ) -> impl Responder {
     debug!("Operation get_inference");
     HttpResponse::Ok()

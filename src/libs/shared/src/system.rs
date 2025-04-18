@@ -13,6 +13,7 @@ pub struct Env {
     pub shared_data_dir: String,
     pub cache_dir: String,
     pub inference_db: String,
+    pub inference_db_host: String,
     pub inference_db_port: String,
     pub inference_db_user: String,
     pub inference_db_password: String
@@ -37,6 +38,11 @@ impl Env {
             }
         }
 
+        let inference_db_host: String = match std::env::var("INFERENCE_DB_HOST") {
+            Ok(var) => var,
+            Err(err) => Err(Error::new(err.to_string()))?
+        };
+
         let inference_db: String = match std::env::var("INFERENCE_DB") {
             Ok(var) => var,
             Err(err) => Err(Error::new(err.to_string()))?
@@ -60,6 +66,7 @@ impl Env {
         return Ok(
             Self {
                 inference_db,
+                inference_db_host,
                 inference_db_port,
                 inference_db_password,
                 inference_db_user,
