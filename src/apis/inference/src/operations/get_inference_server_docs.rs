@@ -19,7 +19,8 @@ async fn get_inference_server_docs(
     data: web::Data<AppState>
 ) -> impl ActixResponder {
     let repo = InferenceServerRepository::new(data.db.clone());
-
+    repo.list()
+        .await;
     let html = r#"
         <!DOCTYPE html>
         <html lang="en">

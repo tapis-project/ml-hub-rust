@@ -12,6 +12,12 @@ impl Error {
             message,
         }
     }
+
+    pub fn from_str(message: &str) -> Self {
+        Error {
+            message: message.to_string(),
+        }
+    }
 }
 
 impl Display for Error {

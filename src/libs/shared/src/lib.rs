@@ -10,3 +10,4 @@ pub mod archive;
 pub mod system;
 pub mod constants;
 pub mod inference;
+pub mod models;
