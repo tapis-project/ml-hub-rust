@@ -1,7 +1,7 @@
 use std::collections::hash_map::HashMap;
 use serde_json::Value;
 use openapiv3::OpenAPI;
-use crate::models::ModelDiscoveryCriteria;
+use crate::domain::models::ModelDiscoveryCriteria;
 use crate::requests::inference as requests;
 use crate::errors::Error;
 
@@ -28,7 +28,7 @@ impl TryFrom<requests::Kind> for Kind {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum InterfaceType {
     Container,
     Model,
@@ -553,3 +553,6 @@ impl TryFrom<requests::InferenceServer> for InferenceServer {
         })
     }
 }
+
+// TODO
+pub struct InferenceServerDeployment;

@@ -9,5 +9,7 @@ pub mod responses;
 pub mod archive;
 pub mod system;
 pub mod constants;
-pub mod inference;
-pub mod models;
+pub mod domain {
+    pub mod inference;
+    pub mod models;
+}

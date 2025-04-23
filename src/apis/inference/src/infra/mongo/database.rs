@@ -1,6 +1,6 @@
 use shared::errors::Error;
 use mongodb::{Client, options::ClientOptions};
-pub use mongodb::{Database, Collection};
+use mongodb::Database;
 
 pub struct ClientParams {
     pub username: String,
@@ -31,3 +31,4 @@ pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
 }
 
 pub const INFERENCE_SERVER_COLLECTION: &str = "inference_servers";
+pub const INFERENCE_SERVER_DEPLOYMENT_COLLECTION: &str = "inference_server_deployments";

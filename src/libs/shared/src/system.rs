@@ -24,7 +24,7 @@ impl Env {
         // Shared data dir
         let shared_data_dir: String = match std::env::var("SHARED_DATA") {
             Ok(var) => var,
-            Err(err) => Err(Error::new(err.to_string()))?
+            Err(err) => Err(Error::new(format!("Error with env var 'SHARED_DATA': {}", err.to_string())))?
         };
         
         // Cache directory
@@ -40,27 +40,27 @@ impl Env {
 
         let inference_db_host: String = match std::env::var("INFERENCE_DB_HOST") {
             Ok(var) => var,
-            Err(err) => Err(Error::new(err.to_string()))?
+            Err(err) => Err(Error::new(format!("Error with env var 'INFERENCE_DB_HOST': {}", err.to_string())))?
         };
 
         let inference_db: String = match std::env::var("INFERENCE_DB") {
             Ok(var) => var,
-            Err(err) => Err(Error::new(err.to_string()))?
+            Err(err) => Err(Error::new(format!("Error with env var 'INFERENCE_DB': {}", err.to_string())))?
         };
 
         let inference_db_port: String = match std::env::var("INFERENCE_DB_PORT") {
             Ok(var) => var,
-            Err(err) => Err(Error::new(err.to_string()))?
+            Err(err) => Err(Error::new(format!("Error with env var 'INFERERENCE_DB_PORT': {}", err.to_string())))?
         };
 
         let inference_db_user: String = match std::env::var("INFERENCE_DB_USER") {
             Ok(var) => var,
-            Err(err) => Err(Error::new(err.to_string()))?
+            Err(err) => Err(Error::new(format!("Error with env var 'INFERENCE_DB_USER': {}", err.to_string())))?
         };
 
         let inference_db_password: String = match std::env::var("INFERENCE_DB_PASSWORD") {
             Ok(var) => var,
-            Err(err) => Err(Error::new(err.to_string()))?
+            Err(err) => Err(Error::new(format!("Error with env var 'INFERENCE_DB_PASSWORD': {}", err.to_string())))?
         };
 
         return Ok(

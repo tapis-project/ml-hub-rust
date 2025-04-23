@@ -1,7 +1,7 @@
 use actix_web::{get, HttpResponse, Responder};
 use log::debug;
 
-#[get("/inference-api/inference-server/{inference_server}/deployments")]
+#[get("/inference-api/inference-servers/{inference_server}/deployments")]
 async fn list_inference_server_deployments() -> impl Responder {
     debug!("Operation list_inferences");
     HttpResponse::Ok()

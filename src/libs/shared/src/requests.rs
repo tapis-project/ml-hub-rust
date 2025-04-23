@@ -495,7 +495,6 @@ pub mod utils {
     use crate::errors::Error;
     use std::collections::hash_map::HashMap;
     
-
     pub fn param_to_string(params: Option<Parameters>, prop: &str) -> Result<Option<String>, Error> {
         return params.unwrap_or_else(HashMap::new)
             .get(prop)

@@ -1,5 +1,6 @@
 use crate::state::AppState;
-use crate::repositories::inference_server_repository::InferenceServerRepository;
+use crate::infra::mongo::repositories::InferenceServerRepository;
+use crate::domain::repositories::InferenceServerRepository as DomainInferenceServerRepository;
 use shared::requests::GetInferenceServerDocsPath;
 use std::collections::hash_map::HashMap;
 use actix_web::{
@@ -19,8 +20,7 @@ async fn get_inference_server_docs(
     data: web::Data<AppState>
 ) -> impl ActixResponder {
     let repo = InferenceServerRepository::new(data.db.clone());
-    repo.list()
-        .await;
+    let _test = repo.list_all().await;
     let html = r#"
         <!DOCTYPE html>
         <html lang="en">
