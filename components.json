@@ -301,6 +301,18 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "code": "code src/libs/{{ self.name }}"
       }
+    },
+    {
+      "name": "cli",
+      "rootDir": "src/libs/cli",
+      "labels": ["lib", "cli"],
+      "commands": {
+        "initialize": "",
+        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "code": "code src/libs/{{ self.name }}"
+      }
     }
   ]
 }
