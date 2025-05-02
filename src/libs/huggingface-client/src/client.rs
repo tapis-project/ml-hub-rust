@@ -18,18 +18,20 @@ use shared::git::{
    SyncGitRepositoryImpl,
    SyncLfsRepositoryParams
 };
-use shared::requests::{
+use shared::models::web::dto::{
     DiscoverModelsRequest,
-    DownloadDatasetRequest,
     DownloadModelRequest,
-    GetDatasetRequest,
     GetModelRequest,
-    ListDatasetsRequest,
     ListModelsRequest,
-    PublishDatasetRequest,
     PublishModelRequest,
-    utils::param_to_string
 };
+use shared::datasets::web::dto::{
+    DownloadDatasetRequest,
+    GetDatasetRequest,
+    ListDatasetsRequest,
+    PublishDatasetRequest,
+};
+use shared::requests::param_to_string;
 use shared::artifacts::{
     Artifact,
     ArtifactStager,

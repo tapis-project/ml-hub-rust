@@ -1,34 +1,17 @@
-mod web {
-    pub mod operations {
-        pub mod get_inference_server;
-        pub mod list_inference_servers;
-        pub mod get_inference_server_deployment;
-        pub mod list_inference_server_deployments;
-        pub mod get_inference_server_docs;
-        pub mod create_inference_server;
-        pub mod update_inference_server;
-        pub mod delete_inference_server;
-    } 
-}
-mod infra {
-    pub mod mongo {
-        pub mod database;
-        pub mod repositories;
-        pub mod entities;
-    }
-}
-mod domain;
-mod state;
+#[cfg(feature = "actix")]
+use actix_web;
 
-use infra::mongo::database::{get_db, ClientParams};
-use shared::system::Env;
-use std::env;
-use actix_web::{web as web_actix, App, HttpServer};
-use state::AppState;
-use log::error;
-
+#[cfg(feature = "actix")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    use inference::bootstrap::state::AppState;
+    use inference::infra::mongo::database::{get_db, ClientParams};
+    use inference::web;
+    use shared::system::Env;
+    use std::env;
+    use log::error;
+    use actix_web::{App, HttpServer};
+
     pub const DEFAULT_PORT: u16 = 8000;
     pub const DEFAULT_HOST: &str = "0.0.0.0";
     
@@ -71,14 +54,13 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web_actix::Data::new(state.clone()))
-            .service(web::operations::get_inference_server::get_inference_server)
-            .service(web::operations::list_inference_servers::list_inference_servers)
-            .service(web::operations::get_inference_server_docs::get_inference_server_docs)
-            .service(web::operations::list_inference_servers::list_inference_servers)
-            .service(web::operations::create_inference_server::create_inference_server)
-            .service(web::operations::update_inference_server::update_inference_server)
-            .service(web::operations::delete_inference_server::delete_inference_server)
+            .app_data(actix_web::web::Data::new(state.clone()))
+            .service(web::handlers::get_inference_server::get_inference_server)
+            .service(web::handlers::list_inference_servers::list_inference_servers)
+            .service(web::handlers::get_inference_server_docs::get_inference_server_docs)
+            .service(web::handlers::create_inference_server::create_inference_server)
+            .service(web::handlers::update_inference_server::update_inference_server)
+            .service(web::handlers::delete_inference_server::delete_inference_server)
     })
         .bind(addrs)?
         .run()

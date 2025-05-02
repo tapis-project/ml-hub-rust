@@ -12,22 +12,28 @@ use shared::git::{
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
-use shared::requests::{
+use shared::models::web::dto::{
     GetModelRequest,
     ListModelsRequest,
     DownloadModelRequest,
+    DiscoverModelsRequest,
+    PublishModelRequest
+};
+
+use shared::datasets::web::dto::{
     ListDatasetsRequest,
     GetDatasetRequest,
     DownloadDatasetRequest,
-    DiscoverModelsRequest,
+    PublishDatasetRequest
 };
+
 use shared::artifacts::{
     Artifact,
     ArtifactStager,
     ArtifactStagingParams,
 };
 use shared::logging::SharedLogger;
-use shared::requests::utils::param_to_string;
+use shared::requests::param_to_string;
 
 
 #[derive(Debug)]
@@ -116,7 +122,7 @@ impl ModelsClient for GitLfsClient {
         ))
     }
 
-    fn publish_model(&self, _request: &shared::requests::PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 
@@ -202,7 +208,7 @@ impl DatasetsClient for GitLfsClient {
         ))
     }
 
-    fn publish_dataset(&self, _request: &shared::requests::PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

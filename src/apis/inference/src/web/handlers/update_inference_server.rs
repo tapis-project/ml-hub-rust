@@ -8,5 +8,5 @@ async fn update_inference_server(
     debug!("Operation create_inference_server");
     HttpResponse::Ok()
         .content_type("text/html")
-        .body("create inference server")
+        .body("update inference server")
 }

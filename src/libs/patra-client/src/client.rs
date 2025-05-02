@@ -9,16 +9,18 @@ use shared::clients::{
     DatasetsClient,
     ModelsClient,
 };
-use shared::requests::{
+use shared::models::web::dto::{
+    DiscoverModelsRequest,
+    DownloadModelRequest,
     GetModelRequest,
     ListModelsRequest,
-    DownloadModelRequest,
-    ListDatasetsRequest,
-    GetDatasetRequest,
-    DownloadDatasetRequest,
-    DiscoverModelsRequest,
-    PublishDatasetRequest,
     PublishModelRequest,
+};
+use shared::datasets::web::dto::{
+    DownloadDatasetRequest,
+    GetDatasetRequest,
+    ListDatasetsRequest,
+    PublishDatasetRequest,
 };
 use shared::logging::SharedLogger;
 

@@ -1,5 +1,5 @@
 use shared::requests::HttpRequest;
-use shared::requests::utils::get_header_value;
+use shared::requests::get_header_value;
 
 pub fn build_tenant_base_url(tenant: String) -> String {
     format!(

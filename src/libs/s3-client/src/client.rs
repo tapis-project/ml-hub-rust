@@ -7,17 +7,20 @@ use shared::clients::{
     DatasetsClient,
     ModelsClient,
 };
-use shared::requests::{
+use shared::models::web::dto::{
+    DiscoverModelsRequest,
+    DownloadModelRequest,
     GetModelRequest,
     ListModelsRequest,
-    DownloadModelRequest,
-    ListDatasetsRequest,
-    GetDatasetRequest,
-    DownloadDatasetRequest,
-    DiscoverModelsRequest,
-    PublishDatasetRequest,
-    PublishModelRequest
+    PublishModelRequest,
 };
+use shared::datasets::web::dto::{
+    DownloadDatasetRequest,
+    GetDatasetRequest,
+    ListDatasetsRequest,
+    PublishDatasetRequest,
+};
+// use shared::requests::param_to_string;
 use shared::logging::SharedLogger;
 
 #[derive(Debug)]
@@ -48,7 +51,7 @@ impl ModelsClient for S3Client {
         Err(ClientError::new(String::from("Discover models not implemented")))
     }
 
-    async fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
         Err(ClientError::new(String::from("Operation not supported")))
     }
 }

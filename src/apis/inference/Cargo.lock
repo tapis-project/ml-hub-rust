@@ -2660,6 +2660,7 @@ dependencies = [
  "actix-web",
  "apistos",
  "apistos-schemars",
+ "async-trait",
  "clients",
  "env_logger",
  "futures",

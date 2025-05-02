@@ -15,7 +15,9 @@ spec:
       - env:
         - name: INFERENCE_DB_HOST
           value: mlhub-mongodb-service
-        - name: INFERENCE_DB_NAME
+        - name: INFERENCE_DB_PORT
+          value: "27017"
+        - name: INFERENCE_DB
           value: inference
         - name: INFERENCE_DB_PASSWORD
           value: password
@@ -23,6 +25,8 @@ spec:
           value: admin
         - name: RUST_LOG
           value: debug
+        - name: SHARED_DATA
+          value: /srv/mlhub
         image: tapis/inference-api:local
         imagePullPolicy: Never
         name: inference-api

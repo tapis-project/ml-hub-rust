@@ -2,6 +2,7 @@ use crate::infra::mongo::database::{
     INFERENCE_SERVER_COLLECTION,
     INFERENCE_SERVER_DEPLOYMENT_COLLECTION
 };
+use crate::application;
 use crate::domain;
 use crate::infra::mongo::entities::{InferenceServer, InferenceServerDeployment};
 use shared::errors::Error;
@@ -12,18 +13,20 @@ use mongodb::{
     Collection,
 };
 use futures::stream::TryStreamExt;
+use async_trait::async_trait;
 
 pub struct InferenceServerRepository {
     collection: Collection<InferenceServer>
 }
 
-impl domain::repositories::InferenceServerRepository for InferenceServerRepository {
-    // async fn save(&self, server: domain::entities::InferenceServer) -> Result<domain::entities::InferenceServer, Error> {
-    //     let _server_entity = InferenceServer::try_from(server)
-    //         .map_err(|err| Error::new(err.to_string()))?;
-    //     let _ = self.collection.find(None, None).await.unwrap();
-    //     Err(Error::from_str("Unimplemented"))
-    // }
+#[async_trait]
+impl application::repositories::InferenceServerRepository for InferenceServerRepository {
+    async fn save(&self, server: domain::entities::InferenceServer) -> Result<domain::entities::InferenceServer, Error> {
+        let _server_entity = InferenceServer::try_from(server)
+            .map_err(|err| Error::new(err.to_string()))?;
+        let _ = self.collection.find(None, None).await.unwrap();
+        Err(Error::from_str("Unimplemented"))
+    }
 
     async fn list_all(&self) -> Result<Vec<domain::entities::InferenceServer>, Error> {
         let mut cursor: Cursor<InferenceServer> = self.collection.find(None, None)
@@ -64,7 +67,8 @@ pub struct InferenceServerDeploymentRepository {
     collection: Collection<InferenceServerDeployment>
 }
 
-impl domain::repositories::InferenceServerDeploymentRepository for InferenceServerDeploymentRepository {
+#[async_trait]
+impl application::repositories::InferenceServerDeploymentRepository for InferenceServerDeploymentRepository {
     // async fn save(&self, _server: domain::entities::InferenceServerDeployment) -> Result<domain::entities::InferenceServerDeployment, Error> {
     //     // let _server_entity = InferenceServerDeployment::try_from(server)
     //     //     .map_err(|err| Error::new(err.to_string()))?;

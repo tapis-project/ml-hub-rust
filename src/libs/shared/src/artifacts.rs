@@ -13,8 +13,21 @@ use futures_util::stream::StreamExt;
 use actix_web::web::Bytes;
 use actix_multipart::Multipart;
 use uuid::Uuid;
+use serde_json::Value;
 // Reexport to create a unified api for all artifact-related functionality
 pub use crate::responses::artifact_helpers;
+
+pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct DownloadArtifactBody {
+    pub include_paths: Option<Vec<String>>,
+    pub exclude_paths: Option<Vec<String>>,
+    pub archive: Option<Archive>,
+    pub compression: Option<Compression>,
+    pub download_filename: Option<String>,
+    pub params: Option<Parameters>,
+}
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug, Deserialize, Serialize, Display, EnumString)]
 #[serde(rename_all = "lowercase")]

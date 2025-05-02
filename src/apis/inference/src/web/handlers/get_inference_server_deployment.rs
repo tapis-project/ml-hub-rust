@@ -1,7 +1,7 @@
 use actix_web::{web, get, HttpResponse, Responder};
-use crate::domain::repositories::InferenceServerDeploymentRepository as _;
+use crate::application::repositories::InferenceServerDeploymentRepository as _;
 use crate::infra::mongo::repositories::InferenceServerDeploymentRepository;
-use crate::AppState;
+use crate::bootstrap::state::AppState;
 use log::debug;
 
 #[get("/inference-api/inference-servers/{inference_server_name}/deployments/{deployment_name}")]

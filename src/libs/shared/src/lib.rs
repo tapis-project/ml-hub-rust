@@ -9,7 +9,8 @@ pub mod responses;
 pub mod archive;
 pub mod system;
 pub mod constants;
-pub mod domain {
-    pub mod inference;
-    pub mod models;
-}
+pub mod filtering;
+pub mod models;
+pub mod inference;
+pub mod training;
+pub mod datasets;
