@@ -11,7 +11,7 @@ async fn get_inference_server_deployment(
 ) -> impl Responder {
     debug!("Operation get_inference_server_deployment");
     let repo = InferenceServerDeploymentRepository::new(data.db.clone());
-    let _test = repo.find_by_metadata_name_version(String::from("test"), String::from("test"));
+    let _test = repo.find_by_labels(String::from("test"), String::from("test"));
     HttpResponse::Ok()
         .content_type("text/html")
         .body("get inference server deployment")

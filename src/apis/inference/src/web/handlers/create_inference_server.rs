@@ -1,13 +1,11 @@
-use crate::config::VERSION;
 use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::services::inference_server_service::InferenceServerService;
 use crate::application::inputs;
 use crate::web::dto;
-use crate::web::helpers::build_error_response;
+use crate::web::helpers::{build_error_response, build_success_response};
 use shared::errors::Error;
-use actix_web::{web, post, HttpResponse, Responder, HttpRequest as ActixHttpRequest};
-use shared::responses::JsonResponse;
+use actix_web::{web, post, Responder, HttpRequest as ActixHttpRequest};
 use serde_json::from_slice as json_from_slice;
 use serde_yaml::from_slice as yaml_from_slice;
 use log::debug;
@@ -35,15 +33,7 @@ async fn create_inference_server(
     } {
         Ok(dto) => dto,
         Err(err) => {
-            return HttpResponse::BadRequest()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(400),
-                    message: Some(String::from(format!("Yaml deserialization error: {}", err.to_string()))),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string()),
-                });
+            return build_error_response(400, String::from(format!("Yaml deserialization error: {}", err.to_string())))
         }
     };
 
@@ -62,55 +52,23 @@ async fn create_inference_server(
     let inference_server = match service.create(input).await {
         Ok(inference_server) => inference_server,
         Err(err) => {
-            return HttpResponse::BadRequest()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(500),
-                    message: Some(String::from(format!("Error creating inference server: {}", err.to_string()))),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string()),
-                })
+            return build_error_response(500, String::from(format!("Error creating inference server: {}", err.to_string())))
         }
     };
 
     let dto = match dto::InferenceServer::try_from(inference_server) {
         Ok(dto) => dto,
         Err(err) => {
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(500),
-                    message: Some(String::from(format!("Error converting inference server data: {}", err.to_string()))),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string()),
-                })
+            return build_error_response(500, String::from(format!("Error converting inference server data: {}", err.to_string())));
         }
     };
 
     match serde_json::to_value(dto) {
         Ok(result) => {
-            return HttpResponse::Ok()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(200),
-                message: Some(String::from("success")),
-                result: Some(serde_json::to_value(result).unwrap()),
-                metadata: None,
-                version: Some(VERSION.to_string()),
-            })
+            return build_success_response(Some(result), Some(200), Some(String::from("success")))
         },
         Err(err) => {
-            return HttpResponse::Ok()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(200),
-                    message: Some(String::from(format!("Error serializing inference server: {}", err.to_string()))),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string()),
-                })
+            return build_error_response(500, String::from(format!("Error serializing inference server: {}", err.to_string())))
         }
     }
 }
