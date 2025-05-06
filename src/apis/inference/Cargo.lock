@@ -358,9 +358,9 @@ dependencies = [
 
 [[package]]
 name = "apistos"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80e7e92f9c340d852d32eda1d0e999342e40743b158d26b44c0722790fc456ae"
+checksum = "cfc50f58c38154895ff455326bf09fad1ade9a189ad326ce1e93e28394510a17"
 dependencies = [
  "actix-service",
  "actix-web",
@@ -381,9 +381,9 @@ dependencies = [
 
 [[package]]
 name = "apistos-core"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e5b311af1488c967ca88d687bdcbf3f48de99ef25e3d0cb838e8ee5bfbcd3d3"
+checksum = "f5f31274bd8ac06bed6404a52aecf86bcb1d588bffc647cc38b919323aed6334"
 dependencies = [
  "actix-web",
  "apistos-models",
@@ -393,9 +393,9 @@ dependencies = [
 
 [[package]]
 name = "apistos-gen"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bec64c993a50e7d6224b5abe63016e2954a9fe6acee7e86fe0bb38ca3479a44"
+checksum = "417ba5d16e3b341ee28537efcc193b5a4343a925d7065180197c727d99f9a8f8"
 dependencies = [
  "actix-web",
  "convert_case 0.6.0",
@@ -408,9 +408,9 @@ dependencies = [
 
 [[package]]
 name = "apistos-models"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13cd5234ca7f5e84f12cffbf51a8dafdd0c50d4db463d77aac96f278b48a5147"
+checksum = "c280e1afedd32564428138a8fa707f1886a8f9c5bed98e287e8fe079aaa081cf"
 dependencies = [
  "apistos-schemars",
  "indexmap",
@@ -420,9 +420,9 @@ dependencies = [
 
 [[package]]
 name = "apistos-plugins"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4766825c294eada6538d30e85d987c30f4d492de083b7ae0973d7e1defed7e5"
+checksum = "37f8d9eca58c60f53f7e0bfcde0388fc1070d44f745f9944f10551dd4897632b"
 dependencies = [
  "actix-web",
 ]

@@ -1,11 +1,9 @@
-use crate::config::VERSION;
 use std::collections::HashMap;
 use clients::registrars::ModelsClientRegistrar;
 use actix_web::{
     web,
     post,
     HttpRequest as ActixHttpRequest,
-    HttpResponse,
     Responder as ActixResponder
 };
 use actix_files::NamedFile;
@@ -13,8 +11,9 @@ use shared::{
     logging::SharedLogger,
     responses::artifact_helpers::StagedArtifactResponseHeaders
 };
-use shared::models::web::dto::{DownloadModelPath, DownloadModelRequest, DownloadArtifactBody};
-use shared::responses::JsonResponse;
+use shared::models::web::dto::{DownloadModelPath, DownloadModelRequest};
+use shared::artifacts::DownloadArtifactBody;
+use crate::helpers::build_error_response;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files")]
 async fn download_model(
@@ -30,15 +29,7 @@ async fn download_model(
     // Catch directory traversal attacks. 'model_id' may be used by clients to
     // constuct directories in the shared file system
     if path.model_id.contains("..") {
-        return HttpResponse::Forbidden()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(403),
-                message: Some(String::from("Forbidden")),
-                result: None,
-                metadata: None,
-                version: Some(VERSION.to_string())
-            });
+        return build_error_response(403, String::from("Forbidden"));
     }
 
     // Initialize the client registrar
@@ -48,15 +39,10 @@ async fn download_model(
     let client = if let Ok(client) = registrar.get_client(&path.platform) {
         client
     } else {
-        return HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(500),
-                message: Some(String::from(format!("Failed to find client for platform '{}'", &path.platform))),
-                result: None,
-                metadata: None,
-                version: Some(VERSION.to_string()),
-            });
+        return build_error_response(
+            403,
+            String::from(format!("Failed to find client for platform '{}'", &path.platform))
+        );
     };
 
     // Build the request used by the client
@@ -73,15 +59,10 @@ async fn download_model(
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(500),
-                    message: Some(err.to_string()),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string())
-                })
+            return build_error_response(
+                500,
+                err.to_string()
+            );
         }
     };
 
@@ -90,15 +71,10 @@ async fn download_model(
         let err_msg = String::from(
             format!("Path to the staged artifact does not exist. Path: {}", staged_artifact_path.to_string_lossy()).as_str());
         logger.error(&err_msg);
-        return HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(500),
-                message: Some(String::from(err_msg)),
-                result: None, 
-                metadata: None,
-                version: Some(VERSION.to_string())
-            })
+        return build_error_response(
+            500,
+            err_msg
+        );
     }
 
     let download_filename = request.body
@@ -119,15 +95,7 @@ async fn download_model(
         Ok(headers) => headers,
         Err(err) => {
             logger.debug(&err.to_string());
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(500),
-                    message: Some(String::from(format!("{}", &err.to_string()))),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string())
-                })
+            return build_error_response(403, err.to_string());
         }
     };
     
@@ -169,27 +137,14 @@ async fn download_model(
             },
             Err(err) => {
                 logger.debug(&err.to_string());
-                return HttpResponse::InternalServerError()
-                    .content_type("application/json")
-                    .json(JsonResponse {
-                        status: Some(500),
-                        message: Some(String::from(format!("{}", &err.to_string()))),
-                        result: None,
-                        metadata: None,
-                        version: Some(VERSION.to_string())
-                    })
+                return build_error_response(500, err.to_string());
             }
         }
     }
 
     // TODO Handle multipart/mixed responses
-    return HttpResponse::InternalServerError()
-        .content_type("application/json")
-        .json(JsonResponse {
-            status: Some(501),
-            message: Some(String::from("Artifact responses for MIME type multipart/mixed not yet implemented")),
-            result: None,
-            metadata: None,
-            version: Some(VERSION.to_string())
-        })
+    return build_error_response(
+        501,
+        String::from("Artifact responses for MIME type multipart/mixed not yet implemented")
+    );
 }

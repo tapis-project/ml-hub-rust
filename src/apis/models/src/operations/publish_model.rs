@@ -1,25 +1,18 @@
-use crate::config::VERSION;
+use crate::helpers::{build_error_response, build_success_response};
 use std::collections::HashMap;
 use clients::registrars::ModelsClientRegistrar;
-use actix_web::{
-    web,
-    post,
-    HttpRequest as ActixHttpRequest,
-    HttpResponse,
-    Responder as ActixResponder
-};
+use actix_web::{web, post, Responder, HttpRequest};
 use actix_multipart::Multipart;
 use shared::logging::SharedLogger;
-use shared::requests::{PublishModelPath, PublishModelRequest};
-use shared::responses::JsonResponse;
+use shared::models::web::dto::{PublishModelPath, PublishModelRequest};
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files/{path:.*}")]
 async fn publish_model(
-    req: ActixHttpRequest,
+    req: HttpRequest,
     path: web::Path<PublishModelPath>,
     query: web::Query<HashMap<String, String>>,
     payload: Multipart,
-) -> impl ActixResponder {
+) -> impl Responder {
     let logger = SharedLogger::new();
     
     logger.debug("Start publish model operation");
@@ -27,15 +20,7 @@ async fn publish_model(
     // Catch directory traversal attacks. 'model_id' may be used by clients to
     // constuct directories in the shared file system
     if path.model_id.contains("..") {
-        return HttpResponse::Forbidden()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(403),
-                message: Some(String::from("Forbidden")),
-                result: None,
-                metadata: None,
-                version: Some(VERSION.to_string())
-            });
+        return build_error_response(403, String::from("Forbidden"))
     }
 
     // Initialize the client registrar
@@ -45,15 +30,7 @@ async fn publish_model(
     let client = if let Ok(client) = registrar.get_client(&path.platform) {
         client
     } else {
-        return HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(500),
-                message: Some(String::from(format!("Failed to find client for platform '{}'", &path.platform))),
-                result: None,
-                metadata: None,
-                version: Some(VERSION.to_string()),
-            });
+        return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))
     };
 
     // Build the request used by the client
@@ -69,25 +46,9 @@ async fn publish_model(
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(500),
-                    message: Some(err.to_string()),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string())
-                })
+            return build_error_response(500, err.to_string())
         }
     };
 
-    HttpResponse::Ok()
-        .content_type("application/json")
-        .json(JsonResponse {
-            status: Some(200),
-            message: client_resp.message,
-            result: client_resp.result,
-            metadata: client_resp.metadata,
-            version: Some(VERSION.to_string())
-        })
+    build_success_response(client_resp.result, Some(200), client_resp.message)
 }

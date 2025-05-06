@@ -1,25 +1,10 @@
-use crate::config::VERSION;
-use actix_web::{
-    get,
-    HttpResponse,
-    Responder as ActixResponder
-};
-use shared::responses::JsonResponse;
+use actix_web::{get, Responder};
 use shared::logging::SharedLogger;
+use crate::helpers::build_success_response;
 
 #[get("/models-api/health-check")]
-pub async fn health_check() -> impl ActixResponder {
+pub async fn health_check() -> impl Responder {
     let logger = SharedLogger::new();
-
     logger.debug("Health check operation");
-
-    HttpResponse::Ok()
-        .content_type("application/json")
-        .json(JsonResponse {
-            status: Some(200),
-            message: Some(String::from("success")),
-            result: None,
-            metadata: None,
-            version: Some(VERSION.to_string())
-        })
+    return build_success_response(None, Some(200), Some(String::from("success")));
 }

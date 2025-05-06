@@ -16,6 +16,7 @@ mod operations {
     pub mod health_check;
 }
 mod config;
+mod helpers;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

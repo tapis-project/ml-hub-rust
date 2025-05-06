@@ -1,16 +1,14 @@
 use std::collections::HashMap;
-use crate::config::VERSION;
+use crate::helpers::{build_error_response, build_success_response};
 use clients::registrars::ModelsClientRegistrar;
 use actix_web::{
     web,
     post,
     HttpRequest as ActixHttpRequest,
-    HttpResponse,
-    Responder as ActixResponder
+    Responder
 };
 use shared::logging::SharedLogger;
-use shared::responses::JsonResponse;
-use shared::requests::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
+use shared::models::web::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
 
 #[post("models-api/platforms/{platform}/models")]
 async fn discover_models(
@@ -18,7 +16,7 @@ async fn discover_models(
     path: web::Path<DiscoverModelsPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Json<DiscoveryCriteriaBody>,
-) -> impl ActixResponder {
+) -> impl Responder {
     let logger = SharedLogger::new();
 
     logger.debug("Start operation discover_models");
@@ -30,15 +28,10 @@ async fn discover_models(
     let client = if let Ok(client) = registrar.get_client(&path.platform) {
         client
     } else {
-        return HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .json(JsonResponse {
-                status: Some(500),
-                message: Some(String::from(format!("Failed to find client for platform '{}'", &path.platform))),
-                result: None,
-                metadata: None,
-                version: Some(VERSION.to_string()),
-            });
+        return build_error_response(
+            500,
+            String::from(format!("Failed to find client for platform '{}'", &path.platform)),
+        )
     };
 
     // Build the request used by the client
@@ -52,26 +45,10 @@ async fn discover_models(
     // Fetch the list of models
     match client.discover_models(&request) {
         Ok(resp) => {
-            return HttpResponse::Ok()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(200),
-                    message: Some(String::from("success")),
-                    result: resp.result,
-                    metadata: None,
-                    version: Some(VERSION.to_string())
-                })
+            return build_success_response(resp.result, Some(200), Some(String::from("success")))
         },
         Err(err) => {
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .json(JsonResponse {
-                    status: Some(500),
-                    message: Some(err.to_string()),
-                    result: None,
-                    metadata: None,
-                    version: Some(VERSION.to_string())
-                })
+            return build_error_response(500, err.to_string())
         }
     }
 }

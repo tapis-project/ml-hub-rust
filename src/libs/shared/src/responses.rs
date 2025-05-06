@@ -86,3 +86,33 @@ pub mod artifact_helpers {
         }
     }
 }
+
+pub mod helpers {
+    use actix_web::HttpResponse;
+    use super::JsonResponse;
+    use serde_json::Value;
+
+    pub fn build_error_response(status: u16, message: String, version: Option<String>) -> HttpResponse {
+        HttpResponse::InternalServerError()
+            .content_type("application/json")
+            .json(JsonResponse {
+                status: Some(status),
+                message: Some(message),
+                result: None,
+                metadata: None,
+                version,
+            })
+    }
+
+    pub fn build_success_response(result: Option<Value>, status: Option<u16>, message: Option<String>, version: Option<String>) -> HttpResponse {
+        HttpResponse::Ok()
+            .content_type("application/json")
+            .json(JsonResponse {
+                status,
+                message,
+                result,
+                metadata: None,
+                version,
+            })
+    }
+}

@@ -1,25 +1,10 @@
-use crate::config::VERSION;
-use actix_web::{
-    get,
-    HttpResponse,
-    Responder as ActixResponder
-};
-use shared::responses::JsonResponse;
+use actix_web::{get, Responder};
 use shared::logging::SharedLogger;
+use crate::helpers::build_success_response;
 
 #[get("/models-api")]
-pub async fn index() -> impl ActixResponder {
+pub async fn index() -> impl Responder {
     let logger = SharedLogger::new();
-
     logger.debug("Index operation");
-
-    HttpResponse::Ok()
-        .content_type("application/json")
-        .json(JsonResponse {
-            status: Some(200),
-            message: Some(String::from("success")),
-            result: None,
-            metadata: None,
-            version: Some(VERSION.to_string())
-        })
+    build_success_response(None, Some(200), Some(String::from("success")))
 }
