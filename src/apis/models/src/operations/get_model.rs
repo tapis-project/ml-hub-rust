@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use crate::config::VERSION;
 use clients::registrars::ModelsClientRegistrar;
+use shared::logging::SharedLogger;
+use shared::models::web::dto::{GetModelPath, GetModelRequest};
+use shared::responses::JsonResponse;
 use actix_web::{
     web,
     get,
@@ -8,9 +11,6 @@ use actix_web::{
     HttpResponse,
     Responder as ActixResponder
 };
-use shared::logging::SharedLogger;
-use shared::requests::{GetModelPath, GetModelRequest};
-use shared::responses::JsonResponse;
 
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]
 async fn get_model(

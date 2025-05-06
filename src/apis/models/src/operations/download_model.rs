@@ -13,7 +13,7 @@ use shared::{
     logging::SharedLogger,
     responses::artifact_helpers::StagedArtifactResponseHeaders
 };
-use shared::requests::{DownloadModelPath, DownloadModelRequest, DownloadArtifactBody};
+use shared::models::web::dto::{DownloadModelPath, DownloadModelRequest, DownloadArtifactBody};
 use shared::responses::JsonResponse;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files")]
