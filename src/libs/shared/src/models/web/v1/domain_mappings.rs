@@ -1,25 +1,24 @@
-use crate::models::web::dto;
-use crate::models::application::inputs;
+use crate::models::web::v1::dto;
+use crate::models::domain::entities;
 use crate::errors::Error;
 
-impl TryFrom<dto::SystemRequirement> for inputs::SystemRequirement {
+impl TryFrom<entities::SystemRequirement> for dto::SystemRequirement {
     type Error = Error;
     
-    fn try_from(value: dto::SystemRequirement) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::SystemRequirement) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             version: value.version
         })
     }
 }
-
-impl TryFrom<dto::Accelerator> for inputs::Accelerator {
+impl TryFrom<entities::Accelerator> for dto::Accelerator {
     type Error = Error;
     
-    fn try_from(value: dto::Accelerator) -> Result<Self, Self::Error> {
-        let mut system_requirements: Vec<inputs::SystemRequirement> = Vec::with_capacity(1);
+    fn try_from(value: entities::Accelerator) -> Result<Self, Self::Error> {
+        let mut system_requirements: Vec<dto::SystemRequirement> = Vec::with_capacity(1);
         for requirement in value.system_requirements {
-            system_requirements.push(inputs::SystemRequirement::try_from(requirement)?);
+            system_requirements.push(dto::SystemRequirement::try_from(requirement)?);
         }
 
         Ok(Self {
@@ -30,14 +29,13 @@ impl TryFrom<dto::Accelerator> for inputs::Accelerator {
         })
     }
 }
-
-impl TryFrom<dto::HardwareRequirements> for inputs::HardwareRequirements {
+impl TryFrom<entities::HardwareRequirements> for dto::HardwareRequirements {
     type Error = Error;
     
-    fn try_from(value: dto::HardwareRequirements) -> Result<Self, Self::Error> {
-        let mut accelerators: Vec<inputs::Accelerator> = Vec::with_capacity(1);
+    fn try_from(value: entities::HardwareRequirements) -> Result<Self, Self::Error> {
+        let mut accelerators: Vec<dto::Accelerator> = Vec::with_capacity(1);
         for accelerator in value.accelerators.unwrap_or(Vec::with_capacity(0)) {
-            accelerators.push(inputs::Accelerator::try_from(accelerator)?);
+            accelerators.push(dto::Accelerator::try_from(accelerator)?);
         }
 
         Ok(Self {
@@ -49,38 +47,36 @@ impl TryFrom<dto::HardwareRequirements> for inputs::HardwareRequirements {
         })
     }
 }
-
-impl TryFrom<dto::ModelIO> for inputs::ModelIO {
+impl TryFrom<entities::ModelIO> for dto::ModelIO {
     type Error = Error;
     
-    fn try_from(value: dto::ModelIO) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::ModelIO) -> Result<Self, Self::Error> {
         Ok(Self {
             data_type: value.data_type,
             shape: value.shape
         })
     }
 }
-
-impl TryFrom<dto::ModelDiscoveryCriteria> for inputs::ModelDiscoveryCriteriaInput {
+impl TryFrom<entities::ModelDiscoveryCriteria> for dto::ModelDiscoveryCriteria {
     type Error = Error;
     
-    fn try_from(value: dto::ModelDiscoveryCriteria) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::ModelDiscoveryCriteria) -> Result<Self, Self::Error> {
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
-            model_inputs.push(inputs::ModelIO::try_from(input)?)
+            model_inputs.push(dto::ModelIO::try_from(input)?)
         }
         
         let mut model_outputs = Vec::with_capacity(1);
         for output in value.model_outputs.unwrap_or(Vec::with_capacity(0)) {
-            model_outputs.push(inputs::ModelIO::try_from(output)?)
+            model_outputs.push(dto::ModelIO::try_from(output)?)
         }
 
         let inference_hardware = value.inference_hardware
-            .map(|hardware| inputs::HardwareRequirements::try_from(hardware))
+            .map(|hardware| dto::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
         let training_hardware = value.training_hardware
-            .map(|hardware| inputs::HardwareRequirements::try_from(hardware))
+            .map(|hardware| dto::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
         Ok(Self {

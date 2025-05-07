@@ -6,5 +6,5 @@ use crate::helpers::build_success_response;
 pub async fn index() -> impl Responder {
     let logger = SharedLogger::new();
     logger.debug("Index operation");
-    build_success_response(None, Some(200), Some(String::from("success")))
+    build_success_response(None, Some(String::from("success")), None)
 }

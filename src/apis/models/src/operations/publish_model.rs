@@ -27,10 +27,9 @@ async fn publish_model(
     let registrar = ModelsClientRegistrar::new();
 
     // Get the client for the provided platform
-    let client = if let Ok(client) = registrar.get_client(&path.platform) {
-        client
-    } else {
-        return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))
+    let client = match registrar.get_client(&path.platform) {
+        Ok(client) => client,
+        Err(_) => return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))
     };
 
     // Build the request used by the client
@@ -50,5 +49,5 @@ async fn publish_model(
         }
     };
 
-    build_success_response(client_resp.result, Some(200), client_resp.message)
+    build_success_response(client_resp.result, client_resp.message, None)
 }

@@ -6,5 +6,5 @@ use crate::helpers::build_success_response;
 pub async fn health_check() -> impl Responder {
     let logger = SharedLogger::new();
     logger.debug("Health check operation");
-    return build_success_response(None, Some(200), Some(String::from("success")));
+    return build_success_response(None, Some(String::from("success")), None);
 }

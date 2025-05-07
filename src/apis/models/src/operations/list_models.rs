@@ -9,7 +9,15 @@ use actix_web::{
 };
 use shared::logging::SharedLogger;
 use shared::models::web::dto::{ListModelsPath, ListModelsRequest};
+// use utoipa::{ToSchema, OpenApi};
 
+#[utoipa::path(
+    get,
+    path = "models-api/platforms/{platform}/models",
+    responses(
+        (status = 200, description = "Returns a greeting", body = JsonResponse)
+    )
+)]
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models(
     req: ActixHttpRequest,
@@ -46,7 +54,7 @@ async fn list_models(
     // Fetch the list of models
     match client.list_models(&request) {
         Ok(resp) => {
-            return build_success_response(resp.result, Some(200), Some(String::from("success")));
+            return build_success_response(resp.result, Some(String::from("success")), None);
         },
         Err(err) => {
             return build_error_response(500, err.to_string())

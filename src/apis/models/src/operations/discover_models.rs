@@ -45,7 +45,7 @@ async fn discover_models(
     // Fetch the list of models
     match client.discover_models(&request) {
         Ok(resp) => {
-            return build_success_response(resp.result, Some(200), Some(String::from("success")))
+            return build_success_response(resp.result, Some(String::from("success")), None)
         },
         Err(err) => {
             return build_error_response(500, err.to_string())
