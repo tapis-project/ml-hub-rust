@@ -2,7 +2,7 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::inputs;
 use crate::application::services::inference_server_service::InferenceServerService;
-use crate::web::dto::{
+use crate::web::v1::dto::{
     ListAll,
     InferenceServer as InferenceServerDto
 };

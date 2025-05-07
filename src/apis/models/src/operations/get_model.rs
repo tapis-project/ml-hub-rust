@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::helpers::{build_error_response, build_success_response};
 use clients::registrars::ModelsClientRegistrar;
 use shared::logging::SharedLogger;
-use shared::models::web::dto::{GetModelPath, GetModelRequest};
+use shared::models::web::v1::dto::{GetModelPath, GetModelRequest};
 use actix_web::{
     web,
     get,

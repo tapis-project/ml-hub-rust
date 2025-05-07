@@ -8,7 +8,7 @@ use actix_web::{
     Responder as ActixResponder
 };
 use shared::logging::SharedLogger;
-use shared::models::web::dto::{ListModelsPath, ListModelsRequest};
+use shared::models::web::v1::dto::{ListModelsPath, ListModelsRequest};
 // use utoipa::{ToSchema, OpenApi};
 
 #[utoipa::path(

@@ -1,1 +1,1 @@
-pub use shared::inference::web::dto::*;
+pub use shared::inference::web::v1::dto::*;

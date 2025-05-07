@@ -11,7 +11,7 @@ use shared::{
     logging::SharedLogger,
     responses::artifact_helpers::StagedArtifactResponseHeaders
 };
-use shared::models::web::dto::{DownloadModelPath, DownloadModelRequest};
+use shared::models::web::v1::dto::{DownloadModelPath, DownloadModelRequest};
 use shared::artifacts::DownloadArtifactBody;
 use crate::helpers::build_error_response;
 

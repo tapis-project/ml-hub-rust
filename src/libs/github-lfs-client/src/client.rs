@@ -12,14 +12,14 @@ use shared::git::{
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
-use shared::models::web::dto::{
+use shared::models::web::v1::dto::{
     DiscoverModelsRequest,
     DownloadModelRequest,
     GetModelRequest,
     ListModelsRequest,
     PublishModelRequest,
 };
-use shared::datasets::web::dto::{
+use shared::datasets::web::v1::dto::{
     DownloadDatasetRequest,
     GetDatasetRequest,
     ListDatasetsRequest,

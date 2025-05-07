@@ -4,7 +4,7 @@ use clients::registrars::ModelsClientRegistrar;
 use actix_web::{web, post, Responder, HttpRequest};
 use actix_multipart::Multipart;
 use shared::logging::SharedLogger;
-use shared::models::web::dto::{PublishModelPath, PublishModelRequest};
+use shared::models::web::v1::dto::{PublishModelPath, PublishModelRequest};
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files/{path:.*}")]
 async fn publish_model(

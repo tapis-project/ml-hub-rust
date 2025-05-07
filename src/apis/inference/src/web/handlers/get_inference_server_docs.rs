@@ -1,7 +1,7 @@
 use crate::bootstrap::state::AppState;
 use crate::infra::mongo::repositories::InferenceServerRepository;
 use crate::application::repositories::InferenceServerRepository as DomainInferenceServerRepository;
-use crate::web::dto::GetInferenceServerDocsPath;
+use crate::web::v1::dto::GetInferenceServerDocsPath;
 use std::collections::hash_map::HashMap;
 use actix_web::{
     web,

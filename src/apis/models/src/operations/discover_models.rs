@@ -8,7 +8,7 @@ use actix_web::{
     Responder
 };
 use shared::logging::SharedLogger;
-use shared::models::web::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
+use shared::models::web::v1::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
 
 #[post("models-api/platforms/{platform}/models")]
 async fn discover_models(

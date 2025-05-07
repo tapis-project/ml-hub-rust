@@ -2,7 +2,7 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::services::inference_server_service::InferenceServerService;
 use crate::application::inputs;
-use crate::web::dto;
+use crate::web::v1::dto;
 use crate::web::helpers::{build_error_response, build_success_response};
 use shared::errors::Error;
 use actix_web::{web, post, Responder, HttpRequest as ActixHttpRequest};
