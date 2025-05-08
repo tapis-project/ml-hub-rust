@@ -3,26 +3,19 @@ use std::collections::hash_map::HashMap;
 use reqwest::blocking::Client as ReqwestClient;
 use shared::artifacts::ArtifactGenerator;
 use shared::clients::{
-    ClientStagedArtifactResponse,
     ClientError,
     ClientJsonResponse,
-    DatasetsClient,
-    ModelsClient,
+    DiscoverModelsClient,
+    GetModelClient,
+    ListModelsClient,
 };
 use shared::models::web::v1::dto::{
     DiscoverModelsRequest,
-    DownloadModelRequest,
     GetModelRequest,
     ListModelsRequest,
-    PublishModelRequest,
-};
-use shared::datasets::web::v1::dto::{
-    DownloadDatasetRequest,
-    GetDatasetRequest,
-    ListDatasetsRequest,
-    PublishDatasetRequest,
 };
 use shared::logging::SharedLogger;
+use serde_json::Value;
 
 #[derive(Debug)]
 pub struct PatraClient {
@@ -32,8 +25,10 @@ pub struct PatraClient {
 
 impl ArtifactGenerator for PatraClient {}
 
-impl ModelsClient for PatraClient {
-    fn list_models(&self, _request: &ListModelsRequest) -> Result<ClientJsonResponse, ClientError> {
+impl ListModelsClient for PatraClient {
+    type Data = Value;
+    type Metadata = Value;
+    fn list_models(&self, _request: &ListModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("List models");
         let resp = self.client.get(PatraClient::LIST_MODELS_ENDPOINT)
             .send()
@@ -50,8 +45,13 @@ impl ModelsClient for PatraClient {
             None
         ))
     }
-    
-    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse, ClientError> {
+}
+
+impl GetModelClient for PatraClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Get model");
 
         let mut query_params = HashMap::new();
@@ -72,12 +72,13 @@ impl ModelsClient for PatraClient {
             None
         ))
     }
+}
 
-    fn download_model(&self, _request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
+impl DiscoverModelsClient for PatraClient {
+    type Data = Value;
+    type Metadata = Value;
 
-    fn discover_models(&self, request: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn discover_models(&self, request: &DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Discover models");
         let mut query_params = HashMap::new();
         if request.body.criteria.len() > 0 {
@@ -104,28 +105,6 @@ impl ModelsClient for PatraClient {
             Some(deserialized_resp),
             None
         ))
-    }
-
-    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::from_str(""))
-    }
-}
-
-impl DatasetsClient for PatraClient {
-    fn list_datasets(&self, _request: &ListDatasetsRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn get_dataset(&self, _request: &GetDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn download_dataset(&self, _request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
     }
 }
 

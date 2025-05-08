@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use actix_web::HttpRequest;
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateTrainingPath {
+pub struct CreateTrainingServerPath {
     pub platform: String,
     pub training_id: String
 }
@@ -15,9 +15,9 @@ pub struct StartTrainingPath {
     pub training_id: String
 }
 
-pub struct CreateTrainingRequest {
+pub struct CreateTrainingServerRequest {
     pub req: HttpRequest,
-    pub path: web::Path<CreateTrainingPath>,
+    pub path: web::Path<CreateTrainingServerPath>,
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }

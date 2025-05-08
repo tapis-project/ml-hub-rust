@@ -1,31 +1,19 @@
 use shared::artifacts::ArtifactGenerator;
 use shared::constants;
 use shared::clients::{
-    ClientStagedArtifactResponse,
     ClientError,
-    ClientJsonResponse,
-    DatasetsClient,
-    ModelsClient,
+    ClientStagedArtifactResponse,
+    DownloadDatasetClient,
+    DownloadModelClient
 };
 use shared::git::{
     SyncGitRepository,
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
-use shared::models::web::v1::dto::{
-    GetModelRequest,
-    ListModelsRequest,
-    DownloadModelRequest,
-    DiscoverModelsRequest,
-    PublishModelRequest
-};
+use shared::models::web::v1::dto::DownloadModelRequest;
 
-use shared::datasets::web::v1::dto::{
-    ListDatasetsRequest,
-    GetDatasetRequest,
-    DownloadDatasetRequest,
-    PublishDatasetRequest
-};
+use shared::datasets::web::v1::dto::DownloadDatasetRequest;
 
 use shared::artifacts::{
     Artifact,
@@ -45,18 +33,7 @@ impl ArtifactGenerator for GitLfsClient {}
 
 impl SyncGitRepository for GitLfsClient {}
 
-impl ModelsClient for GitLfsClient {
-    fn list_models(
-        &self,
-        _request: &ListModelsRequest,
-    ) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Model listing functionality not implemented for platform Git")))
-    }
-    
-    fn get_model(&self, _request: &GetModelRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Model fetching functionality not implemented for platform Git")))
-    }
-
+impl DownloadModelClient for GitLfsClient {
     fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.req
@@ -121,28 +98,9 @@ impl ModelsClient for GitLfsClient {
             Some(200),
         ))
     }
-
-    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Not supported")))
-    }
-
-    fn discover_models(&self, _: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Discover models not implemented")))
-    }
 }
 
-impl DatasetsClient for GitLfsClient {
-    fn list_datasets(
-        &self,
-        _request: &ListDatasetsRequest,
-    ) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Dataset listing functionality not implemented for platform Git")))
-    }
-
-    fn get_dataset(&self, _request: &GetDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Dataset fetching functionality not implemented for platform Git")))
-    }
-
+impl DownloadDatasetClient for GitLfsClient {
     fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.req
@@ -206,10 +164,6 @@ impl DatasetsClient for GitLfsClient {
             staged_artifact,
             Some(200),
         ))
-    }
-
-    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Not supported")))
     }
 }
 

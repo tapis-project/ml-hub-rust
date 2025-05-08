@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use clients::registrars::ModelsClientRegistrar;
+use clients::registrar::ClientRegistrar;
 use actix_web::{
     web,
     post,
@@ -32,11 +32,8 @@ async fn download_model(
         return build_error_response(403, String::from("Forbidden"));
     }
 
-    // Initialize the client registrar
-    let registrar = ModelsClientRegistrar::new();
-
     // Get the client for the provided platform
-    let client = if let Ok(client) = registrar.get_client(&path.platform) {
+    let client = if let Ok(client) = ClientRegistrar::resolve_download_models_client(&path.platform) {
         client
     } else {
         return build_error_response(

@@ -8,19 +8,17 @@ use crate::artifacts::{ArtifactGenerator, StagedArtifact};
 // keyword below will break this modules api for consumers
 pub use crate::errors::ClientError;
 use serde::Serialize;
-use serde_json::Value;
-// use std::future::Future;
 
 #[derive(Serialize)]
-pub struct ClientJsonResponse {
+pub struct ClientJsonResponse<Data: Serialize, Metadata: Serialize> {
     pub status: Option<u16>,
     pub message: Option<String>,
-    pub result: Option<Value>,
-    pub metadata: Option<Value>
+    pub result: Option<Data>,
+    pub metadata: Option<Metadata>
 }
 
-impl ClientJsonResponse {
-    pub fn new(status: Option<u16>, message: Option<String>, result: Option<Value>, metadata: Option<Value>) -> Self {
+impl <Data: Serialize, Metadata: Serialize>ClientJsonResponse<Data, Metadata> {
+    pub fn new(status: Option<u16>, message: Option<String>, result: Option<Data>, metadata: Option<Metadata>) -> Self {
         return Self {
             status,
             message,
@@ -44,36 +42,95 @@ impl ClientStagedArtifactResponse {
     }
 }
 
-pub trait ModelsClient: ArtifactGenerator {
-    fn list_models(&self, request: &models::ListModelsRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn get_model(&self, request: &models::GetModelRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn download_model(&self, request: &models::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
-    fn discover_models(&self, request: &models::DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn publish_model(&self, request: &models::PublishModelRequest) -> Result<ClientJsonResponse, ClientError>;
-    // fn publish_model(&self, request: &requests::PublishModelRequest) -> impl Future<Output=Result<ClientJsonResponse, ClientError>>;
+pub trait ListModelsClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn list_models(&self, _request: &models::ListModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
 }
 
-pub trait DatasetsClient: ArtifactGenerator {
-    fn list_datasets(&self, request: &datasets::ListDatasetsRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn get_dataset(&self, request: &datasets::GetDatasetRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn download_dataset(&self, request: &datasets::DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError>;
-    fn publish_dataset(&self, request: &datasets::PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError>;
+pub trait GetModelClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn get_model(&self, _request: &models::GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
 }
 
-pub trait InferenceClient {
-    fn create_inference_server(&self, request: &inference::CreateInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn deploy_inference_server(&self, request: &inference::CreateInferenceRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn get_inference_server_docs(&self, request: &inference::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn get_inference_server_interface(&self, request: &inference::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn list_inference_server_interfaces(&self, request: &inference::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn run_inference(&self, request: &inference::RunInferenceRequest) -> Result<ClientJsonResponse, ClientError>;
+pub trait DownloadModelClient: ArtifactGenerator {
+    fn download_model(&self, _request: &models::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
 }
 
-pub trait TrainingClient {
-    fn create_training_server(&self, request: &training::CreateTrainingRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn deploy_training_server(&self, request: &inference::CreateInferenceRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn get_training_server_docs(&self, request: &inference::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn get_training_server_interface(&self, request: &inference::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn list_training_server_interfaces(&self, request: &inference::StartInferenceServerRequest) -> Result<ClientJsonResponse, ClientError>;
-    fn start_training(&self, request: &training::StartTrainingRequest) -> Result<ClientJsonResponse, ClientError>;
+pub trait DiscoverModelsClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn discover_models(&self, _request: &models::DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait PublishModelClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn publish_model(&self, _request: &models::PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait ListDatasetsClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn list_datasets(&self, _request: &datasets::ListDatasetsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait GetDatasetClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn get_dataset(&self, _request: &datasets::GetDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait DownloadDatasetClient: ArtifactGenerator {
+    fn download_dataset(&self, _request: &datasets::DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait PublishDatasetClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn publish_dataset(&self, _request: &datasets::PublishDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait CreateInferenceServerClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn create_inference_server(&self, _request: &inference::CreateInferenceServerRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
+}
+
+pub trait CreateTrainingServerClient {
+    type Data: Serialize;
+    type Metadata: Serialize;
+
+    fn create_training_server(&self, _request: &training::CreateTrainingServerRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::new(String::from("unimplemented")))
+    }
 }

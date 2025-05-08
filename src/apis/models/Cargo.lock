@@ -552,6 +552,8 @@ dependencies = [
  "github-lfs-client",
  "huggingface-client",
  "patra-client",
+ "serde",
+ "serde_json",
  "shared",
  "strum 0.26.3",
  "strum_macros 0.26.4",

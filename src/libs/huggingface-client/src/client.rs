@@ -7,11 +7,7 @@ use crate::utils::deserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
 use shared::artifacts::ArtifactGenerator;
 use shared::clients::{
-    ClientStagedArtifactResponse,
-    ClientError,
-    ClientJsonResponse,
-    DatasetsClient,
-    ModelsClient,
+    ClientError, ClientJsonResponse, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient, GetDatasetClient, GetModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient
 };
 use shared::git::{
    SyncGitRepository,
@@ -19,11 +15,9 @@ use shared::git::{
    SyncLfsRepositoryParams
 };
 use shared::models::web::v1::dto::{
-    DiscoverModelsRequest,
     DownloadModelRequest,
     GetModelRequest,
     ListModelsRequest,
-    PublishModelRequest,
 };
 use shared::datasets::web::v1::dto::{
     DownloadDatasetRequest,
@@ -53,11 +47,14 @@ pub struct HuggingFaceClient {
 
 impl ArtifactGenerator for HuggingFaceClient {}
 
-impl ModelsClient for HuggingFaceClient {
+impl ListModelsClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
     fn list_models(
         &self,
         request: &ListModelsRequest,
-    ) -> Result<ClientJsonResponse, ClientError> {
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         // Parse the limit from the query string
         let limit = match request.query.get("limit").cloned() {
             Some(num) => num.parse(),
@@ -108,8 +105,13 @@ impl ModelsClient for HuggingFaceClient {
             },
         }
     }
-    
-    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse, ClientError> {
+}
+
+impl GetModelClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let result = self.client
             .get(Self::format_url(format!("{}/{}", "models", request.path.model_id).as_str()))
             .send();
@@ -131,7 +133,9 @@ impl ModelsClient for HuggingFaceClient {
             }
         }
     }
+}
 
+impl DownloadModelClient for HuggingFaceClient {
     fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.req
@@ -188,21 +192,16 @@ impl ModelsClient for HuggingFaceClient {
             Some(200),
         ))
     }
-
-    fn discover_models(&self, _: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Discover models not implemented")))
-    }
-
-    fn publish_model(&self, _result: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Not supported")))
-    }
 }
 
-impl DatasetsClient for HuggingFaceClient {
+impl ListDatasetsClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
     fn list_datasets(
         &self,
         request: &ListDatasetsRequest,
-    ) -> Result<ClientJsonResponse, ClientError> {
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         // Parse the limit from the query string
         let limit = match request.query.get("limit").cloned() {
             Some(num) => num.parse(),
@@ -246,8 +245,13 @@ impl DatasetsClient for HuggingFaceClient {
             },
         }
     }
+}
 
-    fn get_dataset(&self, request: &GetDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
+impl GetDatasetClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    fn get_dataset(&self, request: &GetDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let result = self.client
             .get(Self::format_url(format!("{}/{}", "datasets", request.path.dataset_id).as_str()))
             .send();
@@ -269,7 +273,9 @@ impl DatasetsClient for HuggingFaceClient {
             },
         }
     }
+}
 
+impl DownloadDatasetClient for HuggingFaceClient {
     fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.req
@@ -326,8 +332,13 @@ impl DatasetsClient for HuggingFaceClient {
             Some(200),
         ))
     }
+}
 
-    fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
+impl PublishDatasetClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         Err(ClientError::new(String::from("Not supported")))
     }
 }

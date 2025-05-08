@@ -6,6 +6,7 @@ use crate::operations::files::{
 use crate::utils::token_from_request;
 use crate::tokens::decode_jwt;
 
+use serde_json::Value;
 use shared::artifacts::{
     // Archive,
     // Artifact,
@@ -15,25 +16,9 @@ use shared::artifacts::{
     // Compression
 };
 use shared::clients::{
-    ClientStagedArtifactResponse,
-    ClientError,
-    ClientJsonResponse,
-    DatasetsClient,
-    ModelsClient,
+    ClientError, ClientJsonResponse, PublishModelClient
 };
-use shared::models::web::v1::dto::{
-    DiscoverModelsRequest,
-    DownloadModelRequest,
-    GetModelRequest,
-    ListModelsRequest,
-    PublishModelRequest,
-};
-use shared::datasets::web::v1::dto::{
-    DownloadDatasetRequest,
-    GetDatasetRequest,
-    ListDatasetsRequest,
-    PublishDatasetRequest,
-};
+use shared::models::web::v1::dto::PublishModelRequest;
 use shared::logging::SharedLogger;
 
 #[derive(Debug)]
@@ -43,30 +28,13 @@ pub struct TapisClient {
 
 impl ArtifactGenerator for TapisClient {}
 
-impl ModelsClient for TapisClient {
-    fn list_models(&self, _request: &ListModelsRequest,) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-    
-    fn get_model(&self, _request: &GetModelRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn download_model(&self, _request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn discover_models(&self, _request: &DiscoverModelsRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    // fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
-    //     Err(ClientError::new(String::from("Operation not supported")))
-    // }
+impl PublishModelClient for TapisClient {
+    type Data = Value;
+    type Metadata = Value;
 
     /// Takes a single file uploaded to the Models API and upload it to a Tapis
     /// system
-    fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse, ClientError> {
+    fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Publishing model");
         let token = token_from_request(&request.req)
             .ok_or_else(|| ClientError::new(String::from("Missing tapis token in 'X-Tapis-Token' header")))?;
@@ -148,24 +116,6 @@ impl ModelsClient for TapisClient {
         //     },
         //     Err(err) => Err(ClientError::new(err.to_string()))
         // }
-    }
-}
-
-impl DatasetsClient for TapisClient {
-    fn list_datasets(&self, _request: &ListDatasetsRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn get_dataset(&self, _request: &GetDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn download_dataset(&self, _request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
-    }
-
-    fn publish_dataset(&self, _request: &PublishDatasetRequest) -> Result<ClientJsonResponse, ClientError> {
-        Err(ClientError::new(String::from("Operation not supported")))
     }
 }
 

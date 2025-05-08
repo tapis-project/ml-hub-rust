@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::helpers::{build_error_response, build_success_response};
-use clients::registrars::ModelsClientRegistrar;
+use clients::registrar::ClientRegistrar;
 use actix_web::{
     web,
     get,
@@ -9,15 +9,8 @@ use actix_web::{
 };
 use shared::logging::SharedLogger;
 use shared::models::web::v1::dto::{ListModelsPath, ListModelsRequest};
-// use utoipa::{ToSchema, OpenApi};
+use shared::clients::ListModelsClient;
 
-#[utoipa::path(
-    get,
-    path = "models-api/platforms/{platform}/models",
-    responses(
-        (status = 200, description = "Returns a greeting", body = JsonResponse)
-    )
-)]
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models(
     req: ActixHttpRequest,
@@ -30,11 +23,8 @@ async fn list_models(
     logger.debug("Start operation list_models");
     logger.debug(format!("path: {:#?}", path).as_str());
 
-    // Initialize the client registrar
-    let registrar = ModelsClientRegistrar::new();
-
     // Get the client for the provided platform
-    let client = if let Ok(client) = registrar.get_client(&path.platform) {
+    let client = if let Ok(client) = ClientRegistrar::resolve_list_models_client(&path.platform) {
         client
     } else {
         return build_error_response(
