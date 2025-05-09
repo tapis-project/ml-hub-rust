@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use clients::registrar::ClientRegistrar;
+use clients::registrar::ClientProvider;
 use actix_web::{
     web,
     post,
@@ -11,7 +11,7 @@ use shared::{
     logging::SharedLogger,
     responses::artifact_helpers::StagedArtifactResponseHeaders
 };
-use shared::models::web::v1::dto::{DownloadModelPath, DownloadModelRequest};
+use shared::models::presentation::http::v1::dto::{DownloadModelPath, DownloadModelRequest};
 use shared::artifacts::DownloadArtifactBody;
 use crate::helpers::build_error_response;
 
@@ -33,7 +33,7 @@ async fn download_model(
     }
 
     // Get the client for the provided platform
-    let client = if let Ok(client) = ClientRegistrar::resolve_download_models_client(&path.platform) {
+    let client = if let Ok(client) = ClientProvider::provide_download_models_client(&path.platform) {
         client
     } else {
         return build_error_response(

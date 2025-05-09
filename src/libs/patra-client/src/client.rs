@@ -9,7 +9,7 @@ use shared::clients::{
     GetModelClient,
     ListModelsClient,
 };
-use shared::models::web::v1::dto::{
+use shared::models::presentation::http::v1::dto::{
     DiscoverModelsRequest,
     GetModelRequest,
     ListModelsRequest,

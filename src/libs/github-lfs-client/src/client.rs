@@ -11,8 +11,8 @@ use shared::git::{
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
-use shared::models::web::v1::dto::DownloadModelRequest;
-use shared::datasets::web::v1::dto::DownloadDatasetRequest;
+use shared::models::presentation::http::v1::dto::DownloadModelRequest;
+use shared::datasets::presentation::http::v1::dto::DownloadDatasetRequest;
 use shared::requests::param_to_string;
 use shared::artifacts::{
     Artifact,

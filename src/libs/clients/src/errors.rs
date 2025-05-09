@@ -1,19 +1,19 @@
 use std::fmt::{Display, Formatter, Result as FormatResult};
 
-/// Represents an error that occurs within the registrar. This error is returned
-/// from registrar method calls as the `Err` variant of the `Result` enum
+/// Represents an error that occurs within the provider. This error is returned
+/// from provider method calls as the `Err` variant of the `Result` enum
 /// 
 /// # Fields
 /// 
 /// - `message`: A `String` of human readable error message
 #[derive(Debug)]
-pub struct RegistrarError {
+pub struct ClientProviderError {
     message: String
 }
 
-/// Inherent implementation for RegistrarError
-impl RegistrarError {
-    /// Creates a new `RegistrarError` with the given message.
+/// Inherent implementation for ClientProviderError
+impl ClientProviderError {
+    /// Creates a new `ClientProviderError` with the given message.
     ///
     /// # Arguments
     ///
@@ -21,16 +21,16 @@ impl RegistrarError {
     ///
     /// # Returns
     ///
-    /// A new instance of `RegistrarError`.
+    /// A new instance of `ClientProviderError`.
     pub fn new(message: String) -> Self {
-        RegistrarError {
+        ClientProviderError {
             message,
         }
     }
 }
 
 /// Implementation of std::fmt::Display for RegisrarError
-impl Display for RegistrarError {
+impl Display for ClientProviderError {
     /// Formats the error message for display.
     ///
     /// # Arguments

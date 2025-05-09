@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::helpers::{build_error_response, build_success_response};
-use clients::registrar::ClientRegistrar;
+use clients::registrar::ClientProvider;
 use actix_web::{
     web,
     post,
@@ -8,7 +8,7 @@ use actix_web::{
     Responder
 };
 use shared::logging::SharedLogger;
-use shared::models::web::v1::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
+use shared::models::presentation::http::v1::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
 use shared::clients::DiscoverModelsClient;
 
 #[post("models-api/platforms/{platform}/models")]
@@ -23,7 +23,7 @@ async fn discover_models(
     logger.debug("Start operation discover_models");
 
     // Get the client for the provided platform
-    let client = if let Ok(client) = ClientRegistrar::resolve_discover_models_client(&path.platform) {
+    let client = if let Ok(client) = ClientProvider::provide_discover_models_client(&path.platform) {
         client
     } else {
         return build_error_response(

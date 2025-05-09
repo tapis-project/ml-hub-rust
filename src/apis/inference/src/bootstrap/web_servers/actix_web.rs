@@ -1,6 +1,6 @@
 use crate::bootstrap::state::AppState;
 use crate::infra::mongo::database::{get_db, ClientParams};
-use crate::web;
+use crate::presentation;
 use shared::system::Env;
 use std::env;
 use actix_web::{web as web_actix, App, HttpServer};
@@ -51,12 +51,12 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web_actix::Data::new(state.clone()))
-            .service(web::handlers::get_inference_server::get_inference_server)
-            .service(web::handlers::list_inference_servers::list_inference_servers)
-            .service(web::handlers::get_inference_server_docs::get_inference_server_docs)
-            .service(web::handlers::create_inference_server::create_inference_server)
-            .service(web::handlers::update_inference_server::update_inference_server)
-            .service(web::handlers::delete_inference_server::delete_inference_server)
+            .service(presentation::handlers::get_inference_server::get_inference_server)
+            .service(presentation::handlers::list_inference_servers::list_inference_servers)
+            .service(presentation::handlers::get_inference_server_docs::get_inference_server_docs)
+            .service(presentation::handlers::create_inference_server::create_inference_server)
+            .service(presentation::handlers::update_inference_server::update_inference_server)
+            .service(presentation::handlers::delete_inference_server::delete_inference_server)
     })
         .bind(addrs)?
         .run()

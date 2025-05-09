@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use actix_web::HttpRequest;
 use serde_json::Value;
 use openapiv3::OpenAPI;
-use crate::models::web::v1::dto::ModelDiscoveryCriteria;
+use crate::models::presentation::http::v1::dto::ModelDiscoveryCriteria;
 pub use crate::filtering::*;
 
 #[derive(Deserialize, Serialize, Debug)]

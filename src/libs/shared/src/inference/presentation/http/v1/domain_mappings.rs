@@ -1,7 +1,7 @@
 //! Contains conversions between domain entities and request and response dtos
-use crate::models::web::v1::dto::ModelDiscoveryCriteria as ModelDiscoveryCriteriaDto;
+use crate::models::presentation::http::v1::dto::ModelDiscoveryCriteria as ModelDiscoveryCriteriaDto;
 use crate::inference::domain::entities;
-use crate::inference::web::v1::dto;
+use crate::inference::presentation::http::v1::dto;
 use crate::errors::Error;
 
 impl TryFrom<entities::Kind> for dto::Kind {

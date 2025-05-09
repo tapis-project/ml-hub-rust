@@ -8,7 +8,7 @@ use shared::clients::{
 // use shared::artifacts::{
 //     ArtifactGenerator,
 // };
-use shared::models::web::v1::dto::{
+use shared::models::presentation::http::v1::dto::{
     DiscoverModelsRequest, DownloadModelRequest, GetModelRequest, ListModelsRequest, PublishModelRequest
 };
 use huggingface_client::client::HuggingFaceClient;

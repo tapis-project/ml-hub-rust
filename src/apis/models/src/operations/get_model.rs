@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use crate::helpers::{build_error_response, build_success_response};
-use clients::registrar::ClientRegistrar;
+use clients::registrar::ClientProvider;
 use shared::logging::SharedLogger;
-use shared::models::web::v1::dto::{GetModelPath, GetModelRequest};
+use shared::models::presentation::http::v1::dto::{GetModelPath, GetModelRequest};
 use shared::clients::GetModelClient;
 use actix_web::{
     web,
@@ -23,7 +23,7 @@ async fn get_model(
     logger.debug("Start operation list_models");
 
     // Get the client for the provided platform
-    let client = if let Ok(client) = ClientRegistrar::resolve_get_model_client(&path.platform) {
+    let client = if let Ok(client) = ClientProvider::provide_get_model_client(&path.platform) {
         client
     } else {
         return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))

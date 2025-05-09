@@ -2,11 +2,11 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::inputs;
 use crate::application::services::inference_server_service::InferenceServerService;
-use crate::web::v1::dto::{
+use crate::presentation::dto::{
     ListAll,
     InferenceServer as InferenceServerDto
 };
-use crate::web::helpers::{
+use crate::presentation::helpers::{
     build_error_response,
     build_success_response
 };
@@ -94,7 +94,7 @@ async fn list_inference_servers(
 
     return build_success_response(
         Some(serialized_dtos),
-        Some(200),
-        Some(String::from("success"))
+        Some(String::from("success")),
+        None
     );
 }

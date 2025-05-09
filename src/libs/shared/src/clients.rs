@@ -1,7 +1,7 @@
-use crate::inference::web::v1::dto as inference;
-use crate::training::web::v1::dto as training;
-use crate::models::web::v1::dto as models;
-use crate::datasets::web::v1::dto as datasets;
+use crate::inference::presentation::http::v1::dto as inference;
+use crate::training::presentation::http::v1::dto as training;
+use crate::models::presentation::http::v1::dto as models;
+use crate::datasets::presentation::http::v1::dto as datasets;
 use crate::artifacts::{ArtifactGenerator, StagedArtifact};
 // Re-exporting here to make the api cleaner and more predictable. Everything
 // clients needs to implement should come from this module. Removing the 'pub'

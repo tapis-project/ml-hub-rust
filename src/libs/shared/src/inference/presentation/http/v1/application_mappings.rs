@@ -1,5 +1,5 @@
 //! Contains conversions between web layer dtos and application layer inputs
-use crate::inference::web::v1::dto;
+use crate::inference::presentation::http::v1::dto;
 use crate::inference::application::inputs;
 use crate::models::application::inputs::ModelDiscoveryCriteriaInput;
 use crate::errors::Error;

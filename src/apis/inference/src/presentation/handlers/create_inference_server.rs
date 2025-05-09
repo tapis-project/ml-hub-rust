@@ -2,8 +2,8 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::services::inference_server_service::InferenceServerService;
 use crate::application::inputs;
-use crate::web::v1::dto;
-use crate::web::helpers::{build_error_response, build_success_response};
+use crate::presentation::dto;
+use crate::presentation::helpers::{build_error_response, build_success_response};
 use shared::errors::Error;
 use actix_web::{web, post, Responder, HttpRequest as ActixHttpRequest};
 use serde_json::from_slice as json_from_slice;
@@ -65,7 +65,7 @@ async fn create_inference_server(
 
     match serde_json::to_value(dto) {
         Ok(result) => {
-            return build_success_response(Some(result), Some(200), Some(String::from("success")))
+            return build_success_response(Some(result), Some(String::from("success")), None)
         },
         Err(err) => {
             return build_error_response(500, String::from(format!("Error serializing inference server: {}", err.to_string())))

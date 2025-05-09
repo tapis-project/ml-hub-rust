@@ -1,10 +1,10 @@
 use crate::helpers::{build_error_response, build_success_response};
 use std::collections::HashMap;
-use clients::registrar::ClientRegistrar;
+use clients::registrar::ClientProvider;
 use actix_web::{web, post, Responder, HttpRequest};
 use actix_multipart::Multipart;
 use shared::logging::SharedLogger;
-use shared::models::web::v1::dto::{PublishModelPath, PublishModelRequest};
+use shared::models::presentation::http::v1::dto::{PublishModelPath, PublishModelRequest};
 use shared::clients::PublishModelClient;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files/{path:.*}")]
@@ -25,7 +25,7 @@ async fn publish_model(
     }
 
     // Get the client for the provided platform
-    let client = match ClientRegistrar::resolve_publish_model_client(&path.platform) {
+    let client = match ClientProvider::provide_publish_model_client(&path.platform) {
         Ok(client) => client,
         Err(_) => return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))
     };

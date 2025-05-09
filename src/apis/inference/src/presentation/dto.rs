@@ -1,0 +1,1 @@
+pub use shared::inference::presentation::http::v1::dto::*;

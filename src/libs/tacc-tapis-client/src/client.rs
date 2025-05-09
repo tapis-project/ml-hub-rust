@@ -18,7 +18,7 @@ use shared::artifacts::{
 use shared::clients::{
     ClientError, ClientJsonResponse, PublishModelClient
 };
-use shared::models::web::v1::dto::PublishModelRequest;
+use shared::models::presentation::http::v1::dto::PublishModelRequest;
 use shared::logging::SharedLogger;
 
 #[derive(Debug)]
