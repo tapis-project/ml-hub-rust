@@ -3,11 +3,10 @@ use crate::infra::db::mongo::database::{get_db, ClientParams};
 use crate::presentation;
 use shared::system::Env;
 use std::env;
-use actix_web::{web as web_actix, App, HttpServer};
 use log::error;
+use actix_web::{App, HttpServer};
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+pub async fn run_server() -> std::io::Result<()> {
     pub const DEFAULT_PORT: u16 = 8000;
     pub const DEFAULT_HOST: &str = "0.0.0.0";
     
@@ -50,7 +49,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web_actix::Data::new(state.clone()))
+            .app_data(actix_web::web::Data::new(state.clone()))
             .service(presentation::handlers::get_inference_server::get_inference_server)
             .service(presentation::handlers::list_inference_servers::list_inference_servers)
             .service(presentation::handlers::get_inference_server_docs::get_inference_server_docs)

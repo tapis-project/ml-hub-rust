@@ -1,10 +1,10 @@
-use crate::infra::mongo::database::{
+use crate::infra::db::mongo::database::{
     INFERENCE_SERVER_COLLECTION,
     INFERENCE_SERVER_DEPLOYMENT_COLLECTION
 };
+use crate::infra::db::mongo::documents::{InferenceServer, InferenceServerDeployment};
 use crate::application;
 use crate::domain::entities;
-use crate::infra::mongo::documents::{InferenceServer, InferenceServerDeployment};
 use shared::errors::Error;
 use mongodb::{
     bson::doc,

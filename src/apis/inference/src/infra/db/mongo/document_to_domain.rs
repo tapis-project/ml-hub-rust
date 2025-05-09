@@ -1,5 +1,5 @@
 use crate::domain::entities as domain;
-use crate::infra::mongo::documents;
+use crate::infra::db::mongo::documents;
 use shared::errors::Error;
 
 

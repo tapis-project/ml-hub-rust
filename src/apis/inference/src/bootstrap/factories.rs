@@ -2,7 +2,7 @@
 //! with application level concerns
 use mongodb::Database;
 use crate::application::repositories::InferenceServerRepository;
-use crate::infra::mongo::repositories::InferenceServerRepository as MongoInferenceServerRepository;
+use crate::infra::db::mongo::repositories::InferenceServerRepository as MongoInferenceServerRepository;
 use std::sync::Arc;
 
 #[cfg(feature = "mongodb")]
