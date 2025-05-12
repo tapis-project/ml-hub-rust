@@ -1,46 +1,19 @@
+pub mod responses;
+pub mod artifacts;
+
 use crate::inference::presentation::http::v1::dto as inference;
 use crate::training::presentation::http::v1::dto as training;
 use crate::models::presentation::http::v1::dto as models;
 use crate::datasets::presentation::http::v1::dto as datasets;
-use crate::artifacts::{ArtifactGenerator, StagedArtifact};
+use crate::clients::artifacts::ArtifactGenerator;
+use serde::Serialize;
 // Re-exporting here to make the api cleaner and more predictable. Everything
 // clients needs to implement should come from this module. Removing the 'pub'
 // keyword below will break this modules api for consumers
 pub use crate::errors::ClientError;
-use serde::Serialize;
+pub use crate::clients::responses::{ClientJsonResponse, ClientStagedArtifactResponse};
 
-#[derive(Serialize)]
-pub struct ClientJsonResponse<Data: Serialize, Metadata: Serialize> {
-    pub status: Option<u16>,
-    pub message: Option<String>,
-    pub result: Option<Data>,
-    pub metadata: Option<Metadata>
-}
 
-impl <Data: Serialize, Metadata: Serialize>ClientJsonResponse<Data, Metadata> {
-    pub fn new(status: Option<u16>, message: Option<String>, result: Option<Data>, metadata: Option<Metadata>) -> Self {
-        return Self {
-            status,
-            message,
-            result,
-            metadata
-        }
-    }
-}
-
-pub struct ClientStagedArtifactResponse {
-    pub staged_artifact: StagedArtifact,
-    pub status: Option<u16>,
-}
-
-impl ClientStagedArtifactResponse {
-    pub fn new(staged_artifact: StagedArtifact, status: Option<u16>) -> Self {
-        return Self {
-            staged_artifact,
-            status,
-        }
-    }
-}
 
 pub trait ListModelsClient {
     type Data: Serialize;

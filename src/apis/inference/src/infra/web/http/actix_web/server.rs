@@ -50,12 +50,12 @@ pub async fn run_server() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(actix_web::web::Data::new(state.clone()))
-            .service(presentation::handlers::get_inference_server::get_inference_server)
-            .service(presentation::handlers::list_inference_servers::list_inference_servers)
-            .service(presentation::handlers::get_inference_server_docs::get_inference_server_docs)
-            .service(presentation::handlers::create_inference_server::create_inference_server)
-            .service(presentation::handlers::update_inference_server::update_inference_server)
-            .service(presentation::handlers::delete_inference_server::delete_inference_server)
+            .service(presentation::http::v1::handlers::get_inference_server::get_inference_server)
+            .service(presentation::http::v1::handlers::list_inference_servers::list_inference_servers)
+            .service(presentation::http::v1::handlers::get_inference_server_docs::get_inference_server_docs)
+            .service(presentation::http::v1::handlers::create_inference_server::create_inference_server)
+            .service(presentation::http::v1::handlers::update_inference_server::update_inference_server)
+            .service(presentation::http::v1::handlers::delete_inference_server::delete_inference_server)
     })
         .bind(addrs)?
         .run()

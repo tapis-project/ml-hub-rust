@@ -2,7 +2,7 @@ use crate::errors::Error;
 use crate::logging::GlobalLogger;
 // Reexporting for continuity as this module is for code that accesses
 // system software. Both git and git lfs are called via Command
-pub use crate::git;
+pub use crate::infra::fs::git;
 use std::process::Command;
 use std::path::PathBuf;
 use std::fs::create_dir_all;

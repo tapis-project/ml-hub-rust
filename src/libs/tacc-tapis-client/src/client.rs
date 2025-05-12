@@ -7,13 +7,14 @@ use crate::utils::token_from_request;
 use crate::tokens::decode_jwt;
 
 use serde_json::Value;
-use shared::artifacts::{
-    // Archive,
-    // Artifact,
+// use shared::presentation::http::v1::dto::{
+//     Archive,
+//     Artifact,
+//     Compression
+// };
+use shared::clients::artifacts::{
     ArtifactGenerator,
     // ArtifactStager,
-    // ArtifactStagingParams,
-    // Compression
 };
 use shared::clients::{
     ClientError, ClientJsonResponse, PublishModelClient

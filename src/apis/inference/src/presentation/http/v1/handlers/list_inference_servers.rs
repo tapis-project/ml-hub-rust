@@ -2,11 +2,11 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::inputs;
 use crate::application::services::inference_server_service::InferenceServerService;
-use crate::presentation::dto::{
+use crate::presentation::http::v1::dto::{
     ListAll,
     InferenceServer as InferenceServerDto
 };
-use crate::presentation::helpers::{
+use crate::presentation::http::v1::helpers::{
     build_error_response,
     build_success_response
 };

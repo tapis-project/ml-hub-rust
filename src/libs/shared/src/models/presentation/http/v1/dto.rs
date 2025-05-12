@@ -5,7 +5,7 @@ use actix_multipart::Multipart;
 use actix_web::web;
 // Re-export so clients can use this struct
 pub use actix_web::HttpRequest;
-pub use crate::artifacts::DownloadArtifactBody;
+pub use crate::presentation::http::v1::dto::DownloadArtifactBody;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {

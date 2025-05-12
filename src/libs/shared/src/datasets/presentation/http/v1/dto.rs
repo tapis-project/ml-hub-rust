@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use actix_multipart::Multipart;
 use actix_web::web;
-use crate::artifacts::DownloadArtifactBody;
+use crate::presentation::http::v1::dto::DownloadArtifactBody;
 // Re-export so clients can use this struct
 pub use actix_web::HttpRequest;
 

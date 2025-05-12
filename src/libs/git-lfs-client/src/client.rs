@@ -1,4 +1,3 @@
-use shared::artifacts::ArtifactGenerator;
 use shared::constants;
 use shared::clients::{
     ClientError,
@@ -6,20 +5,23 @@ use shared::clients::{
     DownloadDatasetClient,
     DownloadModelClient
 };
-use shared::git::{
+use shared::infra::fs::git::{
     SyncGitRepository,
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
 use shared::models::presentation::http::v1::dto::DownloadModelRequest;
 use shared::datasets::presentation::http::v1::dto::DownloadDatasetRequest;
-use shared::artifacts::{
-    Artifact,
+use shared::clients::artifacts::{
     ArtifactStager,
-    ArtifactStagingParams,
+    ArtifactGenerator,
 };
 use shared::logging::SharedLogger;
-use shared::requests::param_to_string;
+use shared::presentation::http::v1::dto::{
+    Artifact,
+    ArtifactStagingParams
+};
+use shared::presentation::http::v1::helpers::param_to_string;
 
 
 #[derive(Debug)]

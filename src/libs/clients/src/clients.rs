@@ -5,9 +5,6 @@ use shared::clients::{
     ClientStagedArtifactResponse,
     DownloadModelClient as _
 };
-// use shared::artifacts::{
-//     ArtifactGenerator,
-// };
 use shared::models::presentation::http::v1::dto::{
     DiscoverModelsRequest, DownloadModelRequest, GetModelRequest, ListModelsRequest, PublishModelRequest
 };

@@ -1,5 +1,5 @@
 pub use actix_web::HttpRequest;
-use crate::artifacts::Parameters;
+use crate::presentation::http::v1::dto::Parameters;
 use crate::errors::Error;
 use std::collections::hash_map::HashMap;
 

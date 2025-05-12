@@ -61,224 +61,152 @@ spec:
             labels:
               mlhub: openapi3
         spec:
-          openapi: 3.0.3
+          openapi: 3.1.0
           info:
-            title: Ultralytics litserver
-            version: 1.0.0
+            title: FastAPI
+            version: 0.1.0
           paths:
+            /:
+              get:
+                summary: Index
+                operationId: index__get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
             /health:
               get:
-                summary: Returns information about the current health of the server
-                operationId: healthcheck
+                summary: Health
+                operationId: health_health_get
                 responses:
                   '200':
-                    description: OK
-
-            /ready/{model_id}:
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /info:
               get:
-                summary: Returns information about whether or not a model is ready
-                operationId: readycheck
-                parameters:
-                  - name: model_id
-                    in: path
-                    required: true
-                    schema:
-                      type: string
+                summary: Info
+                operationId: info_info_get
                 responses:
                   '200':
-                    description: OK
-
-            /openapi3:
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /healthcheck:
               get:
-                summary: Returns the openapiv3 spec for this api
-                operationId: openapi3
+                summary: Healthcheck
+                operationId: healthcheck_healthcheck_get
                 responses:
                   '200':
-                    description: OK
-                    content: 
-                      application/x-yaml:
-                        schema:
-                          type: object
-            /preprocess:
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /load-model:
               post:
-                summary: Runs input data preprocessing
-                operationId: preprocess
+                summary: Load Model
+                operationId: load_model_load_model_post
                 requestBody:
-                  required: true
                   content:
                     application/json:
                       schema:
-                        type: object
-                        required: [image_data, stride, target_size]
-                        properties:
-                          image_data:
-                            type: string
-                            format: base64
-                            description: Base64 encoded string of the input image.
-                          stride:
-                            type: integer
-                            format: int64
-                            description: Stride of the model.
-                          target_size:
-                            type: object
-                            properties:
-                              width:
-                                type: integer
-                                format: int64
-                              height:
-                                type: integer
-                                format: int64
-                            description: Target image size.
+                        $ref: '#/components/schemas/BaseModel'
+                  required: true
                 responses:
                   '200':
-                    description: Success
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+                  '422':
+                    description: Validation Error
                     content:
                       application/json:
                         schema:
-                          type: object
-
-            /postprocess:
-              post:
-                summary: Scales boxes and optionally draws labels
-                operationId: postprocess
+                          $ref: '#/components/schemas/HTTPValidationError'
+            /readycheck:
+              get:
+                summary: Readycheck
+                operationId: readycheck_readycheck_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /shutdown:
+              get:
+                summary: Shutdown
+                operationId: shutdown_shutdown_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /swap-model:
+              put:
+                summary: Swap Model
+                operationId: swap_model_swap_model_put
                 requestBody:
-                  required: true
                   content:
                     application/json:
                       schema:
-                        type: object
-                        required: [original_image_size, augmented_image_size]
-                        properties:
-                          draw_boxes:
-                            type: boolean
-                          original_image_size:
-                            type: object
-                            properties:
-                              width:
-                                type: integer
-                                format: int64
-                              height:
-                                type: integer
-                                format: int64
-                          augmented_image_size:
-                            type: object
-                            properties:
-                              width:
-                                type: integer
-                                format: int64
-                              height:
-                                type: integer
-                                format: int64
+                        $ref: '#/components/schemas/BaseModel'
+                  required: true
                 responses:
                   '200':
-                    description: Success
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+                  '422':
+                    description: Validation Error
                     content:
                       application/json:
                         schema:
-                          type: object
-                          properties:
-                            boxes:
-                              type: string
-                            boxes_shape:
-                              type: array
-                              items:
-                                type: integer
-                            labels:
-                              type: string
-                            labels_shape:
-                              type: array
-                              items:
-                                type: integer
-                            confidences:
-                              type: string
-                            confidences_shape:
-                              type: array
-                              items:
-                                type: integer
-                            annotated_image:
-                              type: string
-                              nullable: true
-                            annotated_image_shape:
-                              type: array
-                              items:
-                                type: integer
-                              nullable: true
+                          $ref: '#/components/schemas/HTTPValidationError'
+          components:
+            schemas:
+              BaseModel:
+                properties: {}
+                type: object
+                title: BaseModel
+              HTTPValidationError:
+                properties:
+                  detail:
+                    items:
+                      $ref: '#/components/schemas/ValidationError'
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+              ValidationError:
+                properties:
+                  loc:
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                    type: array
+                    title: Location
+                  msg:
+                    type: string
+                    title: Message
+                  type:
+                    type: string
+                    title: Error Type
+                type: object
+                required:
+                  - loc
+                  - msg
+                  - type
+                title: ValidationError
 
-            /models/{model_id}:
-              post:
-                summary: Downloads a model from Hugging Face
-                operationId: load_model
-                parameters:
-                  - name: model_id
-                    in: path
-                    required: true
-                    schema:
-                      type: string
-                      format: utf8
-                requestBody:
-                  required: false
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        properties:
-                          version:
-                            type: string
-                responses:
-                  '200':
-                    description: Success
-
-            /predict:
-              post:
-                summary: Run inference using default model
-                operationId: predict
-                requestBody:
-                  required: true
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        required: [image_data]
-                        properties:
-                          image_data:
-                            type: string
-                            format: base64
-                          draw_boxes:
-                            type: boolean
-                responses:
-                  '200':
-                    description: Success
-
-            /models/{model_id}/predict:
-              post:
-                summary: Run inference using a specified model
-                operationId: predict_by_model
-                parameters:
-                  - name: model_id
-                    in: path
-                    required: true
-                    schema:
-                      type: string
-                      format: utf8
-                requestBody:
-                  required: true
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        required: [image_data]
-                        properties:
-                          image_data:
-                            type: string
-                            format: base64
-                          draw_boxes:
-                            type: boolean
-                          tag:
-                            type: string
-                            default: latest
-                responses:
-                  '200':
-                    description: Success
                           # TODO 
 #                           response = {
 #     "boxes": self._encode_tensor(boxes),

@@ -1,74 +1,27 @@
 use crate::errors::Error;
 use crate::logging::GlobalLogger;
-use crate::system::Env;
-use crate::archive::zip;
+use crate::infra::system::Env;
+use crate::infra::fs::zip;
 use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::future::Future;
-use strum_macros::{EnumString, Display};
-use serde::{Deserialize, Serialize};
-use futures_util::stream::StreamExt;
 use actix_web::web::Bytes;
-use actix_multipart::Multipart;
 use uuid::Uuid;
-use serde_json::Value;
+// TODO Should these be presentation-layer dtos? idk
+use crate::presentation::http::v1::dto::{
+    ArtifactStagingParams,
+    StagedArtifact,
+    MultipartStagingParams,
+    Compression,
+    Archive,
+    Artifact
+};
+use futures_util::stream::StreamExt;
+
 // Reexport to create a unified api for all artifact-related functionality
-pub use crate::responses::artifact_helpers;
-
-pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct DownloadArtifactBody {
-    pub include_paths: Option<Vec<String>>,
-    pub exclude_paths: Option<Vec<String>>,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>,
-    pub download_filename: Option<String>,
-    pub params: Option<Parameters>,
-}
-
-#[derive(Clone, Eq, Hash, PartialEq, Debug, Deserialize, Serialize, Display, EnumString)]
-#[serde(rename_all = "lowercase")]
-pub enum Archive {
-    #[strum(serialize="zip")]
-    Zip
-}
-
-#[derive(Clone, Eq, Hash, PartialEq, Debug, Deserialize, Serialize, Display, EnumString)]
-#[serde(rename_all = "lowercase")]
-pub enum Compression {
-    #[strum(serialize="deflated")]
-    Deflated
-}
-
-#[derive(Clone, Debug)]
-pub struct Artifact {
-    pub path: String,
-    pub include_paths: Option<Vec<String>>,
-    pub exclude_paths: Option<Vec<String>>,
-}
-
-#[derive(Clone, Debug)]
-pub struct StagedArtifact {
-    pub path: PathBuf,
-    pub artifact: Artifact
-}
-
-pub struct ArtifactStagingParams<'a> {
-    pub artifact: &'a Artifact,
-    pub staged_filename: Option<String>,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>
-}
-
-pub struct MultipartStagingParams<'payload> {
-    pub payload: &'payload mut Multipart,
-    pub staged_filename: String,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>
-}
+pub use crate::presentation::http::v1::responses::artifact_helpers;
 
 pub trait ArtifactGenerator {}
 

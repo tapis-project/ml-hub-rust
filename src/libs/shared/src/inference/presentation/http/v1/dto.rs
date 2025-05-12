@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 use actix_web::web;
 use serde::{Deserialize, Serialize};
-use actix_web::HttpRequest;
 use serde_json::Value;
 use openapiv3::OpenAPI;
 use crate::models::presentation::http::v1::dto::ModelDiscoveryCriteria;
-pub use crate::filtering::*;
+pub use crate::presentation::http::v1::dto::*;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetInferenceServerDocsPath {
@@ -40,6 +39,7 @@ pub struct CreateInferenceServerRequest {
     pub query: web::Query<HashMap<String, String>>,
     pub body: web::Bytes,
 }
+
 
 pub struct ListAllInferenceServersRequest {
     pub req: HttpRequest,

@@ -5,11 +5,10 @@ use crate::requests::{
 };
 use crate::utils::deserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
-use shared::artifacts::ArtifactGenerator;
 use shared::clients::{
     ClientError, ClientJsonResponse, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient, GetDatasetClient, GetModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient
 };
-use shared::git::{
+use shared::infra::fs::git::{
    SyncGitRepository,
    SyncGitRepositoryImpl,
    SyncLfsRepositoryParams
@@ -25,19 +24,18 @@ use shared::datasets::presentation::http::v1::dto::{
     ListDatasetsRequest,
     PublishDatasetRequest,
 };
-use shared::requests::param_to_string;
-use shared::artifacts::{
+use shared::presentation::http::v1::helpers::param_to_string;
+use shared::presentation::http::v1::dto::{
     Artifact,
-    ArtifactStager,
     ArtifactStagingParams,
 };
+use shared::clients::artifacts::{ArtifactGenerator, ArtifactStager};
 use shared::logging::SharedLogger;
 use shared::constants::{
     MODEL_DOWNLOAD_DIR_NAME,
     DATASET_DOWNLOAD_DIR_NAME,
 };
 use serde_json::{Value, Map};
-
 
 #[derive(Debug)]
 pub struct HuggingFaceClient {
