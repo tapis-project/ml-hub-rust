@@ -3,7 +3,7 @@ use crate::operations::files::{
     mkdir,
     // insert
 };
-use crate::utils::token_from_request;
+use crate::utils::token_from_headers;
 use crate::tokens::decode_jwt;
 
 use serde_json::Value;
@@ -37,7 +37,7 @@ impl PublishModelClient for TapisClient {
     /// system
     fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Publishing model");
-        let token = token_from_request(&request.req)
+        let token = token_from_headers(&request.headers)
             .ok_or_else(|| ClientError::new(String::from("Missing tapis token in 'X-Tapis-Token' header")))?;
         
         let claims = decode_jwt(&token)

@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use actix_web::web;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use openapiv3::OpenAPI;
+use bytes::Bytes;
 use crate::models::presentation::http::v1::dto::ModelDiscoveryCriteria;
-pub use crate::presentation::http::v1::dto::*;
+pub use crate::common::presentation::http::v1::dto::*;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetInferenceServerDocsPath {
@@ -34,39 +34,34 @@ pub struct CreateInferencePath {
 }
 
 pub struct CreateInferenceServerRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<CreateInferenceServerPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub path: CreateInferenceServerPath,
+    pub query: HashMap<String, String>,
+    pub body: Bytes,
 }
 
 
 pub struct ListAllInferenceServersRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<String>,
-    pub query: web::Query<Option<ListAll>>,
-    pub body: web::Bytes,
+    pub path: String,
+    pub query: Option<ListAll>,
+    pub body: Bytes,
 }
 
 pub struct CreateInferenceRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<CreateInferencePath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub path: CreateInferencePath,
+    pub query: HashMap<String, String>,
+    pub body: Bytes,
 }
 
 pub struct StartInferenceServerRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<StartInferenceServerPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub path: StartInferenceServerPath,
+    pub query: HashMap<String, String>,
+    pub body: Bytes,
 }
 
 pub struct RunInferenceRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<RunInferencePath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub path: RunInferencePath,
+    pub query: HashMap<String, String>,
+    pub body: Bytes,
 }
 
 pub type Labels = HashMap<String, String>;

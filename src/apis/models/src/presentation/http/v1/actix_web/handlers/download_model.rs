@@ -7,13 +7,10 @@ use actix_web::{
     Responder as ActixResponder
 };
 use actix_files::NamedFile;
-use shared::{
-    logging::SharedLogger,
-    responses::artifact_helpers::StagedArtifactResponseHeaders
-};
-use shared::models::presentation::http::v1::dto::{DownloadModelPath, DownloadModelRequest};
-use shared::artifacts::DownloadArtifactBody;
-use crate::helpers::build_error_response;
+use shared::logging::SharedLogger;
+use shared::common::presentation::http::v1::dto::artifact_helpers::StagedArtifactResponseHeaders;
+use crate::presentation::http::v1::dto::{DownloadModelPath, DownloadModelRequest, Headers, DownloadArtifactBody};
+use crate::presentation::http::v1::helpers::build_error_response;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files")]
 async fn download_model(
@@ -43,11 +40,21 @@ async fn download_model(
     };
 
     // Build the request used by the client
+    let headers = match Headers::try_from(req.headers()) {
+        Ok(h) => h,
+        Err(err) => {
+            return build_error_response(
+                400,
+                String::from(err.to_string())
+            )
+        }
+    };
+
     let request = DownloadModelRequest{
-        req: req.clone(),
-        path,
-        query,
-        body
+        headers,
+        path: path.into_inner(),
+        query: query.into_inner(),
+        body: body.into_inner()
     };
     
     // Download the model and respond with the file contents using the provided

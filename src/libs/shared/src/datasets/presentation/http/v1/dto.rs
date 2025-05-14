@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use actix_multipart::Multipart;
-use actix_web::web;
-use crate::presentation::http::v1::dto::DownloadArtifactBody;
-// Re-export so clients can use this struct
-pub use actix_web::HttpRequest;
+use bytes::Bytes;
+use crate::common::presentation::http::v1::dto::{Headers,DownloadArtifactBody};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListDatasetsPath {
@@ -30,29 +28,29 @@ pub struct PublishDatasetPath {
 }
 
 pub struct ListDatasetsRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<ListDatasetsPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub headers: Headers,
+    pub path: ListDatasetsPath,
+    pub query: HashMap<String, String>,
+    pub body: Bytes,
 }
 
 pub struct GetDatasetRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<GetDatasetPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub headers: Headers,
+    pub path: GetDatasetPath,
+    pub query: HashMap<String, String>,
+    pub body: Bytes,
 }
 
 pub struct DownloadDatasetRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<DownloadDatasetPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Json<DownloadArtifactBody>,
+    pub headers: Headers,
+    pub path: DownloadDatasetPath,
+    pub query: HashMap<String, String>,
+    pub body: DownloadArtifactBody,
 }
 
 pub struct PublishDatasetRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<PublishDatasetPath>,
-    pub query: web::Query<HashMap<String, String>>,
+    pub headers: Headers,
+    pub path: PublishDatasetPath,
+    pub query: HashMap<String, String>,
     pub payload: Multipart,
 }

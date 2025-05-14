@@ -1,12 +1,44 @@
 use serde::{Serialize, Deserialize};
 use std::path::PathBuf;
 use strum_macros::{EnumString, Display};
-use actix_multipart::Multipart;
 use serde_json::Value;
-
 // Reexport to create a unified api for all artifact-related functionality
-pub use crate::presentation::http::v1::responses::artifact_helpers;
-pub use actix_web::HttpRequest;
+pub use crate::common::presentation::http::v1::responses::artifact_helpers;
+
+// TODO Refactor Multipart into actix_web and create an adapter that prevents
+// consumer from needing to know about this framework-speicifc implemntation
+use actix_multipart::Multipart;
+
+pub struct Headers(Vec<(String, String)>);
+
+impl Headers {
+    pub fn new(headers: Vec<(String, String)>) -> Self {
+        Self(headers)
+    }
+    // By the http standard, some headers can be set more than once, so
+    // we return an optional vector of strings
+    pub fn get_all_values(&self, name: &str) -> Option<Vec<String>> {
+        let header_values = self.0.iter()
+            .filter(|(k, _)| k == &name)
+            .map(|(_, v)| v.clone())
+            .collect::<Vec<_>>();
+
+        if header_values.len() < 1 {
+            return None
+        }
+
+        Some(header_values)
+    }
+
+    pub fn get_first_value(&self, name: &str) -> Option<String> {
+        let values = self.get_all_values(name);
+        if let Some(v) = values {
+            return Some(v[0].clone());
+        };
+
+        return None
+    }
+}
 
 pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
 

@@ -1,5 +1,5 @@
 use actix_web::HttpResponse;
-use shared::responses::helpers::{
+use shared::common::presentation::http::v1::responses::helpers::{
     build_error_response as error,
     build_success_response as success
 };

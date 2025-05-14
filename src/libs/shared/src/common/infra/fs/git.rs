@@ -1,5 +1,5 @@
 use crate::errors::Error;
-use crate::infra::system::{validate_system_dependencies, Env};
+use crate::common::infra::system::{validate_system_dependencies, Env};
 use crate::logging::GlobalLogger;
 use std::process::Command;
 use std::fs::{create_dir_all, read_dir};

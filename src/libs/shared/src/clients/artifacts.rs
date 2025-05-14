@@ -1,16 +1,16 @@
 use crate::errors::Error;
 use crate::logging::GlobalLogger;
-use crate::infra::system::Env;
-use crate::infra::fs::zip;
+use crate::common::infra::system::Env;
+use crate::common::infra::fs::zip;
 use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::future::Future;
-use actix_web::web::Bytes;
+use bytes::Bytes;
 use uuid::Uuid;
 // TODO Should these be presentation-layer dtos? idk
-use crate::presentation::http::v1::dto::{
+use crate::common::presentation::http::v1::dto::{
     ArtifactStagingParams,
     StagedArtifact,
     MultipartStagingParams,
@@ -21,7 +21,7 @@ use crate::presentation::http::v1::dto::{
 use futures_util::stream::StreamExt;
 
 // Reexport to create a unified api for all artifact-related functionality
-pub use crate::presentation::http::v1::responses::artifact_helpers;
+pub use crate::common::presentation::http::v1::responses::artifact_helpers;
 
 pub trait ArtifactGenerator {}
 

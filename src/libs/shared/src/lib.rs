@@ -6,6 +6,5 @@ pub mod models;
 pub mod inference;
 pub mod training;
 pub mod datasets;
-pub mod infra;
+pub mod common;
 pub mod logging;
-pub mod presentation;

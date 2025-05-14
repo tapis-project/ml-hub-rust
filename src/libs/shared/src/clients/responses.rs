@@ -1,4 +1,4 @@
-use crate::presentation::http::v1::dto::StagedArtifact;
+use crate::common::presentation::http::v1::dto::StagedArtifact;
 // Re-exporting here to make the api cleaner and more predictable. Everything
 // clients needs to implement should come from this module. Removing the 'pub'
 // keyword below will break this modules api for consumers

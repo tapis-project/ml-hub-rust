@@ -1,10 +1,10 @@
-use crate::helpers::{build_error_response, build_success_response};
+use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
 use std::collections::HashMap;
 use clients::registrar::ClientProvider;
 use actix_web::{web, post, Responder, HttpRequest};
 use actix_multipart::Multipart;
 use shared::logging::SharedLogger;
-use shared::models::presentation::http::v1::dto::{PublishModelPath, PublishModelRequest};
+use crate::presentation::http::v1::dto::{PublishModelPath, PublishModelRequest, Headers};
 use shared::clients::PublishModelClient;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files/{path:.*}")]
@@ -31,10 +31,20 @@ async fn publish_model(
     };
 
     // Build the request used by the client
+    let headers = match Headers::try_from(req.headers()) {
+        Ok(h) => h,
+        Err(err) => {
+            return build_error_response(
+                400,
+                String::from(err.to_string())
+            )
+        }
+    };
+
     let request = PublishModelRequest{
-        req: req.clone(),
-        path,
-        query,
+        headers,
+        path: path.into_inner(),
+        query: query.into_inner(),
         payload
     };
 

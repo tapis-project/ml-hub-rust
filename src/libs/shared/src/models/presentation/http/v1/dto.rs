@@ -2,10 +2,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use actix_multipart::Multipart;
-use actix_web::web;
-// Re-export so clients can use this struct
-pub use actix_web::HttpRequest;
-pub use crate::presentation::http::v1::dto::DownloadArtifactBody;
+pub use crate::common::presentation::http::v1::dto::{
+    Headers,
+    DownloadArtifactBody
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {
@@ -37,37 +37,37 @@ pub struct DiscoverModelsPath {
 }
 
 pub struct ListModelsRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<ListModelsPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub headers: Headers,
+    pub path: ListModelsPath,
+    pub query: HashMap<String, String>,
+    pub body: bytes::Bytes,
 }
 
 pub struct DiscoverModelsRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<DiscoverModelsPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Json<DiscoveryCriteriaBody>
+    pub headers: Headers,
+    pub path: DiscoverModelsPath,
+    pub query: HashMap<String, String>,
+    pub body: DiscoveryCriteriaBody
 }
 
 pub struct GetModelRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<GetModelPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Bytes,
+    pub headers: Headers,
+    pub path: GetModelPath,
+    pub query: HashMap<String, String>,
+    pub body: bytes::Bytes,
 }
 
 pub struct DownloadModelRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<DownloadModelPath>,
-    pub query: web::Query<HashMap<String, String>>,
-    pub body: web::Json<DownloadArtifactBody>,
+    pub headers: Headers,
+    pub path: DownloadModelPath,
+    pub query: HashMap<String, String>,
+    pub body: DownloadArtifactBody,
 }
 
 pub struct PublishModelRequest {
-    pub req: HttpRequest,
-    pub path: web::Path<PublishModelPath>,
-    pub query: web::Query<HashMap<String, String>>,
+    pub headers: Headers,
+    pub path: PublishModelPath,
+    pub query: HashMap<String, String>,
     pub payload: Multipart,
 }
 

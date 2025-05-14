@@ -1,7 +1,7 @@
 pub mod git;
 
 use crate::errors::Error;
-use crate::presentation::http::v1::dto::Compression;
+use crate::common::presentation::http::v1::dto::Compression;
 use crate::logging::GlobalLogger;
 use std::path::PathBuf;
 use std::fs::File;

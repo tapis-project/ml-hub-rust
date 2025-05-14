@@ -5,7 +5,7 @@ use shared::clients::{
     DownloadDatasetClient,
     DownloadModelClient
 };
-use shared::infra::fs::git::{
+use shared::common::infra::fs::git::{
     SyncGitRepository,
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
@@ -17,11 +17,11 @@ use shared::clients::artifacts::{
     ArtifactGenerator,
 };
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::dto::{
+use shared::common::presentation::http::v1::dto::{
     Artifact,
     ArtifactStagingParams
 };
-use shared::presentation::http::v1::helpers::param_to_string;
+use shared::common::presentation::http::v1::helpers::param_to_string;
 
 
 #[derive(Debug)]
@@ -36,11 +36,7 @@ impl SyncGitRepository for GitLfsClient {}
 impl DownloadModelClient for GitLfsClient {
     fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
-        let access_token = request.req
-            .headers()
-            .get("Authorization")
-            .and_then(|header_value| header_value.to_str().ok())
-            .map(|value| String::from(value));
+        let access_token = request.headers.get_first_value("Authorization");
 
         // Get the remote base url from the request
         let remote_base_url = param_to_string(request.body.params.clone(), "remote_base_url")
@@ -103,11 +99,7 @@ impl DownloadModelClient for GitLfsClient {
 impl DownloadDatasetClient for GitLfsClient {
     fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
-        let access_token = request.req
-            .headers()
-            .get("Authorization")
-            .and_then(|header_value| header_value.to_str().ok())
-            .map(|value| String::from(value));
+        let access_token = request.headers.get_first_value("Authorization");
 
         // Get the remote base url from the request
         let remote_base_url = param_to_string(request.body.params.clone(), "remote_base_url")

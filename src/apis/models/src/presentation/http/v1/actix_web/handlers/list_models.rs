@@ -1,25 +1,24 @@
 use std::collections::HashMap;
-use crate::helpers::{build_error_response, build_success_response};
+use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
 use clients::registrar::ClientProvider;
 use actix_web::{
     web,
     get,
-    HttpRequest as ActixHttpRequest,
-    Responder as ActixResponder
+    HttpRequest,
+    Responder,
 };
 use shared::logging::SharedLogger;
-use shared::models::presentation::http::v1::dto::{ListModelsPath, ListModelsRequest};
+use crate::presentation::http::v1::dto::{ListModelsPath, ListModelsRequest, Headers};
 use shared::clients::ListModelsClient;
 
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models(
-    req: ActixHttpRequest,
+    req: HttpRequest,
     path: web::Path<ListModelsPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Bytes,
-) -> impl ActixResponder {
+) -> impl Responder {
     let logger = SharedLogger::new();
-
     logger.debug("Start operation list_models");
     logger.debug(format!("path: {:#?}", path).as_str());
 
@@ -29,15 +28,25 @@ async fn list_models(
     } else {
         return build_error_response(
             500,
-            String::from(format!("Failed to find client for platform '{}'", &path.platform))
+            String::from(format!("Failed to proivde client for platform '{}'", &path.platform))
         )
     };
 
     // Build the request used by the client
+    let headers = match Headers::try_from(req.headers()) {
+        Ok(h) => h,
+        Err(err) => {
+            return build_error_response(
+                400,
+                String::from(err.to_string())
+            )
+        }
+    };
+
     let request = ListModelsRequest{
-        req,
-        path,
-        query,
+        headers,
+        path: path.into_inner(),
+        query: query.into_inner(),
         body
     };
 

@@ -1,19 +1,19 @@
 use std::collections::HashMap;
-use crate::helpers::{build_error_response, build_success_response};
+use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
 use clients::registrar::ClientProvider;
 use actix_web::{
     web,
     post,
-    HttpRequest as ActixHttpRequest,
+    HttpRequest,
     Responder
 };
 use shared::logging::SharedLogger;
-use shared::models::presentation::http::v1::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody};
+use crate::presentation::http::v1::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody, Headers};
 use shared::clients::DiscoverModelsClient;
 
 #[post("models-api/platforms/{platform}/models")]
 async fn discover_models(
-    req: ActixHttpRequest,
+    req: HttpRequest,
     path: web::Path<DiscoverModelsPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Json<DiscoveryCriteriaBody>,
@@ -33,11 +33,21 @@ async fn discover_models(
     };
 
     // Build the request used by the client
+    let headers = match Headers::try_from(req.headers()) {
+        Ok(h) => h,
+        Err(err) => {
+            return build_error_response(
+                400,
+                String::from(err.to_string())
+            )
+        }
+    };
+
     let request = DiscoverModelsRequest{
-        req,
-        path,
-        query,
-        body
+        headers,
+        path: path.into_inner(),
+        query: query.into_inner(),
+        body: body.into_inner()
     };
 
     // Fetch the list of models

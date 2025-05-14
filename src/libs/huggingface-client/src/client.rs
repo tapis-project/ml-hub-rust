@@ -8,7 +8,7 @@ use reqwest::blocking::Client as ReqwestClient;
 use shared::clients::{
     ClientError, ClientJsonResponse, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient, GetDatasetClient, GetModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient
 };
-use shared::infra::fs::git::{
+use shared::common::infra::fs::git::{
    SyncGitRepository,
    SyncGitRepositoryImpl,
    SyncLfsRepositoryParams
@@ -24,8 +24,8 @@ use shared::datasets::presentation::http::v1::dto::{
     ListDatasetsRequest,
     PublishDatasetRequest,
 };
-use shared::presentation::http::v1::helpers::param_to_string;
-use shared::presentation::http::v1::dto::{
+use shared::common::presentation::http::v1::helpers::param_to_string;
+use shared::common::presentation::http::v1::dto::{
     Artifact,
     ArtifactStagingParams,
 };
@@ -136,11 +136,7 @@ impl GetModelClient for HuggingFaceClient {
 impl DownloadModelClient for HuggingFaceClient {
     fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
-        let access_token = request.req
-            .headers()
-            .get("Authorization")
-            .and_then(|header_value| header_value.to_str().ok())
-            .map(|value| String::from(value));
+        let access_token = request.headers.get_first_value("Authroization");
 
         let branch = param_to_string(request.body.params.clone(), "branch")
             .map_err(|err| ClientError::new(err.to_string()))?;
@@ -276,11 +272,7 @@ impl GetDatasetClient for HuggingFaceClient {
 impl DownloadDatasetClient for HuggingFaceClient {
     fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
-        let access_token = request.req
-            .headers()
-            .get("Authorization")
-            .and_then(|header_value| header_value.to_str().ok())
-            .map(|value| String::from(value));
+        let access_token = request.headers.get_first_value("Authorization");
 
         let branch = param_to_string(request.body.params.clone(), "branch")
             .map_err(|err| ClientError::new(err.to_string()))?;

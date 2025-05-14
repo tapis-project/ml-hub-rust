@@ -5,15 +5,15 @@ use shared::clients::{
     DownloadDatasetClient,
     DownloadModelClient
 };
-use shared::infra::fs::git::{
+use shared::common::infra::fs::git::{
     SyncGitRepository,
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
 use shared::models::presentation::http::v1::dto::DownloadModelRequest;
 use shared::datasets::presentation::http::v1::dto::DownloadDatasetRequest;
-use shared::presentation::http::v1::helpers::param_to_string;
-use shared::presentation::http::v1::dto::{
+use shared::common::presentation::http::v1::helpers::param_to_string;
+use shared::common::presentation::http::v1::dto::{
     Artifact,
     ArtifactStagingParams,
 
@@ -38,11 +38,7 @@ impl SyncGitRepository for GithubLfsClient {}
 impl DownloadModelClient for GithubLfsClient {
     fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
-        let access_token = request.req
-            .headers()
-            .get("Authorization")
-            .and_then(|header_value| header_value.to_str().ok())
-            .map(|value| String::from(value));
+        let access_token = request.headers.get_first_value("Authorization");
 
         // Get the branch from the request
         let branch = param_to_string(request.body.params.clone(), "branch")
@@ -98,11 +94,7 @@ impl DownloadModelClient for GithubLfsClient {
 impl DownloadDatasetClient for GithubLfsClient {
     fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
-        let access_token = request.req
-            .headers()
-            .get("Authorization")
-            .and_then(|header_value| header_value.to_str().ok())
-            .map(|value| String::from(value));
+        let access_token = request.headers.get_first_value("Authorization");
 
         // Get the branch from the request
         let branch = param_to_string(request.body.params.clone(), "branch")

@@ -3,9 +3,14 @@ name = "shared"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["actix"]
+actix = ["actix-web", "actix-multipart"]
+
 [dependencies]
-actix-multipart = "0.7.2"
-actix-web = "4"
+actix-multipart = {version = "0.7.2", optional = true}
+actix-web = {version = "4", optional = true}
+bytes = "1.10.1"
 futures-util = "0.3"
 gix = "0.70.0"
 log = "0.4"

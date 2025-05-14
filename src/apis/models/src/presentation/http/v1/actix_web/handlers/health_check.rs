@@ -1,6 +1,6 @@
 use actix_web::{get, Responder};
 use shared::logging::SharedLogger;
-use crate::helpers::build_success_response;
+use crate::presentation::http::v1::helpers::build_success_response;
 
 #[get("/models-api/health-check")]
 pub async fn health_check() -> impl Responder {
