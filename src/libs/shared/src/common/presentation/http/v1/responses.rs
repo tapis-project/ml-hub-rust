@@ -12,11 +12,9 @@ pub struct JsonResponse {
 
 pub mod artifact_helpers {
     use crate::errors::Error;
-    use crate::common::presentation::http::v1::dto::{Archive, StagedArtifact};
+    use crate::common::presentation::http::v1::dto::{Archive, StagedArtifact, Header, Boundry};
     use uuid::Uuid;
 
-    type Header = (String, String);
-    type Boundry = String;
     pub struct StagedArtifactResponseHeaders {
         pub content_type_header: Header,
         pub content_disposition_header: Option<Header>,

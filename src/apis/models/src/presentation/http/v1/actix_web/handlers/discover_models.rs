@@ -22,16 +22,6 @@ async fn discover_models(
 
     logger.debug("Start operation discover_models");
 
-    // Get the client for the provided platform
-    let client = if let Ok(client) = ClientProvider::provide_discover_models_client(&path.platform) {
-        client
-    } else {
-        return build_error_response(
-            500,
-            String::from(format!("Failed to find client for platform '{}'", &path.platform)),
-        )
-    };
-
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
@@ -48,6 +38,16 @@ async fn discover_models(
         path: path.into_inner(),
         query: query.into_inner(),
         body: body.into_inner()
+    };
+
+    // Get the client for the provided platform
+    let client = if let Ok(client) = ClientProvider::provide_discover_models_client(&request.path.platform) {
+        client
+    } else {
+        return build_error_response(
+            500,
+            String::from(format!("Failed to find client for platform '{}'", &request.path.platform)),
+        )
     };
 
     // Fetch the list of models

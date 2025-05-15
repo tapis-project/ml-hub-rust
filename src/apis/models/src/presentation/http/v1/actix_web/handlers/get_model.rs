@@ -7,13 +7,13 @@ use shared::clients::GetModelClient;
 use actix_web::{
     web,
     get,
-    HttpRequest as ActixHttpRequest,
+    HttpRequest,
     Responder
 };
 
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]
 async fn get_model(
-    req: ActixHttpRequest,
+    req: HttpRequest,
     path: web::Path<GetModelPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Bytes,
@@ -21,13 +21,6 @@ async fn get_model(
     let logger = SharedLogger::new();
 
     logger.debug("Start operation list_models");
-
-    // Get the client for the provided platform
-    let client = if let Ok(client) = ClientProvider::provide_get_model_client(&path.platform) {
-        client
-    } else {
-        return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))
-    };
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
@@ -45,6 +38,13 @@ async fn get_model(
         path: path.into_inner(),
         query: query.into_inner(),
         body
+    };
+
+    // Get the client for the provided platform
+    let client = if let Ok(client) = ClientProvider::provide_get_model_client(&request.path.platform) {
+        client
+    } else {
+        return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &request.path.platform)))
     };
 
     // Fetch the list of models

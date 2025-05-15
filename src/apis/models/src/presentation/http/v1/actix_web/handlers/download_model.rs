@@ -3,8 +3,8 @@ use clients::registrar::ClientProvider;
 use actix_web::{
     web,
     post,
-    HttpRequest as ActixHttpRequest,
-    Responder as ActixResponder
+    HttpRequest,
+    Responder,
 };
 use actix_files::NamedFile;
 use shared::logging::SharedLogger;
@@ -14,30 +14,14 @@ use crate::presentation::http::v1::helpers::build_error_response;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files")]
 async fn download_model(
-    req: ActixHttpRequest,
+    req: HttpRequest,
     path: web::Path<DownloadModelPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Json<DownloadArtifactBody>,
-) -> impl ActixResponder {
+) -> impl Responder {
     let logger = SharedLogger::new();
     
     logger.debug("Start download model operation");
-
-    // Catch directory traversal attacks. 'model_id' may be used by clients to
-    // constuct directories in the shared file system
-    if path.model_id.contains("..") {
-        return build_error_response(403, String::from("Forbidden"));
-    }
-
-    // Get the client for the provided platform
-    let client = if let Ok(client) = ClientProvider::provide_download_models_client(&path.platform) {
-        client
-    } else {
-        return build_error_response(
-            403,
-            String::from(format!("Failed to find client for platform '{}'", &path.platform))
-        );
-    };
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
@@ -55,6 +39,22 @@ async fn download_model(
         path: path.into_inner(),
         query: query.into_inner(),
         body: body.into_inner()
+    };
+
+    // Catch directory traversal attacks. 'model_id' may be used by clients to
+    // constuct directories in the shared file system
+    if request.path.model_id.contains("..") {
+        return build_error_response(403, String::from("Forbidden"));
+    }
+
+    // Get the client for the provided platform
+    let client = if let Ok(client) = ClientProvider::provide_download_models_client(&request.path.platform) {
+        client
+    } else {
+        return build_error_response(
+            403,
+            String::from(format!("Failed to find client for platform '{}'", &request.path.platform))
+        );
     };
     
     // Download the model and respond with the file contents using the provided

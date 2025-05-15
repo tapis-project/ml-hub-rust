@@ -18,20 +18,8 @@ async fn publish_model(
     
     logger.debug("Start publish model operation");
 
-    // Catch directory traversal attacks. 'model_id' may be used by clients to
-    // constuct directories in the shared file system
-    if path.model_id.contains("..") {
-        return build_error_response(403, String::from("Forbidden"))
-    }
-
-    // Get the client for the provided platform
-    let client = match ClientProvider::provide_publish_model_client(&path.platform) {
-        Ok(client) => client,
-        Err(_) => return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &path.platform)))
-    };
-
-    // Build the request used by the client
-    let headers = match Headers::try_from(req.headers()) {
+     // Build the request used by the client
+     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
         Err(err) => {
             return build_error_response(
@@ -46,6 +34,18 @@ async fn publish_model(
         path: path.into_inner(),
         query: query.into_inner(),
         payload
+    };
+
+    // Catch directory traversal attacks. 'model_id' may be used by clients to
+    // constuct directories in the shared file system
+    if request.path.model_id.contains("..") {
+        return build_error_response(403, String::from("Forbidden"))
+    }
+
+    // Get the client for the provided platform
+    let client = match ClientProvider::provide_publish_model_client(&request.path.platform) {
+        Ok(client) => client,
+        Err(_) => return build_error_response(500, String::from(format!("Failed to find client for platform '{}'", &request.path.platform)))
     };
 
     // Publish the model

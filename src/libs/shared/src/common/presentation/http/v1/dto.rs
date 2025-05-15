@@ -9,10 +9,14 @@ pub use crate::common::presentation::http::v1::responses::artifact_helpers;
 // consumer from needing to know about this framework-speicifc implemntation
 use actix_multipart::Multipart;
 
-pub struct Headers(Vec<(String, String)>);
+pub type Header = (String, String);
+
+pub type Boundry = String;
+
+pub struct Headers(Vec<Header>);
 
 impl Headers {
-    pub fn new(headers: Vec<(String, String)>) -> Self {
+    pub fn new(headers: Vec<Header>) -> Self {
         Self(headers)
     }
     // By the http standard, some headers can be set more than once, so
