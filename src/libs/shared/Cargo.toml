@@ -19,9 +19,6 @@ serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.135"
 strum = "0.27.0"
 strum_macros = "0.27.0"
+thiserror = "2.0.12"
 uuid = { version = "1.15.1", features = ["v7"] }
-# TODO need to pin to 2.5.0 as 2.6.0 breaks zip-extensions due to its use of
-# generics. Check in periodically for a new version of zip-extensions with a fix
-# for that issue
-zip = "=2.5.0"
-zip-extensions = "0.8.1"
+zip = "3.0.0"

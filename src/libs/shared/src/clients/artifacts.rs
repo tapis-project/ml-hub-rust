@@ -1,7 +1,7 @@
 use crate::errors::Error;
 use crate::logging::GlobalLogger;
 use crate::common::infra::system::Env;
-use crate::common::infra::fs::zip;
+use crate::common::infra::fs::compression::FileCompressor;
 use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
@@ -95,11 +95,11 @@ impl<T: ArtifactGenerator> ArtifactStager for T {
 
         let staged_path = match params.archive {
             Some(Archive::Zip) => {
-                zip(
+                FileCompressor::zip(
                     &source,
                     &target,
                     params.compression,
-                )?
+                ).map_err(|err| Error::new(err.to_string()))?
             },
             None => {
                 fs::rename(&source, &target)
