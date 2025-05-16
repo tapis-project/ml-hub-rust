@@ -1,6 +1,6 @@
 use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
 use std::collections::HashMap;
-use clients::ClientProvider;
+use client_provider::ClientProvider;
 use actix_web::{web, post, Responder, HttpRequest};
 use actix_multipart::Multipart;
 use shared::logging::SharedLogger;

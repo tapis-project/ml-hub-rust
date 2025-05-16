@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use clients::ClientProvider;
+use client_provider::ClientProvider;
 use actix_web::{
     web,
     post,

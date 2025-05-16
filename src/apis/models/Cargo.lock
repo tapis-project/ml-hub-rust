@@ -545,7 +545,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "clients"
+name = "client-provider"
 version = "0.1.0"
 dependencies = [
  "git-lfs-client",
@@ -2462,7 +2462,7 @@ dependencies = [
  "actix-multipart",
  "actix-web",
  "bytes",
- "clients",
+ "client-provider",
  "env_logger",
  "huggingface-client",
  "serde",
