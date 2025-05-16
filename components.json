@@ -232,8 +232,8 @@
       }
     },
     {
-      "name": "clients",
-      "rootDir": "src/libs/clients",
+      "name": "client-provider",
+      "rootDir": "src/libs/client-provider",
       "labels": ["lib"],
       "commands": {
         "initialize": "",

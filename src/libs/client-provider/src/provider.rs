@@ -21,15 +21,10 @@ use crate::clients::{
 /// # Example
 ///
 /// ```rust
-/// use std::collections::HashMap;
-/// use clients::providers::{ModelsClientProvider, Platform};
-/// use shared::clients::ModelsClient
+/// use client_provider::ClientProvider;
+/// use client_provider::Platform;
 ///
-/// let provider = ModelsClientProvider::new();
-///
-/// // Assume `MyModelsClient` implements `ModelsClient`
-/// // Get the HuggingFace models client from the ModelsClientProvider
-/// let client = provider.get_client(Platform::HuggingFace);
+/// let client = ClientProvider::provide_list_models_client("huggingface");
 /// ```
 ///
 /// This struct is used for managing multiple model clients under a unified interface.
