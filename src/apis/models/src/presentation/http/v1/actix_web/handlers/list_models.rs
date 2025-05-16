@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
-use clients::registrar::ClientProvider;
+use clients::ClientProvider;
 use actix_web::{
     web,
     get,

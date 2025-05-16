@@ -42,7 +42,7 @@ impl ClientProvider {
         match platform {
             Platform::HuggingFace => Ok(ListModelsClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(ListModelsClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::new(format!("No client registered with name '{}' for list_models", platform_name)))
+            _ => Err(ClientProviderError::NotFound(platform_name, "listing"))
         }
     }
 
@@ -51,7 +51,7 @@ impl ClientProvider {
         match platform {
             Platform::HuggingFace => Ok(GetModelClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(GetModelClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::new(format!("No client registered with name '{}' for list_models", platform_name)))
+            _ => Err(ClientProviderError::NotFound(platform_name, "fetching"))
         }
     }
 
@@ -59,30 +59,30 @@ impl ClientProvider {
         let platform = resolve_platform(platform_name)?;
         match platform {
             Platform::Patra => Ok(DiscoverModelsClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::new(format!("No client registered with name '{}' for list_models", platform_name)))
+            _ => Err(ClientProviderError::NotFound(platform_name, "discovery"))
         }
     }
 
-    pub fn provide_download_models_client(platform_name: &str) -> Result<DownloadModelClient, ClientProviderError> {
+    pub fn provide_download_model_client(platform_name: &str) -> Result<DownloadModelClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
             Platform::Git => Ok(DownloadModelClient::Git(GitLfsClient::new())),
             Platform::Github => Ok(DownloadModelClient::Github(GithubLfsClient::new())),
             Platform::HuggingFace => Ok(DownloadModelClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::new(format!("No client registered with name '{}' for list_models", platform_name)))
+            _ => Err(ClientProviderError::NotFound(platform_name, "downloading"))
         }
     }
 
     pub fn provide_publish_model_client(platform_name: &str) -> Result<PublishModelClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
-            _ => Err(ClientProviderError::new(format!("No client registered with name '{}' for list_models", platform_name)))
+            _ => Err(ClientProviderError::NotFound(platform_name, "publishing"))
         }
     }
 }
 
 fn resolve_platform(platform_name: &str) -> Result<Platform, ClientProviderError> {
     Platform::from_str(platform_name)
-        .map_err(|err| ClientProviderError::new(err.to_string()))
+        .map_err(|err| ClientProviderError::ParseError(err.to_string()))
         .map(|p| p)
 }

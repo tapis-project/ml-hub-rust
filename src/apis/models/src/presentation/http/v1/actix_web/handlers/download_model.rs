@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use clients::registrar::ClientProvider;
+use clients::ClientProvider;
 use actix_web::{
     web,
     post,
@@ -48,7 +48,7 @@ async fn download_model(
     }
 
     // Get the client for the provided platform
-    let client = if let Ok(client) = ClientProvider::provide_download_models_client(&request.path.platform) {
+    let client = if let Ok(client) = ClientProvider::provide_download_model_client(&request.path.platform) {
         client
     } else {
         return build_error_response(
