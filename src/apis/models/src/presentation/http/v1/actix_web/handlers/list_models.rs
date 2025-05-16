@@ -9,7 +9,7 @@ use actix_web::{
 };
 use shared::logging::SharedLogger;
 use crate::presentation::http::v1::dto::{ListModelsPath, ListModelsRequest, Headers};
-use shared::clients::ListModelsClient;
+use clients::ListModelsClient;
 
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models(

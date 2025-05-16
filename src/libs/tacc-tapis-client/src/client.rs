@@ -12,11 +12,11 @@ use serde_json::Value;
 //     Artifact,
 //     Compression
 // };
-use shared::clients::artifacts::{
+use clients::artifacts::{
     ArtifactGenerator,
     // ArtifactStager,
 };
-use shared::clients::{
+use clients::{
     ClientError, ClientJsonResponse, PublishModelClient
 };
 use shared::models::presentation::http::v1::dto::PublishModelRequest;

@@ -1,19 +1,14 @@
-pub mod responses;
-pub mod artifacts;
-
-use crate::inference::presentation::http::v1::dto as inference;
-use crate::training::presentation::http::v1::dto as training;
-use crate::models::presentation::http::v1::dto as models;
-use crate::datasets::presentation::http::v1::dto as datasets;
-use crate::clients::artifacts::ArtifactGenerator;
+use shared::inference::presentation::http::v1::dto as inference;
+use shared::training::presentation::http::v1::dto as training;
+use shared::models::presentation::http::v1::dto as models;
+use shared::datasets::presentation::http::v1::dto as datasets;
+use crate::artifacts::ArtifactGenerator;
 use serde::Serialize;
 // Re-exporting here to make the api cleaner and more predictable. Everything
 // clients needs to implement should come from this module. Removing the 'pub'
 // keyword below will break this modules api for consumers
 pub use crate::errors::ClientError;
-pub use crate::clients::responses::{ClientJsonResponse, ClientStagedArtifactResponse};
-
-
+pub use crate::responses::{ClientJsonResponse, ClientStagedArtifactResponse};
 
 pub trait ListModelsClient {
     type Data: Serialize;

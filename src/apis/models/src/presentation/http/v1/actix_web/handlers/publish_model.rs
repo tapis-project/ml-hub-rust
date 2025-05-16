@@ -5,7 +5,7 @@ use actix_web::{web, post, Responder, HttpRequest};
 use actix_multipart::Multipart;
 use shared::logging::SharedLogger;
 use crate::presentation::http::v1::dto::{PublishModelPath, PublishModelRequest, Headers};
-use shared::clients::PublishModelClient;
+use clients::PublishModelClient;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files/{path:.*}")]
 async fn publish_model(

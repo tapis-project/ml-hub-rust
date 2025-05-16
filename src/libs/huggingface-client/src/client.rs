@@ -5,7 +5,7 @@ use crate::requests::{
 };
 use crate::utils::deserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
-use shared::clients::{
+use clients::{
     ClientError, ClientJsonResponse, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient, GetDatasetClient, GetModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient
 };
 use shared::common::infra::fs::git::{
@@ -29,7 +29,7 @@ use shared::common::presentation::http::v1::dto::{
     Artifact,
     ArtifactStagingParams,
 };
-use shared::clients::artifacts::{ArtifactGenerator, ArtifactStager};
+use clients::artifacts::{ArtifactGenerator, ArtifactStager};
 use shared::logging::SharedLogger;
 use shared::constants::{
     MODEL_DOWNLOAD_DIR_NAME,

@@ -548,6 +548,7 @@ dependencies = [
 name = "client-provider"
 version = "0.1.0"
 dependencies = [
+ "clients",
  "git-lfs-client",
  "github-lfs-client",
  "huggingface-client",
@@ -558,6 +559,18 @@ dependencies = [
  "strum 0.26.3",
  "strum_macros 0.26.4",
  "thiserror",
+]
+
+[[package]]
+name = "clients"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "serde",
+ "shared",
+ "thiserror",
+ "uuid",
 ]
 
 [[package]]
@@ -1024,6 +1037,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 name = "git-lfs-client"
 version = "0.1.0"
 dependencies = [
+ "clients",
  "shared",
 ]
 
@@ -1031,6 +1045,7 @@ dependencies = [
 name = "github-lfs-client"
 version = "0.1.0"
 dependencies = [
+ "clients",
  "reqwest",
  "serde",
  "serde_json",
@@ -2065,6 +2080,7 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 name = "huggingface-client"
 version = "0.1.0"
 dependencies = [
+ "clients",
  "reqwest",
  "serde",
  "serde_json",
@@ -2463,6 +2479,7 @@ dependencies = [
  "actix-web",
  "bytes",
  "client-provider",
+ "clients",
  "env_logger",
  "huggingface-client",
  "serde",
@@ -2610,6 +2627,7 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 name = "patra-client"
 version = "0.1.0"
 dependencies = [
+ "clients",
  "reqwest",
  "serde",
  "serde_json",

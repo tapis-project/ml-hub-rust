@@ -1,5 +1,5 @@
 use shared::constants;
-use shared::clients::{
+use clients::{
     ClientError,
     ClientStagedArtifactResponse,
     DownloadDatasetClient,
@@ -18,7 +18,7 @@ use shared::common::presentation::http::v1::dto::{
     ArtifactStagingParams,
 
 };
-use shared::clients::artifacts::{
+use clients::artifacts::{
     ArtifactStager,
     ArtifactGenerator,
 

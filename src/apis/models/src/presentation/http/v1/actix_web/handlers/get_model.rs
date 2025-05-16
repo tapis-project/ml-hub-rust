@@ -3,7 +3,7 @@ use crate::presentation::http::v1::helpers::{build_error_response, build_success
 use client_provider::ClientProvider;
 use shared::logging::SharedLogger;
 use crate::presentation::http::v1::dto::{GetModelPath, GetModelRequest, Headers};
-use shared::clients::GetModelClient;
+use clients::GetModelClient;
 use actix_web::{
     web,
     get,

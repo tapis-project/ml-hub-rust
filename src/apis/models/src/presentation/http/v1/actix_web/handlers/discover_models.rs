@@ -9,7 +9,7 @@ use actix_web::{
 };
 use shared::logging::SharedLogger;
 use crate::presentation::http::v1::dto::{DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody, Headers};
-use shared::clients::DiscoverModelsClient;
+use clients::DiscoverModelsClient;
 
 #[post("models-api/platforms/{platform}/models")]
 async fn discover_models(

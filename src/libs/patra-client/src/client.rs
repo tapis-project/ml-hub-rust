@@ -1,8 +1,8 @@
 use crate::utils::deserialize_response_body;
 use std::collections::hash_map::HashMap;
 use reqwest::blocking::Client as ReqwestClient;
-use shared::clients::artifacts::ArtifactGenerator;
-use shared::clients::{
+use clients::artifacts::ArtifactGenerator;
+use clients::{
     ClientError,
     ClientJsonResponse,
     DiscoverModelsClient,

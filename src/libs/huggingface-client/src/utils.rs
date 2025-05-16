@@ -1,4 +1,4 @@
-use shared::clients::ClientError;
+use clients::ClientError;
 use serde_json::{Value, from_str};
 use reqwest::blocking::Response;
 

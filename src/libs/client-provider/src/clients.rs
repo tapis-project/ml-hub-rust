@@ -1,5 +1,5 @@
 use serde_json::Value;
-use shared::clients::{
+use clients::{
     ClientError,
     ClientJsonResponse,
     ClientStagedArtifactResponse,
@@ -18,7 +18,7 @@ pub enum ListModelsClient {
     Patra(PatraClient)
 }
 
-impl shared::clients::ListModelsClient for ListModelsClient {
+impl clients::ListModelsClient for ListModelsClient {
     type Data = Value;
     type Metadata = Value;
 
@@ -37,7 +37,7 @@ pub enum GetModelClient {
     Patra(PatraClient)
 }
 
-impl shared::clients::GetModelClient for GetModelClient {
+impl clients::GetModelClient for GetModelClient {
     type Data = Value;
     type Metadata = Value;
 
@@ -71,7 +71,7 @@ pub enum DiscoverModelsClient {
     Patra(PatraClient)
 }
 
-impl shared::clients::DiscoverModelsClient for DiscoverModelsClient {
+impl clients::DiscoverModelsClient for DiscoverModelsClient {
     type Data = Value;
     type Metadata = Value;
     fn discover_models(&self, request: &DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
@@ -86,7 +86,7 @@ impl shared::clients::DiscoverModelsClient for DiscoverModelsClient {
 pub enum PublishModelClient {
 }
 
-impl shared::clients::PublishModelClient for PublishModelClient {
+impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
     fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
