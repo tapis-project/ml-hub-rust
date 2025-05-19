@@ -1,9 +1,6 @@
 use serde_json::Value;
 use clients::{
-    ClientError,
-    ClientJsonResponse,
-    ClientStagedArtifactResponse,
-    DownloadModelClient as _
+    ClientError, ClientErrorScope, ClientJsonResponse, ClientStagedArtifactResponse, DownloadModelClient as _
 };
 use shared::models::presentation::http::v1::dto::{
     DiscoverModelsRequest, DownloadModelRequest, GetModelRequest, ListModelsRequest, PublishModelRequest
@@ -91,7 +88,7 @@ impl clients::PublishModelClient for PublishModelClient {
     type Metadata = Value;
     fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<_, ClientError> = match self {
-            _ => Err(ClientError::new(String::from("No clients available for publishing")))
+            _ => Err(ClientError::NotFound { msg: "No clients available for publishing".into(), scope: ClientErrorScope::Client })
         };
 
         resp

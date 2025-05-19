@@ -1,5 +1,5 @@
 use reqwest::blocking::Client as ReqwestClient;
-use shared::artifacts::ArtifactGenerator;
+use clients::artifacts::ArtifactGenerator;
 // use shared::requests::param_to_string;
 use shared::logging::SharedLogger;
 

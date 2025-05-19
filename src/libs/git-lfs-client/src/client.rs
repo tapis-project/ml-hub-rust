@@ -1,6 +1,7 @@
 use shared::constants;
 use clients::{
     ClientError,
+    ClientErrorScope,
     ClientStagedArtifactResponse,
     DownloadDatasetClient,
     DownloadModelClient
@@ -26,7 +27,7 @@ use shared::common::presentation::http::v1::helpers::param_to_string;
 
 #[derive(Debug)]
 pub struct GitLfsClient {
-    logger: SharedLogger
+    _logger: SharedLogger
 }
 
 impl ArtifactGenerator for GitLfsClient {}
@@ -40,14 +41,18 @@ impl DownloadModelClient for GitLfsClient {
 
         // Get the remote base url from the request
         let remote_base_url = param_to_string(request.body.params.clone(), "remote_base_url")
-            .map_err(|err| ClientError::new(err.to_string()))?
-            .ok_or(ClientError::new(String::from("Missing field 'remote_base_url'")))?
+            .map_err(|err| {
+                ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client }
+            })?
+            .ok_or(ClientError::BadRequest { msg: "Parameter 'remote_base_url' missing from the request".into(), scope: ClientErrorScope::Client })?
             .trim_end_matches("/")
             .to_string();
 
         // Get branch from the request
         let branch = param_to_string(request.body.params.clone(), "branch")
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|err| {
+                ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client }
+            })?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
@@ -57,8 +62,7 @@ impl DownloadModelClient for GitLfsClient {
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
-        })
-            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
+        })?;
 
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
@@ -81,12 +85,7 @@ impl DownloadModelClient for GitLfsClient {
             compression: compression_type
         };
         
-        let staged_artifact = self.stage(params)
-            .map_err(|err| {
-                let msg = format!("Error staging artifact: {}", err.to_string());
-                self.logger.error(msg.as_str());
-                ClientError::new(msg)
-        })?;
+        let staged_artifact = self.stage(params)?;
     
         // Create the client response
         Ok(ClientStagedArtifactResponse::new(
@@ -103,14 +102,18 @@ impl DownloadDatasetClient for GitLfsClient {
 
         // Get the remote base url from the request
         let remote_base_url = param_to_string(request.body.params.clone(), "remote_base_url")
-            .map_err(|err| ClientError::new(err.to_string()))?
-            .ok_or(ClientError::new(String::from("Missing field 'remote_base_url'")))?
+            .map_err(|err| {
+                ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client }
+            })?
+            .ok_or(ClientError::BadRequest { msg: "Parameter 'remote_base_url' missing from the request".into(), scope: ClientErrorScope::Client })?
             .trim_end_matches("/")
             .to_string();
 
         // Get the branch from the request
         let branch = param_to_string(request.body.params.clone(), "branch")
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|err| {
+                ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client }
+            })?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
@@ -120,8 +123,7 @@ impl DownloadDatasetClient for GitLfsClient {
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
-        })
-            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
+        })?;
 
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
@@ -144,12 +146,7 @@ impl DownloadDatasetClient for GitLfsClient {
             compression: compression_type
         };
         
-        let staged_artifact = self.stage(params)
-            .map_err(|err| {
-                let msg = format!("Error staging artifact: {}", err.to_string());
-                self.logger.error(msg.as_str());
-                ClientError::new(msg)
-        })?;
+        let staged_artifact = self.stage(params)?;
     
         // Create the client response
         Ok(ClientStagedArtifactResponse::new(
@@ -162,7 +159,7 @@ impl DownloadDatasetClient for GitLfsClient {
 impl GitLfsClient {
     pub fn new() -> Self {
         Self {
-            logger: SharedLogger::new(),
+            _logger: SharedLogger::new(),
         }
     }
 }

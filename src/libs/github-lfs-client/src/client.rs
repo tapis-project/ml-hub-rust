@@ -1,9 +1,6 @@
 use shared::constants;
 use clients::{
-    ClientError,
-    ClientStagedArtifactResponse,
-    DownloadDatasetClient,
-    DownloadModelClient
+    ClientError, ClientErrorScope, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient
 };
 use shared::common::infra::fs::git::{
     SyncGitRepository,
@@ -28,7 +25,7 @@ use shared::logging::SharedLogger;
 
 #[derive(Debug)]
 pub struct GithubLfsClient {
-    logger: SharedLogger
+    _logger: SharedLogger
 }
 
 impl ArtifactGenerator for GithubLfsClient {}
@@ -42,7 +39,9 @@ impl DownloadModelClient for GithubLfsClient {
 
         // Get the branch from the request
         let branch = param_to_string(request.body.params.clone(), "branch")
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|_| {
+                ClientError::BadRequest { msg: "Parameter 'branch' missing from the request".into(), scope: ClientErrorScope::Client }
+            })?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
@@ -52,8 +51,7 @@ impl DownloadModelClient for GithubLfsClient {
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
-        })
-            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
+        })?;
 
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
@@ -76,12 +74,7 @@ impl DownloadModelClient for GithubLfsClient {
             compression: compression_type
         };
         
-        let staged_artifact = self.stage(params)
-            .map_err(|err| {
-                let msg = format!("Error staging artifact: {}", err.to_string());
-                self.logger.error(msg.as_str());
-                ClientError::new(msg)
-        })?;
+        let staged_artifact = self.stage(params)?;
     
         // Create the client response
         Ok(ClientStagedArtifactResponse::new(
@@ -98,7 +91,9 @@ impl DownloadDatasetClient for GithubLfsClient {
 
         // Get the branch from the request
         let branch = param_to_string(request.body.params.clone(), "branch")
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|_| {
+                ClientError::BadRequest { msg: "Parameter 'branch' missing from the request".into(), scope: ClientErrorScope::Client }
+            })?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
@@ -108,9 +103,8 @@ impl DownloadDatasetClient for GithubLfsClient {
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
-        })
-            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
-
+        })?;
+        
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
             .clone();
@@ -132,12 +126,7 @@ impl DownloadDatasetClient for GithubLfsClient {
             compression: compression_type
         };
         
-        let staged_artifact = self.stage(params)
-            .map_err(|err| {
-                let msg = format!("Error staging artifact: {}", err.to_string());
-                self.logger.error(msg.as_str());
-                ClientError::new(msg)
-        })?;
+        let staged_artifact = self.stage(params)?;
     
         // Create the client response
         Ok(ClientStagedArtifactResponse::new(
@@ -150,7 +139,7 @@ impl DownloadDatasetClient for GithubLfsClient {
 impl GithubLfsClient {
     pub fn new() -> Self {
         Self {
-            logger: SharedLogger::new(),
+            _logger: SharedLogger::new(),
         }
     }
 }

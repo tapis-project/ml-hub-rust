@@ -4,6 +4,7 @@ use reqwest::blocking::Client as ReqwestClient;
 use clients::artifacts::ArtifactGenerator;
 use clients::{
     ClientError,
+    ClientErrorScope,
     ClientJsonResponse,
     DiscoverModelsClient,
     GetModelClient,
@@ -32,7 +33,16 @@ impl ListModelsClient for PatraClient {
         self.logger.debug("List models");
         let resp = self.client.get(PatraClient::LIST_MODELS_ENDPOINT)
             .send()
-            .map_err(|err| ClientError::from_str(err.to_string().as_str()))?;
+            .map_err(|err| {
+                let msg = err.to_string();
+                if err.is_body() {
+                    ClientError::BadRequest { msg, scope: ClientErrorScope::Client }
+                } else if err.is_connect() {
+                    ClientError::Unavailable(err.to_string())
+                } else {
+                    ClientError::Internal { msg: "An unknown error occured".into(), scope: ClientErrorScope::Client }
+                }
+            })?;
 
         let status_code = resp.status().as_u16();
 
@@ -59,7 +69,16 @@ impl GetModelClient for PatraClient {
         let resp = self.client.get(PatraClient::GET_MODEL_ENDPOINT)
             .query(&query_params)
             .send()
-            .map_err(|err| ClientError::from_str(err.to_string().as_str()))?;
+            .map_err(|err| {
+                let msg = err.to_string();
+                if err.is_body() {
+                    ClientError::BadRequest { msg, scope: ClientErrorScope::Client }
+                } else if err.is_connect() {
+                    ClientError::Unavailable(err.to_string())
+                } else {
+                    ClientError::Internal { msg: "An unknown error occured".into(), scope: ClientErrorScope::Client }
+                }
+            })?;
 
         let status_code = resp.status().as_u16();
 
@@ -93,7 +112,16 @@ impl DiscoverModelsClient for PatraClient {
         let resp = self.client.get(PatraClient::SEARCH_MODEL_ENDPOINT)
             .query(&query_params)
             .send()
-            .map_err(|err| ClientError::from_str(err.to_string().as_str()))?;
+            .map_err(|err| {
+                let msg = err.to_string();
+                if err.is_body() {
+                    ClientError::BadRequest { msg, scope: ClientErrorScope::Client }
+                } else if err.is_connect() {
+                    ClientError::Unavailable(err.to_string())
+                } else {
+                    ClientError::Internal { msg: "An unknown error occured".into(), scope: ClientErrorScope::Client }
+                }
+            })?;
 
         let status_code = resp.status().as_u16();
 

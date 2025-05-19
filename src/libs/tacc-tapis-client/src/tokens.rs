@@ -1,5 +1,6 @@
-use jsonwebtoken::{decode, DecodingKey, Validation, errors::Error};
+use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
+use clients::{ClientError, ClientErrorScope};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -7,7 +8,7 @@ pub struct Claims {
     pub tapis_tenant_id: String
 }
 
-pub fn decode_jwt(token: &str) -> Result<Claims, Error> {
+pub fn decode_jwt(token: &str) -> Result<Claims, ClientError> {
     // We are decoding the jwt without validation. Tapis will determine if the token
     // is valid and we will pass along the error.
     let mut validation = Validation::default();
@@ -17,7 +18,7 @@ pub fn decode_jwt(token: &str) -> Result<Claims, Error> {
         token,
         &DecodingKey::from_secret(&[]), // No secret key
         &validation,
-    )?;
+    ).map_err(|err| ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client })?;
 
     Ok(data.claims)
 }

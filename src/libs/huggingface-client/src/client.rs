@@ -6,7 +6,17 @@ use crate::requests::{
 use crate::utils::deserialize_response_body;
 use reqwest::blocking::Client as ReqwestClient;
 use clients::{
-    ClientError, ClientJsonResponse, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient, GetDatasetClient, GetModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient
+    ClientError,
+    ClientErrorScope,
+    ClientJsonResponse,
+    ClientStagedArtifactResponse,
+    DownloadDatasetClient,
+    DownloadModelClient,
+    GetDatasetClient,
+    GetModelClient,
+    ListDatasetsClient,
+    ListModelsClient,
+    PublishDatasetClient
 };
 use shared::common::infra::fs::git::{
    SyncGitRepository,
@@ -99,7 +109,12 @@ impl ListModelsClient for HuggingFaceClient {
             
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
-                return Err(ClientError::new(err.to_string()))
+                return Err(
+                    ClientError::Internal {
+                        msg: err.to_string(),
+                        scope: ClientErrorScope::Server
+                    }
+                )
             },
         }
     }
@@ -127,7 +142,12 @@ impl GetModelClient for HuggingFaceClient {
             },
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
-                return Err(ClientError::new(err.to_string()))
+                return Err(
+                    ClientError::Internal {
+                        msg: err.to_string(),
+                        scope: ClientErrorScope::Server
+                    }
+                )
             }
         }
     }
@@ -139,7 +159,12 @@ impl DownloadModelClient for HuggingFaceClient {
         let access_token = request.headers.get_first_value("Authroization");
 
         let branch = param_to_string(request.body.params.clone(), "branch")
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|err| {
+                ClientError::Internal {
+                    msg: err.to_string(),
+                    scope: ClientErrorScope::Server
+                }
+            })?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
@@ -150,7 +175,12 @@ impl DownloadModelClient for HuggingFaceClient {
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
         })
-            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
+            .map_err(|err| {
+                ClientError::Internal {
+                    msg: err.to_string(),
+                    scope: ClientErrorScope::Server
+                }
+            })?;
 
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
@@ -173,12 +203,7 @@ impl DownloadModelClient for HuggingFaceClient {
             compression: compression_type
         };
         
-        let staged_artifact = self.stage(params)
-            .map_err(|err| {
-                let msg = format!("Error staging artifact: {}", err.to_string());
-                self.logger.error(msg.as_str());
-                ClientError::new(msg)
-        })?;
+        let staged_artifact = self.stage(params)?;
     
         // Create the client response
         Ok(ClientStagedArtifactResponse::new(
@@ -235,7 +260,11 @@ impl ListDatasetsClient for HuggingFaceClient {
 
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
-                return Err(ClientError::new(err.to_string()))
+                return Err(
+                    ClientError::Internal {
+                        msg: format!("Error attempting request from HuggingFace Models API: {}", 
+                        err.to_string()), scope: ClientErrorScope::Server
+                    })
             },
         }
     }
@@ -263,7 +292,11 @@ impl GetDatasetClient for HuggingFaceClient {
             },
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
-                return Err(ClientError::new(err.to_string()))
+                return Err(
+                    ClientError::Internal {
+                        msg: format!("Error attempting request from HuggingFace datasets API: {}", 
+                        err.to_string()), scope: ClientErrorScope::Server
+                    })
             },
         }
     }
@@ -275,7 +308,9 @@ impl DownloadDatasetClient for HuggingFaceClient {
         let access_token = request.headers.get_first_value("Authorization");
 
         let branch = param_to_string(request.body.params.clone(), "branch")
-            .map_err(|err| ClientError::new(err.to_string()))?;
+            .map_err(|err| {
+                ClientError::BadRequest { msg: format!("Bad request: {}", err.to_string()), scope: ClientErrorScope::Client }
+            })?;
 
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
@@ -285,9 +320,7 @@ impl DownloadDatasetClient for HuggingFaceClient {
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
-        })
-            .map_err(|err| ClientError::new(String::from(err.to_string())))?;
-
+        })?;
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
             .clone();
@@ -313,7 +346,7 @@ impl DownloadDatasetClient for HuggingFaceClient {
             .map_err(|err| {
                 let msg = format!("Error staging artifact: {}", err.to_string());
                 self.logger.error(msg.as_str());
-                ClientError::new(msg)
+                ClientError::ArtifactStagingError(err)
         })?;
     
         // Create the client response
@@ -329,7 +362,7 @@ impl PublishDatasetClient for HuggingFaceClient {
     type Metadata = Value;
 
     fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        Err(ClientError::new(String::from("Not supported")))
+        Err(ClientError::Unimplemented)
     }
 }
 

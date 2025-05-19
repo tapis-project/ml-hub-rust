@@ -15,7 +15,7 @@ pub trait ListModelsClient {
     type Metadata: Serialize;
 
     fn list_models(&self, _request: &models::ListModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -24,13 +24,13 @@ pub trait GetModelClient {
     type Metadata: Serialize;
 
     fn get_model(&self, _request: &models::GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
 pub trait DownloadModelClient: ArtifactGenerator {
     fn download_model(&self, _request: &models::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -39,7 +39,7 @@ pub trait DiscoverModelsClient {
     type Metadata: Serialize;
 
     fn discover_models(&self, _request: &models::DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -48,7 +48,7 @@ pub trait PublishModelClient {
     type Metadata: Serialize;
 
     fn publish_model(&self, _request: &models::PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -57,7 +57,7 @@ pub trait ListDatasetsClient {
     type Metadata: Serialize;
 
     fn list_datasets(&self, _request: &datasets::ListDatasetsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -66,13 +66,13 @@ pub trait GetDatasetClient {
     type Metadata: Serialize;
 
     fn get_dataset(&self, _request: &datasets::GetDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
 pub trait DownloadDatasetClient: ArtifactGenerator {
     fn download_dataset(&self, _request: &datasets::DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -81,7 +81,7 @@ pub trait PublishDatasetClient {
     type Metadata: Serialize;
 
     fn publish_dataset(&self, _request: &datasets::PublishDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -90,7 +90,7 @@ pub trait CreateInferenceServerClient {
     type Metadata: Serialize;
 
     fn create_inference_server(&self, _request: &inference::CreateInferenceServerRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }
 
@@ -99,6 +99,6 @@ pub trait CreateTrainingServerClient {
     type Metadata: Serialize;
 
     fn create_training_server(&self, _request: &training::CreateTrainingServerRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::new(String::from("unimplemented")))
+        return Err(ClientError::Unimplemented);
     }
 }

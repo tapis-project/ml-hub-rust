@@ -4,7 +4,7 @@ pub(crate) mod files {
     // use std::fs::File;
     // use std::path::Path;
     use std::collections::hash_map::HashMap;
-    use shared::errors::Error;
+    use clients::{ClientError, ClientErrorScope};
     use reqwest::header::{HeaderMap, HeaderValue};
     use reqwest::blocking::{Client, Response};
     // use reqwest::blocking::multipart::{Form, Part};
@@ -14,7 +14,7 @@ pub(crate) mod files {
     #[derive(Debug, Deserialize)]
     pub struct MkdirResponse {
         pub _status: String,
-        pub message: String,
+        pub _message: String,
         pub _result: String,
         pub _version: String,
         pub _commit: String,
@@ -22,7 +22,7 @@ pub(crate) mod files {
         pub _metadata: HashMap<String, Value>
     }
 
-    pub fn mkdir(tenant: String, system_id: String, path: String, token: Option<String>) -> Result<Response, Error> {
+    pub fn mkdir(tenant: String, system_id: String, path: String, token: Option<String>) -> Result<Response, ClientError> {
         let client = Client::new();
 
         let url = build_operation_url(
@@ -45,7 +45,9 @@ pub(crate) mod files {
         let mut headers = HeaderMap::new();
         if let Some(value) = token {
             HeaderValue::from_str(value.as_str())
-                .map_err(|err| Error::new(err.to_string()))
+                .map_err(|err| {
+                    ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client }
+                })
                 .map(|value| {
                     headers.insert("X-Tapis-Token", value);
                 })?;
@@ -54,7 +56,16 @@ pub(crate) mod files {
         // Add token header
         request.headers(headers)
             .send()
-            .map_err(|err| Error::new(err.to_string()))
+            .map_err(|err| {
+                let msg = err.to_string();
+                if err.is_body() {
+                    ClientError::BadRequest { msg, scope: ClientErrorScope::Client }
+                } else if err.is_connect() {
+                    ClientError::Unavailable(err.to_string())
+                } else {
+                    ClientError::Internal { msg: "An unknown error occured".into(), scope: ClientErrorScope::Client }
+                }
+            })
     }
 
     // pub async fn insert(

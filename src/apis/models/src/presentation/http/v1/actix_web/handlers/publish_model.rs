@@ -1,4 +1,4 @@
-use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
+use crate::presentation::http::v1::helpers::{build_error_response, build_client_error_response, build_success_response};
 use std::collections::HashMap;
 use client_provider::ClientProvider;
 use actix_web::{web, post, Responder, HttpRequest};
@@ -53,7 +53,7 @@ async fn publish_model(
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
-            return build_error_response(500, err.to_string())
+            return build_client_error_response(err)
         }
     };
 

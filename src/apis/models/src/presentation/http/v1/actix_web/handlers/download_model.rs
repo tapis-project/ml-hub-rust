@@ -10,7 +10,7 @@ use actix_files::NamedFile;
 use shared::logging::SharedLogger;
 use shared::common::presentation::http::v1::dto::artifact_helpers::StagedArtifactResponseHeaders;
 use crate::presentation::http::v1::dto::{DownloadModelPath, DownloadModelRequest, Headers, DownloadArtifactBody};
-use crate::presentation::http::v1::helpers::build_error_response;
+use crate::presentation::http::v1::helpers::{build_error_response, build_client_error_response};
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/files")]
 async fn download_model(
@@ -63,10 +63,7 @@ async fn download_model(
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());
-            return build_error_response(
-                500,
-                err.to_string()
-            );
+            return build_client_error_response(err)
         }
     };
 

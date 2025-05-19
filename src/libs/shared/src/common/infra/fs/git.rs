@@ -1,9 +1,28 @@
-use crate::errors::Error;
 use crate::common::infra::system::{validate_system_dependencies, Env};
 use crate::logging::GlobalLogger;
 use std::process::Command;
 use std::fs::{create_dir_all, read_dir};
 use std::path::PathBuf;
+use thiserror::Error;
+use crate::common::infra::system::SystemError;
+
+#[derive(Debug, Error)]
+pub enum GitError {
+    #[error("A system error occured when attempting to set up a Git repository: {0}")]
+    SystemError(#[from] SystemError),
+
+    #[error("Error cloning git repository: {0}")]
+    Clone(String),
+
+    #[error("Error pulling branch of git repository: {0}")]
+    Pull(String),
+
+    #[error("Git LFS error listing large files: {0}")]
+    LfsList(String),
+
+    #[error("Git LFS error pulling large files: {0}")]
+    LfsPull(String),
+}
 
 #[derive(Clone)]
 pub struct GitRepository {
@@ -34,7 +53,7 @@ impl GitRepository {
     }
 
     // Prepare the local environment for a clone or pull
-    pub fn prepare(&self, params: PrepareRepositoryParams) -> Result<PreparedRepository, Error> {
+    pub fn prepare(&self, params: PrepareRepositoryParams) -> Result<PreparedRepository, GitError> {
         // Grab the shared env utility. The shared_data_dir will be used as part
         // of the clone target directory
         let shared_data_dir = Env::new()
@@ -58,7 +77,7 @@ impl GitRepository {
         create_dir_all(&target_path)
             .map_err(|err| {
                 GlobalLogger::error(format!("Error creating dirs '{:?}': {}", &target_path, err.to_string()).as_str());
-                Error::new(format!("{}: {:?}", err.to_string(), &target_path))
+                GitError::SystemError(SystemError::FileSystemError(format!("{}: {:?}", err.to_string(), &target_path)))
             })?;
 
         Ok(PreparedRepository::new(self.clone(), target_path))
@@ -79,7 +98,7 @@ impl PreparedRepository {
         }
     }
 
-    fn clone(&self, params: GitCloneParams) -> Result<&Self, Error> {
+    fn clone(&self, params: GitCloneParams) -> Result<&Self, GitError> {
         GlobalLogger::debug(format!("Cloning to path: {:?}", &self.path).as_str());
         
         let mut cmd = Command::new("git");
@@ -109,13 +128,13 @@ impl PreparedRepository {
         cmd.output()
             .map_err(|err| {
                 GlobalLogger::debug(format!("Error running `git clone`: {}", err.to_string()).as_str());
-                Error::new(err.to_string())
+                GitError::Clone(err.to_string())
             })?;
 
         Ok(self)
     }
 
-    fn pull(&self, params: GitPullParams) -> Result<&Self, Error> {
+    fn pull(&self, params: GitPullParams) -> Result<&Self, GitError> {
         GlobalLogger::debug(format!("Pulling repo at path '{:?}'", &self.path).as_str());
         
         let mut cmd = Command::new("git");
@@ -141,7 +160,7 @@ impl PreparedRepository {
         cmd.output()
             .map_err(|err| {
                 GlobalLogger::debug(format!("Error running `git pull`: {}", err.to_string()).as_str());
-                Error::new(err.to_string())
+                GitError::Pull(err.to_string())
             })?;
 
         Ok(self)
@@ -149,7 +168,7 @@ impl PreparedRepository {
 
     /// Clones a git repository if it does not exist in the cache. Pull the repository
     /// if it does exist.
-    pub fn clone_or_pull_repo(&self, params: GitCloneOrPullParams) -> Result<&Self, Error> {
+    pub fn clone_or_pull_repo(&self, params: GitCloneOrPullParams) -> Result<&Self, GitError> {
         let contains_files = match read_dir(self.path.clone()) {
             Ok(mut entries) => entries.next().is_some(), // Check if there's at least one entry
             Err(_) => false, // Path doesn't exist or isn't accessible
@@ -206,14 +225,14 @@ pub struct GitLfsRepository {
 }
 
 impl GitLfsRepository {
-    pub fn from_prepared_git_repo(repo: PreparedRepository) -> Result<Self, Error> {
+    pub fn from_prepared_git_repo(repo: PreparedRepository) -> Result<Self, GitError> {
         validate_system_dependencies(vec!["git-lfs"])?;
         Ok(Self {
             repo
         })
     }
 
-    pub fn pull(&self, params: GitLfsPullLargeFilesParams) -> Result<&Self, Error> {
+    pub fn pull(&self, params: GitLfsPullLargeFilesParams) -> Result<&Self, GitError> {
         let output = Command::new("git")
             .arg("lfs")
             .arg("ls-files")
@@ -222,7 +241,7 @@ impl GitLfsRepository {
             .output()
             .map_err(|err| {
                 GlobalLogger::debug(format!("Error running `git lfs ls-files`: {}", err.to_string()).as_str());
-                Error::new(err.to_string())
+                GitError::LfsList(err.to_string())
             })?;
 
         let large_files: Vec<String> = String::from_utf8_lossy(&output.stdout)
@@ -269,7 +288,7 @@ impl GitLfsRepository {
         cmd.output()
             .map_err(|err| {
                 GlobalLogger::error(format!("Error running `git lfs pull`: {}", err.to_string()).as_str());
-                Error::new(err.to_string())
+                GitError::LfsPull(err.to_string())
             })?;
 
         GlobalLogger::debug("git lfs pull successful");
@@ -297,14 +316,14 @@ pub struct SyncLfsRepositoryParams {
 }
 
 pub trait SyncGitRepositoryImpl {
-    fn sync_git_repo(&self, params: SyncGitRepositoryParams) -> Result<PreparedRepository, Error>;
-    fn sync_lfs_repo(&self, params: SyncLfsRepositoryParams) -> Result<GitLfsRepository, Error>;
+    fn sync_git_repo(&self, params: SyncGitRepositoryParams) -> Result<PreparedRepository, GitError>;
+    fn sync_lfs_repo(&self, params: SyncLfsRepositoryParams) -> Result<GitLfsRepository, GitError>;
 }
 
 pub trait SyncGitRepository {}
 
 impl<T: SyncGitRepository> SyncGitRepositoryImpl for T {
-    fn sync_git_repo(&self, params: SyncGitRepositoryParams) -> Result<PreparedRepository, Error> {
+    fn sync_git_repo(&self, params: SyncGitRepositoryParams) -> Result<PreparedRepository, GitError> {
         // Initialize the git lfs repository
         let repo = GitRepository::new(
             params.remote_base_url,
@@ -324,7 +343,7 @@ impl<T: SyncGitRepository> SyncGitRepositoryImpl for T {
         Ok(prepared_repo)
     }
 
-    fn sync_lfs_repo(&self, params: SyncLfsRepositoryParams) -> Result<GitLfsRepository, Error> {
+    fn sync_lfs_repo(&self, params: SyncLfsRepositoryParams) -> Result<GitLfsRepository, GitError> {
         let prepared_repo = self.sync_git_repo(SyncGitRepositoryParams {
             name: params.name.clone(),
             remote_base_url: params.remote_base_url.clone(),

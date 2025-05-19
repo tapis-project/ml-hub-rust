@@ -478,6 +478,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "clients"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures-util",
+ "serde",
+ "shared",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "clru"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -776,6 +788,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ced92e76e966ca2fd84c8f7aa01a4aea65b0eb6648d72f7c8f3e2764a67fece"
 dependencies = [
  "crc32fast",
+ "libz-rs-sys",
  "miniz_oxide",
 ]
 
@@ -2327,6 +2340,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "libz-rs-sys"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6489ca9bd760fe9642d7644e827b0c9add07df89857b0416ee15c1cc1a3b8c5a"
+dependencies = [
+ "zlib-rs",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2931,6 +2953,7 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 name = "s3-client"
 version = "0.1.0"
 dependencies = [
+ "clients",
  "reqwest",
  "serde",
  "serde_json",
@@ -3067,6 +3090,7 @@ version = "0.1.0"
 dependencies = [
  "actix-multipart",
  "actix-web",
+ "bytes",
  "futures-util",
  "gix",
  "log",
@@ -3075,9 +3099,9 @@ dependencies = [
  "serde_json",
  "strum",
  "strum_macros",
+ "thiserror",
  "uuid",
  "zip",
- "zip-extensions",
 ]
 
 [[package]]
@@ -4040,16 +4064,15 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "2.5.0"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27c03817464f64e23f6f37574b4fdc8cf65925b5bfd2b0f2aedf959791941f88"
+checksum = "12598812502ed0105f607f941c386f43d441e00148fce9dec3ca5ffb0bde9308"
 dependencies = [
  "aes",
  "arbitrary",
  "bzip2",
  "constant_time_eq",
  "crc32fast",
- "crossbeam-utils",
  "deflate64",
  "flate2",
  "getrandom 0.3.2",
@@ -4067,13 +4090,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "zip-extensions"
-version = "0.8.1"
+name = "zlib-rs"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "386508a00aae1d8218b9252a41f59bba739ccee3f8e420bb90bcb1c30d960d4a"
-dependencies = [
- "zip",
-]
+checksum = "868b928d7949e09af2f6086dfc1e01936064cc7a819253bce650d4e2a2d63ba8"
 
 [[package]]
 name = "zopfli"

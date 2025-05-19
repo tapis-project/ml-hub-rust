@@ -17,7 +17,7 @@ use clients::artifacts::{
     // ArtifactStager,
 };
 use clients::{
-    ClientError, ClientJsonResponse, PublishModelClient
+    ClientError, ClientJsonResponse, PublishModelClient, ClientErrorScope
 };
 use shared::models::presentation::http::v1::dto::PublishModelRequest;
 use shared::logging::SharedLogger;
@@ -38,10 +38,9 @@ impl PublishModelClient for TapisClient {
     fn publish_model(&self, request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Publishing model");
         let token = token_from_headers(&request.headers)
-            .ok_or_else(|| ClientError::new(String::from("Missing tapis token in 'X-Tapis-Token' header")))?;
+            .ok_or_else(|| ClientError::BadRequest { msg: "Missing tapis token in 'X-Tapis-Token' header".into(), scope: ClientErrorScope::Client })?;
         
-        let claims = decode_jwt(&token)
-            .map_err(|err| ClientError::new(format!("Failed to decode jwt: {}", err.to_string())))?;
+        let claims = decode_jwt(&token)?;
 
         // Make the directories if they have not yet been made on the tapis sytem
         let path = request.path.path.clone();
@@ -58,7 +57,9 @@ impl PublishModelClient for TapisClient {
             .collect::<Vec<&str>>();
 
         if parts.len() == 0 || (parts.len() > 0 && parts[0].len() == 0) {
-            return Err(ClientError::from_str("Tapis system id is missing from path. Should be the first item in the path"));
+            return Err(
+                ClientError::BadRequest { msg: "Tapis system id is missing from path. Should be the first item in the path".into(), scope: ClientErrorScope::Client}
+            );
         }
 
         let system_id = parts[0].to_string();
@@ -77,19 +78,17 @@ impl PublishModelClient for TapisClient {
             system_id.clone(),
             target_path.to_string().clone(),
             Some(token.clone())
-        ).map_err(|err| ClientError::new(err.to_string()))?;
+        )?;
         
         let mkdir_status_code = mkdir_resp.status()
-            .to_string()
-            .parse::<i16>()
-            .unwrap_or(500);
+            .as_u16();
 
-        let deserizied_mkdir_resp: MkdirResponse = mkdir_resp.json()
-            .map_err(|err| ClientError::new(err.to_string()))?;
+        let _deserizied_mkdir_resp: MkdirResponse = mkdir_resp.json()
+            .map_err(|err| ClientError::Unavailable(format!("Expected JSON response from server. Recieved invalid format: {}", err.to_string())))?;
 
         // Pass along the file mkdir error code
         if !(200..=299).contains(&mkdir_status_code) {
-            return Err(ClientError::new(format!("Error making directories on the target system: {}", &deserizied_mkdir_resp.message)))
+            return Err(ClientError::from(&mkdir_status_code))
         }
 
         // Package the files of upload
@@ -104,7 +103,7 @@ impl PublishModelClient for TapisClient {
         //     Some(token.clone())
         // ).await;
         
-        Err(ClientError::from_str("Placholder not implemented"))
+        Err(ClientError::Unimplemented)
 
         // match resp_insert {
         //     Ok(_) => {
