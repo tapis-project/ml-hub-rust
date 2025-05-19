@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::presentation::http::v1::helpers::{build_error_response, build_client_error_response, build_success_response};
+use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_client_error_response, build_success_response};
 use client_provider::ClientProvider;
 use shared::logging::SharedLogger;
 use crate::presentation::http::v1::dto::{GetModelPath, GetModelRequest, Headers};
