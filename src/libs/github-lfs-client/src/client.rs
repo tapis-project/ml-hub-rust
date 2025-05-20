@@ -9,7 +9,7 @@ use shared::common::infra::fs::git::{
 };
 use shared::models::presentation::http::v1::dto::DownloadModelRequest;
 use shared::datasets::presentation::http::v1::dto::DownloadDatasetRequest;
-use shared::common::presentation::http::v1::helpers::param_to_string;
+use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::common::presentation::http::v1::dto::{
     Artifact,
     ArtifactStagingParams,

@@ -17,6 +17,11 @@ pub enum Platform {
     Git,
     /// This variant corresponds to the Patra client
     #[strum(serialize="patra")]
-    Patra,
-    Default
+    Patra
+}
+
+impl Platform {
+    pub fn list_all() -> Vec<Self> {
+        return vec![Self::HuggingFace, Self::Git, Self::Github, Self::Patra]
+    } 
 }

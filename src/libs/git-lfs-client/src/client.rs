@@ -22,7 +22,7 @@ use shared::common::presentation::http::v1::dto::{
     Artifact,
     ArtifactStagingParams
 };
-use shared::common::presentation::http::v1::helpers::param_to_string;
+use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
 
 
 #[derive(Debug)]

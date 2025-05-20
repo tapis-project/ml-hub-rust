@@ -1,10 +1,10 @@
-# Welcome to Tapis ML Hub! 🤠 🐂
+# Welcome to MLHub! 🤠 🐂
 
-Tapis ML Hub is a suite of services designed to facilitate model and dataset discovery and download, and programatically building up and deploying inference servers and training systems for Machine Learning/Artificial Intelligence models.
+MLHub is a suite of services designed to facilitate model and dataset discovery and download, and programatically building and deploying inference servers and training systems for Machine Learning/Artificial Intelligence models.
 
-## Local Devevelopment Setup 🚧
+## Deploying MLHub 🚧
 
-Before contributing, you must first set up your local development environment with some software and tools that will allow you to run the Tapis ML Hub suite locally.
+Before contributing, you must first set up your local development environment with some software and tools that will allow you to run the MLHub suite locally.
 > **Note**: This documentation only covers how to set up Mac or Linux machines.
 
 ### 0.1. Install Rust 🦀
@@ -32,7 +32,7 @@ You will need to start Minikube with at least 2 nodes. Run the following command
 
 ### 2. Start your Engines! 🏎️
 
-Now that you have all the necessary tools installed, we can start up the Tapis ML Hub suite. 
+Now that you have all the necessary tools installed, we can start up the MLHub suite. 
 
 > **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project and in the root directory of each component to ensure that you will not be utilizing more resources than you want to. You can find the root configuration files in the `/deploy/local/minikube` directory and each individual service's configuration files in the `/src/<service_name>/deploy/local/minikube`
 
@@ -44,34 +44,48 @@ From the project's root directory, run the following commands to initalize the p
 
 2. `./manage start`
 
-Congrats! You know have a fully-functional local deployment of the Tapis ML Hub Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the ML Hub components are `Running`, execute the following command:
+Congrats! You know have a fully-functional local deployment of the MLHub Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
 `./manage expose traefik`
 
 You can now make request to the IP address and port output by the last command. The section below will provide detailed instructions on how to make request to each service.
 
-> **Note**: If you are using a Docker driver on darwin, the terminal will need to remain open in order to make requests to ML Hub services
+> **Note**: If you are using a Docker driver on darwin, the terminal will need to remain open in order to make requests to MLHub services
 
 ### 3. Making requests
 
-You can use the IP address and port produced by the last command to make API calls to any service in the ML Hub suite. Your url will need to be structured as follows:
+You can use the IP address and port produced by the last command to make API calls to any service in the MLHub suite. Your url will need to be structured as follows:
 
 `http://<ipAddress>:<port>/<serviceName>`
 
-Use the tool of your choice to make https requests to one following services. In the example below, we will use `curl`:
-- models
-- datasets
-- inference
-- training
+In the example below, we will use `curl` to list models from the HuggingFace Models API:
 
 Example (Returns a list of machine learning models from the Models API):
 
-`curl http://127.0.0.1:57783/models`
+`curl http://127.0.0.1:57783/models-api/platforms/huggingface/models`
 
 ---
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a python tool that can be invoked from the command line to run bash commands and scripts that control the lifecycle of the various microservices and components of ML Hub. This is the same script invoked previously to initialize the ML Hub project locally.
+The Lifecycle Management CLI is a python tool that can be invoked from the command line to run bash commands and scripts that control the lifecycle of the various microservices and components of MLHub. This is the same script invoked previously to initialize the MLHub project locally.
 
-### Managing ML Hub Services and Components
+### Managing MLHub Services and Components
+
+In this section, we will describe the service and components comprising MLHub and their relationships to eachother.
+
+**APIs**
+Models API
+Datasets API
+Inference API
+Training API
+
+**Components**
+NFS Server
+MongoDB
+Postgres
+Traefik
+
+## Developing in MLHub
+
+
