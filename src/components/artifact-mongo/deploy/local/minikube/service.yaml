@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlhub-artifact-mongodb-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mlhub-artifact-mongodb-deployment
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017

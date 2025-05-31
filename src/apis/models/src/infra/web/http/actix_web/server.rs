@@ -29,7 +29,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
             .service(presentation::http::v1::actix_web::handlers::get_model::get_model)
             .service(presentation::http::v1::actix_web::handlers::list_models::list_models)
-            .service(presentation::http::v1::actix_web::handlers::download_model::download_model)
+            .service(presentation::http::v1::actix_web::handlers::stage_artifact::stage_artifact)
             .service(presentation::http::v1::actix_web::handlers::discover_models::discover_models)
             .service(presentation::http::v1::actix_web::handlers::publish_model::publish_model)
             .service(presentation::http::v1::actix_web::handlers::list_platforms::list_platforms)

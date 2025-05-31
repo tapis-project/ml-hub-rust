@@ -1,7 +1,7 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application level concerns
 use mongodb::Database;
-use crate::application::repositories::InferenceServerRepository;
+use crate::application::ports::repositories::InferenceServerRepository;
 use crate::infra::db::mongo::repositories::InferenceServerRepository as MongoInferenceServerRepository;
 use std::sync::Arc;
 

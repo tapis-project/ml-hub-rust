@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-artifact-op-mq-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mlhub-artifact-op-mq-deployment
+  template:
+    metadata:
+      labels:
+        app: mlhub-artifact-op-mq-deployment
+    spec:
+      hostname: mlhub-artifact-op-mq-deployment
+      restartPolicy: Always
+      containers:
+      - name: mlhub-artifact-op-mq
+        image: rabbitmq:3.9.11-management
+        ports:
+        - name: rabbitmq
+          containerPort: 5672
+        - name: http
+          containerPort: 15672
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: "dev"
+        - name: RABBITMQ_DEFAULT_PASS
+          value: "dev"
+        volumeMounts:
+        - name: mlhub-artifact-op-mq-storage
+          mountPath: "/var/lib/rabbitmq/mnesia"
+        resources: {}
+      volumes:
+      - name: mlhub-artifact-op-mq-storage
+        persistentVolumeClaim:
+          claimName: mlhub-artifact-op-mq-pvc

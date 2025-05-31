@@ -20,7 +20,7 @@ pub struct InferenceServerRepository {
 }
 
 #[async_trait]
-impl application::repositories::InferenceServerRepository for InferenceServerRepository {
+impl application::ports::repositories::InferenceServerRepository for InferenceServerRepository {
     async fn save(&self, server: entities::InferenceServer) -> Result<entities::InferenceServer, Error> {
         let mut document = InferenceServer::try_from(server)
             .map_err(|err| Error::new(err.to_string()))?;
@@ -120,7 +120,7 @@ pub struct InferenceServerDeploymentRepository {
 }
 
 #[async_trait]
-impl application::repositories::InferenceServerDeploymentRepository for InferenceServerDeploymentRepository {
+impl application::ports::repositories::InferenceServerDeploymentRepository for InferenceServerDeploymentRepository {
     // async fn save(&self, _server: entities::InferenceServerDeployment) -> Result<entities::InferenceServerDeployment, Error> {
     //     // let _server_entity = InferenceServerDeployment::try_from(server)
     //     //     .map_err(|err| Error::new(err.to_string()))?;

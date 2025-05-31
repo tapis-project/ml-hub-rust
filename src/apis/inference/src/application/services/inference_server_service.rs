@@ -1,4 +1,4 @@
-use crate::application::repositories::InferenceServerRepository;
+use crate::application::ports::repositories::InferenceServerRepository;
 use crate::domain::entities::InferenceServer;
 use crate::application::inputs;
 use shared::errors::Error;

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mlhub-artifact-ingester-deployment
+  name: mlhub-artifact-ingester-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: mlhub-artifact-ingester-deployment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlhub-artifact-ingester-deployment
+    spec:
+      containers:
+        - env:
+            - name: RUST_LOG
+              value: debug
+            - name: SHARED_DATA
+              value: /srv/mlhub
+            - name: BROKER_HOST
+              value: mlhub-artifact-op-mq-service
+            - name: BROKER_PASSWORD
+              value: dev
+            - name: BROKER_PORT
+              value: "5672"
+            - name: BROKER_USER
+              value: dev
+          image: tapis/mlhub-artifact-down:local
+          imagePullPolicy: Never
+          name: workflows-pipelines
+          ports:
+            - containerPort: 9000
+          resources: {}
+          tty: true
+          volumeMounts:
+            - name: open-workflow-engine-mount
+              mountPath: /var/lib/open-workflow-engine/
+      volumes:
+        - name: open-workflow-engine-mount
+          nfs: 
+            server: '{{ NFS_SERVER_SERVICE_IP }}'
+            path: /   
+      restartPolicy: Always

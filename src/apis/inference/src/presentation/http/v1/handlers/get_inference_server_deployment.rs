@@ -1,5 +1,5 @@
 use actix_web::{web, get, HttpResponse, Responder};
-use crate::application::repositories::InferenceServerDeploymentRepository as _;
+use crate::application::ports::repositories::InferenceServerDeploymentRepository as _;
 use crate::infra::db::mongo::repositories::InferenceServerDeploymentRepository;
 use crate::bootstrap::state::AppState;
 use log::debug;

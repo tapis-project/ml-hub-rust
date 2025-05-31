@@ -1,3 +1,3 @@
 pub mod services;
 pub mod inputs;
-pub mod repositories;
+pub mod ports;

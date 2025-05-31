@@ -321,6 +321,7 @@ impl DownloadDatasetClient for HuggingFaceClient {
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
         })?;
+        
         // Resolve the filename or set a default
         let download_filename = request.body.download_filename
             .clone();
