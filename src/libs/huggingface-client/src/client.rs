@@ -10,8 +10,8 @@ use clients::{
     ClientErrorScope,
     ClientJsonResponse,
     ClientStagedArtifactResponse,
-    DownloadDatasetClient,
-    DownloadModelClient,
+    IngestDatasetClient,
+    IngestModelClient,
     GetDatasetClient,
     GetModelClient,
     ListDatasetsClient,
@@ -24,12 +24,12 @@ use shared::common::infra::fs::git::{
    SyncLfsRepositoryParams
 };
 use shared::models::presentation::http::v1::dto::{
-    DownloadModelRequest,
+    IngestModelRequest,
     GetModelRequest,
     ListModelsRequest,
 };
 use shared::datasets::presentation::http::v1::dto::{
-    DownloadDatasetRequest,
+    IngestDatasetRequest,
     GetDatasetRequest,
     ListDatasetsRequest,
     PublishDatasetRequest,
@@ -42,8 +42,8 @@ use shared::common::presentation::http::v1::dto::{
 use clients::artifacts::{ArtifactGenerator, ArtifactStager};
 use shared::logging::SharedLogger;
 use shared::constants::{
-    MODEL_DOWNLOAD_DIR_NAME,
-    DATASET_DOWNLOAD_DIR_NAME,
+    MODEL_INGEST_DIR_NAME,
+    DATASET_INGEST_DIR_NAME,
 };
 use serde_json::{Value, Map};
 
@@ -153,8 +153,8 @@ impl GetModelClient for HuggingFaceClient {
     }
 }
 
-impl DownloadModelClient for HuggingFaceClient {
-    fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+impl IngestModelClient for HuggingFaceClient {
+    fn ingest_model(&self, request: &IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authroization");
 
@@ -169,7 +169,7 @@ impl DownloadModelClient for HuggingFaceClient {
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
-            target_dir_prefix: String::from(MODEL_DOWNLOAD_DIR_NAME),
+            target_dir_prefix: String::from(MODEL_INGEST_DIR_NAME),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
@@ -302,8 +302,8 @@ impl GetDatasetClient for HuggingFaceClient {
     }
 }
 
-impl DownloadDatasetClient for HuggingFaceClient {
-    fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+impl IngestDatasetClient for HuggingFaceClient {
+    fn ingest_dataset(&self, request: &IngestDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 
@@ -315,7 +315,7 @@ impl DownloadDatasetClient for HuggingFaceClient {
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
-            target_dir_prefix: String::from(DATASET_DOWNLOAD_DIR_NAME),
+            target_dir_prefix: String::from(DATASET_INGEST_DIR_NAME),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),

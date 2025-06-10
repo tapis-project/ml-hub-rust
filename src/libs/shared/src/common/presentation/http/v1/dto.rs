@@ -13,6 +13,7 @@ pub type Header = (String, String);
 
 pub type Boundry = String;
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Headers(Vec<Header>);
 
 impl Headers {
@@ -45,6 +46,17 @@ impl Headers {
 }
 
 pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct IngestArtifactBody {
+    pub include_paths: Option<Vec<String>>,
+    pub exclude_paths: Option<Vec<String>>,
+    pub archive: Option<Archive>,
+    pub compression: Option<Compression>,
+    pub download_filename: Option<String>,
+    pub webhook_url: Option<String>,
+    pub params: Option<Parameters>,
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadArtifactBody {

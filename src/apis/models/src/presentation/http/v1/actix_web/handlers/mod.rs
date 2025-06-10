@@ -1,5 +1,5 @@
 pub mod discover_models;
-pub mod stage_artifact;
+pub mod ingest_model;
 pub mod get_model;
 pub mod health_check;
 pub mod index;

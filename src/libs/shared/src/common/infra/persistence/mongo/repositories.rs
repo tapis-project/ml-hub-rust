@@ -1,36 +1,47 @@
-use crate::{application::errors::ApplicationError, infra::persistence::mongo::database::ARTIFACTS_COLLECTION};
-use crate::infra::persistence::mongo::documents::Artifact;
-use crate::application;
-use crate::domain::entities;
-use shared::errors::Error;
+use crate::common::application::errors::ApplicationError;
+use crate::common::infra::persistence::mongo::database::{
+    ARTIFACT_COLLECTION,
+    ARTIFACT_INGESTION_COLLECTION,
+};
+use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, ArtifactIngestionStatus};
+use crate::common::application;
+use crate::common::domain::entities;
 use mongodb::{
-    bson::doc,
+    bson::{
+        doc,
+        Uuid
+    },
     Database,
     Collection,
 };
 use async_trait::async_trait;
-use futures::stream::TryStreamExt;
-use crate::infra::persistence::errors::DatabaseError;
+// use futures::stream::TryStreamExt;
+// use crate::infra::persistence::errors::DatabaseError;
 
 pub struct ArtifactRepository {
     read_collection: Collection<Artifact>,
     write_collection: Collection<Artifact>
 }
 
+impl ArtifactRepository {
+    pub fn new(db: &Database) -> Self {
+        Self {
+            write_collection: db.collection(ARTIFACT_COLLECTION),
+            read_collection: db.collection(ARTIFACT_COLLECTION)
+        }
+    }
+}
+
 #[async_trait]
 impl application::ports::repositories::ArtifactRepository for ArtifactRepository {
-    async fn save(&self, _artifact: entities::Artifact) -> Result<(), ApplicationError> {
-        // let mut document = Artifact::try_from(artifact)
-        //     .map_err(|err| Error::new(err.to_string()))?;
+    async fn save(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError> {
+        let mut document = Artifact::from(artifact.clone());
         
-        // let result = self.write_collection.insert_one(&document, None)
-        //     .await
-        //     .map_err(|err| Error::new(err.to_string()))?;
+        let result = self.write_collection.insert_one(&document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-        // document._id = result.inserted_id.as_object_id();
-
-        // let artifact = entities::Artifact::try_from(document)
-        //     .map_err(|err| Error::new(err.to_string()))?;
+        document._id = result.inserted_id.as_object_id();
 
         Ok(())
     }
@@ -150,11 +161,49 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
 //     }
 // }
 
-// impl InferenceServerDeploymentRepository {
-//     pub fn new(db: Database) -> Self {
-//         Self {
-//             read_collection: db.collection(INFERENCE_SERVER_DEPLOYMENT_COLLECTION),
-//             _write_collection: db.collection(INFERENCE_SERVER_DEPLOYMENT_COLLECTION),
-//         }
-//     }
-// }
+pub struct ArtifactIngestionRepository {
+    read_collection: Collection<Artifact>,
+    write_collection: Collection<ArtifactIngestion>
+}
+
+impl ArtifactIngestionRepository {
+    pub fn new(db: &Database) -> Self {
+        Self {
+            write_collection: db.collection(ARTIFACT_INGESTION_COLLECTION),
+            read_collection: db.collection(ARTIFACT_INGESTION_COLLECTION)
+        }
+    }
+}
+
+#[async_trait]
+impl application::ports::repositories::ArtifactIngestionRepository for ArtifactIngestionRepository {
+    async fn save(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError> {
+        let mut document = ArtifactIngestion::from(ingestion.clone());
+        
+        let result = self.write_collection.insert_one(&document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        document._id = result.inserted_id.as_object_id();
+
+        Ok(())
+    }
+
+    async fn update_status(&self, id: &uuid::Uuid, status: &entities::ArtifactIngestionStatus) -> Result<(), ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(id.as_bytes().clone())
+        };
+
+        let document = doc! {
+            "$set": {
+                "status": String::from(ArtifactIngestionStatus::from(status.clone()))
+            }
+        };
+
+        self.write_collection.update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        
+        Ok(())
+    }
+}

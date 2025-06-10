@@ -1,5 +1,7 @@
+use serde_json::to_vec;
 use crate::models::presentation::http::v1::dto;
 use crate::models::application::inputs;
+use crate::common::application::inputs as common_inputs;
 use crate::errors::Error;
 
 impl TryFrom<dto::SystemRequirement> for inputs::SystemRequirement {
@@ -121,6 +123,24 @@ impl TryFrom<dto::ModelDiscoveryCriteria> for inputs::ModelDiscoveryCriteriaInpu
             license: value.license,
             bias_evaluation_score: value.bias_evaluation_score,
 
+        })
+    }
+}
+
+/// Model Ingestion
+
+impl TryFrom<dto::IngestModelRequest> for common_inputs::IngestArtifactInput {
+    type Error = Error;
+    fn try_from(value: dto::IngestModelRequest) -> Result<Self, Self::Error> {
+        let serialized_client_request = to_vec(&value)
+            .map_err(|err| Error::new(format!("Failed serialize the full client request: {}", err.to_string())))?;
+        
+        Ok(Self {
+            artifact_type: common_inputs::ArtifactType::Model,
+            platform: value.path.platform,
+            platform_artifact_id: value.path.model_id,
+            webhook_url: value.body.webhook_url,
+            serialized_client_request
         })
     }
 }

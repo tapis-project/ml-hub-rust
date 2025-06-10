@@ -4,7 +4,8 @@ use std::collections::HashMap;
 use actix_multipart::Multipart;
 pub use crate::common::presentation::http::v1::dto::{
     Headers,
-    DownloadArtifactBody
+    DownloadArtifactBody,
+    IngestArtifactBody
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -20,6 +21,12 @@ pub struct GetModelPath {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadModelPath {
+    pub platform: String,
+    pub model_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct IngestModelPath {
     pub platform: String,
     pub model_id: String
 }
@@ -57,13 +64,20 @@ pub struct GetModelRequest {
     pub body: bytes::Bytes,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct IngestModelRequest {
+    pub headers: Headers,
+    pub path: IngestModelPath,
+    pub query: HashMap<String, String>,
+    pub body: IngestArtifactBody,
+}
+
 pub struct DownloadModelRequest {
     pub headers: Headers,
     pub path: DownloadModelPath,
     pub query: HashMap<String, String>,
     pub body: DownloadArtifactBody,
 }
-
 pub struct PublishModelRequest {
     pub headers: Headers,
     pub path: PublishModelPath,

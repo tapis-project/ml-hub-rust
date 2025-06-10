@@ -13,19 +13,19 @@ use shared::{
     logging::SharedLogger,
     responses::artifact_helpers::StagedArtifactResponseHeaders
 };
-use shared::requests::{DownloadDatasetPath, DownloadDatasetRequest, DownloadArtifactBody};
+use shared::requests::{IngestDatasetPath, IngestDatasetRequest, IngestArtifactBody};
 use shared::responses::JsonResponse;
 
 #[post("datasets-api/platforms/{platform}/datasets/{dataset_id:.*}/files")]
-async fn download_dataset(
+async fn ingest_dataset(
     req: ActixHttpRequest,
-    path: web::Path<DownloadDatasetPath>,
+    path: web::Path<IngestDatasetPath>,
     query: web::Query<HashMap<String, String>>,
-    body: web::Json<DownloadArtifactBody>,
+    body: web::Json<IngestArtifactBody>,
 ) -> impl ActixResponder {
     let logger = SharedLogger::new();
     
-    logger.debug("Start download dataset operation");
+    logger.debug("Start ingest dataset operation");
 
     // Initialize the client registrar
     let registrar = DatasetsClientRegistrar::new();
@@ -46,16 +46,16 @@ async fn download_dataset(
     };
 
     // Build the request used by the client
-    let request = DownloadDatasetRequest{
+    let request = IngestDatasetRequest{
         req: req.clone(),
         path,
         query,
         body
     };
     
-    // Download the dataset and respond with the file contents using the provided
+    // Ingest the dataset and respond with the file contents using the provided
     // MIME type
-    let client_resp = match client.download_dataset(&request) {
+    let client_resp = match client.ingest_dataset(&request) {
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());

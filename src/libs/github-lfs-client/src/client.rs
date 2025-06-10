@@ -1,14 +1,14 @@
 use shared::constants;
 use clients::{
-    ClientError, ClientErrorScope, ClientStagedArtifactResponse, DownloadDatasetClient, DownloadModelClient
+    ClientError, ClientErrorScope, ClientStagedArtifactResponse, IngestDatasetClient, IngestModelClient
 };
 use shared::common::infra::fs::git::{
     SyncGitRepository,
     SyncLfsRepositoryParams,
     SyncGitRepositoryImpl
 };
-use shared::models::presentation::http::v1::dto::DownloadModelRequest;
-use shared::datasets::presentation::http::v1::dto::DownloadDatasetRequest;
+use shared::models::presentation::http::v1::dto::IngestModelRequest;
+use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
 use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::common::presentation::http::v1::dto::{
     Artifact,
@@ -32,8 +32,8 @@ impl ArtifactGenerator for GithubLfsClient {}
 
 impl SyncGitRepository for GithubLfsClient {}
 
-impl DownloadModelClient for GithubLfsClient {
-    fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+impl IngestModelClient for GithubLfsClient {
+    fn ingest_model(&self, request: &IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 
@@ -46,7 +46,7 @@ impl DownloadModelClient for GithubLfsClient {
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
             remote_base_url: String::from("https://github.com"),
-            target_dir_prefix: String::from(constants::MODEL_DOWNLOAD_DIR_NAME),
+            target_dir_prefix: String::from(constants::MODEL_INGEST_DIR_NAME),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
@@ -84,8 +84,8 @@ impl DownloadModelClient for GithubLfsClient {
     }
 }
 
-impl DownloadDatasetClient for GithubLfsClient {
-    fn download_dataset(&self, request: &DownloadDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+impl IngestDatasetClient for GithubLfsClient {
+    fn ingest_dataset(&self, request: &IngestDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 
@@ -98,7 +98,7 @@ impl DownloadDatasetClient for GithubLfsClient {
         let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url: String::from("https://github.com"),
-            target_dir_prefix: String::from(constants::MODEL_DOWNLOAD_DIR_NAME),
+            target_dir_prefix: String::from(constants::MODEL_INGEST_DIR_NAME),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),

@@ -1,4 +1,2 @@
 #[cfg(feature = "mongo")]
-pub mod mongo;
-
-pub mod errors;
+pub use shared::common::infra::persistence::mongo;

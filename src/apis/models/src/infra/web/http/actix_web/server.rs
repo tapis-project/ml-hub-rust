@@ -1,6 +1,6 @@
 use crate::presentation;
-// use shared::common::infra::system::Env;
-// use log::error;
+use crate::bootstrap::state::AppState;
+use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use actix_web::{App, HttpServer};
 use std::env;
 use actix_web::middleware::Logger;
@@ -22,14 +22,31 @@ pub async fn run_server() -> std::io::Result<()> {
             .unwrap_or(DEFAULT_PORT)
     );
 
-    HttpServer::new(|| {
+    // Initialize AppState
+    let state = AppState {
+        db: get_db(ClientParams{
+            username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
+            password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
+            host: env::var("ARTIFACTS_DB_HOST").expect("ARTIFACTS_DB_HOST env var not set"),
+            port: env::var("ARTIFACTS_DB_PORT").expect("ARTIFACTS_DB_PORT env var not set"),
+            db: env::var("ARTIFACTS_DB_NAME").expect("ARTIFACTS_DB_NAME env var not set"),
+        })
+            .await
+            .map_err(|err| {
+                panic!("Database initialization error: {}", err.to_string().as_str()); 
+            })
+            .expect("Datbase initialization error")
+    };
+
+    HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
+            .app_data(actix_web::web::Data::new(state.clone()))
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
             .service(presentation::http::v1::actix_web::handlers::get_model::get_model)
             .service(presentation::http::v1::actix_web::handlers::list_models::list_models)
-            .service(presentation::http::v1::actix_web::handlers::stage_artifact::stage_artifact)
+            .service(presentation::http::v1::actix_web::handlers::ingest_model::ingest_model)
             .service(presentation::http::v1::actix_web::handlers::discover_models::discover_models)
             .service(presentation::http::v1::actix_web::handlers::publish_model::publish_model)
             .service(presentation::http::v1::actix_web::handlers::list_platforms::list_platforms)

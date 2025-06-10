@@ -1,9 +1,9 @@
 use serde_json::Value;
 use clients::{
-    ClientError, ClientErrorScope, ClientJsonResponse, ClientStagedArtifactResponse, DownloadModelClient as _
+    ClientError, ClientErrorScope, ClientJsonResponse, ClientStagedArtifactResponse, IngestModelClient as _
 };
 use shared::models::presentation::http::v1::dto::{
-    DiscoverModelsRequest, DownloadModelRequest, GetModelRequest, ListModelsRequest, PublishModelRequest
+    DiscoverModelsRequest, GetModelRequest, IngestModelRequest, ListModelsRequest, PublishModelRequest
 };
 use huggingface_client::client::HuggingFaceClient;
 use github_lfs_client::client::GithubLfsClient;
@@ -48,18 +48,18 @@ impl clients::GetModelClient for GetModelClient {
     }
 }
 
-pub enum DownloadModelClient {
+pub enum IngestModelClient {
     Github(GithubLfsClient),
     Git(GitLfsClient),
     HuggingFace(HuggingFaceClient)
 }
 
-impl DownloadModelClient {
-    pub fn download_model(&self, request: &DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+impl IngestModelClient {
+    pub fn ingest_model(&self, request: &IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
         match self {
-            DownloadModelClient::HuggingFace(c) => c.download_model(request),
-            DownloadModelClient::Git(c) => c.download_model(request),
-            DownloadModelClient::Github(c) => c.download_model(request)
+            IngestModelClient::HuggingFace(c) => c.ingest_model(request),
+            IngestModelClient::Git(c) => c.ingest_model(request),
+            IngestModelClient::Github(c) => c.ingest_model(request)
         }
     }
 }

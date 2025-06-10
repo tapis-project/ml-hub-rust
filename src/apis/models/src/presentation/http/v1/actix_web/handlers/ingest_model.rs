@@ -9,19 +9,19 @@ use actix_web::{
 use actix_files::NamedFile;
 use shared::logging::SharedLogger;
 use shared::common::presentation::http::v1::dto::artifact_helpers::StagedArtifactResponseHeaders;
-use crate::presentation::http::v1::dto::{DownloadModelPath, DownloadModelRequest, Headers, DownloadArtifactBody};
+use crate::presentation::http::v1::dto::{IngestModelPath, IngestModelRequest, Headers, IngestArtifactBody};
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_client_error_response};
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/artifacts")]
-async fn stage_artifact(
+async fn ingest_model(
     req: HttpRequest,
-    path: web::Path<DownloadModelPath>,
+    path: web::Path<IngestModelPath>,
     query: web::Query<HashMap<String, String>>,
-    body: web::Json<DownloadArtifactBody>,
+    body: web::Json<IngestArtifactBody>,
 ) -> impl Responder {
     let logger = SharedLogger::new();
     
-    logger.debug("Start download model operation");
+    logger.debug("Start ingest model operation");
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
@@ -34,7 +34,7 @@ async fn stage_artifact(
         }
     };
 
-    let request = DownloadModelRequest{
+    let request = IngestModelRequest{
         headers,
         path: path.into_inner(),
         query: query.into_inner(),
@@ -48,7 +48,7 @@ async fn stage_artifact(
     }
 
     // Get the client for the provided platform
-    let client = if let Ok(client) = ClientProvider::provide_download_model_client(&request.path.platform) {
+    let client = if let Ok(client) = ClientProvider::provide_ingest_model_client(&request.path.platform) {
         client
     } else {
         return build_error_response(
@@ -57,9 +57,9 @@ async fn stage_artifact(
         );
     };
     
-    // Download the model and respond with the file contents using the provided
+    // Ingest the model and respond with the file contents using the provided
     // MIME type
-    let client_resp = match client.download_model(&request) {
+    let client_resp = match client.ingest_model(&request) {
         Ok(client_resp) => client_resp,
         Err(err) => {
             logger.debug(&err.to_string());

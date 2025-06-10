@@ -1,4 +1,4 @@
-use shared::errors::Error;
+use crate::errors::Error;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::Database;
 
@@ -30,4 +30,5 @@ pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
     Ok(client.database(&params.db))
 }
 
-pub const ARTIFACTS_COLLECTION: &str = "ARTIFACTS";
+pub const ARTIFACT_COLLECTION: &str = "ARTIFACTS";
+pub const ARTIFACT_INGESTION_COLLECTION: &str = "ARTIFACT_INGESTIONS";

@@ -38,5 +38,33 @@ pub enum ArtifactIngestionStatus {
     Archiving,
     Archived,
     Finished,
-    Failed,
+    Failed(Reason),
 }
+
+type Status = ArtifactIngestionStatus;
+
+impl From<Status> for String {
+    fn from(value: Status) -> Self {
+        match value {
+            Status::Submitted => "Submitted".into(),
+            Status::Resubmitted => "Submitted".into(),
+            Status::Pending => "Pending".into(),
+            Status::Downloading => "Downloading".into(),
+            Status::Downloaded => "Downloaded".into(),
+            Status::Archiving => "Archiving".into(),
+            Status::Archived => "Archived".into(),
+            Status::Finished => "Finished".into(),
+            Status::Failed(_) => "Failed".into(),
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
+pub enum ArtifactIngestionFailureReason {
+    FailedToQueue,
+    FailedToDownload,
+    FailedToArchive,
+    Unknown
+}
+
+type Reason = ArtifactIngestionFailureReason;

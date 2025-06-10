@@ -9,8 +9,8 @@ use crate::clients::{
     ListModelsClient,
     GetModelClient,
     DiscoverModelsClient,
-    DownloadModelClient,
-    PublishModelClient
+    PublishModelClient,
+    IngestModelClient
 };
 
 /// A provider for managing clients mapped to their respective platforms.
@@ -58,12 +58,12 @@ impl ClientProvider {
         }
     }
 
-    pub fn provide_download_model_client(platform_name: &str) -> Result<DownloadModelClient, ClientProviderError> {
+    pub fn provide_ingest_model_client(platform_name: &str) -> Result<IngestModelClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
-            Platform::Git => Ok(DownloadModelClient::Git(GitLfsClient::new())),
-            Platform::Github => Ok(DownloadModelClient::Github(GithubLfsClient::new())),
-            Platform::HuggingFace => Ok(DownloadModelClient::HuggingFace(HuggingFaceClient::new())),
+            Platform::Git => Ok(IngestModelClient::Git(GitLfsClient::new())),
+            Platform::Github => Ok(IngestModelClient::Github(GithubLfsClient::new())),
+            Platform::HuggingFace => Ok(IngestModelClient::HuggingFace(HuggingFaceClient::new())),
             _ => Err(ClientProviderError::NotFound(platform_name, "downloading"))
         }
     }

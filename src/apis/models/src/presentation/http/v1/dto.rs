@@ -8,8 +8,8 @@ pub use shared::models::presentation::http::v1::dto::{
     DiscoverModelsPath,
     DiscoverModelsRequest,
     DiscoveryCriteriaBody,
-    DownloadArtifactBody,
-    DownloadModelPath,
-    DownloadModelRequest,
+    IngestArtifactBody,
+    IngestModelPath,
+    IngestModelRequest,
     Headers
 };

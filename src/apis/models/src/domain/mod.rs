@@ -1,2 +1,2 @@
-pub mod entities;
-pub mod services;
+pub use shared::common::domain::entities;
+pub use shared::common::domain::services;

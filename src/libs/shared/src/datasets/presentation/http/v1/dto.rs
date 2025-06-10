@@ -2,7 +2,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use actix_multipart::Multipart;
 use bytes::Bytes;
-use crate::common::presentation::http::v1::dto::{Headers,DownloadArtifactBody};
+use crate::common::presentation::http::v1::dto::{
+    Headers,
+    DownloadArtifactBody,
+    IngestArtifactBody
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListDatasetsPath {
@@ -11,6 +15,12 @@ pub struct ListDatasetsPath {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetDatasetPath {
+    pub platform: String,
+    pub dataset_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct IngestDatasetPath {
     pub platform: String,
     pub dataset_id: String
 }
@@ -39,6 +49,13 @@ pub struct GetDatasetRequest {
     pub path: GetDatasetPath,
     pub query: HashMap<String, String>,
     pub body: Bytes,
+}
+
+pub struct IngestDatasetRequest {
+    pub headers: Headers,
+    pub path: IngestDatasetPath,
+    pub query: HashMap<String, String>,
+    pub body: IngestArtifactBody,
 }
 
 pub struct DownloadDatasetRequest {

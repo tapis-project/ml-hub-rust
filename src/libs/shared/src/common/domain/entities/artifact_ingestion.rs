@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use uuid::Uuid;
 use thiserror::Error;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::common::domain::entities::timestamp::TimeStamp;
 
 #[derive(Debug, Error)]
 pub enum ArtifactIngestionError {
@@ -15,7 +15,7 @@ pub enum ArtifactIngestionError {
 // Private type alias to make things less verbose
 type IngestionError = ArtifactIngestionError;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct ArtifactIngestion {
     pub id: Uuid,
     pub artifact_id: Uuid, 
@@ -43,11 +43,6 @@ impl ArtifactIngestion {
             artifact_path: None,
             webhook_url,
         }
-    }
-    
-    /// Checks if the provied status is oneOf the list of statuses provided
-    fn match_status(status: Status, statuses: Vec<Status>) -> bool {
-        statuses.contains(&status)
     }
 
     /// Updates last modified to the UTC timestamp
@@ -142,7 +137,7 @@ pub enum ArtifactIngestionStatus {
     Archiving,
     Archived,
     Finished,
-    Failed(ArtifactIngestionFailureReason),
+    Failed(Reason),
 }
 
 type Status = ArtifactIngestionStatus;
