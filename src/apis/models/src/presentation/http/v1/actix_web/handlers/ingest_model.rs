@@ -67,25 +67,13 @@ async fn ingest_model(
     
     let ingestion = match artifact_service.ingest_artifact(input).await {
         Ok(a) => a,
-        Err(err) => {
-            match err {
-                ArtifactServiceError::ArtifactIngestionError(err) => {
-                    return build_error_response(500, err.to_string())
-                },
-                ArtifactServiceError::PubisherError(err) => {
-                    return build_error_response(500, err.to_string())
-                },
-                ArtifactServiceError::RepoError(err) => {
-                    return build_error_response(500, err.to_string())
-                }
-            }
-        }
+        Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let value = match to_value(ArtifactIngestion::from(ingestion)) {
+    let dto = match to_value(ArtifactIngestion::from(ingestion)) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    build_success_response(Some(value), Some("success".into()), None)
+    build_success_response(Some(dto), Some("success".into()), None)
 }
