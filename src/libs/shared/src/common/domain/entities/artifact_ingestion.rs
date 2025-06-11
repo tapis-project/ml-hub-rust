@@ -97,7 +97,7 @@ impl ArtifactIngestion {
     }
 
     pub fn set_artifact_path(&mut self, path: PathBuf) -> Result<(), IngestionError> {
-        if self.status != Status::Downloaded || self.status != Status::Archived {
+        if !(self.status == Status::Downloaded || self.status == Status::Archived) {
             return Err(IngestionError::ArtifactPath("This ingestion's artifact_path can only be set while the ingestion has a status of Downloaded or Archived".into()))
         }
 
@@ -119,6 +119,9 @@ impl ArtifactIngestion {
         if new_status == Status::Finished && self.artifact_path == None {
             return Err(IngestionError::ArtifactPath("The artifact_path must be set before moving the ingestion into a Finished state".into()));
         }
+
+        // Changes the status
+        self.status = new_status;
 
         // Updates last_modified
         self.touch();
@@ -167,3 +170,8 @@ pub enum ArtifactIngestionFailureReason {
 }
 
 type Reason = ArtifactIngestionFailureReason;
+
+// Unit tests
+#[cfg(test)]
+#[path = "artifact_ingestion.test.rs"]
+mod artifact_ingestion_test;

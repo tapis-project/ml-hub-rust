@@ -34,3 +34,7 @@ impl Artifact {
     }
 }
 
+// Unit tests
+#[cfg(test)]
+#[path = "artifact.test.rs"]
+mod artifact_ingestion_test;
