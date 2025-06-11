@@ -5,7 +5,6 @@ use actix_web::{
     HttpRequest,
     Responder,
 };
-use shared::common::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
 use crate::bootstrap::{
     state::AppState,
