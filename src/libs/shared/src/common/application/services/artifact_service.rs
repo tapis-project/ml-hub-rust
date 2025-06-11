@@ -56,7 +56,7 @@ impl ArtifactService {
         }
     }
 
-    pub async fn ingest_artifact(&self, input: IngestArtifactInput) -> Result<Artifact, ArtifactServiceError> {
+    pub async fn ingest_artifact(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
         let artifact = Artifact::new();
         
         // Closure for saving the artifact
@@ -100,6 +100,6 @@ impl ArtifactService {
             return Err(err)
         };
 
-        return Ok(artifact)
+        return Ok(ingestion)
     }
 }

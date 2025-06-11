@@ -625,6 +625,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -3502,6 +3503,7 @@ dependencies = [
  "futures-util",
  "gix",
  "log",
+ "mongodb",
  "once_cell",
  "openapiv3",
  "rand 0.9.1",

@@ -29,6 +29,7 @@ pub async fn artifact_service_factory(db: &Database) -> Result<ArtifactService, 
         Ok(p) => p,
         Err(err) => return Err(ApplicationError::PublisherError(err))
     };
+    
     Ok(ArtifactService::new(
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),

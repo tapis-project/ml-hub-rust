@@ -10,6 +10,31 @@ pub struct JsonResponse {
     pub version: Option<String>
 }
 
+#[derive(Serialize)]
+pub enum ArtifactIngestionStatus {
+    Submitted,
+    Resubmitted,
+    Pending,
+    Downloading,
+    Downloaded,
+    Archiving,
+    Archived,
+    Finished,
+    Failed,
+}
+
+#[derive(Serialize)]
+pub struct ArtifactIngestion {
+    pub id: String,
+    pub artifact_id: String, 
+    pub platform: String,
+    pub status: ArtifactIngestionStatus,
+    pub last_message: Option<String>,
+    pub created_at: String,
+    pub last_modified: String,
+    pub webhook_url: Option<String>,
+}
+
 pub mod artifact_helpers {
     use crate::errors::Error;
     use crate::common::presentation::http::v1::dto::{Archive, StagedArtifact, Header, Boundry};

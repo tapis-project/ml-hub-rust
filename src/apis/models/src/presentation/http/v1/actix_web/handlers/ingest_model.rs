@@ -1,16 +1,21 @@
 use std::collections::HashMap;
-use client_provider::ClientProvider;
 use actix_web::{
     web,
     post,
     HttpRequest,
     Responder,
 };
-use actix_files::NamedFile;
+use shared::common::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
-use shared::common::presentation::http::v1::dto::artifact_helpers::StagedArtifactResponseHeaders;
+use crate::bootstrap::{
+    state::AppState,
+    factories::artifact_service_factory
+};
+use serde_json::to_value;
+use crate::application::inputs::IngestArtifactInput;
 use crate::presentation::http::v1::dto::{IngestModelPath, IngestModelRequest, Headers, IngestArtifactBody};
-use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_client_error_response};
+use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
+use crate::presentation::http::v1::responses::ArtifactIngestion;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/artifacts")]
 async fn ingest_model(
@@ -18,6 +23,7 @@ async fn ingest_model(
     path: web::Path<IngestModelPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Json<IngestArtifactBody>,
+    data: web::Data<AppState>
 ) -> impl Responder {
     let logger = SharedLogger::new();
     
@@ -47,105 +53,39 @@ async fn ingest_model(
         return build_error_response(403, String::from("Forbidden"));
     }
 
-    // Get the client for the provided platform
-    let client = if let Ok(client) = ClientProvider::provide_ingest_model_client(&request.path.platform) {
-        client
-    } else {
-        return build_error_response(
-            403,
-            String::from(format!("Failed to find client for platform '{}'", &request.path.platform))
-        );
+    // Instantiate an artifact service
+    let artifact_service = match artifact_service_factory(&data.db).await {
+        Ok(s) => s,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    // Convert the request dto into an input
+    let input = match IngestArtifactInput::try_from(request) {
+        Ok(i) => i,
+        Err(err) => return build_error_response(500, err.to_string())
     };
     
-    // Ingest the model and respond with the file contents using the provided
-    // MIME type
-    let client_resp = match client.ingest_model(&request) {
-        Ok(client_resp) => client_resp,
+    let ingestion = match artifact_service.ingest_artifact(input).await {
+        Ok(a) => a,
         Err(err) => {
-            logger.debug(&err.to_string());
-            return build_client_error_response(err)
-        }
-    };
-
-    let staged_artifact_path = client_resp.staged_artifact.path.clone();
-    if !staged_artifact_path.exists() {
-        let err_msg = String::from(
-            format!("Path to the staged artifact does not exist. Path: {}", staged_artifact_path.to_string_lossy()).as_str());
-        logger.error(&err_msg);
-        return build_error_response(
-            500,
-            err_msg
-        );
-    }
-
-    let download_filename = request.body
-            .download_filename
-            .clone();
-
-    let staged_artifact = client_resp.staged_artifact.clone();
-
-    logger.debug(format!("{:#?}", &staged_artifact).as_str());
-
-    let archive = request.body.archive.clone();
-
-    let staged_artifact_headers = match StagedArtifactResponseHeaders::new(
-        &staged_artifact,
-        &download_filename,
-        &archive
-    ) {
-        Ok(headers) => headers,
-        Err(err) => {
-            logger.debug(&err.to_string());
-            return build_error_response(403, err.to_string());
-        }
-    };
-    
-    let mut headers: Vec<(&str, &str)> = Vec::with_capacity(2);
-
-    let content_type_header = (
-        staged_artifact_headers.content_type_header.0.as_str(),
-        staged_artifact_headers.content_type_header.1.as_str(),
-    );
-
-    headers.push(content_type_header);
-
-    match &staged_artifact_headers.content_disposition_header {
-        Some((ref key, ref value)) => {
-            headers.push((
-                key.as_str(),
-                value.as_str()
-            ));
-        },
-        None => {}
-    };
-    
-    logger.debug(format!("Staged artifact path: {:?}", &staged_artifact_path).as_str());
-
-    // Handle single-file octect-stream and archived responses
-    if staged_artifact_path.is_file() {
-        match NamedFile::open(staged_artifact_path) {
-            Ok(file) => {
-                let mut resp = file.use_last_modified(true)
-                    .customize();
-                
-                for header in headers {
-                    resp = resp.insert_header(header);
+            match err {
+                ArtifactServiceError::ArtifactIngestionError(err) => {
+                    return build_error_response(500, err.to_string())
+                },
+                ArtifactServiceError::PubisherError(err) => {
+                    return build_error_response(500, err.to_string())
+                },
+                ArtifactServiceError::RepoError(err) => {
+                    return build_error_response(500, err.to_string())
                 }
-    
-                return resp
-                    .respond_to(&req)
-                    .map_into_boxed_body()
-            },
-            Err(err) => {
-                logger.debug(&err.to_string());
-                return build_error_response(500, err.to_string());
             }
         }
-    }
+    };
 
-    // TODO Handle multipart/mixed responses
-    return build_error_response(
-        501,
-        String::from("Artifact responses for MIME type multipart/mixed not yet implemented")
-    );
+    let value = match to_value(ArtifactIngestion::from(ingestion)) {
+        Ok(v) => v,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    build_success_response(Some(value), Some("success".into()), None)
 }
