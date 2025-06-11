@@ -15,6 +15,7 @@ use crate::application::inputs::IngestArtifactInput;
 use crate::presentation::http::v1::dto::{IngestModelPath, IngestModelRequest, Headers, IngestArtifactBody};
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
 use crate::presentation::http::v1::responses::ArtifactIngestion;
+use client_provider::ClientProvider;
 
 #[post("models-api/platforms/{platform}/models/{model_id:.*}/artifacts")]
 async fn ingest_model(
@@ -52,6 +53,14 @@ async fn ingest_model(
         return build_error_response(403, String::from("Forbidden"));
     }
 
+    // Fail-fast: Use the client provider to determine the client for the request platform 
+    // has the ability to ingest artifacts. The client will not actually be used here,
+    // we are just using this check to fail fast as the client will be invoked
+    // somewhere else later.
+    if let Err(err) = ClientProvider::provide_ingest_model_client(&request.path.platform) {
+        return build_error_response(400, err.to_string())
+    }
+
     // Instantiate an artifact service
     let artifact_service = match artifact_service_factory(&data.db).await {
         Ok(s) => s,
@@ -64,11 +73,13 @@ async fn ingest_model(
         Err(err) => return build_error_response(500, err.to_string())
     };
     
+    // Ingest the artifact
     let ingestion = match artifact_service.ingest_artifact(input).await {
         Ok(a) => a,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
+    // Convert to dto
     let dto = match to_value(ArtifactIngestion::from(ingestion)) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
