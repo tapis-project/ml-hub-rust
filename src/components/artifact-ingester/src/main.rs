@@ -35,7 +35,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
     async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content:Vec<u8>) {
         // Deserialize the message into a DownloadArtifactRequest
         let request: IngestArtifactMessage = match serde_json::from_slice(&content) {
-            Ok(message) => message,
+            Ok(m) => m,
             Err(err) => {
                 eprintln!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
                 nack(&channel, &deliver, None, None).await;
@@ -48,7 +48,17 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                 match ClientProvider::provide_ingest_model_client(&request.platform) {
                     Ok(client) => {
                         let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request).unwrap();
-                        client.ingest_model(&client_request).unwrap()
+                        // TODO Handle the error
+                        match client.ingest_model(&client_request) {
+                            Ok(_) => {
+                                // TODO update the artifact ingestion with status Finished
+                                // TODO update the artifact with the path to the artifact
+                            },
+                            Err(err) => {
+                                eprintln!("{}", err.to_string());
+                                nack(&channel, &deliver, None, None).await;
+                            }
+                        };
                     },
                     Err(err) => {
                         eprintln!("Client provider error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
@@ -62,13 +72,12 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                 //     .map_err(|err| {
                 //         eprintln!("{}", err);
                 //     });
-
+                eprintln!("Artifact ingestion not yet available for datasets");
                 nack(&channel, &deliver, None, None).await;
                 return 
             }
         };
 
-        // Dispatch client to download
         // Update database
             
         // Acknowledge the message
@@ -183,6 +192,7 @@ async fn main() -> () {
         Ok(_) => {},
         Err(err) => panic!("Failed to bind queue: {}", err.to_string())
     };
+    
     // Unique consumer tag. Make this unique per worker. 
     let consumer_tag = Uuid::now_v7();
 
@@ -193,7 +203,7 @@ async fn main() -> () {
         .finish();
 
     match channel.basic_consume(consumer, args).await {
-        Ok(_) => {},
+        Ok(_) => { println!("Ready to recieve messages...") },
         Err(err) => panic!("Failed to consume: {}", err.to_string())
     };
 

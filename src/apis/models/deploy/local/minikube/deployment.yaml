@@ -13,13 +13,15 @@ spec:
     spec:
       containers:
         - env:
-            - name: DB_HOST
-              value: mlhub-postgres-service
-            - name: DB_NAME
+            - name: ARTIFACTS_DB_HOST
+              value: mlhub-artifact-mongodb-service
+            - name: ARTIFACTS_DB_PORT
+              value: "27017"
+            - name: ARTIFACTS_DB_NAME
               value: mlhub
-            - name: DB_PASSWORD
+            - name: ARTIFACTS_DB_PASSWORD
               value: dev
-            - name: DB_USER
+            - name: ARTIFACTS_DB_USERNAME
               value: mlhub
             - name: RUST_LOG
               value: debug

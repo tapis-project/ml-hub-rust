@@ -14,10 +14,13 @@
     "training-deployment": "training-api-deployment",
     "training-image": "tapis/training-api",
     "nfs-deployment": "mlhub-nfs-server-deployment",
+    "nfs-server-service": "nfs-server-service",
     "postgres-deployment": "mlhub-postgres-deployment",
     "postgres-image": "postgres",
     "postgres-image-version": "15",
-    "traefik-deployment": "traefik-deployment"
+    "traefik-deployment": "traefik-deployment",
+    "artifact-ingester-deployment": "mlhub-artifact-ingester-deployment",
+    "artifact-ingester-image": "tapis/mlhub-artifact-ingester"
   },
   "components": [
     {
@@ -26,9 +29,9 @@
       "labels": ["api"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "get-nfs-ip": "kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
+        "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -58,9 +61,9 @@
       "labels": ["api"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "get-nfs-ip": "kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
+        "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -193,41 +196,14 @@
       }
     },
     {
-      "name": "artifact-archiver",
-      "rootDir": "src/components/artifact-archiver",
-      "labels": ["component"],
-      "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "get-nfs-ip": "kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
-        "install": "cargo install --path {{ self.rootDir }}",
-        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "build": "docker buildx build --platform linux/x86_64 -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
-        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
-        "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
-        "cyclel": "{{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
-        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}"
-      }
-    },
-    {
       "name": "artifact-ingester",
       "rootDir": "src/components/artifact-ingester",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "get-nfs-ip": "kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service nfs-server-service -o jsonpath='{.spec.clusterIP}')",
+        "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",

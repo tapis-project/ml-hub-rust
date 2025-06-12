@@ -76,6 +76,7 @@ impl ArtifactService {
         let save_ingestion = || self.ingestion_repo.save(&ingestion);
 
         // Persist the new ArtifactIngestion to the database
+        // TODO need to attempt to clean up the Artifact that was just persisted if ingestion fails
         let _ = retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err));
 

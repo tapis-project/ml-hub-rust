@@ -5,7 +5,7 @@ metadata:
     app: mlhub-artifact-ingester-deployment
   name: mlhub-artifact-ingester-deployment
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: mlhub-artifact-ingester-deployment
@@ -30,19 +30,17 @@ spec:
               value: "5672"
             - name: BROKER_USER
               value: dev
-          image: tapis/mlhub-artifact-down:local
+          image: tapis/mlhub-artifact-ingester:local
           imagePullPolicy: Never
-          name: workflows-pipelines
-          ports:
-            - containerPort: 9000
+          name: artifact-ingester
           resources: {}
           tty: true
           volumeMounts:
-            - name: open-workflow-engine-mount
-              mountPath: /var/lib/open-workflow-engine/
+              - name: nfs-server-mount
+                mountPath: /srv/mlhub/
       volumes:
-        - name: open-workflow-engine-mount
-          nfs: 
-            server: '{{ NFS_SERVER_SERVICE_IP }}'
-            path: /   
+        - name: nfs-server-mount
+          nfs:
+            server: '10.110.247.173'
+            path: /
       restartPolicy: Always
