@@ -52,12 +52,12 @@ fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64
                 match jitter {
                     Jitter::Full => {
                         let max = (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone());
-                        return rand::rng().random_range(0..max)
+                        rand::rng().random_range(0..max)
                     }
-                };
-            };
-            
-            (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone())
+                }
+            } else {
+                (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone())
+            }
         },
         RetryPolicy::FixedBackoff(_) => {
             base_delay * 1
