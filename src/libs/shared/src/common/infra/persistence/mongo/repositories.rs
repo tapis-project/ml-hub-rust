@@ -193,7 +193,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         let filter = doc! {
             "id": Uuid::from_bytes(id.as_bytes().clone())
         };
-
+        
         let document = doc! {
             "$set": {
                 "status": String::from(ArtifactIngestionStatus::from(status.clone()))

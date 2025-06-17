@@ -22,13 +22,13 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
-            - name: BROKER_HOST
+            - name: ARTIFACT_OP_MQ_HOST
               value: mlhub-artifact-op-mq-service
-            - name: BROKER_PASSWORD
+            - name: ARTIFACT_OP_MQ_PASSWORD
               value: dev
-            - name: BROKER_PORT
+            - name: ARTIFACT_OP_MQ_PORT
               value: "5672"
-            - name: BROKER_USER
+            - name: ARTIFACT_OP_MQ_USER
               value: dev
           image: tapis/mlhub-artifact-ingester:local
           imagePullPolicy: Never

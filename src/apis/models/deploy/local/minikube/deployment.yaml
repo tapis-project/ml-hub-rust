@@ -23,6 +23,14 @@ spec:
               value: dev
             - name: ARTIFACTS_DB_USERNAME
               value: mlhub
+            - name: ARTIFACT_OP_MQ_HOST
+              value: mlhub-artifact-op-mq-service
+            - name: ARTIFACT_OP_MQ_PASSWORD
+              value: dev
+            - name: ARTIFACT_OP_MQ_PORT
+              value: "5672"
+            - name: ARTIFACT_OP_MQ_USER
+              value: dev
             - name: RUST_LOG
               value: debug
             - name: SHARED_DATA

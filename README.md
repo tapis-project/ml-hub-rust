@@ -38,11 +38,23 @@ Now that you have all the necessary tools installed, we can start up the MLHub s
 
 This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
 
-From the project's root directory, run the following commands to initalize the project and launch the services in Minikube.
+From the project's root directory, run the following commands to initalize the project and launch the services in Minikube. For all `./manage start` steps, ensure that each component pod is in the "Running" state before moving onto the next step.
 
-1. `chmod +x manage`
+1. `chmod +x manage` - Makes the lifecycle script executable
 
-2. `./manage start`
+2. `./manage start nfs` - Starts the shared file system
+
+3. `./manage start artifact-op-mq` - Starts the artifact message broker
+
+4. `./manage start artifact-mongo` - Starts the artifact database
+
+5. `./manage start artifact-ingester` - Start up the artifact ingestion workers
+
+6. `./manage start traefik` - Starts the revers proxy
+
+7. `./manage buildl models` - Builds the Models API image with the `local` tag
+
+8. `./manage start models` - Starts the Models API pod
 
 Congrats! You know have a fully-functional local deployment of the MLHub Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
@@ -82,8 +94,10 @@ Training API
 
 **Components**
 NFS Server
-MongoDB
-Postgres
+Artifacts Database - MongoDB
+Artifact Operations Message Broker - RabbitMQ
+Artifact Ingester - Asynch workers for model/dataset ingestion
+Inference Database - MongoDB
 Traefik
 
 ## Developing in MLHub

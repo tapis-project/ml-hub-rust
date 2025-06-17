@@ -37,10 +37,10 @@ pub struct RabbitMQArtifactOpMessagePublisher {
 
 impl RabbitMQArtifactOpMessagePublisher {
     pub async fn new() -> Result<Self, MessagePublisherError> {
-        let host = std::env::var("BROKER_HOST").expect("BROKER_URL missing from environment variables");
-        let port = std::env::var("BROKER_PORT").expect("BROKER_PORT missing from environment variables");
-        let username = std::env::var("BROKER_USER").expect("BROKER_USER missing from environment variables");
-        let password = std::env::var("BROKER_PASSWORD").expect("BROKER_PASSWORD missing from environment variables");
+        let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
+        let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+        let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+        let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
 
         let connection_args = OpenConnectionArguments::new(
             host.as_str(),

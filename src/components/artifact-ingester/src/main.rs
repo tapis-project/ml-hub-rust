@@ -145,10 +145,10 @@ async fn nack(channel: &Channel, deliver: &Deliver, requeue: Option<bool>, multi
 async fn main() -> () {
     env_logger::init();
 
-    let host = std::env::var("BROKER_HOST").expect("BROKER_URL missing from environment variables");
-    let port = std::env::var("BROKER_PORT").expect("BROKER_PORT missing from environment variables");
-    let username = std::env::var("BROKER_USER").expect("BROKER_USER missing from environment variables");
-    let password = std::env::var("BROKER_PASSWORD").expect("BROKER_PASSWORD missing from environment variables");
+    let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_HOST missing from environment variables");
+    let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+    let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+    let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
 
     let connection_args = OpenConnectionArguments::new(
         host.as_str(),
@@ -192,7 +192,7 @@ async fn main() -> () {
         Ok(_) => {},
         Err(err) => panic!("Failed to bind queue: {}", err.to_string())
     };
-    
+
     // Unique consumer tag. Make this unique per worker. 
     let consumer_tag = Uuid::now_v7();
 
