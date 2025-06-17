@@ -54,16 +54,16 @@ fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64
                         let max = (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone());
                         rand::rng().random_range(0..max)
                     }
-                };
-            };
-            
-            (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone())
+                }
+            } else {
+                (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone())
+            }
         },
         RetryPolicy::FixedBackoff(_) => {
             base_delay * 1
         },
         RetryPolicy::LinearBackoff(_) => {
-            base_delay * attempt.clone() as u64 
+            base_delay * (attempt.clone() as u64 + 1)
         },
         RetryPolicy::NoBackoff(_) => {
             0
@@ -132,8 +132,8 @@ where
         }
     };
 
-    // Caculate the initial decay
-    let mut calulated_delay = calculate_delay(&delay, &(attempt.clone() as u16).clone(), &policy);
+    // Calculate the initial decay
+    let mut calculated_delay = calculate_delay(&delay, &(attempt.clone() as u16).clone(), &policy);
     loop {
         // Call the operation
         let result = op().await;
@@ -143,8 +143,8 @@ where
             Ok(v) => return Ok(v),
             Err(err) => {
                 // Handle delay
-                if delay > 0 && attempt != retries {
-                    sleep(Duration::from_millis(delay)).await;
+                if calculated_delay > 0 && attempt != retries {
+                    sleep(Duration::from_millis(calculated_delay)).await;
                 }
 
                 // 1st condition: indefinite retry case.
@@ -152,7 +152,7 @@ where
                 if retries == -1 || attempt < retries  {
                     attempt += 1;
                     // Calculate the new delay
-                    calulated_delay = calculate_delay(&calulated_delay, &(attempt.clone() as u16), &policy);
+                    calculated_delay = calculate_delay(&delay, &(attempt.clone() as u16), &policy);
                     continue;
                 }
 
@@ -161,3 +161,8 @@ where
         }
     };
 }
+
+// Unit tests
+#[cfg(test)]
+#[path = "retry.test.rs"]
+mod retry_test;
