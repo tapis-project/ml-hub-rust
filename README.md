@@ -102,4 +102,9 @@ Traefik
 
 ## Developing in MLHub
 
+### Using the MongoDB Compass GUI for local db administration
+1. Download and install the MongoDB Compass GUI
+2. Run `kubectl port-forward svc/mongodb-service 27017:27017`
+3. Create a connection to the ip:port combination output by that command 
+
 
