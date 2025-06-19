@@ -223,8 +223,8 @@
       }
     },
     {
-      "name": "artifact-op-mq",
-      "rootDir": "src/components/artifact-op-mq",
+      "name": "artifact-mq",
+      "rootDir": "src/components/artifact-mq",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",

@@ -1,7 +1,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: mlhub-artifact-op-mq-pvc
+  name: mlhub-artifact-mq-pvc
 spec:
   accessModes:
     - ReadWriteOnce
