@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mlhub-artifact-db-deployment
+  name: mlhub-inference-db-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mlhub-artifact-db-deployment
+      app: mlhub-inference-db-deployment
   template:
     metadata:
       labels:
-        app: mlhub-artifact-db-deployment
+        app: mlhub-inference-db-deployment
     spec:
       containers:
         - name: mongodb
@@ -34,8 +34,8 @@ spec:
       volumes:
         - name: mongodb-data
           persistentVolumeClaim:
-            claimName: mlhub-artifact-db-pvc
+            claimName: mlhub-inference-db-pvc
         - name: init-db-script
           configMap:
-            name: mlhub-cm-init-artifact-db-script
+            name: mlhub-cm-init-inference-db-script
             defaultMode: 0755

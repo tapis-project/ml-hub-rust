@@ -1,0 +1,12 @@
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mlhub-inference-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi

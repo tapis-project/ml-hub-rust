@@ -254,8 +254,8 @@
       }
     },
     {
-      "name": "inference-mongo",
-      "rootDir": "src/components/inference-mongo",
+      "name": "inference-db",
+      "rootDir": "src/components/inference-db",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
