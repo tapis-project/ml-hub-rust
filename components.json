@@ -238,8 +238,8 @@
       }
     },
     {
-      "name": "artifact-mongo",
-      "rootDir": "src/components/artifact-mongo",
+      "name": "artifact-db",
+      "rootDir": "src/components/artifact-db",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",

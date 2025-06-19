@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mlhub-artifact-mongodb-deployment
+  name: mlhub-artifact-db-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mlhub-artifact-mongodb-deployment
+      app: mlhub-artifact-db-deployment
   template:
     metadata:
       labels:
-        app: mlhub-artifact-mongodb-deployment
+        app: mlhub-artifact-db-deployment
     spec:
       containers:
         - name: mongodb
@@ -34,7 +34,7 @@ spec:
       volumes:
         - name: mongodb-data
           persistentVolumeClaim:
-            claimName: mlhub-artifact-mongodb-pvc
+            claimName: mlhub-artifact-db-pvc
         - name: init-db-script
           configMap:
             name: cm-init-db-script
