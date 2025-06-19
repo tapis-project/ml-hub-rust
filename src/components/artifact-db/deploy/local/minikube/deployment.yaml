@@ -37,5 +37,5 @@ spec:
             claimName: mlhub-artifact-db-pvc
         - name: init-db-script
           configMap:
-            name: cm-init-db-script
+            name: cm-init-artifact-db-script
             defaultMode: 0755

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cm-init-db-script
+  name: cm-init-artifact-db-script
 data:
   init-db.sh: |
     #!/bin/bash
