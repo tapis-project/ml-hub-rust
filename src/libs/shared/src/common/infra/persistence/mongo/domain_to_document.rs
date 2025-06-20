@@ -1,6 +1,7 @@
 use crate::common::domain::entities;
 use crate::common::infra::persistence::mongo::documents;
-use mongodb::bson::Uuid;
+use mongodb::bson::{Uuid, DateTime};
+
 
 impl From<entities::Artifact> for documents::Artifact {
     fn from(value: entities::Artifact) -> Self {
@@ -12,8 +13,8 @@ impl From<entities::Artifact> for documents::Artifact {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
-            last_modified: value.last_modified.into_inner(),
-            created_at: value.created_at.into_inner(),
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            created_at: DateTime::from_chrono(value.created_at.into_inner()),
             path
         }
     }
@@ -30,14 +31,25 @@ impl From<entities::ArtifactIngestion> for documents::ArtifactIngestion {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
-            last_modified: value.last_modified.into_inner(),
-            created_at: value.created_at.into_inner(),
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            created_at: DateTime::from_chrono(value.created_at.into_inner()),
             artifact_id: Uuid::from_bytes(value.artifact_id.into_bytes()),
             artifact_path,
             last_message: value.last_message,
             platform: value.platform,
             status: documents::ArtifactIngestionStatus::from(value.status),
             webhook_url: value.webhook_url
+        }
+    }
+}
+
+impl From<entities::ArtifactIngestion> for documents::UpdateArtifactIngestionStatusRequest {
+    fn from(value: entities::ArtifactIngestion) -> Self {
+        Self {
+            id: Uuid::from_bytes(value.id.into_bytes()),
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_message: value.last_message,
+            status: documents::ArtifactIngestionStatus::from(value.status),
         }
     }
 }

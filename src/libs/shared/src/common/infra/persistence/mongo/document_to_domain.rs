@@ -13,8 +13,8 @@ impl From<documents::Artifact> for entities::Artifact {
 
         Self {
             id: Uuid::from_bytes(value.id.bytes()),
-            last_modified: entities::TimeStamp::from(value.last_modified),
-            created_at: entities::TimeStamp::from(value.created_at),
+            last_modified: entities::TimeStamp::from(value.last_modified.to_chrono()),
+            created_at: entities::TimeStamp::from(value.created_at.to_chrono()),
             path
         }
     }
@@ -29,8 +29,8 @@ impl From<documents::ArtifactIngestion> for entities::ArtifactIngestion {
 
         Self {
             id: Uuid::from_bytes(value.id.bytes()),
-            last_modified: entities::TimeStamp::from(value.last_modified),
-            created_at: entities::TimeStamp::from(value.created_at),
+            last_modified: entities::TimeStamp::from(value.last_modified.to_chrono()),
+            created_at: entities::TimeStamp::from(value.created_at.to_chrono()),
             artifact_id: Uuid::from_bytes(value.artifact_id.bytes()),
             artifact_path,
             last_message: value.last_message,

@@ -1,4 +1,4 @@
-use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionStatus};
+use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionStatus, TimeStamp};
 use crate::common::application::errors::ApplicationError;
 use uuid::Uuid;
 use async_trait::async_trait;
@@ -14,6 +14,6 @@ pub trait ArtifactRepository: Send + Sync {
 #[async_trait]
 pub trait ArtifactIngestionRepository: Send + Sync {
     async fn save(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
-    async fn update_status(&self, id: &Uuid, status: &ArtifactIngestionStatus) -> Result<(), ApplicationError>;
+    async fn update_status(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
     // fn find_by_artifact_id(&self, id: Uuid) -> Result<Vec<ArtifactIngestion>, ()>;
 }

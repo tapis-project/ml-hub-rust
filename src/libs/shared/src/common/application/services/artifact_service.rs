@@ -61,17 +61,17 @@ impl ArtifactService {
         
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
-        println!("saving artifact");
+        
         // Persist the new Artifact to the database
         retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
-        println!("saved artifact");
+        
         let mut ingestion = ArtifactIngestion::new(
             artifact.id.clone(),
             input.platform.clone(),
             input.webhook_url.clone()
         );
-        println!("saving ingestion");
+        
         // Closure for saving the ingestion
         let save_ingestion = || self.ingestion_repo.save(&ingestion);
 
@@ -94,7 +94,8 @@ impl ArtifactService {
             ingestion.change_status(ArtifactIngestionStatus::Failed(Reason::FailedToQueue))
                 .map_err(|err| ArtifactServiceError::ArtifactIngestionError(err))?;
             
-            let update_ingestion = || self.ingestion_repo.update_status(&ingestion.id, &ingestion.status);
+            let update_ingestion = || 
+                self.ingestion_repo.update_status(&ingestion);
             
             let _ = retry_async(update_ingestion, &Self::REPO_RETRY_POLICY).await
                 .map_err(|err| ArtifactServiceError::RepoError(err))?;

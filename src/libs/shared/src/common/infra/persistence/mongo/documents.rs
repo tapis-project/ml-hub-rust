@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-use mongodb::bson::{oid::ObjectId, Uuid};
-use chrono::{DateTime, Utc};
+use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -9,8 +8,8 @@ pub struct Artifact {
     pub _id: Option<ObjectId>,
     pub id: Uuid,
     pub path: Option<String>, 
-    pub created_at: DateTime<Utc>,
-    pub last_modified: DateTime<Utc>,
+    pub created_at: DateTime,
+    pub last_modified: DateTime,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -22,10 +21,18 @@ pub struct ArtifactIngestion {
     pub platform: String,
     pub status: ArtifactIngestionStatus,
     pub last_message: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub last_modified: DateTime<Utc>,
+    pub created_at: DateTime,
+    pub last_modified: DateTime,
     pub artifact_path: Option<String>,
     pub webhook_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UpdateArtifactIngestionStatusRequest {
+    pub id: Uuid,
+    pub status: ArtifactIngestionStatus,
+    pub last_message: Option<String>,
+    pub last_modified: DateTime,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]

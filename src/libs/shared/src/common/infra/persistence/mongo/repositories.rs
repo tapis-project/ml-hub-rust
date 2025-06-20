@@ -3,7 +3,7 @@ use crate::common::infra::persistence::mongo::database::{
     ARTIFACT_COLLECTION,
     ARTIFACT_INGESTION_COLLECTION,
 };
-use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, ArtifactIngestionStatus};
+use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, UpdateArtifactIngestionStatusRequest};
 use crate::common::application;
 use crate::common::domain::entities;
 use mongodb::{
@@ -189,14 +189,19 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(())
     }
 
-    async fn update_status(&self, id: &uuid::Uuid, status: &entities::ArtifactIngestionStatus) -> Result<(), ApplicationError> {
+    async fn update_status(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError> {
+        
+        let update = UpdateArtifactIngestionStatusRequest::from(ingestion.clone());
+
         let filter = doc! {
-            "id": Uuid::from_bytes(id.as_bytes().clone())
+            "id": update.id
         };
         
         let document = doc! {
             "$set": {
-                "status": String::from(ArtifactIngestionStatus::from(status.clone()))
+                "status": String::from(update.status),
+                "last_modified": update.last_modified,
+                "last_message": update.last_message
             }
         };
 
