@@ -15,5 +15,5 @@ pub trait ArtifactRepository: Send + Sync {
 pub trait ArtifactIngestionRepository: Send + Sync {
     async fn save(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
     async fn update_status(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
-    // fn find_by_artifact_id(&self, id: Uuid) -> Result<Vec<ArtifactIngestion>, ()>;
+    async fn find_by_artifact_id(&self, id: Uuid) -> Result<Vec<ArtifactIngestion>, ApplicationError>;
 }
