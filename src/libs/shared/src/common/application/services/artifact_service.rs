@@ -61,17 +61,17 @@ impl ArtifactService {
         
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
-
+        println!("saving artifact");
         // Persist the new Artifact to the database
         retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
-
+        println!("saved artifact");
         let mut ingestion = ArtifactIngestion::new(
             artifact.id.clone(),
             input.platform.clone(),
             input.webhook_url.clone()
         );
-
+        println!("saving ingestion");
         // Closure for saving the ingestion
         let save_ingestion = || self.ingestion_repo.save(&ingestion);
 
@@ -79,6 +79,7 @@ impl ArtifactService {
         // TODO need to attempt to clean up the Artifact that was just persisted if ingestion fails
         let _ = retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err));
+        println!("saved ingestion");
 
         // Closure for publishing the artifact ingestion request
         let publish_ingestion = || self.publisher.publish(

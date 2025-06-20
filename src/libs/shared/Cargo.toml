@@ -31,3 +31,4 @@ tokio-retry = "0.3.0"
 uuid = { version = "1.15.1", features = ["v7", "v4"] }
 zip = "3.0.0"
 mongodb = {version = "2.8", optional = true}
+futures = "0.3.31"

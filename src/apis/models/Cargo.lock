@@ -3724,6 +3724,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "chrono",
+ "futures",
  "futures-util",
  "gix",
  "log",

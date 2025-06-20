@@ -14,17 +14,17 @@ spec:
       containers:
         - env:
             - name: ARTIFACTS_DB_HOST
-              value: mlhub-artifact-mongodb-service
+              value: mlhub-artifact-db-service
             - name: ARTIFACTS_DB_PORT
               value: "27017"
             - name: ARTIFACTS_DB_NAME
               value: mlhub
             - name: ARTIFACTS_DB_PASSWORD
-              value: dev
+              value: password
             - name: ARTIFACTS_DB_USERNAME
               value: mlhub
             - name: ARTIFACT_OP_MQ_HOST
-              value: mlhub-artifact-op-mq-service
+              value: mlhub-artifact-mq-service
             - name: ARTIFACT_OP_MQ_PASSWORD
               value: dev
             - name: ARTIFACT_OP_MQ_PORT

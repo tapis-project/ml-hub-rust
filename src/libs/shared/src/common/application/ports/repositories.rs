@@ -6,8 +6,9 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait ArtifactRepository: Send + Sync {
     async fn save(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
+    async fn get_by_id(&self, id: Uuid) -> Result<Option<Artifact>, ApplicationError>;
+    async fn list_all(&self) -> Result<Vec<Artifact>, ApplicationError>;
     // async fn update(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
-    // fn get_by_id(&self, id: Uuid) -> Result<Artifact, ()>;
 }
 
 #[async_trait]

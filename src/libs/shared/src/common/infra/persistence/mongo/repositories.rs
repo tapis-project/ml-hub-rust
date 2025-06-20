@@ -15,7 +15,7 @@ use mongodb::{
     Collection,
 };
 use async_trait::async_trait;
-// use futures::stream::TryStreamExt;
+use futures::stream::TryStreamExt;
 // use crate::infra::persistence::errors::DatabaseError;
 
 pub struct ArtifactRepository {
@@ -46,40 +46,40 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(())
     }
 
-    // async fn list_all(&self) -> Result<Vec<entities::InferenceServer>, Error> {
-    //     let mut cursor = self.read_collection.find(None, None)
-    //         .await
-    //         .map_err(|err| Error::new(err.to_string()))?;
+    async fn list_all(&self) -> Result<Vec<entities::Artifact>, ApplicationError> {
+        let mut cursor = self.read_collection.find(None, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //     let mut inference_servers:Vec<entities::InferenceServer> = Vec::new();
-    //     while let Some(server_doc) = cursor.try_next().await.map_err(|err| Error::new(err.to_string()))?  {
-    //         inference_servers.push(
-    //             entities::InferenceServer::try_from(server_doc)
-    //                 .map_err(|err| Error::new(err.to_string()))?
-    //         );
-    //     }
+        let mut artifacts:Vec<entities::Artifact> = Vec::new();
+        while let Some(artifact) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+            artifacts.push(
+                entities::Artifact::try_from(artifact)
+                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?
+            );
+        }
         
-    //     Ok(inference_servers)
-    // }
+        Ok(artifacts)
+    }
 
-    // async fn find_by_metadata_name_version(&self, name: String, version: String) -> Result<Option<entities::InferenceServer>, Error> {
-    //     let filter = doc! { 
-    //         "metadata.name": name,
-    //         "metadata.version": version
-    //     };
-    //     let mut cursor = self.read_collection.find(filter, None)
-    //         .await
-    //         .map_err(|err| Error::new(err.to_string()))?;
+    async fn get_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::Artifact>, ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*id.as_bytes()),
+        };
 
-    //     while let Some(server_doc) = cursor.try_next().await.map_err(|err| Error::new(err.to_string()))?  {
-    //         let inference_server = entities::InferenceServer::try_from(server_doc)
-    //             .map_err(|err| Error::new(err.to_string()))?;
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //         return Ok(Some(inference_server))
-    //     }
+        while let Some(artifact_doc) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+            let artifact = entities::Artifact::try_from(artifact_doc)
+                .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //     Ok(None)
-    // }
+            return Ok(Some(artifact))
+        }
+
+        Ok(None)
+    }
 
     // async fn delete_by_metadata_name_version(&self, name: String, version: String) -> Result<(), Error> {
     //     let filter = doc! { 
