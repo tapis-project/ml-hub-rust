@@ -15,14 +15,15 @@ spec:
       containers:
         - name: mongodb
           image: mongo:8
-          command:
-            - "sh"
-            - "-c"
-          args:
-            - |
-              /bootstrap/init-db.sh
-              echo "Starting MongoDB..."
-              exec docker-entrypoint.sh mongod
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: "admin"
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: "password"
+            - name: MLHUB_USERNAME
+              value: "mlhub"
+            - name: MLHUB_PASSWORD
+              value: "password"
           ports:
             - containerPort: 27017
           resources: {}
@@ -30,7 +31,7 @@ spec:
           - name: mongodb-data
             mountPath: "/data/db"
           - name: init-db-script
-            mountPath: /bootstrap
+            mountPath: /docker-entrypoint-initdb.d/
       volumes:
         - name: mongodb-data
           persistentVolumeClaim:

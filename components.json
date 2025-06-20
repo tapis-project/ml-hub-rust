@@ -13,11 +13,9 @@
     "inference-image": "tapis/inference-api",
     "training-deployment": "training-api-deployment",
     "training-image": "tapis/training-api",
+    "artifact-db-deployment": "mlhub-artifact-db-deployment",
     "nfs-deployment": "mlhub-nfs-server-deployment",
     "nfs-server-service": "nfs-server-service",
-    "postgres-deployment": "mlhub-postgres-deployment",
-    "postgres-image": "postgres",
-    "postgres-image-version": "15",
     "traefik-deployment": "traefik-deployment",
     "artifact-ingester-deployment": "mlhub-artifact-ingester-deployment",
     "artifact-ingester-image": "tapis/mlhub-artifact-ingester"
@@ -51,8 +49,7 @@
       },
       "dependencies": [
         "traefik",
-        "nfs",
-        "postgres"
+        "nfs"
       ]
     },
     {
@@ -83,8 +80,7 @@
       },
       "dependencies": [
         "traefik",
-        "nfs",
-        "postgres"
+        "nfs"
       ]
     },
     {
@@ -114,8 +110,7 @@
       },
       "dependencies": [
         "traefik",
-        "nfs",
-        "postgres"
+        "nfs"
       ]
     },
     {
@@ -145,8 +140,7 @@
       },
       "dependencies": [
         "traefik",
-        "nfs",
-        "postgres"
+        "nfs"
       ]
     },
     {
@@ -177,21 +171,6 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "expose": "minikube service expose traefik-web-service --url",
-        "code": "code src/components/{{ self.name }}"
-      }
-    },
-    {
-      "name": "postgres",
-      "rootDir": "src/components/postgres",
-      "labels": ["component"],
-      "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
-        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "code": "code src/components/{{ self.name }}"
       }
     },
@@ -248,7 +227,8 @@
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
+        "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-service 27017:27017", 
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code src/components/{{ self.name }}",
         "gui": "open -a \"MongoDB Compass\""
       }
