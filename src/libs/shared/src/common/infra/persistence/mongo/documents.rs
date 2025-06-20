@@ -13,6 +13,13 @@ pub struct Artifact {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UpdateArtifactPathRequest {
+    pub id: Uuid,
+    pub path: String,
+    pub last_modified: DateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtifactIngestion {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>,

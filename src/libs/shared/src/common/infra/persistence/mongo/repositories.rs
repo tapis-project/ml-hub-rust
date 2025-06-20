@@ -3,7 +3,7 @@ use crate::common::infra::persistence::mongo::database::{
     ARTIFACT_COLLECTION,
     ARTIFACT_INGESTION_COLLECTION,
 };
-use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, UpdateArtifactIngestionStatusRequest};
+use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, UpdateArtifactIngestionStatusRequest, UpdateArtifactPathRequest};
 use crate::common::application;
 use crate::common::domain::entities;
 use mongodb::{
@@ -79,6 +79,27 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         }
 
         Ok(None)
+    }
+
+    async fn update_path(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError> {
+        let update = UpdateArtifactPathRequest::try_from(artifact.clone())?;
+
+        let filter = doc! {
+            "id": update.id
+        };
+        
+        let document = doc! {
+            "$set": {
+                "path": update.path,
+                "last_modified": update.last_modified,
+            }
+        };
+
+        self.write_collection.update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        
+        Ok(())
     }
 }
 

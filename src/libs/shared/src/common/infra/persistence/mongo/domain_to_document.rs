@@ -1,4 +1,4 @@
-use crate::common::domain::entities;
+use crate::common::{application::errors::ApplicationError, domain::entities};
 use crate::common::infra::persistence::mongo::documents;
 use mongodb::bson::{Uuid, DateTime};
 
@@ -51,6 +51,23 @@ impl From<entities::ArtifactIngestion> for documents::UpdateArtifactIngestionSta
             last_message: value.last_message,
             status: documents::ArtifactIngestionStatus::from(value.status),
         }
+    }
+}
+
+impl TryFrom<entities::Artifact> for documents::UpdateArtifactPathRequest {
+    type Error = ApplicationError;
+
+    fn try_from(value: entities::Artifact) -> Result<Self, Self::Error> {
+        let path = match value.path {
+            Some(p) => p,
+            None => return Err(ApplicationError::ConvesionError("Path".into()))
+        };
+
+        Ok(Self {
+            id: Uuid::from_bytes(value.id.into_bytes()),
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            path: path.to_string_lossy().into_owned()
+        })
     }
 }
 
