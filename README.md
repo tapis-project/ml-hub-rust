@@ -44,7 +44,7 @@ From the project's root directory, run the following commands to initalize the p
 
 2. `./manage start nfs` - Starts the shared file system
 
-3. `./manage start artifact-op` - Starts the artifact message broker
+3. `./manage start artifact-mq` - Starts the artifact message broker
 
 4. `./manage start artifact-db` - Starts the artifact database
 

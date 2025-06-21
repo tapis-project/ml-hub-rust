@@ -12,6 +12,9 @@ pub enum MessagePublisherError {
 
     #[error("Internal error: {0}")]
     InternalError(String),
+
+    #[error("Connection: {0}")]
+    ConnectionError(String),
 }
 
 pub enum Message {

@@ -7,6 +7,7 @@ use crate::common::application::ports::repositories::{ArtifactRepository, Artifa
 use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
 use thiserror::Error;
 use once_cell::sync::Lazy;
+use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
@@ -58,6 +59,8 @@ impl ArtifactService {
 
     pub async fn ingest_artifact(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
         let artifact = Artifact::new();
+
+        GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
         
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
@@ -71,6 +74,8 @@ impl ArtifactService {
             input.platform.clone(),
             input.webhook_url.clone()
         );
+
+        GlobalLogger::debug(format!("New ArtifactIngestion: {:#?}", ingestion).as_str());
         
         // Closure for saving the ingestion
         let save_ingestion = || self.ingestion_repo.save(&ingestion);
@@ -79,7 +84,6 @@ impl ArtifactService {
         // TODO need to attempt to clean up the Artifact that was just persisted if ingestion fails
         let _ = retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err));
-        println!("saved ingestion");
 
         // Closure for publishing the artifact ingestion request
         let publish_ingestion = || self.publisher.publish(
@@ -88,12 +92,16 @@ impl ArtifactService {
         
         // Publish the artifact ingestion request to the queue
         let publish_result = retry_async(publish_ingestion, &Self::MQ_RETRY_POLICY).await
-            .map_err(|err| ArtifactServiceError::PubisherError(err));
+            .map_err(|err| {ArtifactServiceError::PubisherError(err)});
 
         if let Err(err) = publish_result {
+            GlobalLogger::error(format!("Failed to publish ArtifactIngestion: {}", &err.to_string()).as_str());
+
             ingestion.change_status(ArtifactIngestionStatus::Failed(Reason::FailedToQueue))
                 .map_err(|err| ArtifactServiceError::ArtifactIngestionError(err))?;
             
+            GlobalLogger::debug(format!("Updated ArtifactIngestion: {:#?}", ingestion).as_str());
+
             let update_ingestion = || 
                 self.ingestion_repo.update_status(&ingestion);
             

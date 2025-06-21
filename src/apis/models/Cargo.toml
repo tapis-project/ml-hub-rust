@@ -9,7 +9,6 @@ actix = ["actix-web", "actix-multipart", "actix-files"]
 mongo = []
 
 [dependencies]
-huggingface-client = { path = "../../libs/huggingface-client" }
 serde = { version = "1.0", features = ["derive"] }
 actix-multipart = {version = "0.7.2", optional = true}
 actix-web = {version = "4", optional = true}

@@ -1,12 +1,12 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ArtifactType {
     Model,
     Dataset
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct IngestArtifactMessage {
     pub artifact_type: ArtifactType,
     pub platform: String,

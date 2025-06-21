@@ -31,6 +31,6 @@ RUN apt-get install -y --no-install-recommends ca-certificates git git-lfs
 RUN update-ca-certificates
 COPY --from=builder /usr/local/mlhub/service/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
-ENV RUST_LOG=debug
+ENV RUST_LOG=debug,shared=debug
 
 CMD ["mlhub"]

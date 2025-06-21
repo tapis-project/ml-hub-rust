@@ -2798,7 +2798,6 @@ dependencies = [
  "clients",
  "env_logger",
  "futures",
- "huggingface-client",
  "mongodb",
  "once_cell",
  "serde",

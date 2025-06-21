@@ -211,6 +211,7 @@
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "code": "code src/components/{{ self.name }}"

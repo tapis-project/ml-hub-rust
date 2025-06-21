@@ -15,7 +15,7 @@ pub enum ArtifactIngestionError {
 // Private type alias to make things less verbose
 type IngestionError = ArtifactIngestionError;
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ArtifactIngestion {
     pub id: Uuid,
     pub artifact_id: Uuid, 
@@ -130,7 +130,7 @@ impl ArtifactIngestion {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum ArtifactIngestionStatus {
     Submitted,
     Resubmitted,
@@ -161,7 +161,7 @@ impl From<Status> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum ArtifactIngestionFailureReason {
     FailedToQueue,
     FailedToDownload,

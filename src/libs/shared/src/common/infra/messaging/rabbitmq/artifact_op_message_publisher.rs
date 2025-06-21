@@ -21,6 +21,7 @@ use amqprs::{
     BasicProperties
 };
 use async_trait::async_trait;
+use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
 pub enum ArtifactOpMessagePublisherError {
@@ -31,12 +32,10 @@ pub enum ArtifactOpMessagePublisherError {
     AmqpError(#[from] amqprs::error::Error)
 }
 
-pub struct RabbitMQArtifactOpMessagePublisher {
-    channel: Channel
-}
+pub struct RabbitMQArtifactOpMessagePublisher;
 
 impl RabbitMQArtifactOpMessagePublisher {
-    pub async fn new() -> Result<Self, MessagePublisherError> {
+    async fn connect(&self) -> Result<Channel, MessagePublisherError> {
         let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
         let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
         let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
@@ -56,12 +55,8 @@ impl RabbitMQArtifactOpMessagePublisher {
 
         let channel = conn.open_channel(None).await.expect("Open channel failed");
 
-        Ok(Self {
-            channel
-        })
-    }
-
-    
+        Ok(channel)
+    }    
 }
 
 #[async_trait]
@@ -87,10 +82,14 @@ impl MessagePublisher for RabbitMQArtifactOpMessagePublisher {
             ARTIFACT_INGESTION_ROUTING_KEY,
         );
 
-        self.channel
-            .basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
+        let connection = self.connect().await.unwrap();
+
+        connection.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
             .await
-            .map_err(|err| MessagePublisherError::AmqpError(err.to_string()))?;
+            .map_err(|err| {
+                GlobalLogger::error(format!("Failed basic publish: {:#?}", err).as_str());
+                MessagePublisherError::AmqpError(err.to_string())
+            })?;
        
         Ok(())
     }

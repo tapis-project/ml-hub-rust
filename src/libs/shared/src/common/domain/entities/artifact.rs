@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 use crate::common::domain::entities::TimeStamp;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Artifact {
     pub id: Uuid,
     pub path: Option<PathBuf>, 

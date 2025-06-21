@@ -24,16 +24,11 @@ pub fn artifact_ingestion_repo_factory(db: &Database) -> Arc<dyn ArtifactIngesti
     Arc::new(MongoArtifactIngestionRepository::new(db))
 }
 
-pub async fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {
-    let publisher = match RabbitMQArtifactOpMessagePublisher::new().await {
-        Ok(p) => p,
-        Err(err) => return Err(ApplicationError::PublisherError(err))
-    };
-    
+pub async fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {    
     Ok(ArtifactService::new(
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
-        Arc::new(publisher)
+        Arc::new(RabbitMQArtifactOpMessagePublisher {})
     ))
 }
 
