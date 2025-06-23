@@ -97,3 +97,9 @@ impl FileCompressor {
         Ok(file)
     }
 }
+
+// Unit tests
+// This test is ignored by default, as it requires a specific file structure and may not be suitable for all environments.
+#[cfg(test)]#[ignore]
+#[path = "compression.test.rs"]
+mod compression_test;
