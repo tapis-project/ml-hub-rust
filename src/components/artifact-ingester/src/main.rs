@@ -22,6 +22,7 @@ use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
 use shared::constants::{ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_ROUTING_KEY};
+use shared::logging::GlobalLogger;
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
 use shared::common::infra::messaging::messages::{ArtifactType, IngestArtifactMessage};
@@ -42,6 +43,8 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                 return;
             }
         };
+
+        GlobalLogger::debug(format!("{:#?}", &request).as_str());
 
         match request.artifact_type {
             ArtifactType::Model => {
@@ -88,7 +91,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
 async fn connect_to_broker(args: &OpenConnectionArguments, max_connection_attempts: i8) -> Connection {
     println!("Attempting to connect to broker");
     
-    let mut connection_attempts: i8 = 1;
+    let mut connection_attempts: i8 = 0;
     while connection_attempts <= max_connection_attempts {
         // Attempt to connect. Out of all the possible errors, we only want to retry
         // the connection on the two IO errors below
@@ -156,6 +159,8 @@ async fn main() -> () {
         username.as_str(),
         password.as_str()
     );
+
+    GlobalLogger::debug(format!("{host} {port}, {username}, {password}").as_str());
 
     // Connect to the broker
     let conn = connect_to_broker(&connection_args, 25).await;

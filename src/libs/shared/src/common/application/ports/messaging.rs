@@ -19,7 +19,7 @@ pub enum MessagePublisherError {
 
 pub enum Message {
     IngestArtifactInput(IngestArtifactInput),
-    Placeholer // TODO remove Placeholder when a second message variant is added to this enum
+    Placeholder // TODO remove Placeholder when a second message variant is added to this enum
 }
 
 #[async_trait]

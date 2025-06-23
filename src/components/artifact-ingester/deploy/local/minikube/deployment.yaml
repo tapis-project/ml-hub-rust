@@ -23,7 +23,7 @@ spec:
             - name: SHARED_DATA
               value: /srv/mlhub
             - name: ARTIFACT_OP_MQ_HOST
-              value: mlhub-artifact-op-mq-service
+              value: mlhub-artifact-mq-service
             - name: ARTIFACT_OP_MQ_PASSWORD
               value: dev
             - name: ARTIFACT_OP_MQ_PORT
