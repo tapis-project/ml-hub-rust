@@ -113,4 +113,33 @@ impl ArtifactService {
 
         return Ok(ingestion)
     }
+
+    pub async fn upload_artifact(&self, input: IngestArtifactInput) -> Result<Artifact, ArtifactServiceError> {
+        let artifact = Artifact::new();
+
+        GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
+        
+        // Closure for saving the artifact
+        let save_artifact = || self.artifact_repo.save(&artifact);
+        
+        // Persist the new Artifact to the database
+        retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        
+        
+        //call Unzip Function that return file_path
+
+
+        // changin file_path of the artifact
+        artifact.file_path = file_path; //this filepath come from unzip function
+
+        // Closure for updating the artifact
+        let update_artifact_path = || self.artifact_repo.update_path(&artifact);
+        
+        // Persist the new Artifact to the database
+        retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        return Ok(artifact)
+    }
 }
