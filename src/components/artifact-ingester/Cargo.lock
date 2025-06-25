@@ -412,6 +412,7 @@ dependencies = [
  "client-provider",
  "env_logger",
  "futures-util",
+ "mongodb",
  "serde",
  "serde_json",
  "shared",

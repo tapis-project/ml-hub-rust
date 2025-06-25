@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use shared::constants;
 use clients::{
     ClientError, ClientErrorScope, ClientStagedArtifactResponse, IngestDatasetClient, IngestModelClient
@@ -33,7 +35,7 @@ impl ArtifactGenerator for GithubLfsClient {}
 impl SyncGitRepository for GithubLfsClient {}
 
 impl IngestModelClient for GithubLfsClient {
-    fn ingest_model(&self, request: &IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_model(&self, request: &IngestModelRequest, _target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 

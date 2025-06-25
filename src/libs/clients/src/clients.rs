@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use shared::inference::presentation::http::v1::dto as inference;
 use shared::training::presentation::http::v1::dto as training;
 use shared::models::presentation::http::v1::dto as models;
@@ -29,7 +30,7 @@ pub trait GetModelClient {
 }
 
 pub trait IngestModelClient: ArtifactGenerator {
-    fn ingest_model(&self, _request: &models::IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_model(&self, _request: &models::IngestModelRequest, _target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use amqprs::{
     channel::{
         BasicAckArguments, 
@@ -21,19 +22,27 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::constants::{ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_ROUTING_KEY};
+use shared::{common::domain::entities::ArtifactIngestionStatus, constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, MODEL_INGEST_DIR_NAME}};
 use shared::logging::GlobalLogger;
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
+use shared::common::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
 use shared::common::infra::messaging::messages::{ArtifactType, IngestArtifactMessage};
 use async_trait::async_trait;
+use shared::common::application::services::artifact_service::ArtifactService;
+use std::env;
+use artifact_ingester::bootstrap::artifact_service_factory;
+use artifact_ingester::database::{get_db, ClientParams};
 
-#[derive(Debug)]
-struct ArtifactIngesterConsumer;
+struct ArtifactIngesterConsumer {
+    artifact_service: ArtifactService,
+    models_target_base_path: PathBuf,
+    datasets_target_base_path: PathBuf
+}
 
 #[async_trait]
 impl AsyncConsumer for ArtifactIngesterConsumer {
-    async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content:Vec<u8>) {
+    async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
         // Deserialize the message into a DownloadArtifactRequest
         let request: IngestArtifactMessage = match serde_json::from_slice(&content) {
             Ok(m) => m,
@@ -44,20 +53,48 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             }
         };
 
-        GlobalLogger::debug(format!("{:#?}", &request).as_str());
+        let ingestion_id = Uuid::parse_str(request.ingestion_id.as_str()).expect("Invalid Uuid. Cannot convert ingestion_id into Uuid");
+
+        self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Pending)
+            .await
+            .map_err(|err| {
+                panic!("Error updating ingestion status: {}", err.to_string())
+            }).unwrap();
+
+        let artifact = self.artifact_service.find_artifact_by_ingestion_id(
+            ingestion_id.clone()
+        ).await
+            .expect("Failed to fetch artifact")
+            .expect(format!("Could not find artifact associated with ingestion '{}'", &ingestion_id).as_str());
+
+        let models_target_path = self.models_target_base_path.join(artifact.id.to_string());
+        let _datasets_target_path = self.datasets_target_base_path.join(artifact.id.to_string());
 
         match request.artifact_type {
             ArtifactType::Model => {
                 match ClientProvider::provide_ingest_model_client(&request.platform) {
                     Ok(client) => {
-                        let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request).unwrap();
-                        // TODO Handle the error
-                        match client.ingest_model(&client_request) {
-                            Ok(_) => {
+                        self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Downloading)
+                            .await
+                            .map_err(|err| {
+                                panic!("Error updating ingestion status: {}", err.to_string())
+                            }).unwrap();
+
+                        let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
+                            .unwrap(); // TODO Handle the error
+
+                        match client.ingest_model(&client_request, models_target_path) {
+                            Ok(resp) => {
+                                self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Downloaded)
+                                    .await
+                                    .map_err(|err| {
+                                        panic!("Error updating ingestion status: {}", err.to_string())
+                                    }).unwrap();
                                 // TODO update the artifact ingestion with status Finished
                                 // TODO update the artifact with the path to the artifact
                             },
                             Err(err) => {
+                                // TODO update the artifact ingestion with status Failed
                                 eprintln!("{}", err.to_string());
                                 nack(&channel, &deliver, None, None).await;
                             }
@@ -160,8 +197,6 @@ async fn main() -> () {
         password.as_str()
     );
 
-    GlobalLogger::debug(format!("{host} {port}, {username}, {password}").as_str());
-
     // Connect to the broker
     let conn = connect_to_broker(&connection_args, 25).await;
 
@@ -201,7 +236,28 @@ async fn main() -> () {
     // Unique consumer tag. Make this unique per worker. 
     let consumer_tag = Uuid::now_v7();
 
-    let consumer = ArtifactIngesterConsumer;
+    // Database connection
+    let db = get_db(ClientParams{
+        username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
+        password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
+        host: env::var("ARTIFACTS_DB_HOST").expect("ARTIFACTS_DB_HOST env var not set"),
+        port: env::var("ARTIFACTS_DB_PORT").expect("ARTIFACTS_DB_PORT env var not set"),
+        db: env::var("ARTIFACTS_DB_NAME").expect("ARTIFACTS_DB_NAME env var not set"),
+    })
+        .await
+        .map_err(|err| {
+            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        })
+        .expect("Datbase initialization error");
+    
+    let environment = Env::new().expect("Env could not be initialized");
+
+    let consumer = ArtifactIngesterConsumer {
+        artifact_service: artifact_service_factory(&db).await.expect("failed to initialize artifact service"),
+        models_target_base_path: PathBuf::from(&environment.shared_data_dir).join(MODEL_INGEST_DIR_NAME),
+        datasets_target_base_path: PathBuf::from(&environment.shared_data_dir).join(MODEL_INGEST_DIR_NAME),
+    };
+
     let args = BasicConsumeArguments::default()
         .queue(ARTIFACT_INGESTION_QUEUE.into())
         .consumer_tag(consumer_tag.to_string())

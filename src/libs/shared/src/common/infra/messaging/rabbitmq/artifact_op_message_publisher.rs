@@ -68,8 +68,8 @@ impl RabbitMQArtifactOpMessagePublisher {
 impl MessagePublisher for RabbitMQArtifactOpMessagePublisher {
     async fn publish(&self, message: Message) -> Result<(), MessagePublisherError> {
         let msg: IngestArtifactMessage = match message {
-            Message::IngestArtifactInput(msg) => {
-                IngestArtifactMessage::from(msg)
+            Message::IngestArtifactMessage(payload) => {
+                IngestArtifactMessage::from(payload)
             },
             _other => { return Err(MessagePublisherError::InternalError("unsupported message type".into())) }
         };

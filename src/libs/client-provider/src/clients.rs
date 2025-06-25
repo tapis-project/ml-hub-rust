@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use serde_json::Value;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, ClientStagedArtifactResponse, IngestModelClient as _
@@ -55,11 +56,11 @@ pub enum IngestModelClient {
 }
 
 impl IngestModelClient {
-    pub fn ingest_model(&self, request: &IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    pub fn ingest_model(&self, request: &IngestModelRequest, target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
         match self {
-            IngestModelClient::HuggingFace(c) => c.ingest_model(request),
-            IngestModelClient::Git(c) => c.ingest_model(request),
-            IngestModelClient::Github(c) => c.ingest_model(request)
+            IngestModelClient::HuggingFace(c) => c.ingest_model(request, target_path),
+            IngestModelClient::Git(c) => c.ingest_model(request, target_path),
+            IngestModelClient::Github(c) => c.ingest_model(request, target_path)
         }
     }
 }

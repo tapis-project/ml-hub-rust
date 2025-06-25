@@ -62,7 +62,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(artifacts)
     }
 
-    async fn get_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::Artifact>, ApplicationError> {
+    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::Artifact>, ApplicationError> {
         let filter = doc! {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
@@ -175,5 +175,27 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         }
 
         Ok(ingestions)
+    }
+
+    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::ArtifactIngestion>, ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*id.as_bytes()),
+        };
+
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        while let Some(ingestion_doc) = cursor.try_next()
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
+        {
+            let ingestion = entities::ArtifactIngestion::try_from(ingestion_doc)
+                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+            return Ok(Some(ingestion))
+        }
+
+        Ok(None)
     }
 }

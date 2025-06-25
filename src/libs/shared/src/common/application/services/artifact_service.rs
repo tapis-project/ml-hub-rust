@@ -1,12 +1,14 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::common::application::errors::ApplicationError;
 use crate::common::application::inputs::IngestArtifactInput;
-use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message};
+use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::common::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
 use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
 use thiserror::Error;
 use once_cell::sync::Lazy;
+use uuid::Uuid;
 use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
@@ -19,12 +21,15 @@ pub enum ArtifactServiceError {
 
     #[error("Artifact ingestion error: {0}")]
     ArtifactIngestionError(#[from] ArtifactIngestionError),
+
+    #[error("Not Found Error: {0}")]
+    NotFound(String),
 }
 
 pub struct ArtifactService {
     artifact_repo: Arc<dyn ArtifactRepository>,
     ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
-    publisher: Arc<dyn MessagePublisher>
+    publisher: Arc<dyn MessagePublisher>,
 }
 
 impl ArtifactService {
@@ -53,14 +58,12 @@ impl ArtifactService {
         Self {
             artifact_repo,
             ingestion_repo,
-            publisher
+            publisher,
         }
     }
 
     pub async fn ingest_artifact(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
         let artifact = Artifact::new();
-
-        GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
         
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
@@ -74,8 +77,6 @@ impl ArtifactService {
             input.platform.clone(),
             input.webhook_url.clone()
         );
-
-        GlobalLogger::debug(format!("New ArtifactIngestion: {:#?}", ingestion).as_str());
         
         // Closure for saving the ingestion
         let save_ingestion = || self.ingestion_repo.save(&ingestion);
@@ -86,8 +87,16 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err));
 
         // Closure for publishing the artifact ingestion request
+        let message_payload = IngestArtifactMessagePayload {
+            ingestion_id: ingestion.id.clone(),
+            artifact_type: input.artifact_type.clone(),
+            platform: ingestion.platform.clone(),
+            serialized_client_request: input.serialized_client_request.clone(),
+            webhook_url: input.webhook_url.clone()
+        };
+        
         let publish_ingestion = || self.publisher.publish(
-            Message::IngestArtifactInput(input.clone())
+            Message::IngestArtifactMessage(message_payload.clone())
         );
         
         // Publish the artifact ingestion request to the queue
@@ -99,8 +108,6 @@ impl ArtifactService {
 
             ingestion.change_status(ArtifactIngestionStatus::Failed(Reason::FailedToQueue))
                 .map_err(|err| ArtifactServiceError::ArtifactIngestionError(err))?;
-            
-            GlobalLogger::debug(format!("Updated ArtifactIngestion: {:#?}", ingestion).as_str());
 
             let update_ingestion = || 
                 self.ingestion_repo.update_status(&ingestion);
@@ -112,5 +119,62 @@ impl ArtifactService {
         };
 
         return Ok(ingestion)
+    }
+
+    pub async fn find_artifact_by_ingestion_id(&self, ingestion_id: Uuid) -> Result<Option<Artifact>, ArtifactServiceError> {
+        // Closure for fetching the ingestion
+        let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
+        
+        // Find the ingestion
+        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        let ingestion = match maybe_ingestion {
+            Some(i) => i,
+            None => return Ok(None)
+        };
+
+        // Closure for fetching the artifact
+        let find_artifact = || self.artifact_repo.find_by_id(ingestion.artifact_id);
+        
+        // Find the artifact
+        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        let artifact = match maybe_artifact {
+            Some(a) => a,
+            None => {
+                GlobalLogger::error(format!("Cannot find any record of the Artifact associated with ArtifactIngestion '{}'.", ingestion.id).as_str());
+                return Err(ArtifactServiceError::NotFound("Cannot find any record of the artifact associated with this ingestion".into()))
+            }
+        };
+
+        Ok(Some(artifact))
+    }
+
+    pub async fn update_ingestion_status_by_ingestion_id(&self, ingestion_id: Uuid, status: ArtifactIngestionStatus) -> Result<(), ArtifactServiceError> {
+        let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
+
+        // Find the ingestion
+        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        let mut ingestion = match maybe_ingestion {
+            Some(i) => i,
+            None => {
+                GlobalLogger::error(format!("Cannot find any record of ArtifactIngestion '{}'.", ingestion_id).as_str());
+                return Err(ArtifactServiceError::NotFound(format!("Cannot find any record of ArtifactIngestion '{}'.", ingestion_id)))
+            }
+        };
+
+        ingestion.change_status(status)?;
+
+        Ok(())
+    }
+
+    pub async fn finish_artifact_ingestion(&self, artifact_path: PathBuf, artifact: Artifact, ingestion: ArtifactIngestion) -> Result<(), ArtifactServiceError> {
+        
+        
+        Ok(())
     }
 }

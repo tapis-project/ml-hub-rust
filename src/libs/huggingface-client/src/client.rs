@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use crate::constants;
 use crate::requests::{
     ListModelsQueryParameters,
@@ -154,7 +155,7 @@ impl GetModelClient for HuggingFaceClient {
 }
 
 impl IngestModelClient for HuggingFaceClient {
-    fn ingest_model(&self, request: &IngestModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_model(&self, request: &IngestModelRequest, _target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authroization");
 
