@@ -6,6 +6,9 @@ use crate::common::application::inputs::IngestArtifactInput;
 use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::common::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
 use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
+use crate::common::domain::services::{
+    ArtifactService as DomainArtifactService,
+    ArtifactServiceError as DomainArtifactServiceError};
 use thiserror::Error;
 use once_cell::sync::Lazy;
 use uuid::Uuid;
@@ -21,6 +24,9 @@ pub enum ArtifactServiceError {
 
     #[error("Artifact ingestion error: {0}")]
     ArtifactIngestionError(#[from] ArtifactIngestionError),
+
+    #[error("Artifact service error: {0}")]
+    DomainArtifactServiceError(#[from] DomainArtifactServiceError),
 
     #[error("Not Found Error: {0}")]
     NotFound(String),
@@ -172,9 +178,34 @@ impl ArtifactService {
         Ok(())
     }
 
-    pub async fn finish_artifact_ingestion(&self, artifact_path: PathBuf, artifact: Artifact, ingestion: ArtifactIngestion) -> Result<(), ArtifactServiceError> {
+    pub async fn find_ingestion_by_ingestion_id(&self, ingestion_id: Uuid) -> Result<Option<ArtifactIngestion>, ArtifactServiceError> {
+        let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
         
+        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        return Ok(maybe_ingestion)
+    }
+
+    pub async fn finish_artifact_ingest(&self, artifact_path: PathBuf, artifact: &mut Artifact, ingestion: &mut ArtifactIngestion) -> Result<(), ArtifactServiceError> {
+        ingestion.set_artifact_path(artifact_path)?;
+
+        // Closure for saving the updated ingestion
+        let save_ingestion = || self.ingestion_repo.save(ingestion);
         
+        // Save updated artifact
+        retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        
+        DomainArtifactService::finish_artifact_ingest(artifact, ingestion)?;
+
+        // Closure for saving the updated artifact
+        let save_artifact = || self.artifact_repo.save(artifact);
+        
+        // Save updated artifact
+        retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
         Ok(())
     }
 }

@@ -11,7 +11,7 @@ pub struct ArtifactService {}
 
 impl ArtifactService {
     /// Adds the final path of the ingestion to the artifact
-    pub fn finish_artifact<'a>(artifact: &'a mut Artifact, ingestion: &ArtifactIngestion) -> Result<&'a mut Artifact, ArtifactServiceError> {
+    pub fn finish_artifact_ingest<'a>(artifact: &'a mut Artifact, ingestion: &ArtifactIngestion) -> Result<&'a mut Artifact, ArtifactServiceError> {
         if ingestion.status != ArtifactIngestionStatus::Finished {
             return Err(ArtifactServiceError::InvalidIngestionState("Artifact ingestion must be Finished before setting the download url of an artifact".into()))
         }

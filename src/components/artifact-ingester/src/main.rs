@@ -23,7 +23,7 @@ use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
 use shared::{common::domain::entities::ArtifactIngestionStatus, constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, MODEL_INGEST_DIR_NAME}};
-use shared::logging::GlobalLogger;
+// use shared::logging::GlobalLogger;
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
 use shared::common::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
@@ -61,15 +61,17 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                 panic!("Error updating ingestion status: {}", err.to_string())
             }).unwrap();
 
-        let artifact = self.artifact_service.find_artifact_by_ingestion_id(
+        let ref mut artifact = self.artifact_service.find_artifact_by_ingestion_id(
             ingestion_id.clone()
         ).await
             .expect("Failed to fetch artifact")
             .expect(format!("Could not find artifact associated with ingestion '{}'", &ingestion_id).as_str());
 
-        let models_target_path = self.models_target_base_path.join(artifact.id.to_string());
-        let _datasets_target_path = self.datasets_target_base_path.join(artifact.id.to_string());
-
+        let artifact_target_path = match request.artifact_type {
+            ArtifactType::Model => self.models_target_base_path.join(artifact.id.to_string()),
+            ArtifactType::Dataset => self.datasets_target_base_path.join(artifact.id.to_string())
+        };
+     
         match request.artifact_type {
             ArtifactType::Model => {
                 match ClientProvider::provide_ingest_model_client(&request.platform) {
@@ -83,15 +85,25 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                         let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
                             .unwrap(); // TODO Handle the error
 
-                        match client.ingest_model(&client_request, models_target_path) {
-                            Ok(resp) => {
+                        match client.ingest_model(&client_request, artifact_target_path.clone()) {
+                            Ok(_resp) => {
                                 self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Downloaded)
                                     .await
                                     .map_err(|err| {
                                         panic!("Error updating ingestion status: {}", err.to_string())
                                     }).unwrap();
-                                // TODO update the artifact ingestion with status Finished
-                                // TODO update the artifact with the path to the artifact
+
+                                // TODO Archive if necessary
+
+                                let ref mut ingestion = self.artifact_service.find_ingestion_by_ingestion_id(ingestion_id)
+                                    .await
+                                    .expect("Error fetching ingestion")
+                                    .expect("Ingestion should exist but does not");
+
+                                self.artifact_service.finish_artifact_ingest(artifact_target_path, artifact, ingestion)
+                                    .await
+                                    .map_err(|err| panic!("Error finishing artifact ingestion: {}", err.to_string()))
+                                    .unwrap();
                             },
                             Err(err) => {
                                 // TODO update the artifact ingestion with status Failed
