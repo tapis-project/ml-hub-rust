@@ -30,6 +30,9 @@ pub enum ArtifactServiceError {
 
     #[error("Not Found Error: {0}")]
     NotFound(String),
+
+    #[error("Missing artifact file(s) error: {0}")]
+    MissingArtifactFiles(String),
 }
 
 pub struct ArtifactService {
@@ -188,6 +191,11 @@ impl ArtifactService {
     }
 
     pub async fn finish_artifact_ingest(&self, artifact_path: PathBuf, artifact: &mut Artifact, ingestion: &mut ArtifactIngestion) -> Result<(), ArtifactServiceError> {
+        // Check if the artifact path actually exists
+        if artifact_path.exists() {
+            return Err(ArtifactServiceError::MissingArtifactFiles(format!("No files found for Artifact '{}' at path '{}'", artifact.id.to_string(), artifact_path.to_string_lossy())))
+        }
+
         ingestion.set_artifact_path(artifact_path)?;
 
         // Closure for saving the updated ingestion
