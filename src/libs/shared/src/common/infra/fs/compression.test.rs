@@ -1,9 +1,13 @@
 // This test is ignored by default, as it requires a specific file structure and may not be suitable for all environments.
-#[cfg(test)]#[ignore]
+#[cfg(test)]
 mod compression_test {
     use crate::common::infra::fs::compression::FileCompressor;
     use crate::common::presentation::http::v1::dto::Compression;
-    use std::path::PathBuf;
+    use std::{
+        fs,
+        path::PathBuf,
+        io::Write,
+    };
 
     const PATH_FOR_TESTING: &str = "./path_for_testing";
     const FILE_FOR_TESTING: &str = "file_for_testing.txt";
@@ -13,8 +17,6 @@ mod compression_test {
 
     #[test]#[ignore]
     fn setup_test_file() {
-        use std::io::Write;
-        use std::fs;
 
         // create a directory structure for testing
         fs::create_dir_all(PATH_FOR_TESTING).expect("Failed to create");
@@ -24,7 +26,7 @@ mod compression_test {
         let test_file = PathBuf::from(PATH_FOR_TESTING).join(FILE_FOR_TESTING);
         if !test_file.exists() {
             let mut file = fs::File::create(&test_file).expect("Failed to create test file");
-            writeln!(file, "{}", TEST_CONTENT).expect("Failed to write to test file");
+            write!(file, "{}", TEST_CONTENT).expect("Failed to write to test file");
         }
     }
 
@@ -42,8 +44,19 @@ mod compression_test {
     }
 
     #[test]#[ignore]
+    fn test_unzip() {
+        // if zip file already exists, this will overwrite it
+        let source: &PathBuf = &PathBuf::from(TEST_ZIP_FILE);
+        let destination: &PathBuf = &PathBuf::from(PATH_FOR_TESTING).join("unzipped_test_dir");
+        let result = FileCompressor::unzip(&source, &destination, None);
+        let unzipped_file = destination.join(PATH_FOR_TESTING).join(FILE_FOR_TESTING);
+        let content = fs::read_to_string(&unzipped_file).expect("Failed to read unzipped file");
+        assert!(result.is_ok(), "Unzipping failed: {:?}", result.err());
+        assert_eq!(content, TEST_CONTENT, "Unzipped file content does not match expected content");
+    }
+
+    #[test]#[ignore]
     fn delete_test_dir() {
-        use std::fs;
         let test_dir = PathBuf::from(PATH_FOR_TESTING);
         if test_dir.exists() {
             fs::remove_dir_all(test_dir).expect("Failed to delete test directory");
@@ -52,7 +65,6 @@ mod compression_test {
 
     #[test]#[ignore]
     fn delete_test_zip_file() {
-        use std::fs;
         // delete the test zip file
         let test_zip_file = PathBuf::from(TEST_ZIP_FILE);
         if test_zip_file.exists() {
