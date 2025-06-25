@@ -103,7 +103,7 @@ impl ArtifactService {
             serialized_client_request: input.serialized_client_request.clone(),
             webhook_url: input.webhook_url.clone()
         };
-        
+
         let publish_ingestion = || self.publisher.publish(
             Message::IngestArtifactMessage(message_payload.clone())
         );
@@ -133,7 +133,7 @@ impl ArtifactService {
     pub async fn find_artifact_by_ingestion_id(&self, ingestion_id: Uuid) -> Result<Option<Artifact>, ArtifactServiceError> {
         // Closure for fetching the ingestion
         let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
-        
+
         // Find the ingestion
         let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
@@ -145,7 +145,7 @@ impl ArtifactService {
 
         // Closure for fetching the artifact
         let find_artifact = || self.artifact_repo.find_by_id(ingestion.artifact_id);
-        
+
         // Find the artifact
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
@@ -192,13 +192,13 @@ impl ArtifactService {
 
         retry_async(update_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
-        
+
         Ok(())
     }
 
     pub async fn find_ingestion_by_ingestion_id(&self, ingestion_id: Uuid) -> Result<Option<ArtifactIngestion>, ArtifactServiceError> {
         let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
-        
+
         let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
@@ -216,20 +216,49 @@ impl ArtifactService {
 
         // Closure for saving the updated ingestion
         let save_ingestion = || self.ingestion_repo.save(ingestion);
-        
+
         // Save updated artifact
         retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
-        
+
         DomainArtifactService::finish_artifact_ingestion(artifact, ingestion)?;
 
         // Closure for saving the updated artifact
         let save_artifact = || self.artifact_repo.save(artifact);
-        
+
         // Save updated artifact
         retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
         Ok(())
+    }
+
+    pub async fn upload_artifact(&self, input: IngestArtifactInput) -> Result<Artifact, ArtifactServiceError> {
+        let artifact = Artifact::new();
+
+        GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
+
+        // Closure for saving the artifact
+        let save_artifact = || self.artifact_repo.save(&artifact);
+
+        // Persist the new Artifact to the database
+        retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+
+        //call Unzip Function that return file_path
+
+
+        // changin file_path of the artifact
+        artifact.file_path = file_path; //this filepath come from unzip function
+
+        // Closure for updating the artifact
+        let update_artifact_path = || self.artifact_repo.update_path(&artifact);
+
+        // Persist the new Artifact to the database
+        retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        return Ok(artifact)
     }
 }
