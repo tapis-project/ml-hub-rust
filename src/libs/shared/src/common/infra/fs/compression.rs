@@ -156,16 +156,17 @@ impl FileCompressor {
                     .map_err(|e| CompressionError::IOError(e.to_string()))
             }
 
-            // ──────────────── 2) zip ─────────────────
-            _ if name.to_ascii_lowercase().ends_with(".zip") => {
-                let mut buffer = Vec::with_capacity(entry.size() as usize);
-                entry.read_to_end(&mut buffer)
-                    .map_err(|e| CompressionError::IOError(e.to_string()))?;
-
-                // After one layer of unzipping, password is not applied
-                Self::unzip_file(Cursor::new(buffer), &out_path, None)
-                    .map_err(|e| CompressionError::ZipError(e.to_string()))
-            }
+            // recursively unzip if it is a zip file
+            // // ──────────────── 2) zip ─────────────────
+            // _ if name.to_ascii_lowercase().ends_with(".zip") => {
+            //     let mut buffer = Vec::with_capacity(entry.size() as usize);
+            //     entry.read_to_end(&mut buffer)
+            //         .map_err(|e| CompressionError::IOError(e.to_string()))?;
+            //
+            //     // After one layer of unzipping, password is not applied
+            //     Self::unzip_file(Cursor::new(buffer), &out_path, None)
+            //         .map_err(|e| CompressionError::ZipError(e.to_string()))
+            // }
 
             // ──────────────── 3) other ────────────────
             _ => {
