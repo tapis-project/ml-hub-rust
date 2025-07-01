@@ -71,7 +71,7 @@ impl ArtifactService {
         }
     }
 
-    pub async fn ingest_artifact(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
+    pub async fn submit_artifact_ingestion(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
         let artifact = Artifact::new();
         
         // Closure for saving the artifact
@@ -161,7 +161,12 @@ impl ArtifactService {
         Ok(Some(artifact))
     }
 
-    pub async fn update_ingestion_status_by_ingestion_id(&self, ingestion_id: Uuid, status: ArtifactIngestionStatus) -> Result<(), ArtifactServiceError> {
+    pub async fn change_ingestion_status_by_ingestion_id(
+        &self,
+        ingestion_id: Uuid,
+        status: ArtifactIngestionStatus,
+        message: Option<String>
+    ) -> Result<(), ArtifactServiceError> {
         let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
 
         // Find the ingestion
@@ -178,6 +183,16 @@ impl ArtifactService {
 
         ingestion.change_status(status)?;
 
+        // Only set the message if one was provided
+        if let Some(msg) = message {
+            ingestion.last_message = Some(msg)
+        }
+
+        let update_ingestion = || self.ingestion_repo.update_status(&ingestion);
+
+        retry_async(update_ingestion, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        
         Ok(())
     }
 
@@ -190,9 +205,10 @@ impl ArtifactService {
         return Ok(maybe_ingestion)
     }
 
-    pub async fn finish_artifact_ingest(&self, artifact_path: PathBuf, artifact: &mut Artifact, ingestion: &mut ArtifactIngestion) -> Result<(), ArtifactServiceError> {
+    pub async fn finish_artifact_ingestion(&self, artifact_path: PathBuf, artifact: &mut Artifact, ingestion: &mut ArtifactIngestion) -> Result<(), ArtifactServiceError> {
+        GlobalLogger::debug(format!("Artifact path: {}", artifact_path.clone().to_string_lossy().to_string()).as_str());
         // Check if the artifact path actually exists
-        if artifact_path.exists() {
+        if !artifact_path.exists() {
             return Err(ArtifactServiceError::MissingArtifactFiles(format!("No files found for Artifact '{}' at path '{}'", artifact.id.to_string(), artifact_path.to_string_lossy())))
         }
 
@@ -205,7 +221,7 @@ impl ArtifactService {
         retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
         
-        DomainArtifactService::finish_artifact_ingest(artifact, ingestion)?;
+        DomainArtifactService::finish_artifact_ingestion(artifact, ingestion)?;
 
         // Closure for saving the updated artifact
         let save_artifact = || self.artifact_repo.save(artifact);

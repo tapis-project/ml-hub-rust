@@ -51,19 +51,12 @@ pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
 pub struct IngestArtifactBody {
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>,
-    pub download_filename: Option<String>,
     pub webhook_url: Option<String>,
     pub params: Option<Parameters>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadArtifactBody {
-    pub include_paths: Option<Vec<String>>,
-    pub exclude_paths: Option<Vec<String>>,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>,
     pub download_filename: Option<String>,
     pub params: Option<Parameters>,
 }

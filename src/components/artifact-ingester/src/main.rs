@@ -22,7 +22,7 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::{common::domain::entities::ArtifactIngestionStatus, constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, MODEL_INGEST_DIR_NAME}};
+use shared::{common::domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus}, constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME}, logging::GlobalLogger};
 // use shared::logging::GlobalLogger;
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
 use shared::common::infra::system::Env;
@@ -33,11 +33,13 @@ use shared::common::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
 use artifact_ingester::database::{get_db, ClientParams};
+use shared::common::infra::fs::compression::FileCompressor;
 
 struct ArtifactIngesterConsumer {
     artifact_service: ArtifactService,
     models_target_base_path: PathBuf,
-    datasets_target_base_path: PathBuf
+    datasets_target_base_path: PathBuf,
+    artifacts_cache_dir: PathBuf,
 }
 
 #[async_trait]
@@ -55,7 +57,11 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
 
         let ingestion_id = Uuid::parse_str(request.ingestion_id.as_str()).expect("Invalid Uuid. Cannot convert ingestion_id into Uuid");
 
-        self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Pending)
+        self.artifact_service.change_ingestion_status_by_ingestion_id(
+            ingestion_id.clone(),
+            ArtifactIngestionStatus::Pending,
+            Some("Ingestion pending".into())
+        )
             .await
             .map_err(|err| {
                 panic!("Error updating ingestion status: {}", err.to_string())
@@ -67,46 +73,114 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             .expect("Failed to fetch artifact")
             .expect(format!("Could not find artifact associated with ingestion '{}'", &ingestion_id).as_str());
 
-        let artifact_target_path = match request.artifact_type {
+        let download_path = match request.artifact_type {
             ArtifactType::Model => self.models_target_base_path.join(artifact.id.to_string()),
             ArtifactType::Dataset => self.datasets_target_base_path.join(artifact.id.to_string())
         };
+
+        GlobalLogger::debug(format!("download path: {}", &download_path.to_string_lossy().to_string()).as_str());
      
         match request.artifact_type {
             ArtifactType::Model => {
                 match ClientProvider::provide_ingest_model_client(&request.platform) {
                     Ok(client) => {
-                        self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Downloading)
+                        self.artifact_service.change_ingestion_status_by_ingestion_id(
+                            ingestion_id.clone(),
+                            ArtifactIngestionStatus::Downloading,
+                            Some("Downloaded starting".into())
+                        )
                             .await
                             .map_err(|err| {
                                 panic!("Error updating ingestion status: {}", err.to_string())
                             }).unwrap();
 
                         let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
-                            .unwrap(); // TODO Handle the error
+                            .expect("Failed deserializing the client request");
 
-                        match client.ingest_model(&client_request, artifact_target_path.clone()) {
-                            Ok(_resp) => {
-                                self.artifact_service.update_ingestion_status_by_ingestion_id(ingestion_id.clone(), ArtifactIngestionStatus::Downloaded)
+                        match client.ingest_model(&client_request, download_path.clone()) {
+                            Ok(_) => {
+                                // Update ingestion to Downloaded
+                                self.artifact_service.change_ingestion_status_by_ingestion_id(
+                                    ingestion_id.clone(),
+                                    ArtifactIngestionStatus::Downloaded,
+                                    Some("Download complete".into())
+                                )
+                                    .await
+                                    .map_err(|err| {
+                                        panic!("Error updating ingestion status: {}", err.to_string())
+                                    }).unwrap();
+                                
+                                // Update ingestion to Archiving
+                                self.artifact_service.change_ingestion_status_by_ingestion_id(
+                                    ingestion_id.clone(),
+                                    ArtifactIngestionStatus::Archiving,
+                                    Some("Archiving started".into())
+                                )
                                     .await
                                     .map_err(|err| {
                                         panic!("Error updating ingestion status: {}", err.to_string())
                                     }).unwrap();
 
-                                // TODO Archive if necessary
+                                let maybe_artifact_path = FileCompressor::zip(
+                                    &download_path,
+                                    &PathBuf::from(&self.artifacts_cache_dir).join(artifact.id.clone().to_string()),
+                                    None,
+                                );
 
+                                let artifact_path = match maybe_artifact_path {
+                                    Ok(p) => p,
+                                    Err(err) => {
+                                        self.artifact_service.change_ingestion_status_by_ingestion_id(
+                                            ingestion_id.clone(),
+                                            ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToArchive),
+                                            Some(err.to_string())
+                                        )
+                                            .await
+                                            .map_err(|err| {
+                                                panic!("Error updating ingestion status: {}", err.to_string())
+                                            }).unwrap();
+                                        return 
+                                    }
+                                };
+                                
+                                // Update ingestion to Archived
+                                self.artifact_service.change_ingestion_status_by_ingestion_id(
+                                    ingestion_id.clone(),
+                                    ArtifactIngestionStatus::Archived,
+                                    Some("Successfully Archived".into())
+                                )
+                                    .await
+                                    .map_err(|err| {
+                                        panic!("Error updating ingestion status: {}", err.to_string())
+                                    }).unwrap();
+
+                                // Clean up the ingestion workdir
+                                std::fs::remove_dir_all(&download_path)
+                                    .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
+                                
+                                // Update ingestion to Finished
                                 let ref mut ingestion = self.artifact_service.find_ingestion_by_ingestion_id(ingestion_id)
                                     .await
                                     .expect("Error fetching ingestion")
                                     .expect("Ingestion should exist but does not");
-
-                                self.artifact_service.finish_artifact_ingest(artifact_target_path, artifact, ingestion)
+                                
+                                // Set the path to the artifact on the Artifact itself
+                                self.artifact_service.finish_artifact_ingestion(artifact_path, artifact, ingestion)
                                     .await
                                     .map_err(|err| panic!("Error finishing artifact ingestion: {}", err.to_string()))
                                     .unwrap();
                             },
                             Err(err) => {
-                                // TODO update the artifact ingestion with status Failed
+                                self.artifact_service.change_ingestion_status_by_ingestion_id(
+                                    ingestion_id.clone(),
+                                    ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToDownload),
+                                    Some(err.to_string())
+                                )
+                                    .await
+                                    .map_err(|err| {
+                                        panic!("Error updating ingestion status: {}", err.to_string())
+                                    }).unwrap();
+
                                 eprintln!("{}", err.to_string());
                                 nack(&channel, &deliver, None, None).await;
                             }
@@ -129,8 +203,6 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                 return 
             }
         };
-
-        // Update database
             
         // Acknowledge the message
         ack(&channel, &deliver, None).await;
@@ -267,9 +339,13 @@ async fn main() -> () {
     let consumer = ArtifactIngesterConsumer {
         artifact_service: artifact_service_factory(&db).await.expect("failed to initialize artifact service"),
         models_target_base_path: PathBuf::from(&environment.shared_data_dir).join(MODEL_INGEST_DIR_NAME),
-        datasets_target_base_path: PathBuf::from(&environment.shared_data_dir).join(MODEL_INGEST_DIR_NAME),
+        datasets_target_base_path: PathBuf::from(&environment.shared_data_dir).join(DATASET_INGEST_DIR_NAME),
+        artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
-
+    
+    GlobalLogger::debug(format!("shared_data_dir: {}", &environment.shared_data_dir).as_str());
+    GlobalLogger::debug(format!("artifacts_cache_dir: {}", &environment.artifacts_cache_dir).as_str());
+     
     let args = BasicConsumeArguments::default()
         .queue(ARTIFACT_INGESTION_QUEUE.into())
         .consumer_tag(consumer_tag.to_string())

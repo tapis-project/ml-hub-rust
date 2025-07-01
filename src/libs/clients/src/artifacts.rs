@@ -1,8 +1,5 @@
 use shared::common::infra::fs::compression::CompressionError;
-use shared::common::infra::system::{Env, SystemError};
-use shared::common::infra::fs::compression::FileCompressor;
-use std::path::PathBuf;
-use std::fs;
+use shared::common::infra::system::SystemError;
 use std::fs::File;
 use std::io::Write;
 use std::future::Future;
@@ -92,42 +89,44 @@ impl<T: ArtifactGenerator> ArtifactStager for T {
         self.stage(params)
     }
 
-    fn stage(&self, params: ArtifactStagingParams) -> Result<StagedArtifact, ArtifactStagingError> {
-        let env = Env::new()?;
-        let cache_dir = PathBuf::from(env.cache_dir);
-        let artifact = params.artifact.clone();
-        let source = PathBuf::new().join(artifact.path.as_str());
+    // TODO remove
+    fn stage(&self, _params: ArtifactStagingParams) -> Result<StagedArtifact, ArtifactStagingError> {
+        unimplemented!("Staging with the ArtifactStage is no longer available")
+        // let env = Env::new()?;
+        // let cache_dir = PathBuf::from(env.artifacts_cache_dir);
+        // let artifact = params.artifact.clone();
+        // let source = PathBuf::new().join(artifact.path.as_str());
         
-        let mut target = cache_dir;
-        if params.archive.is_some() {
-            target = target.join(params.staged_filename.unwrap_or(String::from("artifact")))
-        }
+        // let mut target = cache_dir;
+        // if params.archive.is_some() {
+        //     target = target.join(params.staged_filename.unwrap_or(String::from("artifact")))
+        // }
 
-        // Shadowing here because the archive utilities expect a reference to some
-        // path, not a mutable reference
-        let target = target;
+        // // Shadowing here because the archive utilities expect a reference to some
+        // // path, not a mutable reference
+        // let target = target;
 
-        let staged_path = match params.archive {
-            Some(Archive::Zip) => {
-                FileCompressor::zip(
-                    &source,
-                    &target,
-                    params.compression,
-                )?
-            },
-            None => {
-                fs::rename(&source, &target)?;
+        // let staged_path = match params.archive {
+        //     Some(Archive::Zip) => {
+        //         FileCompressor::zip(
+        //             &source,
+        //             &target,
+        //             params.compression,
+        //         )?
+        //     },
+        //     None => {
+        //         fs::rename(&source, &target)?;
 
-                PathBuf::from(&target)
-            }
-        };
+        //         PathBuf::from(&target)
+        //     }
+        // };
         
-        // Clean up all of the workdir
-        fs::remove_dir_all(&source)?;
+        // // Clean up all of the workdir
+        // fs::remove_dir_all(&source)?;
 
-        Ok(StagedArtifact {
-            path: staged_path,
-            artifact,
-        })
+        // Ok(StagedArtifact {
+        //     path: staged_path,
+        //     artifact,
+        // })
     }
 }

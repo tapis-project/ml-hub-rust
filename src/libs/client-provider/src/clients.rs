@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use serde_json::Value;
 use clients::{
-    ClientError, ClientErrorScope, ClientJsonResponse, ClientStagedArtifactResponse, IngestModelClient as _
+    ClientError, ClientErrorScope, ClientJsonResponse, IngestModelClient as _
 };
 use shared::models::presentation::http::v1::dto::{
     DiscoverModelsRequest, GetModelRequest, IngestModelRequest, ListModelsRequest, PublishModelRequest
@@ -56,11 +56,11 @@ pub enum IngestModelClient {
 }
 
 impl IngestModelClient {
-    pub fn ingest_model(&self, request: &IngestModelRequest, target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
+    pub fn ingest_model(&self, request: &IngestModelRequest, ingest_path: PathBuf) -> Result<(), ClientError> {
         match self {
-            IngestModelClient::HuggingFace(c) => c.ingest_model(request, target_path),
-            IngestModelClient::Git(c) => c.ingest_model(request, target_path),
-            IngestModelClient::Github(c) => c.ingest_model(request, target_path)
+            IngestModelClient::HuggingFace(c) => c.ingest_model(request, ingest_path),
+            IngestModelClient::Git(c) => c.ingest_model(request, ingest_path),
+            IngestModelClient::Github(c) => c.ingest_model(request, ingest_path)
         }
     }
 }

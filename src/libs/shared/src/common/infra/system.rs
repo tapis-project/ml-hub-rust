@@ -26,7 +26,7 @@ pub enum SystemError {
 /// derived from them that are required by the various services
 pub struct Env {
     pub shared_data_dir: String,
-    pub cache_dir: String,
+    pub artifacts_cache_dir: String,
 }
 
 impl Env {
@@ -38,9 +38,9 @@ impl Env {
         };
         
         // Cache directory
-        let cache_dir = format!("{}/{}", shared_data_dir, "cache");
+        let artifacts_cache_dir = format!("{}/{}", shared_data_dir, "cache");
 
-        let dirs: Vec<&String> = vec![&shared_data_dir, &cache_dir];
+        let dirs: Vec<&String> = vec![&shared_data_dir, &artifacts_cache_dir];
         for dir in dirs {
             if !PathBuf::from(dir).exists() {
                 create_dir_all(dir)
@@ -51,7 +51,7 @@ impl Env {
         return Ok(
             Self {
                 shared_data_dir,
-                cache_dir
+                artifacts_cache_dir
             }
         )
     }

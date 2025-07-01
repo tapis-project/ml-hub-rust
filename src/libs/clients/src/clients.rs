@@ -30,13 +30,7 @@ pub trait GetModelClient {
 }
 
 pub trait IngestModelClient: ArtifactGenerator {
-    fn ingest_model(&self, _request: &models::IngestModelRequest, _target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
-        return Err(ClientError::Unimplemented);
-    }
-}
-
-pub trait DownloadModelClient: ArtifactGenerator {
-    fn download_model(&self, _request: &models::DownloadModelRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_model(&self, _request: &models::IngestModelRequest, _ingest_path: PathBuf) -> Result<(), ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -78,7 +72,7 @@ pub trait GetDatasetClient {
 }
 
 pub trait IngestDatasetClient: ArtifactGenerator {
-    fn ingest_dataset(&self, _request: &datasets::IngestDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_dataset(&self, _request: &datasets::IngestDatasetRequest,  _ingest_path: PathBuf) -> Result<(), ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

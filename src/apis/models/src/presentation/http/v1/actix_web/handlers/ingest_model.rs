@@ -74,7 +74,7 @@ async fn ingest_model(
     };
     
     // Ingest the artifact
-    let ingestion = match artifact_service.ingest_artifact(input).await {
+    let ingestion = match artifact_service.submit_artifact_ingestion(input).await {
         Ok(a) => a,
         Err(err) => return build_error_response(500, err.to_string())
     };

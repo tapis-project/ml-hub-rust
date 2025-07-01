@@ -10,7 +10,6 @@ use clients::{
     ClientError,
     ClientErrorScope,
     ClientJsonResponse,
-    ClientStagedArtifactResponse,
     IngestDatasetClient,
     IngestModelClient,
     GetDatasetClient,
@@ -36,16 +35,8 @@ use shared::datasets::presentation::http::v1::dto::{
     PublishDatasetRequest,
 };
 use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::common::presentation::http::v1::dto::{
-    Artifact,
-    ArtifactStagingParams,
-};
-use clients::artifacts::{ArtifactGenerator, ArtifactStager};
+use clients::artifacts::ArtifactGenerator;
 use shared::logging::SharedLogger;
-use shared::constants::{
-    MODEL_INGEST_DIR_NAME,
-    DATASET_INGEST_DIR_NAME,
-};
 use serde_json::{Value, Map};
 
 #[derive(Debug)]
@@ -155,7 +146,7 @@ impl GetModelClient for HuggingFaceClient {
 }
 
 impl IngestModelClient for HuggingFaceClient {
-    fn ingest_model(&self, request: &IngestModelRequest, _target_path: PathBuf) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_model(&self, request: &IngestModelRequest, target_path: PathBuf) -> Result<(), ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authroization");
 
@@ -167,10 +158,10 @@ impl IngestModelClient for HuggingFaceClient {
                 }
             })?;
 
-        let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
+        self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.model_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
-            target_dir_prefix: String::from(MODEL_INGEST_DIR_NAME),
+            target_dir: target_path.to_string_lossy().to_string(),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
@@ -183,34 +174,7 @@ impl IngestModelClient for HuggingFaceClient {
                 }
             })?;
 
-        // Resolve the filename or set a default
-        let download_filename = request.body.download_filename
-            .clone();
-
-        let artifact = Artifact {
-            path: String::from(git_lfs_repo.repo.path.to_string_lossy()),
-            include_paths: request.body.include_paths.clone(),
-            exclude_paths: request.body.exclude_paths.clone()
-        };
-
-        let archive_type = request.body.archive.clone();
-
-        let compression_type = request.body.compression.clone();
-
-        let params = ArtifactStagingParams {
-            artifact: &artifact,
-            staged_filename: download_filename,
-            archive: archive_type.clone(),
-            compression: compression_type
-        };
-        
-        let staged_artifact = self.stage(params)?;
-    
-        // Create the client response
-        Ok(ClientStagedArtifactResponse::new(
-            staged_artifact,
-            Some(200),
-        ))
+        Ok(())
     }
 }
 
@@ -304,7 +268,7 @@ impl GetDatasetClient for HuggingFaceClient {
 }
 
 impl IngestDatasetClient for HuggingFaceClient {
-    fn ingest_dataset(&self, request: &IngestDatasetRequest) -> Result<ClientStagedArtifactResponse, ClientError> {
+    fn ingest_dataset(&self, request: &IngestDatasetRequest, target_path: PathBuf) -> Result<(), ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 
@@ -313,49 +277,17 @@ impl IngestDatasetClient for HuggingFaceClient {
                 ClientError::BadRequest { msg: format!("Bad request: {}", err.to_string()), scope: ClientErrorScope::Client }
             })?;
 
-        let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
+        self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
-            target_dir_prefix: String::from(DATASET_INGEST_DIR_NAME),
+            target_dir: target_path.to_string_lossy().to_string(),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone()
         })?;
         
-        // Resolve the filename or set a default
-        let download_filename = request.body.download_filename
-            .clone();
-
-        let artifact = Artifact {
-            path: String::from(git_lfs_repo.repo.path.to_string_lossy()),
-            include_paths: request.body.include_paths.clone(),
-            exclude_paths: request.body.exclude_paths.clone()
-        };
-
-        let archive_type = request.body.archive.clone();
-
-        let compression_type = request.body.compression.clone();
-
-        let params = ArtifactStagingParams {
-            artifact: &artifact,
-            staged_filename: download_filename,
-            archive: archive_type.clone(),
-            compression: compression_type
-        };
-        
-        let staged_artifact = self.stage(params)
-            .map_err(|err| {
-                let msg = format!("Error staging artifact: {}", err.to_string());
-                self.logger.error(msg.as_str());
-                ClientError::ArtifactStagingError(err)
-        })?;
-    
-        // Create the client response
-        Ok(ClientStagedArtifactResponse::new(
-            staged_artifact,
-            Some(200),
-        ))
+        Ok(())
     }
 }
 

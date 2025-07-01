@@ -40,7 +40,7 @@ We use specific design patterns to ensure consistency across the project. Here a
   
 - **Factory Pattern**: Use this for encapsulating logic for creating complex or polymorphic objects.
 
-- **Repository Pattern**: Use this for data access layers to abstract the business logic from database operations.
+- **Repository Pattern**: Use this for data access layers to insulate the business logic from persistence-related infrastructure concerns.
 
 > **Note** See Service Pattern below
 
