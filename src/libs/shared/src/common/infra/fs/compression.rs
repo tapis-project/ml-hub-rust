@@ -1,5 +1,6 @@
 // TODO Refactor: Should not be a dto. Needs mappings through to the
 // infra layer
+use crate::common::presentation::http::v1::dto::Compression;
 use std::path::PathBuf;
 use std::fs::{self, File};
 use std::io::{Read, Seek, Cursor};
@@ -7,9 +8,6 @@ use zip::{ZipWriter, CompressionMethod, ZipArchive};
 use zip::write::SimpleFileOptions;
 use zip::read::ZipFile;
 use thiserror::Error;
-
-use crate::logging::GlobalLogger;
-
 
 #[derive(Debug, Error)]
 pub enum CompressionError {
@@ -21,16 +19,6 @@ pub enum CompressionError {
 
     #[error("Error zipping path: {0}")]
     ZipError(String),
-}
-
-#[derive(Clone, Eq, Hash, PartialEq, Debug)]
-pub enum Archive {
-    Zip
-}
-
-#[derive(Clone, Eq, Hash, PartialEq, Debug)]
-pub enum Compression {
-    Deflated
 }
 
 // A file compression utility that zips and compresses files and directories
@@ -46,8 +34,6 @@ impl FileCompressor {
         destination: &PathBuf,
         compression: Option<Compression>,
     ) -> Result<PathBuf, CompressionError> {
-        GlobalLogger::debug(format!("SOURCE: {}", source.clone().to_string_lossy().to_string()).as_str());
-        GlobalLogger::debug(format!("DESTINATION: {}", destination.clone().to_string_lossy().to_string()).as_str());
         let file = Self::create_compression_file(destination)?;
 
         let mut writer = ZipWriter::new(file);
