@@ -8,6 +8,7 @@ mod upload_artifacts_test {
     use crate::presentation::http::v1::actix_web::handlers::upload_artifacts::upload_artifacts;
 
     // #[test]
+    #[ignore]
     async fn setup_test_app_state() -> web::Data<AppState> {
         web::Data::new(AppState {
             db: get_db(ClientParams{
