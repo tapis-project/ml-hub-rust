@@ -1,15 +1,12 @@
-use std::collections::HashMap;
-use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_client_error_response, build_success_response};
-use client_provider::ClientProvider;
-use actix_web::{
-    web,
-    get,
-    HttpRequest,
-    Responder,
+use crate::presentation::http::v1::actix_web::helpers::{
+    build_client_error_response, build_error_response, build_success_response,
 };
-use shared::logging::SharedLogger;
-use crate::presentation::http::v1::dto::{ListModelsPath, ListModelsRequest, Headers};
+use crate::presentation::http::v1::dto::{Headers, ListModelsPath, ListModelsRequest};
+use actix_web::{get, web, HttpRequest, Responder};
+use client_provider::ClientProvider;
 use clients::ListModelsClient;
+use shared::logging::SharedLogger;
+use std::collections::HashMap;
 
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models(
@@ -28,35 +25,31 @@ async fn list_models(
     } else {
         return build_error_response(
             500,
-            String::from(format!("Failed to proivde client for platform '{}'", &path.platform))
-        )
+            String::from(format!(
+                "Failed to proivde client for platform '{}'",
+                &path.platform
+            )),
+        );
     };
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
-        Err(err) => {
-            return build_error_response(
-                400,
-                String::from(err.to_string())
-            )
-        }
+        Err(err) => return build_error_response(400, String::from(err.to_string())),
     };
 
-    let request = ListModelsRequest{
+    let request = ListModelsRequest {
         headers,
         path: path.into_inner(),
         query: query.into_inner(),
-        body
+        body,
     };
 
     // Fetch the list of models
-    match client.list_models(&request) {
+    match client.list_models(&request).await {
         Ok(resp) => {
             return build_success_response(resp.result, Some(String::from("success")), None);
-        },
-        Err(err) => {
-            return build_client_error_response(err)
         }
+        Err(err) => return build_client_error_response(err),
     }
 }
