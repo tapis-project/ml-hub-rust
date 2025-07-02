@@ -144,3 +144,13 @@ impl TryFrom<dto::IngestModelRequest> for common_inputs::IngestArtifactInput {
         })
     }
 }
+
+impl TryFrom<dto::UploadArtifactRequest> for common_inputs::UploadArtifactInput {
+    type Error = Error;
+    fn try_from(value: dto::UploadArtifactRequest) -> Result<Self, Self::Error> {
+
+        Ok(Self {
+            artifact_type: common_inputs::ArtifactType::Model
+        })
+    }
+}

@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::future::Future;
+use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::common::application::errors::ApplicationError;
-use crate::common::application::inputs::IngestArtifactInput;
+use crate::common::application::inputs::{ArtifactType, IngestArtifactInput, UploadArtifactInput};
 use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::common::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
 use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
@@ -13,6 +15,9 @@ use thiserror::Error;
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use crate::logging::GlobalLogger;
+use crate::constants::{DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME};
+use crate::common::infra::fs::stacking::FileStacker;
+use crate::common::infra::system::Env;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
@@ -233,11 +238,20 @@ impl ArtifactService {
         Ok(())
     }
 
-    pub async fn upload_artifact(&self, input: IngestArtifactInput) -> Result<Artifact, ArtifactServiceError> {
-        let artifact = Artifact::new();
-
+    // Uploads an artifact and returns a tuple containing the artifact ID and a closure for saving chunks of the artifact
+    pub async fn upload_artifact<'a>(
+        &'a self,
+        input: &'a UploadArtifactInput
+    ) -> Result<
+        (
+            String,
+            impl FnMut(Vec<u8>) -> Pin<Box<dyn Future<Output = Result<(), ArtifactServiceError>> + Send + 'a>>,
+        ),
+        ArtifactServiceError,
+    > {
+        GlobalLogger::debug(format!("Uploading start").as_str());
+        let mut artifact = Artifact::new();
         GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
-
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
 
@@ -245,12 +259,20 @@ impl ArtifactService {
         retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
-
-        //call Unzip Function that return file_path
-
-
-        // changin file_path of the artifact
-        artifact.file_path = file_path; //this filepath come from unzip function
+        let environment = Env::new().expect("Env could not be initialized");
+        artifact.set_path(PathBuf::from(&environment.shared_data_dir).join(
+            match input.artifact_type {
+                ArtifactType::Dataset => {
+                    DATASET_INGEST_DIR_NAME
+                },
+                ArtifactType::Model => {
+                    MODEL_INGEST_DIR_NAME
+                },
+                _ => {
+                    return Err(ArtifactServiceError::NotFound("Invalid artifact type".into()));
+                }
+            }
+        ).join(artifact.id.to_string()));
 
         // Closure for updating the artifact
         let update_artifact_path = || self.artifact_repo.update_path(&artifact);
@@ -259,6 +281,22 @@ impl ArtifactService {
         retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
-        return Ok(artifact)
+        let stacker = move |chunk: Vec<u8>| -> Pin<Box<dyn Future<Output = Result<(), ArtifactServiceError>> + Send + 'a>> {
+            let filepath = artifact.path.clone();
+            Box::pin(async move {
+                if let Some(filepath) = filepath {
+                    FileStacker::stack(&filepath, chunk)
+                        .await
+                        .map_err(|e| ArtifactServiceError::NotFound(format!("Fail to stack file: {}", e)))?;
+                    Ok(())
+                } else {
+                    Err(ArtifactServiceError::NotFound(
+                        "Artifact file path is not set.".into(),
+                    ))
+                }
+            })
+        };
+
+        Ok((artifact.id.to_string(), stacker))
     }
 }
