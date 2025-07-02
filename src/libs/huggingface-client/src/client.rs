@@ -5,7 +5,7 @@ use crate::requests::{
     ListDatasetsQueryParameters,
 };
 use crate::utils::deserialize_response_body;
-use reqwest::blocking::Client as ReqwestClient;
+use reqwest::Client as ReqwestClient;
 use clients::{
     ClientError,
     ClientErrorScope,
@@ -38,6 +38,7 @@ use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
 use clients::artifacts::ArtifactGenerator;
 use shared::logging::SharedLogger;
 use serde_json::{Value, Map};
+use async_trait;
 
 #[derive(Debug)]
 pub struct HuggingFaceClient {
@@ -47,11 +48,12 @@ pub struct HuggingFaceClient {
 
 impl ArtifactGenerator for HuggingFaceClient {}
 
+#[async_trait::async_trait]
 impl ListModelsClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn list_models(
+    async fn list_models(
         &self,
         request: &ListModelsRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
@@ -85,11 +87,12 @@ impl ListModelsClient for HuggingFaceClient {
         let result = self.client
             .get(url)
             .query(&query_params)
-            .send();
+            .send()
+            .await;
         
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
                 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -112,18 +115,20 @@ impl ListModelsClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl GetModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let result = self.client
             .get(Self::format_url(format!("{}/{}", "models", request.path.model_id).as_str()))
-            .send();
+            .send()
+            .await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
                 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -145,8 +150,9 @@ impl GetModelClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl IngestModelClient for HuggingFaceClient {
-    fn ingest_model(&self, request: &IngestModelRequest, target_path: PathBuf) -> Result<(), ClientError> {
+    async fn ingest_model(&self, request: &IngestModelRequest, target_path: PathBuf) -> Result<(), ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authroization");
 
@@ -178,11 +184,12 @@ impl IngestModelClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl ListDatasetsClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn list_datasets(
+    async fn list_datasets(
         &self,
         request: &ListDatasetsRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
@@ -209,11 +216,12 @@ impl ListDatasetsClient for HuggingFaceClient {
         let result = self.client
             .get(Self::format_url("datasets"))
             .query(&query_params)
-            .send();
+            .send()
+            .await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
                 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -235,18 +243,20 @@ impl ListDatasetsClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl GetDatasetClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn get_dataset(&self, request: &GetDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn get_dataset(&self, request: &GetDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let result = self.client
             .get(Self::format_url(format!("{}/{}", "datasets", request.path.dataset_id).as_str()))
-            .send();
+            .send()
+            .await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -267,8 +277,9 @@ impl GetDatasetClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl IngestDatasetClient for HuggingFaceClient {
-    fn ingest_dataset(&self, request: &IngestDatasetRequest, target_path: PathBuf) -> Result<(), ClientError> {
+    async fn ingest_dataset(&self, request: &IngestDatasetRequest, target_path: PathBuf) -> Result<(), ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 
@@ -291,11 +302,12 @@ impl IngestDatasetClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl PublishDatasetClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_dataset(&self, _result: &PublishDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         Err(ClientError::Unimplemented)
     }
 }

@@ -20,10 +20,10 @@ impl clients::ListModelsClient for ListModelsClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn list_models(&self, request: &ListModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>{
+    async fn list_models(&self, request: &ListModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>{
         let resp: ClientJsonResponse<Value, Value> = match self {
-            ListModelsClient::HuggingFace(c) => c.list_models(request)?,
-            ListModelsClient::Patra(c) => c.list_models(request)?,
+            ListModelsClient::HuggingFace(c) => c.list_models(request).await?,
+            ListModelsClient::Patra(c) => c.list_models(request).await?,
         };
 
         Ok(resp)
@@ -39,10 +39,10 @@ impl clients::GetModelClient for GetModelClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>{
+    async fn get_model(&self, request: &GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>{
         let resp: ClientJsonResponse<Value, Value> = match self {
-            GetModelClient::HuggingFace(c) => c.get_model(request)?,
-            GetModelClient::Patra(c) => c.get_model(request)?,
+            GetModelClient::HuggingFace(c) => c.get_model(request).await?,
+            GetModelClient::Patra(c) => c.get_model(request).await?,
         };
 
         Ok(resp)
@@ -56,7 +56,7 @@ pub enum IngestModelClient {
 }
 
 impl IngestModelClient {
-    pub fn ingest_model(&self, request: &IngestModelRequest, ingest_path: PathBuf) -> Result<(), ClientError> {
+    pub async fn ingest_model(&self, request: &IngestModelRequest, ingest_path: PathBuf) -> Result<(), ClientError> {
         match self {
             IngestModelClient::HuggingFace(c) => c.ingest_model(request, ingest_path),
             IngestModelClient::Git(c) => c.ingest_model(request, ingest_path),
@@ -72,9 +72,9 @@ pub enum DiscoverModelsClient {
 impl clients::DiscoverModelsClient for DiscoverModelsClient {
     type Data = Value;
     type Metadata = Value;
-    fn discover_models(&self, request: &DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn discover_models(&self, request: &DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp = match self {
-            DiscoverModelsClient::Patra(c) => c.discover_models(request)?
+            DiscoverModelsClient::Patra(c) => c.discover_models(request).await?
         };
 
         return Ok(resp);
@@ -87,7 +87,7 @@ pub enum PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _request: &PublishModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<_, ClientError> = match self {
             _ => Err(ClientError::NotFound { msg: "No clients available for publishing".into(), scope: ClientErrorScope::Client })
         };
