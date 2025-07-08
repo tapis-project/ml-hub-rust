@@ -11,3 +11,4 @@ tokio = { version = "1.44.1", features = ["fs"] }
 tokio-util = "0.7.14"
 shared = { version = "0.1.0", path = "../shared" }
 clients = { version = "0.1.0", path = "../clients" }
+async-trait = "0.1.88"
