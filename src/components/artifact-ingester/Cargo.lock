@@ -686,6 +686,7 @@ dependencies = [
 name = "clients"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bytes",
  "futures-util",
  "serde",
@@ -2322,6 +2323,7 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 name = "huggingface-client"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "clients",
  "reqwest",
  "serde",
