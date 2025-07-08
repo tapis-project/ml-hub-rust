@@ -85,6 +85,9 @@ pub struct PublishModelRequest {
     pub payload: Multipart,
 }
 
+pub struct UploadArtifactRequest {
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SystemRequirement {
     pub name: String,

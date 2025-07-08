@@ -10,3 +10,4 @@ tokio = { version = "1", features = ["full"] }
 shared = { version = "0.1.0", path = "../shared" }
 clients = { version = "0.1.0", path = "../clients" }
 serde_json = "1.0.135"
+async-trait = "0.1.88"
