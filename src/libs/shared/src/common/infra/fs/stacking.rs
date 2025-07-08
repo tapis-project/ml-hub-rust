@@ -8,9 +8,9 @@ use tokio::io::AsyncWriteExt;
 use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
-pub enum StakingError {
+pub enum StackingError {
     #[error("Error creating file: {0}")]
-    StakingFileError(String),
+    StackingFileError(String),
 
     #[error("File I/O error: {0}")]
     IOError(String),
@@ -24,7 +24,7 @@ impl FileStacker {
         Self {}
     }
 
-    pub async fn stack(destination: &PathBuf, chunk: Vec<u8>) -> Result<(), StakingError> {
+    pub async fn stack(destination: &PathBuf, chunk: Vec<u8>) -> Result<(), StackingError> {
         GlobalLogger::debug(
             format!(
                 "FILE STACKING (DESTINATION: {})",
@@ -35,7 +35,7 @@ impl FileStacker {
         // 1. check if the parent directory exists, if not create it
         if let Some(parent_dir) = destination.parent() {
             tokio::fs::create_dir_all(parent_dir).await.map_err(|e| {
-                StakingError::StakingFileError(format!("Fail to create dir: {}", e))
+                StackingError::StackingFileError(format!("Fail to create dir: {}", e))
             })?;
         }
 
@@ -46,12 +46,12 @@ impl FileStacker {
             .append(true) // Append to the file if it exists
             .open(&destination)
             .await
-            .map_err(|e| StakingError::StakingFileError(format!("Fail to open file: {}", e)))?;
+            .map_err(|e| StackingError::StackingFileError(format!("Fail to open file: {}", e)))?;
 
         // 3. write the chunk to the file
         file.write_all(&chunk)
             .await
-            .map_err(|e| StakingError::StakingFileError(format!("Fail to write: {}", e)))?;
+            .map_err(|e| StackingError::StackingFileError(format!("Fail to write: {}", e)))?;
 
         Ok(())
     }
