@@ -47,7 +47,7 @@ async fn get_model(
         };
 
     // Fetch the list of models
-    match client.get_model(&request) {
+    match client.get_model(&request).await {
         Ok(resp) => {
             return build_success_response(resp.result, Some(String::from("success")), None)
         }

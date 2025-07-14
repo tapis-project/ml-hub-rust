@@ -1,7 +1,7 @@
 use crate::bootstrap::state::AppState;
 use crate::infra::db::mongo::database::{get_db, ClientParams};
 use crate::presentation;
-use shared::common::infra::system::Env;
+// use shared::common::infra::system::Env;
 use std::env;
 use log::error;
 use actix_web::{App, HttpServer};
@@ -23,21 +23,27 @@ pub async fn run_server() -> std::io::Result<()> {
         .unwrap_or(DEFAULT_PORT)
     );
 
-    let env = Env::new()
-        .map_err(|err| {
-            error!("Shared environment initialization error: {}", err.to_string().as_str());
-            err 
-        })
-        .expect("Shared environment initialization error");
+    // let env = Env::new()
+    //     .map_err(|err| {
+    //         error!("Shared environment initialization error: {}", err.to_string().as_str());
+    //         err 
+    //     })
+    //     .expect("Shared environment initialization error");
+
+    let inference_db: String = std::env::var("INFERENCE_DB").expect("Missing env var: INFERENCE_DB");
+    let inference_db_host: String = std::env::var("INFERENCE_DB_HOST").expect("Missing env var: INFERENCE_DB_HOST");
+    let inference_db_port: String = std::env::var("INFERENCE_DB_PORT").expect("Missing env var: INFERENCE_DB_PORT");
+    let inference_db_user: String = std::env::var("INFERENCE_DB_USER").expect("Missing env var: INFERENCE_DB_USER");
+    let inference_db_password: String = std::env::var("INFERENCE_DB_PASSWORD").expect("Missing env var: INFERENCE_DB_PASSWORD");
 
     // Initialize AppState
     let state = AppState {
         db: get_db(ClientParams{
-            username: env.inference_db_user,
-            password: env.inference_db_password,
-            host: env.inference_db_host,
-            port: env.inference_db_port,
-            db: env.inference_db
+            username: inference_db_user,
+            password: inference_db_password,
+            host: inference_db_host,
+            port: inference_db_port,
+            db: inference_db
         })
             .await
             .map_err(|err| {

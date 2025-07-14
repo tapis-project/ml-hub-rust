@@ -1,10 +1,11 @@
 use clients::{ClientError, ClientErrorScope};
 use serde_json::{Value, from_str};
-use reqwest::blocking::Response;
+use reqwest::Response;
 
-pub(crate) fn deserialize_response_body(response: Response) -> Result<Value, ClientError> {
+pub(crate) async fn deserialize_response_body(response: Response) -> Result<Value, ClientError> {
     response
         .text()
+        .await
         .map_err(|err| {
             ClientError::Internal {
                 msg: err.to_string(),

@@ -10,3 +10,4 @@ serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.12"
 uuid = { version = "1.15.1", features = ["v7"] }
 shared = { version = "0.1.0", path = "../shared" }
+async-trait = "0.1.88"

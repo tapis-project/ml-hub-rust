@@ -12,3 +12,8 @@ pub struct IngestArtifactInput {
     pub webhook_url: Option<String>,
     pub serialized_client_request: Vec<u8>,
 }
+
+#[derive(Clone)]
+pub struct UploadArtifactInput {
+    pub artifact_type: ArtifactType,
+}

@@ -40,9 +40,7 @@ We use specific design patterns to ensure consistency across the project. Here a
   
 - **Factory Pattern**: Use this for encapsulating logic for creating complex or polymorphic objects.
 
-- **Repository Pattern**: Use this for data access layers to abstract the business logic from database operations.
-
-- **Controller Pattern**: Use this pattern for handling HTTP requests, interpret user input, and return the appropriate response. You will find this pattern employed in <service>/src/operations. These operation functions can be viewed as controllers. These functions should only contain application logic and calls to objects in the Service Layer, and when appropriate, the Data Layer (via repositories! The Application Layer should be completely insulated from the data access logic)
+- **Repository Pattern**: Use this for data access layers to insulate the business logic from persistence-related infrastructure concerns.
 
 > **Note** See Service Pattern below
 
@@ -68,6 +66,7 @@ To ensure you are recognized for your contributions to ML Hub, please add a link
 ## Pull Request (PR) Guidelines
 
 When submitting a PR, ensure the following:
+- The number of modified files should be around 5-10 files. up to ~20 files is acceptable for a major refactor. More than ~20 files will require a substantial explanation detailing why such a large change needs to be made.
 - **Title**: Use a clear and concise title for your PR.
 - **Description**: Provide a detailed description of your changes. Reference any relevant issues (e.g., "Fixes #123").
 - **Screenshots**: If your PR involves UI changes, include screenshots.

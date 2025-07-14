@@ -1,4 +1,4 @@
-use crate::common::infra::system::{validate_system_dependencies, Env};
+use crate::common::infra::system::validate_system_dependencies;
 use crate::logging::GlobalLogger;
 use std::process::Command;
 use std::fs::{create_dir_all, read_dir};
@@ -54,21 +54,7 @@ impl GitRepository {
 
     // Prepare the local environment for a clone or pull
     pub fn prepare(&self, params: PrepareRepositoryParams) -> Result<PreparedRepository, GitError> {
-        // Grab the shared env utility. The shared_data_dir will be used as part
-        // of the clone target directory
-        let shared_data_dir = Env::new()
-            .map_err(|err| err)? 
-            .shared_data_dir;
-
-        let target_path = PathBuf::from(
-            format!(
-                "{}/{}/{}/{}",
-                &shared_data_dir,
-                &params.target_dir_prefix,
-                &self.remote_base_url.replace("://", "/"),
-                &self.name
-            )
-        );
+        let target_path = PathBuf::from(&params.target_dir);
 
         GlobalLogger::debug(format!("Preparing target path: {:?}", &target_path).as_str());
 
@@ -196,7 +182,7 @@ impl PreparedRepository {
 }
 
 pub struct PrepareRepositoryParams {
-    pub target_dir_prefix: String
+    pub target_dir: String
 }
 
 pub struct GitCloneOrPullParams {
@@ -300,7 +286,7 @@ impl GitLfsRepository {
 pub struct SyncGitRepositoryParams {
     pub name: String,
     pub remote_base_url: String,
-    pub target_dir_prefix: String,
+    pub target_dir: String,
     pub branch: Option<String>,
     pub access_token: Option<String>,
 }
@@ -308,7 +294,7 @@ pub struct SyncGitRepositoryParams {
 pub struct SyncLfsRepositoryParams {
     pub name: String,
     pub remote_base_url: String,
-    pub target_dir_prefix: String,
+    pub target_dir: String,
     pub branch: Option<String>,
     pub access_token: Option<String>,
     pub include_paths: Option<Vec<String>>,
@@ -332,7 +318,7 @@ impl<T: SyncGitRepository> SyncGitRepositoryImpl for T {
 
         let prepared_repo = repo
             .prepare(PrepareRepositoryParams {
-                target_dir_prefix: params.target_dir_prefix
+                target_dir: params.target_dir
             })?;
 
         prepared_repo.clone_or_pull_repo(GitCloneOrPullParams {
@@ -347,7 +333,7 @@ impl<T: SyncGitRepository> SyncGitRepositoryImpl for T {
         let prepared_repo = self.sync_git_repo(SyncGitRepositoryParams {
             name: params.name.clone(),
             remote_base_url: params.remote_base_url.clone(),
-            target_dir_prefix: params.target_dir_prefix.clone(),
+            target_dir: params.target_dir.clone(),
             branch: params.branch.clone(),
             access_token: params.access_token.clone()
         })?;

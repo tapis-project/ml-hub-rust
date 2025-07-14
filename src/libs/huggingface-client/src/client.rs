@@ -1,24 +1,22 @@
 use crate::constants;
 use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
 use crate::utils::deserialize_response_body;
-use clients::artifacts::{ArtifactGenerator, ArtifactStager};
+use async_trait;
+use clients::artifacts::ArtifactGenerator;
 use clients::{
-    ClientError, ClientErrorScope, ClientJsonResponse,
-    ClientStagedArtifactResponse, GetDatasetClient, GetModelClient,
-    IngestDatasetClient, IngestModelClient, ListDatasetsClient,
+    ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient,
+    GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
     ListModelsClient, PublishDatasetClient,
 };
-use reqwest::blocking::Client as ReqwestClient;
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use reqwest::header::HeaderMap;
+use reqwest::header::HeaderValue;
+use reqwest::header::AUTHORIZATION;
+use reqwest::Client as ReqwestClient;
 use serde_json::{Map, Value};
 use shared::common::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::common::presentation::http::v1::dto::{
-    Artifact, ArtifactStagingParams,
-};
-use shared::constants::{DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME};
 use shared::datasets::presentation::http::v1::dto::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest,
@@ -27,6 +25,7 @@ use shared::logging::SharedLogger;
 use shared::models::presentation::http::v1::dto::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
 };
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct HuggingFaceClient {
@@ -36,11 +35,12 @@ pub struct HuggingFaceClient {
 
 impl ArtifactGenerator for HuggingFaceClient {}
 
+#[async_trait::async_trait]
 impl ListModelsClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn list_models(
+    async fn list_models(
         &self,
         request: &ListModelsRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
@@ -71,11 +71,11 @@ impl ListModelsClient for HuggingFaceClient {
             .debug(format!("Query Params: {:#?}", &query_params).as_str());
 
         // Make a GET request to Hugging Face to fetch the models
-        let result = self.client.get(url).query(&query_params).send();
+        let result = self.client.get(url).query(&query_params).send().await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -96,11 +96,12 @@ impl ListModelsClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl GetModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn get_model(
+    async fn get_model(
         &self,
         request: &GetModelRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
@@ -145,11 +146,12 @@ impl GetModelClient for HuggingFaceClient {
                 format!("{}/{}", "models", request.path.model_id).as_str(),
             ))
             .headers(headers)
-            .send();
+            .send()
+            .await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -169,11 +171,13 @@ impl GetModelClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl IngestModelClient for HuggingFaceClient {
-    fn ingest_model(
+    async fn ingest_model(
         &self,
         request: &IngestModelRequest,
-    ) -> Result<ClientStagedArtifactResponse, ClientError> {
+        target_path: PathBuf,
+    ) -> Result<(), ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authroization");
 
@@ -183,56 +187,30 @@ impl IngestModelClient for HuggingFaceClient {
                 scope: ClientErrorScope::Server,
             })?;
 
-        let git_lfs_repo = self
-            .sync_lfs_repo(SyncLfsRepositoryParams {
-                name: request.path.model_id.clone(),
-                remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
-                target_dir_prefix: String::from(MODEL_INGEST_DIR_NAME),
-                branch,
-                access_token: access_token.clone(),
-                include_paths: request.body.include_paths.clone(),
-                exclude_paths: request.body.exclude_paths.clone(),
-            })
-            .map_err(|err| ClientError::Internal {
-                msg: err.to_string(),
-                scope: ClientErrorScope::Server,
-            })?;
-
-        // Resolve the filename or set a default
-        let download_filename = request.body.download_filename.clone();
-
-        let artifact = Artifact {
-            path: String::from(git_lfs_repo.repo.path.to_string_lossy()),
+        self.sync_lfs_repo(SyncLfsRepositoryParams {
+            name: request.path.model_id.clone(),
+            remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
+            target_dir: target_path.to_string_lossy().to_string(),
+            branch,
+            access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone(),
-        };
+        })
+        .map_err(|err| ClientError::Internal {
+            msg: err.to_string(),
+            scope: ClientErrorScope::Server,
+        })?;
 
-        let archive_type = request.body.archive.clone();
-
-        let compression_type = request.body.compression.clone();
-
-        let params = ArtifactStagingParams {
-            artifact: &artifact,
-            staged_filename: download_filename,
-            archive: archive_type.clone(),
-            compression: compression_type,
-        };
-
-        let staged_artifact = self.stage(params)?;
-
-        // Create the client response
-        Ok(ClientStagedArtifactResponse::new(
-            staged_artifact,
-            Some(200),
-        ))
+        Ok(())
     }
 }
 
+#[async_trait::async_trait]
 impl ListDatasetsClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn list_datasets(
+    async fn list_datasets(
         &self,
         request: &ListDatasetsRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
@@ -259,11 +237,12 @@ impl ListDatasetsClient for HuggingFaceClient {
             .client
             .get(Self::format_url("datasets"))
             .query(&query_params)
-            .send();
+            .send()
+            .await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -285,11 +264,12 @@ impl ListDatasetsClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl GetDatasetClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn get_dataset(
+    async fn get_dataset(
         &self,
         request: &GetDatasetRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
@@ -299,11 +279,12 @@ impl GetDatasetClient for HuggingFaceClient {
             .get(Self::format_url(
                 format!("{}/{}", "datasets", request.path.dataset_id).as_str(),
             ))
-            .send();
+            .send()
+            .await;
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response)?;
+                let body = deserialize_response_body(response).await?;
 
                 Ok(ClientJsonResponse::new(
                     Some(200),
@@ -324,11 +305,13 @@ impl GetDatasetClient for HuggingFaceClient {
     }
 }
 
+#[async_trait::async_trait]
 impl IngestDatasetClient for HuggingFaceClient {
-    fn ingest_dataset(
+    async fn ingest_dataset(
         &self,
         request: &IngestDatasetRequest,
-    ) -> Result<ClientStagedArtifactResponse, ClientError> {
+        target_path: PathBuf,
+    ) -> Result<(), ClientError> {
         // Get the authorization token from the request
         let access_token = request.headers.get_first_value("Authorization");
 
@@ -338,55 +321,26 @@ impl IngestDatasetClient for HuggingFaceClient {
                 scope: ClientErrorScope::Client,
             })?;
 
-        let git_lfs_repo = self.sync_lfs_repo(SyncLfsRepositoryParams {
+        self.sync_lfs_repo(SyncLfsRepositoryParams {
             name: request.path.dataset_id.clone(),
             remote_base_url: String::from(constants::HUGGING_FACE_BASE_URL),
-            target_dir_prefix: String::from(DATASET_INGEST_DIR_NAME),
+            target_dir: target_path.to_string_lossy().to_string(),
             branch,
             access_token: access_token.clone(),
             include_paths: request.body.include_paths.clone(),
             exclude_paths: request.body.exclude_paths.clone(),
         })?;
 
-        // Resolve the filename or set a default
-        let download_filename = request.body.download_filename.clone();
-
-        let artifact = Artifact {
-            path: String::from(git_lfs_repo.repo.path.to_string_lossy()),
-            include_paths: request.body.include_paths.clone(),
-            exclude_paths: request.body.exclude_paths.clone(),
-        };
-
-        let archive_type = request.body.archive.clone();
-
-        let compression_type = request.body.compression.clone();
-
-        let params = ArtifactStagingParams {
-            artifact: &artifact,
-            staged_filename: download_filename,
-            archive: archive_type.clone(),
-            compression: compression_type,
-        };
-
-        let staged_artifact = self.stage(params).map_err(|err| {
-            let msg = format!("Error staging artifact: {}", err.to_string());
-            self.logger.error(msg.as_str());
-            ClientError::ArtifactStagingError(err)
-        })?;
-
-        // Create the client response
-        Ok(ClientStagedArtifactResponse::new(
-            staged_artifact,
-            Some(200),
-        ))
+        Ok(())
     }
 }
 
+#[async_trait::async_trait]
 impl PublishDatasetClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    fn publish_dataset(
+    async fn publish_dataset(
         &self,
         _result: &PublishDatasetRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>

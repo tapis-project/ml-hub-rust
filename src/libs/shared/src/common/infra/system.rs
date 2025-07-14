@@ -26,12 +26,7 @@ pub enum SystemError {
 /// derived from them that are required by the various services
 pub struct Env {
     pub shared_data_dir: String,
-    pub cache_dir: String,
-    pub inference_db: String,
-    pub inference_db_host: String,
-    pub inference_db_port: String,
-    pub inference_db_user: String,
-    pub inference_db_password: String
+    pub artifacts_cache_dir: String,
 }
 
 impl Env {
@@ -43,9 +38,9 @@ impl Env {
         };
         
         // Cache directory
-        let cache_dir = format!("{}/{}", shared_data_dir, "cache");
+        let artifacts_cache_dir = format!("{}/{}", shared_data_dir, "cache");
 
-        let dirs: Vec<&String> = vec![&shared_data_dir, &cache_dir];
+        let dirs: Vec<&String> = vec![&shared_data_dir, &artifacts_cache_dir];
         for dir in dirs {
             if !PathBuf::from(dir).exists() {
                 create_dir_all(dir)
@@ -53,40 +48,10 @@ impl Env {
             }
         }
 
-        let inference_db_host: String = match std::env::var("INFERENCE_DB_HOST") {
-            Ok(var) => var,
-            Err(_) => Err(SystemError::MissingEnvVar("INFERENCE_DB_HOST".into()))?
-        };
-
-        let inference_db: String = match std::env::var("INFERENCE_DB") {
-            Ok(var) => var,
-            Err(_) => Err(SystemError::MissingEnvVar("INFERENCE_DB".into()))?
-        };
-
-        let inference_db_port: String = match std::env::var("INFERENCE_DB_PORT") {
-            Ok(var) => var,
-            Err(_) => Err(SystemError::MissingEnvVar("INFERENCE_DB_PORT".into()))?
-        };
-
-        let inference_db_user: String = match std::env::var("INFERENCE_DB_USER") {
-            Ok(var) => var,
-            Err(_) => Err(SystemError::MissingEnvVar("INFERENCE_DB_USER".into()))?
-        };
-
-        let inference_db_password: String = match std::env::var("INFERENCE_DB_PASSWORD") {
-            Ok(var) => var,
-            Err(_) => Err(SystemError::MissingEnvVar("INFERENCE_DB_PASSWORD".into()))?
-        };
-
         return Ok(
             Self {
-                inference_db,
-                inference_db_host,
-                inference_db_port,
-                inference_db_password,
-                inference_db_user,
                 shared_data_dir,
-                cache_dir
+                artifacts_cache_dir
             }
         )
     }

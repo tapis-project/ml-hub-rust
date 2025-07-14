@@ -2,11 +2,12 @@
 // infra layer
 use crate::common::presentation::http::v1::dto::Compression;
 use std::path::PathBuf;
-use std::fs::File;
-use zip::{ZipWriter, CompressionMethod};
+use std::fs::{self, File};
+use std::io::{Read, Seek, Cursor};
+use zip::{ZipWriter, CompressionMethod, ZipArchive};
 use zip::write::SimpleFileOptions;
+use zip::read::ZipFile;
 use thiserror::Error;
-
 
 #[derive(Debug, Error)]
 pub enum CompressionError {
@@ -54,11 +55,31 @@ impl FileCompressor {
         Ok(destination.clone())
     }
 
+    pub fn unzip(
+        source: &PathBuf,
+        destination: &PathBuf,
+        password: Option<&str>,
+    ) -> Result<PathBuf, CompressionError> {
+        // if the destination directory does not exist, create it
+        if !destination.exists() {
+            fs::create_dir_all(destination)
+                .map_err(|e| CompressionError::IOError(e.to_string()))?;
+        }
+
+        let file   = File::open(source)
+            .map_err(|e| CompressionError::IOError(e.to_string()))?;
+
+        Self::unzip_file(file, destination, password)
+            .map_err(|e| CompressionError::ZipError(e.to_string()))?;
+
+        Ok(destination.clone())
+    }
+
     fn zip_dir(writer: &mut ZipWriter<File>, options: SimpleFileOptions,  path: &PathBuf) -> Result<(), CompressionError> {
         writer.add_directory_from_path(path, options)
             .map_err(|err| CompressionError::ZipError(err.to_string()))?;
         
-        let entries = std::fs::read_dir(path)
+        let entries = fs::read_dir(path)
             .map_err(|err| CompressionError::IOError(err.to_string()))?;
         
         for maybe_entry in entries {
@@ -87,6 +108,68 @@ impl FileCompressor {
         Ok(())
     }
 
+    fn unzip_file<R: Read + Seek>(
+        file: R,
+        destination: &PathBuf,
+        password: Option<&str>,
+    ) -> Result<(), CompressionError> {
+        let mut archive = ZipArchive::new(file)
+            .map_err(|e| CompressionError::ZipError(e.to_string()))?;
+
+        (0..archive.len()).try_for_each(|i| -> Result<(), CompressionError> {
+            let mut entry = match password {
+                Some(pw) => archive.by_index_decrypt(i, pw.as_bytes())
+                    .map_err(|e| CompressionError::ZipError(e.to_string()))?,
+                None => archive.by_index(i)
+                    .map_err(|e| CompressionError::ZipError(e.to_string()))?,
+            };
+
+            Self::extract_entry(&mut entry, destination)
+        })
+    }
+
+    fn extract_entry<R: Read + Seek>(
+        entry: &mut ZipFile<R>,
+        destination: &PathBuf,
+    ) -> Result<(), CompressionError>{
+        let out_path = destination.join(entry.name());
+        let name = entry.name();
+        // with end of the name, we can check if it is a directory or zip or just a file
+        match () {
+            // ──────────────── 1) dir ────────────────
+            _ if name.ends_with('/') => {
+                fs::create_dir_all(&out_path)
+                    .map_err(|e| CompressionError::IOError(e.to_string()))
+            }
+
+            // recursively unzip if it is a zip file
+            // // ──────────────── 2) zip ─────────────────
+            // _ if name.to_ascii_lowercase().ends_with(".zip") => {
+            //     let mut buffer = Vec::with_capacity(entry.size() as usize);
+            //     entry.read_to_end(&mut buffer)
+            //         .map_err(|e| CompressionError::IOError(e.to_string()))?;
+            //
+            //     // After one layer of unzipping, password is not applied
+            //     Self::unzip_file(Cursor::new(buffer), &out_path, None)
+            //         .map_err(|e| CompressionError::ZipError(e.to_string()))
+            // }
+
+            // ──────────────── 3) other ────────────────
+            _ => {
+                if let Some(parent) = out_path.parent() {
+                    fs::create_dir_all(parent)
+                        .map_err(|e| CompressionError::IOError(e.to_string()))?;
+                }
+                let mut outfile = File::create(&out_path)
+                    .map_err(|e| CompressionError::IOError(e.to_string()))?;
+                std::io::copy(entry, &mut outfile)
+                    .map_err(|e| CompressionError::IOError(e.to_string()))?;
+                Ok(())
+            }
+        }?;
+        Ok(())
+    }
+
     fn create_compression_file(destination: &PathBuf) -> Result<File, CompressionError> {
         let file = File::create(&destination)
             .map_err(|err| {
@@ -97,3 +180,9 @@ impl FileCompressor {
         Ok(file)
     }
 }
+
+// Unit tests
+// This test is ignored by default, as it requires a specific file structure and may not be suitable for all environments.
+#[cfg(test)]
+#[path = "compression.test.rs"]
+mod compression_test;

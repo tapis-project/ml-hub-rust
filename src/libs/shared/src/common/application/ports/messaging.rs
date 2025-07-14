@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use thiserror::Error;
-use crate::common::application::inputs::IngestArtifactInput;
+use uuid::Uuid;
+use crate::common::application::inputs::ArtifactType;
 
 #[derive(Debug, Error)]
 pub enum MessagePublisherError {
@@ -17,9 +18,19 @@ pub enum MessagePublisherError {
     ConnectionError(String),
 }
 
+#[derive(Clone)]
+pub struct IngestArtifactMessagePayload {
+    pub ingestion_id: Uuid,
+    pub artifact_type: ArtifactType,
+    pub platform: String,
+    pub webhook_url: Option<String>,
+    pub serialized_client_request: Vec<u8>,
+}
+
+#[derive(Clone)]
 pub enum Message {
-    IngestArtifactInput(IngestArtifactInput),
-    Placeholer // TODO remove Placeholder when a second message variant is added to this enum
+    IngestArtifactMessage(IngestArtifactMessagePayload),
+    Placeholder // TODO remove Placeholder when a second message variant is added to this enum
 }
 
 #[async_trait]
