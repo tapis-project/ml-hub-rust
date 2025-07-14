@@ -1,187 +1,100 @@
-use std::collections::HashMap;
-use client_provider::ClientProvider;
-use actix_web::{
-    web,
-    post,
-    HttpRequest,
-    Responder,
-};
+use actix_web::{web, get, HttpRequest, Responder, Result};
 use actix_files::NamedFile;
 use shared::common::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
-use shared::common::presentation::http::v1::dto::artifact_helpers::StagedArtifactResponseHeaders;
 use crate::bootstrap::{
     state::AppState,
     factories::artifact_service_factory
 };
-use crate::application::inputs::IngestArtifactInput;
-use crate::presentation::http::v1::dto::{IngestModelPath, IngestModelRequest, Headers, IngestArtifactBody};
-use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_client_error_response};
+use crate::application::inputs::DownloadArtifactInput;
+use crate::presentation::http::v1::dto::{Headers, DownloadModelPath, DownloadModelRequest};
+use crate::presentation::http::v1::actix_web::helpers::{build_error_response};
 
-#[post("models-api/artifacts/{artifact_id}")]
+#[get("models-api/artifacts/{artifact_id}")]
 async fn download_artifact(
     req: HttpRequest,
-    path: web::Path<IngestModelPath>,
-    query: web::Query<HashMap<String, String>>,
-    body: web::Json<IngestArtifactBody>,
-    data: web::Data<AppState>
-) -> impl Responder {
+    path: web::Path<DownloadModelPath>,
+    _data: web::Data<AppState>,
+) -> Result<impl Responder> {
     let logger = SharedLogger::new();
     
-    logger.debug("Start ingest model operation");
+    logger.debug("Start download model operation");
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
         Err(err) => {
-            return build_error_response(
+            return Ok(build_error_response(
                 400,
                 String::from(err.to_string())
-            )
+            ));
         }
     };
 
     let request = DownloadModelRequest{
         headers,
         path: path.into_inner(),
-        query: query.into_inner(),
-        body: body.into_inner()
     };
 
-    // Catch directory traversal attacks. 'model_id' may be used by clients to
-    // constuct directories in the shared file system
-    if request.path.model_id.contains("..") {
-        return build_error_response(403, String::from("Forbidden"));
+    if request.path.artifact_id.contains("..") {
+        return Ok(build_error_response(403, String::from("Forbidden")));
     }
 
-    // // Get the client for the provided platform
-    // let client = if let Ok(client) = ClientProvider::provide_ingest_model_client(&request.path.platform) {
-    //     client
-    // } else {
-    //     return build_error_response(
-    //         403,
-    //         String::from(format!("Failed to find client for platform '{}'", &request.path.platform))
-    //     );
-    // };
-
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db).await {
+    let artifact_service = match artifact_service_factory(&_data.db).await {
         Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
+        Err(err) => return Ok(build_error_response(500, err.to_string()))
     };
 
     // Convert the request dto into an input
-    let input = match IngestArtifactInput::try_from(request) {
+    let input = match DownloadArtifactInput::try_from(request) {
         Ok(i) => i,
-        Err(err) => return build_error_response(500, err.to_string())
+        Err(err) => return Ok(build_error_response(500, err.to_string()))
     };
     
-    let artifact = match artifact_service.ingest_artifact(input).await {
+    let artifact_path = match artifact_service.download_artifact(input).await {
         Ok(a) => a,
         Err(err) => {
             match err {
-                ArtifactServiceError::ArtifactIngestionError(err) => {
-                    return build_error_response(500, err.to_string())
+                ArtifactServiceError::NotFound(err) => {
+                    return Ok(build_error_response(500, err.to_string()))
                 },
-                ArtifactServiceError::PubisherError(err) => {
-                    return build_error_response(500, err.to_string())
-                },
-                ArtifactServiceError::RepoError(err) => {
-                    return build_error_response(500, err.to_string())
+                _ => {
+                    logger.debug(&err.to_string());
+                    return Ok(build_error_response(500, "Unexpected error occurred while downloading artifact".to_string()))
                 }
             }
         }
     };
 
-    // Ingest the model and respond with the file contents using the provided
-    // MIME type
-    let client_resp = match client.ingest_model(&request) {
-        Ok(client_resp) => client_resp,
+    let file = match NamedFile::open(artifact_path) {
+        Ok(file) => file,
         Err(err) => {
             logger.debug(&err.to_string());
-            return build_client_error_response(err)
+            return Ok(build_error_response(500, "Failed to open artifact".to_string()));
         }
     };
 
-    let staged_artifact_path = client_resp.staged_artifact.path.clone();
-    if !staged_artifact_path.exists() {
-        let err_msg = String::from(
-            format!("Path to the staged artifact does not exist. Path: {}", staged_artifact_path.to_string_lossy()).as_str());
-        logger.error(&err_msg);
-        return build_error_response(
-            500,
-            err_msg
-        );
-    }
-
-    let download_filename = request.body
-            .download_filename
-            .clone();
-
-    let staged_artifact = client_resp.staged_artifact.clone();
-
-    logger.debug(format!("{:#?}", &staged_artifact).as_str());
-
-    let archive = request.body.archive.clone();
-
-    let staged_artifact_headers = match StagedArtifactResponseHeaders::new(
-        &staged_artifact,
-        &download_filename,
-        &archive
-    ) {
-        Ok(headers) => headers,
-        Err(err) => {
-            logger.debug(&err.to_string());
-            return build_error_response(403, err.to_string());
-        }
-    };
-    
-    let mut headers: Vec<(&str, &str)> = Vec::with_capacity(2);
-
-    let content_type_header = (
-        staged_artifact_headers.content_type_header.0.as_str(),
-        staged_artifact_headers.content_type_header.1.as_str(),
-    );
-
-    headers.push(content_type_header);
-
-    match &staged_artifact_headers.content_disposition_header {
-        Some((ref key, ref value)) => {
-            headers.push((
-                key.as_str(),
-                value.as_str()
-            ));
-        },
-        None => {}
-    };
-    
-    logger.debug(format!("Staged artifact path: {:?}", &staged_artifact_path).as_str());
-
-    // Handle single-file octect-stream and archived responses
-    if staged_artifact_path.is_file() {
-        match NamedFile::open(staged_artifact_path) {
-            Ok(file) => {
-                let mut resp = file.use_last_modified(true)
-                    .customize();
-                
-                for header in headers {
-                    resp = resp.insert_header(header);
-                }
-    
-                return resp
-                    .respond_to(&req)
-                    .map_into_boxed_body()
-            },
-            Err(err) => {
-                logger.debug(&err.to_string());
-                return build_error_response(500, err.to_string());
+    let response = file
+        .set_content_disposition(
+            actix_web::http::header::ContentDisposition {
+                disposition: actix_web::http::header::DispositionType::Attachment,
+                parameters: vec![],
             }
-        }
-    }
+        )
+        .into_response(&req);
+
+    Ok(response)
+
 
     // TODO Handle multipart/mixed responses
-    return build_error_response(
-        501,
-        String::from("Artifact responses for MIME type multipart/mixed not yet implemented")
-    );
+    // return build_error_response(
+    //     501,
+    //     String::from("Artifact responses for MIME type multipart/mixed not yet implemented")
+    // );
 }
+
+// Handler tests
+#[cfg(test)]
+#[path = "download_artifact.test.rs"]
+mod download_artifact_test;

@@ -11,6 +11,8 @@ pub use shared::models::presentation::http::v1::dto::{
     IngestArtifactBody,
     IngestModelPath,
     IngestModelRequest,
-    UploadArtifactRequest,
+    DownloadModelPath,
+    DownloadModelRequest,
+    UploadModelRequest,
     Headers
 };

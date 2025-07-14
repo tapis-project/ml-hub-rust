@@ -145,12 +145,22 @@ impl TryFrom<dto::IngestModelRequest> for common_inputs::IngestArtifactInput {
     }
 }
 
-impl TryFrom<dto::UploadArtifactRequest> for common_inputs::UploadArtifactInput {
+impl TryFrom<dto::UploadModelRequest> for common_inputs::UploadArtifactInput {
     type Error = Error;
-    fn try_from(value: dto::UploadArtifactRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: dto::UploadModelRequest) -> Result<Self, Self::Error> {
 
         Ok(Self {
             artifact_type: common_inputs::ArtifactType::Model
+        })
+    }
+}
+
+impl TryFrom<dto::DownloadModelRequest> for common_inputs::DownloadArtifactInput {
+    type Error = Error;
+    fn try_from(value: dto::DownloadModelRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            artifact_type: common_inputs::ArtifactType::Model,
+            artifact_id: value.path.artifact_id.clone()
         })
     }
 }

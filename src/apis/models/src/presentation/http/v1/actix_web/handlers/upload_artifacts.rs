@@ -3,7 +3,7 @@ use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{Headers, UploadArtifactRequest};
+use crate::presentation::http::v1::dto::{UploadModelRequest};
 use actix_multipart::Multipart;
 use actix_web::{post, web, HttpRequest, Responder};
 use futures::TryStreamExt;
@@ -43,7 +43,7 @@ async fn upload_artifacts(
         };
 
         // todo: write to a file * refactor this code to infra/app layer
-        let input = match UploadArtifactInput::try_from(UploadArtifactRequest {}) {
+        let input = match UploadArtifactInput::try_from(UploadModelRequest {}) {
             Ok(i) => i,
             Err(err) => return build_error_response(500, err.to_string()),
         };
