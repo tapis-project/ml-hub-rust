@@ -108,7 +108,7 @@ impl GetModelClient for HuggingFaceClient {
     {
         let mut headers = HeaderMap::new();
         if let Some(auth_header) =
-            request.headers.get_all_values("Authorization")
+            request.headers.get_all_values(AUTHORIZATION.as_str())
         {
             // error got more than 1 'Authorization' header
             if auth_header.len() > 1 {
@@ -148,6 +148,10 @@ impl GetModelClient for HuggingFaceClient {
             .headers(headers)
             .send()
             .await;
+
+        let value = Self::format_url(
+            format!("{}/{}", "models", request.path.model_id).as_str(),
+        );
 
         match result {
             Ok(response) => {
@@ -380,7 +384,7 @@ impl HuggingFaceClient {
             if let Some(space_index) = find_space {
                 if space_index == header_value.len() - 1 {
                     return Err(String::from(
-                        "receivied 'Bearer' header but did not receive a value",
+                        "receivied 'Bearer ' header but did not receive a value",
                     ));
                 }
             }
