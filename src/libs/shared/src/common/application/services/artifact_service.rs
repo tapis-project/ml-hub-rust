@@ -302,17 +302,14 @@ impl ArtifactService {
         Ok((artifact.id.to_string(), stacker))
     }
 
-    pub async fn find_artifact_by_artifact_id(&self, artifact_id: UuidOrString) -> Result<Option<Artifact>, ArtifactServiceError> {
-        let artifact_id = match artifact_id {
-            UuidOrString::Uuid(id) => id,
-            UuidOrString::String(id) => match Uuid::parse_str(&id) {
+    pub async fn find_artifact_by_artifact_id(&self, artifact_id: String) -> Result<Option<Artifact>, ArtifactServiceError> {
+        let artifact_uuid = match Uuid::parse_str(&artifact_id) {
                 Ok(uuid) => uuid,
-                Err(_) => return Err(ArtifactServiceError::NotFound(format!("Invalid UUID string: {}", id)))
-            }
-        };
+                Err(_) => return Err(ArtifactServiceError::NotFound(format!("Invalid UUID string: {}", artifact_id)))
+            };
 
         // Closure for fetching the artifact
-        let find_artifact = || self.artifact_repo.find_by_id(artifact_id);
+        let find_artifact = || self.artifact_repo.find_by_id(artifact_uuid);
 
         // Find the artifact
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
@@ -321,7 +318,7 @@ impl ArtifactService {
         let artifact = match maybe_artifact {
             Some(a) => a,
             None => {
-                GlobalLogger::error(format!("Cannot find any record of the Artifact associated with ID '{}'.", artifact_id).as_str());
+                GlobalLogger::error(format!("Cannot find any record of the Artifact associated with ID '{}'.", artifact_uuid).as_str());
                 return Err(ArtifactServiceError::NotFound("Cannot find any record of the artifact associated with ID".into()))
             }
         };
@@ -329,8 +326,8 @@ impl ArtifactService {
         Ok(Some(artifact))
     }
 
-    pub async fn download_artifact(&self, input: DownloadArtifactInput) -> Result<PathBuf, ArtifactServiceError> {
-        let artifact = self.find_artifact_by_artifact_id(UuidOrString::String(input.artifact_id)).await?;
+    pub async fn get_artifact_path(&self, input: DownloadArtifactInput) -> Result<PathBuf, ArtifactServiceError> {
+        let artifact = self.find_artifact_by_artifact_id(input.artifact_id).await?;
 
         let artifact = match artifact {
             Some(a) => a,

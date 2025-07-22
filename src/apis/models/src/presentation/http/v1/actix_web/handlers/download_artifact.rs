@@ -14,7 +14,7 @@ use crate::presentation::http::v1::actix_web::helpers::{build_error_response};
 async fn download_artifact(
     req: HttpRequest,
     path: web::Path<DownloadModelPath>,
-    _data: web::Data<AppState>,
+    data: web::Data<AppState>,
 ) -> Result<impl Responder> {
     let logger = SharedLogger::new();
     
@@ -41,7 +41,7 @@ async fn download_artifact(
     }
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&_data.db).await {
+    let artifact_service = match artifact_service_factory(&data.db).await {
         Ok(s) => s,
         Err(err) => return Ok(build_error_response(500, err.to_string()))
     };
@@ -52,7 +52,7 @@ async fn download_artifact(
         Err(err) => return Ok(build_error_response(500, err.to_string()))
     };
     
-    let artifact_path = match artifact_service.download_artifact(input).await {
+    let artifact_path = match artifact_service.get_artifact_path(input).await {
         Ok(a) => a,
         Err(err) => {
             match err {
