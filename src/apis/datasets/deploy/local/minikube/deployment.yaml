@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: datasets-api-deployment
+  name: mlhub-datasets-api-deployment
 spec:
   selector:
     matchLabels:
-      app: datasets-api-deployment
+      app: mlhub-datasets-api-deployment
   template:
     metadata:
       labels:
-        app: datasets-api-deployment
+        app: mlhub-datasets-api-deployment
     spec:
       containers:
       - env:

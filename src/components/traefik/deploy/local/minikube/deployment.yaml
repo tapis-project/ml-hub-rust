@@ -1,7 +1,7 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: traefik-deployment
+  name: mlhub-traefik-deployment
   labels:
     app: traefik
 
@@ -15,7 +15,7 @@ spec:
       labels:
         app: traefik
     spec:
-      serviceAccountName: traefik-account
+      serviceAccountName: mlhub-traefik-account
       containers:
         - name: traefik
           image: traefik:v3.2
@@ -37,4 +37,4 @@ spec:
       volumes:
       - name: dynamic-config
         configMap:
-          name: traefik-dynamic-config
+          name: mlhub-traefik-dynamic-config

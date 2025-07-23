@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: traefik-dynamic-config
+  name: mlhub-traefik-dynamic-config
 data:
   dynamic-config.yaml: |-
     http:
@@ -30,19 +30,19 @@ data:
         models-api:
           loadBalancer:
             servers:
-            - url: http://models-api-service:8000
+            - url: http://mlhub-models-api-service:8000
         datasets-api:
           loadBalancer:
             servers:
-            - url: http://datasets-api-service:8000
+            - url: http://mlhub-datasets-api-service:8000
         inference-api:
           loadBalancer:
             servers:
-            - url: http://inference-api-service:8000
+            - url: http://mlhub-inference-api-service:8000
         training-api:
           loadBalancer:
             servers:
-            - url: http://training-api-service:8000
+            - url: http://mlhub-training-api-service:8000
 
 
 
