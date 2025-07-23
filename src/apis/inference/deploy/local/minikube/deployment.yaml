@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: inference-api-deployment
+  name: mlhub-inference-api-deployment
 spec:
   selector:
     matchLabels:
-      app: inference-api-deployment
+      app: mlhub-inference-api-deployment
   template:
     metadata:
       labels:
-        app: inference-api-deployment
+        app: mlhub-inference-api-deployment
     spec:
       containers:
       - env:
         - name: INFERENCE_DB_HOST
-          value: mlhub-mongodb-service
+          value: mlhub-inference-db-service
         - name: INFERENCE_DB_PORT
           value: "27017"
         - name: INFERENCE_DB

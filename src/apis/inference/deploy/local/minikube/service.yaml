@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: inference-api-service
+  name: mlhub-inference-api-service
 spec:
   type: NodePort
   selector:
-    app: inference-api-deployment
+    app: mlhub-inference-api-deployment
   ports:
   - port: 8000
     targetPort: 8000
