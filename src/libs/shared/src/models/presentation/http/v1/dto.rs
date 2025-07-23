@@ -177,5 +177,5 @@ pub struct ModelDiscoveryCriteria {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DiscoveryCriteriaBody {
     pub criteria: Vec<ModelDiscoveryCriteria>,
-    pub confidence_threshold: Option<Vec<String>>
+    pub confidence_threshold: Option<Vec<String>>,
 }
