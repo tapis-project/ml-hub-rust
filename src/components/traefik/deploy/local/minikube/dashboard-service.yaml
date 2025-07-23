@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: traefik-web-service
+  name: mlhub-traefik-web-service
 
 spec:
   type: LoadBalancer

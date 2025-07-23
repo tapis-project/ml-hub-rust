@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: models-api-deployment
+  name: mlhub-models-api-deployment
 spec:
   selector:
     matchLabels:
-      app: models-api-deployment
+      app: mlhub-models-api-deployment
   template:
     metadata:
       labels:
-        app: models-api-deployment
+        app: mlhub-models-api-deployment
     spec:
       containers:
         - env:

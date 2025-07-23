@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: training-api-deployment
+  name: mlhub-training-api-deployment
 spec:
   selector:
     matchLabels:
-      app: training-api-deployment
+      app: mlhub-training-api-deployment
   template:
     metadata:
       labels:
-        app: training-api-deployment
+        app: mlhub-training-api-deployment
     spec:
       containers:
       - env:
