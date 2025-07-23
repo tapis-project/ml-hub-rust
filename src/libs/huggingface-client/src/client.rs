@@ -8,9 +8,7 @@ use clients::{
     GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
     ListModelsClient, PublishDatasetClient,
 };
-use reqwest::header::HeaderMap;
-use reqwest::header::HeaderValue;
-use reqwest::header::AUTHORIZATION;
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use reqwest::Client as ReqwestClient;
 use serde_json::{Map, Value};
 use shared::common::infra::fs::git::{
@@ -148,10 +146,6 @@ impl GetModelClient for HuggingFaceClient {
             .headers(headers)
             .send()
             .await;
-
-        let value = Self::format_url(
-            format!("{}/{}", "models", request.path.model_id).as_str(),
-        );
 
         match result {
             Ok(response) => {
@@ -374,22 +368,25 @@ impl HuggingFaceClient {
     fn validate_auth_header(header_value: &str) -> Result<(), String> {
         let search_str = "Bearer ";
         let find_value = header_value.find(search_str);
-        let find_space = header_value.find(" ");
-        if let Some(header_index) = find_value {
-            if header_index != 0 {
+
+        let header_index = match find_value {
+            Some(index) => index,
+            None => {
                 return Err(String::from(
-                    "'Bearer ' does not being at index 0",
+                    "'Bearer ' not found in authorization string",
                 ));
             }
-            if let Some(space_index) = find_space {
-                if space_index == header_value.len() - 1 {
-                    return Err(String::from(
-                        "receivied 'Bearer ' header but did not receive a value",
-                    ));
-                }
-            }
-            return Ok(());
+        };
+
+        if header_index != 0 {
+            return Err(String::from("malformed value"));
         }
-        return Err(String::from("'Bearer ' not found authorization string"));
+
+        if search_str.len() == header_value.len() {
+            return Err(String::from(
+                "receivied 'Bearer ' header but did not receive a value",
+            ));
+        }
+        return Ok(());
     }
 }
