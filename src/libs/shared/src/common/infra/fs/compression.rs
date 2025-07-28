@@ -3,7 +3,7 @@
 use crate::common::presentation::http::v1::dto::Compression;
 use std::path::PathBuf;
 use std::fs::{self, File};
-use std::io::{Read, Seek, Cursor};
+use std::io::{Read, Seek};
 use zip::{ZipWriter, CompressionMethod, ZipArchive};
 use zip::write::SimpleFileOptions;
 use zip::read::ZipFile;

@@ -4,7 +4,7 @@ use std::future::Future;
 use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::common::application::errors::ApplicationError;
-use crate::common::application::inputs::{ArtifactType, IngestArtifactInput, UploadArtifactInput};
+use crate::common::application::inputs::{ArtifactType, DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::common::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
 use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
@@ -38,6 +38,11 @@ pub enum ArtifactServiceError {
 
     #[error("Missing artifact file(s) error: {0}")]
     MissingArtifactFiles(String),
+}
+
+pub enum UuidOrString {
+    Uuid(Uuid),
+    String(String),
 }
 
 pub struct ArtifactService {
@@ -267,9 +272,6 @@ impl ArtifactService {
                 },
                 ArtifactType::Model => {
                     MODEL_INGEST_DIR_NAME
-                },
-                _ => {
-                    return Err(ArtifactServiceError::NotFound("Invalid artifact type".into()));
                 }
             }
         ).join(artifact.id.to_string()));
@@ -298,5 +300,42 @@ impl ArtifactService {
         };
 
         Ok((artifact.id.to_string(), stacker))
+    }
+
+    pub async fn find_artifact_by_artifact_id(&self, artifact_id: String) -> Result<Option<Artifact>, ArtifactServiceError> {
+        let artifact_uuid = match Uuid::parse_str(&artifact_id) {
+                Ok(uuid) => uuid,
+                Err(_) => return Err(ArtifactServiceError::NotFound(format!("Invalid UUID string: {}", artifact_id)))
+            };
+
+        // Closure for fetching the artifact
+        let find_artifact = || self.artifact_repo.find_by_id(artifact_uuid);
+
+        // Find the artifact
+        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        let artifact = match maybe_artifact {
+            Some(a) => a,
+            None => {
+                GlobalLogger::error(format!("Cannot find any record of the Artifact associated with ID '{}'.", artifact_uuid).as_str());
+                return Err(ArtifactServiceError::NotFound("Cannot find any record of the artifact associated with ID".into()))
+            }
+        };
+
+        Ok(Some(artifact))
+    }
+
+    pub async fn get_artifact_path(&self, input: DownloadArtifactInput) -> Result<PathBuf, ArtifactServiceError> {
+        let artifact = self.find_artifact_by_artifact_id(input.artifact_id).await?;
+
+        let artifact = match artifact {
+            Some(a) => a,
+            None => return Err(ArtifactServiceError::NotFound("Artifact not found".into()))
+        };
+
+        let path = artifact.path.clone().ok_or_else(|| ArtifactServiceError::NotFound("Artifact path is not set".into()))?;
+
+        Ok(path)
     }
 }

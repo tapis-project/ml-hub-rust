@@ -17,3 +17,9 @@ pub struct IngestArtifactInput {
 pub struct UploadArtifactInput {
     pub artifact_type: ArtifactType,
 }
+
+#[derive(Clone)]
+pub struct DownloadArtifactInput {
+    pub artifact_type: ArtifactType,
+    pub artifact_id: String,
+}
