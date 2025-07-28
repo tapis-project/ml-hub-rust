@@ -15,6 +15,7 @@ use shared::common::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
+use shared::common::presentation::http::v1::dto::AuthorizationHeaderError;
 use shared::datasets::presentation::http::v1::dto::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest,
@@ -24,6 +25,7 @@ use shared::models::presentation::http::v1::dto::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
 };
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct HuggingFaceClient {
@@ -104,39 +106,25 @@ impl GetModelClient for HuggingFaceClient {
         request: &GetModelRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
-        let mut headers = HeaderMap::new();
-        if let Some(auth_header) =
-            request.headers.get_all_values(AUTHORIZATION.as_str())
+        if let Err(my_error) =
+            request.headers.validate_authorization_header(None)
         {
-            // error got more than 1 'Authorization' header
-            if auth_header.len() > 1 {
-                return Err(ClientError::Internal {
-                    msg: String::from("got more than 1 'Authorization' header"),
-                    scope: ClientErrorScope::Server,
-                });
-            }
-            // validate 'Authorization' header
-            if let Err(auth_error) = Self::validate_auth_header(&auth_header[0])
-            {
-                return Err(ClientError::Internal {
-                    msg: auth_error,
-                    scope: ClientErrorScope::Server,
-                });
-            }
-
-            // creating the header value
-            match HeaderValue::from_str(&auth_header[0]) {
-                Ok(auth_header_value) => {
-                    headers.insert(AUTHORIZATION, auth_header_value);
-                }
-                Err(err_message) => {
-                    return Err(ClientError::Internal {
-                        msg: err_message.to_string(),
-                        scope: ClientErrorScope::Server,
-                    });
-                }
-            }
+            return Err(ClientError::Internal {
+                msg: my_error.to_string(),
+                scope: ClientErrorScope::Server,
+            });
         }
+        let fail_message = String::from_str("failed to convert to header map")
+            .expect("won't fail");
+        let headers = match HeaderMap::try_from(&request.headers) {
+            Ok(header_map) => header_map,
+            Err(_) => {
+                return Err(ClientError::Internal {
+                    msg: fail_message,
+                    scope: ClientErrorScope::Server,
+                })
+            }
+        };
 
         let result = self
             .client
