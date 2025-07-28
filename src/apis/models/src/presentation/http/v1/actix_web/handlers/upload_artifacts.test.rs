@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod upload_artifacts_test {
-    use std::env;
     use actix_web::{test, web, App, http::header};
     use bytes::Bytes;
     use shared::common::infra::persistence::mongo::database::{get_db, ClientParams};

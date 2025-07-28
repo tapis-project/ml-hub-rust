@@ -21,8 +21,7 @@ pub struct GetModelPath {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DownloadModelPath {
-    pub platform: String,
-    pub model_id: String
+    pub artifact_id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -75,8 +74,6 @@ pub struct IngestModelRequest {
 pub struct DownloadModelRequest {
     pub headers: Headers,
     pub path: DownloadModelPath,
-    pub query: HashMap<String, String>,
-    pub body: DownloadArtifactBody,
 }
 pub struct PublishModelRequest {
     pub headers: Headers,
@@ -85,7 +82,7 @@ pub struct PublishModelRequest {
     pub payload: Multipart,
 }
 
-pub struct UploadArtifactRequest {
+pub struct UploadModelRequest {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

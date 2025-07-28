@@ -8,3 +8,9 @@ pub async fn health_check() -> impl Responder {
     logger.debug("Health check operation");
     return build_success_response(None, Some(String::from("success")), None);
 }
+
+
+// Handler tests
+#[cfg(test)]
+#[path = "health_check.test.rs"]
+mod health_check_test;
