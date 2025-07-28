@@ -23,7 +23,7 @@ fn is_zip_file(field: &actix_multipart::Field) -> bool {
 async fn upload_artifacts(
     req: HttpRequest,
     bytes: web::Payload,
-    _data: web::Data<AppState>,
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let logger = SharedLogger::new();
     logger.debug("Start upload artifact operation");
@@ -37,7 +37,7 @@ async fn upload_artifacts(
         }
 
         // Instantiate an artifact service
-        let artifact_service = match artifact_service_factory(&_data.db).await {
+        let artifact_service = match artifact_service_factory(&data.db).await {
             Ok(s) => s,
             Err(err) => return build_error_response(500, err.to_string()),
         };
