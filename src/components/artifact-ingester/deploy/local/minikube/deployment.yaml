@@ -51,6 +51,6 @@ spec:
       volumes:
         - name: nfs-server-mount
           nfs:
-            server: '10.110.247.173'
+            server: '10.110.11.30'
             path: /
       restartPolicy: Always

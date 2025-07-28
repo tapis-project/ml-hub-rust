@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nfs-server-deployment
+  name: mlhub-nfs-server-deployment
 spec:
   selector:
     matchLabels:
-      app: nfs-server-deployment
+      app: mlhub-nfs-server-deployment
   template:
     metadata:
       labels:
-        app: nfs-server-deployment
+        app: mlhub-nfs-server-deployment
     spec:
       initContainers:
       - name: create-mount-dirs
@@ -33,5 +33,5 @@ spec:
       volumes:
       - name: nfs-data
         persistentVolumeClaim:
-          claimName: nfs-server-pvc
+          claimName: mlhub-nfs-server-pvc
 

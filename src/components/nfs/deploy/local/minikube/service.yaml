@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:  
-  name: nfs-server-service
+  name: mlhub-nfs-server-service
 spec:
   selector:    
-    app: nfs-server-deployment
+    app: mlhub-nfs-server-deployment
   ports:  
   - name: nfs
     port: 2049

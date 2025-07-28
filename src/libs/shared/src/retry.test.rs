@@ -98,7 +98,7 @@ mod retry_test {
         use std::cell::Cell;
 
         #[tokio::test]
-        async fn test_with_exponentional_backoff() {
+        async fn test_with_exponential_backoff() {
             use super::*;
             let policy = RetryPolicy::ExponentionalBackoff(retry::ExponentionalBackoff {
                 retries: retry::Retry::NTimes(5),

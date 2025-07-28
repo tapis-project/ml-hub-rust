@@ -15,7 +15,7 @@
     "training-image": "tapis/training-api",
     "artifact-db-deployment": "mlhub-artifact-db-deployment",
     "nfs-deployment": "mlhub-nfs-server-deployment",
-    "nfs-server-service": "nfs-server-service",
+    "nfs-server-service": "mlhub-nfs-server-service",
     "traefik-deployment": "mlhub-traefik-deployment",
     "artifact-ingester-deployment": "mlhub-artifact-ingester-deployment",
     "artifact-ingester-image": "tapis/mlhub-artifact-ingester"
