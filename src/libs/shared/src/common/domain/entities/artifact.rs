@@ -3,19 +3,27 @@ use uuid::Uuid;
 use crate::common::domain::entities::TimeStamp;
 
 #[derive(Clone, Debug)]
+pub enum ArtifactType {
+    Model,
+    Dataset,
+}
+
+#[derive(Clone, Debug)]
 pub struct Artifact {
     pub id: Uuid,
+    pub artifact_type: ArtifactType,
     pub path: Option<PathBuf>, 
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
 }
 
 impl Artifact {
-    pub fn new() -> Self {
+    pub fn new(r#type: ArtifactType) -> Self {
         let now = TimeStamp::now();
         Self {
             id: Uuid::new_v4(),
             path: None,
+            artifact_type: r#type,
             created_at: now.clone(),
             last_modified: now.clone()
         }

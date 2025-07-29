@@ -22,13 +22,13 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::common::domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus};
+use shared::common::domain::entities::{ArtifactType, ArtifactIngestionFailureReason, ArtifactIngestionStatus};
 use shared::logging::GlobalLogger;
 use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME};
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
 use shared::common::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
-use shared::common::infra::messaging::messages::{ArtifactType, IngestArtifactMessage};
+use shared::common::infra::messaging::messages::IngestArtifactMessage;
 use async_trait::async_trait;
 use shared::common::application::services::artifact_service::ArtifactService;
 use std::env;
@@ -74,21 +74,21 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             .expect("Failed to fetch artifact")
             .expect(format!("Could not find artifact associated with ingestion '{}'", &ingestion_id).as_str());
 
-        let download_path = match request.artifact_type {
+        let download_path = match artifact.artifact_type {
             ArtifactType::Model => self.models_target_base_path.join(artifact.id.to_string()),
             ArtifactType::Dataset => self.datasets_target_base_path.join(artifact.id.to_string())
         };
 
         GlobalLogger::debug(format!("download path: {}", &download_path.to_string_lossy().to_string()).as_str());
      
-        match request.artifact_type {
+        match artifact.artifact_type {
             ArtifactType::Model => {
                 match ClientProvider::provide_ingest_model_client(&request.platform) {
                     Ok(client) => {
                         self.artifact_service.change_ingestion_status_by_ingestion_id(
                             ingestion_id.clone(),
                             ArtifactIngestionStatus::Downloading,
-                            Some("Downloaded starting".into())
+                            Some("Download in progress".into())
                         )
                             .await
                             .map_err(|err| {
@@ -98,7 +98,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                         let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
                             .expect("Failed deserializing the client request");
 
-                        match client.ingest_model(&client_request, download_path.clone()) {
+                        match client.ingest_model(&client_request, download_path.clone()).await {
                             Ok(_) => {
                                 // Update ingestion to Downloaded
                                 self.artifact_service.change_ingestion_status_by_ingestion_id(
@@ -156,10 +156,9 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                     }).unwrap();
 
                                 // Clean up the ingestion workdir
-                                std::fs::remove_dir_all(&download_path)
-                                    .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
-                                
-                                // Update ingestion to Finished
+                                // std::fs::remove_dir_all(&download_path)
+                                //     .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
+
                                 let ref mut ingestion = self.artifact_service.find_ingestion_by_ingestion_id(ingestion_id)
                                     .await
                                     .expect("Error fetching ingestion")
@@ -343,9 +342,6 @@ async fn main() -> () {
         datasets_target_base_path: PathBuf::from(&environment.shared_data_dir).join(DATASET_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
-    
-    GlobalLogger::debug(format!("shared_data_dir: {}", &environment.shared_data_dir).as_str());
-    GlobalLogger::debug(format!("artifacts_cache_dir: {}", &environment.artifacts_cache_dir).as_str());
      
     let args = BasicConsumeArguments::default()
         .queue(ARTIFACT_INGESTION_QUEUE.into())

@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod artifact_test {
-    use crate::common::domain::entities::artifact::Artifact;
+    use crate::common::domain::entities::artifact::{Artifact, ArtifactType};
 
     #[test]
     fn test_touch() {
-        let mut artifact = Artifact::new();
+        let mut artifact = Artifact::new(ArtifactType::Model);
         let initial_last_modified = artifact.last_modified.clone();
         // Call touch to update last_modified
         artifact.touch();
@@ -14,7 +14,7 @@ mod artifact_test {
 
     #[test]
     fn test_set_path() {
-        let mut artifact = Artifact::new();
+        let mut artifact = Artifact::new(ArtifactType::Model);
         let initial_last_modified = artifact.last_modified.clone();
 
         // check that the path is initially None

@@ -3,6 +3,15 @@ use crate::common::infra::persistence::mongo::documents;
 use mongodb::bson::{Uuid, DateTime};
 
 
+impl From<entities::ArtifactType> for documents::ArtifactType {
+    fn from(value: entities::ArtifactType) -> Self {
+        match value {
+            entities::ArtifactType::Model => documents::ArtifactType::Model,
+            entities::ArtifactType::Dataset => documents::ArtifactType::Dataset,
+        }
+    }
+}
+
 impl From<entities::Artifact> for documents::Artifact {
     fn from(value: entities::Artifact) -> Self {
         let path = match value.path {
@@ -13,6 +22,7 @@ impl From<entities::Artifact> for documents::Artifact {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
+            artifact_type: documents::ArtifactType::from(value.artifact_type),
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
             created_at: DateTime::from_chrono(value.created_at.into_inner()),
             path
@@ -46,10 +56,26 @@ impl From<entities::ArtifactIngestion> for documents::ArtifactIngestion {
 impl From<entities::ArtifactIngestion> for documents::UpdateArtifactIngestionStatusRequest {
     fn from(value: entities::ArtifactIngestion) -> Self {
         Self {
-            id: Uuid::from_bytes(value.id.into_bytes()),
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
             last_message: value.last_message,
             status: documents::ArtifactIngestionStatus::from(value.status),
+        }
+    }
+}
+
+impl From<entities::ArtifactIngestion> for documents::UpdateArtifactIngestionRequest {
+    fn from(value: entities::ArtifactIngestion) -> Self {
+        let artifact_path = match value.artifact_path {
+            Some(p) => p.to_str().map(|s| s.to_string()),
+            None => None
+        };
+
+        Self {
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_message: value.last_message,
+            status: documents::ArtifactIngestionStatus::from(value.status),
+            artifact_path,
+            webhook_url: value.webhook_url,
         }
     }
 }
@@ -64,7 +90,22 @@ impl TryFrom<entities::Artifact> for documents::UpdateArtifactPathRequest {
         };
 
         Ok(Self {
-            id: Uuid::from_bytes(value.id.into_bytes()),
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            path: path.to_string_lossy().into_owned()
+        })
+    }
+}
+
+impl TryFrom<entities::Artifact> for documents::UpdateArtifactRequest {
+    type Error = ApplicationError;
+
+    fn try_from(value: entities::Artifact) -> Result<Self, Self::Error> {
+        let path = match value.path {
+            Some(p) => p,
+            None => return Err(ApplicationError::ConvesionError("Path".into()))
+        };
+
+        Ok(Self {
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
             path: path.to_string_lossy().into_owned()
         })

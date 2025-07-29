@@ -4,6 +4,15 @@ use crate::common::domain::entities;
 use crate::common::infra::persistence::mongo::documents;
 use uuid::Uuid;
 
+impl From<documents::ArtifactType> for entities::ArtifactType {
+    fn from(value: documents::ArtifactType) -> Self {
+        match value {
+            documents::ArtifactType::Model => entities::ArtifactType::Model,
+            documents::ArtifactType::Dataset => entities::ArtifactType::Dataset,
+        }
+    }
+}
+
 impl From<documents::Artifact> for entities::Artifact {
     fn from(value: documents::Artifact) -> Self {
         let path = match value.path {
@@ -13,6 +22,7 @@ impl From<documents::Artifact> for entities::Artifact {
 
         Self {
             id: Uuid::from_bytes(value.id.bytes()),
+            artifact_type: entities::ArtifactType::from(value.artifact_type),
             last_modified: entities::TimeStamp::from(value.last_modified.to_chrono()),
             created_at: entities::TimeStamp::from(value.created_at.to_chrono()),
             path

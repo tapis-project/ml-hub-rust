@@ -7,7 +7,7 @@ use crate::common::application::errors::ApplicationError;
 use crate::common::application::inputs::{ArtifactType, DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::common::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
-use crate::common::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
+use crate::common::domain::entities::{Artifact, ArtifactType as ArtifactTypeEntity, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
 use crate::common::domain::services::{
     ArtifactService as DomainArtifactService,
     ArtifactServiceError as DomainArtifactServiceError};
@@ -82,7 +82,7 @@ impl ArtifactService {
     }
 
     pub async fn submit_artifact_ingestion(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
-        let artifact = Artifact::new();
+        let artifact = Artifact::new(ArtifactTypeEntity::from(input.artifact_type.clone()));
         
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
@@ -222,22 +222,24 @@ impl ArtifactService {
             return Err(ArtifactServiceError::MissingArtifactFiles(format!("No files found for Artifact '{}' at path '{}'", artifact.id.to_string(), artifact_path.to_string_lossy())))
         }
 
-        ingestion.set_artifact_path(artifact_path)?;
+        ingestion.set_artifact_path(artifact_path.clone())?;
+
+        ingestion.change_status(ArtifactIngestionStatus::Finished)?;
 
         // Closure for saving the updated ingestion
-        let save_ingestion = || self.ingestion_repo.save(ingestion);
+        let update = || self.ingestion_repo.update(ingestion);
 
-        // Save updated artifact
-        retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
+        // Update the ingestions
+        retry_async(update, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
-        DomainArtifactService::finish_artifact_ingestion(artifact, ingestion)?;
+        DomainArtifactService::finish_artifact_ingestion(artifact, ingestion)?;  
 
         // Closure for saving the updated artifact
-        let save_artifact = || self.artifact_repo.save(artifact);
+        let update = || self.artifact_repo.update(artifact);
 
-        // Save updated artifact
-        retry_async(save_artifact, &Self::REPO_RETRY_POLICY).await
+        // Update the artifact
+        retry_async(update, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
         Ok(())
@@ -255,8 +257,9 @@ impl ArtifactService {
         ArtifactServiceError,
     > {
         GlobalLogger::debug(format!("Uploading start").as_str());
-        let mut artifact = Artifact::new();
+        let mut artifact = Artifact::new(ArtifactTypeEntity::from(input.artifact_type.clone()));
         GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
+        
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
 

@@ -3,7 +3,7 @@ use crate::common::infra::persistence::mongo::database::{
     ARTIFACT_COLLECTION,
     ARTIFACT_INGESTION_COLLECTION,
 };
-use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, UpdateArtifactIngestionStatusRequest, UpdateArtifactPathRequest};
+use crate::common::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, UpdateArtifactRequest, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest, UpdateArtifactPathRequest};
 use crate::common::application;
 use crate::common::domain::entities;
 use mongodb::{
@@ -81,11 +81,33 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(None)
     }
 
+    async fn update(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError>  {
+        let update = UpdateArtifactRequest::try_from(artifact.clone())?;
+
+        let filter = doc! {
+            "id": Uuid::from_bytes(*artifact.id.as_bytes())
+        };
+        
+        let document = doc! {
+            "$set": {
+                "last_modified": update.last_modified,
+                "path": update.path,
+            }
+        };
+
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        Ok(())
+    }
+
     async fn update_path(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError> {
         let update = UpdateArtifactPathRequest::try_from(artifact.clone())?;
 
         let filter = doc! {
-            "id": update.id
+            "id": Uuid::from_bytes(*artifact.id.as_bytes()),
         };
         
         let document = doc! {
@@ -131,12 +153,36 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(())
     }
 
-    async fn update_status(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError> {
+    async fn update(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError>  {
+        let update = UpdateArtifactIngestionRequest::from(ingestion.clone());
+
+        let filter = doc! {
+            "id": Uuid::from_bytes(*ingestion.id.as_bytes())
+        };
         
+        let document = doc! {
+            "$set": {
+                "status": String::from(update.status),
+                "last_modified": update.last_modified,
+                "last_message": update.last_message,
+                "webhook_url": update.webhook_url,
+                "artifact_path": update.artifact_path,
+            }
+        };
+
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        Ok(())
+    }
+
+    async fn update_status(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError> {
         let update = UpdateArtifactIngestionStatusRequest::from(ingestion.clone());
 
         let filter = doc! {
-            "id": update.id
+            "id": Uuid::from_bytes(*ingestion.id.as_bytes())
         };
         
         let document = doc! {

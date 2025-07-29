@@ -55,19 +55,19 @@ impl ArtifactIngestion {
         match from {
             Status::Submitted | Status::Resubmitted => {
                 match to {
-                    Status::Failed(_) | Status::Pending => true,
+                    Status::Pending | Status::Failed(_)  => true,
                     _ => false
                 }
             }
             Status::Pending => {
                 match to {
-                    Status::Failed(_) | Status::Downloading => true,
+                    Status::Downloading | Status::Failed(_) => true,
                     _ => false
                 }
             }
             Status::Downloading => {
                 match to {
-                    Status::Downloaded => true,
+                    Status::Downloaded | Status::Failed(_) => true,
                     _ => false
                 }
             }, 
