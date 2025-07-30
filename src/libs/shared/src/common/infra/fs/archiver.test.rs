@@ -1,7 +1,7 @@
 // This test is ignored by default, as it requires a specific file structure and may not be suitable for all environments.
 #[cfg(test)]
 mod compression_test {
-    use crate::common::infra::fs::compression::FileCompressor;
+    use crate::common::infra::fs::archiver::Archiver;
     use crate::common::presentation::http::v1::dto::Compression;
     use std::{
         fs,
@@ -39,7 +39,7 @@ mod compression_test {
         let source: &PathBuf = &PathBuf::from(PATH_FOR_TESTING);
         let destination: &PathBuf = &PathBuf::from(TEST_ZIP_FILE);
         let compression_option = Some(Compression::Deflated);
-        let result = FileCompressor::zip(&source, &destination, compression_option);
+        let result = Archiver::zip(&source, &destination, compression_option);
         assert!(result.is_ok(), "Zipping failed: {:?}", result.err());
     }
 
@@ -48,7 +48,7 @@ mod compression_test {
         // if zip file already exists, this will overwrite it
         let source: &PathBuf = &PathBuf::from(TEST_ZIP_FILE);
         let destination: &PathBuf = &PathBuf::from(PATH_FOR_TESTING).join("unzipped_test_dir");
-        let result = FileCompressor::unzip(&source, &destination, None);
+        let result = Archiver::unzip(&source, &destination, None);
         let unzipped_file = destination.join(PATH_FOR_TESTING).join(FILE_FOR_TESTING);
         let content = fs::read_to_string(&unzipped_file).expect("Failed to read unzipped file");
         assert!(result.is_ok(), "Unzipping failed: {:?}", result.err());

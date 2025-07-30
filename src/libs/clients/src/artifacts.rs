@@ -1,4 +1,4 @@
-use shared::common::infra::fs::compression::CompressionError;
+use shared::common::infra::fs::archiver::CompressionError;
 use shared::common::infra::system::SystemError;
 use std::fs::File;
 use std::io::Write;

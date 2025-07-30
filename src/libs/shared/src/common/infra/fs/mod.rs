@@ -1,3 +1,3 @@
 pub mod git;
-pub mod compression;
+pub mod archiver;
 pub mod stacking;

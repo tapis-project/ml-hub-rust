@@ -34,7 +34,7 @@ use shared::common::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
 use artifact_ingester::database::{get_db, ClientParams};
-use shared::common::infra::fs::compression::FileCompressor;
+use shared::common::infra::fs::archiver::Archiver;
 
 struct ArtifactIngesterConsumer {
     artifact_service: ArtifactService,
@@ -58,6 +58,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
 
         let ingestion_id = Uuid::parse_str(request.ingestion_id.as_str()).expect("Invalid Uuid. Cannot convert ingestion_id into Uuid");
 
+        // Update artifact ingestion to Pending
         self.artifact_service.change_ingestion_status_by_ingestion_id(
             ingestion_id.clone(),
             ArtifactIngestionStatus::Pending,
@@ -68,12 +69,14 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                 panic!("Error updating ingestion status: {}", err.to_string())
             }).unwrap();
 
+        // Fetch the artifact related to the ingestion
         let ref mut artifact = self.artifact_service.find_artifact_by_ingestion_id(
             ingestion_id.clone()
         ).await
             .expect("Failed to fetch artifact")
             .expect(format!("Could not find artifact associated with ingestion '{}'", &ingestion_id).as_str());
 
+        // Set the download path based on whether this is a model or a dataset
         let download_path = match artifact.artifact_type {
             ArtifactType::Model => self.models_target_base_path.join(artifact.id.to_string()),
             ArtifactType::Dataset => self.datasets_target_base_path.join(artifact.id.to_string())
@@ -81,10 +84,13 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
 
         GlobalLogger::debug(format!("download path: {}", &download_path.to_string_lossy().to_string()).as_str());
      
+        // Ingest the artifact
         match artifact.artifact_type {
             ArtifactType::Model => {
+                // Get the correct client to do the model ingestion
                 match ClientProvider::provide_ingest_model_client(&request.platform) {
                     Ok(client) => {
+                        // Update the ingestion to Downloading
                         self.artifact_service.change_ingestion_status_by_ingestion_id(
                             ingestion_id.clone(),
                             ArtifactIngestionStatus::Downloading,
@@ -94,10 +100,12 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                             .map_err(|err| {
                                 panic!("Error updating ingestion status: {}", err.to_string())
                             }).unwrap();
-
+                        
+                        // Deserialize the client request
                         let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
                             .expect("Failed deserializing the client request");
-
+                        
+                        // Ingest the model
                         match client.ingest_model(&client_request, download_path.clone()).await {
                             Ok(_) => {
                                 // Update ingestion to Downloaded
@@ -121,13 +129,15 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                     .map_err(|err| {
                                         panic!("Error updating ingestion status: {}", err.to_string())
                                     }).unwrap();
-
-                                let maybe_artifact_path = FileCompressor::zip(
+                                
+                                // Archive the artifact files with compression
+                                let maybe_artifact_path = Archiver::zip(
                                     &download_path,
                                     &PathBuf::from(&self.artifacts_cache_dir).join(artifact.id.clone().to_string()),
                                     None,
                                 );
 
+                                // Get the artifact path
                                 let artifact_path = match maybe_artifact_path {
                                     Ok(p) => p,
                                     Err(err) => {
@@ -158,7 +168,8 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                 // Clean up the ingestion workdir
                                 // std::fs::remove_dir_all(&download_path)
                                 //     .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
-
+                                
+                                // Get the updated ingestion
                                 let ref mut ingestion = self.artifact_service.find_ingestion_by_ingestion_id(ingestion_id)
                                     .await
                                     .expect("Error fetching ingestion")
@@ -193,6 +204,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                     }
                 };
             },
+            // Ingest the dataset
             ArtifactType::Dataset => {
                 // let client = ClientProvider::provide_ingest_dataset_client(&request.platform)
                 //     .map_err(|err| {

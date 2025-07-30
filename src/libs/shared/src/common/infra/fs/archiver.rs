@@ -21,10 +21,10 @@ pub enum CompressionError {
     ZipError(String),
 }
 
-// A file compression utility that zips and compresses files and directories
-pub struct FileCompressor {}
+// A utility that archives and optionally compresses files and directories
+pub struct Archiver {}
 
-impl FileCompressor {
+impl Archiver {
     pub fn new() -> Self {
         Self {}
     }
@@ -184,5 +184,5 @@ impl FileCompressor {
 // Unit tests
 // This test is ignored by default, as it requires a specific file structure and may not be suitable for all environments.
 #[cfg(test)]
-#[path = "compression.test.rs"]
-mod compression_test;
+#[path = "archiver.test.rs"]
+mod archiver_test;
