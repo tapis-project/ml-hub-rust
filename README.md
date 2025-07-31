@@ -107,4 +107,5 @@ Traefik
 2. Run `kubectl port-forward svc/mlhub-artifact-db-service 27017:27017`
 3. Create a connection to the ip:port combination output by that command 
 
-
+### Test case requirements
+1. valid huggingface hub token stored at the environemnt variable "HUGGINGFACE_HUB_TOKEN"

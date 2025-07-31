@@ -17,7 +17,7 @@ async fn get_model(
 ) -> impl Responder {
     let logger = SharedLogger::new();
 
-    logger.debug("Start operation list_models");
+    logger.debug("Start operation get_model");
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
