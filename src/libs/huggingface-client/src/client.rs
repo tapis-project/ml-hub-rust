@@ -8,12 +8,14 @@ use clients::{
     GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
     ListModelsClient, PublishDatasetClient,
 };
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use reqwest::Client as ReqwestClient;
 use serde_json::{Map, Value};
 use shared::common::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
+use shared::common::presentation::http::v1::dto::AuthorizationHeaderError;
 use shared::datasets::presentation::http::v1::dto::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest,
@@ -23,6 +25,7 @@ use shared::models::presentation::http::v1::dto::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
 };
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct HuggingFaceClient {
@@ -103,11 +106,32 @@ impl GetModelClient for HuggingFaceClient {
         request: &GetModelRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
+        if let Err(my_error) =
+            request.headers.validate_authorization_header(None)
+        {
+            return Err(ClientError::Internal {
+                msg: my_error.to_string(),
+                scope: ClientErrorScope::Server,
+            });
+        }
+        let fail_message = String::from_str("failed to convert to header map")
+            .expect("won't fail");
+        let headers = match HeaderMap::try_from(&request.headers) {
+            Ok(header_map) => header_map,
+            Err(_) => {
+                return Err(ClientError::Internal {
+                    msg: fail_message,
+                    scope: ClientErrorScope::Server,
+                })
+            }
+        };
+
         let result = self
             .client
             .get(Self::format_url(
                 format!("{}/{}", "models", request.path.model_id).as_str(),
             ))
+            .headers(headers)
             .send()
             .await;
 
@@ -327,5 +351,30 @@ impl HuggingFaceClient {
             constants::HUGGING_FACE_BASE_URL,
             url.strip_prefix("/").unwrap_or(url).to_string()
         )
+    }
+
+    fn validate_auth_header(header_value: &str) -> Result<(), String> {
+        let search_str = "Bearer ";
+        let find_value = header_value.find(search_str);
+
+        let header_index = match find_value {
+            Some(index) => index,
+            None => {
+                return Err(String::from(
+                    "'Bearer ' not found in authorization string",
+                ));
+            }
+        };
+
+        if header_index != 0 {
+            return Err(String::from("malformed value"));
+        }
+
+        if search_str.len() == header_value.len() {
+            return Err(String::from(
+                "receivied 'Bearer ' header but did not receive a value",
+            ));
+        }
+        return Ok(());
     }
 }
