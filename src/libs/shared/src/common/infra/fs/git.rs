@@ -56,8 +56,6 @@ impl GitRepository {
     pub fn prepare(&self, params: PrepareRepositoryParams) -> Result<PreparedRepository, GitError> {
         let target_path = PathBuf::from(&params.target_dir);
 
-        GlobalLogger::debug(format!("Preparing target path: {:?}", &target_path).as_str());
-
         // Create the all of the directories in the download_dir path. Works like
         // mkdir -p. Propogate the error if any
         create_dir_all(&target_path)
@@ -85,8 +83,6 @@ impl PreparedRepository {
     }
 
     fn clone(&self, params: GitCloneParams) -> Result<&Self, GitError> {
-        GlobalLogger::debug(format!("Cloning to path: {:?}", &self.path).as_str());
-        
         let mut cmd = Command::new("git");
         
         // Set the current work directory
@@ -107,22 +103,36 @@ impl PreparedRepository {
         }
 
         cmd.arg(self.repository.remote_url.clone())
-            .arg(".");
-            // .env("GIT_LFS_SKIP_SMUDGE", "1");
+            .arg(".")
+            .env("GIT_LFS_SKIP_SMUDGE", "1");
 
         // Run the command
-        cmd.output()
+        let output = cmd.output()
             .map_err(|err| {
                 GlobalLogger::debug(format!("Error running `git clone`: {}", err.to_string()).as_str());
                 GitError::Clone(err.to_string())
             })?;
-
-        Ok(self)
+        
+        match output.status.code() {
+            Some(code) => {
+                if code == 0 {
+                    return Ok(self)
+                }
+                
+                return Err(
+                    GitError::Clone(
+                        String::from_utf8(output.stderr)
+                            .unwrap_or("Git clone failed. Additionally, stderr from the git clone process could not be decoded".into())
+                    )
+                )
+            },
+            None => {
+                return Err(GitError::Clone("The git clone operation was terminated by an unknown signal".into()))
+            } 
+        }
     }
 
-    fn pull(&self, params: GitPullParams) -> Result<&Self, GitError> {
-        GlobalLogger::debug(format!("Pulling repo at path '{:?}'", &self.path).as_str());
-        
+    fn pull(&self, params: GitPullParams) -> Result<&Self, GitError> { 
         let mut cmd = Command::new("git");
         
         // Set the current work directory
@@ -160,7 +170,7 @@ impl PreparedRepository {
             Err(_) => false, // Path doesn't exist or isn't accessible
         };
         
-        // Pull the at the target path if it exists otherwise clone
+        // Pull the repo at the target path if it exists otherwise clone
         if self.path.exists() && contains_files {
             self.pull(GitPullParams {
                 branch: params.branch,
@@ -269,16 +279,11 @@ impl GitLfsRepository {
             // .env_remove("GIT_LFS_SKIP_SMUDGE")
             // .env("GIT_LFS_SKIP_SMUDGE", "0");
 
-        GlobalLogger::debug(format!("Running: {:?}", &cmd).as_str());
-
         cmd.output()
             .map_err(|err| {
                 GlobalLogger::error(format!("Error running `git lfs pull`: {}", err.to_string()).as_str());
                 GitError::LfsPull(err.to_string())
             })?;
-
-        GlobalLogger::debug("git lfs pull successful");
-
         Ok(self)
     }
 }

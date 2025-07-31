@@ -23,7 +23,6 @@ use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
 use shared::common::domain::entities::{ArtifactType, ArtifactIngestionFailureReason, ArtifactIngestionStatus};
-use shared::logging::GlobalLogger;
 use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME};
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
 use shared::common::infra::system::Env;
@@ -82,8 +81,6 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             ArtifactType::Dataset => self.datasets_target_base_path.join(artifact.id.to_string())
         };
 
-        GlobalLogger::debug(format!("download path: {}", &download_path.to_string_lossy().to_string()).as_str());
-     
         // Ingest the artifact
         match artifact.artifact_type {
             ArtifactType::Model => {
@@ -166,8 +163,8 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                     }).unwrap();
 
                                 // Clean up the ingestion workdir
-                                // std::fs::remove_dir_all(&download_path)
-                                //     .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
+                                std::fs::remove_dir_all(&download_path)
+                                    .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
                                 
                                 // Get the updated ingestion
                                 let ref mut ingestion = self.artifact_service.find_ingestion_by_ingestion_id(ingestion_id)
@@ -194,6 +191,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
 
                                 eprintln!("{}", err.to_string());
                                 nack(&channel, &deliver, None, None).await;
+                                return;
                             }
                         };
                     },

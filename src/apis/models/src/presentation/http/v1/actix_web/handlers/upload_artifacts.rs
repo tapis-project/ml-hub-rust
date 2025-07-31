@@ -3,7 +3,7 @@ use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{UploadModelRequest};
+use crate::presentation::http::v1::dto::UploadModelRequest;
 use actix_multipart::Multipart;
 use actix_web::{post, web, HttpRequest, Responder};
 use futures::TryStreamExt;

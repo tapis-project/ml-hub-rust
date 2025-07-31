@@ -216,7 +216,6 @@ impl ArtifactService {
     }
 
     pub async fn finish_artifact_ingestion(&self, artifact_path: PathBuf, artifact: &mut Artifact, ingestion: &mut ArtifactIngestion) -> Result<(), ArtifactServiceError> {
-        GlobalLogger::debug(format!("Artifact path: {}", artifact_path.clone().to_string_lossy().to_string()).as_str());
         // Check if the artifact path actually exists
         if !artifact_path.exists() {
             return Err(ArtifactServiceError::MissingArtifactFiles(format!("No files found for Artifact '{}' at path '{}'", artifact.id.to_string(), artifact_path.to_string_lossy())))
@@ -256,9 +255,7 @@ impl ArtifactService {
         ),
         ArtifactServiceError,
     > {
-        GlobalLogger::debug(format!("Uploading start").as_str());
         let mut artifact = Artifact::new(ArtifactTypeEntity::from(input.artifact_type.clone()));
-        GlobalLogger::debug(format!("New Artifact: {:#?}", artifact).as_str());
         
         // Closure for saving the artifact
         let save_artifact = || self.artifact_repo.save(&artifact);
