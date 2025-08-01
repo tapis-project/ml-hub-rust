@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 shared = { version = "0.1.0", path = "../../libs/shared" }
 client-provider = { version = "0.1.0", path = "../../libs/client-provider" }
+clients = { version = "0.1.0", path = "../../libs/clients" }
 env_logger = "0.11.8"
 futures-util = "0.3.31"
 tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }

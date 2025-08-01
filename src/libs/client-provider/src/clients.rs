@@ -77,6 +77,20 @@ impl IngestModelClient {
     }
 }
 
+pub enum IngestDatasetClient {
+    
+}
+
+impl IngestDatasetClient {
+    pub async fn ingest_dataset(
+        &self,
+        _request: &IngestModelRequest,
+        _ingest_path: PathBuf,
+    ) -> Result<(), ClientError> {
+        Err(ClientError::Unimplemented)
+    }
+}
+
 pub enum DiscoverModelsClient {
     Patra(PatraClient),
 }

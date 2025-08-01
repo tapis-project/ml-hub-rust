@@ -14,6 +14,9 @@ pub enum CompressionError {
     #[error("Error creating file: {0}")]
     CompressionFileError(String),
 
+    #[error("Error stripping prefix `{0}` from path: {1}")]
+    BasePathError(String, String),
+
     #[error("File I/O error: {0}")]
     IOError(String),
 
@@ -33,6 +36,7 @@ impl Archiver {
         source: &PathBuf,
         destination: &PathBuf,
         compression: Option<Compression>,
+        base_path: Option<&str>
     ) -> Result<PathBuf, CompressionError> {
         let file = Self::create_compression_file(destination)?;
 
@@ -46,13 +50,68 @@ impl Archiver {
             .compression_method(compression_method);
 
         match source.is_dir() {
-            true => Self::zip_dir(&mut writer, options, source)?,
-            false => Self::zip_file(&mut writer, options, source)?
+            true => Self::zip_dir(&mut writer, options, source, base_path)?,
+            false => Self::zip_file(&mut writer, options, source, base_path)?
         }
 
         writer.finish().map_err(|err| CompressionError::ZipError(err.to_string()))?;
     
         Ok(destination.clone())
+    }
+
+    fn zip_dir(writer: &mut ZipWriter<File>, options: SimpleFileOptions,  path: &PathBuf, base_path: Option<&str>) -> Result<(), CompressionError> {
+        // The prefix that will be stripped from the directory name being written
+        let prefix = base_path.unwrap_or_else(|| "");
+
+        // Strip the prefix. Will strip nothing if no base_path provided. In the
+        // event nothing is stripped, the modified_path will be equal to the
+        // provided path
+        let modified_path = path.strip_prefix(prefix)
+            .map_err(|err| CompressionError::BasePathError(prefix.into(), err.to_string()))?;
+        
+        let dir_path = modified_path.to_string_lossy().into_owned();
+        
+        writer.add_directory_from_path(dir_path, options)
+            .map_err(|err| CompressionError::ZipError(err.to_string()))?;
+        
+        let entries = fs::read_dir(path)
+            .map_err(|err| CompressionError::IOError(err.to_string()))?;
+        
+        for maybe_entry in entries {
+            let entry = maybe_entry
+                .map_err(|err| CompressionError::IOError(err.to_string()))?;
+
+            match entry.path().is_dir() {
+                true => Self::zip_dir(writer, options, &entry.path(), base_path)?,
+                false => Self::zip_file(writer, options, &entry.path(), base_path)?
+            }
+        }
+
+        Ok(())
+    }
+
+    fn zip_file(writer: &mut ZipWriter<File>, options: SimpleFileOptions,  path: &PathBuf, base_path: Option<&str>) -> Result<(), CompressionError> {
+        let mut file = File::open(path)
+            .map_err(|err| CompressionError::CompressionFileError(err.to_string()))?;
+
+        // The prefix that will be stripped from the file name being written
+        let prefix = base_path.unwrap_or_else(|| "");
+
+        // Strip the prefix. Will strip nothing if no base_path provided. In the
+        // event nothing is stripped, the modified_path will be equal to the
+        // provided path
+        let modified_path = path.strip_prefix(prefix)
+            .map_err(|err| CompressionError::BasePathError(prefix.into(), err.to_string()))?;
+        
+        let file_path = modified_path.to_string_lossy().into_owned();
+
+        writer.start_file(file_path, options)
+            .map_err(|err| CompressionError::ZipError(err.to_string()))?;
+
+        std::io::copy(&mut file, writer)
+            .map_err(|err| CompressionError::IOError(err.to_string()))?;
+
+        Ok(())
     }
 
     pub fn unzip(
@@ -73,39 +132,6 @@ impl Archiver {
             .map_err(|e| CompressionError::ZipError(e.to_string()))?;
 
         Ok(destination.clone())
-    }
-
-    fn zip_dir(writer: &mut ZipWriter<File>, options: SimpleFileOptions,  path: &PathBuf) -> Result<(), CompressionError> {
-        writer.add_directory_from_path(path, options)
-            .map_err(|err| CompressionError::ZipError(err.to_string()))?;
-        
-        let entries = fs::read_dir(path)
-            .map_err(|err| CompressionError::IOError(err.to_string()))?;
-        
-        for maybe_entry in entries {
-            let entry = maybe_entry
-                .map_err(|err| CompressionError::IOError(err.to_string()))?;
-
-            match entry.path().is_dir() {
-                true => Self::zip_dir(writer, options, &entry.path())?,
-                false => Self::zip_file(writer, options, &entry.path())?
-            }
-        }
-
-        Ok(())
-    }
-
-    fn zip_file(writer: &mut ZipWriter<File>, options: SimpleFileOptions,  path: &PathBuf) -> Result<(), CompressionError> {
-        let mut file = File::open(path)
-            .map_err(|err| CompressionError::CompressionFileError(err.to_string()))?;
-
-        writer.start_file_from_path(path, options)
-            .map_err(|err| CompressionError::ZipError(err.to_string()))?;
-
-        std::io::copy(&mut file, writer)
-            .map_err(|err| CompressionError::IOError(err.to_string()))?;
-
-        Ok(())
     }
 
     fn unzip_file<R: Read + Seek>(
@@ -142,19 +168,7 @@ impl Archiver {
                     .map_err(|e| CompressionError::IOError(e.to_string()))
             }
 
-            // recursively unzip if it is a zip file
-            // // ──────────────── 2) zip ─────────────────
-            // _ if name.to_ascii_lowercase().ends_with(".zip") => {
-            //     let mut buffer = Vec::with_capacity(entry.size() as usize);
-            //     entry.read_to_end(&mut buffer)
-            //         .map_err(|e| CompressionError::IOError(e.to_string()))?;
-            //
-            //     // After one layer of unzipping, password is not applied
-            //     Self::unzip_file(Cursor::new(buffer), &out_path, None)
-            //         .map_err(|e| CompressionError::ZipError(e.to_string()))
-            // }
-
-            // ──────────────── 3) other ────────────────
+            // ──────────────── 3) zip ────────────────
             _ => {
                 if let Some(parent) = out_path.parent() {
                     fs::create_dir_all(parent)

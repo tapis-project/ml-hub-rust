@@ -10,7 +10,8 @@ use crate::clients::{
     GetModelClient,
     DiscoverModelsClient,
     PublishModelClient,
-    IngestModelClient
+    IngestModelClient,
+    IngestDatasetClient,
 };
 
 /// A provider for managing clients mapped to their respective platforms.
@@ -72,6 +73,13 @@ impl ClientProvider {
         let platform = resolve_platform(platform_name)?;
         match platform {
             _ => Err(ClientProviderError::NotFound(platform_name, "publishing"))
+        }
+    }
+
+    pub fn provide_ingest_dataset_client(platform_name: &str) -> Result<IngestDatasetClient, ClientProviderError> {
+        let platform = resolve_platform(platform_name)?;
+        match platform {
+            _ => Err(ClientProviderError::NotFound(platform_name, "ingest dataset"))
         }
     }
 }

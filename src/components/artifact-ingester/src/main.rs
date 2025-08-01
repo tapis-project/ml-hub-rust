@@ -22,8 +22,8 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::common::domain::entities::{ArtifactType, ArtifactIngestionFailureReason, ArtifactIngestionStatus};
-use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY, DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME};
+use shared::{common::domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus, ArtifactType}, constants::ARTIFACT_INGEST_DIR_NAME};
+use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
 use shared::common::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
@@ -37,8 +37,7 @@ use shared::common::infra::fs::archiver::Archiver;
 
 struct ArtifactIngesterConsumer {
     artifact_service: ArtifactService,
-    models_target_base_path: PathBuf,
-    datasets_target_base_path: PathBuf,
+    artifacts_work_dir: PathBuf,
     artifacts_cache_dir: PathBuf,
 }
 
@@ -76,10 +75,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             .expect(format!("Could not find artifact associated with ingestion '{}'", &ingestion_id).as_str());
 
         // Set the download path based on whether this is a model or a dataset
-        let download_path = match artifact.artifact_type {
-            ArtifactType::Model => self.models_target_base_path.join(artifact.id.to_string()),
-            ArtifactType::Dataset => self.datasets_target_base_path.join(artifact.id.to_string())
-        };
+        let download_path = self.artifacts_work_dir.join(artifact.id.to_string());
 
         // Ingest the artifact
         match artifact.artifact_type {
@@ -132,6 +128,14 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                     &download_path,
                                     &PathBuf::from(&self.artifacts_cache_dir).join(artifact.id.clone().to_string()),
                                     None,
+                                    // This is the base path, this path will be stripped from every file
+                                    // and directory that is written
+                                    Some(
+                                        self.artifacts_work_dir.join(artifact.id.clone().to_string())
+                                            .to_string_lossy()
+                                            .into_owned()
+                                            .as_str()
+                                    ),
                                 );
 
                                 // Get the artifact path
@@ -155,7 +159,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                 self.artifact_service.change_ingestion_status_by_ingestion_id(
                                     ingestion_id.clone(),
                                     ArtifactIngestionStatus::Archived,
-                                    Some("Successfully Archived".into())
+                                    Some("Successfully ingested".into())
                                 )
                                     .await
                                     .map_err(|err| {
@@ -348,8 +352,7 @@ async fn main() -> () {
 
     let consumer = ArtifactIngesterConsumer {
         artifact_service: artifact_service_factory(&db).await.expect("failed to initialize artifact service"),
-        models_target_base_path: PathBuf::from(&environment.shared_data_dir).join(MODEL_INGEST_DIR_NAME),
-        datasets_target_base_path: PathBuf::from(&environment.shared_data_dir).join(DATASET_INGEST_DIR_NAME),
+        artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
      

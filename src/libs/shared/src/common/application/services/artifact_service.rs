@@ -4,7 +4,7 @@ use std::future::Future;
 use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::common::application::errors::ApplicationError;
-use crate::common::application::inputs::{ArtifactType, DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
+use crate::common::application::inputs::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::common::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::common::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
 use crate::common::domain::entities::{Artifact, ArtifactType as ArtifactTypeEntity, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
@@ -15,7 +15,7 @@ use thiserror::Error;
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use crate::logging::GlobalLogger;
-use crate::constants::{DATASET_INGEST_DIR_NAME, MODEL_INGEST_DIR_NAME};
+use crate::constants::ARTIFACT_INGEST_DIR_NAME;
 use crate::common::infra::fs::stacking::FileStacker;
 use crate::common::infra::system::Env;
 
@@ -265,16 +265,11 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
         let environment = Env::new().expect("Env could not be initialized");
-        artifact.set_path(PathBuf::from(&environment.shared_data_dir).join(
-            match input.artifact_type {
-                ArtifactType::Dataset => {
-                    DATASET_INGEST_DIR_NAME
-                },
-                ArtifactType::Model => {
-                    MODEL_INGEST_DIR_NAME
-                }
-            }
-        ).join(artifact.id.to_string()));
+
+        // Set the artifact ingest dir on the 
+        artifact.set_path(PathBuf::from(&environment.shared_data_dir)
+            .join(ARTIFACT_INGEST_DIR_NAME)
+            .join(artifact.id.to_string()));
 
         // Closure for updating the artifact
         let update_artifact_path = || self.artifact_repo.update_path(&artifact);

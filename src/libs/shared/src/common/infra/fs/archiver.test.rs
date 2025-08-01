@@ -39,7 +39,7 @@ mod compression_test {
         let source: &PathBuf = &PathBuf::from(PATH_FOR_TESTING);
         let destination: &PathBuf = &PathBuf::from(TEST_ZIP_FILE);
         let compression_option = Some(Compression::Deflated);
-        let result = Archiver::zip(&source, &destination, compression_option);
+        let result = Archiver::zip(&source, &destination, compression_option, None);
         assert!(result.is_ok(), "Zipping failed: {:?}", result.err());
     }
 

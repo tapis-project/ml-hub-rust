@@ -596,6 +596,7 @@ dependencies = [
 name = "client-provider"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "clients",
  "git-lfs-client",
  "github-lfs-client",
@@ -1167,6 +1168,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 name = "git-lfs-client"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "clients",
  "shared",
 ]
@@ -1175,6 +1177,7 @@ dependencies = [
 name = "github-lfs-client"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "clients",
  "reqwest",
  "serde",
@@ -2989,6 +2992,7 @@ checksum = "487f2ccd1e17ce8c1bfab3a65c89525af41cfad4c8659021a1e9a2aacd73b89b"
 name = "patra-client"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "clients",
  "reqwest",
  "serde",

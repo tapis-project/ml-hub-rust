@@ -410,6 +410,7 @@ dependencies = [
  "amqprs",
  "async-trait",
  "client-provider",
+ "clients",
  "env_logger",
  "futures-util",
  "mongodb",

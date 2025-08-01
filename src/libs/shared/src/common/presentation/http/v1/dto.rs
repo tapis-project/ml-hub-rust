@@ -1,4 +1,3 @@
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -22,6 +21,17 @@ impl Headers {
     pub fn new(headers: Vec<Header>) -> Self {
         Self(headers)
     }
+
+    pub fn into_inner(&self) -> Vec<(String, String)> {
+        let mut headers = Vec::new();
+        let tuples = self.0.clone();
+        for kv in tuples {
+            headers.push(kv)
+        }
+
+        headers
+    }
+
     // By the http standard, some headers can be set more than once, so
     // we return an optional vector of strings
     pub fn get_all_values(&self, name: &str) -> Option<Vec<String>> {
@@ -53,7 +63,7 @@ impl Headers {
         auth_header_prefix: Option<&str>,
     ) -> Result<(), AuthorizationHeaderError> {
         // get authorization header if there isn't 1 return
-        let header_value = match self.get_first_value(AUTHORIZATION.as_str()) {
+        let header_value = match self.get_first_value("Authorization") {
             Some(value) => value,
             None => {
                 return Ok(());
@@ -87,29 +97,18 @@ impl Headers {
     }
 }
 
-impl TryFrom<&Headers> for reqwest::header::HeaderMap {
-    type Error = Box<dyn std::error::Error + Send + Sync>;
-
-    fn try_from(value: &Headers) -> Result<Self, Self::Error> {
-        let mut header_map = HeaderMap::new();
-        for (key, value) in value.0.iter() {
-            let header_name = HeaderName::try_from(key.as_str())?;
-            let header_value = HeaderValue::from_str(value.as_str())?;
-            header_map.insert(header_name, header_value);
-        }
-        Ok(header_map)
-    }
-}
-
 #[derive(Debug, Error)]
 pub enum AuthorizationHeaderError {
-    #[error("malformed header: {0}")]
+    #[error("Header name error: {0}")]
+    HeaderNameError(String),
+
+    #[error("Malformed header: {0}")]
     MalformedHeader(String),
 
-    #[error("no header value was provided")]
+    #[error("No header value was provided")]
     NoValue,
 
-    #[error("provided prefix not found")]
+    #[error("Provided prefix not found")]
     PrefixNotFound,
 }
 
