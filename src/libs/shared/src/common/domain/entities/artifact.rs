@@ -12,7 +12,7 @@ pub enum ArtifactType {
 pub struct Artifact {
     pub id: Uuid,
     pub artifact_type: ArtifactType,
-    pub path: Option<PathBuf>, 
+    pub path: Option<PathBuf>,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
 }
