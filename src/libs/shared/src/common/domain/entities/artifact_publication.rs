@@ -18,7 +18,7 @@ pub enum ArtifactPublicationFailedReason {
 }
 
 impl ArtifactPublicationFailedReason {
-    fn kind(&self) -> &str {
+    fn _kind(&self) -> &str {
         match self {
             Self::FailedToExtract(_) => "FailedToExtract",
             Self::FailedToPublishArtifact(_) => "FailedToPublishArtifact",
@@ -76,7 +76,7 @@ pub struct ArtifactPublication  {
     pub last_modified: TimeStamp,
 }
 
-/// Represents the life cycle of an artifact 
+/// Represents the life cycle of an attempt to publish an artifact
 impl ArtifactPublication {
     pub fn new(artifact_id: Uuid, platform: String, platform_artifact_id: String) -> Self {
         let now = TimeStamp::now();
