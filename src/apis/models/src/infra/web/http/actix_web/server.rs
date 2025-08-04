@@ -51,7 +51,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::publish_model::publish_model)
             .service(presentation::http::v1::actix_web::handlers::list_platforms::list_platforms)
             .service(presentation::http::v1::actix_web::handlers::download_artifact::download_artifact)
-            .service(presentation::http::v1::actix_web::handlers::upload_artifacts::upload_artifacts)
+            .service(presentation::http::v1::actix_web::handlers::upload_artifact::upload_artifact)
     })
         .bind(addrs)?
         .run()

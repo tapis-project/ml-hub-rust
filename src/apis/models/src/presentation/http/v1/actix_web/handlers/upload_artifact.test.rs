@@ -1,10 +1,10 @@
 #[cfg(test)]
-mod upload_artifacts_test {
+mod upload_artifact_test {
     use actix_web::{test, web, App, http::header};
     use bytes::Bytes;
     use shared::common::infra::persistence::mongo::database::{get_db, ClientParams};
     use crate::bootstrap::state::AppState;
-    use crate::presentation::http::v1::actix_web::handlers::upload_artifacts::upload_artifacts;
+    use crate::presentation::http::v1::actix_web::handlers::upload_artifact::upload_artifact;
 
     // #[test]
     #[ignore]
@@ -26,13 +26,13 @@ mod upload_artifacts_test {
     }
 
     #[actix_web::test]#[ignore]
-    async fn test_upload_artifacts_success() {
+    async fn test_upload_artifact_success() {
         // 1. setup test AppState and service
         let app_state = setup_test_app_state().await;
         let app = test::init_service(
             App::new()
                 .app_data(app_state.clone())
-                .service(upload_artifacts)
+                .service(upload_artifact)
         ).await;
 
         // 2. Multipart/form-data
