@@ -8,8 +8,8 @@ use clients::PublishModelClient;
 use shared::logging::SharedLogger;
 use std::collections::HashMap;
 
-#[post("models-api/artifacts/{artifact_id}/publications")]
-async fn publish_model(
+#[post("models-api/artifacts/{artifact_id}/metadata")]
+async fn create_model_metadata(
     req: HttpRequest,
     path: web::Path<PublishArtifactPath>,
     query: web::Query<HashMap<String, String>>,
@@ -17,7 +17,7 @@ async fn publish_model(
 ) -> impl Responder {
     let logger = SharedLogger::new();
 
-    logger.debug("Start publish model operation");
+    logger.debug("Start create model metadata operation");
     
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {

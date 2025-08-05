@@ -3,13 +3,13 @@ use actix_web::test;
 use actix_web::web;
 use actix_web::App;
 use actix_web::HttpResponse;
-use models::presentation::http::v1::actix_web::handlers::get_model::get_model;
+use crate::presentation::http::v1::actix_web::handlers::get_model::get_model;
 use shared::models::presentation::http::v1::dto::GetModelPath;
 use std::collections::HashMap;
 use std::env;
 
 #[cfg(test)]
-mod tests {
+mod get_model_test {
 
     use actix_web::{HttpMessage, HttpRequest};
 
