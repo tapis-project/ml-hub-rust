@@ -7,15 +7,6 @@ use crate::utils::token_from_headers;
 use crate::tokens::decode_jwt;
 
 use serde_json::Value;
-// use shared::presentation::http::v1::dto::{
-//     Archive,
-//     Artifact,
-//     Compression
-// };
-use clients::artifacts::{
-    ArtifactGenerator,
-    // ArtifactStager,
-};
 use clients::{
     ClientError, ClientJsonResponse, PublishModelClient, ClientErrorScope
 };
@@ -26,8 +17,6 @@ use shared::logging::SharedLogger;
 pub struct TapisClient {
     logger: SharedLogger
 }
-
-impl ArtifactGenerator for TapisClient {}
 
 impl PublishModelClient for TapisClient {
     type Data = Value;

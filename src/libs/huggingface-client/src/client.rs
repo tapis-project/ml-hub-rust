@@ -2,7 +2,6 @@ use crate::constants;
 use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
 use crate::utils::deserialize_response_body;
 use async_trait;
-use clients::artifacts::ArtifactGenerator;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient,
     GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
@@ -52,8 +51,6 @@ pub struct HuggingFaceClient {
     client: ReqwestClient,
     logger: SharedLogger,
 }
-
-impl ArtifactGenerator for HuggingFaceClient {}
 
 #[async_trait::async_trait]
 impl ListModelsClient for HuggingFaceClient {

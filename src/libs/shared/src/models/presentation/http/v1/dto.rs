@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use actix_multipart::Multipart;
 pub use crate::common::presentation::http::v1::dto::{
     Headers,
     DownloadArtifactBody,
-    IngestArtifactBody
+    IngestArtifactBody,
+    PublishArtifactBody,
+    PublishArtifactPath,
+    PublishArtifactRequest
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -28,13 +30,6 @@ pub struct DownloadModelPath {
 pub struct IngestModelPath {
     pub platform: String,
     pub model_id: String
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct PublishModelPath {
-    pub platform: String,
-    pub model_id: String,
-    pub path: String
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -75,15 +70,8 @@ pub struct DownloadModelRequest {
     pub headers: Headers,
     pub path: DownloadModelPath,
 }
-pub struct PublishModelRequest {
-    pub headers: Headers,
-    pub path: PublishModelPath,
-    pub query: HashMap<String, String>,
-    pub payload: Multipart,
-}
 
-pub struct UploadModelRequest {
-}
+pub struct UploadModelRequest {}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SystemRequirement {

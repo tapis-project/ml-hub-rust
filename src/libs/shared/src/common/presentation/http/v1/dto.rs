@@ -1,14 +1,10 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::path::PathBuf;
 use strum_macros::{Display, EnumString};
 use thiserror::Error;
 // Reexport to create a unified api for all artifact-related functionality
 pub use crate::common::presentation::http::v1::responses::artifact_helpers;
-
-// TODO Refactor Multipart into actix_web and create an adapter that prevents
-// consumer from needing to know about this framework-speicifc implemntation
-use actix_multipart::Multipart;
 
 pub type Header = (String, String);
 
@@ -142,31 +138,30 @@ pub enum Compression {
     Deflated,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PublishArtifactPath {
+    pub artifact_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct PublishArtifactBody {
+    pub platform: String,
+    pub platform_artifact_id: String,
+    pub artifact_metadata: Option<Value>
+}
+
+pub struct PublishArtifactRequest {
+    pub headers: Headers,
+    pub path: PublishArtifactPath,
+    pub query: HashMap<String, String>,
+    pub body: PublishArtifactBody,
+}
+
 #[derive(Clone, Debug)]
 pub struct Artifact {
     pub path: String,
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
-}
-
-#[derive(Clone, Debug)]
-pub struct StagedArtifact {
-    pub path: PathBuf,
-    pub artifact: Artifact,
-}
-
-pub struct ArtifactStagingParams<'a> {
-    pub artifact: &'a Artifact,
-    pub staged_filename: Option<String>,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>,
-}
-
-pub struct MultipartStagingParams<'payload> {
-    pub payload: &'payload mut Multipart,
-    pub staged_filename: String,
-    pub archive: Option<Archive>,
-    pub compression: Option<Compression>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]

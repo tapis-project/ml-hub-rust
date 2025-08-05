@@ -1,5 +1,4 @@
 use async_trait;
-use clients::artifacts::ArtifactGenerator;
 use clients::{ClientError, ClientErrorScope, IngestDatasetClient, IngestModelClient};
 use shared::common::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
@@ -14,8 +13,6 @@ use std::path::PathBuf;
 pub struct GitLfsClient {
     _logger: SharedLogger,
 }
-
-impl ArtifactGenerator for GitLfsClient {}
 
 impl SyncGitRepository for GitLfsClient {}
 

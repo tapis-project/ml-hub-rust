@@ -1,4 +1,3 @@
-use shared::common::presentation::http::v1::dto::StagedArtifact;
 // Re-exporting here to make the api cleaner and more predictable. Everything
 // clients needs to implement should come from this module. Removing the 'pub'
 // keyword below will break this modules api for consumers
@@ -20,20 +19,6 @@ impl <Data: Serialize, Metadata: Serialize>ClientJsonResponse<Data, Metadata> {
             message,
             result,
             metadata
-        }
-    }
-}
-
-pub struct ClientStagedArtifactResponse {
-    pub staged_artifact: StagedArtifact,
-    pub status: Option<u16>,
-}
-
-impl ClientStagedArtifactResponse {
-    pub fn new(staged_artifact: StagedArtifact, status: Option<u16>) -> Self {
-        return Self {
-            staged_artifact,
-            status,
         }
     }
 }

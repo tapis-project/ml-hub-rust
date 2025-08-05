@@ -1,6 +1,4 @@
 use thiserror::Error;
-
-use crate::artifacts::ArtifactStagingError;
 use shared::common::infra::fs::git::GitError;
 
 #[derive(Debug)]
@@ -50,9 +48,6 @@ pub enum ClientError {
     #[error("Missing or invalid credentials: {0}")]
     MissingInvalidCredentials(String),
 
-    #[error("Error staging artifact: {0}")]
-    ArtifactStagingError(#[from] ArtifactStagingError),
-
     #[error("Service unavailable: {0}")]
     Unavailable(String),
 }
@@ -68,7 +63,6 @@ impl ClientError {
             ClientError::Unavailable(_) => 503,
             ClientError::Unimplemented => 500,
             ClientError::MissingInvalidCredentials(_) => 400,
-            ClientError::ArtifactStagingError(_) => 500
         }
     }
 }

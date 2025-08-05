@@ -7,7 +7,7 @@ use patra_client::client::PatraClient;
 use serde_json::Value;
 use shared::models::presentation::http::v1::dto::{
     DiscoverModelsRequest, GetModelRequest, IngestModelRequest, ListModelsRequest,
-    PublishModelRequest,
+    PublishArtifactRequest,
 };
 use std::path::PathBuf;
 
@@ -119,7 +119,7 @@ impl clients::PublishModelClient for PublishModelClient {
     type Metadata = Value;
     async fn publish_model(
         &self,
-        _request: &PublishModelRequest,
+        _request: &PublishArtifactRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<_, ClientError> = match self {
             _ => Err(ClientError::NotFound {

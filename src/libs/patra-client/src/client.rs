@@ -1,6 +1,5 @@
 use crate::utils::deserialize_response_body;
 use async_trait;
-use clients::artifacts::ArtifactGenerator;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient,
     ListModelsClient,
@@ -18,8 +17,6 @@ pub struct PatraClient {
     client: ReqwestClient,
     logger: SharedLogger,
 }
-
-impl ArtifactGenerator for PatraClient {}
 
 #[async_trait::async_trait]
 impl ListModelsClient for PatraClient {
