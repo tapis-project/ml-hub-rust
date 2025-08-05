@@ -2,7 +2,7 @@
 mod upload_artifact_test {
     use actix_web::{test, web, App, http::header};
     use bytes::Bytes;
-    use shared::common::infra::persistence::mongo::database::{get_db, ClientParams};
+    use shared::infra::persistence::mongo::database::{get_db, ClientParams};
     use crate::bootstrap::state::AppState;
     use crate::presentation::http::v1::actix_web::handlers::upload_artifact::upload_artifact;
 

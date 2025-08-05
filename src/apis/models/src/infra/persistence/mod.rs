@@ -1,2 +1,2 @@
 #[cfg(feature = "mongo")]
-pub use shared::common::infra::persistence::mongo;
+pub use shared::infra::persistence::mongo;

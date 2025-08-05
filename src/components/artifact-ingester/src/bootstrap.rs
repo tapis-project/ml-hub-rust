@@ -1,17 +1,17 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application-level concerns
 use mongodb::Database;
-use shared::common::application::errors::ApplicationError;
-use shared::common::application::ports::repositories::{
+use shared::application::errors::ApplicationError;
+use shared::application::ports::repositories::{
     ArtifactRepository,
     ArtifactIngestionRepository,
 };
-use shared::common::application::services::artifact_service::ArtifactService;
-use shared::common::infra::persistence::mongo::repositories::{
+use shared::application::services::artifact_service::ArtifactService;
+use shared::infra::persistence::mongo::repositories::{
     ArtifactRepository as MongoArtifactRepository,
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
 };
-use shared::common::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
+use shared::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
 use std::sync::Arc;
 
 pub fn artifact_repo_factory(db: &Database) -> Arc<dyn ArtifactRepository> {

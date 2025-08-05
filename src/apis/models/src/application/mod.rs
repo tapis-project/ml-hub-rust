@@ -1,4 +1,4 @@
-pub use shared::common::application::inputs;
-pub use shared::common::application::services;
-pub use shared::common::application::ports;
-pub use shared::common::application::errors;
+pub use shared::application::inputs;
+pub use shared::application::services;
+pub use shared::application::ports;
+pub use shared::application::errors;

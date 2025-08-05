@@ -1,9 +1,9 @@
 use async_trait;
 use clients::{ClientError, ClientErrorScope, IngestDatasetClient, IngestModelClient};
-use shared::common::infra::fs::git::{
+use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
-use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
+use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
 use shared::logging::SharedLogger;
 use shared::models::presentation::http::v1::dto::IngestModelRequest;

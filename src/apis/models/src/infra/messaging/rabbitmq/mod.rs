@@ -1,1 +1,1 @@
-pub use shared::common::infra::messaging::rabbitmq::artifact_op_message_publisher;
+pub use shared::infra::messaging::rabbitmq::artifact_op_message_publisher;

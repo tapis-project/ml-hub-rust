@@ -1,7 +1,7 @@
 use serde_json::to_vec;
 use crate::models::presentation::http::v1::dto;
 use crate::models::application::inputs;
-use crate::common::application::inputs as common_inputs;
+use crate::application::inputs as common_inputs;
 use crate::errors::Error;
 
 impl TryFrom<dto::SystemRequirement> for inputs::SystemRequirement {

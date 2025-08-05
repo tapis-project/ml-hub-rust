@@ -1,7 +1,7 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application-level concerns
 use mongodb::Database;
-use shared::common::application::errors::ApplicationError;
+use shared::application::errors::ApplicationError;
 use crate::application::ports::repositories::{
     ArtifactRepository,
     ArtifactIngestionRepository,

@@ -1,5 +1,5 @@
 use thiserror::Error;
-use shared::common::infra::fs::git::GitError;
+use shared::infra::fs::git::GitError;
 
 #[derive(Debug)]
 pub enum ClientErrorScope {

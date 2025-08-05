@@ -10,11 +10,11 @@ use clients::{
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::Client as ReqwestClient;
 use serde_json::{Map, Value};
-use shared::common::infra::fs::git::{
+use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
-use shared::common::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::common::presentation::http::v1::dto::{AuthorizationHeaderError, Headers};
+use shared::presentation::http::v1::actix_web::helpers::param_to_string;
+use shared::presentation::http::v1::dto::{AuthorizationHeaderError, Headers};
 use shared::datasets::presentation::http::v1::dto::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest,

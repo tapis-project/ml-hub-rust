@@ -1,6 +1,6 @@
 use actix_web::{web, get, HttpRequest, Responder, Result};
 use actix_files::NamedFile;
-use shared::common::application::services::artifact_service::ArtifactServiceError;
+use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
 use crate::bootstrap::{
     state::AppState,

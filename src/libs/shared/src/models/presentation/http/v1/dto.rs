@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-pub use crate::common::presentation::http::v1::dto::{
+pub use crate::presentation::http::v1::dto::{
     Headers,
     DownloadArtifactBody,
     IngestArtifactBody,

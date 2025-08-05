@@ -22,18 +22,18 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::{common::domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus, ArtifactType}, constants::ARTIFACT_INGEST_DIR_NAME};
+use shared::{domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus, ArtifactType}, constants::ARTIFACT_INGEST_DIR_NAME};
 use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
 use shared::models::presentation::http::v1::dto::IngestModelRequest;
-use shared::common::infra::system::Env;
+use shared::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
-use shared::common::infra::messaging::messages::IngestArtifactMessage;
+use shared::infra::messaging::messages::IngestArtifactMessage;
 use async_trait::async_trait;
-use shared::common::application::services::artifact_service::ArtifactService;
+use shared::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
 use artifact_ingester::database::{get_db, ClientParams};
-use shared::common::infra::fs::archiver::Archiver;
+use shared::infra::fs::archiver::Archiver;
 
 struct ArtifactIngesterConsumer {
     artifact_service: ArtifactService,
