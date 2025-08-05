@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod compression_test {
     use crate::infra::fs::archiver::Archiver;
-    use crate::presentation::http::v1::dto::Compression;
+    use crate::presentation::http::v1::dto::archive::Compression;
     use std::{
         fs,
         path::PathBuf,

@@ -1,6 +1,6 @@
 use actix_web::http::header::HeaderMap;
 use crate::errors::Error;
-use crate::presentation::http::v1::dto::Headers;
+use crate::presentation::http::v1::dto::headers::Headers;
  
 impl TryFrom<&HeaderMap> for Headers {
     type Error = Error;

@@ -14,7 +14,7 @@ use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::presentation::http::v1::dto::{AuthorizationHeaderError, Headers};
+use shared::presentation::http::v1::dto::headers::{AuthorizationHeaderError, Headers};
 use shared::presentation::http::v1::dto::datasets::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest,

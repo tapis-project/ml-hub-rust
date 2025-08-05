@@ -1,31 +1,32 @@
 //! Contains conversions between web layer dtos and application layer inputs
 use crate::presentation::http::v1::dto::inference as dto;
+use crate::presentation::http::v1::dto::filtering::{FilterOperation, Filter, Order, ListAll};
 use crate::application::inputs::inference as inputs;
 use crate::application::inputs::models::ModelDiscoveryCriteriaInput;
 use crate::errors::Error;
 
-impl TryFrom<dto::FilterOperation> for inputs::FilterOperation {
+impl TryFrom<FilterOperation> for inputs::FilterOperation {
     type Error = Error;
     
-    fn try_from(value: dto::FilterOperation) -> Result<Self, Self::Error> {
+    fn try_from(value: FilterOperation) -> Result<Self, Self::Error> {
         match value {
-            dto::FilterOperation::Eq => Ok(Self::Eq),
-            dto::FilterOperation::Ne => Ok(Self::Ne),
-            dto::FilterOperation::Gt => Ok(Self::Gt),
-            dto::FilterOperation::Gte => Ok(Self::Gte),
-            dto::FilterOperation::Lt => Ok(Self::Lt),
-            dto::FilterOperation::Lte => Ok(Self::Lte),
-            dto::FilterOperation::In => Ok(Self::In),
-            dto::FilterOperation::Nin => Ok(Self::Nin),
-            dto::FilterOperation::Pattern => Ok(Self::Pattern),
+            FilterOperation::Eq => Ok(Self::Eq),
+            FilterOperation::Ne => Ok(Self::Ne),
+            FilterOperation::Gt => Ok(Self::Gt),
+            FilterOperation::Gte => Ok(Self::Gte),
+            FilterOperation::Lt => Ok(Self::Lt),
+            FilterOperation::Lte => Ok(Self::Lte),
+            FilterOperation::In => Ok(Self::In),
+            FilterOperation::Nin => Ok(Self::Nin),
+            FilterOperation::Pattern => Ok(Self::Pattern),
         }
     }
 }
 
-impl TryFrom<dto::Filter> for inputs::Filter {
+impl TryFrom<Filter> for inputs::Filter {
     type Error = Error;
     
-    fn try_from(value: dto::Filter) -> Result<Self, Self::Error> {
+    fn try_from(value: Filter) -> Result<Self, Self::Error> {
         Ok(Self {
             field: value.field,
             operation: inputs::FilterOperation::try_from(value.operation)?,
@@ -34,21 +35,21 @@ impl TryFrom<dto::Filter> for inputs::Filter {
     }
 }
 
-impl TryFrom<dto::Order> for inputs::Order {
+impl TryFrom<Order> for inputs::Order {
     type Error = Error;
     
-    fn try_from(value: dto::Order) -> Result<Self, Self::Error> {
+    fn try_from(value: Order) -> Result<Self, Self::Error> {
         match value {
-            dto::Order::Asc => Ok(Self::Asc),
-            dto::Order::Desc => Ok(Self::Desc),
+            Order::Asc => Ok(Self::Asc),
+            Order::Desc => Ok(Self::Desc),
         }
     }
 }
 
-impl TryFrom<dto::ListAll> for inputs::ListAll {
+impl TryFrom<ListAll> for inputs::ListAll {
     type Error = Error;
     
-    fn try_from(value: dto::ListAll) -> Result<Self, Self::Error> {
+    fn try_from(value: ListAll) -> Result<Self, Self::Error> {
         let page = value.page.unwrap_or(1);
         if page == 0 {
             return Err(Self::Error::new(String::from("Value for field 'page' must be >= 1")));
@@ -72,7 +73,7 @@ impl TryFrom<dto::ListAll> for inputs::ListAll {
             fields: value.fields.unwrap_or(Vec::new()),
             sort_by: value.sort_by,
             filters: Some(filters),
-            order_by: Some(inputs::Order::try_from(value.order_by.unwrap_or(dto::Order::Asc))?)
+            order_by: Some(inputs::Order::try_from(value.order_by.unwrap_or(Order::Asc))?)
         })
     }
 }

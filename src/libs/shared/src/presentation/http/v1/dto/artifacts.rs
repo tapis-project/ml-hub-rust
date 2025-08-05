@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use strum_macros::{Display, EnumString};
 use super::headers::Headers;
-
-pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
+use crate::presentation::http::v1::dto::Parameters;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct IngestArtifactBody {
@@ -18,20 +16,6 @@ pub struct IngestArtifactBody {
 pub struct DownloadArtifactBody {
     pub download_filename: Option<String>,
     pub params: Option<Parameters>,
-}
-
-#[derive(Clone, Eq, Hash, PartialEq, Debug, Deserialize, Serialize, Display, EnumString)]
-#[serde(rename_all = "lowercase")]
-pub enum Archive {
-    #[strum(serialize = "zip")]
-    Zip,
-}
-
-#[derive(Clone, Eq, Hash, PartialEq, Debug, Deserialize, Serialize, Display, EnumString)]
-#[serde(rename_all = "lowercase")]
-pub enum Compression {
-    #[strum(serialize = "deflated")]
-    Deflated,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

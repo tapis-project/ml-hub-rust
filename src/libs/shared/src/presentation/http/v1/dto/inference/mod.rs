@@ -7,7 +7,7 @@ use serde_json::Value;
 use openapiv3::OpenAPI;
 use bytes::Bytes;
 use crate::presentation::http::v1::dto::models::ModelDiscoveryCriteria;
-pub use crate::presentation::http::v1::dto::*;
+use crate::presentation::http::v1::dto::filtering::ListAll;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetInferenceServerDocsPath {

@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use actix_multipart::Multipart;
 use bytes::Bytes;
-use crate::presentation::http::v1::dto::{
-    Headers,
+use crate::presentation::http::v1::dto::headers::Headers;
+use crate::presentation::http::v1::dto::artifacts::{
     DownloadArtifactBody,
     IngestArtifactBody
 };
