@@ -4,7 +4,7 @@ use std::future::Future;
 use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
+use crate::application::inputs::artifacts::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
 use crate::domain::entities::{Artifact, ArtifactType as ArtifactTypeEntity, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};

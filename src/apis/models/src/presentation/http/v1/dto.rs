@@ -1,19 +1,21 @@
-pub use shared::models::presentation::http::v1::dto::{
+pub use shared::presentation::http::v1::dto::models::{
     ListModelsPath,
     ListModelsRequest,
     GetModelPath,
     GetModelRequest,
-    PublishArtifactPath,
-    PublishArtifactRequest,
-    PublishArtifactBody,
     DiscoverModelsPath,
     DiscoverModelsRequest,
     DiscoveryCriteriaBody,
-    IngestArtifactBody,
     IngestModelPath,
     IngestModelRequest,
     DownloadModelPath,
     DownloadModelRequest,
     UploadModelRequest,
-    Headers
 };
+pub use shared::presentation::http::v1::dto::artifacts::{
+    PublishArtifactPath,
+    PublishArtifactRequest,
+    PublishArtifactBody,
+    IngestArtifactBody,
+};
+pub use shared::presentation::http::v1::dto::headers::Headers;

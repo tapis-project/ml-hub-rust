@@ -8,7 +8,7 @@ use actix_multipart::Multipart;
 use actix_web::{post, web, HttpRequest, Responder};
 use futures::TryStreamExt;
 use serde_json::json;
-use shared::application::inputs::UploadArtifactInput;
+use shared::application::inputs::artifacts::UploadArtifactInput;
 use shared::logging::SharedLogger;
 
 // Check if the field is a zip file based on its content type

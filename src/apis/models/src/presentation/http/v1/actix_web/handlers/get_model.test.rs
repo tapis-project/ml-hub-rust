@@ -4,7 +4,7 @@ use actix_web::web;
 use actix_web::App;
 use actix_web::HttpResponse;
 use crate::presentation::http::v1::actix_web::handlers::get_model::get_model;
-use shared::models::presentation::http::v1::dto::GetModelPath;
+use shared::presentation::http::v1::dto::models::GetModelPath;
 use std::collections::HashMap;
 use std::env;
 

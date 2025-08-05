@@ -1,6 +1,5 @@
-pub mod responses;
 pub mod dto;
-pub mod domain_to_dto;
+pub mod responses;
 
 #[cfg(feature = "actix")]
 pub mod actix_web;

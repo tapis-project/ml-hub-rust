@@ -7,7 +7,7 @@ use clients::{
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
 use shared::logging::SharedLogger;
-use shared::models::presentation::http::v1::dto::{
+use shared::presentation::http::v1::dto::models::{
     DiscoverModelsRequest, GetModelRequest, ListModelsRequest,
 };
 use std::collections::hash_map::HashMap;
@@ -166,9 +166,9 @@ impl DiscoverModelsClient for PatraClient {
 }
 
 impl PatraClient {
-    const LIST_MODELS_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/list";
-    const GET_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/download_mc";
-    const SEARCH_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/search";
+    const LIST_MODELS_ENDPOINT: &str = "https://patraserver.pods.icicleai.tapis.io/list";
+    const GET_MODEL_ENDPOINT: &str = "https://patraserver.pods.icicleai.tapis.io/download_mc";
+    const SEARCH_MODEL_ENDPOINT: &str = "https://patraserver.pods.icicleai.tapis.io/search";
 
     pub fn new() -> Self {
         Self {

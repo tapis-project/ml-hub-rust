@@ -6,7 +6,7 @@ use crate::bootstrap::{
     state::AppState,
     factories::artifact_service_factory
 };
-use crate::application::inputs::DownloadArtifactInput;
+use crate::application::artifact_inputs::DownloadArtifactInput;
 use crate::presentation::http::v1::dto::{Headers, DownloadModelPath, DownloadModelRequest};
 use crate::presentation::http::v1::actix_web::helpers::build_error_response;
 

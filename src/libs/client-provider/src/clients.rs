@@ -5,10 +5,13 @@ use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
-use shared::models::presentation::http::v1::dto::{
-    DiscoverModelsRequest, GetModelRequest, IngestModelRequest, ListModelsRequest,
-    PublishArtifactRequest,
+use shared::presentation::http::v1::dto::models::{
+    DiscoverModelsRequest,
+    GetModelRequest,
+    IngestModelRequest,
+    ListModelsRequest,
 };
+use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
 use std::path::PathBuf;
 
 pub enum ListModelsClient {

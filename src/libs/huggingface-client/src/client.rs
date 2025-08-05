@@ -15,12 +15,12 @@ use shared::infra::fs::git::{
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::presentation::http::v1::dto::{AuthorizationHeaderError, Headers};
-use shared::datasets::presentation::http::v1::dto::{
+use shared::presentation::http::v1::dto::datasets::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest,
 };
 use shared::logging::SharedLogger;
-use shared::models::presentation::http::v1::dto::{
+use shared::presentation::http::v1::dto::models::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
 };
 use std::path::PathBuf;

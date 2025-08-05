@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use thiserror::Error;
 use uuid::Uuid;
-use crate::application::inputs::ArtifactType;
+use crate::application::inputs::artifacts::ArtifactType;
 
 #[derive(Debug, Error)]
 pub enum MessagePublisherError {

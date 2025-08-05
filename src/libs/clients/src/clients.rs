@@ -1,8 +1,9 @@
 use std::path::PathBuf;
-use shared::inference::presentation::http::v1::dto as inference;
-use shared::training::presentation::http::v1::dto as training;
-use shared::models::presentation::http::v1::dto as models;
-use shared::datasets::presentation::http::v1::dto as datasets;
+use shared::presentation::http::v1::dto::inference;
+use shared::presentation::http::v1::dto::training;
+use shared::presentation::http::v1::dto::models;
+use shared::presentation::http::v1::dto::datasets;
+use shared::presentation::http::v1::dto::artifacts;
 use serde::Serialize;
 use async_trait;
 // Re-exporting here to make the api cleaner and more predictable. Everything
@@ -53,7 +54,7 @@ pub trait PublishModelClient: Send + Sync {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn publish_model(&self, _request: &models::PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _request: &artifacts::PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -63,7 +64,7 @@ pub trait PublishModelMetadataClient: Send + Sync {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn publish_model_metadata(&self, _request: &models::PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model_metadata(&self, _request: &artifacts::PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
