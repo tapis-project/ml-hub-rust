@@ -18,6 +18,7 @@ use crate::logging::GlobalLogger;
 use crate::constants::ARTIFACT_INGEST_DIR_NAME;
 use crate::common::infra::fs::stacking::FileStacker;
 use crate::common::infra::system::Env;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
@@ -271,29 +272,26 @@ impl ArtifactService {
             .join(ARTIFACT_INGEST_DIR_NAME)
             .join(artifact.id.to_string()));
 
-        // Closure for updating the artifact
-        let update_artifact_path = || self.artifact_repo.update_path(&artifact);
-
-        // Persist the new Artifact to the database
-        retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
-
-        let stacker = move |chunk: Vec<u8>| -> Pin<Box<dyn Future<Output = Result<(), ArtifactServiceError>> + Send + 'a>> {
-            let filepath = artifact.path.clone();
+        
+        let filepath: Arc<Mutex<Option<PathBuf>>>  = Arc::new(Mutex::new(artifact.path.clone()));
+        let stacker_filepath: Arc<Mutex<Option<PathBuf>>> = filepath.clone(); 
+        let stacker = move |chunk: Vec<u8>| {
+            let filepath: Arc<Mutex<Option<PathBuf>>> = stacker_filepath.clone();
             Box::pin(async move {
-                if let Some(filepath) = filepath {
-                    FileStacker::stack(&filepath, chunk)
-                        .await
-                        .map_err(|e| ArtifactServiceError::NotFound(format!("Fail to stack file: {}", e)))?;
-                    Ok(())
-                } else {
-                    Err(ArtifactServiceError::NotFound(
-                        "Artifact file path is not set.".into(),
-                    ))
-                }
-            })
+                let path = filepath.lock().await.as_ref().unwrap().clone();
+                FileStacker::stack(&path, chunk)
+                    .await
+                    .map_err(|e| ArtifactServiceError::NotFound(format!("Fail to stack file: {}", e)))
+            }) as Pin<Box<dyn Future<Output = Result<(), ArtifactServiceError>> + Send + 'a>>
         };
+    
+    // Closure for updating the artifact
+    let update_artifact_path = || self.artifact_repo.update_path(&artifact);
 
+    // Persist the new Artifact to the database
+    retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
+        .map_err(|err| ArtifactServiceError::RepoError(err))?;
+    
         Ok((artifact.id.to_string(), stacker))
     }
 
