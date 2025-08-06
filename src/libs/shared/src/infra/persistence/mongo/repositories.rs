@@ -3,7 +3,8 @@ use crate::infra::persistence::mongo::database::{
     ARTIFACT_COLLECTION,
     ARTIFACT_INGESTION_COLLECTION,
 };
-use crate::infra::persistence::mongo::documents::{Artifact, ArtifactIngestion, UpdateArtifactRequest, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest, UpdateArtifactPathRequest};
+use crate::infra::persistence::mongo::documents::artifact::{Artifact, UpdateArtifactRequest, UpdateArtifactPathRequest};
+use crate::infra::persistence::mongo::documents::artifact_ingestion::{ArtifactIngestion, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest};
 use crate::application;
 use crate::domain::entities;
 use mongodb::{
