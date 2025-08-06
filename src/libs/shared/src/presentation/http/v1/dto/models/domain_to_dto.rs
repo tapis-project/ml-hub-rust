@@ -1,5 +1,5 @@
 use crate::presentation::http::v1::dto::models as dto;
-use crate::domain::entities::models as entities;
+use crate::domain::entities::model_metadata as entities;
 use crate::errors::Error;
 
 impl TryFrom<entities::SystemRequirement> for dto::SystemRequirement {

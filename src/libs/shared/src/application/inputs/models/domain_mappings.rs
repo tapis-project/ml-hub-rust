@@ -1,5 +1,5 @@
 use crate::application::inputs::models as inputs;
-use crate::domain::entities::models as domain;
+use crate::domain::entities::model_metadata as domain;
 use crate::errors::Error;
 
 impl TryFrom<inputs::SystemRequirement> for domain::SystemRequirement {

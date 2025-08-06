@@ -1,7 +1,7 @@
 use std::collections::hash_map::HashMap;
 use serde_json::Value;
 use openapiv3::OpenAPI;
-use crate::domain::entities::models::ModelMetadata;
+use crate::domain::entities::model_metadata::ModelMetadata;
 
 pub type Labels = HashMap<String, String>;
 

@@ -1,5 +1,5 @@
 //! Contains conversions between domain entities and request and response dtos
-use crate::domain::entities::models::ModelMetadata;
+use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::entities::inference as entities;
 use crate::application::inputs::inference as inputs;
 use crate::errors::Error;
