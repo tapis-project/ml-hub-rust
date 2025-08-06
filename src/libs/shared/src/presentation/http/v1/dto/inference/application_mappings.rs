@@ -2,7 +2,7 @@
 use crate::presentation::http::v1::dto::inference as dto;
 use crate::presentation::http::v1::dto::filtering::{FilterOperation, Filter, Order, ListAll};
 use crate::application::inputs::inference as inputs;
-use crate::application::inputs::models::ModelMetadata;
+use crate::application::inputs::model_metadata::ModelMetadata;
 use crate::errors::Error;
 
 impl TryFrom<FilterOperation> for inputs::FilterOperation {

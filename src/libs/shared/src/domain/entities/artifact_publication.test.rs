@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod artifact_publication_test {
     use uuid::Uuid;
-    use crate::domain::entities::{
+    use crate::domain::entities::artifact_publication::{
         ArtifactPublication,
         ArtifactPublicationStatus
     };

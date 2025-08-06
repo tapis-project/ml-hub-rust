@@ -1,4 +1,5 @@
-use crate::domain::entities::{Artifact, ArtifactIngestion, ArtifactIngestionStatus};
+use crate::domain::entities::artifact::Artifact;
+use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

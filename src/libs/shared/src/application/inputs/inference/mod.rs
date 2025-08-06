@@ -3,7 +3,7 @@ pub mod domain_to_inputs;
 use std::collections::hash_map::HashMap;
 use serde_json::Value;
 use openapiv3::OpenAPI;
-pub use crate::application::inputs::models::ModelMetadata;
+pub use crate::application::inputs::model_metadata::ModelMetadata;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FilterOperation {

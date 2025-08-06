@@ -7,7 +7,8 @@ use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
 use crate::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
-use crate::domain::entities::{Artifact, ArtifactType as ArtifactTypeEntity, ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
+use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
+use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
 use crate::domain::services::{
     ArtifactService as DomainArtifactService,
     ArtifactServiceError as DomainArtifactServiceError};

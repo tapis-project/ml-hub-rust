@@ -22,7 +22,9 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::{domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus, ArtifactType}, constants::ARTIFACT_INGEST_DIR_NAME};
+use shared::constants::ARTIFACT_INGEST_DIR_NAME;
+use shared::domain::entities::artifact_ingestion::{ArtifactIngestionFailureReason, ArtifactIngestionStatus};
+use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
 use shared::presentation::http::v1::dto::models::IngestModelRequest;
 use shared::infra::system::Env;

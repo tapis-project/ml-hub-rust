@@ -34,7 +34,7 @@ impl ArtifactRepository {
 
 #[async_trait]
 impl application::ports::repositories::ArtifactRepository for ArtifactRepository {
-    async fn save(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError> {
+    async fn save(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError> {
         let mut document = Artifact::from(artifact.clone());
         
         let result = self.write_collection.insert_one(&document, None)
@@ -46,15 +46,15 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(())
     }
 
-    async fn list_all(&self) -> Result<Vec<entities::Artifact>, ApplicationError> {
+    async fn list_all(&self) -> Result<Vec<entities::artifact::Artifact>, ApplicationError> {
         let mut cursor = self.read_collection.find(None, None)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-        let mut artifacts:Vec<entities::Artifact> = Vec::new();
+        let mut artifacts:Vec<entities::artifact::Artifact> = Vec::new();
         while let Some(artifact) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
             artifacts.push(
-                entities::Artifact::try_from(artifact)
+                entities::artifact::Artifact::try_from(artifact)
                     .map_err(|err| ApplicationError::RepoError(err.to_string()))?
             );
         }
@@ -62,7 +62,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(artifacts)
     }
 
-    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::Artifact>, ApplicationError> {
+    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact::Artifact>, ApplicationError> {
         let filter = doc! {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
@@ -72,7 +72,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
         while let Some(artifact_doc) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
-            let artifact = entities::Artifact::try_from(artifact_doc)
+            let artifact = entities::artifact::Artifact::try_from(artifact_doc)
                 .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
             return Ok(Some(artifact))
@@ -81,7 +81,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(None)
     }
 
-    async fn update(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError>  {
+    async fn update(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError>  {
         let update = UpdateArtifactRequest::try_from(artifact.clone())?;
 
         let filter = doc! {
@@ -103,7 +103,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(())
     }
 
-    async fn update_path(&self, artifact: &entities::Artifact) -> Result<(), ApplicationError> {
+    async fn update_path(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError> {
         let update = UpdateArtifactPathRequest::try_from(artifact.clone())?;
 
         let filter = doc! {
@@ -141,7 +141,7 @@ impl ArtifactIngestionRepository {
 
 #[async_trait]
 impl application::ports::repositories::ArtifactIngestionRepository for ArtifactIngestionRepository {
-    async fn save(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError> {
+    async fn save(&self, ingestion: &entities::artifact_ingestion::ArtifactIngestion) -> Result<(), ApplicationError> {
         let mut document = ArtifactIngestion::from(ingestion.clone());
         
         let result = self.write_collection.insert_one(&document, None)
@@ -153,7 +153,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(())
     }
 
-    async fn update(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError>  {
+    async fn update(&self, ingestion: &entities::artifact_ingestion::ArtifactIngestion) -> Result<(), ApplicationError>  {
         let update = UpdateArtifactIngestionRequest::from(ingestion.clone());
 
         let filter = doc! {
@@ -178,7 +178,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(())
     }
 
-    async fn update_status(&self, ingestion: &entities::ArtifactIngestion) -> Result<(), ApplicationError> {
+    async fn update_status(&self, ingestion: &entities::artifact_ingestion::ArtifactIngestion) -> Result<(), ApplicationError> {
         let update = UpdateArtifactIngestionStatusRequest::from(ingestion.clone());
 
         let filter = doc! {
@@ -200,7 +200,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(())
     }
 
-    async fn find_by_artifact_id(&self, artifact_id: uuid::Uuid) -> Result<Vec<entities::ArtifactIngestion>, ApplicationError> {
+    async fn find_by_artifact_id(&self, artifact_id: uuid::Uuid) -> Result<Vec<entities::artifact_ingestion::ArtifactIngestion>, ApplicationError> {
         let filter = doc! {
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
@@ -209,12 +209,12 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-        let mut ingestions: Vec<entities::ArtifactIngestion> = Vec::new();
+        let mut ingestions: Vec<entities::artifact_ingestion::ArtifactIngestion> = Vec::new();
         while let Some(ingestion_doc) = cursor.try_next()
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
         {
-            let ingestion = entities::ArtifactIngestion::try_from(ingestion_doc)
+            let ingestion = entities::artifact_ingestion::ArtifactIngestion::try_from(ingestion_doc)
                     .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
             ingestions.push(ingestion);
@@ -223,7 +223,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(ingestions)
     }
 
-    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::ArtifactIngestion>, ApplicationError> {
+    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact_ingestion::ArtifactIngestion>, ApplicationError> {
         let filter = doc! {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
@@ -236,7 +236,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
         {
-            let ingestion = entities::ArtifactIngestion::try_from(ingestion_doc)
+            let ingestion = entities::artifact_ingestion::ArtifactIngestion::try_from(ingestion_doc)
                     .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
             return Ok(Some(ingestion))

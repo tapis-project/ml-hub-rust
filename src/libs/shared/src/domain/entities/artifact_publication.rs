@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::domain::entities::TimeStamp;
+use crate::domain::entities::timestamp::TimeStamp;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

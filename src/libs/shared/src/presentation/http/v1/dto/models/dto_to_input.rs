@@ -1,6 +1,6 @@
 use serde_json::to_vec;
 use crate::presentation::http::v1::dto::models as dto;
-use crate::application::inputs::models as inputs;
+use crate::application::inputs::model_metadata as inputs;
 use crate::application::inputs::artifacts as artifact_inputs;
 use crate::errors::Error;
 

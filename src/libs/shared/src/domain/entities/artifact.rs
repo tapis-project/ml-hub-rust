@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use uuid::Uuid;
-use crate::domain::entities::TimeStamp;
+use crate::domain::entities::timestamp::TimeStamp;
 
 #[derive(Clone, Debug)]
 pub enum ArtifactType {

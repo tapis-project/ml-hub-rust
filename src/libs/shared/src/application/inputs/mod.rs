@@ -1,3 +1,3 @@
 pub mod artifacts;
-pub mod models;
+pub mod model_metadata;
 pub mod inference;

@@ -1,4 +1,5 @@
-use crate::domain::entities::{Artifact, ArtifactIngestion};
+use crate::domain::entities::artifact::Artifact;
+use crate::domain::entities::artifact_ingestion::ArtifactIngestion;
 use crate::application::errors::ApplicationError;
 use uuid::Uuid;
 use async_trait::async_trait;
@@ -20,3 +21,12 @@ pub trait ArtifactIngestionRepository: Send + Sync {
     async fn find_by_artifact_id(&self, id: Uuid) -> Result<Vec<ArtifactIngestion>, ApplicationError>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<ArtifactIngestion>, ApplicationError>;
 }
+
+// #[async_trait]
+// pub trait ModelMetadataRepository: Send + Sync {
+//     async fn save(&self, metadata: &ModelMetadata) -> Result<(), ApplicationError>;
+//     async fn update(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
+//     async fn update_status(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
+//     async fn find_by_artifact_id(&self, id: Uuid) -> Result<Vec<ArtifactIngestion>, ApplicationError>;
+//     async fn find_by_id(&self, id: Uuid) -> Result<Option<ArtifactIngestion>, ApplicationError>;
+// }

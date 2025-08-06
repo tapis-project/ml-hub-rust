@@ -1,24 +1,24 @@
 use crate::domain::entities;
 use crate::presentation::http::v1::responses;
 
-impl From<entities::ArtifactIngestionStatus> for responses::ArtifactIngestionStatus {
-    fn from(value: entities::ArtifactIngestionStatus) -> Self {
+impl From<entities::artifact_ingestion::ArtifactIngestionStatus> for responses::ArtifactIngestionStatus {
+    fn from(value: entities::artifact_ingestion::ArtifactIngestionStatus) -> Self {
         match value {
-            entities::ArtifactIngestionStatus::Submitted => responses::ArtifactIngestionStatus::Submitted,
-            entities::ArtifactIngestionStatus::Resubmitted => responses::ArtifactIngestionStatus::Resubmitted,
-            entities::ArtifactIngestionStatus::Archived => responses::ArtifactIngestionStatus::Archived,
-            entities::ArtifactIngestionStatus::Archiving => responses::ArtifactIngestionStatus::Archiving,
-            entities::ArtifactIngestionStatus::Pending => responses::ArtifactIngestionStatus::Pending,
-            entities::ArtifactIngestionStatus::Finished => responses::ArtifactIngestionStatus::Finished,
-            entities::ArtifactIngestionStatus::Failed(_) => responses::ArtifactIngestionStatus::Failed,
-            entities::ArtifactIngestionStatus::Downloaded => responses::ArtifactIngestionStatus::Downloaded,
-            entities::ArtifactIngestionStatus::Downloading => responses::ArtifactIngestionStatus::Downloading,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Submitted => responses::ArtifactIngestionStatus::Submitted,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Resubmitted => responses::ArtifactIngestionStatus::Resubmitted,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Archived => responses::ArtifactIngestionStatus::Archived,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Archiving => responses::ArtifactIngestionStatus::Archiving,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Pending => responses::ArtifactIngestionStatus::Pending,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Finished => responses::ArtifactIngestionStatus::Finished,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Failed(_) => responses::ArtifactIngestionStatus::Failed,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Downloaded => responses::ArtifactIngestionStatus::Downloaded,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Downloading => responses::ArtifactIngestionStatus::Downloading,
         }
     }
 }
 
-impl From<entities::ArtifactIngestion> for responses::ArtifactIngestion {
-    fn from(value: entities::ArtifactIngestion) -> Self {
+impl From<entities::artifact_ingestion::ArtifactIngestion> for responses::ArtifactIngestion {
+    fn from(value: entities::artifact_ingestion::ArtifactIngestion) -> Self {
         responses::ArtifactIngestion {
             artifact_id: value.artifact_id.to_string(),
             id: value.id.to_string(),

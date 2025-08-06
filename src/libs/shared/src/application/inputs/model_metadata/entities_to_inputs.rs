@@ -1,4 +1,4 @@
-use crate::application::inputs::models as inputs;
+use crate::application::inputs::model_metadata as inputs;
 use crate::domain::entities::model_metadata as domain;
 use crate::errors::Error;
 
