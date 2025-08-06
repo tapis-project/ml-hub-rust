@@ -57,10 +57,10 @@ impl TryFrom<entities::ModelIO> for dto::ModelIO {
         })
     }
 }
-impl TryFrom<entities::ModelDiscoveryCriteria> for dto::ModelDiscoveryCriteria {
+impl TryFrom<entities::ModelMetadata> for dto::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: entities::ModelDiscoveryCriteria) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::ModelMetadata) -> Result<Self, Self::Error> {
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(dto::ModelIO::try_from(input)?)

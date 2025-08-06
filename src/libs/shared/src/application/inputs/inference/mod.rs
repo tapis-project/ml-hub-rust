@@ -1,4 +1,4 @@
-pub mod domain_mappings;
+pub mod domain_to_inputs;
 
 use std::collections::hash_map::HashMap;
 use serde_json::Value;

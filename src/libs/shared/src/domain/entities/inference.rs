@@ -1,7 +1,7 @@
 use std::collections::hash_map::HashMap;
 use serde_json::Value;
 use openapiv3::OpenAPI;
-use crate::domain::entities::models::ModelDiscoveryCriteria;
+use crate::domain::entities::models::ModelMetadata;
 
 pub type Labels = HashMap<String, String>;
 
@@ -108,7 +108,7 @@ pub struct ModelInterfaceMetadataSelectors {
 pub struct ModelInterfaceMetadataDiscoveryCriteria {
     pub platform: String,
     pub confidence: Option<u8>,
-    pub criteria: Vec<ModelDiscoveryCriteria>
+    pub criteria: Vec<ModelMetadata>
 }
 
 pub struct ModelInterfaceMetadata {

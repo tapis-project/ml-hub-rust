@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use openapiv3::OpenAPI;
 use bytes::Bytes;
-use crate::presentation::http::v1::dto::models::ModelDiscoveryCriteria;
+use crate::presentation::http::v1::dto::models::ModelMetadata;
 use crate::presentation::http::v1::dto::filtering::ListAll;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -187,7 +187,7 @@ pub struct ModelInterfaceMetadataSelectors {
 pub struct ModelInterfaceMetadataDiscoveryCriteria {
     pub platform: String,
     pub confidence: Option<u8>,
-    pub criteria: Vec<ModelDiscoveryCriteria>
+    pub criteria: Vec<ModelMetadata>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

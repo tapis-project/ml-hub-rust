@@ -101,7 +101,7 @@ pub struct ModelIO {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ModelDiscoveryCriteria {
+pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
     pub model_type: Option<String>,
@@ -158,6 +158,6 @@ pub struct ModelDiscoveryCriteria {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DiscoveryCriteriaBody {
-    pub criteria: Vec<ModelDiscoveryCriteria>,
+    pub criteria: Vec<ModelMetadata>,
     pub confidence_threshold: Option<Vec<String>>,
 }

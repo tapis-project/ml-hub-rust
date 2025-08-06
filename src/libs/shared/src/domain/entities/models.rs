@@ -26,7 +26,7 @@ pub struct ModelIO {
     pub shape: Option<Vec<i32>>
 }
 
-pub struct ModelDiscoveryCriteria {
+pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
     pub model_type: Option<String>,

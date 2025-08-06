@@ -1,1 +1,1 @@
-pub use shared::inference::application::inputs::*;
+pub use shared::application::inputs::inference::*;

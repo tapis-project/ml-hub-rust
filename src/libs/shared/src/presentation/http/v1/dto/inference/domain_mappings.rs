@@ -1,5 +1,5 @@
 //! Contains conversions between domain entities and request and response dtos
-use crate::presentation::http::v1::dto::models::ModelDiscoveryCriteria as ModelDiscoveryCriteriaDto;
+use crate::presentation::http::v1::dto::models::ModelMetadata as ModelMetadataDto;
 use crate::domain::entities::inference as entities;
 use crate::presentation::http::v1::dto::inference as dto;
 use crate::errors::Error;
@@ -239,9 +239,9 @@ impl TryFrom<entities::ModelInterfaceMetadataDiscoveryCriteria> for dto::ModelIn
     type Error = Error;
 
     fn try_from(value: entities::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
-        let mut criteria: Vec<ModelDiscoveryCriteriaDto> = Vec::with_capacity(1);
+        let mut criteria: Vec<ModelMetadataDto> = Vec::with_capacity(1);
         for criterion in value.criteria {
-            criteria.push(ModelDiscoveryCriteriaDto::try_from(criterion)?);
+            criteria.push(ModelMetadataDto::try_from(criterion)?);
         }
         
         Ok(Self {

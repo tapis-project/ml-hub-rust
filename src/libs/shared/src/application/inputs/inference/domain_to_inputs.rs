@@ -1,5 +1,5 @@
 //! Contains conversions between domain entities and request and response dtos
-use crate::domain::entities::models::ModelDiscoveryCriteria;
+use crate::domain::entities::models::ModelMetadata;
 use crate::domain::entities::inference as entities;
 use crate::application::inputs::inference as inputs;
 use crate::errors::Error;
@@ -256,9 +256,9 @@ impl TryFrom<inputs::ModelInterfaceMetadataDiscoveryCriteria> for entities::Mode
     type Error = Error;
 
     fn try_from(value: inputs::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
-        let mut criteria: Vec<ModelDiscoveryCriteria> = Vec::with_capacity(1);
+        let mut criteria: Vec<ModelMetadata> = Vec::with_capacity(1);
         for criterion in value.criteria {
-            criteria.push(ModelDiscoveryCriteria::try_from(criterion)?);
+            criteria.push(ModelMetadata::try_from(criterion)?);
         }
         
         Ok(Self {

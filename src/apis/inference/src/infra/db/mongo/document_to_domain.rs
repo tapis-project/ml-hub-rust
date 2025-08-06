@@ -257,9 +257,9 @@ impl TryFrom<documents::ModelInterfaceMetadataDiscoveryCriteria> for domain::Mod
     type Error = Error;
 
     fn try_from(value: documents::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
-        let mut criteria: Vec<domain::ModelDiscoveryCriteria> = Vec::with_capacity(1);
+        let mut criteria: Vec<domain::ModelMetadata> = Vec::with_capacity(1);
         for criterion in value.criteria {
-            criteria.push(domain::ModelDiscoveryCriteria::try_from(criterion)?);
+            criteria.push(domain::ModelMetadata::try_from(criterion)?);
         }
         
         Ok(Self {
@@ -462,10 +462,10 @@ impl TryFrom<documents::ModelIO> for domain::ModelIO {
     }
 }
 
-impl TryFrom<documents::ModelDiscoveryCriteria> for domain::ModelDiscoveryCriteria {
+impl TryFrom<documents::ModelMetadata> for domain::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: documents::ModelDiscoveryCriteria) -> Result<Self, Self::Error> {
+    fn try_from(value: documents::ModelMetadata) -> Result<Self, Self::Error> {
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(domain::ModelIO::try_from(input)?)

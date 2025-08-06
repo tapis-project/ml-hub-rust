@@ -125,7 +125,7 @@ pub struct ModelInterfaceMetadataSelectors {
 pub struct ModelInterfaceMetadataDiscoveryCriteria {
     pub platform: String,
     pub confidence: Option<u8>,
-    pub criteria: Vec<ModelDiscoveryCriteria>
+    pub criteria: Vec<ModelMetadata>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -212,7 +212,7 @@ pub struct ModelIO {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ModelDiscoveryCriteria {
+pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
     pub model_type: Option<String>,
