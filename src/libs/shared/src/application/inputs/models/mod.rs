@@ -1,4 +1,4 @@
-pub mod domain_mappings;
+pub mod entities_to_inputs;
 
 use serde_json::Value;
 
@@ -33,7 +33,7 @@ pub struct ModelIO {
 }
 
 #[derive(Debug)]
-pub struct ModelDiscoveryCriteriaInput {
+pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
     pub model_type: Option<String>,

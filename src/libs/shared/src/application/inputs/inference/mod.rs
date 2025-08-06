@@ -3,7 +3,7 @@ pub mod domain_to_inputs;
 use std::collections::hash_map::HashMap;
 use serde_json::Value;
 use openapiv3::OpenAPI;
-pub use crate::application::inputs::models::ModelDiscoveryCriteriaInput;
+pub use crate::application::inputs::models::ModelMetadata;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FilterOperation {
@@ -162,7 +162,7 @@ pub struct ModelInterfaceMetadataSelectors {
 pub struct ModelInterfaceMetadataDiscoveryCriteria {
     pub platform: String,
     pub confidence: Option<u8>,
-    pub criteria: Vec<ModelDiscoveryCriteriaInput>
+    pub criteria: Vec<ModelMetadata>
 }
 
 #[derive(Debug)]

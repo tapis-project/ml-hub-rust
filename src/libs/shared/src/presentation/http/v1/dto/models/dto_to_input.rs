@@ -63,7 +63,7 @@ impl TryFrom<dto::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<dto::ModelMetadata> for inputs::ModelDiscoveryCriteriaInput {
+impl TryFrom<dto::ModelMetadata> for inputs::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: dto::ModelMetadata) -> Result<Self, Self::Error> {
