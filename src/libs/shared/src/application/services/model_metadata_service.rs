@@ -22,6 +22,9 @@ pub enum ModelMetadataServiceError {
 
     #[error("{0}")]
     DomainServiceError(#[from] ModelMetadataDomainServiceError),
+
+    #[error("Metadata already exists for Artifact '{0}'")]
+    DuplicateMetadataError(String),
 }
 
 pub struct ModelMetadataService {
@@ -63,6 +66,17 @@ impl ModelMetadataService {
 
         // Determine if we are allowed to create the metadata for this artifact
         ModelMetadataDomainService::create(&artifact, metadata)?;
+
+        // Ensure no metadata already exists for this artifact
+        let find_metadata = || self.model_metadata_repo.find_by_artifact_id(&artifact_id);
+
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY)
+            .await?;
+
+        // Check if duplicate metadata
+        if maybe_metadata.is_some() {
+            return Err(ModelMetadataServiceError::DuplicateMetadataError(artifact_id.to_string()));
+        };
 
         let create_metadata = || self.model_metadata_repo.save(&input);
 

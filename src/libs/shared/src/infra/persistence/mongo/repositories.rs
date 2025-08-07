@@ -5,7 +5,7 @@ use crate::infra::persistence::mongo::database::{
 };
 use crate::infra::persistence::mongo::documents::artifact::{Artifact, UpdateArtifactRequest, UpdateArtifactPathRequest};
 use crate::infra::persistence::mongo::documents::artifact_ingestion::{ArtifactIngestion, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest};
-use crate::application;
+use crate::{application, domain};
 use crate::domain::entities;
 use mongodb::{
     bson::{
@@ -277,5 +277,26 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         document._id = result.inserted_id.as_object_id();
 
         Ok(())
+    }
+
+    async fn find_by_artifact_id(&self, artifact_id: &uuid::Uuid) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+        let filter = doc! {
+            "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
+        };
+
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        let maybe_metadata = match cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))? {
+            Some(m) => {
+                Some(domain::entities::model_metadata::ModelMetadata::try_from(m)
+                    .map_err(|err| ApplicationError::ConvesionError(err.to_string()))?)
+
+            },
+            None => None
+        };
+
+        Ok(maybe_metadata)
     }
 }
