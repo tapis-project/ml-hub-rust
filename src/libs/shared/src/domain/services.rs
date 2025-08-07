@@ -2,6 +2,8 @@ use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
 
+use super::entities::model_metadata::ModelMetadata;
+
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
     #[error("{0}")]
@@ -26,5 +28,25 @@ impl ArtifactService {
                 Err(ArtifactServiceError::InvalidIngestionState("Cannot set the artifact's path because the ingestion is missing a value for field artifact_path".into()))
             }
         }
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ModelMetadataServiceError {
+    #[error("Cannot create metadata for an artifact that is not fully ingested")]
+    ArtifactNotReady,
+}
+
+pub struct ModelMetadataService {}
+
+impl ModelMetadataService {
+    /// Verifies the the artifact exists and that the artifact has is fully
+    /// ingested or uploaded
+    pub fn create<'a>(artifact: &Artifact, _metadata: ModelMetadata) -> Result<(), ModelMetadataServiceError> {
+        if !artifact.is_fully_ingested() {
+            return Err(ModelMetadataServiceError::ArtifactNotReady);
+        }
+
+        return Ok(());
     }
 }

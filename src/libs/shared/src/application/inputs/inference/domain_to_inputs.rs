@@ -2,10 +2,10 @@
 use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::entities::inference as entities;
 use crate::application::inputs::inference as inputs;
-use crate::errors::Error;
+use crate::application::errors::ApplicationError;
 
 impl TryFrom<inputs::Kind> for entities::Kind {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::Kind) -> Result<Self, Self::Error> {
         match value {
@@ -17,7 +17,7 @@ impl TryFrom<inputs::Kind> for entities::Kind {
 }
 
 impl TryFrom<inputs::InterfaceType> for entities::InterfaceType {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::InterfaceType) -> Result<Self, Self::Error> {
         match value {
@@ -29,7 +29,7 @@ impl TryFrom<inputs::InterfaceType> for entities::InterfaceType {
 }
 
 impl TryFrom<inputs::ContainerInterfaceMetadata> for entities::ContainerInterfaceMetadata {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::ContainerInterfaceMetadata) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -41,17 +41,17 @@ impl TryFrom<inputs::ContainerInterfaceMetadata> for entities::ContainerInterfac
 }
 
 impl TryFrom<inputs::ContainerInterface> for entities::ContainerInterface {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::ContainerInterface) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::Interface {
-            return Err(Error::from_str("Field 'kind' must be of variant Kind::Interface"))
+            return Err(ApplicationError::ConvesionError("Field 'kind' must be of variant Kind::Interface".to_string()))
         }
 
         let r#type = entities::InterfaceType::try_from(value.r#type)?;
         if r#type != entities::InterfaceType::Container {
-            return Err(Error::from_str("Field 'type' must be of variant InterfaceType::Container"))
+            return Err(ApplicationError::ConvesionError("Field 'type' must be of variant InterfaceType::Container".to_string()))
         }
 
         Ok(Self {
@@ -64,7 +64,7 @@ impl TryFrom<inputs::ContainerInterface> for entities::ContainerInterface {
 }
 
 impl TryFrom<inputs::Protocol> for entities::Protocol {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::Protocol) -> Result<Self, Self::Error> {
         match value {
@@ -75,7 +75,7 @@ impl TryFrom<inputs::Protocol> for entities::Protocol {
 }
 
 impl TryFrom<inputs::Port> for entities::Port {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::Port) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -87,7 +87,7 @@ impl TryFrom<inputs::Port> for entities::Port {
 }
 
 impl TryFrom<inputs::GpuResourceDefinition> for entities::GpuResourceDefinition {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::GpuResourceDefinition) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -98,7 +98,7 @@ impl TryFrom<inputs::GpuResourceDefinition> for entities::GpuResourceDefinition 
 }
 
 impl TryFrom<inputs::ResourcesDefinition> for entities::ResourcesDefinition {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::ResourcesDefinition) -> Result<Self, Self::Error> {
         let gpu = value.gpu
@@ -115,7 +115,7 @@ impl TryFrom<inputs::ResourcesDefinition> for entities::ResourcesDefinition {
 }
 
 impl TryFrom<inputs::Resources> for entities::Resources {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::Resources) -> Result<Self, Self::Error> {
         let limits = value.limits
@@ -134,7 +134,7 @@ impl TryFrom<inputs::Resources> for entities::Resources {
 }
 
 impl TryFrom<inputs::ContainerInterfaceSpec> for entities::ContainerInterfaceSpec {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::ContainerInterfaceSpec) -> Result<Self, Self::Error> {
         let resources = value.resources
@@ -155,7 +155,7 @@ impl TryFrom<inputs::ContainerInterfaceSpec> for entities::ContainerInterfaceSpe
 }
 
 impl TryFrom<inputs::EndpointLabels> for entities::EndpointLabels {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::EndpointLabels) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -166,7 +166,7 @@ impl TryFrom<inputs::EndpointLabels> for entities::EndpointLabels {
 }
 
 impl TryFrom<inputs::OpenApiV3Spec> for entities::OpenApiV3Spec {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::OpenApiV3Spec) -> Result<Self, Self::Error> {
         let endpoint_labels = value.endpoint_labels
@@ -181,7 +181,7 @@ impl TryFrom<inputs::OpenApiV3Spec> for entities::OpenApiV3Spec {
 }
 
 impl TryFrom<inputs::RestApiInterfaceSpec> for entities::RestApiInterfaceSpec {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::RestApiInterfaceSpec) -> Result<Self, Self::Error> {
         match value {
@@ -193,7 +193,7 @@ impl TryFrom<inputs::RestApiInterfaceSpec> for entities::RestApiInterfaceSpec {
 }
 
 impl TryFrom<inputs::RestApiInterfaceFormat> for entities::RestApiInterfaceFormat {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::RestApiInterfaceFormat) -> Result<Self, Self::Error> {
         match value {
@@ -203,7 +203,7 @@ impl TryFrom<inputs::RestApiInterfaceFormat> for entities::RestApiInterfaceForma
 }
 
 impl TryFrom<inputs::RestApiInterfaceMetadata> for entities::RestApiInterfaceMetadata {
-    type Error = Error;
+    type Error = ApplicationError;
 
     fn try_from(value: inputs::RestApiInterfaceMetadata) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -215,17 +215,17 @@ impl TryFrom<inputs::RestApiInterfaceMetadata> for entities::RestApiInterfaceMet
 }
 
 impl TryFrom<inputs::RestApiInterface> for entities::RestApiInterface {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::RestApiInterface) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::Interface {
-            return Err(Error::from_str("Field 'kind' must be variant Kind::Interface"))
+            return Err(ApplicationError::ConvesionError("Field 'kind' must be variant Kind::Interface".to_string()))
         }
 
         let r#type = entities::InterfaceType::try_from(value.r#type)?;
         if r#type != entities::InterfaceType::RestApi {
-            return Err(Error::from_str("Field 'type' must be variant InterfaceType::RestApi"))
+            return Err(ApplicationError::ConvesionError("Field 'type' must be variant InterfaceType::RestApi".to_string()))
         }
 
         let format = entities::RestApiInterfaceFormat::try_from(value.format)?;
@@ -242,7 +242,7 @@ impl TryFrom<inputs::RestApiInterface> for entities::RestApiInterface {
 }
 
 impl TryFrom<inputs::ModelInterfaceMetadataSelectors> for entities::ModelInterfaceMetadataSelectors {
-    type Error = Error;
+    type Error = ApplicationError;
 
     fn try_from(value: inputs::ModelInterfaceMetadataSelectors) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -253,12 +253,15 @@ impl TryFrom<inputs::ModelInterfaceMetadataSelectors> for entities::ModelInterfa
 }
 
 impl TryFrom<inputs::ModelInterfaceMetadataDiscoveryCriteria> for entities::ModelInterfaceMetadataDiscoveryCriteria {
-    type Error = Error;
+    type Error = ApplicationError;
 
     fn try_from(value: inputs::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
         let mut criteria: Vec<ModelMetadata> = Vec::with_capacity(1);
         for criterion in value.criteria {
-            criteria.push(ModelMetadata::try_from(criterion)?);
+            criteria.push(
+                ModelMetadata::try_from(criterion)
+                    .map_err(|err| err)?
+                );
         }
         
         Ok(Self {
@@ -270,7 +273,7 @@ impl TryFrom<inputs::ModelInterfaceMetadataDiscoveryCriteria> for entities::Mode
 }
 
 impl TryFrom<inputs::ModelInterfaceMetadata> for entities::ModelInterfaceMetadata {
-    type Error = Error;
+    type Error = ApplicationError;
 
     fn try_from(value: inputs::ModelInterfaceMetadata) -> Result<Self, Self::Error> {
         let mut selectors: Vec<entities::ModelInterfaceMetadataSelectors> = Vec::with_capacity(1);
@@ -294,7 +297,7 @@ impl TryFrom<inputs::ModelInterfaceMetadata> for entities::ModelInterfaceMetadat
 }
 
 impl TryFrom<inputs::ModelInterfaceSpec> for entities::ModelInterfaceSpec {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::ModelInterfaceSpec) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -305,17 +308,17 @@ impl TryFrom<inputs::ModelInterfaceSpec> for entities::ModelInterfaceSpec {
 }
 
 impl TryFrom<inputs::ModelInterface> for entities::ModelInterface {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::ModelInterface) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::Interface {
-            return Err(Error::from_str("Field 'kind' must be variant Kind::Interface"))
+            return Err(ApplicationError::ConvesionError("Field 'kind' must be variant Kind::Interface".to_string()))
         }
 
         let r#type = entities::InterfaceType::try_from(value.r#type)?;
         if r#type != entities::InterfaceType::Model {
-            return Err(Error::from_str("Field 'type' must be variant InterfaceType::Model"))
+            return Err(ApplicationError::ConvesionError("Field 'type' must be variant InterfaceType::Model".to_string()))
         }
 
         Ok(Self {
@@ -328,28 +331,28 @@ impl TryFrom<inputs::ModelInterface> for entities::ModelInterface {
 }
 
 impl TryFrom<inputs::InferenceServerInterface> for entities::InferenceServerInterface {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::InferenceServerInterface) -> Result<Self, Self::Error> {
         match value {
             inputs::InferenceServerInterface::Container(interface) => {
                 let r#type = entities::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != entities::InterfaceType::Container {
-                    return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Container"))
+                    return Err(ApplicationError::ConvesionError("Inference server interface field 'type' must be of of type InterfaceType::Container".to_string()))
                 }
                 Ok(entities::InferenceServerInterface::Container(entities::ContainerInterface::try_from(interface)?))
             },
             inputs::InferenceServerInterface::RestApi(interface) => {
                 let r#type = entities::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != entities::InterfaceType::RestApi {
-                    return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::RestApi"))
+                    return Err(ApplicationError::ConvesionError("Inference server interface field 'type' must be of of type InterfaceType::RestApi".to_string()))
                 }
                 Ok(entities::InferenceServerInterface::RestApi(entities::RestApiInterface::try_from(interface)?))
             },
             inputs::InferenceServerInterface::Model(interface) => {
                 let r#type = entities::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != entities::InterfaceType::Model {
-                    return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Model"))
+                    return Err(ApplicationError::ConvesionError("Inference server interface field 'type' must be of of type InterfaceType::Model".to_string()))
                 }
                 Ok(entities::InferenceServerInterface::Model(entities::ModelInterface::try_from(interface)?))
             },
@@ -358,7 +361,7 @@ impl TryFrom<inputs::InferenceServerInterface> for entities::InferenceServerInte
 }
 
 impl TryFrom<inputs::InferenceServerMetadata> for entities::InferenceServerMetadata {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::InferenceServerMetadata) -> Result<Self, Self::Error> {
         
@@ -372,7 +375,7 @@ impl TryFrom<inputs::InferenceServerMetadata> for entities::InferenceServerMetad
 }
 
 impl TryFrom<inputs::InferenceServerSpec> for entities::InferenceServerSpec {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::InferenceServerSpec) -> Result<Self, Self::Error> {
         let mut interfaces: Vec<entities::InferenceServerInterface> = Vec::with_capacity(1);
@@ -386,12 +389,12 @@ impl TryFrom<inputs::InferenceServerSpec> for entities::InferenceServerSpec {
 }
 
 impl TryFrom<inputs::CreateInferenceServerInput> for entities::InferenceServer {
-    type Error = Error;
+    type Error = ApplicationError;
     
     fn try_from(value: inputs::CreateInferenceServerInput) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::InferenceServer {
-            return Err(Error::from_str("Field 'kind' on InferenceServer must be variant Kind::InferenceServer"));
+            return Err(ApplicationError::ConvesionError("Field 'kind' on InferenceServer must be variant Kind::InferenceServer".to_string()));
         }
 
         Ok(Self {

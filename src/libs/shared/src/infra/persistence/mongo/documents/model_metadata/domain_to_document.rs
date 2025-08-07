@@ -84,6 +84,7 @@ impl TryFrom<domain::ModelMetadata> for model_metadata::ModelMetadata {
             .transpose()?;
 
         Ok(Self {
+            _id: None,
             name: value.name,
             framework: value.framework,
             model_type: value.model_type,

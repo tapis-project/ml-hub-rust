@@ -17,6 +17,9 @@ use mongodb::{
 };
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
+
+use super::database::MODEL_METADATA_COLLECTION;
+use super::documents::model_metadata::ModelMetadata;
 // use crate::infra::persistence::errors::DatabaseError;
 
 pub struct ArtifactRepository {
@@ -244,5 +247,35 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         }
 
         Ok(None)
+    }
+}
+
+pub struct ModelMetadataRepository {
+    read_collection: Collection<ModelMetadata>,
+    write_collection: Collection<ModelMetadata>
+}
+
+impl ModelMetadataRepository {
+    pub fn new(db: &Database) -> Self {
+        Self {
+            write_collection: db.collection(MODEL_METADATA_COLLECTION),
+            read_collection: db.collection(MODEL_METADATA_COLLECTION)
+        }
+    }
+}
+
+#[async_trait]
+impl application::ports::repositories::ModelMetadataRepository for ModelMetadataRepository {
+    async fn save(&self, input: &application::inputs::model_metadata::CreateModelMetadata) -> Result<(), ApplicationError> {
+        let mut document = ModelMetadata::try_from(input)
+            .map_err(|err| ApplicationError::ConvesionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
+        
+        let result = self.write_collection.insert_one(&document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        document._id = result.inserted_id.as_object_id();
+
+        Ok(())
     }
 }

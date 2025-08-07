@@ -1,14 +1,16 @@
-pub mod entities_to_inputs;
+pub mod inputs_to_entities;
+// pub mod entities_to_inputs;
 
 use serde_json::Value;
+use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SystemRequirement {
     pub name: String,
     pub version: String
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Accelerator {
     pub accelerator_type: String,
     pub memory_gb: Option<i32>,
@@ -17,7 +19,7 @@ pub struct Accelerator {
     pub system_requirements: Vec<SystemRequirement>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
@@ -26,13 +28,13 @@ pub struct HardwareRequirements {
     pub architectures: Option<Vec<String>>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
@@ -86,4 +88,10 @@ pub struct ModelMetadata {
     pub regulatory: Option<Vec<String>>,
     pub license: Option<String>,
     pub bias_evaluation_score: Option<i8>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateModelMetadata {
+    pub artifact_id: Uuid,
+    pub metadata: ModelMetadata,
 }

@@ -1,8 +1,10 @@
 mod document_to_domain;
-mod domain_to_document;
+// mod domain_to_document;
+mod input_to_document;
 
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
+use mongodb::bson::{Uuid, oid::ObjectId};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SystemRequirement {
@@ -36,6 +38,12 @@ pub struct ModelIO {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub _id: Option<ObjectId>,
+    
+    // Unique ID of the artifact that this metadata is related to
+    pub artifact_id: Uuid,
+
     // General fields
     pub name: Option<String>,
     pub model_type: Option<String>,

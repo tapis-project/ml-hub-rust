@@ -36,6 +36,10 @@ impl Artifact {
         self.touch();
     }
 
+    pub fn is_fully_ingested(&self) -> bool {
+        self.path.is_some()
+    }
+
     /// Updates last modified to the UTC timestamp
     fn touch(&mut self) {
         self.last_modified = TimeStamp::now()
