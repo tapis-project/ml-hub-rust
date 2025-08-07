@@ -1,0 +1,69 @@
+{
+  "name": "vision-classifier-v2",
+  "model_type": "cnn",
+  "version": "2.1.3",
+  "framework": "TensorFlow",
+  "image": "registry.example.com/vision-classifier:v2.1.3",
+
+  "labels": ["cv", "image-classification"],
+  "label_map": {
+    "cat": 0,
+    "dog": 1,
+    "bird": 2
+  },
+
+  "multi_modal": true,
+  "model_inputs": [
+    {
+      "name": "image",
+      "data_type": "uint8",
+      "shape": [1, 224, 224, 3]
+    }
+  ],
+  "model_outputs": [
+    {
+      "name": "class_scores",
+      "data_type": "float32",
+      "shape": [1, 3]
+    }
+  ],
+
+  "task_types": ["image-classification"],
+  "inference_precision": "int8",
+  "inference_hardware": {
+    "gpus": 0,
+    "cpus": 2,
+    "memory_gb": 8
+  },
+  "inference_software_dependencies": ["tensorflow-lite==2.8.0"],
+  "inference_max_energy_consumption_watts": 45,
+
+  "inference_max_latency_ms": 30,
+  "inference_min_throughput": 300,
+  "inference_max_compute_utilization_percentage": 70,
+  "inference_max_memory_usage_mb": 1024,
+  "inference_distributed": false,
+
+  "training_time": 18000,
+  "training_precision": "int8",
+  "training_hardware": {
+    "gpus": 2,
+    "cpus": 8,
+    "memory_gb": 32
+  },
+  "pretraining_datasets": ["ImageNet"],
+  "finetuning_datasets": ["CatsVsDogs"],
+  "edge_optimized": true,
+  "quantization_aware": true,
+  "supports_quantization": true,
+  "pretrained": true,
+  "pruned": true,
+  "slimmed": true,
+  "training_distributed": false,
+
+  "training_max_energy_consumption_watts": 400,
+
+  "regulatory": ["ISO/IEC 27001"],
+  "license": "MIT",
+  "bias_evaluation_score": -1
+}

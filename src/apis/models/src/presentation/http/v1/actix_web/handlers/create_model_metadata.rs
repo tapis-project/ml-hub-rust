@@ -31,13 +31,10 @@ async fn create_model_metadata(
 
     logger.debug("Start create model metadata operation");
 
-    let model_metadata_service = match model_metadata_service_factory(&data.db).await {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
-    };
+    let artifact_id = path.into_inner().artifact_id;
 
     let dto = CreateModelMetadataDto {
-        artifact_id: path.into_inner().artifact_id,
+        artifact_id: artifact_id.clone(),
         metadata: body.into_inner()
     };
 
@@ -46,10 +43,15 @@ async fn create_model_metadata(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
+    let model_metadata_service = match model_metadata_service_factory(&data.db).await {
+        Ok(s) => s,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
     match model_metadata_service.create_metadata(input).await {
         Ok(_) => (),
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    build_success_response(None, Some(String::from("Successfully created metadata")), None)
+    build_success_response(None, Some(format!("Successfully created metadata for artifact {}", artifact_id)), None)
 }
