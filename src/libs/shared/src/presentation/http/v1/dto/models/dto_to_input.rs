@@ -3,6 +3,7 @@ use crate::presentation::http::v1::dto::models as dto;
 use crate::application::inputs::model_metadata as inputs;
 use crate::application::inputs::artifacts as artifact_inputs;
 use crate::errors::Error;
+use uuid::Uuid;
 
 impl TryFrom<dto::SystemRequirement> for inputs::SystemRequirement {
     type Error = Error;
@@ -59,6 +60,21 @@ impl TryFrom<dto::ModelIO> for inputs::ModelIO {
         Ok(Self {
             data_type: value.data_type,
             shape: value.shape
+        })
+    }
+}
+
+impl TryFrom<dto::CreateModelMetadata> for inputs::CreateModelMetadata {
+    type Error = Error;
+
+    fn try_from(value: dto::CreateModelMetadata) -> Result<Self, Self::Error> {
+        let metadata = inputs::ModelMetadata::try_from(value.metadata)?;
+        let artifact_id = Uuid::parse_str(&value.artifact_id)
+            .map_err(|err| Self::Error::new(err.to_string()))?;
+        
+        return Ok(Self {
+            artifact_id,
+            metadata
         })
     }
 }

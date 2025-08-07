@@ -71,6 +71,11 @@ pub struct DownloadModelRequest {
 pub struct UploadModelRequest {}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CreateModelMetadataPath {
+    pub artifact_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SystemRequirement {
     pub name: String,
     pub version: String
@@ -154,6 +159,12 @@ pub struct ModelMetadata {
     pub regulatory: Option<Vec<String>>,
     pub license: Option<String>,
     pub bias_evaluation_score: Option<i8>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct CreateModelMetadata {
+    pub artifact_id: String,
+    pub metadata: ModelMetadata
 }
 
 #[derive(Deserialize, Serialize, Debug)]

@@ -11,6 +11,9 @@ pub use shared::presentation::http::v1::dto::models::{
     DownloadModelPath,
     DownloadModelRequest,
     UploadModelRequest,
+    ModelMetadata,
+    CreateModelMetadataPath,
+    CreateModelMetadata
 };
 pub use shared::presentation::http::v1::dto::artifacts::{
     PublishArtifactPath,
