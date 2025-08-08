@@ -285,13 +285,13 @@ impl ArtifactService {
             }) as Pin<Box<dyn Future<Output = Result<(), ArtifactServiceError>> + Send + 'a>>
         };
     
-    // Closure for updating the artifact
-    let update_artifact_path = || self.artifact_repo.update_path(&artifact);
+        // Closure for updating the artifact
+        let update_artifact_path = || self.artifact_repo.update_path(&artifact);
 
-    // Persist the new Artifact to the database
-    retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
-        .map_err(|err| ArtifactServiceError::RepoError(err))?;
-    
+        // Persist the new Artifact to the database
+        retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        
         Ok((artifact.id.to_string(), stacker))
     }
 
