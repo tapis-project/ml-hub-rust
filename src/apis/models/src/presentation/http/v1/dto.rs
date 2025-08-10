@@ -20,5 +20,7 @@ pub use shared::presentation::http::v1::dto::artifacts::{
     PublishArtifactRequest,
     PublishArtifactBody,
     IngestArtifactBody,
+    CreateArtifactPublication
 };
+pub use shared::presentation::http::v1::responses::ArtifactPublication;
 pub use shared::presentation::http::v1::dto::headers::Headers;

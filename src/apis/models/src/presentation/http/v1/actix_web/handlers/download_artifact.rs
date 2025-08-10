@@ -41,7 +41,7 @@ async fn download_artifact(
     }
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db).await {
+    let artifact_service = match artifact_service_factory(&data.db) {
         Ok(s) => s,
         Err(err) => return Ok(build_error_response(500, err.to_string()))
     };

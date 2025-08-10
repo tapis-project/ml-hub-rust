@@ -39,7 +39,7 @@ pub fn artifact_publication_repo_factory(db: &Database) -> Arc<dyn ArtifactPubli
     Arc::new(MongoArtifactPublicationRepository::new(db))
 }
 
-pub async fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {    
+pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {    
     Ok(ArtifactService::new(
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),

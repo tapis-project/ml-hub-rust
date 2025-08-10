@@ -36,3 +36,30 @@ pub struct ArtifactIngestion {
     pub last_modified: String,
     pub webhook_url: Option<String>,
 }
+
+#[derive(Serialize)]
+pub enum ArtifactPublicationStatus {
+    Submitted,
+    Pending,
+    Extracting,
+    Extracted,
+    PublishingMetadata,
+    PublishedMetadata,
+    PublishingArtifact,
+    PublishedArtifact,
+    Finished,
+    Failed
+}
+
+#[derive(Serialize)]
+pub struct ArtifactPublication  {
+    pub id: String,
+    pub status: ArtifactPublicationStatus,
+    pub artifact_id: String,
+    pub platform: String,
+    pub platform_artifact_id: String,
+    pub last_message: String,
+    pub attempts: u8,
+    pub created_at: String,
+    pub last_modified: String,
+}

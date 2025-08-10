@@ -1,6 +1,7 @@
+mod dto_to_input;
+
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use super::headers::Headers;
 use crate::presentation::http::v1::dto::Parameters;
 
@@ -27,7 +28,6 @@ pub struct PublishArtifactPath {
 pub struct PublishArtifactBody {
     pub platform: String,
     pub platform_artifact_id: String,
-    pub artifact_metadata: Option<Value>
 }
 
 pub struct PublishArtifactRequest {
@@ -35,6 +35,12 @@ pub struct PublishArtifactRequest {
     pub path: PublishArtifactPath,
     pub query: HashMap<String, String>,
     pub body: PublishArtifactBody,
+}
+
+pub struct CreateArtifactPublication {
+    pub platform: String,
+    pub platform_artifact_id: String,
+    pub artifact_id: String,
 }
 
 #[derive(Clone, Debug)]

@@ -353,7 +353,7 @@ async fn main() -> () {
     let environment = Env::new().expect("Env could not be initialized");
 
     let consumer = ArtifactIngesterConsumer {
-        artifact_service: artifact_service_factory(&db).await.expect("failed to initialize artifact service"),
+        artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
         artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };

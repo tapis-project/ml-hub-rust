@@ -31,3 +31,36 @@ impl From<entities::artifact_ingestion::ArtifactIngestion> for responses::Artifa
         }
     }
 }
+
+impl From<entities::artifact_publication::ArtifactPublicationStatus> for responses::ArtifactPublicationStatus {
+    fn from(value: entities::artifact_publication::ArtifactPublicationStatus) -> Self {
+        match value {
+            entities::artifact_publication::ArtifactPublicationStatus::Submitted => responses::ArtifactPublicationStatus::Submitted,
+            entities::artifact_publication::ArtifactPublicationStatus::Pending => responses::ArtifactPublicationStatus::Pending,
+            entities::artifact_publication::ArtifactPublicationStatus::Extracted => responses::ArtifactPublicationStatus::Extracted,
+            entities::artifact_publication::ArtifactPublicationStatus::Extracting => responses::ArtifactPublicationStatus::Extracting,
+            entities::artifact_publication::ArtifactPublicationStatus::PublishingArtifact => responses::ArtifactPublicationStatus::PublishingArtifact,
+            entities::artifact_publication::ArtifactPublicationStatus::PublishedArtifact => responses::ArtifactPublicationStatus::PublishedArtifact,
+            entities::artifact_publication::ArtifactPublicationStatus::PublishingMetadata => responses::ArtifactPublicationStatus::PublishingMetadata,
+            entities::artifact_publication::ArtifactPublicationStatus::PublishedMetadata => responses::ArtifactPublicationStatus::PublishedMetadata,
+            entities::artifact_publication::ArtifactPublicationStatus::Finished => responses::ArtifactPublicationStatus::Finished,
+            entities::artifact_publication::ArtifactPublicationStatus::Failed(_) => responses::ArtifactPublicationStatus::Failed,
+        }
+    }
+}
+
+impl From<entities::artifact_publication::ArtifactPublication> for responses::ArtifactPublication {
+    fn from(value: entities::artifact_publication::ArtifactPublication) -> Self {
+        responses::ArtifactPublication {
+            artifact_id: value.artifact_id.to_string(),
+            id: value.id.to_string(),
+            platform_artifact_id: value.platform_artifact_id,
+            created_at: String::from(value.created_at),
+            last_modified: String::from(value.last_modified),
+            last_message: value.last_message,
+            platform: value.platform,
+            attempts: value.attempts,
+            status: responses::ArtifactPublicationStatus::from(value.status),
+        }
+    }
+}

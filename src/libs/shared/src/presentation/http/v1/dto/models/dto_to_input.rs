@@ -143,8 +143,6 @@ impl TryFrom<dto::ModelMetadata> for inputs::ModelMetadata {
     }
 }
 
-/// Model Ingestion
-
 impl TryFrom<dto::IngestModelRequest> for artifact_inputs::IngestArtifactInput {
     type Error = Error;
     fn try_from(value: dto::IngestModelRequest) -> Result<Self, Self::Error> {
