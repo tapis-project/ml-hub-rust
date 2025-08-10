@@ -5,10 +5,12 @@ use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
+use crate::application::inputs::artifact_publication::PublishArtifactInput;
 use crate::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
-use crate::application::ports::repositories::{ArtifactRepository, ArtifactIngestionRepository};
+use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
+use crate::domain::entities::artifact_publication::ArtifactPublication;
 use crate::domain::services::{
     ArtifactService as DomainArtifactService,
     ArtifactServiceError as DomainArtifactServiceError};
@@ -39,6 +41,12 @@ pub enum ArtifactServiceError {
 
     #[error("Missing artifact file(s) error: {0}")]
     MissingArtifactFiles(String),
+
+    #[error("Missing artifact: {0}")]
+    MissingArtifact(String),
+
+    #[error("Missing metadata: {0}")]
+    MissingMetadata(String),
 }
 
 pub enum UuidOrString {
@@ -49,7 +57,9 @@ pub enum UuidOrString {
 pub struct ArtifactService {
     artifact_repo: Arc<dyn ArtifactRepository>,
     ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
-    publisher: Arc<dyn MessagePublisher>,
+    publication_repo: Arc<dyn ArtifactPublicationRepository>,
+    metadata_repo: Arc<dyn ModelMetadataRepository>,
+    mq_publisher: Arc<dyn MessagePublisher>,
 }
 
 impl ArtifactService {
@@ -73,13 +83,62 @@ impl ArtifactService {
     pub fn new(
         artifact_repo: Arc<dyn ArtifactRepository>,
         ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
-        publisher: Arc<dyn MessagePublisher>
+        publication_repo: Arc<dyn ArtifactPublicationRepository>,
+        metadata_repo: Arc<dyn ModelMetadataRepository>,
+        mq_publisher: Arc<dyn MessagePublisher>,
     ) -> Self {
         Self {
             artifact_repo,
             ingestion_repo,
-            publisher,
+            publication_repo,
+            metadata_repo,
+            mq_publisher,
         }
+    }
+
+    /// Creates an artifact publication
+    pub async fn submit_artifact_publication(&self, input: PublishArtifactInput) -> Result<ArtifactPublication, ArtifactServiceError> {
+        // Closure for fetching the artifact
+        let find_artifact = || self.artifact_repo.find_by_id(&input.artifact_id);
+        
+        // Find the artifact with retries
+        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        // Check that the artifact exists
+        if maybe_artifact.is_none() {
+            return Err(ArtifactServiceError::MissingArtifact("Artifact must exist in order to publish it".into()))
+        }
+
+        // Closure for fetching the metadata for this artifact
+        let find_metadata = || self.metadata_repo.find_by_artifact_id(&input.artifact_id);
+
+        // Find the metadata with retries
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        // Check that the artifact exists
+        if maybe_metadata.is_none() {
+            return Err(ArtifactServiceError::MissingMetadata("Artifact must exist in order to publish it".into()))
+        }
+
+        // Instantiate the ArtifactPublication
+        let publication = ArtifactPublication::new(
+            input.artifact_id,
+            input.platform,
+            input.platform_artifact_id,
+        );
+
+        // Closure for saving the publication
+        let save_publication = || self.publication_repo.save(&publication);
+
+        // Save publication with retries. Propogate error
+        retry_async(save_publication, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        // TODO Publish message to queue
+
+        return Ok(publication)
     }
 
     pub async fn submit_artifact_ingestion(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
@@ -115,7 +174,7 @@ impl ArtifactService {
             webhook_url: input.webhook_url.clone()
         };
 
-        let publish_ingestion = || self.publisher.publish(
+        let publish_ingestion = || self.mq_publisher.publish(
             Message::IngestArtifactMessage(message_payload.clone())
         );
         
@@ -155,8 +214,8 @@ impl ArtifactService {
         };
 
         // Closure for fetching the artifact
-        let find_artifact = || self.artifact_repo.find_by_id(ingestion.artifact_id);
-
+        let find_artifact = || self.artifact_repo.find_by_id(&ingestion.artifact_id);
+        
         // Find the artifact
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
@@ -305,7 +364,7 @@ impl ArtifactService {
             };
 
         // Closure for fetching the artifact
-        let find_artifact = || self.artifact_repo.find_by_id(artifact_uuid);
+        let find_artifact = || self.artifact_repo.find_by_id(&artifact_uuid);
 
         // Find the artifact
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await

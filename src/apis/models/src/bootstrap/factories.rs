@@ -5,7 +5,8 @@ use shared::application::errors::ApplicationError;
 use crate::application::ports::repositories::{
     ArtifactRepository,
     ArtifactIngestionRepository,
-    ModelMetadataRepository
+    ModelMetadataRepository,
+    ArtifactPublicationRepository,
 };
 use crate::application::services::artifact_service::ArtifactService;
 use crate::application::services::model_metadata_service::ModelMetadataService;
@@ -13,6 +14,7 @@ use crate::infra::persistence::mongo::repositories::{
     ArtifactRepository as MongoArtifactRepository,
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
     ModelMetadataRepository as MongoModelMetadataRepository,
+    ArtifactPublicationRepository as MongoArtifactPublicationRepository,
 };
 use crate::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
 use std::sync::Arc;
@@ -32,10 +34,17 @@ pub fn model_metadata_repo_factory(db: &Database) -> Arc<dyn ModelMetadataReposi
     Arc::new(MongoModelMetadataRepository::new(db))
 }
 
+#[cfg(feature = "mongo")]
+pub fn artifact_publication_repo_factory(db: &Database) -> Arc<dyn ArtifactPublicationRepository> {
+    Arc::new(MongoArtifactPublicationRepository::new(db))
+}
+
 pub async fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {    
     Ok(ArtifactService::new(
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
+        artifact_publication_repo_factory(db),
+        model_metadata_repo_factory(db),
         Arc::new(RabbitMQArtifactOpMessagePublisher {})
     ))
 }

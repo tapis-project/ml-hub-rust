@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 use crate::domain::entities::timestamp::TimeStamp;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ArtifactType {
     Model,
     Dataset,

@@ -57,7 +57,7 @@ impl ModelMetadataService {
         // Convert from service input to domain entitiy
         let metadata = ModelMetadata::try_from(input.clone())?;
 
-        let find_artifact = || self.artifact_repo.find_by_id(artifact_id.clone());
+        let find_artifact = || self.artifact_repo.find_by_id(&artifact_id);
 
         // Find the artifact by id
         let artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY)

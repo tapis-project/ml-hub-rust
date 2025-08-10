@@ -58,7 +58,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(artifacts)
     }
 
-    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact::Artifact>, ApplicationError> {
+    async fn find_by_id(&self, id: &uuid::Uuid) -> Result<Option<entities::artifact::Artifact>, ApplicationError> {
         let filter = doc! {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };

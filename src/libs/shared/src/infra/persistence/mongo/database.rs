@@ -33,3 +33,4 @@ pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
 pub const ARTIFACT_COLLECTION: &str = "ARTIFACTS";
 pub const ARTIFACT_INGESTION_COLLECTION: &str = "ARTIFACT_INGESTIONS";
 pub const MODEL_METADATA_COLLECTION: &str = "MODEL_METADATA";
+pub const ARTIFACT_PUBLICATION_COLLECTION: &str = "ARTIFACT_PUBLICATIONS";
