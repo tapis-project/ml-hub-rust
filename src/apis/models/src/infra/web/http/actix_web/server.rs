@@ -53,6 +53,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::download_artifact::download_artifact)
             .service(presentation::http::v1::actix_web::handlers::upload_artifact::upload_artifact)
             .service(presentation::http::v1::actix_web::handlers::create_model_metadata::create_model_metadata)
+            .service(presentation::http::v1::actix_web::handlers::publish_model::publish_model)
     })
         .bind(addrs)?
         .run()
