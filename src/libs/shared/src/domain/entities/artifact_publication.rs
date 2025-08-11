@@ -8,62 +8,6 @@ pub enum ArtifactPublicationError {
     InvalidStatusTransition(String)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ArtifactPublicationFailedReason {
-    FailedToExtract(String),
-    FailedToPublishArtifact(String),
-    FailedToPublishMetadata(String),
-    InternalError(String),
-    PlatformError(String),
-}
-
-impl ArtifactPublicationFailedReason {
-    fn _kind(&self) -> &str {
-        match self {
-            Self::FailedToExtract(_) => "FailedToExtract",
-            Self::FailedToPublishArtifact(_) => "FailedToPublishArtifact",
-            Self::FailedToPublishMetadata(_) => "FailedToPublishMetadata",
-            Self::InternalError(_) => "InternalError",
-            Self::PlatformError(_) => "PlatformError",
-        }
-    }
-}
-
-type Reason = ArtifactPublicationFailedReason;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ArtifactPublicationStatus {
-    Submitted,
-    Pending,
-    Extracting,
-    Extracted,
-    PublishingMetadata,
-    PublishedMetadata,
-    PublishingArtifact,
-    PublishedArtifact,
-    Finished,
-    Failed(Reason)
-}
-
-impl ArtifactPublicationStatus {
-    fn kind(&self) -> &str {
-        match self {
-            Self::Submitted => "Submitted",
-            Self::Pending => "Pending",
-            Self::Extracting => "Extracting",
-            Self::Extracted => "Extracted",
-            Self::PublishingMetadata => "PublishingMetadata",
-            Self::PublishedMetadata => "PublishedMetadata",
-            Self::PublishingArtifact => "PublishingArtifact",
-            Self::PublishedArtifact => "PublishedArtifact",
-            Self::Finished => "Finished",
-            Self::Failed(_) => "Failed"
-        }
-    }
-}
-
-type Status = ArtifactPublicationStatus;
-
 pub struct ArtifactPublication  {
     pub id: Uuid,
     pub status: Status,
@@ -180,6 +124,62 @@ impl ArtifactPublication {
         };
 
         is_valid
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ArtifactPublicationStatus {
+    Submitted,
+    Pending,
+    Extracting,
+    Extracted,
+    PublishingMetadata,
+    PublishedMetadata,
+    PublishingArtifact,
+    PublishedArtifact,
+    Finished,
+    Failed(Reason)
+}
+
+type Status = ArtifactPublicationStatus;
+
+impl ArtifactPublicationStatus {
+    fn kind(&self) -> &str {
+        match self {
+            Self::Submitted => "Submitted",
+            Self::Pending => "Pending",
+            Self::Extracting => "Extracting",
+            Self::Extracted => "Extracted",
+            Self::PublishingMetadata => "PublishingMetadata",
+            Self::PublishedMetadata => "PublishedMetadata",
+            Self::PublishingArtifact => "PublishingArtifact",
+            Self::PublishedArtifact => "PublishedArtifact",
+            Self::Finished => "Finished",
+            Self::Failed(_) => "Failed"
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ArtifactPublicationFailedReason {
+    FailedToExtract(String),
+    FailedToPublishArtifact(String),
+    FailedToPublishMetadata(String),
+    InternalError(String),
+    PlatformError(String),
+}
+
+type Reason = ArtifactPublicationFailedReason;
+
+impl ArtifactPublicationFailedReason {
+    fn _kind(&self) -> &str {
+        match self {
+            Self::FailedToExtract(_) => "FailedToExtract",
+            Self::FailedToPublishArtifact(_) => "FailedToPublishArtifact",
+            Self::FailedToPublishMetadata(_) => "FailedToPublishMetadata",
+            Self::InternalError(_) => "InternalError",
+            Self::PlatformError(_) => "PlatformError",
+        }
     }
 }
 

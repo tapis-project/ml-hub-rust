@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::application::inputs::artifacts::ArtifactType;
 
 #[derive(Debug, Error)]
-pub enum MessagePublisherError {
-    #[error("Message broker error: {0}")]
+pub enum EventPublisherError {
+    #[error("Event broker error: {0}")]
     AmqpError(String),
 
     #[error("Serialization error: {0}")]
@@ -19,7 +19,7 @@ pub enum MessagePublisherError {
 }
 
 #[derive(Clone)]
-pub struct IngestArtifactMessagePayload {
+pub struct IngestArtifactEventPayload {
     pub ingestion_id: Uuid,
     pub artifact_type: ArtifactType,
     pub platform: String,
@@ -28,12 +28,12 @@ pub struct IngestArtifactMessagePayload {
 }
 
 #[derive(Clone)]
-pub enum Message {
-    IngestArtifactMessage(IngestArtifactMessagePayload),
-    Placeholder // TODO remove Placeholder when a second message variant is added to this enum
+pub enum Event {
+    IngestArtifactEvent(IngestArtifactEventPayload),
+    Placeholder // TODO remove Placeholder when a second event variant is added to this enum
 }
 
 #[async_trait]
-pub trait MessagePublisher: Send + Sync {
-    async fn publish(&self, message: Message) -> Result<(), MessagePublisherError>;
+pub trait EventPublisher: Send + Sync {
+    async fn publish(&self, event: Event) -> Result<(), EventPublisherError>;
 }

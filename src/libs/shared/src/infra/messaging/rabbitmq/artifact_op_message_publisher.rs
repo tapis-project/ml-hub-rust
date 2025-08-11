@@ -3,10 +3,10 @@ use crate::constants::{
     ARTIFACT_INGESTION_EXCHANGE,
     ARTIFACT_INGESTION_ROUTING_KEY
 };
-use crate::application::ports::messaging::{
-    MessagePublisherError,
-    MessagePublisher,
-    Message
+use crate::application::ports::events::{
+    EventPublisherError,
+    EventPublisher,
+    Event
 };
 use crate::infra::messaging::messages::IngestArtifactMessage;
 use amqprs::{
@@ -36,7 +36,7 @@ pub enum ArtifactOpMessagePublisherError {
 pub struct RabbitMQArtifactOpMessagePublisher;
 
 impl RabbitMQArtifactOpMessagePublisher {
-    async fn connect(&self) -> Result<Channel, MessagePublisherError> {
+    async fn connect(&self) -> Result<Channel, EventPublisherError> {
         let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
         let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
         let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
@@ -51,33 +51,33 @@ impl RabbitMQArtifactOpMessagePublisher {
 
         let conn = match Connection::open(&connection_args).await {
             Ok(conn) => conn,
-            Err(err) => return Err(MessagePublisherError::AmqpError(err.to_string()))
+            Err(err) => return Err(EventPublisherError::AmqpError(err.to_string()))
         };
 
         let channel = conn.open_channel(None).await.expect("Open channel failed");
 
         let exchange_args = ExchangeDeclareArguments::new(ARTIFACT_INGESTION_EXCHANGE, "topic");
         channel.exchange_declare(exchange_args).await
-            .map_err(|err| MessagePublisherError::ConnectionError(err.to_string()))?;
+            .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?;
 
         Ok(channel)
     }    
 }
 
 #[async_trait]
-impl MessagePublisher for RabbitMQArtifactOpMessagePublisher {
-    async fn publish(&self, message: Message) -> Result<(), MessagePublisherError> {
-        let msg: IngestArtifactMessage = match message {
-            Message::IngestArtifactMessage(payload) => {
+impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
+    async fn publish(&self, event: Event) -> Result<(), EventPublisherError> {
+        let msg: IngestArtifactMessage = match event {
+            Event::IngestArtifactEvent(payload) => {
                 IngestArtifactMessage::from(payload)
             },
-            _other => { return Err(MessagePublisherError::InternalError("unsupported message type".into())) }
+            _other => { return Err(EventPublisherError::InternalError("unsupported message type".into())) }
         };
         
         let payload = match serde_json::to_string(&msg) {
             Ok(p) => p,
             Err(err) => {
-                return Err(MessagePublisherError::SerializationError(err.to_string()));
+                return Err(EventPublisherError::SerializationError(err.to_string()));
             }
         };
 
@@ -94,7 +94,7 @@ impl MessagePublisher for RabbitMQArtifactOpMessagePublisher {
             .await
             .map_err(|err| {
                 GlobalLogger::error(format!("Failed basic publish: {:#?}", err).as_str());
-                MessagePublisherError::AmqpError(err.to_string())
+                EventPublisherError::AmqpError(err.to_string())
             })?;
        
         Ok(())

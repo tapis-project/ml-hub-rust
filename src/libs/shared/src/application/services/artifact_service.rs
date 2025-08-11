@@ -6,7 +6,7 @@ use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff,
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::application::inputs::artifact_publication::PublishArtifactInput;
-use crate::application::ports::messaging::{MessagePublisher, MessagePublisherError, Message, IngestArtifactMessagePayload};
+use crate::application::ports::events::{EventPublisher, EventPublisherError, Event, IngestArtifactEventPayload};
 use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
@@ -25,7 +25,7 @@ use crate::infra::system::Env;
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
     #[error("Message broker error: {0}")]
-    PubisherError(#[from] MessagePublisherError),
+    PubisherError(#[from] EventPublisherError),
 
     #[error("Repository error: {0}")]
     RepoError(#[from] ApplicationError),
@@ -59,7 +59,7 @@ pub struct ArtifactService {
     ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
     publication_repo: Arc<dyn ArtifactPublicationRepository>,
     metadata_repo: Arc<dyn ModelMetadataRepository>,
-    mq_publisher: Arc<dyn MessagePublisher>,
+    event_publisher: Arc<dyn EventPublisher>,
 }
 
 impl ArtifactService {
@@ -85,14 +85,14 @@ impl ArtifactService {
         ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
         publication_repo: Arc<dyn ArtifactPublicationRepository>,
         metadata_repo: Arc<dyn ModelMetadataRepository>,
-        mq_publisher: Arc<dyn MessagePublisher>,
+        event_publisher: Arc<dyn EventPublisher>,
     ) -> Self {
         Self {
             artifact_repo,
             ingestion_repo,
             publication_repo,
             metadata_repo,
-            mq_publisher,
+            event_publisher,
         }
     }
 
@@ -165,7 +165,7 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err));
 
         // Closure for publishing the artifact ingestion request
-        let message_payload = IngestArtifactMessagePayload {
+        let message_payload = IngestArtifactEventPayload {
             ingestion_id: ingestion.id.clone(),
             artifact_type: input.artifact_type.clone(),
             platform: ingestion.platform.clone(),
@@ -173,8 +173,8 @@ impl ArtifactService {
             webhook_url: input.webhook_url.clone()
         };
 
-        let publish_ingestion = || self.mq_publisher.publish(
-            Message::IngestArtifactMessage(message_payload.clone())
+        let publish_ingestion = || self.event_publisher.publish(
+            Event::IngestArtifactEvent(message_payload.clone())
         );
         
         // Publish the artifact ingestion request to the queue

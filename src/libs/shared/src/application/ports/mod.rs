@@ -1,2 +1,2 @@
 pub mod repositories;
-pub mod messaging;
+pub mod events;

@@ -1,8 +1,8 @@
-use crate::application::ports::messaging::IngestArtifactMessagePayload;
+use crate::application::ports::events::IngestArtifactEventPayload;
 use crate::infra::messaging::messages;
 
-impl From<IngestArtifactMessagePayload> for messages::IngestArtifactMessage {
-    fn from(value: IngestArtifactMessagePayload) -> Self {
+impl From<IngestArtifactEventPayload> for messages::IngestArtifactMessage {
+    fn from(value: IngestArtifactEventPayload) -> Self {
         Self {
             ingestion_id: value.ingestion_id.to_string(),
             platform: value.platform,
