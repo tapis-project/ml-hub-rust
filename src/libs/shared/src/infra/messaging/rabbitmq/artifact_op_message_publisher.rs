@@ -1,14 +1,19 @@
 use thiserror::Error;
 use crate::constants::{
     ARTIFACT_INGESTION_EXCHANGE,
-    ARTIFACT_INGESTION_ROUTING_KEY
+    ARTIFACT_INGESTION_ROUTING_KEY,
+    ARTIFACT_PUBLICATION_EXCHANGE,
+    ARTIFACT_PUBLICATION_ROUTING_KEY
 };
 use crate::application::ports::events::{
     EventPublisherError,
     EventPublisher,
     Event
 };
-use crate::infra::messaging::messages::IngestArtifactMessage;
+use crate::infra::messaging::messages::{
+    IngestArtifactMessage,
+    PublishArtifactMessage
+};
 use amqprs::{
     channel::{
         Channel,
@@ -60,21 +65,54 @@ impl RabbitMQArtifactOpMessagePublisher {
         channel.exchange_declare(exchange_args).await
             .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?;
 
+        let exchange_args = ExchangeDeclareArguments::new(ARTIFACT_INGESTION_EXCHANGE, "topic");
+        channel.exchange_declare(exchange_args).await
+            .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?;
+
         Ok(channel)
     }    
 }
 
+fn get_message_from_event(event: &Event) -> Result<String, EventPublisherError> {
+    match event {
+        Event::IngestArtifactEvent(payload) => {
+            match serde_json::to_string(&IngestArtifactMessage::from(payload)) {
+                Ok(p) => return Ok(p),
+                Err(err) => {
+                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                }
+            };
+        },
+        Event::PublishArtifactEvent(payload) => {
+            match serde_json::to_string(&PublishArtifactMessage::from(payload)) {
+                Ok(p) => return Ok(p),
+                Err(err) => {
+                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                }
+            };
+        }
+    }
+}
+
+fn get_exchange(event: &Event) -> &'static str {
+    match event {
+        Event::IngestArtifactEvent(_) => ARTIFACT_INGESTION_EXCHANGE,
+        Event::PublishArtifactEvent(_) => ARTIFACT_PUBLICATION_EXCHANGE
+    }
+}
+
+fn get_routing_key(event: &Event) -> &'static str {
+    match event {
+        Event::IngestArtifactEvent(_) => ARTIFACT_INGESTION_ROUTING_KEY,
+        Event::PublishArtifactEvent(_) => ARTIFACT_PUBLICATION_ROUTING_KEY
+    }
+}
+
 #[async_trait]
 impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
-    async fn publish(&self, event: Event) -> Result<(), EventPublisherError> {
-        let msg: IngestArtifactMessage = match event {
-            Event::IngestArtifactEvent(payload) => {
-                IngestArtifactMessage::from(payload)
-            },
-            _other => { return Err(EventPublisherError::InternalError("unsupported message type".into())) }
-        };
-        
-        let payload = match serde_json::to_string(&msg) {
+    async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
+        let serialized_message = get_message_from_event(&event)?;
+        let payload = match serde_json::to_string(&serialized_message) {
             Ok(p) => p,
             Err(err) => {
                 return Err(EventPublisherError::SerializationError(err.to_string()));
@@ -83,8 +121,8 @@ impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
 
         // Publish to exchange
         let args = BasicPublishArguments::new(
-            ARTIFACT_INGESTION_EXCHANGE,
-            ARTIFACT_INGESTION_ROUTING_KEY,
+            get_exchange(event),
+            get_routing_key(event),
         ).mandatory(true)
             .finish();
 

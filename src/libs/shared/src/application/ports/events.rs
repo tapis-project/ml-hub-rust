@@ -3,6 +3,7 @@ use thiserror::Error;
 use uuid::Uuid;
 use crate::application::inputs::artifacts::ArtifactType;
 
+// TODO Message borker related errors should be factored out of these ports
 #[derive(Debug, Error)]
 pub enum EventPublisherError {
     #[error("Event broker error: {0}")]
@@ -28,12 +29,18 @@ pub struct IngestArtifactEventPayload {
 }
 
 #[derive(Clone)]
+pub struct PublishArtifactEventPayload {
+    pub publication_id: Uuid,
+    pub webhook_url: Option<String>
+}
+
+#[derive(Clone)]
 pub enum Event {
     IngestArtifactEvent(IngestArtifactEventPayload),
-    Placeholder // TODO remove Placeholder when a second event variant is added to this enum
+    PublishArtifactEvent(PublishArtifactEventPayload),
 }
 
 #[async_trait]
 pub trait EventPublisher: Send + Sync {
-    async fn publish(&self, event: Event) -> Result<(), EventPublisherError>;
+    async fn publish(&self, event: &Event) -> Result<(), EventPublisherError>;
 }

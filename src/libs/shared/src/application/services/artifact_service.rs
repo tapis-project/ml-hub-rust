@@ -173,8 +173,9 @@ impl ArtifactService {
             webhook_url: input.webhook_url.clone()
         };
 
+        let event = Event::IngestArtifactEvent(message_payload.clone());
         let publish_ingestion = || self.event_publisher.publish(
-            Event::IngestArtifactEvent(message_payload.clone())
+            &event
         );
         
         // Publish the artifact ingestion request to the queue
