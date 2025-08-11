@@ -69,7 +69,6 @@ pub struct ArtifactPublication  {
     pub status: Status,
     pub artifact_id: Uuid,
     pub platform: String,
-    pub platform_artifact_id: String,
     pub last_message: String,
     pub attempts: u8,
     pub created_at: TimeStamp,
@@ -78,14 +77,13 @@ pub struct ArtifactPublication  {
 
 /// Represents the life cycle of an attempt to publish an artifact
 impl ArtifactPublication {
-    pub fn new(artifact_id: Uuid, platform: String, platform_artifact_id: String) -> Self {
+    pub fn new(artifact_id: Uuid, platform: String) -> Self {
         let now = TimeStamp::now();
         Self {
             id: Uuid::new_v4(),
             artifact_id,
             status: ArtifactPublicationStatus::Submitted,
             platform,
-            platform_artifact_id,
             last_message: "Submitted".into(),
             attempts: 0,
             created_at: now.clone(),

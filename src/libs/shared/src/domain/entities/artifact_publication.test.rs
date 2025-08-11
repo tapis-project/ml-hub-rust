@@ -12,13 +12,11 @@ mod artifact_publication_test {
         let publication = ArtifactPublication::new(
             artifact_id,
             "platform".into(),
-            "platform-artifact-id".into()
         );
         
         assert!(publication.artifact_id == artifact_id);
         assert!(publication.attempts == 0);
         assert!(publication.platform == String::from("platform"));
-        assert!(publication.platform_artifact_id == String::from("platform-artifact-id"));
         assert!(publication.created_at.into_inner() == publication.last_modified.into_inner());
         assert!(publication.status == ArtifactPublicationStatus::Submitted)
     }
@@ -28,7 +26,6 @@ mod artifact_publication_test {
         let mut publication = ArtifactPublication::new(
             Uuid::new_v4(),
             "platform".into(),
-            "platform-artifact-id".into()
         );
 
         let last_modified_before = publication.last_modified.clone();
@@ -51,7 +48,6 @@ mod artifact_publication_test {
         let mut publication = ArtifactPublication::new(
             Uuid::new_v4(),
             "platform".into(),
-            "platform-artifact-id".into()
         );
 
         let maybe_publication = publication.set_status(&ArtifactPublicationStatus::Pending)
@@ -99,7 +95,6 @@ mod artifact_publication_test {
         let mut publication = ArtifactPublication::new(
             Uuid::new_v4(),
             "platform".into(),
-            "platform-artifact-id".into()
         );
 
         let maybe_publication = publication.set_status(&ArtifactPublicationStatus::Finished);

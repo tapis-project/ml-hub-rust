@@ -11,7 +11,6 @@ impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
             attempts: value.attempts,
             last_message: value.last_message.clone(),
             platform: value.platform.clone(),
-            platform_artifact_id: value.platform_artifact_id.clone(),
             created_at: DateTime::from_chrono(value.created_at.into_inner()),
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
             status: documents::ArtifactPublicationStatus::from(value.status.clone())

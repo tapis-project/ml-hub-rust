@@ -57,7 +57,6 @@ pub struct ArtifactPublication  {
     pub status: ArtifactPublicationStatus,
     pub artifact_id: String,
     pub platform: String,
-    pub platform_artifact_id: String,
     pub last_message: String,
     pub attempts: u8,
     pub created_at: String,

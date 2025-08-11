@@ -47,23 +47,6 @@ pub enum ArtifactPublicationStatus {
     Failed(Reason)
 }
 
-impl ArtifactPublicationStatus {
-    fn kind(&self) -> &str {
-        match self {
-            Self::Submitted => "Submitted",
-            Self::Pending => "Pending",
-            Self::Extracting => "Extracting",
-            Self::Extracted => "Extracted",
-            Self::PublishingMetadata => "PublishingMetadata",
-            Self::PublishedMetadata => "PublishedMetadata",
-            Self::PublishingArtifact => "PublishingArtifact",
-            Self::PublishedArtifact => "PublishedArtifact",
-            Self::Finished => "Finished",
-            Self::Failed(_) => "Failed"
-        }
-    }
-}
-
 type Status = ArtifactPublicationStatus;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -74,7 +57,6 @@ pub struct ArtifactPublication  {
     pub status: Status,
     pub artifact_id: Uuid,
     pub platform: String,
-    pub platform_artifact_id: String,
     pub last_message: String,
     pub attempts: u8,
     pub created_at: DateTime,

@@ -13,7 +13,6 @@ impl TryFrom<CreateArtifactPublication> for PublishArtifactInput {
         Ok(Self {
             artifact_id,
             platform: value.platform,
-            platform_artifact_id: value.platform_artifact_id,
         })
     }
 }

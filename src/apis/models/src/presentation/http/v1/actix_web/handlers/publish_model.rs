@@ -45,7 +45,6 @@ async fn publish_model(
 
     let dto = CreateArtifactPublication {
         platform: request.body.platform.clone(),
-        platform_artifact_id: request.body.platform_artifact_id,
         artifact_id: request.path.artifact_id
     };
 

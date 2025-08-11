@@ -126,7 +126,6 @@ impl ArtifactService {
         let publication = ArtifactPublication::new(
             input.artifact_id,
             input.platform,
-            input.platform_artifact_id,
         );
 
         // Closure for saving the publication

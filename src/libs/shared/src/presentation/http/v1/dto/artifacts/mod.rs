@@ -27,7 +27,6 @@ pub struct PublishArtifactPath {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PublishArtifactBody {
     pub platform: String,
-    pub platform_artifact_id: String,
 }
 
 pub struct PublishArtifactRequest {
@@ -39,7 +38,6 @@ pub struct PublishArtifactRequest {
 
 pub struct CreateArtifactPublication {
     pub platform: String,
-    pub platform_artifact_id: String,
     pub artifact_id: String,
 }
 
