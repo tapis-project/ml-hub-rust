@@ -31,20 +31,20 @@ impl From<entities::ArtifactPublicationStatus> for documents::ArtifactPublicatio
             entities::ArtifactPublicationStatus::PublishedArtifact => documents::ArtifactPublicationStatus::PublishedArtifact,
             entities::ArtifactPublicationStatus::Finished => documents::ArtifactPublicationStatus::Finished,
             entities::ArtifactPublicationStatus::Failed(r) => {
-                documents::ArtifactPublicationStatus::Failed(documents::ArtifactPublicationFailedReason::from(r))
+                documents::ArtifactPublicationStatus::Failed(documents::ArtifactPublicationFailureReason::from(r))
             },
         }
     }
 }
 
-impl From<entities::ArtifactPublicationFailedReason> for documents::ArtifactPublicationFailedReason {
-    fn from(value: entities::ArtifactPublicationFailedReason) -> Self {
+impl From<entities::ArtifactPublicationFailureReason> for documents::ArtifactPublicationFailureReason {
+    fn from(value: entities::ArtifactPublicationFailureReason) -> Self {
         match value {
-            entities::ArtifactPublicationFailedReason::FailedToExtract(s) => documents::ArtifactPublicationFailedReason::FailedToExtract(s),
-            entities::ArtifactPublicationFailedReason::FailedToPublishArtifact(s) => documents::ArtifactPublicationFailedReason::FailedToPublishArtifact(s),
-            entities::ArtifactPublicationFailedReason::FailedToPublishMetadata(s) => documents::ArtifactPublicationFailedReason::FailedToPublishMetadata(s),
-            entities::ArtifactPublicationFailedReason::InternalError(s) => documents::ArtifactPublicationFailedReason::InternalError(s),
-            entities::ArtifactPublicationFailedReason::PlatformError(s) => documents::ArtifactPublicationFailedReason::PlatformError(s),
+            entities::ArtifactPublicationFailureReason::FailedToExtract(s) => documents::ArtifactPublicationFailureReason::FailedToExtract(s),
+            entities::ArtifactPublicationFailureReason::FailedToPublishArtifact(s) => documents::ArtifactPublicationFailureReason::FailedToPublishArtifact(s),
+            entities::ArtifactPublicationFailureReason::FailedToPublishMetadata(s) => documents::ArtifactPublicationFailureReason::FailedToPublishMetadata(s),
+            entities::ArtifactPublicationFailureReason::InternalError(s) => documents::ArtifactPublicationFailureReason::InternalError(s),
+            entities::ArtifactPublicationFailureReason::PlatformError(s) => documents::ArtifactPublicationFailureReason::PlatformError(s),
         }
     }
 }

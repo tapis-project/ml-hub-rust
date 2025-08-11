@@ -161,7 +161,7 @@ impl ArtifactPublicationStatus {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ArtifactPublicationFailedReason {
+pub enum ArtifactPublicationFailureReason {
     FailedToExtract(String),
     FailedToPublishArtifact(String),
     FailedToPublishMetadata(String),
@@ -169,9 +169,9 @@ pub enum ArtifactPublicationFailedReason {
     PlatformError(String),
 }
 
-type Reason = ArtifactPublicationFailedReason;
+type Reason = ArtifactPublicationFailureReason;
 
-impl ArtifactPublicationFailedReason {
+impl ArtifactPublicationFailureReason {
     fn _kind(&self) -> &str {
         match self {
             Self::FailedToExtract(_) => "FailedToExtract",

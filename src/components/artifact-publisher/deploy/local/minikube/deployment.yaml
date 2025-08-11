@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mlhub-artifact-publisher-deployment
+  name: mlhub-artifact-publisher-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-artifact-publisher-deployment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlhub-artifact-publisher-deployment
+    spec:
+      containers:
+        - env:
+            - name: RUST_LOG
+              value: debug
+            - name: ARTIFACTS_DB_HOST
+              value: mlhub-artifact-db-service
+            - name: ARTIFACTS_DB_PORT
+              value: "27017"
+            - name: ARTIFACTS_DB_NAME
+              value: mlhub
+            - name: ARTIFACTS_DB_PASSWORD
+              value: password
+            - name: ARTIFACTS_DB_USERNAME
+              value: mlhub
+            - name: SHARED_DATA
+              value: /srv/mlhub
+            - name: ARTIFACT_OP_MQ_HOST
+              value: mlhub-artifact-mq-service
+            - name: ARTIFACT_OP_MQ_PASSWORD
+              value: dev
+            - name: ARTIFACT_OP_MQ_PORT
+              value: "5672"
+            - name: ARTIFACT_OP_MQ_USER
+              value: dev
+          image: tapis/mlhub-artifact-publisher:local
+          imagePullPolicy: Never
+          name: artifact-publisher
+          resources: {}
+          tty: true
+          volumeMounts:
+              - name: nfs-server-mount
+                mountPath: /srv/mlhub/
+      volumes:
+        - name: nfs-server-mount
+          nfs:
+            server: '10.102.146.160'
+            path: /
+      restartPolicy: Always

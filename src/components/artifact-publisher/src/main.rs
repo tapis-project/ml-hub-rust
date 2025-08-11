@@ -1,0 +1,376 @@
+use std::path::PathBuf;
+use amqprs::{
+    channel::{
+        BasicAckArguments, 
+        BasicConsumeArguments, 
+        BasicNackArguments, 
+        Channel, 
+        QueueDeclareArguments,
+        ExchangeDeclareArguments,
+        QueueBindArguments,
+        ExchangeType
+    },
+    connection::{
+        Connection, 
+        OpenConnectionArguments
+    },
+    consumer::AsyncConsumer,
+    error::Error,
+    BasicProperties,
+    Deliver
+};
+use tokio;
+use uuid::Uuid;
+use client_provider::ClientProvider;
+use shared::constants::ARTIFACT_INGEST_DIR_NAME;
+use shared::domain::entities::artifact_publication::{ArtifactPublicationFailureReason, ArtifactPublicationStatus};
+use shared::domain::entities::artifact::ArtifactType;
+use shared::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
+use shared::presentation::http::v1::dto::models::IngestModelRequest;
+use shared::infra::system::Env;
+// use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
+use shared::infra::messaging::messages::PublishArtifactMessage;
+use async_trait::async_trait;
+use shared::application::services::artifact_service::ArtifactService;
+use std::env;
+use artifact_publisher::bootstrap::artifact_service_factory;
+use artifact_publisher::database::{get_db, ClientParams};
+use shared::infra::fs::archiver::Archiver;
+
+struct ArtifactpublisherConsumer {
+    artifact_service: ArtifactService,
+    artifacts_work_dir: PathBuf,
+    artifacts_cache_dir: PathBuf,
+}
+
+#[async_trait]
+impl AsyncConsumer for ArtifactpublisherConsumer {
+    async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
+        // Deserialize the message into a DownloadArtifactRequest
+        let request: PublishArtifactMessage = match serde_json::from_slice(&content) {
+            Ok(m) => m,
+            Err(err) => {
+                eprintln!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
+                nack(&channel, &deliver, None, None).await;
+                return;
+            }
+        };
+
+        let publication_id = Uuid::parse_str(request.publication_id.as_str()).expect("Invalid Uuid. Cannot convert publication_id into Uuid");
+
+        // // Update artifact publication to Pending
+        // self.artifact_service.change_publication_status_by_publication_id(
+        //     publication_id.clone(),
+        //     ArtifactPublicationStatus::Pending,
+        //     Some("Publication pending".into())
+        // )
+        //     .await
+        //     .map_err(|err| {
+        //         panic!("Error updating publication status: {}", err.to_string())
+        //     }).unwrap();
+
+        // // Fetch the artifact related to the publication
+        // let ref mut artifact = self.artifact_service.find_artifact_by_publication_id(
+        //     publication_id.clone()
+        // ).await
+        //     .expect("Failed to fetch artifact")
+        //     .expect(format!("Could not find artifact associated with publication '{}'", &publication_id).as_str());
+
+        // // Set the download path based on whether this is a model or a dataset
+        // let download_path = self.artifacts_work_dir.join(artifact.id.to_string());
+
+        // // Ingest the artifact
+        // match artifact.artifact_type {
+        //     ArtifactType::Model => {
+        //         // Get the correct client to do the model publication
+        //         match ClientProvider::provide_ingest_model_client(&request.platform) {
+        //             Ok(client) => {
+        //                 // Update the publication to Downloading
+        //                 self.artifact_service.change_publication_status_by_publication_id(
+        //                     publication_id.clone(),
+        //                     ArtifactPublicationStatus::Downloading,
+        //                     Some("Download in progress".into())
+        //                 )
+        //                     .await
+        //                     .map_err(|err| {
+        //                         panic!("Error updating publication status: {}", err.to_string())
+        //                     }).unwrap();
+                        
+        //                 // Deserialize the client request
+        //                 let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
+        //                     .expect("Failed deserializing the client request");
+                        
+        //                 // Ingest the model
+        //                 match client.ingest_model(&client_request, download_path.clone()).await {
+        //                     Ok(_) => {
+        //                         // Update publication to Downloaded
+        //                         self.artifact_service.change_publication_status_by_publication_id(
+        //                             publication_id.clone(),
+        //                             ArtifactPublicationStatus::Downloaded,
+        //                             Some("Download complete".into())
+        //                         )
+        //                             .await
+        //                             .map_err(|err| {
+        //                                 panic!("Error updating publication status: {}", err.to_string())
+        //                             }).unwrap();
+                                
+        //                         // Update publication to Archiving
+        //                         self.artifact_service.change_publication_status_by_publication_id(
+        //                             publication_id.clone(),
+        //                             ArtifactPublicationStatus::Archiving,
+        //                             Some("Archiving started".into())
+        //                         )
+        //                             .await
+        //                             .map_err(|err| {
+        //                                 panic!("Error updating publication status: {}", err.to_string())
+        //                             }).unwrap();
+                                
+        //                         // Archive the artifact files with compression
+        //                         let maybe_artifact_path = Archiver::zip(
+        //                             &download_path,
+        //                             &PathBuf::from(&self.artifacts_cache_dir).join(artifact.id.clone().to_string()),
+        //                             None,
+        //                             // This is the base path, this path will be stripped from every file
+        //                             // and directory that is written
+        //                             Some(
+        //                                 self.artifacts_work_dir.join(artifact.id.clone().to_string())
+        //                                     .to_string_lossy()
+        //                                     .into_owned()
+        //                                     .as_str()
+        //                             ),
+        //                         );
+
+        //                         // Get the artifact path
+        //                         let artifact_path = match maybe_artifact_path {
+        //                             Ok(p) => p,
+        //                             Err(err) => {
+        //                                 self.artifact_service.change_publication_status_by_publication_id(
+        //                                     publication_id.clone(),
+        //                                     ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToArchive),
+        //                                     Some(err.to_string())
+        //                                 )
+        //                                     .await
+        //                                     .map_err(|err| {
+        //                                         panic!("Error updating publication status: {}", err.to_string())
+        //                                     }).unwrap();
+        //                                 return 
+        //                             }
+        //                         };
+                                
+        //                         // Update publication to Archived
+        //                         self.artifact_service.change_publication_status_by_publication_id(
+        //                             publication_id.clone(),
+        //                             ArtifactPublicationStatus::Archived,
+        //                             Some("Successfully ingested".into())
+        //                         )
+        //                             .await
+        //                             .map_err(|err| {
+        //                                 panic!("Error updating publication status: {}", err.to_string())
+        //                             }).unwrap();
+
+        //                         // Clean up the publication workdir
+        //                         std::fs::remove_dir_all(&download_path)
+        //                             .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
+                                
+        //                         // Get the updated publication
+        //                         let ref mut publication = self.artifact_service.find_publication_by_publication_id(publication_id)
+        //                             .await
+        //                             .expect("Error fetching publication")
+        //                             .expect("Publication should exist but does not");
+                                
+        //                         // Set the path to the artifact on the Artifact itself
+        //                         self.artifact_service.finish_artifact_publication(artifact_path, artifact, publication)
+        //                             .await
+        //                             .map_err(|err| panic!("Error finishing artifact publication: {}", err.to_string()))
+        //                             .unwrap();
+        //                     },
+        //                     Err(err) => {
+        //                         self.artifact_service.change_publication_status_by_publication_id(
+        //                             publication_id.clone(),
+        //                             ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToDownload),
+        //                             Some(err.to_string())
+        //                         )
+        //                             .await
+        //                             .map_err(|err| {
+        //                                 panic!("Error updating publication status: {}", err.to_string())
+        //                             }).unwrap();
+
+        //                         eprintln!("{}", err.to_string());
+        //                         nack(&channel, &deliver, None, None).await;
+        //                         return;
+        //                     }
+        //                 };
+        //             },
+        //             Err(err) => {
+        //                 eprintln!("Client provider error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
+        //                 nack(&channel, &deliver, None, None).await;
+        //                 return;
+        //             }
+        //         };
+        //     },
+        //     // Ingest the dataset
+        //     ArtifactType::Dataset => {
+        //         // let client = ClientProvider::provide_ingest_dataset_client(&request.platform)
+        //         //     .map_err(|err| {
+        //         //         eprintln!("{}", err);
+        //         //     });
+        //         eprintln!("Artifact publication not yet available for datasets");
+        //         nack(&channel, &deliver, None, None).await;
+        //         return 
+        //     }
+        // };
+            
+        // Acknowledge the message
+        ack(&channel, &deliver, None).await;
+    }
+}
+
+async fn connect_to_broker(args: &OpenConnectionArguments, max_connection_attempts: i8) -> Connection {
+    println!("Attempting to connect to broker");
+    
+    let mut connection_attempts: i8 = 0;
+    while connection_attempts <= max_connection_attempts {
+        // Attempt to connect. Out of all the possible errors, we only want to retry
+        // the connection on the two IO errors below
+        
+        // Open connection
+        let maybe_connection = Connection::open(args)
+            .await;
+
+        match maybe_connection {
+            Ok(conn) => return conn, // Return the successful connection
+            Err(err) => {
+                connection_attempts += 1;
+                match err {
+                    Error::NetworkError(_) => {
+                        println!("Failed to connect to message broker: Attempt {} of {}", connection_attempts, max_connection_attempts);
+                        connection_attempts += 1;
+                        continue;
+                    },
+                    other => panic!("Failed to connect to message broker: {}", other.to_string())
+                };
+            }
+        }
+    }
+
+    panic!("Failed to connect to message broker. Max attempts reached: {}", max_connection_attempts);
+}
+
+async fn ack(channel: &Channel, deliver: &Deliver, multiple: Option<bool>) {
+    let args = BasicAckArguments {
+        delivery_tag: deliver.delivery_tag(),
+        multiple: multiple.unwrap_or(false)
+    };
+
+    if let Err(err) = channel.basic_ack(args).await {
+        eprintln!("CRITICAL: Failed to ack message: {}", err.to_string());
+        panic!("Cannot ack. Shutting down to avoid inconsistent state.");
+    }
+}
+
+async fn nack(channel: &Channel, deliver: &Deliver, requeue: Option<bool>, multiple: Option<bool>) {
+    let args = BasicNackArguments {
+        delivery_tag: deliver.delivery_tag(),
+        requeue: requeue.unwrap_or(false),
+        multiple: multiple.unwrap_or(false)
+    };
+
+    if let Err(err) = channel.basic_nack(args).await {
+        eprintln!("CRITICAL: Failed to nack message: {}", err.to_string());
+        panic!("Cannot nack. Shutting down to avoid inconsistent state.");
+    }
+}
+
+#[tokio::main]
+async fn main() -> () {
+    env_logger::init();
+
+    let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_HOST missing from environment variables");
+    let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+    let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+    let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
+
+    let connection_args = OpenConnectionArguments::new(
+        host.as_str(),
+        port.parse::<u16>().unwrap_or(5672),
+        username.as_str(),
+        password.as_str()
+    );
+
+    // Connect to the broker
+    let conn = connect_to_broker(&connection_args, 25).await;
+
+    // Create a channel
+    let channel = match conn.open_channel(None).await {
+        Ok(c) => c,
+        Err(err) => panic!("Failed to open channel: {}", err.to_string())
+    };
+
+    // Declare queue
+    let _ = match channel.queue_declare(QueueDeclareArguments::new(ARTIFACT_PUBLICATION_QUEUE.into())).await {
+        Ok(q) => q,
+        Err(err) => panic!("Failed to create channel: {}", err.to_string())
+    };
+
+    match channel.exchange_declare(
+        ExchangeDeclareArguments::new(
+            ARTIFACT_PUBLICATION_EXCHANGE,
+            ExchangeType::Topic.to_string().as_str()
+        )
+    ).await {
+        Ok(_) => {},
+        Err(err) => panic!("Failed to delare exchange: {}", err.to_string())
+    };
+    
+     match channel.queue_bind(
+        QueueBindArguments::new(
+            ARTIFACT_PUBLICATION_QUEUE,
+            ARTIFACT_PUBLICATION_EXCHANGE, 
+            ARTIFACT_PUBLICATION_ROUTING_KEY
+        )
+    ).await {
+        Ok(_) => {},
+        Err(err) => panic!("Failed to bind queue: {}", err.to_string())
+    };
+
+    // Unique consumer tag. Make this unique per worker. 
+    let consumer_tag = Uuid::now_v7();
+
+    // Database connection
+    let db = get_db(ClientParams{
+        username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
+        password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
+        host: env::var("ARTIFACTS_DB_HOST").expect("ARTIFACTS_DB_HOST env var not set"),
+        port: env::var("ARTIFACTS_DB_PORT").expect("ARTIFACTS_DB_PORT env var not set"),
+        db: env::var("ARTIFACTS_DB_NAME").expect("ARTIFACTS_DB_NAME env var not set"),
+    })
+        .await
+        .map_err(|err| {
+            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        })
+        .expect("Datbase initialization error");
+    
+    let environment = Env::new().expect("Env could not be initialized");
+
+    let consumer = ArtifactpublisherConsumer {
+        artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
+        artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
+        artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
+    };
+     
+    let args = BasicConsumeArguments::default()
+        .queue(ARTIFACT_PUBLICATION_QUEUE.into())
+        .consumer_tag(consumer_tag.to_string())
+        .finish();
+
+    match channel.basic_consume(consumer, args).await {
+        Ok(_) => { println!("Ready to recieve messages...") },
+        Err(err) => panic!("Failed to consume: {}", err.to_string())
+    };
+
+    // Block forever or until terminated
+    if let Err(err) = tokio::signal::ctrl_c().await {
+        panic!("{}", err.to_string())
+    }
+}
+
