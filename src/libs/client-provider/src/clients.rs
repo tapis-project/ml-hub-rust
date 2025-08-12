@@ -114,16 +114,16 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
     }
 }
 
-pub enum PublishModelClient {}
+pub enum PublishModelClient {
+    HuggingFace(HuggingFaceClient),
+    Patra(PatraClient)
+}
 
 #[async_trait::async_trait]
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(
-        &self,
-        _request: &PublishArtifactRequest,
-    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<_, ClientError> = match self {
             _ => Err(ClientError::NotFound {
                 msg: "No clients available for publishing".into(),

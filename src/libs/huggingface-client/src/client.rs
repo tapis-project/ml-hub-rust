@@ -5,7 +5,7 @@ use async_trait;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient,
     GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
-    ListModelsClient, PublishDatasetClient,
+    ListModelsClient, PublishDatasetClient, PublishModelClient,
 };
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::Client as ReqwestClient;
@@ -14,10 +14,11 @@ use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
+use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
 use shared::presentation::http::v1::dto::headers::{AuthorizationHeaderError, Headers};
 use shared::presentation::http::v1::dto::datasets::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
-    PublishDatasetRequest,
+    PublishDatasetRequest
 };
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::dto::models::{
@@ -339,6 +340,16 @@ impl IngestDatasetClient for HuggingFaceClient {
 }
 
 #[async_trait::async_trait]
+impl PublishModelClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn publish_model(&self, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        Err(ClientError::Unimplemented)
+    }
+}
+
+#[async_trait::async_trait]
 impl PublishDatasetClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
@@ -346,8 +357,7 @@ impl PublishDatasetClient for HuggingFaceClient {
     async fn publish_dataset(
         &self,
         _result: &PublishDatasetRequest,
-    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
-    {
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         Err(ClientError::Unimplemented)
     }
 }

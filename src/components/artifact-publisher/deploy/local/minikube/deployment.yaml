@@ -51,6 +51,6 @@ spec:
       volumes:
         - name: nfs-server-mount
           nfs:
-            server: '{{ NFS_SERVER_COMPONENT_IP }}'
+            server: '10.102.146.160'
             path: /
       restartPolicy: Always

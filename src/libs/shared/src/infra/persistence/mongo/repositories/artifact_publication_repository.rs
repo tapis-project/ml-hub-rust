@@ -68,7 +68,7 @@ impl application::ports::repositories::ArtifactPublicationRepository for Artifac
     // }
 
     async fn update_status(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ApplicationError> {
-        let update = UpdateArtifactPublicationStatusRequest::from(publication.clone());
+        let update = UpdateArtifactPublicationStatusRequest::from(publication);
 
         let filter = doc! {
             "id": Uuid::from_bytes(*publication.id.as_bytes())
