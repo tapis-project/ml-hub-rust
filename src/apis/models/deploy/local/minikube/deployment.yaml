@@ -56,5 +56,5 @@ spec:
       volumes:
         - name: nfs-server-mount
           nfs:
-            server: '10.102.146.160'
+            server: '10.106.111.120'
             path: /
