@@ -16,7 +16,7 @@ mod artifact_publication_test {
         
         assert!(publication.artifact_id == artifact_id);
         assert!(publication.attempts == 0);
-        assert!(publication.platform == String::from("platform"));
+        assert!(publication.target_platform == String::from("platform"));
         assert!(publication.created_at.into_inner() == publication.last_modified.into_inner());
         assert!(publication.status == ArtifactPublicationStatus::Submitted)
     }
@@ -30,7 +30,7 @@ mod artifact_publication_test {
 
         let last_modified_before = publication.last_modified.clone();
 
-        let result = publication.set_status(&ArtifactPublicationStatus::Pending)
+        let result = publication.change_status(&ArtifactPublicationStatus::Pending)
             .map(|p| {
                 // The status should be updated
                 assert!(p.status == ArtifactPublicationStatus::Pending);
@@ -50,39 +50,39 @@ mod artifact_publication_test {
             "platform".into(),
         );
 
-        let maybe_publication = publication.set_status(&ArtifactPublicationStatus::Pending)
+        let maybe_publication = publication.change_status(&ArtifactPublicationStatus::Pending)
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::Extracting);
+                let publication = p.change_status(&ArtifactPublicationStatus::Extracting);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::Extracted);
+                let publication = p.change_status(&ArtifactPublicationStatus::Extracted);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::PublishingMetadata);
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishingMetadata);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::PublishedMetadata);
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishedMetadata);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::PublishingArtifact);
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishingArtifact);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::PublishedArtifact);
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishedArtifact);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.set_status(&ArtifactPublicationStatus::Finished);
+                let publication = p.change_status(&ArtifactPublicationStatus::Finished);
                 assert!(!publication.is_err());
                 publication
             });
@@ -97,7 +97,7 @@ mod artifact_publication_test {
             "platform".into(),
         );
 
-        let maybe_publication = publication.set_status(&ArtifactPublicationStatus::Finished);
+        let maybe_publication = publication.change_status(&ArtifactPublicationStatus::Finished);
         assert!(maybe_publication.is_err())
     }
 }

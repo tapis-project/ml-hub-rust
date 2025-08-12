@@ -57,7 +57,7 @@ impl From<entities::artifact_publication::ArtifactPublication> for responses::Ar
             created_at: String::from(value.created_at),
             last_modified: String::from(value.last_modified),
             last_message: value.last_message,
-            platform: value.platform,
+            target_platform: value.target_platform,
             attempts: value.attempts,
             status: responses::ArtifactPublicationStatus::from(value.status),
         }

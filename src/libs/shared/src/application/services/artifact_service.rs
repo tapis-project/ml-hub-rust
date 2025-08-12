@@ -6,11 +6,11 @@ use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff,
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
 use crate::application::inputs::artifact_publication::PublishArtifactInput;
-use crate::application::ports::events::{EventPublisher, EventPublisherError, Event, IngestArtifactEventPayload};
+use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
 use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
-use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason as Reason, ArtifactIngestionStatus};
-use crate::domain::entities::artifact_publication::ArtifactPublication;
+use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason, ArtifactIngestionStatus};
+use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError, ArtifactPublicationFailureReason};
 use crate::domain::services::{
     ArtifactService as DomainArtifactService,
     ArtifactServiceError as DomainArtifactServiceError};
@@ -32,6 +32,9 @@ pub enum ArtifactServiceError {
 
     #[error("Artifact ingestion error: {0}")]
     ArtifactIngestionError(#[from] ArtifactIngestionError),
+
+    #[error("Artifact publication error: {0}")]
+    ArtifactPublicationError(#[from] ArtifactPublicationError),
 
     #[error("Artifact service error: {0}")]
     DomainArtifactServiceError(#[from] DomainArtifactServiceError),
@@ -123,9 +126,9 @@ impl ArtifactService {
         }
 
         // Instantiate the ArtifactPublication
-        let publication = ArtifactPublication::new(
+        let mut publication = ArtifactPublication::new(
             input.artifact_id,
-            input.platform,
+            input.target_platform,
         );
 
         // Closure for saving the publication
@@ -135,7 +138,35 @@ impl ArtifactService {
         retry_async(save_publication, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
-        // TODO Publish message to queue
+        // 
+        let payload = PublishArtifactEventPayload {
+            publication_id: publication.id.clone(),
+            webhook_url: input.webhook_url.clone()
+        };
+
+        let event = Event::PublishArtifactEvent(payload.clone());
+        let publish_ingestion = || self.event_publisher.publish(
+            &event
+        );
+        
+        // Publish the artifact ingestion request to the queue
+        let publish_result = retry_async(publish_ingestion, &Self::MQ_RETRY_POLICY).await
+            .map_err(|err| {ArtifactServiceError::PubisherError(err)});
+
+        if let Err(err) = publish_result {
+            GlobalLogger::error(format!("Failed to publish ArtifactIngestion: {}", &err.to_string()).as_str());
+
+            publication.change_status(&ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToQueue("Failed to queue".into())))
+                .map_err(|err| ArtifactServiceError::ArtifactPublicationError(err))?;
+
+            let update_ingestion = || 
+                self.publication_repo.update_status(&publication);
+            
+            let _ = retry_async(update_ingestion, &Self::REPO_RETRY_POLICY).await
+                .map_err(|err| ArtifactServiceError::RepoError(err))?;
+            
+            return Err(err)
+        };
 
         return Ok(publication)
     }
@@ -165,7 +196,7 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err));
 
         // Closure for publishing the artifact ingestion request
-        let message_payload = IngestArtifactEventPayload {
+        let payload = IngestArtifactEventPayload {
             ingestion_id: ingestion.id.clone(),
             artifact_type: input.artifact_type.clone(),
             platform: ingestion.platform.clone(),
@@ -173,7 +204,7 @@ impl ArtifactService {
             webhook_url: input.webhook_url.clone()
         };
 
-        let event = Event::IngestArtifactEvent(message_payload.clone());
+        let event = Event::IngestArtifactEvent(payload.clone());
         let publish_ingestion = || self.event_publisher.publish(
             &event
         );
@@ -185,7 +216,7 @@ impl ArtifactService {
         if let Err(err) = publish_result {
             GlobalLogger::error(format!("Failed to publish ArtifactIngestion: {}", &err.to_string()).as_str());
 
-            ingestion.change_status(ArtifactIngestionStatus::Failed(Reason::FailedToQueue))
+            ingestion.change_status(ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToQueue))
                 .map_err(|err| ArtifactServiceError::ArtifactIngestionError(err))?;
 
             let update_ingestion = || 

@@ -10,7 +10,7 @@ impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
             artifact_id: Uuid::from_bytes(value.artifact_id.into_bytes()),
             attempts: value.attempts,
             last_message: value.last_message.clone(),
-            platform: value.platform.clone(),
+            target_platform: value.target_platform.clone(),
             created_at: DateTime::from_chrono(value.created_at.into_inner()),
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
             status: documents::ArtifactPublicationStatus::from(value.status.clone())
@@ -40,11 +40,22 @@ impl From<entities::ArtifactPublicationStatus> for documents::ArtifactPublicatio
 impl From<entities::ArtifactPublicationFailureReason> for documents::ArtifactPublicationFailureReason {
     fn from(value: entities::ArtifactPublicationFailureReason) -> Self {
         match value {
+            entities::ArtifactPublicationFailureReason::FailedToQueue(s) => documents::ArtifactPublicationFailureReason::FailedToQueue(s),
             entities::ArtifactPublicationFailureReason::FailedToExtract(s) => documents::ArtifactPublicationFailureReason::FailedToExtract(s),
             entities::ArtifactPublicationFailureReason::FailedToPublishArtifact(s) => documents::ArtifactPublicationFailureReason::FailedToPublishArtifact(s),
             entities::ArtifactPublicationFailureReason::FailedToPublishMetadata(s) => documents::ArtifactPublicationFailureReason::FailedToPublishMetadata(s),
             entities::ArtifactPublicationFailureReason::InternalError(s) => documents::ArtifactPublicationFailureReason::InternalError(s),
             entities::ArtifactPublicationFailureReason::PlatformError(s) => documents::ArtifactPublicationFailureReason::PlatformError(s),
+        }
+    }
+}
+
+impl From<&entities::ArtifactPublication> for documents::UpdateArtifactPublicationStatusRequest {
+    fn from(value: &entities::ArtifactPublication) -> Self {
+        Self {
+            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_message: value.last_message.clone(),
+            status: documents::ArtifactPublicationStatus::from(value.status.clone()),
         }
     }
 }

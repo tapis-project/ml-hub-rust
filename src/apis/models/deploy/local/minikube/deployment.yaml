@@ -56,5 +56,5 @@ spec:
       volumes:
         - name: nfs-server-mount
           nfs:
-            server: '10.102.146.160'
+            server: '{{ NFS_SERVER_COMPONENT_IP }}'
             path: /

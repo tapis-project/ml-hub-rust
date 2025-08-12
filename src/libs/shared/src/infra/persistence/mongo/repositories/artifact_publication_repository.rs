@@ -1,13 +1,13 @@
 use crate::application::errors::ApplicationError;
 use crate::infra::persistence::mongo::database::ARTIFACT_PUBLICATION_COLLECTION;
-use crate::infra::persistence::mongo::documents::artifact_publication::ArtifactPublication;
+use crate::infra::persistence::mongo::documents::artifact_publication::{ArtifactPublication, UpdateArtifactPublicationStatusRequest};
 use crate::application;
 use crate::domain::entities;
 use mongodb::{
-    // bson::{
-    //     doc,
-    //     Uuid
-    // },
+    bson::{
+        doc,
+        Uuid
+    },
     Database,
     Collection,
 };
@@ -67,27 +67,27 @@ impl application::ports::repositories::ArtifactPublicationRepository for Artifac
     //     Ok(())
     // }
 
-    // async fn update_status(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ApplicationError> {
-    //     let update = UpdateArtifactPublicationStatusRequest::from(publication.clone());
+    async fn update_status(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ApplicationError> {
+        let update = UpdateArtifactPublicationStatusRequest::from(publication.clone());
 
-    //     let filter = doc! {
-    //         "id": Uuid::from_bytes(*publication.id.as_bytes())
-    //     };
+        let filter = doc! {
+            "id": Uuid::from_bytes(*publication.id.as_bytes())
+        };
         
-    //     let document = doc! {
-    //         "$set": {
-    //             "status": String::from(update.status),
-    //             "last_modified": update.last_modified,
-    //             "last_message": update.last_message
-    //         }
-    //     };
+        let document = doc! {
+            "$set": {
+                "status": update.status.to_string(),
+                "last_modified": update.last_modified,
+                "last_message": update.last_message
+            }
+        };
 
-    //     self.write_collection.update_one(filter, document, None)
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        self.write_collection.update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
         
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     // async fn find_by_artifact_id(&self, artifact_id: uuid::Uuid) -> Result<Vec<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
     //     let filter = doc! {

@@ -36,6 +36,7 @@ pub trait ModelMetadataRepository: Send + Sync {
 #[async_trait]
 pub trait ArtifactPublicationRepository: Send + Sync {
     async fn save(&self, publication: &ArtifactPublication) -> Result<(), ApplicationError>;
-    // async fn update_status(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
-    // async fn find_by_id(&self, id: Uuid) -> Result<Option<ArtifactIngestion>, ApplicationError>;
+    async fn update_status(&self, ingestion: &ArtifactPublication) -> Result<(), ApplicationError>;
+    // async fn find_by_id(&self, id: Uuid) -> Result<Option<ArtifactPublication>, ApplicationError>;
+    // async fn find_all_by_id(&self, artifact_id: Uuid) -> Result<Vec<ArtifactPublication>, ApplicationError>;
 }

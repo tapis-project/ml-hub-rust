@@ -12,8 +12,8 @@ pub struct ArtifactPublication  {
     pub id: Uuid,
     pub status: Status,
     pub artifact_id: Uuid,
-    pub platform: String,
-    pub last_message: String,
+    pub target_platform: String,
+    pub last_message: Option<String>,
     pub attempts: u8,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
@@ -21,14 +21,14 @@ pub struct ArtifactPublication  {
 
 /// Represents the life cycle of an attempt to publish an artifact
 impl ArtifactPublication {
-    pub fn new(artifact_id: Uuid, platform: String) -> Self {
+    pub fn new(artifact_id: Uuid, target_platform: String) -> Self {
         let now = TimeStamp::now();
         Self {
             id: Uuid::new_v4(),
             artifact_id,
             status: ArtifactPublicationStatus::Submitted,
-            platform,
-            last_message: "Submitted".into(),
+            target_platform,
+            last_message: Some("Submitted".into()),
             attempts: 0,
             created_at: now.clone(),
             last_modified: now.clone(),
@@ -39,7 +39,7 @@ impl ArtifactPublication {
     /// if the transition from the current status to the new status is valid.
     /// Additionally the the ArtifactPublications last_modified will be updated
     /// to "now"
-    pub fn set_status(&mut self, status: &Status) -> Result<&mut Self, ArtifactPublicationError> {
+    pub fn change_status(&mut self, status: &Status) -> Result<&mut Self, ArtifactPublicationError> {
         if !self.is_valid_status_transition(&self.status, status) {
             return Err(ArtifactPublicationError::InvalidStatusTransition(format!("Invalid status transition: ArtifactPublication cannot move from status {} to status {}", self.status.kind(), status.kind())))
         }
@@ -162,6 +162,7 @@ impl ArtifactPublicationStatus {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ArtifactPublicationFailureReason {
+    FailedToQueue(String),
     FailedToExtract(String),
     FailedToPublishArtifact(String),
     FailedToPublishMetadata(String),
@@ -174,6 +175,7 @@ type Reason = ArtifactPublicationFailureReason;
 impl ArtifactPublicationFailureReason {
     fn _kind(&self) -> &str {
         match self {
+            Self::FailedToQueue(_) => "FailedToQueue",
             Self::FailedToExtract(_) => "FailedToExtract",
             Self::FailedToPublishArtifact(_) => "FailedToPublishArtifact",
             Self::FailedToPublishMetadata(_) => "FailedToPublishMetadata",

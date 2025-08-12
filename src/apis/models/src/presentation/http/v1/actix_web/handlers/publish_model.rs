@@ -5,9 +5,9 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_success_response,
 };
 use crate::presentation::http::v1::dto::{Headers, PublishArtifactPath, PublishArtifactBody, PublishArtifactRequest};
-use crate::presentation::http::v1::dto::CreateArtifactPublication;
 use crate::presentation::http::v1::dto::ArtifactPublication as ArtifactPublicationDto;
 use crate::application::artifact_publication_inputs::PublishArtifactInput;
+use client_provider::ClientProvider;
 use actix_web::{post, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
 use std::collections::HashMap;
@@ -38,17 +38,20 @@ async fn publish_model(
         body: body.into_inner(),
     };
 
+    // Fail-fast: Use the client provider to determine the client for the request platform
+    // has the ability to publish artifacts. The client will not actually be used here,
+    // we are just using this check to fail fast as the client will be invoked
+    // somewhere else later.
+    if let Err(err) = ClientProvider::provide_ingest_model_client(&request.body.target_platform) {
+        return build_error_response(400, err.to_string());
+    }
+
     let artifact_service = match artifact_service_factory(&data.db) {
         Ok(s) => s,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let dto = CreateArtifactPublication {
-        platform: request.body.platform.clone(),
-        artifact_id: request.path.artifact_id
-    };
-
-    let input = match PublishArtifactInput::try_from(dto) {
+    let input = match PublishArtifactInput::try_from(request) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

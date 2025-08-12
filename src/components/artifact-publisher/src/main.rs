@@ -58,6 +58,7 @@ impl AsyncConsumer for ArtifactpublisherConsumer {
 
         let publication_id = Uuid::parse_str(request.publication_id.as_str()).expect("Invalid Uuid. Cannot convert publication_id into Uuid");
 
+        println!("{}", publication_id);
         // // Update artifact publication to Pending
         // self.artifact_service.change_publication_status_by_publication_id(
         //     publication_id.clone(),

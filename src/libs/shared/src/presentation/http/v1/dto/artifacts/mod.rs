@@ -26,19 +26,16 @@ pub struct PublishArtifactPath {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PublishArtifactBody {
-    pub platform: String,
+    pub target_platform: String,
+    pub webhook_url: Option<String>
 }
 
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PublishArtifactRequest {
     pub headers: Headers,
     pub path: PublishArtifactPath,
     pub query: HashMap<String, String>,
     pub body: PublishArtifactBody,
-}
-
-pub struct CreateArtifactPublication {
-    pub platform: String,
-    pub artifact_id: String,
 }
 
 #[derive(Clone, Debug)]
