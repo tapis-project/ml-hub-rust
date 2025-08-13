@@ -19,7 +19,8 @@ impl From<&PublishArtifactEventPayload> for messages::PublishArtifactMessage {
     fn from(value: &PublishArtifactEventPayload) -> Self {
         Self {
             publication_id: value.publication_id.to_string(),
-            webhook_url: value.webhook_url.clone()
+            webhook_url: value.webhook_url.clone(),
+            serialized_client_request: value.serialized_client_request.clone(),
         }
     }
 }

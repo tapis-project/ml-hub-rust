@@ -42,7 +42,7 @@ async fn publish_model(
     // has the ability to publish artifacts. The client will not actually be used here,
     // we are just using this check to fail fast as the client will be invoked
     // somewhere else later.
-    if let Err(err) = ClientProvider::provide_ingest_model_client(&request.body.target_platform) {
+    if let Err(err) = ClientProvider::provide_publish_model_client(&request.body.target_platform) {
         return build_error_response(400, err.to_string());
     }
 

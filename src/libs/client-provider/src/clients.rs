@@ -123,12 +123,10 @@ pub enum PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, _request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        let resp: Result<_, ClientError> = match self {
-            _ => Err(ClientError::NotFound {
-                msg: "No clients available for publishing".into(),
-                scope: ClientErrorScope::Client,
-            }),
+    async fn publish_model(&self, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
+            PublishModelClient::HuggingFace(c) => c.publish_model(request).await,
+            PublishModelClient::Patra(c) => c.publish_model(request).await,
         };
 
         resp

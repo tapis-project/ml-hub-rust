@@ -46,7 +46,7 @@ struct ArtifactIngesterConsumer {
 #[async_trait]
 impl AsyncConsumer for ArtifactIngesterConsumer {
     async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
-        // Deserialize the message into a DownloadArtifactRequest
+        // Deserialize the message
         let request: IngestArtifactMessage = match serde_json::from_slice(&content) {
             Ok(m) => m,
             Err(err) => {

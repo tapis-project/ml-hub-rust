@@ -65,7 +65,7 @@ impl ClientProvider {
             Platform::Git => Ok(IngestModelClient::Git(GitLfsClient::new())),
             Platform::Github => Ok(IngestModelClient::Github(GithubLfsClient::new())),
             Platform::HuggingFace => Ok(IngestModelClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(platform_name, "ingesting"))
+            _ => Err(ClientProviderError::NotFound(platform_name, "model ingesting"))
         }
     }
 
@@ -74,14 +74,14 @@ impl ClientProvider {
         match platform {
             Platform::HuggingFace => Ok(PublishModelClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(PublishModelClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::NotFound(platform_name, "publishing"))
+            _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
         }
     }
 
     pub fn provide_ingest_dataset_client(platform_name: &str) -> Result<IngestDatasetClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
-            _ => Err(ClientProviderError::NotFound(platform_name, "ingest dataset"))
+            _ => Err(ClientProviderError::NotFound(platform_name, "dataset ingesting"))
         }
     }
 }

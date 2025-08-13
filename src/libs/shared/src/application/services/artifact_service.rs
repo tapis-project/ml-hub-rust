@@ -138,19 +138,22 @@ impl ArtifactService {
         retry_async(save_publication, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
-        // 
+        
         let payload = PublishArtifactEventPayload {
             publication_id: publication.id.clone(),
-            webhook_url: input.webhook_url.clone()
+            webhook_url: input.webhook_url.clone(),
+            serialized_client_request: input.serialized_client_request.clone(),
         };
 
         let event = Event::PublishArtifactEvent(payload.clone());
-        let publish_ingestion = || self.event_publisher.publish(
+
+        // Closure for publishing artifact
+        let publish_artifact = || self.event_publisher.publish(
             &event
         );
         
-        // Publish the artifact ingestion request to the queue
-        let publish_result = retry_async(publish_ingestion, &Self::MQ_RETRY_POLICY).await
+        // Handle the artifact publication with retries
+        let publish_result = retry_async(publish_artifact, &Self::MQ_RETRY_POLICY).await
             .map_err(|err| {ArtifactServiceError::PubisherError(err)});
 
         if let Err(err) = publish_result {

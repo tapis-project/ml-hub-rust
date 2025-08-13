@@ -31,7 +31,8 @@ pub struct IngestArtifactEventPayload {
 #[derive(Clone)]
 pub struct PublishArtifactEventPayload {
     pub publication_id: Uuid,
-    pub webhook_url: Option<String>
+    pub webhook_url: Option<String>,
+    pub serialized_client_request: Vec<u8>,
 }
 
 #[derive(Clone)]

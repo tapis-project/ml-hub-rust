@@ -37,16 +37,16 @@ use artifact_publisher::bootstrap::artifact_service_factory;
 use artifact_publisher::database::{get_db, ClientParams};
 use shared::infra::fs::archiver::Archiver;
 
-struct ArtifactpublisherConsumer {
+struct ArtifactPublisherConsumer {
     artifact_service: ArtifactService,
     artifacts_work_dir: PathBuf,
     artifacts_cache_dir: PathBuf,
 }
 
 #[async_trait]
-impl AsyncConsumer for ArtifactpublisherConsumer {
+impl AsyncConsumer for ArtifactPublisherConsumer {
     async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
-        // Deserialize the message into a DownloadArtifactRequest
+        // Deserialize the message
         let request: PublishArtifactMessage = match serde_json::from_slice(&content) {
             Ok(m) => m,
             Err(err) => {
@@ -353,7 +353,7 @@ async fn main() -> () {
     
     let environment = Env::new().expect("Env could not be initialized");
 
-    let consumer = ArtifactpublisherConsumer {
+    let consumer = ArtifactPublisherConsumer {
         artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
         artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)

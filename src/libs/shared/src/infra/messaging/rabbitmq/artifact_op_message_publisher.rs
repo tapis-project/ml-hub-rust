@@ -38,6 +38,15 @@ pub enum ArtifactOpMessagePublisherError {
     AmqpError(#[from] amqprs::error::Error)
 }
 
+async fn delcare_exchanges(channel: &Channel, exchanges: Vec<(&'static str, &str)>) -> Result<(), EventPublisherError> {
+    for (exchange, exchange_type) in exchanges {
+        let exchange_args = ExchangeDeclareArguments::new(exchange, exchange_type);
+        channel.exchange_declare(exchange_args).await
+            .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?
+    }
+    Ok(())
+}
+
 pub struct RabbitMQArtifactOpMessagePublisher;
 
 impl RabbitMQArtifactOpMessagePublisher {
@@ -61,19 +70,19 @@ impl RabbitMQArtifactOpMessagePublisher {
 
         let channel = conn.open_channel(None).await.expect("Open channel failed");
 
-        let exchange_args = ExchangeDeclareArguments::new(ARTIFACT_INGESTION_EXCHANGE, "topic");
-        channel.exchange_declare(exchange_args).await
-            .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?;
-
-        let exchange_args = ExchangeDeclareArguments::new(ARTIFACT_INGESTION_EXCHANGE, "topic");
-        channel.exchange_declare(exchange_args).await
-            .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?;
+        delcare_exchanges(
+            &channel, 
+            vec![
+                (ARTIFACT_INGESTION_EXCHANGE, "topic"),
+                (ARTIFACT_PUBLICATION_EXCHANGE, "topic")
+            ]
+        ).await?;
 
         Ok(channel)
     }    
 }
 
-fn get_message_from_event(event: &Event) -> Result<String, EventPublisherError> {
+fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherError> {
     match event {
         Event::IngestArtifactEvent(payload) => {
             match serde_json::to_string(&IngestArtifactMessage::from(payload)) {
@@ -111,13 +120,7 @@ fn get_routing_key(event: &Event) -> &'static str {
 #[async_trait]
 impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
     async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
-        let serialized_message = get_message_from_event(&event)?;
-        let payload = match serde_json::to_string(&serialized_message) {
-            Ok(p) => p,
-            Err(err) => {
-                return Err(EventPublisherError::SerializationError(err.to_string()));
-            }
-        };
+        let payload = get_serialized_event_payload(&event)?;
 
         // Publish to exchange
         let args = BasicPublishArguments::new(
