@@ -1,4 +1,5 @@
 pub const ARTIFACT_INGEST_DIR_NAME: &'static str = "ingest";
+pub const ARTIFACT_PUBLICATION_DIR_NAME: &'static str = "publication";
 
 pub const ARTIFACT_INGESTION_QUEUE: &'static str = "queue.artifact.ingest";
 pub const ARTIFACT_INGESTION_EXCHANGE: &'static str = "exchange.artifact.ingest";

@@ -51,6 +51,12 @@ pub enum ArtifactServiceError {
 
     #[error("Missing metadata: {0}")]
     MissingMetadata(String),
+
+    #[error("Artifact not ingested: {0}")]
+    AritfactNotIngested(String),
+
+    #[error("UnexpectedState: {0}")]
+    UnexpectedState(String),
 }
 
 pub enum UuidOrString {
@@ -467,6 +473,20 @@ impl ArtifactService {
         Ok(Some(artifact))
     }
 
+    pub fn get_ingested_artifact_path(&self, artifact: &Artifact) -> Result<PathBuf, ArtifactServiceError> {
+        if !artifact.is_fully_ingested() {
+            return Err(ArtifactServiceError::AritfactNotIngested("Attempting to get the path of an Artifact that is not fully ingested".into()))
+        };
+
+        let path = artifact.path.clone()
+            .ok_or_else(|| ArtifactServiceError::UnexpectedState("Attempting to access path on a fully ingested artifact, but the path is None".into()))?;
+
+        Ok(path)
+    }
+
+    // TODO This should not be internally loading in the artifact just to get the
+    // path. The artifact should be fetched before calling this method and the 
+    // reference to that should be passed an an argument
     pub async fn get_artifact_path(&self, input: DownloadArtifactInput) -> Result<PathBuf, ArtifactServiceError> {
         let artifact = self.find_artifact_by_artifact_id(input.artifact_id).await?;
 

@@ -210,10 +210,6 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             },
             // Ingest the dataset
             ArtifactType::Dataset => {
-                // let client = ClientProvider::provide_ingest_dataset_client(&request.platform)
-                //     .map_err(|err| {
-                //         eprintln!("{}", err);
-                //     });
                 eprintln!("Artifact ingestion not yet available for datasets");
                 nack(&channel, &deliver, None, None).await;
                 return 

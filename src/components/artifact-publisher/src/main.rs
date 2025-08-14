@@ -27,6 +27,7 @@ use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
 use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
 use shared::infra::system::Env;
+use shared::constants::ARTIFACT_PUBLICATION_DIR_NAME;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
 use shared::infra::messaging::messages::PublishArtifactMessage;
 use async_trait::async_trait;
@@ -39,8 +40,7 @@ use clients::{PublishModelClient, PublishModelMetadataClient};
 
 struct ArtifactPublisherConsumer {
     artifact_service: ArtifactService,
-    // artifacts_work_dir: PathBuf,
-    // artifacts_cache_dir: PathBuf,
+    publications_work_dir: PathBuf,
 }
 
 #[async_trait]
@@ -80,6 +80,13 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
         if !artifact.is_fully_ingested() {
             panic!("Artifact '{}' not fully ingested", artifact.id.to_string())
         }
+
+        // Get the artifact path
+        let artifact_path = match self.artifact_service.get_ingested_artifact_path(&artifact) {
+            Ok(p) => p,
+            Err(err) => { panic!("{}", err.to_string()) }
+        };
+
 
         // Publish the artifact
         match artifact.artifact_type {
@@ -131,11 +138,16 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                             panic!("Error updating publication status: {}", err.to_string())
                         }).unwrap();
                     
+                    // Path to which the files should be extracted
+                    let extracted_artifact_path = self.publications_work_dir.clone()
+                        .join(PathBuf::from(publication.id.to_string().clone()));
+                    
                     // Extract the archived artifact files
-                    let extracted_artifact_path = PathBuf::new();
-                    // let maybe_artifact_path = Archiver::unzip(
-                        
-                    // );
+                    let _ = Archiver::unzip(
+                        &artifact_path,
+                        &extracted_artifact_path,
+                        None,
+                    ).map_err(|err| panic!("Error extracting artifact {}: {}", artifact.id.to_string(), err.to_string()));
                     
                     // Update publication status to Extracted
                     self.artifact_service.change_publication_status_by_publication_id(
@@ -386,7 +398,7 @@ async fn main() -> () {
 
     let consumer = ArtifactPublisherConsumer {
         artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
-        // artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_PUBLISH_DIR_NAME),
+        publications_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_PUBLICATION_DIR_NAME),
         // artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
      
