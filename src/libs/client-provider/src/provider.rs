@@ -12,6 +12,7 @@ use crate::clients::{
     PublishModelClient,
     IngestModelClient,
     IngestDatasetClient,
+    PublishModelMetadataClient,
 };
 
 /// A provider for managing clients mapped to their respective platforms.
@@ -74,6 +75,14 @@ impl ClientProvider {
         match platform {
             Platform::HuggingFace => Ok(PublishModelClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(PublishModelClient::Patra(PatraClient::new())),
+            _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
+        }
+    }
+
+    pub fn provide_publish_metadata_client(platform_name: &str) -> Result<PublishModelMetadataClient, ClientProviderError> {
+        let platform = resolve_platform(platform_name)?;
+        match platform {
+            // Platform::Patra => Ok(PublishModelMetadataClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
         }
     }

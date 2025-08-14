@@ -11,6 +11,7 @@ use crate::application::ports::repositories::{ArtifactIngestionRepository, Artif
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason, ArtifactIngestionStatus};
 use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError, ArtifactPublicationFailureReason};
+use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::services::{
     ArtifactService as DomainArtifactService,
     ArtifactServiceError as DomainArtifactServiceError};
@@ -113,17 +114,9 @@ impl ArtifactService {
             return Err(ArtifactServiceError::MissingArtifact("Artifact must exist in order to publish it".into()))
         }
 
-        // Closure for fetching the metadata for this artifact
-        let find_metadata = || self.metadata_repo.find_by_artifact_id(&input.artifact_id);
-
-        // Find the metadata with retries
-        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
-
-        // Check that the artifact exists
-        if maybe_metadata.is_none() {
-            return Err(ArtifactServiceError::MissingMetadata("Artifact must exist in order to publish it".into()))
-        }
+        // Fetch artifact metadata
+        let _ = self.find_metadata_by_artifact_id(&input.artifact_id)
+            .await?;
 
         // Instantiate the ArtifactPublication
         let mut publication = ArtifactPublication::new(
@@ -172,6 +165,65 @@ impl ArtifactService {
         };
 
         return Ok(publication)
+    }
+
+    pub async fn find_metadata_by_artifact_id(&self, artifact_id: &Uuid) -> Result<ModelMetadata, ArtifactServiceError> {
+        // Closure for fetching the metadata for this artifact
+        let find_metadata = || self.metadata_repo.find_by_artifact_id(&artifact_id);
+
+        // Find the metadata with retries
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        // Check that the artifact exists
+        match maybe_metadata {
+            Some(m) => Ok(m),
+            None => Err(ArtifactServiceError::MissingMetadata("Artifact must exist in order to publish it".into()))
+        }
+    }
+
+    pub async fn change_publication_status_by_publication_id(
+        &self,
+        publication_id: Uuid,
+        status: ArtifactPublicationStatus,
+        message: Option<String>
+    ) -> Result<(), ArtifactServiceError> {
+        let find_publication = || self.publication_repo.find_by_id(publication_id);
+
+        // Find the publication
+        let maybe_publication = retry_async(find_publication, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        let mut publication = match maybe_publication {
+            Some(i) => i,
+            None => {
+                GlobalLogger::error(format!("Cannot find any record of ArtifactPublication '{}'.", publication_id).as_str());
+                return Err(ArtifactServiceError::NotFound(format!("Cannot find any record of ArtifactPublication '{}'.", publication_id)))
+            }
+        };
+
+        publication.change_status(&status)?;
+
+        // Only set the message if one was provided
+        if let Some(msg) = message {
+            publication.last_message = Some(msg)
+        }
+
+        let update_publication = || self.publication_repo.update_status(&publication);
+
+        retry_async(update_publication, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        Ok(())
+    }
+
+    pub async fn find_publication_by_publication_id(&self, publication_id: Uuid) -> Result<Option<ArtifactPublication>, ArtifactServiceError> {
+        let find_publication = || self.publication_repo.find_by_id(publication_id);
+
+        let maybe_publication = retry_async(find_publication, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+
+        return Ok(maybe_publication)
     }
 
     pub async fn submit_artifact_ingestion(&self, input: IngestArtifactInput) -> Result<ArtifactIngestion, ArtifactServiceError> {
@@ -393,9 +445,9 @@ impl ArtifactService {
 
     pub async fn find_artifact_by_artifact_id(&self, artifact_id: String) -> Result<Option<Artifact>, ArtifactServiceError> {
         let artifact_uuid = match Uuid::parse_str(&artifact_id) {
-                Ok(uuid) => uuid,
-                Err(_) => return Err(ArtifactServiceError::NotFound(format!("Invalid UUID string: {}", artifact_id)))
-            };
+            Ok(uuid) => uuid,
+            Err(_) => return Err(ArtifactServiceError::NotFound(format!("Invalid UUID string: {}", artifact_id)))
+        };
 
         // Closure for fetching the artifact
         let find_artifact = || self.artifact_repo.find_by_id(&artifact_uuid);

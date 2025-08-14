@@ -20,6 +20,10 @@ use shared::presentation::http::v1::dto::datasets::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest
 };
+use shared::domain::entities::{
+    artifact::Artifact,
+    model_metadata::ModelMetadata
+};
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::dto::models::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
@@ -344,7 +348,7 @@ impl PublishModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model(&self, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _artifact: &Artifact, _metadata: &ModelMetadata, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         Err(ClientError::Unimplemented)
     }
 }

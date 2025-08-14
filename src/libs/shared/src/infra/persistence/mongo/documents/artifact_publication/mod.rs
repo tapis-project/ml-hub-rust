@@ -1,4 +1,5 @@
 pub mod entity_to_document;
+pub mod document_to_entity;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

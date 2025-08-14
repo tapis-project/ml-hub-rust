@@ -33,6 +33,7 @@ pub struct ModelMetadata {
     pub version: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
+    // TODO pub artifact_uri: Option<String>
 
     /// Arbitrary labels
     pub labels: Option<Vec<String>>,

@@ -11,6 +11,8 @@ use shared::presentation::http::v1::dto::models::{
     IngestModelRequest,
     ListModelsRequest,
 };
+use shared::domain::entities::artifact::Artifact;
+use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
 use std::path::PathBuf;
 
@@ -123,12 +125,31 @@ pub enum PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
-            PublishModelClient::HuggingFace(c) => c.publish_model(request).await,
-            PublishModelClient::Patra(c) => c.publish_model(request).await,
+            PublishModelClient::HuggingFace(c) => c.publish_model(artifact, metadata, request).await,
+            PublishModelClient::Patra(c) => c.publish_model(artifact, metadata, request).await,
         };
 
         resp
+    }
+}
+
+pub enum PublishModelMetadataClient {
+
+}
+
+#[async_trait::async_trait]
+impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        // let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
+            // PublishModelMetadataClient::Patra(c) => c.publish_model_metadata(metadata, request).await,
+        // };
+
+        // resp
+        Err(ClientError::Unimplemented)
     }
 }

@@ -11,6 +11,10 @@ use shared::presentation::http::v1::dto::models::{
     DiscoverModelsRequest, GetModelRequest, ListModelsRequest,
 };
 use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
+use shared::domain::entities::{
+    artifact::Artifact,
+    model_metadata::ModelMetadata
+};
 use std::collections::hash_map::HashMap;
 
 #[derive(Debug)]
@@ -173,7 +177,9 @@ impl PublishModelClient for PatraClient {
 
     async fn publish_model(
         &self,
-        request: &PublishArtifactRequest,
+        _artifact: &Artifact,
+        _metadata: &ModelMetadata,
+        _request: &PublishArtifactRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         // TODO publish model metadata to patra
         

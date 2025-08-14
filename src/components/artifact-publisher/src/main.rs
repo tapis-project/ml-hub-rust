@@ -22,11 +22,10 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::constants::ARTIFACT_INGEST_DIR_NAME;
 use shared::domain::entities::artifact_publication::{ArtifactPublicationFailureReason, ArtifactPublicationStatus};
 use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
-use shared::presentation::http::v1::dto::models::IngestModelRequest;
+use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
 use shared::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
 use shared::infra::messaging::messages::PublishArtifactMessage;
@@ -36,11 +35,12 @@ use std::env;
 use artifact_publisher::bootstrap::artifact_service_factory;
 use artifact_publisher::database::{get_db, ClientParams};
 use shared::infra::fs::archiver::Archiver;
+use clients::{PublishModelClient, PublishModelMetadataClient};
 
 struct ArtifactPublisherConsumer {
     artifact_service: ArtifactService,
-    artifacts_work_dir: PathBuf,
-    artifacts_cache_dir: PathBuf,
+    // artifacts_work_dir: PathBuf,
+    // artifacts_cache_dir: PathBuf,
 }
 
 #[async_trait]
@@ -56,171 +56,202 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
             }
         };
 
+        // Deserialize the client request
+        let client_request: PublishArtifactRequest = serde_json::from_slice(&request.serialized_client_request)
+            .expect("Failed deserializing the client request");
+
         let publication_id = Uuid::parse_str(request.publication_id.as_str()).expect("Invalid Uuid. Cannot convert publication_id into Uuid");
 
-        println!("{}", publication_id);
-        // // Update artifact publication to Pending
-        // self.artifact_service.change_publication_status_by_publication_id(
-        //     publication_id.clone(),
-        //     ArtifactPublicationStatus::Pending,
-        //     Some("Publication pending".into())
-        // )
-        //     .await
-        //     .map_err(|err| {
-        //         panic!("Error updating publication status: {}", err.to_string())
-        //     }).unwrap();
+        // Fetch the publication
+        let ref mut publication = self.artifact_service.find_publication_by_publication_id(
+            publication_id.clone()
+        ).await
+            .expect("Failed to fetch publication")
+            .expect(format!("Could not find publication '{}'", &publication_id).as_str());
 
-        // // Fetch the artifact related to the publication
-        // let ref mut artifact = self.artifact_service.find_artifact_by_publication_id(
-        //     publication_id.clone()
-        // ).await
-        //     .expect("Failed to fetch artifact")
-        //     .expect(format!("Could not find artifact associated with publication '{}'", &publication_id).as_str());
+        // Fetch artifact associated with the publication
+        let artifact = self.artifact_service.find_artifact_by_artifact_id(
+            publication.artifact_id.clone().to_string()
+        ).await
+            .expect("Failed to fetch artifact")
+            .expect(format!("Could not find artifact '{}'", &publication.artifact_id).as_str());
 
-        // // Set the download path based on whether this is a model or a dataset
-        // let download_path = self.artifacts_work_dir.join(artifact.id.to_string());
+        // Check that the artifact is fully ingested
+        if !artifact.is_fully_ingested() {
+            panic!("Artifact '{}' not fully ingested", artifact.id.to_string())
+        }
 
-        // // Ingest the artifact
-        // match artifact.artifact_type {
-        //     ArtifactType::Model => {
-        //         // Get the correct client to do the model publication
-        //         match ClientProvider::provide_ingest_model_client(&request.platform) {
-        //             Ok(client) => {
-        //                 // Update the publication to Downloading
-        //                 self.artifact_service.change_publication_status_by_publication_id(
-        //                     publication_id.clone(),
-        //                     ArtifactPublicationStatus::Downloading,
-        //                     Some("Download in progress".into())
-        //                 )
-        //                     .await
-        //                     .map_err(|err| {
-        //                         panic!("Error updating publication status: {}", err.to_string())
-        //                     }).unwrap();
+        // Publish the artifact
+        match artifact.artifact_type {
+            ArtifactType::Model => {
+                // Fetch metadata associated with the model
+                let metadata = self.artifact_service.find_metadata_by_artifact_id(
+                    &publication.artifact_id
+                ).await
+                    .expect(format!("Failed to fetch metadata for artifact '{}'", &artifact.id.to_string()).as_str());
+
+                // Update artifact publication to Pending
+                self.artifact_service.change_publication_status_by_publication_id(
+                    publication.id.clone(),
+                    ArtifactPublicationStatus::Pending,
+                    Some("Publication pending".into())
+                )
+                .await
+                .map_err(|err| {
+                    panic!("Error updating publication status: {}", err.to_string())
+                }).unwrap();
+                
+                // Check whether at least one of the publish_model_client or the 
+                // publish_metadata_client exists
+                let (maybe_publish_model_client, maybe_publish_metadata_client) = {
+                    let maybe_model = ClientProvider::provide_publish_model_client(&publication.target_platform);
+                    let maybe_meta  = ClientProvider::provide_publish_metadata_client(&publication.target_platform);
+                
+                    match (maybe_model, maybe_meta) {
+                        (Err(_), Err(_)) => panic!(
+                            "Failed to find a client for both model and metadata publishing for platform {}",
+                            publication.target_platform
+                        ),
+                        (Ok(model), meta) => (Some(model), meta.ok()),
+                        (model, Ok(meta)) => (model.ok(), Some(meta)),
+                    }
+                };
+
+                // Extract the artifact files and publish those files to the target
+                // platform
+                if let Some(client) = maybe_publish_model_client {
+                    // Update publication status to Extracting
+                    self.artifact_service.change_publication_status_by_publication_id(
+                        publication_id.clone(),
+                        ArtifactPublicationStatus::Extracting,
+                        Some("Extracting artifact files".into())
+                    )
+                        .await
+                        .map_err(|err| {
+                            panic!("Error updating publication status: {}", err.to_string())
+                        }).unwrap();
+                    
+                    // Extract the archived artifact files
+                    let extracted_artifact_path = PathBuf::new();
+                    // let maybe_artifact_path = Archiver::unzip(
                         
-        //                 // Deserialize the client request
-        //                 let client_request: IngestModelRequest = serde_json::from_slice(&request.serialized_client_request)
-        //                     .expect("Failed deserializing the client request");
-                        
-        //                 // Ingest the model
-        //                 match client.ingest_model(&client_request, download_path.clone()).await {
-        //                     Ok(_) => {
-        //                         // Update publication to Downloaded
-        //                         self.artifact_service.change_publication_status_by_publication_id(
-        //                             publication_id.clone(),
-        //                             ArtifactPublicationStatus::Downloaded,
-        //                             Some("Download complete".into())
-        //                         )
-        //                             .await
-        //                             .map_err(|err| {
-        //                                 panic!("Error updating publication status: {}", err.to_string())
-        //                             }).unwrap();
-                                
-        //                         // Update publication to Archiving
-        //                         self.artifact_service.change_publication_status_by_publication_id(
-        //                             publication_id.clone(),
-        //                             ArtifactPublicationStatus::Archiving,
-        //                             Some("Archiving started".into())
-        //                         )
-        //                             .await
-        //                             .map_err(|err| {
-        //                                 panic!("Error updating publication status: {}", err.to_string())
-        //                             }).unwrap();
-                                
-        //                         // Archive the artifact files with compression
-        //                         let maybe_artifact_path = Archiver::zip(
-        //                             &download_path,
-        //                             &PathBuf::from(&self.artifacts_cache_dir).join(artifact.id.clone().to_string()),
-        //                             None,
-        //                             // This is the base path, this path will be stripped from every file
-        //                             // and directory that is written
-        //                             Some(
-        //                                 self.artifacts_work_dir.join(artifact.id.clone().to_string())
-        //                                     .to_string_lossy()
-        //                                     .into_owned()
-        //                                     .as_str()
-        //                             ),
-        //                         );
+                    // );
+                    
+                    // Update publication status to Extracted
+                    self.artifact_service.change_publication_status_by_publication_id(
+                        publication_id.clone(),
+                        ArtifactPublicationStatus::Extracted,
+                        Some("Successfully extracted artifact file(s)".into())
+                    )
+                        .await
+                        .map_err(|err| {
+                            panic!("Error updating publication status: {}", err.to_string())
+                        }).unwrap();
+                    
+                    // Publish the model files to the target platform
+                    match client.publish_model(&artifact, &metadata, &client_request).await {
+                        Ok(_) => {                
+                            // Update publication status to PublishedArtifact
+                            self.artifact_service.change_publication_status_by_publication_id(
+                                publication_id.clone(),
+                                ArtifactPublicationStatus::PublishedArtifact,
+                                Some("Extracting artifact files".into())
+                            )
+                                .await
+                                .map_err(|err| {
+                                    panic!("Error updating publication status: {}", err.to_string())
+                                }).unwrap();
 
-        //                         // Get the artifact path
-        //                         let artifact_path = match maybe_artifact_path {
-        //                             Ok(p) => p,
-        //                             Err(err) => {
-        //                                 self.artifact_service.change_publication_status_by_publication_id(
-        //                                     publication_id.clone(),
-        //                                     ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToArchive),
-        //                                     Some(err.to_string())
-        //                                 )
-        //                                     .await
-        //                                     .map_err(|err| {
-        //                                         panic!("Error updating publication status: {}", err.to_string())
-        //                                     }).unwrap();
-        //                                 return 
-        //                             }
-        //                         };
-                                
-        //                         // Update publication to Archived
-        //                         self.artifact_service.change_publication_status_by_publication_id(
-        //                             publication_id.clone(),
-        //                             ArtifactPublicationStatus::Archived,
-        //                             Some("Successfully ingested".into())
-        //                         )
-        //                             .await
-        //                             .map_err(|err| {
-        //                                 panic!("Error updating publication status: {}", err.to_string())
-        //                             }).unwrap();
+                            // Clean up the extracted_artifact_path
+                            std::fs::remove_dir_all(&extracted_artifact_path)
+                                .expect(format!("Error cleaning up extracted artifact at path {}", &extracted_artifact_path.to_string_lossy().to_string()).as_str());
+                        },
+                        Err(err) => {
+                            self.artifact_service.change_publication_status_by_publication_id(
+                                publication_id.clone(),
+                                ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToPublishArtifact(err.to_string())),
+                                Some(err.to_string())
+                            )
+                                .await
+                                .map_err(|err| {
+                                    panic!("Error updating publication status: {}", err.to_string())
+                                }).unwrap();
 
-        //                         // Clean up the publication workdir
-        //                         std::fs::remove_dir_all(&download_path)
-        //                             .expect(format!("Error removing files at path {}", &download_path.to_string_lossy().to_string()).as_str());
-                                
-        //                         // Get the updated publication
-        //                         let ref mut publication = self.artifact_service.find_publication_by_publication_id(publication_id)
-        //                             .await
-        //                             .expect("Error fetching publication")
-        //                             .expect("Publication should exist but does not");
-                                
-        //                         // Set the path to the artifact on the Artifact itself
-        //                         self.artifact_service.finish_artifact_publication(artifact_path, artifact, publication)
-        //                             .await
-        //                             .map_err(|err| panic!("Error finishing artifact publication: {}", err.to_string()))
-        //                             .unwrap();
-        //                     },
-        //                     Err(err) => {
-        //                         self.artifact_service.change_publication_status_by_publication_id(
-        //                             publication_id.clone(),
-        //                             ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToDownload),
-        //                             Some(err.to_string())
-        //                         )
-        //                             .await
-        //                             .map_err(|err| {
-        //                                 panic!("Error updating publication status: {}", err.to_string())
-        //                             }).unwrap();
+                            eprintln!("{}", err.to_string());
+                            nack(&channel, &deliver, None, None).await;
+                            return;
+                        }
+                    };
+                }
 
-        //                         eprintln!("{}", err.to_string());
-        //                         nack(&channel, &deliver, None, None).await;
-        //                         return;
-        //                     }
-        //                 };
-        //             },
-        //             Err(err) => {
-        //                 eprintln!("Client provider error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
-        //                 nack(&channel, &deliver, None, None).await;
-        //                 return;
-        //             }
-        //         };
-        //     },
-        //     // Ingest the dataset
-        //     ArtifactType::Dataset => {
-        //         // let client = ClientProvider::provide_ingest_dataset_client(&request.platform)
-        //         //     .map_err(|err| {
-        //         //         eprintln!("{}", err);
-        //         //     });
-        //         eprintln!("Artifact publication not yet available for datasets");
-        //         nack(&channel, &deliver, None, None).await;
-        //         return 
-        //     }
-        // };
-            
+                // Publish the model metadata to the target platform
+                if let Some(client) = maybe_publish_metadata_client {
+                    // Update publication status to PublishingMetata
+                    self.artifact_service.change_publication_status_by_publication_id(
+                        publication_id.clone(),
+                        ArtifactPublicationStatus::PublishingMetadata,
+                        Some("Artifact published successfully".into())
+                    )
+                        .await
+                        .map_err(|err| {
+                            panic!("Error updating publication status: {}", err.to_string())
+                        }).unwrap();
+                    
+                    // Publish the model files to the target platform
+                    match client.publish_model_metadata(&metadata, &client_request).await {
+                        Ok(_) => {
+                            // Update publication status to PublishedMetadata
+                            self.artifact_service.change_publication_status_by_publication_id(
+                                publication_id.clone(),
+                                ArtifactPublicationStatus::PublishedMetadata,
+                                Some("Metadata published successfully".into())
+                            )
+                                .await
+                                .map_err(|err| {
+                                    panic!("Error updating publication status: {}", err.to_string())
+                                }).unwrap();
+                        },
+                        Err(err) => {
+                            self.artifact_service.change_publication_status_by_publication_id(
+                                publication_id.clone(),
+                                ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToPublishArtifact(err.to_string())),
+                                Some(err.to_string())
+                            )
+                                .await
+                                .map_err(|err| {
+                                    panic!("Error updating publication status: {}", err.to_string())
+                                }).unwrap();
+
+                            eprintln!("{}", err.to_string());
+                            nack(&channel, &deliver, None, None).await;
+                            return;
+                        }
+                    };
+
+                    // Update publication status to Finished
+                    self.artifact_service.change_publication_status_by_publication_id(
+                        publication_id.clone(),
+                        ArtifactPublicationStatus::PublishedMetadata,
+                        Some("Extracting artifact files".into())
+                    )
+                        .await
+                        .map_err(|err| {
+                            panic!("Error updating publication status: {}", err.to_string())
+                        }).unwrap();
+                }
+            },
+            // Publish the dataset
+            ArtifactType::Dataset => {
+                // let client = ClientProvider::provide_publish_dataset_client(&request.platform)
+                //     .map_err(|err| {
+                //         eprintln!("{}", err);
+                //     });
+                eprintln!("Artifact publication not yet available for datasets");
+                nack(&channel, &deliver, None, None).await;
+                return 
+            }
+        };
+
         // Acknowledge the message
         ack(&channel, &deliver, None).await;
     }
@@ -355,8 +386,8 @@ async fn main() -> () {
 
     let consumer = ArtifactPublisherConsumer {
         artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
-        artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
-        artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
+        // artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_PUBLISH_DIR_NAME),
+        // artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
      
     let args = BasicConsumeArguments::default()

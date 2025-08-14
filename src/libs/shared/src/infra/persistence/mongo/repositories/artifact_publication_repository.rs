@@ -12,7 +12,7 @@ use mongodb::{
     Collection,
 };
 use async_trait::async_trait;
-// use futures::stream::TryStreamExt;
+use futures::stream::TryStreamExt;
 
 pub struct ArtifactPublicationRepository {
     read_collection: Collection<ArtifactPublication>,
@@ -112,25 +112,25 @@ impl application::ports::repositories::ArtifactPublicationRepository for Artifac
     //     Ok(publications)
     // }
 
-    // async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
-    //     let filter = doc! {
-    //         "id": Uuid::from_bytes(*id.as_bytes()),
-    //     };
+    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*id.as_bytes()),
+        };
 
-    //     let mut cursor = self.read_collection.find(filter, None)
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //     while let Some(publication_doc) = cursor.try_next()
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
-    //     {
-    //         let publication = entities::artifact_publication::ArtifactPublication::try_from(publication_doc)
-    //                 .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        while let Some(publication_doc) = cursor.try_next()
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
+        {
+            let publication = entities::artifact_publication::ArtifactPublication::try_from(&publication_doc)
+                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //         return Ok(Some(publication))
-    //     }
+            return Ok(Some(publication))
+        }
 
-    //     Ok(None)
-    // }
+        Ok(None)
+    }
 }
