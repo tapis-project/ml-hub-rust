@@ -118,7 +118,6 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
 
 pub enum PublishModelClient {
     HuggingFace(HuggingFaceClient),
-    Patra(PatraClient)
 }
 
 #[async_trait::async_trait]
@@ -128,7 +127,6 @@ impl clients::PublishModelClient for PublishModelClient {
     async fn publish_model(&self, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
             PublishModelClient::HuggingFace(c) => c.publish_model(artifact, metadata, request).await,
-            PublishModelClient::Patra(c) => c.publish_model(artifact, metadata, request).await,
         };
 
         resp

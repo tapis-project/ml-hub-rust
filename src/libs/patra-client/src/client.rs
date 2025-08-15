@@ -2,7 +2,7 @@ use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient,
-    ListModelsClient, PublishModelClient, PublishModelMetadataClient
+    ListModelsClient, PublishModelMetadataClient
 };
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
@@ -11,10 +11,7 @@ use shared::presentation::http::v1::dto::models::{
     DiscoverModelsRequest, GetModelRequest, ListModelsRequest,
 };
 use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
-use shared::domain::entities::{
-    artifact::Artifact,
-    model_metadata::ModelMetadata
-};
+use shared::domain::entities:: model_metadata::ModelMetadata;
 use std::collections::hash_map::HashMap;
 
 #[derive(Debug)]
@@ -171,21 +168,6 @@ impl DiscoverModelsClient for PatraClient {
 }
 
 #[async_trait::async_trait]
-impl PublishModelClient for PatraClient {
-    type Data = Value;
-    type Metadata = Value;
-
-    async fn publish_model(
-        &self,
-        _artifact: &Artifact,
-        _metadata: &ModelMetadata,
-        _request: &PublishArtifactRequest,
-    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        Err(ClientError::Unimplemented)
-    }
-}
-
-#[async_trait::async_trait]
 impl PublishModelMetadataClient for PatraClient {
     type Data = Value;
     type Metadata = Value;
@@ -195,7 +177,6 @@ impl PublishModelMetadataClient for PatraClient {
         _metadata: &ModelMetadata,
         _request: &PublishArtifactRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        println!("Patra metadata client");
         return Ok(
             ClientJsonResponse::new(
                 None,

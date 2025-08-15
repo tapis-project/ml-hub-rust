@@ -181,9 +181,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         // we have already guaranteed that either there is a publish model
                         // client, or a publish model metadata client and a platform client
                         // only needs to implement one of those.
-                        Err(ClientError::Unimplemented)  => {
-                            println!("")
-                        },
+                        Err(ClientError::Unimplemented)  => {},
                         // All other errors are considered failure conditions. Handle them
                         // accordingly
                         Err(err) => {
@@ -206,7 +204,6 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
 
                 // Publish the model metadata to the target platform
                 if let Some(client) = maybe_publish_metadata_client {
-                    println!("Publish Metadata Model Client");
                     // Update publication status to PublishingMetata
                     self.artifact_service.change_publication_status_by_publication_id(
                         publication_id.clone(),
@@ -255,17 +252,6 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                             return;
                         }
                     };
-
-                    // Update publication status to Finished
-                    self.artifact_service.change_publication_status_by_publication_id(
-                        publication_id.clone(),
-                        ArtifactPublicationStatus::PublishedMetadata,
-                        Some("Extracting artifact files".into())
-                    )
-                        .await
-                        .map_err(|err| {
-                            panic!("Error updating publication status: {}", err.to_string())
-                        }).unwrap();
                 }
             },
             // Publish the dataset
@@ -279,6 +265,17 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                 return 
             }
         };
+
+        // Update publication status to Finsihed
+        self.artifact_service.change_publication_status_by_publication_id(
+            publication_id.clone(),
+            ArtifactPublicationStatus::Finished,
+            Some("Successfully published".into())
+        )
+            .await
+            .map_err(|err| {
+                panic!("Error updating publication status: {}", err.to_string())
+            }).unwrap();
 
         // Acknowledge the message
         ack(&channel, &deliver, None).await;

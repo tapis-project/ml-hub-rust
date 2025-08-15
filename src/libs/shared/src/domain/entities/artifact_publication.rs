@@ -41,7 +41,7 @@ impl ArtifactPublication {
     /// to "now"
     pub fn change_status(&mut self, status: &Status) -> Result<&mut Self, ArtifactPublicationError> {
         if !self.is_valid_status_transition(&self.status, status) {
-            return Err(ArtifactPublicationError::InvalidStatusTransition(format!("Invalid status transition: ArtifactPublication cannot move from status {} to status {}", self.status.kind(), status.kind())))
+            return Err(ArtifactPublicationError::InvalidStatusTransition(format!("ArtifactPublication cannot move from status {} to status {}", self.status.kind(), status.kind())))
         }
 
         self.status = status.clone();
@@ -69,8 +69,7 @@ impl ArtifactPublication {
             Status::Pending => {
                 match to {
                     Status::Extracting
-                    | Status::PublishingArtifact
-                    | Status::PublishedMetadata
+                    | Status::PublishingMetadata
                     | Status::Failed(_) => true,
                     _ => false
                 }
@@ -84,7 +83,19 @@ impl ArtifactPublication {
             },
             Status::Extracted => {
                 match to {
-                    Status::PublishingArtifact
+                    Status::PublishingArtifact | Status::Failed(_) => true,
+                    _ => false
+                }
+            },
+            Status::PublishingArtifact => {
+                match to {
+                    Status::PublishedArtifact | Status::Failed(_) => true,
+                    _ => false
+                }
+            },
+            Status::PublishedArtifact => {
+                match to {
+                    Status::Finished
                     | Status::PublishingMetadata
                     | Status::Failed(_) => true,
                     _ => false
@@ -99,20 +110,8 @@ impl ArtifactPublication {
             },
             Status::PublishedMetadata => {
                 match to {
-                    Status::PublishingArtifact
+                    Status::Finished
                     | Status::Failed(_) => true,
-                    _ => false
-                }
-            },
-            Status::PublishingArtifact => {
-                match to {
-                    Status::PublishedArtifact => true,
-                    _ => false
-                }
-            },
-            Status::PublishedArtifact => {
-                match to {
-                    Status::Finished | Status::Failed(_) => true,
                     _ => false
                 }
             },

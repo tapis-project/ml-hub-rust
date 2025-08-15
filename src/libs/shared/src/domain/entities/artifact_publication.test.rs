@@ -62,22 +62,22 @@ mod artifact_publication_test {
                 publication
             })
             .and_then(|p| {
-                let publication = p.change_status(&ArtifactPublicationStatus::PublishingMetadata);
-                assert!(!publication.is_err());
-                publication
-            })
-            .and_then(|p| {
-                let publication = p.change_status(&ArtifactPublicationStatus::PublishedMetadata);
-                assert!(!publication.is_err());
-                publication
-            })
-            .and_then(|p| {
                 let publication = p.change_status(&ArtifactPublicationStatus::PublishingArtifact);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
                 let publication = p.change_status(&ArtifactPublicationStatus::PublishedArtifact);
+                assert!(!publication.is_err());
+                publication
+            })
+            .and_then(|p| {
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishingMetadata);
+                assert!(!publication.is_err());
+                publication
+            })
+            .and_then(|p| {
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishedMetadata);
                 assert!(!publication.is_err());
                 publication
             })

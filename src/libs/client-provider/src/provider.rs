@@ -74,7 +74,6 @@ impl ClientProvider {
         let platform = resolve_platform(platform_name)?;
         match platform {
             Platform::HuggingFace => Ok(PublishModelClient::HuggingFace(HuggingFaceClient::new())),
-            Platform::Patra => Ok(PublishModelClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
         }
     }
@@ -82,7 +81,7 @@ impl ClientProvider {
     pub fn provide_publish_metadata_client(platform_name: &str) -> Result<PublishModelMetadataClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
-            // Platform::Patra => Ok(PublishModelMetadataClient::Patra(PatraClient::new())),
+            Platform::Patra => Ok(PublishModelMetadataClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
         }
     }
