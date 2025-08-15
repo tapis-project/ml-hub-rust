@@ -136,7 +136,7 @@ impl clients::PublishModelClient for PublishModelClient {
 }
 
 pub enum PublishModelMetadataClient {
-
+    Patra(PatraClient)
 }
 
 #[async_trait::async_trait]
@@ -145,11 +145,10 @@ impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
     type Metadata = Value;
 
     async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        // let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
-            // PublishModelMetadataClient::Patra(c) => c.publish_model_metadata(metadata, request).await,
-        // };
+        let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
+            PublishModelMetadataClient::Patra(c) => c.publish_model_metadata(metadata, request).await,
+        };
 
-        // resp
-        Err(ClientError::Unimplemented)
+        resp
     }
 }

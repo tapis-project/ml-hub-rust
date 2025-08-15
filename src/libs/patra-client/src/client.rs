@@ -2,7 +2,7 @@ use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient,
-    ListModelsClient, PublishModelClient
+    ListModelsClient, PublishModelClient, PublishModelMetadataClient
 };
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
@@ -181,10 +181,29 @@ impl PublishModelClient for PatraClient {
         _metadata: &ModelMetadata,
         _request: &PublishArtifactRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        // TODO publish model metadata to patra
-        
-
         Err(ClientError::Unimplemented)
+    }
+}
+
+#[async_trait::async_trait]
+impl PublishModelMetadataClient for PatraClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn publish_model_metadata(
+        &self,
+        _metadata: &ModelMetadata,
+        _request: &PublishArtifactRequest,
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        println!("Patra metadata client");
+        return Ok(
+            ClientJsonResponse::new(
+                None,
+                None,
+                None,
+                None
+            )
+        )
     }
 }
 

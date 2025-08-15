@@ -5,7 +5,7 @@ use async_trait;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient,
     GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
-    ListModelsClient, PublishDatasetClient, PublishModelClient,
+    ListModelsClient, PublishDatasetClient, PublishModelClient, PublishModelMetadataClient
 };
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::Client as ReqwestClient;
@@ -349,7 +349,33 @@ impl PublishModelClient for HuggingFaceClient {
     type Metadata = Value;
 
     async fn publish_model(&self, _artifact: &Artifact, _metadata: &ModelMetadata, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        Err(ClientError::Unimplemented)
+        println!("Huggingface metadata client");
+        return Ok(
+            ClientJsonResponse::new(
+                None,
+                None,
+                None,
+                None
+            )
+        )
+    }
+}
+
+#[async_trait::async_trait]
+impl PublishModelMetadataClient for HuggingFaceClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn publish_model_metadata(&self, _metadata: &ModelMetadata, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        println!("Huggingface metadata client");
+        return Ok(
+            ClientJsonResponse::new(
+                None,
+                None,
+                None,
+                None
+            )
+        )
     }
 }
 
