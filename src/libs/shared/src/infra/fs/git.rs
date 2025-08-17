@@ -56,8 +56,7 @@ impl GitRepository {
     pub fn prepare(&self, params: PrepareRepositoryParams) -> Result<PreparedRepository, GitError> {
         let target_path = PathBuf::from(&params.target_dir);
 
-        // Create the all of the directories in the download_dir path. Works like
-        // mkdir -p. Propogate the error if any
+        // Create the all of the directories at the target path. Works like  mkdir -p
         create_dir_all(&target_path)
             .map_err(|err| {
                 GlobalLogger::error(format!("Error creating dirs '{:?}': {}", &target_path, err.to_string()).as_str());

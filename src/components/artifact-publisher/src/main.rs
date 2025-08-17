@@ -160,7 +160,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         }).unwrap();
                     
                     // Publish the model files to the target platform
-                    match client.publish_model(&artifact, &metadata, &client_request).await {
+                    match client.publish_model(&extracted_artifact_path, &artifact, &metadata, &client_request).await {
                         Ok(_) => {                
                             // Update publication status to PublishedArtifact
                             self.artifact_service.change_publication_status_by_publication_id(

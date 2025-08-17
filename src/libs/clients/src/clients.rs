@@ -57,6 +57,7 @@ pub trait PublishModelClient: Send + Sync {
 
     async fn publish_model(
         &self,
+        _extracted_artifact_path: &PathBuf,
         _artifact: &entities::artifact::Artifact,
         _metadata: &entities::model_metadata::ModelMetadata,
         _request: &artifacts::PublishArtifactRequest

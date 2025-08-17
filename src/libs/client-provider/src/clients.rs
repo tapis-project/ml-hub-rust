@@ -124,9 +124,9 @@ pub enum PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, extracted_artfiact_path: &PathBuf, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
-            PublishModelClient::HuggingFace(c) => c.publish_model(artifact, metadata, request).await,
+            PublishModelClient::HuggingFace(c) => c.publish_model(extracted_artfiact_path, artifact, metadata, request).await,
         };
 
         resp
