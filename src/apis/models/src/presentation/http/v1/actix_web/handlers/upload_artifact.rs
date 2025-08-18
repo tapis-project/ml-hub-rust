@@ -59,10 +59,10 @@ async fn upload_artifact(
             }
         }
 
-        build_success_response(Some(json!(artifact_id)), Some("success".into()), None)
-    } else {
-        build_error_response(400, "No file provided".to_string())
+        return build_success_response(Some(json!(artifact_id)), Some("success".into()), None)
     }
+    
+    build_error_response(400, "No file provided".to_string())
 }
 
 // Handler tests

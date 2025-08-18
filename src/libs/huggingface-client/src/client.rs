@@ -321,6 +321,7 @@ impl IngestDatasetClient for HuggingFaceClient {
         target_path: PathBuf,
     ) -> Result<(), ClientError> {
         // Get the authorization token from the request
+        println!("{:#?}", request.headers);
         let access_token = request.headers.get_first_value("Authorization");
 
         let branch = param_to_string(request.body.params.clone(), "branch")
@@ -375,7 +376,8 @@ impl PublishModelClient for HuggingFaceClient {
             }
         };
 
-        // Return an error if the repo doesn't exist
+        // Return an error if the repo doesn't exist or there is some remote
+        // internal error
         match response.status() {
             StatusCode::NOT_FOUND => return Err(ClientError::NotFound { msg: format!("Repo for user/model '{}' does not exist. Repo must exist before attempting to publish to it.", &model_name), scope: ClientErrorScope::Client }),
             StatusCode::INTERNAL_SERVER_ERROR
