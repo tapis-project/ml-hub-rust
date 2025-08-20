@@ -48,7 +48,7 @@ spec:
           #   initialDelaySeconds: 2
           #   periodSeconds: 15
           #   failureThreshold: 5
-          
+
           resources: {}
           tty: true
           volumeMounts:

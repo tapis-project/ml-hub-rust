@@ -51,12 +51,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test models -s"
+        run: "./manage test models -sv"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install models -s"
+        run: "./manage install models -sv -t release-flag --release"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -75,12 +75,12 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build models -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build models -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht models -s
+        run: ./manage pusht models -sv
         if: steps.git-diff.outputs.diff
 
   Datasets_API:
@@ -108,12 +108,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test datasets -s"
+        run: "./manage test datasets -sv"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install datasets -s"
+        run: "./manage install datasets -sv"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -132,12 +132,12 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build datasets -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build datasets -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht datasets -s
+        run: ./manage pusht datasets -sv
         if: steps.git-diff.outputs.diff
     
   Inference_API:
@@ -165,12 +165,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test inference -s"
+        run: "./manage test inference -sv"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install inference -s"
+        run: "./manage install inference -sv"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -189,12 +189,12 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build inference -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build inference -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht inference -s
+        run: ./manage pusht inference -sv
         if: steps.git-diff.outputs.diff
 
   Training_API:
@@ -222,12 +222,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test training -s"
+        run: "./manage test training -sv"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install training -s"
+        run: "./manage install training -sv"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -246,10 +246,10 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build training -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build training -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht training -s
+        run: ./manage pusht training -sv
         if: steps.git-diff.outputs.diff
