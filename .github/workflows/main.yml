@@ -75,7 +75,7 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build models -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build models -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
@@ -132,7 +132,7 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build datasets -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build datasets -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
@@ -189,7 +189,7 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build inference -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build -s inference -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
@@ -246,7 +246,7 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build training -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build training -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
