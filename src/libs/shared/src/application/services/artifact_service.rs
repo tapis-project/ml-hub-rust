@@ -19,7 +19,7 @@ use thiserror::Error;
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use crate::logging::GlobalLogger;
-use crate::constants::ARTIFACT_INGEST_DIR_NAME;
+use crate::constants::{ARTIFACT_CACHE_DIR_NAME, ARTIFACT_INGEST_DIR_NAME};
 use crate::infra::fs::stacking::FileStacker;
 use crate::infra::system::Env;
 
@@ -184,7 +184,7 @@ impl ArtifactService {
         // Check that the artifact exists
         match maybe_metadata {
             Some(m) => Ok(m),
-            None => Err(ArtifactServiceError::MissingMetadata("Artifact must exist in order to publish it".into()))
+            None => Err(ArtifactServiceError::MissingMetadata("Artifact must have a an associated metadata in order to publish it. Create metadata for this artifact then try again".into()))
         }
     }
 
@@ -420,7 +420,7 @@ impl ArtifactService {
 
         // Set the artifact ingest dir on the 
         artifact.set_path(PathBuf::from(&environment.shared_data_dir)
-            .join(ARTIFACT_INGEST_DIR_NAME)
+            .join(ARTIFACT_CACHE_DIR_NAME)
             .join(artifact.id.to_string()));
 
         // Closure for updating the artifact

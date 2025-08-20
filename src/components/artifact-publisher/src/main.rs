@@ -158,33 +158,43 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         .map_err(|err| {
                             panic!("Error updating publication status: {}", err.to_string())
                         }).unwrap();
+
+                    // Update publication status to PublishingArtifact
+                    self.artifact_service.change_publication_status_by_publication_id(
+                        publication_id.clone(),
+                        ArtifactPublicationStatus::PublishingArtifact,
+                        Some("Started publishing artifact".into())
+                    )
+                        .await
+                        .map_err(|err| {
+                            panic!("Error updating publication status: {}", err.to_string())
+                        }).unwrap();
                     
                     // Publish the model files to the target platform
                     match client.publish_model(&extracted_artifact_path, &artifact, &metadata, &client_request).await {
-                        Ok(_) => {                
+                        Ok(_) => {            
                             // Update publication status to PublishedArtifact
                             self.artifact_service.change_publication_status_by_publication_id(
                                 publication_id.clone(),
                                 ArtifactPublicationStatus::PublishedArtifact,
-                                Some("Extracting artifact files".into())
+                                Some("Successfully published artifact".into())
                             )
                                 .await
                                 .map_err(|err| {
                                     panic!("Error updating publication status: {}", err.to_string())
                                 }).unwrap();
-
-                            // Clean up the extracted_artifact_path
-                            std::fs::remove_dir_all(&extracted_artifact_path)
-                                .expect(format!("Error cleaning up extracted artifact at path {}", &extracted_artifact_path.to_string_lossy().to_string()).as_str());
                         },
                         // Do nothing if getting an unimplemented error. This is because
                         // we have already guaranteed that either there is a publish model
                         // client, or a publish model metadata client and a platform client
                         // only needs to implement one of those.
-                        Err(ClientError::Unimplemented)  => {},
+                        Err(ClientError::Unimplemented)  => {
+                            println!("What?");
+                        },
                         // All other errors are considered failure conditions. Handle them
                         // accordingly
                         Err(err) => {
+                            println!("Failed: {}", err.to_string());
                             self.artifact_service.change_publication_status_by_publication_id(
                                 publication_id.clone(),
                                 ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToPublishArtifact(err.to_string())),
@@ -200,11 +210,15 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                             return;
                         }
                     };
+
+                    // Clean up the extracted_artifact_path
+                    std::fs::remove_dir_all(&extracted_artifact_path)
+                        .expect(format!("Error cleaning up extracted artifact at path {}", &extracted_artifact_path.to_string_lossy().to_string()).as_str());
                 }
 
                 // Publish the model metadata to the target platform
                 if let Some(client) = maybe_publish_metadata_client {
-                    // Update publication status to PublishingMetata
+                    // Update publication status to PublishingMetadata
                     self.artifact_service.change_publication_status_by_publication_id(
                         publication_id.clone(),
                         ArtifactPublicationStatus::PublishingMetadata,

@@ -31,9 +31,6 @@ pub struct GitRepository {
     pub name: String,
 }
 
-/// TODO git lfs will pull down the large files when cloning. Using GIT_LFS_SKIP_SMUDGE=1
-/// prevents that but subseuqnt Command(s) still run with that env value as 1 even when
-/// explicitly removed or set to 0.
 impl GitRepository {
     pub fn new(remote_base_url: String, name: String) ->  Self {
         Self {
@@ -102,8 +99,7 @@ impl PreparedRepository {
         }
 
         cmd.arg(self.repository.remote_url.clone())
-            .arg(".")
-            .env("GIT_LFS_SKIP_SMUDGE", "1");
+            .arg(".");
 
         // Run the command
         let output = cmd.output()
@@ -275,8 +271,6 @@ impl GitLfsRepository {
             .arg("pull")
             .args(excluded_large_files_args)
             .args(included_large_files_args);
-            // .env_remove("GIT_LFS_SKIP_SMUDGE")
-            // .env("GIT_LFS_SKIP_SMUDGE", "0");
 
         cmd.output()
             .map_err(|err| {

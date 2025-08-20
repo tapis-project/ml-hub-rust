@@ -187,7 +187,8 @@ impl IngestModelClient for HuggingFaceClient {
         target_path: PathBuf,
     ) -> Result<(), ClientError> {
         // Get the authorization token from the request
-        let access_token = request.headers.get_first_value("Authroization");
+        let access_token = request.headers.get_first_value("Authroization")
+            .map(|t| t.replace("Bearer ", ""));
 
         let branch = param_to_string(request.body.params.clone(), "branch")
             .map_err(|err| ClientError::Internal {
@@ -321,8 +322,8 @@ impl IngestDatasetClient for HuggingFaceClient {
         target_path: PathBuf,
     ) -> Result<(), ClientError> {
         // Get the authorization token from the request
-        println!("{:#?}", request.headers);
-        let access_token = request.headers.get_first_value("Authorization");
+        let access_token = request.headers.get_first_value("authorization")
+            .map(|t| t.replace("Bearer ", ""));
 
         let branch = param_to_string(request.body.params.clone(), "branch")
             .map_err(|err| ClientError::BadRequest {
@@ -357,25 +358,25 @@ impl PublishModelClient for HuggingFaceClient {
         };
 
         // Get the access token from the headers
-        let access_token = match request.headers.get_first_value("Authroization") {
-            Some(t) => t,
+        let access_token = match request.headers.get_first_value("authorization") {
+            Some(t) => t.replace("Bearer ", ""),
             None => return Err(ClientError::BadRequest { msg: "Missing Authorization header".into(), scope: ClientErrorScope::Client })
         };
         
         // Check that the repo on huggingface exists
-        let base_url = Self::format_url("repos");
+        let base_url = Self::format_url("models");
         let maybe_response = self.client.get(format!("{}/{}", &base_url, &model_name))
             .header("Authorization", format!("Bearer {}", &access_token))
             .send()
             .await;
-
+        
         let response = match maybe_response {
             Ok(r) => r,
             Err(err) => {
                 return Err(ClientError::Internal { msg: err.to_string(), scope: ClientErrorScope::Client })
             }
         };
-
+        
         // Return an error if the repo doesn't exist or there is some remote
         // internal error
         match response.status() {
@@ -385,17 +386,19 @@ impl PublishModelClient for HuggingFaceClient {
             _ => {}
         };
         
-        // Remove the existing .git directory
+        // Pull the large files wil git lfs then remove the existing .git directory
         if extracted_artifact_path.join(".git").is_dir() {
             std::fs::remove_dir_all(extracted_artifact_path.join(".git"))
                 .map_err(|err| ClientError::Internal { msg: format!("Error removing .git directory: {}", err.to_string()), scope: ClientErrorScope::Client })?;
         }
 
-        // Construct remote name
+        // Get the huggingface username from the model name
+        let hf_username = model_name.split("/").collect::<Vec<&str>>()[0];
+        
+        // Construct remote name. Contains the auth token
         let origin = PathBuf::new()
-            .join(constants::HUGGING_FACE_BASE_URL)
+            .join(constants::HUGGING_FACE_BASE_URL.replace("//huggingface", format!("//{}:{}@huggingface", &hf_username, &access_token).as_str()))
             .join(&model_name)
-            .join(".git")
             .to_string_lossy()
             .to_string();
         
@@ -403,10 +406,10 @@ impl PublishModelClient for HuggingFaceClient {
         let init_output = Command::new("sh")
             .current_dir(&extracted_artifact_path)
             .arg("-c")
-            .arg(format!("set -e; git init && git add -A && git commit -m \"MLHub HuggingFace Client: initial commit\" && git remote add origin {}", &origin))
+            .arg(format!("set -e; git init && git add -A && git -c user.name=\"MLHub HugginFace Client\" -c user.email=\"hf.client@mlhub\" commit -m \"MLHub HuggingFace Client: initial commit\" && git remote add origin {}", &origin))
             .output()
-            .map_err(|err| ClientError::Internal { msg: format!("{}", err.to_string()), scope: ClientErrorScope::Client })?;
-        
+            .map_err(|err| ClientError::Internal { msg: format!("Error initializing, commiting, and adding origin: {}", err.to_string()), scope: ClientErrorScope::Client })?;
+
         // Check that the operation was successful
         match init_output.status.code() {
             Some(code) => {
@@ -415,16 +418,16 @@ impl PublishModelClient for HuggingFaceClient {
                         ClientError::Internal {
                             msg: String::from_utf8(init_output.stderr)
                                 .unwrap_or("git init operation failed. Additionally, stderr from the git rev-parse process could not be decoded".into()),
-                            scope: ClientErrorScope::Client }
+                            scope: ClientErrorScope::Client
+                        }
                     )
-                    
                 }
             },
             None => {
                 return Err(ClientError::Internal { msg: "The git init operation was terminated by an unknown signal".into(), scope: ClientErrorScope::Client })
             } 
         };
-
+        
         // Get the current branch
         let mut cmd = Command::new("git");
 
@@ -447,29 +450,35 @@ impl PublishModelClient for HuggingFaceClient {
                     )
                     
                 }
-                
+                // NOTE We a trimming at the end because we are getting the newline from stdout!
                 String::from_utf8(branch_name_output.stdout)
                     .map_err(|err| ClientError::Internal { msg: format!("Failed to decode stdout of command `git rev-parse ...`: {}", err.to_string()), scope: ClientErrorScope::Client })?
+                    .trim()
+                    .to_string()
             },
             None => {
                 return Err(ClientError::Internal { msg: "The git rev-parse operation was terminated by an unknown signal".into(), scope: ClientErrorScope::Client })
             } 
         };
-
+        
         // Start the git push command
         let mut cmd = Command::new("git");
 
         // Extend the headers on the push command with the provided access token
         // and push to the branch according
         let push_output = cmd.current_dir(&extracted_artifact_path)
-            .arg("-c")
-            .arg(format!("http.extraHeader=\"Authorization: Bearer {}\"", access_token))
+            .env("GIT_CURL_VERBOSE", "1")
+            .env("GIT_TRACE", "1")
+            .env("GIT_TRANSFER_TRACE", "1")
             .arg("push")
+            .arg("-u")
             .arg("origin")
             .arg(&branch_name)
             .output()
-            .map_err(|err| ClientError::Internal { msg: format!("Failed to push artifact: {}", err.to_string()), scope: ClientErrorScope::Client })?;
-        
+            .map_err(|err| {
+                ClientError::Internal { msg: format!("Failed to push artifact: {}", err.to_string()), scope: ClientErrorScope::Client }
+            })?;
+
         // TODO check metadata for a version number. If provided, create a tag
         // and push it up
 
@@ -479,21 +488,18 @@ impl PublishModelClient for HuggingFaceClient {
                 if code != 0 {
                     return Err(
                         ClientError::Internal {
-                            msg: String::from_utf8(branch_name_output.stderr)
-                                    .unwrap_or(format!("`git push origin {}`  operation failed. Additionally, stderr from the git rev-parse process could not be decoded", &branch_name)),
+                            msg: String::from_utf8(push_output.stderr)
+                                    .unwrap_or(format!("`git push origin {}` operation failed. Additionally, stderr from the git rev-parse process could not be decoded", &branch_name)),
                             scope: ClientErrorScope::Client }
                     )
                     
                 }
-                
-                String::from_utf8(push_output.stdout)
-                    .map_err(|err| ClientError::Internal { msg: format!("Failed to decode stdout of command `git push ...`: {}", err.to_string()), scope: ClientErrorScope::Client })?
             },
             None => {
                 return Err(ClientError::Internal { msg: "The git push operation was terminated by an unknown signal".into(), scope: ClientErrorScope::Client })
             } 
         };
-
+        
         return Ok(
             ClientJsonResponse::new(
                 None,
@@ -511,7 +517,6 @@ impl PublishModelMetadataClient for HuggingFaceClient {
     type Metadata = Value;
 
     async fn publish_model_metadata(&self, _metadata: &ModelMetadata, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        println!("Huggingface metadata client");
         return Ok(
             ClientJsonResponse::new(
                 None,

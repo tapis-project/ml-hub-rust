@@ -20,7 +20,7 @@ pub enum CompressionError {
     #[error("File I/O error: {0}")]
     IOError(String),
 
-    #[error("Error zipping path: {0}")]
+    #[error("Error zipping/unzipping path: {0}")]
     ZipError(String),
 }
 
