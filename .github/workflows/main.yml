@@ -257,7 +257,7 @@ jobs:
   Artifact_Ingester:
     needs:
       - Set_Image_Tag
-    name: Artifact_Ingesster_Compile_Test_Build_Push
+    name: Artifact_Ingester_Compile_Test_Build_Push
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
@@ -270,7 +270,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/models/**/*
+            src/components/artifact-ingester/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -314,7 +314,7 @@ jobs:
   Artifact_Publisher:
     needs:
       - Set_Image_Tag
-    name: Artifact_Ingesster_Compile_Test_Build_Push
+    name: Artifact_Publisher_Compile_Test_Build_Push
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
@@ -327,7 +327,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/models/**/*
+            src/components/artifact-publisher/**/*
 
       # Setup rust
       - name: Setup Rust
