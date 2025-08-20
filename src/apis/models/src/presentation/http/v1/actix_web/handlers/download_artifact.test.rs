@@ -4,7 +4,7 @@ mod download_artifact_test {
     use bytes::Bytes;
     use std::fs;
     use std::io::Write;
-    use shared::common::infra::persistence::mongo::database::{get_db, ClientParams};
+    use shared::infra::persistence::mongo::database::{get_db, ClientParams};
     use crate::bootstrap::state::AppState;
     use crate::presentation::http::v1::actix_web::handlers::download_artifact::download_artifact;
 

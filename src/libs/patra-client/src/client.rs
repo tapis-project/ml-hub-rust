@@ -1,16 +1,17 @@
 use crate::utils::deserialize_response_body;
 use async_trait;
-use clients::artifacts::ArtifactGenerator;
 use clients::{
     ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient,
-    ListModelsClient,
+    ListModelsClient, PublishModelMetadataClient
 };
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
 use shared::logging::SharedLogger;
-use shared::models::presentation::http::v1::dto::{
+use shared::presentation::http::v1::dto::models::{
     DiscoverModelsRequest, GetModelRequest, ListModelsRequest,
 };
+use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
+use shared::domain::entities:: model_metadata::ModelMetadata;
 use std::collections::hash_map::HashMap;
 
 #[derive(Debug)]
@@ -18,8 +19,6 @@ pub struct PatraClient {
     client: ReqwestClient,
     logger: SharedLogger,
 }
-
-impl ArtifactGenerator for PatraClient {}
 
 #[async_trait::async_trait]
 impl ListModelsClient for PatraClient {
@@ -168,10 +167,31 @@ impl DiscoverModelsClient for PatraClient {
     }
 }
 
+#[async_trait::async_trait]
+impl PublishModelMetadataClient for PatraClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn publish_model_metadata(
+        &self,
+        _metadata: &ModelMetadata,
+        _request: &PublishArtifactRequest,
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Ok(
+            ClientJsonResponse::new(
+                None,
+                None,
+                None,
+                None
+            )
+        )
+    }
+}
+
 impl PatraClient {
-    const LIST_MODELS_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/list";
-    const GET_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/download_mc";
-    const SEARCH_MODEL_ENDPOINT: &str = "https://ckn.d2i.tacc.cloud/patra/search";
+    const LIST_MODELS_ENDPOINT: &str = "https://patraserver.pods.icicleai.tapis.io/list";
+    const GET_MODEL_ENDPOINT: &str = "https://patraserver.pods.icicleai.tapis.io/download_mc";
+    const SEARCH_MODEL_ENDPOINT: &str = "https://patraserver.pods.icicleai.tapis.io/search";
 
     pub fn new() -> Self {
         Self {

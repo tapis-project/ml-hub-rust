@@ -1,12 +1,12 @@
 use actix_web::{web, get, HttpRequest, Responder, Result};
 use actix_files::NamedFile;
-use shared::common::application::services::artifact_service::ArtifactServiceError;
+use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
 use crate::bootstrap::{
     state::AppState,
     factories::artifact_service_factory
 };
-use crate::application::inputs::DownloadArtifactInput;
+use crate::application::artifact_inputs::DownloadArtifactInput;
 use crate::presentation::http::v1::dto::{Headers, DownloadModelPath, DownloadModelRequest};
 use crate::presentation::http::v1::actix_web::helpers::build_error_response;
 
@@ -41,7 +41,7 @@ async fn download_artifact(
     }
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db).await {
+    let artifact_service = match artifact_service_factory(&data.db) {
         Ok(s) => s,
         Err(err) => return Ok(build_error_response(500, err.to_string()))
     };

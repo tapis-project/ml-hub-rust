@@ -54,3 +54,7 @@ async fn get_model(
         Err(err) => return build_client_error_response(err),
     }
 }
+
+#[cfg(test)]
+#[path = "get_model.test.rs"]
+mod get_model_test;

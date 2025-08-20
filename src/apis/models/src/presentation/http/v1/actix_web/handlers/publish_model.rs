@@ -1,66 +1,70 @@
+use crate::bootstrap::factories::artifact_service_factory;
+use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::actix_web::helpers::{
-    build_client_error_response, build_error_response, build_success_response,
+    build_error_response,
+    build_success_response,
 };
-use crate::presentation::http::v1::dto::{Headers, PublishModelPath, PublishModelRequest};
-use actix_multipart::Multipart;
-use actix_web::{post, web, HttpRequest, Responder};
+use crate::presentation::http::v1::dto::{Headers, PublishArtifactPath, PublishArtifactBody, PublishArtifactRequest};
+use crate::presentation::http::v1::dto::ArtifactPublication as ArtifactPublicationDto;
+use crate::application::artifact_publication_inputs::PublishArtifactInput;
 use client_provider::ClientProvider;
-use clients::PublishModelClient;
+use actix_web::{post, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
 use std::collections::HashMap;
+use serde_json::to_value;
 
-#[post("models-api/platforms/{platform}/models/{model_id:.*}/files/{path:.*}")]
+#[post("models-api/artifacts/{artifact_id}/publications")]
 async fn publish_model(
     req: HttpRequest,
-    path: web::Path<PublishModelPath>,
+    path: web::Path<PublishArtifactPath>,
     query: web::Query<HashMap<String, String>>,
-    payload: Multipart,
+    body: web::Json<PublishArtifactBody>,
+    data: web::Data<AppState>
 ) -> impl Responder {
     let logger = SharedLogger::new();
 
     logger.debug("Start publish model operation");
-
+    
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
         Err(err) => return build_error_response(400, String::from(err.to_string())),
     };
 
-    let request = PublishModelRequest {
+    let request = PublishArtifactRequest {
         headers,
         path: path.into_inner(),
         query: query.into_inner(),
-        payload,
+        body: body.into_inner(),
     };
 
-    // Catch directory traversal attacks. 'model_id' may be used by clients to
-    // constuct directories in the shared file system
-    if request.path.model_id.contains("..") {
-        return build_error_response(403, String::from("Forbidden"));
+    // Fail-fast: Use the client provider to determine the client for the request platform
+    // has the ability to publish artifacts. The client will not actually be used here,
+    // we are just using this check to fail fast as the client will be invoked
+    // somewhere else later.
+    if let Err(err) = ClientProvider::provide_publish_model_client(&request.body.target_platform) {
+        return build_error_response(400, err.to_string());
     }
 
-    // Get the client for the provided platform
-    let client = match ClientProvider::provide_publish_model_client(&request.path.platform) {
-        Ok(client) => client,
-        Err(_) => {
-            return build_error_response(
-                500,
-                String::from(format!(
-                    "Failed to find client for platform '{}'",
-                    &request.path.platform
-                )),
-            )
-        }
+    let artifact_service = match artifact_service_factory(&data.db) {
+        Ok(s) => s,
+        Err(err) => return build_error_response(500, err.to_string())
     };
 
-    // Publish the model
-    let client_resp = match client.publish_model(&request).await {
-        Ok(client_resp) => client_resp,
-        Err(err) => {
-            logger.debug(&err.to_string());
-            return build_client_error_response(err);
-        }
+    let input = match PublishArtifactInput::try_from(request) {
+        Ok(i) => i,
+        Err(err) => return build_error_response(500, err.to_string())
     };
 
-    build_success_response(client_resp.result, client_resp.message, None)
+    let publication = match artifact_service.submit_artifact_publication(input).await {
+        Ok(p) => p,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    let resp = match to_value(ArtifactPublicationDto::from(publication)) {
+        Ok(r) => r,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    build_success_response(Some(resp), Some("Successfully submitted artifact publication".into()), None)
 }

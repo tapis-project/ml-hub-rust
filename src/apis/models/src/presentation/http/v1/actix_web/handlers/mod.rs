@@ -6,5 +6,6 @@ pub mod index;
 pub mod list_models;
 pub mod publish_model;
 pub mod list_platforms;
-pub mod upload_artifacts;
+pub mod upload_artifact;
 pub mod download_artifact;
+pub mod create_model_metadata;

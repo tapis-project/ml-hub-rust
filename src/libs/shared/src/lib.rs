@@ -1,9 +1,8 @@
+pub mod application;
+pub mod presentation;
+pub mod infra;
+pub mod domain;
 pub mod errors;
 pub mod constants;
-pub mod models;
-pub mod inference;
-pub mod training;
-pub mod datasets;
-pub mod common;
 pub mod logging;
 pub mod retry;

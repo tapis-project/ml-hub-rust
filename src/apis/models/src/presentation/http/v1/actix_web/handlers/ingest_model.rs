@@ -1,4 +1,4 @@
-use crate::application::inputs::IngestArtifactInput;
+use crate::application::artifact_inputs::IngestArtifactInput;
 use crate::bootstrap::{factories::artifact_service_factory, state::AppState};
 use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
@@ -53,7 +53,7 @@ async fn ingest_model(
     }
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db).await {
+    let artifact_service = match artifact_service_factory(&data.db) {
         Ok(s) => s,
         Err(err) => return build_error_response(500, err.to_string()),
     };

@@ -12,6 +12,52 @@
 			"name": "Models API",
 			"item": [
 				{
+					"name": "downloadModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"branch\": \"main\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts/8b93345c-b1bf-4b58-b09c-dc3e50858f66",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"8b93345c-b1bf-4b58-b09c-dc3e50858f66"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
 					"name": "getModel",
 					"event": [
 						{
@@ -226,15 +272,21 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{mlh_base_url}}/models-api/platforms/patra/models",
+									"raw": "{{mlh_base_url}}/models-api/platforms/huggingface/models?filter=text-classification",
 									"host": [
 										"{{mlh_base_url}}"
 									],
 									"path": [
 										"models-api",
 										"platforms",
-										"patra",
+										"huggingface",
 										"models"
+									],
+									"query": [
+										{
+											"key": "filter",
+											"value": "text-classification"
+										}
 									]
 								}
 							},
@@ -249,7 +301,61 @@
 					"name": "listPlatforms",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"platforms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "createModelMetadata",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"ndfreeman/mlhub-publish-test\",\n  \"model_type\": \"llm\",\n  \"version\": \"0.0.1\",\n  \"framework\": \"TensorFlow\",\n  \"image\": \"registry.example.com/vision-classifier:v2.1.3\",\n  \"labels\": [\"cv\", \"image-classification\"],\n  \"label_map\": {\n    \"cat\": 0,\n    \"dog\": 1,\n    \"bird\": 2\n  },\n\n  \"multi_modal\": true,\n  \"model_inputs\": [\n    {\n      \"name\": \"image\",\n      \"data_type\": \"uint8\",\n      \"shape\": [1, 224, 224, 3]\n    }\n  ],\n  \"model_outputs\": [\n    {\n      \"name\": \"class_scores\",\n      \"data_type\": \"float32\",\n      \"shape\": [1, 3]\n    }\n  ],\n\n  \"task_types\": [\"image-classification\"],\n  \"inference_precision\": \"int8\",\n  \"inference_hardware\": {\n    \"gpus\": 0,\n    \"cpus\": 2,\n    \"memory_gb\": 8\n  },\n  \"inference_software_dependencies\": [\"tensorflow-lite==2.8.0\"],\n  \"inference_max_energy_consumption_watts\": 45,\n\n  \"inference_max_latency_ms\": 30,\n  \"inference_min_throughput\": 300,\n  \"inference_max_compute_utilization_percentage\": 70,\n  \"inference_max_memory_usage_mb\": 1024,\n  \"inference_distributed\": false,\n\n  \"training_time\": 18000,\n  \"training_precision\": \"int8\",\n  \"training_hardware\": {\n    \"gpus\": 2,\n    \"cpus\": 8,\n    \"memory_gb\": 32\n  },\n  \"pretraining_datasets\": [\"ImageNet\"],\n  \"finetuning_datasets\": [\"CatsVsDogs\"],\n  \"edge_optimized\": true,\n  \"quantization_aware\": true,\n  \"supports_quantization\": true,\n  \"pretrained\": true,\n  \"pruned\": true,\n  \"slimmed\": true,\n  \"training_distributed\": false,\n\n  \"training_max_energy_consumption_watts\": 400,\n\n  \"regulatory\": [\"ISO/IEC 27001\"],\n  \"license\": \"MIT\",\n  \"bias_evaluation_score\": -1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts/c80efc3a-48f0-4c71-b1b3-2edc3ab4df24/metadata",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"c80efc3a-48f0-4c71-b1b3-2edc3ab4df24",
+								"metadata"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
 					},
 					"response": []
 				},
@@ -331,7 +437,7 @@
 					]
 				},
 				{
-					"name": "downloadModel",
+					"name": "ingestModel",
 					"event": [
 						{
 							"listen": "test",
@@ -351,7 +457,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+							"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"branch\": \"main\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -359,18 +465,18 @@
 							}
 						},
 						"url": {
-							"raw": "{{mlh_base_url}}/models-api/platforms/git/models/nathandf/coe-332-forking-demo/files",
+							"raw": "{{mlh_base_url}}/models-api/platforms/github/models/nathandf/coe-332-forking-demo/artifacts",
 							"host": [
 								"{{mlh_base_url}}"
 							],
 							"path": [
 								"models-api",
 								"platforms",
-								"git",
+								"github",
 								"models",
 								"nathandf",
 								"coe-332-forking-demo",
-								"files"
+								"artifacts"
 							]
 						},
 						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
@@ -383,7 +489,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"remote_base_url\": \"https://github.com\"\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -391,7 +497,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{mlh_base_url}}/models-api/platforms/git/models/nathandf/coe-332-forking-demo/files",
+									"raw": "{{mlh_base_url}}/models-api/platforms/git/models/nathandf/coe-332-forking-demo/artifacts",
 									"host": [
 										"{{mlh_base_url}}"
 									],
@@ -402,7 +508,7 @@
 										"models",
 										"nathandf",
 										"coe-332-forking-demo",
-										"files"
+										"artifacts"
 									]
 								}
 							},
@@ -418,7 +524,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -426,18 +532,18 @@
 									}
 								},
 								"url": {
-									"raw": "{{mlh_base_url}}/models-api/platforms/git/models/nathandf/coe-332-forking-demo/files",
+									"raw": "{{mlh_base_url}}/models-api/platforms/github/models/nathandf/coe-332-forking-demo/artifacts",
 									"host": [
 										"{{mlh_base_url}}"
 									],
 									"path": [
 										"models-api",
 										"platforms",
-										"git",
+										"github",
 										"models",
 										"nathandf",
 										"coe-332-forking-demo",
-										"files"
+										"artifacts"
 									]
 								}
 							},
@@ -461,18 +567,248 @@
 									}
 								},
 								"url": {
-									"raw": "{{mlh_base_url}}/models-api/platforms/git/models/nathandf/coe-332-forking-demo/files",
+									"raw": "{{mlh_base_url}}/models-api/platforms/huggingface/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english/artifacts",
 									"host": [
 										"{{mlh_base_url}}"
 									],
 									"path": [
 										"models-api",
 										"platforms",
-										"git",
+										"huggingface",
 										"models",
-										"nathandf",
-										"coe-332-forking-demo",
-										"files"
+										"distilbert",
+										"distilbert-base-uncased-finetuned-sst-2-english",
+										"artifacts"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "uploadModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"warning": "This is a duplicate header and will be overridden by the Content-Type header generated by Postman.",
+								"key": "Content-Type",
+								"value": "application/zip",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/nathandf/Desktop/9f6ece21-8e53-481e-8dbc-bd5548f94e63"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "publishModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"connection": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{hf_access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"target_platform\": \"huggingface\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts/92a7764e-8d01-4e3d-b177-e7b06682d3c3/publications",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"92a7764e-8d01-4e3d-b177-e7b06682d3c3",
+								"publications"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": [
+						{
+							"name": "git",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "patra",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "github",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "huggingface",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
 									]
 								}
 							},

@@ -1,6 +1,6 @@
 use actix_web::HttpResponse;
 use clients::ClientError;
-use shared::common::presentation::http::v1::actix_web::helpers::{
+use shared::presentation::http::v1::actix_web::helpers::{
     build_error_response as error,
     build_success_response as success
 };
@@ -16,7 +16,6 @@ pub fn build_client_error_response(err: ClientError) -> HttpResponse {
         ClientError::Forbidden { msg, scope: _ } => build_error_response(status_code, msg),
         ClientError::NotFound { msg, scope: _ } => build_error_response(status_code, msg),
         ClientError::Unavailable(msg) => build_error_response(status_code, msg),
-        ClientError::ArtifactStagingError(msg) => build_error_response(status_code, msg.to_string()),
         ClientError::MissingInvalidCredentials(msg) => build_error_response(status_code, msg),
         ClientError::Unimplemented => build_error_response(status_code, "Unimplemented".into()),
     }

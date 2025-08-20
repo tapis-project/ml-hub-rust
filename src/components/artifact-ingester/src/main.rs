@@ -22,18 +22,20 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::{common::domain::entities::{ArtifactIngestionFailureReason, ArtifactIngestionStatus, ArtifactType}, constants::ARTIFACT_INGEST_DIR_NAME};
+use shared::constants::ARTIFACT_INGEST_DIR_NAME;
+use shared::domain::entities::artifact_ingestion::{ArtifactIngestionFailureReason, ArtifactIngestionStatus};
+use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
-use shared::models::presentation::http::v1::dto::IngestModelRequest;
-use shared::common::infra::system::Env;
+use shared::presentation::http::v1::dto::models::IngestModelRequest;
+use shared::infra::system::Env;
 // use shared::datasets::presentation::http::v1::dto::IngestDatasetRequest;
-use shared::common::infra::messaging::messages::IngestArtifactMessage;
+use shared::infra::messaging::messages::IngestArtifactMessage;
 use async_trait::async_trait;
-use shared::common::application::services::artifact_service::ArtifactService;
+use shared::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
 use artifact_ingester::database::{get_db, ClientParams};
-use shared::common::infra::fs::archiver::Archiver;
+use shared::infra::fs::archiver::Archiver;
 
 struct ArtifactIngesterConsumer {
     artifact_service: ArtifactService,
@@ -44,7 +46,7 @@ struct ArtifactIngesterConsumer {
 #[async_trait]
 impl AsyncConsumer for ArtifactIngesterConsumer {
     async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
-        // Deserialize the message into a DownloadArtifactRequest
+        // Deserialize the message
         let request: IngestArtifactMessage = match serde_json::from_slice(&content) {
             Ok(m) => m,
             Err(err) => {
@@ -208,10 +210,6 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
             },
             // Ingest the dataset
             ArtifactType::Dataset => {
-                // let client = ClientProvider::provide_ingest_dataset_client(&request.platform)
-                //     .map_err(|err| {
-                //         eprintln!("{}", err);
-                //     });
                 eprintln!("Artifact ingestion not yet available for datasets");
                 nack(&channel, &deliver, None, None).await;
                 return 
@@ -351,7 +349,7 @@ async fn main() -> () {
     let environment = Env::new().expect("Env could not be initialized");
 
     let consumer = ArtifactIngesterConsumer {
-        artifact_service: artifact_service_factory(&db).await.expect("failed to initialize artifact service"),
+        artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
         artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };

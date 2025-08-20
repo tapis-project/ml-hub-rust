@@ -18,7 +18,9 @@
     "nfs-server-service": "mlhub-nfs-server-service",
     "traefik-deployment": "mlhub-traefik-deployment",
     "artifact-ingester-deployment": "mlhub-artifact-ingester-deployment",
-    "artifact-ingester-image": "tapis/mlhub-artifact-ingester"
+    "artifact-ingester-image": "tapis/mlhub-artifact-ingester",
+    "artifact-publisher-deployment": "mlhub-artifact-publisher-deployment",
+    "artifact-publisher-image": "tapis/mlhub-artifact-publisher"
   },
   "components": [
     {
@@ -45,7 +47,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}"
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -76,7 +79,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}"
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -106,7 +110,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}"
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -136,7 +141,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}"
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -155,7 +161,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} --container=\"nfs-server\" -- sh",
-        "code": "code src/components/{{ self.name }}"
+        "code": "code src/components/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -171,13 +178,14 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "expose": "minikube service expose mlhub-traefik-web-service --url",
-        "code": "code src/components/{{ self.name }}"
+        "code": "code src/components/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-ingester",
       "rootDir": "src/components/artifact-ingester",
-      "labels": ["component"],
+      "labels": ["component", "worker"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -198,7 +206,36 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}"
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+      }
+    },
+    {
+      "name": "artifact-publisher",
+      "rootDir": "src/components/artifact-publisher",
+      "labels": ["component", "worker"],
+      "commands": {
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "build": "docker buildx build --platform linux/x86_64 -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
+        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cyclel": "{{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -214,7 +251,8 @@
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/components/{{ self.name }}"
+        "code": "code src/components/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -231,7 +269,8 @@
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-service 27017:27017", 
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code src/components/{{ self.name }}",
-        "gui": "open -a \"MongoDB Compass\""
+        "gui": "open -a \"MongoDB Compass\"",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -246,7 +285,8 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/components/{{ self.name }}"
+        "code": "code src/components/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -258,7 +298,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -271,7 +312,8 @@
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -283,7 +325,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -295,7 +338,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -307,7 +351,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -319,7 +364,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -331,7 +377,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -343,7 +390,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -355,7 +403,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}"
+        "code": "code src/libs/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
@@ -367,7 +416,8 @@
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code {{ bins-dir }}/{{ self.name }}"
+        "code": "code {{ bins-dir }}/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     }
   ]

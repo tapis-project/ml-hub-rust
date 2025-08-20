@@ -5,10 +5,15 @@ use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
-use shared::models::presentation::http::v1::dto::{
-    DiscoverModelsRequest, GetModelRequest, IngestModelRequest, ListModelsRequest,
-    PublishModelRequest,
+use shared::presentation::http::v1::dto::models::{
+    DiscoverModelsRequest,
+    GetModelRequest,
+    IngestModelRequest,
+    ListModelsRequest,
 };
+use shared::domain::entities::artifact::Artifact;
+use shared::domain::entities::model_metadata::ModelMetadata;
+use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
 use std::path::PathBuf;
 
 pub enum ListModelsClient {
@@ -111,21 +116,35 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
     }
 }
 
-pub enum PublishModelClient {}
+pub enum PublishModelClient {
+    HuggingFace(HuggingFaceClient),
+}
 
 #[async_trait::async_trait]
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(
-        &self,
-        _request: &PublishModelRequest,
-    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        let resp: Result<_, ClientError> = match self {
-            _ => Err(ClientError::NotFound {
-                msg: "No clients available for publishing".into(),
-                scope: ClientErrorScope::Client,
-            }),
+    async fn publish_model(&self, extracted_artfiact_path: &PathBuf, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
+            PublishModelClient::HuggingFace(c) => c.publish_model(extracted_artfiact_path, artifact, metadata, request).await,
+        };
+
+        resp
+    }
+}
+
+pub enum PublishModelMetadataClient {
+    Patra(PatraClient)
+}
+
+#[async_trait::async_trait]
+impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
+            PublishModelMetadataClient::Patra(c) => c.publish_model_metadata(metadata, request).await,
         };
 
         resp

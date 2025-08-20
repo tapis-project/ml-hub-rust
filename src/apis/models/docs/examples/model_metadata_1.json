@@ -1,0 +1,68 @@
+{
+    "name": "example-model",
+    "model_type": "transformer",
+    "version": "1.0.0",
+    "framework": "PyTorch",
+    "image": "exampleorg/model:1.0.0",
+  
+    "labels": ["nlp", "classification"],
+    "label_map": {
+      "0": "negative",
+      "1": "positive"
+    },
+  
+    "multi_modal": false,
+    "model_inputs": [
+      {
+        "name": "input_text",
+        "data_type": "string",
+        "shape": [1]
+      }
+    ],
+    "model_outputs": [
+      {
+        "name": "output_probs",
+        "data_type": "float32",
+        "shape": [2]
+      }
+    ],
+  
+    "task_types": ["sentiment-analysis"],
+    "inference_precision": "fp16",
+    "inference_hardware": {
+      "gpus": 1,
+      "cpus": 4,
+      "memory_gb": 16
+    },
+    "inference_software_dependencies": ["torch==2.1.0", "transformers==4.34.0"],
+    "inference_max_energy_consumption_watts": 120,
+  
+    "inference_max_latency_ms": 50,
+    "inference_min_throughput": 100,
+    "inference_max_compute_utilization_percentage": 80,
+    "inference_max_memory_usage_mb": 2048,
+    "inference_distributed": false,
+  
+    "training_time": 36000,
+    "training_precision": "fp32",
+    "training_hardware": {
+      "gpus": 4,
+      "cpus": 16,
+      "memory_gb": 64
+    },
+    "pretraining_datasets": ["CommonCrawl", "Wikipedia"],
+    "finetuning_datasets": ["IMDB"],
+    "edge_optimized": false,
+    "quantization_aware": true,
+    "supports_quantization": true,
+    "pretrained": true,
+    "pruned": false,
+    "slimmed": false,
+    "training_distributed": true,
+  
+    "training_max_energy_consumption_watts": 600,
+  
+    "regulatory": ["HIPAA", "GDPR"],
+    "license": "Apache-2.0",
+    "bias_evaluation_score": 5
+  }

@@ -12,6 +12,7 @@ use crate::clients::{
     PublishModelClient,
     IngestModelClient,
     IngestDatasetClient,
+    PublishModelMetadataClient,
 };
 
 /// A provider for managing clients mapped to their respective platforms.
@@ -65,21 +66,30 @@ impl ClientProvider {
             Platform::Git => Ok(IngestModelClient::Git(GitLfsClient::new())),
             Platform::Github => Ok(IngestModelClient::Github(GithubLfsClient::new())),
             Platform::HuggingFace => Ok(IngestModelClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(platform_name, "downloading"))
+            _ => Err(ClientProviderError::NotFound(platform_name, "model ingesting"))
         }
     }
 
     pub fn provide_publish_model_client(platform_name: &str) -> Result<PublishModelClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
-            _ => Err(ClientProviderError::NotFound(platform_name, "publishing"))
+            Platform::HuggingFace => Ok(PublishModelClient::HuggingFace(HuggingFaceClient::new())),
+            _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
+        }
+    }
+
+    pub fn provide_publish_metadata_client(platform_name: &str) -> Result<PublishModelMetadataClient, ClientProviderError> {
+        let platform = resolve_platform(platform_name)?;
+        match platform {
+            Platform::Patra => Ok(PublishModelMetadataClient::Patra(PatraClient::new())),
+            _ => Err(ClientProviderError::NotFound(platform_name, "model publishing"))
         }
     }
 
     pub fn provide_ingest_dataset_client(platform_name: &str) -> Result<IngestDatasetClient, ClientProviderError> {
         let platform = resolve_platform(platform_name)?;
         match platform {
-            _ => Err(ClientProviderError::NotFound(platform_name, "ingest dataset"))
+            _ => Err(ClientProviderError::NotFound(platform_name, "dataset ingesting"))
         }
     }
 }
