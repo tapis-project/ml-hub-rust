@@ -72,8 +72,8 @@ jobs:
 
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
-      - name: Delete docker ignore
-        run: rm src/apis/models/.dockerignore
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/apis/models/.dockerignore
         if: steps.git-diff.outputs.diff
 
       - name: LS After
