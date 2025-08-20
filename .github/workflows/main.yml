@@ -51,12 +51,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test models"
+        run: "./manage test models -s"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install models"
+        run: "./manage install models -s"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -80,7 +80,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht models
+        run: ./manage pusht models -s
         if: steps.git-diff.outputs.diff
 
   Datasets_API:
@@ -108,12 +108,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test datasets"
+        run: "./manage test datasets -s"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install datasets"
+        run: "./manage install datasets -s"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -137,7 +137,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht datasets
+        run: ./manage pusht datasets -s
         if: steps.git-diff.outputs.diff
     
   Inference_API:
@@ -165,12 +165,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test inference"
+        run: "./manage test inference -s"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install inference"
+        run: "./manage install inference -s"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -189,12 +189,12 @@ jobs:
 
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build -s inference -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build inference -s -v -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht inference
+        run: ./manage pusht inference -s
         if: steps.git-diff.outputs.diff
 
   Training_API:
@@ -222,12 +222,12 @@ jobs:
 
       # Compile and run tests
       - name: Test
-        run: "./manage test training"
+        run: "./manage test training -s"
         if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install training"
+        run: "./manage install training -s"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
@@ -251,5 +251,5 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht training
+        run: ./manage pusht training -s
         if: steps.git-diff.outputs.diff
