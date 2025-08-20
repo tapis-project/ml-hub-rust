@@ -59,9 +59,6 @@ jobs:
         run: "./manage install models -sv"
         if: steps.git-diff.outputs.diff
 
-      - name: LS Before
-        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target && ls -lha src/apis/models/target/release"
-
       # Log into dockerhub with CIC credentials
       - name: Login to Docker Hub
         uses: docker/login-action@v1
@@ -76,12 +73,9 @@ jobs:
         run: rm .dockerignore src/apis/models/.dockerignore
         if: steps.git-diff.outputs.diff
 
-      - name: LS After
-        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target && ls -lha src/apis/models/target/release"
-
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target && ls -lha src/apis/models/target/release && ./manage build models -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build models -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
@@ -132,8 +126,8 @@ jobs:
 
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
-      - name: Delete docker ignore
-        run: rm src/apis/datasets/.dockerignore
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/apis/datasets/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -189,8 +183,8 @@ jobs:
 
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
-      - name: Delete docker ignore
-        run: rm src/apis/inference/.dockerignore
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/apis/inference/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -246,8 +240,8 @@ jobs:
 
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
-      - name: Delete docker ignore
-        run: rm src/apis/training/.dockerignore
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/apis/training/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -258,4 +252,118 @@ jobs:
       # Push the all tags for the image
       - name: Push All Tags
         run: ./manage pusht training -sv
+        if: steps.git-diff.outputs.diff
+
+  Artifact_Ingester:
+    needs:
+      - Set_Image_Tag
+    name: Artifact_Ingesster_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/apis/models/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # # Compile and run tests
+      # - name: Test
+      #   run: "./manage test models -sv"
+      #   if: steps.git-diff.outputs.diff
+
+      # Compile the release binary of the api
+      - name: Compile
+        run: "./manage install artifact-ingester -sv"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/components/artifact-ingester/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the given branch or git tag
+      - name: Build_Image
+        run: "./manage build artifact-ingester -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: ./manage pusht artifact-ingester -sv
+        if: steps.git-diff.outputs.diff
+
+  Artifact_Publisher:
+    needs:
+      - Set_Image_Tag
+    name: Artifact_Ingesster_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/apis/models/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # # Compile and run tests
+      # - name: Test
+      #   run: "./manage test models -sv"
+      #   if: steps.git-diff.outputs.diff
+
+      # Compile the release binary of the api
+      - name: Compile
+        run: "./manage install artifact-publisher -sv"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/components/artifact-publisher/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the given branch or git tag
+      - name: Build_Image
+        run: "./manage build artifact-publisher -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: ./manage pusht artifact-publisher -sv
         if: steps.git-diff.outputs.diff
