@@ -56,7 +56,7 @@ jobs:
 
       # Compile the release bindaary of the api
       - name: Compile
-        run: "./manage install models -sv -t release-flag release"
+        run: "./manage install models -sv"
         if: steps.git-diff.outputs.diff
 
       # Log into dockerhub with CIC credentials
