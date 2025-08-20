@@ -59,8 +59,8 @@ jobs:
         run: "./manage install models -sv"
         if: steps.git-diff.outputs.diff
 
-      - name: LS
-        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target"
+      - name: LS Before
+        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target && ls -lha src/apis/models/target/release"
 
       # Log into dockerhub with CIC credentials
       - name: Login to Docker Hub
@@ -76,9 +76,12 @@ jobs:
         run: rm src/apis/models/.dockerignore
         if: steps.git-diff.outputs.diff
 
+      - name: LS After
+        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target && ls -lha src/apis/models/target/release"
+
       # Build the image for the given branch or git tag
       - name: Build_Image
-        run: "./manage build models -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "ls -lha ./ && ls -lha src/apis/models/ && ls -lha src/apis/models/target && ls -lha src/apis/models/target/release && ./manage build models -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
