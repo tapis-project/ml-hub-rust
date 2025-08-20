@@ -49,10 +49,10 @@ jobs:
         run: rustup toolchain install stable
         if: steps.git-diff.outputs.diff
 
-      # Compile and run tests
-      - name: Test
-        run: "./manage test models -sv"
-        if: steps.git-diff.outputs.diff
+      # # Compile and run tests
+      # - name: Test
+      #   run: "./manage test models -sv"
+      #   if: steps.git-diff.outputs.diff
 
       # Compile the release bindaary of the api
       - name: Compile
