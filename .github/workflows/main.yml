@@ -54,10 +54,13 @@ jobs:
       #   run: "./manage test models -sv"
       #   if: steps.git-diff.outputs.diff
 
-      # Compile the release bindaary of the api
+      # Compile the release binary of the api
       - name: Compile
         run: "./manage install models -sv"
         if: steps.git-diff.outputs.diff
+
+      - name: LS
+        run: "ls -lh src/api/models/"
 
       # Log into dockerhub with CIC credentials
       - name: Login to Docker Hub
