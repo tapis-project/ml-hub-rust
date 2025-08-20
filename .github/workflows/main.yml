@@ -60,7 +60,7 @@ jobs:
         if: steps.git-diff.outputs.diff
 
       - name: LS
-        run: "ls -lh src/api/models/"
+        run: "ls -lh ./ && ls -lh src/apis/models/ && ls -lh src/apis/models/target"
 
       # Log into dockerhub with CIC credentials
       - name: Login to Docker Hub
