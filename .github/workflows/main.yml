@@ -259,8 +259,6 @@ jobs:
       - Set_Image_Tag
     name: Artifact_Ingester_Compile_Test_Build_Push
     runs-on: ubuntu-latest
-    container:
-      image: debian:bookworm-slim
     steps:
       # Checkout the code
       - name: Checkout
@@ -318,8 +316,6 @@ jobs:
       - Set_Image_Tag
     name: Artifact_Publisher_Compile_Test_Build_Push
     runs-on: ubuntu-latest
-    container:
-      image: debian:bookworm-slim
     steps:
       # Checkout the code
       - name: Checkout
