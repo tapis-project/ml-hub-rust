@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 // use crate::operations::files::{
 //     MkdirResponse,
 //     mkdir,
@@ -13,7 +15,9 @@ use clients::{
     PublishModelClient,
     // ClientErrorScope
 };
-use shared::presentation::http::v1::dto::artifacts;
+use shared::domain::entities::artifact::Artifact;
+use shared::domain::entities::model_metadata::ModelMetadata;
+use shared::presentation::http::v1::dto::artifacts::{self, PublishArtifactRequest};
 use shared::logging::SharedLogger;
 
 #[derive(Debug)]
@@ -26,7 +30,8 @@ impl PublishModelClient for TapisClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model(&self, _request: &artifacts::PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _extracted_artifact_path: &PathBuf, _artifact: &Artifact, _metadata: &ModelMetadata, _request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+
         return Err(ClientError::Unimplemented);
     }
 }
