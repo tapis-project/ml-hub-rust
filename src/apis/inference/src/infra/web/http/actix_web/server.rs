@@ -1,0 +1,69 @@
+use crate::bootstrap::state::AppState;
+use crate::infra::db::mongo::database::{get_db, ClientParams};
+use crate::presentation;
+// use shared::infra::system::Env;
+use std::env;
+use log::error;
+use actix_web::{App, HttpServer};
+
+pub async fn run_server() -> std::io::Result<()> {
+    pub const DEFAULT_PORT: u16 = 8000;
+    pub const DEFAULT_HOST: &str = "0.0.0.0";
+    
+    // Initialize the logger
+    env_logger::init();
+    
+    // Set the address from env vars HOST and PORT, fallback to default values
+    // if values for these env vars are not defined
+    let addrs = (
+        env::var("HOST").unwrap_or(DEFAULT_HOST.into()),
+        env::var("PORT")
+        .ok()
+        .and_then(|port| port.parse::<u16>().ok())
+        .unwrap_or(DEFAULT_PORT)
+    );
+
+    // let env = Env::new()
+    //     .map_err(|err| {
+    //         error!("Shared environment initialization error: {}", err.to_string().as_str());
+    //         err 
+    //     })
+    //     .expect("Shared environment initialization error");
+
+    let inference_db: String = std::env::var("INFERENCE_DB").expect("Missing env var: INFERENCE_DB");
+    let inference_db_host: String = std::env::var("INFERENCE_DB_HOST").expect("Missing env var: INFERENCE_DB_HOST");
+    let inference_db_port: String = std::env::var("INFERENCE_DB_PORT").expect("Missing env var: INFERENCE_DB_PORT");
+    let inference_db_user: String = std::env::var("INFERENCE_DB_USER").expect("Missing env var: INFERENCE_DB_USER");
+    let inference_db_password: String = std::env::var("INFERENCE_DB_PASSWORD").expect("Missing env var: INFERENCE_DB_PASSWORD");
+
+    // Initialize AppState
+    let state = AppState {
+        db: get_db(ClientParams{
+            username: inference_db_user,
+            password: inference_db_password,
+            host: inference_db_host,
+            port: inference_db_port,
+            db: inference_db
+        })
+            .await
+            .map_err(|err| {
+                error!("Database initialization error: {}", err.to_string().as_str());
+                err 
+            })
+            .expect("Datbase initialization error")
+    };
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(actix_web::web::Data::new(state.clone()))
+            .service(presentation::http::v1::handlers::get_inference_server::get_inference_server)
+            .service(presentation::http::v1::handlers::list_inference_servers::list_inference_servers)
+            .service(presentation::http::v1::handlers::get_inference_server_docs::get_inference_server_docs)
+            .service(presentation::http::v1::handlers::create_inference_server::create_inference_server)
+            .service(presentation::http::v1::handlers::update_inference_server::update_inference_server)
+            .service(presentation::http::v1::handlers::delete_inference_server::delete_inference_server)
+    })
+        .bind(addrs)?
+        .run()
+        .await
+}

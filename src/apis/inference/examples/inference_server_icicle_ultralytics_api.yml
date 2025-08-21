@@ -1,0 +1,282 @@
+---
+kind: InferenceServer
+metadata:
+  name: ultralytics-litserve
+  version: 0.1.0
+  description: >-
+    An inference server 
+  labels:
+    multi-model: "true"
+    model-hotloading: "true"
+spec:
+  interfaces:
+    - kind: Interface
+      type: Container
+      metadata:
+        name: ultralytics-litserve-container
+        labels:
+          something: something
+      spec:
+        image: 'https://ghcr.io/icicle-ai/ultralytics-litserve:latest'
+        ports:
+        - name: http
+          port: 8000
+          protocol: http
+        resources:
+          requests:
+            cpu: 1
+            tpu: 0
+            mps: 0
+            memory: 2Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+              amd: 0
+            # accelerators:
+          limits:
+            cpu: 2
+            tpu: 0
+            mps: 0
+            memory: 20Gi
+            disk: 50Gi
+            gpu:
+              nvidia: 0
+    - kind: Interface
+      type: RestApi
+      format: OpenApi3
+      metadata:
+        name: ultralytics-api
+        labels:
+          server-type: litserver
+          task-type: object-detection
+      spec:
+        endpoint_labels:
+          - operation_id: healthcheck
+            labels:
+              mlhub: healthcheck
+          - operation_id: readycheck
+            labels:
+              mlhub: readycheck
+          - operation_id: openapi3
+            labels:
+              mlhub: openapi3
+        spec:
+          openapi: 3.1.0
+          info:
+            title: FastAPI
+            version: 0.1.0
+          paths:
+            /:
+              get:
+                summary: Index
+                operationId: index__get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /health:
+              get:
+                summary: Health
+                operationId: health_health_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /info:
+              get:
+                summary: Info
+                operationId: info_info_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /healthcheck:
+              get:
+                summary: Healthcheck
+                operationId: healthcheck_healthcheck_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /load-model:
+              post:
+                summary: Load Model
+                operationId: load_model_load_model_post
+                requestBody:
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/BaseModel'
+                  required: true
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+                  '422':
+                    description: Validation Error
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/HTTPValidationError'
+            /readycheck:
+              get:
+                summary: Readycheck
+                operationId: readycheck_readycheck_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /shutdown:
+              get:
+                summary: Shutdown
+                operationId: shutdown_shutdown_get
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+            /swap-model:
+              put:
+                summary: Swap Model
+                operationId: swap_model_swap_model_put
+                requestBody:
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/BaseModel'
+                  required: true
+                responses:
+                  '200':
+                    description: Successful Response
+                    content:
+                      application/json:
+                        schema: {}
+                  '422':
+                    description: Validation Error
+                    content:
+                      application/json:
+                        schema:
+                          $ref: '#/components/schemas/HTTPValidationError'
+          components:
+            schemas:
+              BaseModel:
+                properties: {}
+                type: object
+                title: BaseModel
+              HTTPValidationError:
+                properties:
+                  detail:
+                    items:
+                      $ref: '#/components/schemas/ValidationError'
+                    type: array
+                    title: Detail
+                type: object
+                title: HTTPValidationError
+              ValidationError:
+                properties:
+                  loc:
+                    items:
+                      anyOf:
+                        - type: string
+                        - type: integer
+                    type: array
+                    title: Location
+                  msg:
+                    type: string
+                    title: Message
+                  type:
+                    type: string
+                    title: Error Type
+                type: object
+                required:
+                  - loc
+                  - msg
+                  - type
+                title: ValidationError
+
+                          # TODO 
+#                           response = {
+#     "boxes": self._encode_tensor(boxes),
+#     "boxes_shape": list(boxes.shape),
+#     "labels": self._encode_tensor(labels),
+#     "labels_shape": list(labels.shape),
+#     "confidences": self._encode_tensor(confidences),
+#     "confidences_shape": list(confidences.shape),
+#     "annotated_image": self._encode_image(annotated_image), // nullable
+#     "annotated_image_shape": list(annotated_image.shape), // nullable
+# }
+            
+    - kind: Interface
+      type: Model
+      metadata:
+        name: model-interface
+        labels:
+          server-type: litserver
+          task-type: object-detection
+        discovery_criteria:
+          - platform: patra
+            confidence: 100
+            criteria:
+              - task-type: image-classification
+        selectors:
+          - match_server_labels:
+              server-type: image-classification-server
+            match_endpoint_labels:
+              task-type: image-classification
+      spec:
+        inputs:
+          - name: image_data
+            required: true
+            datatype: STRING
+            shape:
+              - 1
+            description: Base64 encoded string of the input image.
+            format: base64
+          - name: draw_boxes
+            required: false
+            datatype: BOOLEAN
+            shape:
+              - 1
+            description: Flag to control drawing boxes (if applicable).
+          - name: stride
+            required: true
+            datatype: INT64
+            shape:
+              - 1
+            description: Inference stride value.
+          - name: image_scale_size
+            required: true
+            datatype: INT64
+            shape:
+              - 2
+            description: >-
+              Target image size (width, height or height, width) as a
+              two-element array.
+        outputs:
+        # https://docs.ultralytics.com/reference/engine/results/#ultralytics.engine.results.BaseTensor.to
+        # Boxes.xyxy -> boxes | array of arrays of uint8/fp64
+        # Boxes.cls -> prediction_label | array of strings
+        # Boxes.conf -> confidence | array of fp64
+          - name: label
+            datatype: STRING
+            shape:
+              - 0
+            description: Predicted class label.
+          - name: probability
+            datatype: FP32
+            shape:
+              - 1
+            description: Confidence score for the predicted label (0.0-1.0).

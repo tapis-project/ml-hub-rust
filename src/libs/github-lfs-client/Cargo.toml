@@ -1,0 +1,13 @@
+[package]
+name = "github-lfs-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.216", features = ["derive"]}
+reqwest = { version = "0.12", features = ["json", "blocking"] }
+tokio = { version = "1", features = ["full"] }
+shared = { version = "0.1.0", path = "../shared" }
+clients = { version = "0.1.0", path = "../clients" }
+serde_json = "1.0.135"
+async-trait = "0.1.88"

@@ -1,0 +1,1078 @@
+{
+	"info": {
+		"_postman_id": "74ba7856-ea10-41ed-9485-20ebc8ed7a24",
+		"name": "MLHub",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17159950",
+		"_collection_link": "https://tapis-workflows.postman.co/workspace/CIC-Tapis-Workflows~4974a8d5-991f-4543-aa4a-dd03a388f977/collection/17159950-74ba7856-ea10-41ed-9485-20ebc8ed7a24?action=share&source=collection_link&creator=17159950"
+	},
+	"item": [
+		{
+			"name": "Models API",
+			"item": [
+				{
+					"name": "downloadModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"branch\": \"main\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts/8b93345c-b1bf-4b58-b09c-dc3e50858f66",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"8b93345c-b1bf-4b58-b09c-dc3e50858f66"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "getModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms/huggingface/models/nvidia/parakeet-tdt-0.6b-v2",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"platforms",
+								"huggingface",
+								"models",
+								"nvidia",
+								"parakeet-tdt-0.6b-v2"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": [
+						{
+							"name": "patra",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/patra/models/9d17c875-b7da-4ba1-9e6a-99b0ed208e46",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"patra",
+										"models",
+										"9d17c875-b7da-4ba1-9e6a-99b0ed208e46"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "huggingface",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/huggingface/models/deepseek-ai/DeepSeek-R1",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"huggingface",
+										"models",
+										"deepseek-ai",
+										"DeepSeek-R1"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "healthCheck",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/datasets/some_id",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"datasets",
+								"some_id"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "index",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "listModels",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms/patra/models",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"platforms",
+								"patra",
+								"models"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": [
+						{
+							"name": "patra",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/patra/models",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"patra",
+										"models"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "huggingface",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/huggingface/models?filter=text-classification",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"huggingface",
+										"models"
+									],
+									"query": [
+										{
+											"key": "filter",
+											"value": "text-classification"
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "listPlatforms",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"platforms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "createModelMetadata",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"ndfreeman/mlhub-publish-test\",\n  \"model_type\": \"llm\",\n  \"version\": \"0.0.1\",\n  \"framework\": \"TensorFlow\",\n  \"image\": \"registry.example.com/vision-classifier:v2.1.3\",\n  \"labels\": [\"cv\", \"image-classification\"],\n  \"label_map\": {\n    \"cat\": 0,\n    \"dog\": 1,\n    \"bird\": 2\n  },\n\n  \"multi_modal\": true,\n  \"model_inputs\": [\n    {\n      \"name\": \"image\",\n      \"data_type\": \"uint8\",\n      \"shape\": [1, 224, 224, 3]\n    }\n  ],\n  \"model_outputs\": [\n    {\n      \"name\": \"class_scores\",\n      \"data_type\": \"float32\",\n      \"shape\": [1, 3]\n    }\n  ],\n\n  \"task_types\": [\"image-classification\"],\n  \"inference_precision\": \"int8\",\n  \"inference_hardware\": {\n    \"gpus\": 0,\n    \"cpus\": 2,\n    \"memory_gb\": 8\n  },\n  \"inference_software_dependencies\": [\"tensorflow-lite==2.8.0\"],\n  \"inference_max_energy_consumption_watts\": 45,\n\n  \"inference_max_latency_ms\": 30,\n  \"inference_min_throughput\": 300,\n  \"inference_max_compute_utilization_percentage\": 70,\n  \"inference_max_memory_usage_mb\": 1024,\n  \"inference_distributed\": false,\n\n  \"training_time\": 18000,\n  \"training_precision\": \"int8\",\n  \"training_hardware\": {\n    \"gpus\": 2,\n    \"cpus\": 8,\n    \"memory_gb\": 32\n  },\n  \"pretraining_datasets\": [\"ImageNet\"],\n  \"finetuning_datasets\": [\"CatsVsDogs\"],\n  \"edge_optimized\": true,\n  \"quantization_aware\": true,\n  \"supports_quantization\": true,\n  \"pretrained\": true,\n  \"pruned\": true,\n  \"slimmed\": true,\n  \"training_distributed\": false,\n\n  \"training_max_energy_consumption_watts\": 400,\n\n  \"regulatory\": [\"ISO/IEC 27001\"],\n  \"license\": \"MIT\",\n  \"bias_evaluation_score\": -1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts/c80efc3a-48f0-4c71-b1b3-2edc3ab4df24/metadata",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"c80efc3a-48f0-4c71-b1b3-2edc3ab4df24",
+								"metadata"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "discoverModels",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"criteria\": [\n        {\n            \"name\": \"megadector\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms/patra/models",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"platforms",
+								"patra",
+								"models"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": [
+						{
+							"name": "patra",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"criteria\": [\n        {\n            \"name\": \"UCI Adult Data Analysis\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/patra/models",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"patra",
+										"models"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "ingestModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"branch\": \"main\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms/github/models/nathandf/coe-332-forking-demo/artifacts",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"platforms",
+								"github",
+								"models",
+								"nathandf",
+								"coe-332-forking-demo",
+								"artifacts"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": [
+						{
+							"name": "git",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"remote_base_url\": \"https://github.com\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/git/models/nathandf/coe-332-forking-demo/artifacts",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"git",
+										"models",
+										"nathandf",
+										"coe-332-forking-demo",
+										"artifacts"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "github",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/github/models/nathandf/coe-332-forking-demo/artifacts",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"github",
+										"models",
+										"nathandf",
+										"coe-332-forking-demo",
+										"artifacts"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "huggingface",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/platforms/huggingface/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english/artifacts",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"platforms",
+										"huggingface",
+										"models",
+										"distilbert",
+										"distilbert-base-uncased-finetuned-sst-2-english",
+										"artifacts"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "uploadModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"warning": "This is a duplicate header and will be overridden by the Content-Type header generated by Postman.",
+								"key": "Content-Type",
+								"value": "application/zip",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/nathandf/Desktop/9f6ece21-8e53-481e-8dbc-bd5548f94e63"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "publishModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"connection": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{hf_access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"target_platform\": \"huggingface\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts/92a7764e-8d01-4e3d-b177-e7b06682d3c3/publications",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"92a7764e-8d01-4e3d-b177-e7b06682d3c3",
+								"publications"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": [
+						{
+							"name": "git",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "patra",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "github",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "huggingface",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{mlh_base_url}}/models-api/artifacts/{artifact_id}",
+									"host": [
+										"{{mlh_base_url}}"
+									],
+									"path": [
+										"models-api",
+										"artifacts",
+										"{artifact_id}"
+									]
+								}
+							},
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Datasets API",
+			"item": [
+				{
+					"name": "getDataset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/datasets/some_id",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"datasets",
+								"some_id"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "listDatasets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/datasets?full=true&limit=10",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"datasets"
+							],
+							"query": [
+								{
+									"key": "full",
+									"value": "true"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inference API",
+			"item": [
+				{
+					"name": "getInferenceServer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models/some_id",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models",
+								"some_id"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "getIferenceServerDocs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/inference-api/inference-servers/test/docs",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"inference-api",
+								"inference-servers",
+								"test",
+								"docs"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Training API",
+			"item": [
+				{
+					"name": "getTraining",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/training/some_id",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"training",
+								"some_id"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "listTrainings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/training",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"training"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}

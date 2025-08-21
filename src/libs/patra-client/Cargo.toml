@@ -1,0 +1,14 @@
+[package]
+name = "patra-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.216", features = ["derive"]}
+reqwest = { version = "0.12", features = ["json", "blocking", "multipart"] }
+serde_json = "1.0.135"
+tokio = { version = "1.44.1", features = ["fs"] }
+tokio-util = "0.7.14"
+shared = { version = "0.1.0", path = "../shared" }
+clients = { version = "0.1.0", path = "../clients" }
+async-trait = "0.1.88"

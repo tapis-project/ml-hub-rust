@@ -1,0 +1,18 @@
+[package]
+name = "client-provider"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+huggingface-client = { version = "0.1.0", path = "../huggingface-client" }
+github-lfs-client = { version = "0.1.0", path = "../github-lfs-client" }
+git-lfs-client = { version = "0.1.0", path = "../git-lfs-client" }
+patra-client = { version = "0.1.0", path = "../patra-client" }
+shared = { version = "0.1.0", path = "../shared" }
+clients = { version = "0.1.0", path = "../clients" }
+strum = "0.26.3"
+strum_macros = "0.26.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.135"
+thiserror = "2.0.12"
+async-trait = "0.1.88"

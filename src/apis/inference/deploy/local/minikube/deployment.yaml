@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-inference-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mlhub-inference-api-deployment
+  template:
+    metadata:
+      labels:
+        app: mlhub-inference-api-deployment
+    spec:
+      containers:
+      - env:
+        - name: INFERENCE_DB_HOST
+          value: mlhub-inference-db-service
+        - name: INFERENCE_DB_PORT
+          value: "27017"
+        - name: INFERENCE_DB
+          value: inference
+        - name: INFERENCE_DB_PASSWORD
+          value: password
+        - name: INFERENCE_DB_USER
+          value: admin
+        - name: RUST_LOG
+          value: debug
+        - name: SHARED_DATA
+          value: /srv/mlhub
+        image: tapis/inference-api:local
+        imagePullPolicy: Never
+        name: inference-api
+        ports:
+          - containerPort: 8000
+            name: webserver
+        resources: {}
+        tty: true
+      #   volumeMounts:
+      #       - name: nfs-server-mount
+      #         mountPath: /srv/mlhub/
+      #         subPath: inference
+      # volumes:
+      #   - name: nfs-server-mount
+      #     nfs: 
+      #       server: '{{ NFS_SERVER_COMPONENT_IP }}'
+      #       path: /

@@ -1,0 +1,35 @@
+kind: InferenceServerDeployment
+type: TapisPods
+metadata:
+  name: jstubbs_MegaDetector-for-Wildlife-Detection_5a-litserve-0.1.0-deployment
+  version: 0.1.0
+  namespace: public
+  description: >-
+    A instance of the megadetector inference server deployed on Tapis Pods Api
+  selector:
+    match_metadata:
+      name: jstubbs_MegaDetector-for-Wildlife-Detection_5a-litserve
+      version: 0.1.0
+  labels:
+    something: something
+spec:
+  pod_id: string
+  image: ${interfaces.megadetector-container.spec.image}
+  template: {}
+  command:
+    - whatever
+  arguments:
+    - soemthing
+  environment_variables: {}
+  status_requested: 'ON'
+  volume_mounts: {}
+  time_to_stop_default: 43200
+  time_to_stop_instance: 0
+  networking:
+    default:
+      protocol: http
+      port: 5000
+      tapis_auth: true
+  resources: {}
+  compute_queue: default
+ 

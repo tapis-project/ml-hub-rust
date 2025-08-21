@@ -1,0 +1,37 @@
+# Stage 1: Compile the code
+FROM rust:1.82.0 AS builder
+
+ARG SERVICE_NAME
+ARG SERVICE_DIR
+ARG LIBS_DIR
+
+# Create 
+RUN mkdir -p /usr/local/mlhub/service/${SERVICE_NAME} /usr/local/mlhub/libs
+
+# Copy shared libraries code
+WORKDIR /usr/local/mlhub/libs
+COPY ${LIBS_DIR} .
+
+# Copy service code
+WORKDIR /usr/local/mlhub/service/${SERVICE_NAME}
+COPY ${SERVICE_DIR} .
+
+# Install
+RUN cargo install --path .
+
+
+# Stage 2: Copy the binary to a slim Linux image
+FROM debian:bookworm-slim
+
+ARG SERVICE_NAME
+
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
+RUN apt update
+RUN apt install libssl3
+RUN apt-get install -y --no-install-recommends ca-certificates
+RUN update-ca-certificates
+COPY --from=builder /usr/local/mlhub/service/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+
+ENV RUST_LOG=debug
+
+CMD ["mlhub"]
