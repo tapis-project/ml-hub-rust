@@ -1,4 +1,4 @@
-use crate::domain::entities::artifact::Artifact;
+use crate::domain::entities::artifact::{Artifact, ArtifactType};
 use crate::domain::entities::artifact_ingestion::ArtifactIngestion;
 use crate::domain::entities::artifact_publication::ArtifactPublication;
 use crate::domain::entities::model_metadata::ModelMetadata;
@@ -12,7 +12,7 @@ pub trait ArtifactRepository: Send + Sync {
     async fn save(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
     async fn update(&self, ingestion: &Artifact) -> Result<(), ApplicationError>;
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Artifact>, ApplicationError>;
-    async fn list_all(&self) -> Result<Vec<Artifact>, ApplicationError>;
+    async fn list_all_by_artifact_type(&self, artifact_type: ArtifactType) -> Result<Vec<Artifact>, ApplicationError>;
     async fn update_path(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
 }
 
@@ -29,8 +29,8 @@ pub trait ArtifactIngestionRepository: Send + Sync {
 pub trait ModelMetadataRepository: Send + Sync {
     async fn save(&self, input: &CreateModelMetadata) -> Result<(), ApplicationError>;
     async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<ModelMetadata>, ApplicationError>;
-    // async fn update(&self, metadata: &ModelMetadata) -> Result<(), ApplicationError>;
     // async fn list(&self) -> Result<Vec<ModelMetadata>, ApplicationError>;
+    // async fn update(&self, metadata: &ModelMetadata) -> Result<(), ApplicationError>;
 }
 
 #[async_trait]

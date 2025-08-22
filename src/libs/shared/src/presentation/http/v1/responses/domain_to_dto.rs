@@ -63,3 +63,23 @@ impl From<entities::artifact_publication::ArtifactPublication> for responses::Ar
         }
     }
 }
+
+impl From<entities::artifact::ArtifactType> for responses::ArtifactType {
+    fn from(value: entities::artifact::ArtifactType) -> Self {
+        match value {
+            entities::artifact::ArtifactType::Dataset => responses::ArtifactType::Dataset,
+            entities::artifact::ArtifactType::Model => responses::ArtifactType::Model
+        }
+    }
+}
+
+impl From<entities::artifact::Artifact> for responses::Artifact {
+    fn from(value: entities::artifact::Artifact) -> Self {
+        responses::Artifact {
+            id: value.id.to_string(),
+            created_at: String::from(value.created_at),
+            last_modified: String::from(value.last_modified),
+            artifact_type: responses::ArtifactType::from(value.artifact_type)
+        }
+    }
+}

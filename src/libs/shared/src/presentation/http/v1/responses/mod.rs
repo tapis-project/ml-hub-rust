@@ -13,6 +13,21 @@ pub struct JsonResponse {
 }
 
 #[derive(Serialize)]
+pub enum ArtifactType {
+    Model,
+    Dataset
+}
+
+#[derive(Serialize)]
+pub struct Artifact {
+    pub id: String,
+    pub artifact_type: ArtifactType,
+    pub created_at: String,
+    pub last_modified: String,
+    // pub metadata: Option<ModelMetadata>
+}
+
+#[derive(Serialize)]
 pub enum ArtifactIngestionStatus {
     Submitted,
     Resubmitted,

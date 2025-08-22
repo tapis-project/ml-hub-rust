@@ -497,4 +497,18 @@ impl ArtifactService {
 
         Ok(path)
     }
+
+    pub async fn get_all_model_artifacts(&self) -> Result<Vec<Artifact>, ArtifactServiceError> {
+        let artifacts = self.artifact_repo.list_all_by_artifact_type(ArtifactTypeEntity::Model)
+            .await?;
+
+        return Ok(artifacts)
+    }
+
+    pub async fn get_all_dataset_artifacts(&self) -> Result<Vec<Artifact>, ArtifactServiceError> {
+        let artifacts = self.artifact_repo.list_all_by_artifact_type(ArtifactTypeEntity::Dataset)
+            .await?;
+
+        return Ok(artifacts)
+    }
 }

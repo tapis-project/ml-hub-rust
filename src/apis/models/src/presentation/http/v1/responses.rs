@@ -1,1 +1,1 @@
-pub use shared::presentation::http::v1::responses::ArtifactIngestion;
+pub use shared::presentation::http::v1::responses::{ArtifactIngestion, Artifact};

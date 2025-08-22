@@ -1,6 +1,7 @@
 use crate::application::errors::ApplicationError;
+use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::infra::persistence::mongo::database::ARTIFACT_COLLECTION;
-use crate::infra::persistence::mongo::documents::artifact::{Artifact, UpdateArtifactRequest, UpdateArtifactPathRequest};
+use crate::infra::persistence::mongo::documents::artifact::{Artifact, ArtifactType, UpdateArtifactRequest, UpdateArtifactPathRequest};
 use crate::application;
 use crate::domain::entities;
 use mongodb::{
@@ -42,8 +43,12 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(())
     }
 
-    async fn list_all(&self) -> Result<Vec<entities::artifact::Artifact>, ApplicationError> {
-        let mut cursor = self.read_collection.find(None, None)
+    async fn list_all_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact::Artifact>, ApplicationError> {
+        let filter = doc! {
+            "artifact_type": String::from(ArtifactType::from(artifact_type))
+        };
+        
+        let mut cursor = self.read_collection.find(filter, None)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
