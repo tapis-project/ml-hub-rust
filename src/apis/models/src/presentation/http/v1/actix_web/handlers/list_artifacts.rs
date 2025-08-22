@@ -15,12 +15,13 @@ async fn list_artifacts(
 ) -> impl Responder {
     let logger = SharedLogger::new();
     logger.debug("List aritfacts operation");
+    
     let artifact_service = match artifact_service_factory(&data.db) {
         Ok(s) => s,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let artifacts = match artifact_service.get_all_dataset_artifacts().await {
+    let artifacts = match artifact_service.get_all_model_artifacts().await {
         Ok(a) => a,
         Err(err) => return build_error_response(500, err.to_string())
     };
