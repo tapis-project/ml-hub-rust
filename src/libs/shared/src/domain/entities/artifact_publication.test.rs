@@ -5,16 +5,19 @@ mod artifact_publication_test {
         ArtifactPublication,
         ArtifactPublicationStatus
     };
+    use crate::domain::entities::artifact::ArtifactType;
 
     #[test]
     fn test_initializes_correctly() {
         let artifact_id = Uuid::new_v4();
         let publication = ArtifactPublication::new(
             artifact_id,
+            ArtifactType::Model,
             "platform".into(),
         );
         
         assert!(publication.artifact_id == artifact_id);
+        assert!(publication.artifact_type == ArtifactType::Model);
         assert!(publication.attempts == 0);
         assert!(publication.target_platform == String::from("platform"));
         assert!(publication.created_at.into_inner() == publication.last_modified.into_inner());
@@ -25,6 +28,7 @@ mod artifact_publication_test {
     fn test_set_status_and_touch() {
         let mut publication = ArtifactPublication::new(
             Uuid::new_v4(),
+            ArtifactType::Model,
             "platform".into(),
         );
 
@@ -47,6 +51,7 @@ mod artifact_publication_test {
     fn test_valid_transitions() {
         let mut publication = ArtifactPublication::new(
             Uuid::new_v4(),
+            ArtifactType::Model,
             "platform".into(),
         );
 
@@ -94,6 +99,7 @@ mod artifact_publication_test {
     fn test_invalid_transitions() {
         let mut publication = ArtifactPublication::new(
             Uuid::new_v4(),
+            ArtifactType::Model,
             "platform".into(),
         );
 

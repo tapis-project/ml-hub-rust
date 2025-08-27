@@ -1,6 +1,16 @@
 use crate::domain::entities::artifact_publication as entities;
+use crate::domain::entities::artifact::ArtifactType;
 use crate::infra::persistence::mongo::documents::artifact_publication as documents;
 use mongodb::bson::{Uuid, DateTime};
+
+impl From<ArtifactType> for documents::ArtifactType {
+    fn from(value: ArtifactType) -> Self {
+        match value {
+            ArtifactType::Model => documents::ArtifactType::Model,
+            ArtifactType::Dataset => documents::ArtifactType::Dataset
+        }
+    }
+}
 
 impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
     fn from(value: &entities::ArtifactPublication) -> Self {
@@ -8,6 +18,7 @@ impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
             artifact_id: Uuid::from_bytes(value.artifact_id.into_bytes()),
+            artifact_type: documents::ArtifactType::from(value.artifact_type.clone()),
             attempts: value.attempts,
             last_message: value.last_message.clone(),
             target_platform: value.target_platform.clone(),

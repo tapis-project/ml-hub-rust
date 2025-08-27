@@ -4,8 +4,9 @@ use std::future::Future;
 use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::artifacts::{DownloadArtifactInput, IngestArtifactInput, UploadArtifactInput};
-use crate::application::inputs::artifact_publication::PublishArtifactInput;
+use crate::application::inputs::artifacts::{DownloadArtifactInput, ListIngestionsByArtifactIdInput, ListPublicationsByArtifactIdInput, IngestArtifactInput, UploadArtifactInput};
+use crate::application::inputs::artifact_publication::{GetModelPublicationInput, ListModelPublicationsInput, PublishArtifactInput};
+use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
 use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
@@ -58,6 +59,9 @@ pub enum ArtifactServiceError {
 
     #[error("UnexpectedState: {0}")]
     UnexpectedState(String),
+
+    #[error("Incorrect artifact type: {0}")]
+    IncorrectArtifactType(String),
 }
 
 pub enum UuidOrString {
@@ -117,9 +121,10 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
         // Check that the artifact exists
-        if maybe_artifact.is_none() {
-            return Err(ArtifactServiceError::MissingArtifact("Artifact must exist in order to publish it".into()))
-        }
+        let artifact = match maybe_artifact {
+            Some(a) => a,
+            None => return Err(ArtifactServiceError::MissingArtifact("Artifact must exist in order to publish it".into()))
+        };
 
         // Fetch artifact metadata
         let _ = self.find_metadata_by_artifact_id(&input.artifact_id)
@@ -127,7 +132,8 @@ impl ArtifactService {
 
         // Instantiate the ArtifactPublication
         let mut publication = ArtifactPublication::new(
-            input.artifact_id,
+            artifact.id,
+            artifact.artifact_type,
             input.target_platform,
         );
 
@@ -245,6 +251,7 @@ impl ArtifactService {
         
         let mut ingestion = ArtifactIngestion::new(
             artifact.id.clone(),
+            artifact.artifact_type.clone(),
             input.platform.clone(),
             input.webhook_url.clone()
         );
@@ -257,7 +264,7 @@ impl ArtifactService {
         let _ = retry_async(save_ingestion, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err));
 
-        // Closure for publishing the artifact ingestion request
+        // Closure for submitting the artifact ingestion request
         let payload = IngestArtifactEventPayload {
             ingestion_id: ingestion.id.clone(),
             artifact_type: input.artifact_type.clone(),
@@ -267,16 +274,16 @@ impl ArtifactService {
         };
 
         let event = Event::IngestArtifactEvent(payload.clone());
-        let publish_ingestion = || self.event_publisher.publish(
+        let submit_ingestion = || self.event_publisher.publish(
             &event
         );
         
-        // Publish the artifact ingestion request to the queue
-        let publish_result = retry_async(publish_ingestion, &Self::MQ_RETRY_POLICY).await
+        // Submit the artifact ingestion request to the queue
+        let submit_result = retry_async(submit_ingestion, &Self::MQ_RETRY_POLICY).await
             .map_err(|err| {ArtifactServiceError::PubisherError(err)});
 
-        if let Err(err) = publish_result {
-            GlobalLogger::error(format!("Failed to publish ArtifactIngestion: {}", &err.to_string()).as_str());
+        if let Err(err) = submit_result {
+            GlobalLogger::error(format!("Failed to submit ArtifactIngestion: {}", &err.to_string()).as_str());
 
             ingestion.change_status(ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToQueue))
                 .map_err(|err| ArtifactServiceError::ArtifactIngestionError(err))?;
@@ -498,15 +505,80 @@ impl ArtifactService {
         Ok(path)
     }
 
-    pub async fn get_all_model_artifacts(&self) -> Result<Vec<Artifact>, ArtifactServiceError> {
-        let artifacts = self.artifact_repo.list_all_by_artifact_type(ArtifactTypeEntity::Model)
+    pub async fn get_model_publication(&self, input: GetModelPublicationInput) -> Result<Option<ArtifactPublication>, ArtifactServiceError> {
+        let publication = self.publication_repo.find_by_id(input.publication_id)
             .await?;
 
-        return Ok(artifacts)
+            match publication {
+                Some(i) => {
+                    if i.artifact_type != ArtifactTypeEntity::Model {
+                       return Err(ArtifactServiceError::IncorrectArtifactType("ArtifactPublication is not associated with a Model artifact".into()))
+                    };
+    
+                    Ok(Some(i))
+                },
+                None => Ok(None)
+            }
     }
 
-    pub async fn get_all_dataset_artifacts(&self) -> Result<Vec<Artifact>, ArtifactServiceError> {
-        let artifacts = self.artifact_repo.list_all_by_artifact_type(ArtifactTypeEntity::Dataset)
+    pub async fn list_model_publications(&self, _input: ListModelPublicationsInput) -> Result<Vec<ArtifactPublication>, ArtifactServiceError> {
+        let publications = self.publication_repo.find_by_artifact_type(ArtifactTypeEntity::Model)
+            .await?;
+
+        return Ok(publications)
+    }
+
+    pub async fn get_model_ingestion(&self, input: GetModelIngestionInput) -> Result<Option<ArtifactIngestion>, ArtifactServiceError> {
+        let ingestion = self.ingestion_repo.find_by_id(input.ingestion_id)
+            .await?;
+
+        match ingestion {
+            Some(i) => {
+                if i.artifact_type != ArtifactTypeEntity::Model {
+                   return Err(ArtifactServiceError::IncorrectArtifactType("ArtifactIngestion is not associated with a Model artifact".into()))
+                };
+
+                Ok(Some(i))
+            },
+            None => Ok(None)
+        }
+    }
+
+    pub async fn list_model_ingestions(&self, _input: ListModelIngestionsInput) -> Result<Vec<ArtifactIngestion>, ArtifactServiceError> {
+        let ingestions = self.ingestion_repo.find_by_artifact_type(ArtifactTypeEntity::Model)
+            .await?;
+
+        return Ok(ingestions)
+    }
+
+    pub async fn list_publications_by_artifact_id(&self, input: ListPublicationsByArtifactIdInput) -> Result<Vec<ArtifactPublication>, ArtifactServiceError> {
+        let maybe_artifact = self.artifact_repo.find_by_id(&input.artifact_id)
+            .await?;
+
+        let artifact = match maybe_artifact {
+            Some(a) => a,
+            None => return Err(ArtifactServiceError::NotFound(format!("Artifact with id '{}' not found", &input.artifact_id)))
+        };
+
+        if artifact.artifact_type != ArtifactTypeEntity::Model {
+            return Err(ArtifactServiceError::IncorrectArtifactType(format!("Expected type Model found type {}", &artifact.artifact_type)))
+        }
+        
+        let publications = self.publication_repo.find_by_artifact_id(&input.artifact_id)
+            .await?;
+
+        return Ok(publications)
+    }
+
+    pub async fn list_ingestions_by_artifact_id(&self, input: ListIngestionsByArtifactIdInput) -> Result<Vec<ArtifactIngestion>, ArtifactServiceError> {
+        let ingestions = self.ingestion_repo.find_by_artifact_id(&input.artifact_id)
+            .await?;
+
+        return Ok(ingestions)
+    }
+
+    pub async fn list_model_artifacts(&self) -> Result<Vec<Artifact>, ArtifactServiceError> {
+        let artifacts = self.artifact_repo.list_by_artifact_type(ArtifactTypeEntity::Model)
             .await?;
 
         return Ok(artifacts)

@@ -13,6 +13,12 @@ pub enum ArtifactPublicationError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub enum ArtifactType {
+    Model,
+    Dataset
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ArtifactPublicationFailureReason {
     FailedToQueue(String),
     FailedToExtract(String),
@@ -47,6 +53,7 @@ pub struct ArtifactPublication  {
     pub id: Uuid,
     pub status: Status,
     pub artifact_id: Uuid,
+    pub artifact_type: ArtifactType,
     pub target_platform: String,
     pub last_message: Option<String>,
     pub attempts: u8,

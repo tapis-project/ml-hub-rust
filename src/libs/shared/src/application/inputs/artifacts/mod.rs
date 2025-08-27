@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 pub mod inputs_to_domain;
 
 #[derive(Clone, Debug)]
@@ -24,4 +26,14 @@ pub struct UploadArtifactInput {
 pub struct DownloadArtifactInput {
     pub artifact_type: ArtifactType,
     pub artifact_id: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct ListIngestionsByArtifactIdInput {
+    pub artifact_id: Uuid,
+}
+
+#[derive(Clone, Debug)]
+pub struct ListPublicationsByArtifactIdInput {
+    pub artifact_id: Uuid,
 }

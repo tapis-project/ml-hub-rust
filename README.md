@@ -52,7 +52,7 @@ From the project's root directory, run the following commands to initalize the p
 
 6. `./manage start traefik` - Starts the revers proxy
 
-7. `./manage buildl models` - Builds the Models API image with the `local` tag
+7. `./manage buildl models -s` - Builds the Models API image with the `local` tag
 
 8. `./manage start models` - Starts the Models API pod
 

@@ -8,6 +8,15 @@ pub enum ArtifactType {
     Dataset,
 }
 
+impl std::fmt::Display for ArtifactType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ArtifactType::Model => write!(f, "Model"),
+            ArtifactType::Dataset => write!(f, "Dataset"),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Artifact {
     pub id: Uuid,

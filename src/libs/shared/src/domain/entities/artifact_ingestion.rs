@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
+use crate::domain::entities::artifact::ArtifactType;
 
 #[derive(Debug, Error)]
 pub enum ArtifactIngestionError {
@@ -18,6 +19,7 @@ type IngestionError = ArtifactIngestionError;
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct ArtifactIngestion {
     pub id: Uuid,
+    pub artifact_type: ArtifactType,
     pub artifact_id: Uuid, 
     pub platform: String,
     pub status: ArtifactIngestionStatus,
@@ -30,10 +32,11 @@ pub struct ArtifactIngestion {
 
 /// Represent the ingestion
 impl ArtifactIngestion {
-    pub fn new(artifact_id: Uuid, platform: String, webhook_url: Option<String>) -> Self {
+    pub fn new(artifact_id: Uuid, artifact_type: ArtifactType, platform: String, webhook_url: Option<String>) -> Self {
         let now = TimeStamp::now();
         Self {
             id: Uuid::new_v4(),
+            artifact_type,
             artifact_id,
             platform,
             last_message: None,

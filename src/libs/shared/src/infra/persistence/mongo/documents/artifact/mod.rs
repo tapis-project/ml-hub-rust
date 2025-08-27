@@ -1,3 +1,7 @@
+pub mod document_to_entity;
+pub mod entity_to_document;
+pub mod document_to_string;
+
 use serde::{Deserialize, Serialize};
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 

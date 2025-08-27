@@ -1,13 +1,25 @@
 use crate::domain::entities::artifact_publication as entities;
+use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::infra::persistence::mongo::documents::artifact_publication as documents;
+use crate::infra::persistence::mongo::documents::artifact_publication::ArtifactType as ArtifactTypeDoc;
 use uuid::Uuid;
+
+impl From<ArtifactTypeDoc> for ArtifactTypeEntity {
+    fn from(value: ArtifactTypeDoc) -> Self {
+        match value {
+            ArtifactTypeDoc::Dataset => ArtifactTypeEntity::Dataset,
+            ArtifactTypeDoc::Model => ArtifactTypeEntity::Model
+        }
+    }
+}
 
 impl From<&documents::ArtifactPublication> for entities::ArtifactPublication {
     fn from(value: &documents::ArtifactPublication) -> Self {
         Self {
             id: Uuid::from_bytes(value.id.bytes()),
             artifact_id: Uuid::from_bytes(value.artifact_id.bytes()),
+            artifact_type: ArtifactTypeEntity::from(value.artifact_type.clone()),
             attempts: value.attempts,
             last_message: value.last_message.clone(),
             target_platform: value.target_platform.clone(),

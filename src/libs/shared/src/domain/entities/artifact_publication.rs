@@ -1,6 +1,7 @@
 use uuid::Uuid;
 use crate::domain::entities::timestamp::TimeStamp;
 use thiserror::Error;
+use crate::domain::entities::artifact::ArtifactType;
 
 #[derive(Debug, Error)]
 pub enum ArtifactPublicationError {
@@ -12,6 +13,7 @@ pub struct ArtifactPublication  {
     pub id: Uuid,
     pub status: Status,
     pub artifact_id: Uuid,
+    pub artifact_type: ArtifactType,
     pub target_platform: String,
     pub last_message: Option<String>,
     pub attempts: u8,
@@ -21,11 +23,12 @@ pub struct ArtifactPublication  {
 
 /// Represents the life cycle of an attempt to publish an artifact
 impl ArtifactPublication {
-    pub fn new(artifact_id: Uuid, target_platform: String) -> Self {
+    pub fn new(artifact_id: Uuid, artifact_type: ArtifactType, target_platform: String) -> Self {
         let now = TimeStamp::now();
         Self {
             id: Uuid::new_v4(),
             artifact_id,
+            artifact_type,
             status: ArtifactPublicationStatus::Submitted,
             target_platform,
             last_message: Some("Submitted".into()),

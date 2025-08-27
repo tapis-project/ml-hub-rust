@@ -1,12 +1,22 @@
+pub mod document_to_entity;
+pub mod entity_to_document;
+
 use serde::{Deserialize, Serialize};
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub enum ArtifactType {
+    Model,
+    Dataset
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtifactIngestion {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>,
     pub id: Uuid,
-    pub artifact_id: Uuid, 
+    pub artifact_id: Uuid,
+    pub artifact_type: ArtifactType,
     pub platform: String,
     pub status: ArtifactIngestionStatus,
     pub last_message: Option<String>,

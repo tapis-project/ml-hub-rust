@@ -43,7 +43,7 @@ impl application::ports::repositories::ArtifactRepository for ArtifactRepository
         Ok(())
     }
 
-    async fn list_all_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact::Artifact>, ApplicationError> {
+    async fn list_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact::Artifact>, ApplicationError> {
         let filter = doc! {
             "artifact_type": String::from(ArtifactType::from(artifact_type))
         };

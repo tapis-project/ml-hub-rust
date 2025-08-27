@@ -1,6 +1,8 @@
 use crate::application::errors::ApplicationError;
+use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::infra::persistence::mongo::database::ARTIFACT_PUBLICATION_COLLECTION;
 use crate::infra::persistence::mongo::documents::artifact_publication::{ArtifactPublication, UpdateArtifactPublicationStatusRequest};
+use crate::infra::persistence::mongo::documents::artifact::ArtifactType as ArtifactTypeDoc;
 use crate::application;
 use crate::domain::entities;
 use mongodb::{
@@ -89,28 +91,27 @@ impl application::ports::repositories::ArtifactPublicationRepository for Artifac
         Ok(())
     }
 
-    // async fn find_by_artifact_id(&self, artifact_id: uuid::Uuid) -> Result<Vec<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
-    //     let filter = doc! {
-    //         "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
-    //     };
+    async fn find_by_artifact_id(&self, artifact_id: &uuid::Uuid) -> Result<Vec<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
+        let filter = doc! {
+            "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
+        };
 
-    //     let mut cursor = self.read_collection.find(filter, None)
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //     let mut publications: Vec<entities::artifact_publication::ArtifactPublication> = Vec::new();
-    //     while let Some(publication_doc) = cursor.try_next()
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
-    //     {
-    //         let publication = entities::artifact_publication::ArtifactPublication::try_from(publication_doc)
-    //                 .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        let mut publications: Vec<entities::artifact_publication::ArtifactPublication> = Vec::new();
+        while let Some(publication_doc) = cursor.try_next()
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
+        {
+            let publication = entities::artifact_publication::ArtifactPublication::from(&publication_doc);
 
-    //         publications.push(publication);
-    //     }
+            publications.push(publication);
+        }
 
-    //     Ok(publications)
-    // }
+        Ok(publications)
+    }
 
     async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
         let filter = doc! {
@@ -132,5 +133,27 @@ impl application::ports::repositories::ArtifactPublicationRepository for Artifac
         }
 
         Ok(None)
+    }
+
+    async fn find_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact_publication::ArtifactPublication>, ApplicationError> {
+        let filter = doc! {
+            "artifact_type": String::from(ArtifactTypeDoc::from(artifact_type))
+        };
+
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        
+        let mut publications: Vec<entities::artifact_publication::ArtifactPublication> = Vec::new();
+        while let Some(publication_doc) = cursor.try_next()
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
+        {
+            let publication = entities::artifact_publication::ArtifactPublication::from(&publication_doc);
+
+            publications.push(publication);
+        }
+
+        Ok(publications)
     }
 }

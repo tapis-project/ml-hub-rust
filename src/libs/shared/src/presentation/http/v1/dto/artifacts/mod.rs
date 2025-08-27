@@ -25,6 +25,16 @@ pub struct PublishArtifactPath {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct ListArtifactPublicationsPath {
+    pub artifact_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ListArtifactIngestionsPath {
+    pub artifact_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PublishArtifactBody {
     pub target_platform: String,
     pub webhook_url: Option<String>

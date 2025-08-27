@@ -6,6 +6,8 @@ pub mod artifacts;
 pub mod headers;
 pub mod filtering;
 pub mod archive;
+pub mod artifact_ingestions;
+pub mod artifact_publications;
 
 use serde_json::Value;
 

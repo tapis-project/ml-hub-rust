@@ -1,5 +1,6 @@
 use crate::application::errors::ApplicationError;
 use crate::infra::persistence::mongo::database::ARTIFACT_INGESTION_COLLECTION;
+use crate::infra::persistence::mongo::documents::artifact::ArtifactType as ArtifactTypeDoc;
 use crate::infra::persistence::mongo::documents::artifact_ingestion::{ArtifactIngestion, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest};
 use crate::application;
 use crate::domain::entities;
@@ -89,7 +90,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         Ok(())
     }
 
-    async fn find_by_artifact_id(&self, artifact_id: uuid::Uuid) -> Result<Vec<entities::artifact_ingestion::ArtifactIngestion>, ApplicationError> {
+    async fn find_by_artifact_id(&self, artifact_id: &uuid::Uuid) -> Result<Vec<entities::artifact_ingestion::ArtifactIngestion>, ApplicationError> {
         let filter = doc! {
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
@@ -105,6 +106,28 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
         {
             let ingestion = entities::artifact_ingestion::ArtifactIngestion::try_from(ingestion_doc)
                     .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+            ingestions.push(ingestion);
+        }
+
+        Ok(ingestions)
+    }
+
+    async fn find_by_artifact_type(&self, artifact_type: entities::artifact::ArtifactType) -> Result<Vec<entities::artifact_ingestion::ArtifactIngestion>, ApplicationError> {
+        let filter = doc! {
+            "artifact_type": String::from(ArtifactTypeDoc::from(artifact_type))
+        };
+
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        
+        let mut ingestions: Vec<entities::artifact_ingestion::ArtifactIngestion> = Vec::new();
+        while let Some(ingestion_doc) = cursor.try_next()
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
+        {
+            let ingestion = entities::artifact_ingestion::ArtifactIngestion::from(ingestion_doc);
 
             ingestions.push(ingestion);
         }

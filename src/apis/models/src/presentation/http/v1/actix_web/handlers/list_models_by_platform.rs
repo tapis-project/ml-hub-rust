@@ -9,7 +9,7 @@ use shared::logging::SharedLogger;
 use std::collections::HashMap;
 
 #[get("models-api/platforms/{platform}/models")]
-async fn list_models(
+async fn list_models_by_platform(
     req: HttpRequest,
     path: web::Path<ListModelsPath>,
     query: web::Query<HashMap<String, String>>,

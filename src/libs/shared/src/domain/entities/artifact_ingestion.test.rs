@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod artifact_ingestion_test {
     use uuid::Uuid;
+    use crate::domain::entities::artifact::ArtifactType;
     use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 
     #[test]
@@ -8,7 +9,7 @@ mod artifact_ingestion_test {
         let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
             .expect("Failed to parse UUID");
 
-        let mut ingestion = ArtifactIngestion::new(test_id, "test_path".into(), None);
+        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
         let initial_last_modified = ingestion.last_modified.clone();
         // Call touch to update last_modified
         ingestion.touch();
@@ -22,7 +23,7 @@ mod artifact_ingestion_test {
             .expect("Failed to parse UUID");
 
         // Create a new ArtifactIngestion instance with initial status which is Submitted
-        let mut ingestion = ArtifactIngestion::new(test_id, "test_path".into(), None);
+        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
         assert!(matches!(ingestion.status, ArtifactIngestionStatus::Submitted));
 
         // Try to change status to Pending
@@ -38,7 +39,7 @@ mod artifact_ingestion_test {
             .expect("Failed to parse UUID");
 
         // Create a new ArtifactIngestion instance with initial status which is Submitted
-        let mut ingestion = ArtifactIngestion::new(test_id, "test_path".into(), None);
+        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
         assert!(matches!(ingestion.status, ArtifactIngestionStatus::Submitted));
 
         // Try to change status to Downloaded directly
@@ -54,7 +55,7 @@ mod artifact_ingestion_test {
         let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
             .expect("Failed to parse UUID");
 
-        let mut ingestion = ArtifactIngestion::new(test_id, "test_path".into(), None);
+        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
 
         // Set the status to a valid state before setting the artifact path
         ingestion.change_status(ArtifactIngestionStatus::Pending)
@@ -72,7 +73,7 @@ mod artifact_ingestion_test {
         let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
             .expect("Failed to parse UUID");
 
-        let mut ingestion = ArtifactIngestion::new(test_id, "test_path".into(), None);
+        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
 
         // Try to set the artifact path without a valid status
         let result = ingestion.set_artifact_path("new_artifact_path".into());
