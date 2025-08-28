@@ -1,6 +1,7 @@
 pub mod discover_models;
 pub mod ingest_model;
-pub mod get_model;
+pub mod get_model_artifact;
+pub mod get_model_by_platform;
 pub mod health_check;
 pub mod index;
 pub mod list_models_by_platform;

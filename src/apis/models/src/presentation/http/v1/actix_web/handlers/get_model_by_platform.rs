@@ -9,7 +9,7 @@ use shared::logging::SharedLogger;
 use std::collections::HashMap;
 
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]
-async fn get_model(
+async fn get_model_by_platform(
     req: HttpRequest,
     path: web::Path<GetModelPath>,
     query: web::Query<HashMap<String, String>>,
@@ -56,5 +56,5 @@ async fn get_model(
 }
 
 #[cfg(test)]
-#[path = "get_model.test.rs"]
-mod get_model_test;
+#[path = "get_model_by_platform.test.rs"]
+mod get_model_by_platform_test;

@@ -1,4 +1,4 @@
-use actix_web::{web, get, HttpRequest, Responder, Result};
+use actix_web::{web, post, HttpRequest, Responder, Result};
 use actix_files::NamedFile;
 use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
@@ -10,7 +10,7 @@ use crate::application::artifact_inputs::DownloadArtifactInput;
 use crate::presentation::http::v1::dto::{Headers, DownloadModelPath, DownloadModelRequest};
 use crate::presentation::http::v1::actix_web::helpers::build_error_response;
 
-#[get("models-api/artifacts/{artifact_id}")]
+#[post("models-api/artifacts/{artifact_id}")]
 async fn download_artifact(
     req: HttpRequest,
     path: web::Path<DownloadModelPath>,

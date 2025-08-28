@@ -171,9 +171,14 @@ impl TryFrom<dto::UploadModelRequest> for artifact_inputs::UploadArtifactInput {
 impl TryFrom<dto::DownloadModelRequest> for artifact_inputs::DownloadArtifactInput {
     type Error = Error;
     fn try_from(value: dto::DownloadModelRequest) -> Result<Self, Self::Error> {
+        let artifact_id= match Uuid::parse_str(&value.path.artifact_id) {
+            Ok(uuid) => uuid,
+            Err(_) => return Err(Error::new("Value provided for artifact_id is not a string".into()))
+        };
+        
         Ok(Self {
             artifact_type: artifact_inputs::ArtifactType::Model,
-            artifact_id: value.path.artifact_id.clone()
+            artifact_id
         })
     }
 }

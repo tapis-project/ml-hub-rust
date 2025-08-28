@@ -44,7 +44,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(actix_web::web::Data::new(state.clone()))
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
-            .service(presentation::http::v1::actix_web::handlers::get_model::get_model)
+            .service(presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform)
             .service(presentation::http::v1::actix_web::handlers::list_models_by_platform::list_models_by_platform)
             .service(presentation::http::v1::actix_web::handlers::ingest_model::ingest_model)
             .service(presentation::http::v1::actix_web::handlers::discover_models::discover_models)
@@ -60,6 +60,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::list_publications_for_artifact::list_publications_for_artifact)
             .service(presentation::http::v1::actix_web::handlers::get_model_ingestion::get_model_ingestion)
             .service(presentation::http::v1::actix_web::handlers::get_model_publication::get_model_publication)
+            .service(presentation::http::v1::actix_web::handlers::get_model_artifact::get_model_artifact)
     })
         .bind(addrs)?
         .run()

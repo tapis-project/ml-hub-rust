@@ -4,7 +4,7 @@ use std::future::Future;
 use std::pin::Pin;
 use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::artifacts::{DownloadArtifactInput, ListIngestionsByArtifactIdInput, ListPublicationsByArtifactIdInput, IngestArtifactInput, UploadArtifactInput};
+use crate::application::inputs::artifacts::{DownloadArtifactInput, GetModelArtifactInput, IngestArtifactInput, ListIngestionsByArtifactIdInput, ListPublicationsByArtifactIdInput, UploadArtifactInput};
 use crate::application::inputs::artifact_publication::{GetModelPublicationInput, ListModelPublicationsInput, PublishArtifactInput};
 use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
@@ -114,7 +114,7 @@ impl ArtifactService {
     /// Creates an artifact publication
     pub async fn submit_artifact_publication(&self, input: PublishArtifactInput) -> Result<ArtifactPublication, ArtifactServiceError> {
         // Closure for fetching the artifact
-        let find_artifact = || self.artifact_repo.find_by_id(&input.artifact_id);
+        let find_artifact = || self.artifact_repo.get_by_id(&input.artifact_id);
         
         // Find the artifact with retries
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
@@ -314,7 +314,7 @@ impl ArtifactService {
         };
 
         // Closure for fetching the artifact
-        let find_artifact = || self.artifact_repo.find_by_id(&ingestion.artifact_id);
+        let find_artifact = || self.artifact_repo.get_by_id(&ingestion.artifact_id);
         
         // Find the artifact
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
@@ -454,14 +454,9 @@ impl ArtifactService {
         Ok((artifact.id.to_string(), stacker))
     }
 
-    pub async fn find_artifact_by_artifact_id(&self, artifact_id: String) -> Result<Option<Artifact>, ArtifactServiceError> {
-        let artifact_uuid = match Uuid::parse_str(&artifact_id) {
-            Ok(uuid) => uuid,
-            Err(_) => return Err(ArtifactServiceError::NotFound(format!("Invalid UUID string: {}", artifact_id)))
-        };
-
+    pub async fn find_artifact_by_artifact_id(&self, artifact_id: Uuid) -> Result<Option<Artifact>, ArtifactServiceError> {
         // Closure for fetching the artifact
-        let find_artifact = || self.artifact_repo.find_by_id(&artifact_uuid);
+        let find_artifact = || self.artifact_repo.get_by_id(&artifact_id);
 
         // Find the artifact
         let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY).await
@@ -470,7 +465,7 @@ impl ArtifactService {
         let artifact = match maybe_artifact {
             Some(a) => a,
             None => {
-                GlobalLogger::error(format!("Cannot find any record of the Artifact associated with ID '{}'.", artifact_uuid).as_str());
+                GlobalLogger::error(format!("Cannot find any record of the Artifact associated with ID '{}'.", artifact_id).as_str());
                 return Err(ArtifactServiceError::NotFound("Cannot find any record of the artifact associated with ID".into()))
             }
         };
@@ -503,6 +498,21 @@ impl ArtifactService {
         let path = artifact.path.clone().ok_or_else(|| ArtifactServiceError::NotFound("Artifact path is not set".into()))?;
 
         Ok(path)
+    }
+
+    pub async fn get_model_artifact(&self, input: GetModelArtifactInput) -> Result<Option<Artifact>, ArtifactServiceError> {
+        let maybe_artifact = self.find_artifact_by_artifact_id(input.artifact_id).await?;
+
+        match maybe_artifact {
+            Some(a) => {
+                if a.artifact_type != ArtifactTypeEntity::Model {
+                   return Err(ArtifactServiceError::IncorrectArtifactType("ArtifactPublication is not associated with a Model artifact".into()))
+                };
+
+                Ok(Some(a))
+            },
+            None => Ok(None)
+        }
     }
 
     pub async fn get_model_publication(&self, input: GetModelPublicationInput) -> Result<Option<ArtifactPublication>, ArtifactServiceError> {
@@ -552,7 +562,7 @@ impl ArtifactService {
     }
 
     pub async fn list_publications_by_artifact_id(&self, input: ListPublicationsByArtifactIdInput) -> Result<Vec<ArtifactPublication>, ArtifactServiceError> {
-        let maybe_artifact = self.artifact_repo.find_by_id(&input.artifact_id)
+        let maybe_artifact = self.artifact_repo.get_by_id(&input.artifact_id)
             .await?;
 
         let artifact = match maybe_artifact {

@@ -25,7 +25,7 @@ pub struct UploadArtifactInput {
 #[derive(Clone, Debug)]
 pub struct DownloadArtifactInput {
     pub artifact_type: ArtifactType,
-    pub artifact_id: String,
+    pub artifact_id: Uuid,
 }
 
 #[derive(Clone, Debug)]
@@ -35,5 +35,10 @@ pub struct ListIngestionsByArtifactIdInput {
 
 #[derive(Clone, Debug)]
 pub struct ListPublicationsByArtifactIdInput {
+    pub artifact_id: Uuid,
+}
+
+#[derive(Clone, Debug)]
+pub struct GetModelArtifactInput {
     pub artifact_id: Uuid,
 }

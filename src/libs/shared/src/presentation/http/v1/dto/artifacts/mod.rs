@@ -5,6 +5,11 @@ use serde::{Deserialize, Serialize};
 use super::headers::Headers;
 use crate::presentation::http::v1::dto::Parameters;
 
+#[derive(Serialize, Deserialize)]
+pub struct GetArtifactPath {
+    pub artifact_id: String
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct IngestArtifactBody {
     pub include_paths: Option<Vec<String>>,

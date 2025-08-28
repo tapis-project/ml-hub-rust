@@ -3,13 +3,13 @@ use actix_web::test;
 use actix_web::web;
 use actix_web::App;
 use actix_web::HttpResponse;
-use crate::presentation::http::v1::actix_web::handlers::get_model::get_model;
+use crate::presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform;
 use shared::presentation::http::v1::dto::models::GetModelPath;
 use std::collections::HashMap;
 use std::env;
 
 #[cfg(test)]
-mod get_model_test {
+mod get_model_by_platform_test {
 
     use actix_web::{HttpMessage, HttpRequest};
 
@@ -31,7 +31,7 @@ mod get_model_test {
     #[actix_web::test]
     async fn test_get_model_hugging_face_no_auth_header() {
         // creating application to run test
-        let app = test::init_service(App::new().service(get_model)).await;
+        let app = test::init_service(App::new().service(get_model_by_platform)).await;
 
         // creating the request
         let req = test::TestRequest::get()
@@ -53,7 +53,7 @@ mod get_model_test {
     async fn test_get_model_hugging_face_auth_header_with_colon() {
         let _ = env_logger::builder().is_test(true).try_init();
         // creating application to run test
-        let app = test::init_service(App::new().service(get_model)).await;
+        let app = test::init_service(App::new().service(get_model_by_platform)).await;
 
         // creating the request
         let req = test::TestRequest::get()
@@ -78,7 +78,7 @@ mod get_model_test {
     #[actix_web::test]
     async fn test_get_model_hugging_face_auth_header_space_in_front() {
         // creating application to run test
-        let app = test::init_service(App::new().service(get_model)).await;
+        let app = test::init_service(App::new().service(get_model_by_platform)).await;
 
         // creating the request
         let req = test::TestRequest::get()
@@ -103,7 +103,7 @@ mod get_model_test {
     #[actix_web::test]
     async fn test_get_model_hugging_face_auth_header_bearer_spelled_wrong() {
         // creating application to run test
-        let app = test::init_service(App::new().service(get_model)).await;
+        let app = test::init_service(App::new().service(get_model_by_platform)).await;
 
         // creating the request
         let req = test::TestRequest::get()
@@ -128,7 +128,7 @@ mod get_model_test {
     #[actix_web::test]
     async fn test_get_model_hugging_face_auth_header_bearer_only() {
         // creating application to run test
-        let app = test::init_service(App::new().service(get_model)).await;
+        let app = test::init_service(App::new().service(get_model_by_platform)).await;
 
         // creating the request
         let req = test::TestRequest::get()
@@ -150,7 +150,7 @@ mod get_model_test {
     #[actix_web::test]
     async fn test_get_model_hugging_face_with_auth_header_pass() {
         // creating application to run test
-        let app = test::init_service(App::new().service(get_model)).await;
+        let app = test::init_service(App::new().service(get_model_by_platform)).await;
 
         // creating the request
         let req = test::TestRequest::get()
