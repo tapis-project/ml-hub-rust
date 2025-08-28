@@ -29,7 +29,7 @@ spec:
         volumeMounts:
         - name: mlhub-artifact-mq-storage
           mountPath: "/var/lib/rabbitmq/mnesia"
-        resources: {}
+        resources: {requests: {cpu: "500m", memory: "500Mi"}, limits: {cpu: "500m", memory: "500Mi"}}
       volumes:
       - name: mlhub-artifact-mq-storage
         persistentVolumeClaim:
