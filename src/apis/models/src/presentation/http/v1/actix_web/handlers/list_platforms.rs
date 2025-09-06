@@ -4,7 +4,17 @@ use actix_web::{
     get, Responder
 };
 use serde_json::Value;
+use shared::presentation::http::v1::contracts::responses::ListPlatformsResponse;
 
+#[utoipa::path(
+    get,
+    path="/models-api/platforms",
+    tag="Platforms",
+    description="List all external platforms integrated with this deployment of MLHub",
+    responses(
+        (status=200, description="Listed platforms", body=ListPlatformsResponse)
+    )
+)]
 #[get("models-api/platforms")]
 async fn list_platforms() -> impl Responder {
     let mut platforms = Vec::new();

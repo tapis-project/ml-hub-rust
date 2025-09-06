@@ -10,11 +10,24 @@ use crate::application::artifact_publication_inputs::PublishArtifactInput;
 use client_provider::ClientProvider;
 use actix_web::{post, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
+use shared::presentation::http::v1::contracts::responses::PublishModelArtifactResponse;
 use std::collections::HashMap;
 use serde_json::to_value;
 
+#[utoipa::path(
+    post,
+    path="/models-api/artifacts/{artifact_id}/publications",
+    tag="Publications",
+    description="Publish a model artifact to an external platform",
+    params(
+        ("artifact_id" = String, Path, description = "The ID of the model artifact")
+    ),
+    responses(
+        (status=200, description="Discovered models", body=PublishModelArtifactResponse)
+    )
+)]
 #[post("models-api/artifacts/{artifact_id}/publications")]
-async fn publish_model(
+async fn publish_model_artifact(
     req: HttpRequest,
     path: web::Path<PublishArtifactPath>,
     query: web::Query<HashMap<String, String>>,

@@ -1,9 +1,13 @@
 use crate::presentation;
 use crate::bootstrap::state::AppState;
 use crate::infra::persistence::mongo::database::{ClientParams, get_db};
+use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
 use std::env;
 use actix_web::middleware::Logger;
+use utoipa_swagger_ui::SwaggerUi;
+use utoipa::OpenApi;
+
 
 pub async fn run_server() -> std::io::Result<()> {
     pub const DEFAULT_PORT: u16 = 8000;
@@ -46,14 +50,14 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
             .service(presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform)
             .service(presentation::http::v1::actix_web::handlers::list_models_by_platform::list_models_by_platform)
-            .service(presentation::http::v1::actix_web::handlers::ingest_model::ingest_model)
-            .service(presentation::http::v1::actix_web::handlers::discover_models::discover_models)
-            .service(presentation::http::v1::actix_web::handlers::publish_model::publish_model)
+            .service(presentation::http::v1::actix_web::handlers::ingest_external_model::ingest_external_model)
+            .service(presentation::http::v1::actix_web::handlers::discover_models_by_platform::discover_models_by_platform)
+            .service(presentation::http::v1::actix_web::handlers::publish_model_artifact::publish_model_artifact)
             .service(presentation::http::v1::actix_web::handlers::list_platforms::list_platforms)
             .service(presentation::http::v1::actix_web::handlers::download_artifact::download_artifact)
-            .service(presentation::http::v1::actix_web::handlers::upload_artifact::upload_artifact)
+            .service(presentation::http::v1::actix_web::handlers::upload_model_artifact::upload_model_artifact)
             .service(presentation::http::v1::actix_web::handlers::create_model_metadata::create_model_metadata)
-            .service(presentation::http::v1::actix_web::handlers::publish_model::publish_model)
+            .service(presentation::http::v1::actix_web::handlers::publish_model_artifact::publish_model_artifact)
             .service(presentation::http::v1::actix_web::handlers::list_model_artifacts::list_model_artifacts)
             .service(presentation::http::v1::actix_web::handlers::list_model_publications::list_model_publications)
             .service(presentation::http::v1::actix_web::handlers::list_model_ingestions::list_model_ingestions)
@@ -61,6 +65,11 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::get_model_ingestion::get_model_ingestion)
             .service(presentation::http::v1::actix_web::handlers::get_model_publication::get_model_publication)
             .service(presentation::http::v1::actix_web::handlers::get_model_artifact::get_model_artifact)
+            .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
+            .service(
+                SwaggerUi::new("models-api/swagger-ui/{_:.*}")
+                    .url("/models-api/specs/openapi.json", ApiDoc::openapi()),
+            )
     })
         .bind(addrs)?
         .run()

@@ -10,8 +10,21 @@ use shared::application::inputs::artifact_publication::GetModelPublicationInput;
 use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
 use serde_json::to_value;
+use shared::presentation::http::v1::contracts::responses::GetModelPublicationResponse;
 use uuid::Uuid;
 
+#[utoipa::path(
+    get,
+    path="/models-api/publications/{publication_id}",
+    tag="Publications",
+    description="Fetch a publication by id",
+    params(
+        ("publication_id" = String, Path, description = "The ID of the model publication")
+    ),
+    responses(
+        (status=200, description="Discovered models", body=GetModelPublicationResponse)
+    )
+)]
 #[get("models-api/publications/{publication_id}")]
 async fn get_model_publication(
     _req: HttpRequest,

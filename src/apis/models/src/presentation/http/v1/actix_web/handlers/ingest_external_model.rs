@@ -11,10 +11,23 @@ use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use serde_json::to_value;
 use shared::logging::SharedLogger;
+use shared::presentation::http::v1::contracts::responses::IngestModelArtifactResponse;
 use std::collections::HashMap;
 
-#[post("models-api/platforms/{platform}/models/{model_id:.*}/artifacts")]
-async fn ingest_model(
+#[utoipa::path(
+    post,
+    path="/models-api/platforms/{platform}/models/{model_id}",
+    tag="External Models",
+    description="Ingest a model from an external platform",
+    params(
+        ("artifact_id" = String, Path, description = "The ID of the model artifact")
+    ),
+    responses(
+        (status=200, description="Discovered models", body=IngestModelArtifactResponse)
+    )
+)]
+#[post("models-api/platforms/{platform}/models/{model_id:.*}")]
+async fn ingest_external_model(
     req: HttpRequest,
     path: web::Path<IngestModelPath>,
     query: web::Query<HashMap<String, String>>,

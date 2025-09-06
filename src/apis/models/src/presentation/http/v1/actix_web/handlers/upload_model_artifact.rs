@@ -20,7 +20,7 @@ fn is_zip_file(field: &actix_multipart::Field) -> bool {
 }
 
 #[post("models-api/artifacts")]
-async fn upload_artifact(
+async fn upload_model_artifact(
     req: HttpRequest,
     bytes: web::Payload,
     data: web::Data<AppState>,
@@ -67,5 +67,5 @@ async fn upload_artifact(
 
 // Handler tests
 #[cfg(test)]
-#[path = "upload_artifact.test.rs"]
-mod upload_artifact_test;
+#[path = "upload_model_artifact.test.rs"]
+mod upload_model_artifact_test;

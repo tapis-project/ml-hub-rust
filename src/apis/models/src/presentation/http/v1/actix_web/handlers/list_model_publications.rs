@@ -8,7 +8,17 @@ use actix_web::{get, web, Responder};
 use shared::application::inputs::artifact_publication::ListModelPublicationsInput;
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
+use shared::presentation::http::v1::contracts::responses::ListModelPublicationsResponse;
 
+#[utoipa::path(
+    get,
+    path="/models-api/publications",
+    tag="Publications",
+    description="List all model publications",
+    responses(
+        (status=200, description="Listed model publications", body=ListModelPublicationsResponse)
+    )
+)]
 #[get("models-api/publications")]
 async fn list_model_publications(
     data: web::Data<AppState>

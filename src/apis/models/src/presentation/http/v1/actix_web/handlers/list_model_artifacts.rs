@@ -7,7 +7,17 @@ use crate::bootstrap::state::AppState;
 use actix_web::{get, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
+use shared::presentation::http::v1::contracts::responses::ListModelArtifactResponse;
 
+#[utoipa::path(
+    get,
+    tag="Artifacts",
+    path = "/models-api/artifacts",
+    description="List all model artifacts",
+    responses(
+        (status=200, description="Listed model artifacts", body=ListModelArtifactResponse)
+    )
+)]
 #[get("models-api/artifacts")]
 async fn list_model_artifacts(
     _req: HttpRequest,

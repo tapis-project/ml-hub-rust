@@ -2,6 +2,7 @@ mod domain_to_dto;
 
 use serde::Serialize;
 use serde_json::Value;
+use utoipa::ToSchema;
 
 #[derive(Serialize)]
 pub struct JsonResponse {
@@ -12,13 +13,13 @@ pub struct JsonResponse {
     pub version: Option<String>
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub enum ArtifactType {
     Model,
     Dataset
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct Artifact {
     pub id: String,
     pub artifact_type: ArtifactType,
@@ -27,7 +28,7 @@ pub struct Artifact {
     // pub metadata: Option<ModelMetadata>
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub enum ArtifactIngestionStatus {
     Submitted,
     Resubmitted,
@@ -40,7 +41,7 @@ pub enum ArtifactIngestionStatus {
     Failed,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct ArtifactIngestion {
     pub id: String,
     pub artifact_id: String, 
@@ -52,7 +53,7 @@ pub struct ArtifactIngestion {
     pub webhook_url: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub enum ArtifactPublicationStatus {
     Submitted,
     Pending,
@@ -66,7 +67,7 @@ pub enum ArtifactPublicationStatus {
     Failed
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct ArtifactPublication  {
     pub id: String,
     pub status: ArtifactPublicationStatus,

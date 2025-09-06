@@ -85,13 +85,6 @@ async fn download_artifact(
         .into_response(&req);
 
     Ok(response)
-
-
-    // TODO Handle multipart/mixed responses
-    // return build_error_response(
-    //     501,
-    //     String::from("Artifact responses for MIME type multipart/mixed not yet implemented")
-    // );
 }
 
 // Handler tests

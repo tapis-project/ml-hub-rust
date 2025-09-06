@@ -4,7 +4,7 @@ mod upload_artifact_test {
     use bytes::Bytes;
     use shared::infra::persistence::mongo::database::{get_db, ClientParams};
     use crate::bootstrap::state::AppState;
-    use crate::presentation::http::v1::actix_web::handlers::upload_artifact::upload_artifact;
+    use crate::presentation::http::v1::actix_web::handlers::upload_model_artifact::upload_model_artifact;
 
     // #[test]
     #[ignore]
@@ -32,7 +32,7 @@ mod upload_artifact_test {
         let app = test::init_service(
             App::new()
                 .app_data(app_state.clone())
-                .service(upload_artifact)
+                .service(upload_model_artifact)
         ).await;
 
         // 2. Multipart/form-data

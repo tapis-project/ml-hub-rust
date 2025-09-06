@@ -10,8 +10,21 @@ use shared::application::inputs::artifact_ingestion::GetModelIngestionInput;
 use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
 use serde_json::to_value;
+use shared::presentation::http::v1::contracts::responses::GetModelIngestionResponse;
 use uuid::Uuid;
 
+#[utoipa::path(
+    get,
+    path="/models-api/ingestions/{ingestion_id}",
+    tag="Ingestions",
+    description="Fetch an ingestion by id",
+    params(
+        ("ingestion_id" = String, Path, description = "The ID of the model ingestion")
+    ),
+    responses(
+        (status=200, description="Discovered models", body=GetModelIngestionResponse)
+    )
+)]
 #[get("models-api/ingestions/{ingestion_id}")]
 async fn get_model_ingestion(
     _req: HttpRequest,

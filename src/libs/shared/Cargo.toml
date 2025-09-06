@@ -33,3 +33,5 @@ zip = "3.0.0"
 mongodb = {version = "2.8", optional = true}
 bson = { version = "2", features = ["chrono-0_4"] }
 futures = "0.3.31"
+utoipa = { version = "5.4.0" }
+utoipa-swagger-ui = "9.0.2"

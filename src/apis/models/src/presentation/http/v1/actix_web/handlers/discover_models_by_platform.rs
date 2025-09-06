@@ -5,13 +5,26 @@ use crate::presentation::http::v1::dto::{
     DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody, Headers,
 };
 use actix_web::{post, web, HttpRequest, Responder};
-use client_provider::ClientProvider;
+use client_provider::{ClientProvider, Platform};
 use clients::DiscoverModelsClient;
 use shared::logging::SharedLogger;
+use shared::presentation::http::v1::contracts::responses::DiscoverModelsByPlatformResponse;
 use std::collections::HashMap;
 
+#[utoipa::path(
+    post,
+    path = "/models-api/platforms/{platform}/models",
+    tag="External Models",
+    description="Discover models from external platforms",
+    params(
+        ("platform" = Platform, Path, description = "The platform on which you want to discover models")
+    ),
+    responses(
+        (status=200, description="Discovered models", body=DiscoverModelsByPlatformResponse)
+    )
+)]
 #[post("models-api/platforms/{platform}/models")]
-async fn discover_models(
+async fn discover_models_by_platform(
     req: HttpRequest,
     path: web::Path<DiscoverModelsPath>,
     query: web::Query<HashMap<String, String>>,
