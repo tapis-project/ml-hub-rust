@@ -1,4 +1,4 @@
-pub use shared::presentation::http::v1::dto::models::{
+pub use shared::presentation::http::v1::requests::models::{
     ListModelsPath,
     ListModelsRequest,
     GetModelPath,
@@ -15,9 +15,9 @@ pub use shared::presentation::http::v1::dto::models::{
     CreateModelMetadataPath,
     CreateModelMetadata
 };
-pub use shared::presentation::http::v1::dto::artifact_ingestions::GetArtifactIngestionPath;
-pub use shared::presentation::http::v1::dto::artifact_publications::GetArtifactPublicationPath;
-pub use shared::presentation::http::v1::dto::artifacts::{
+pub use shared::presentation::http::v1::requests::artifact_ingestions::GetArtifactIngestionPath;
+pub use shared::presentation::http::v1::requests::artifact_publications::GetArtifactPublicationPath;
+pub use shared::presentation::http::v1::requests::artifacts::{
     PublishArtifactPath,
     PublishArtifactRequest,
     PublishArtifactBody,
@@ -26,4 +26,4 @@ pub use shared::presentation::http::v1::dto::artifacts::{
     ListArtifactPublicationsPath,
 };
 pub use shared::presentation::http::v1::responses::ArtifactPublication;
-pub use shared::presentation::http::v1::dto::headers::Headers;
+pub use shared::presentation::http::v1::requests::headers::Headers;

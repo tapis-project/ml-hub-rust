@@ -1,3 +1,3 @@
 pub mod handlers;
-pub mod dto;
+pub mod requests;
 pub mod helpers;

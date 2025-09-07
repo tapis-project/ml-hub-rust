@@ -4,8 +4,8 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::dto::{Headers, PublishArtifactPath, PublishArtifactBody, PublishArtifactRequest};
-use crate::presentation::http::v1::dto::ArtifactPublication as ArtifactPublicationDto;
+use crate::presentation::http::v1::requests::{Headers, PublishArtifactPath, PublishArtifactBody, PublishArtifactRequest};
+use crate::presentation::http::v1::requests::ArtifactPublication as ArtifactPublicationDto;
 use crate::application::artifact_publication_inputs::PublishArtifactInput;
 use client_provider::ClientProvider;
 use actix_web::{post, web, HttpRequest, Responder};

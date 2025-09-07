@@ -5,7 +5,7 @@ use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
-use shared::presentation::http::v1::dto::models::{
+use shared::presentation::http::v1::requests::models::{
     DiscoverModelsRequest,
     GetModelRequest,
     IngestModelRequest,
@@ -13,7 +13,7 @@ use shared::presentation::http::v1::dto::models::{
 };
 use shared::domain::entities::artifact::Artifact;
 use shared::domain::entities::model_metadata::ModelMetadata;
-use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactRequest;
 use std::path::PathBuf;
 
 pub enum ListModelsClient {

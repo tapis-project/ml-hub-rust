@@ -1,7 +1,7 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{Headers, ListModelsPath, ListModelsRequest};
+use crate::presentation::http::v1::requests::{Headers, ListModelsPath, ListModelsRequest};
 use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use clients::ListModelsClient;

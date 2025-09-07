@@ -3,7 +3,7 @@ use crate::bootstrap::{factories::artifact_service_factory, state::AppState};
 use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{
+use crate::presentation::http::v1::requests::{
     Headers, IngestArtifactBody, IngestModelPath, IngestModelRequest,
 };
 use crate::presentation::http::v1::responses::ArtifactIngestion;
@@ -71,7 +71,7 @@ async fn ingest_external_model(
         Err(err) => return build_error_response(500, err.to_string()),
     };
 
-    // Convert the request dto into an input
+    // Convert the request requests into an input
     let input = match IngestArtifactInput::try_from(request) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string()),
@@ -83,11 +83,11 @@ async fn ingest_external_model(
         Err(err) => return build_error_response(500, err.to_string()),
     };
 
-    // Convert to dto
-    let dto = match to_value(ArtifactIngestion::from(ingestion)) {
+    // Convert to requests
+    let requests = match to_value(ArtifactIngestion::from(ingestion)) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string()),
     };
 
-    build_success_response(Some(dto), Some("success".into()), None)
+    build_success_response(Some(requests), Some("success".into()), None)
 }

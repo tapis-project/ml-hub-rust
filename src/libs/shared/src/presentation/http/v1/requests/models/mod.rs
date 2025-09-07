@@ -4,8 +4,8 @@ pub mod dto_to_input;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use crate::presentation::http::v1::dto::headers::Headers;
-use crate::presentation::http::v1::dto::artifacts::IngestArtifactBody;
+use crate::presentation::http::v1::requests::headers::Headers;
+use crate::presentation::http::v1::requests::artifacts::IngestArtifactBody;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {

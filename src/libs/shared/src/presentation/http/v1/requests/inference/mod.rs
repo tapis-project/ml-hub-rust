@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use openapiv3::OpenAPI;
 use bytes::Bytes;
-use crate::presentation::http::v1::dto::models::ModelMetadata;
-use crate::presentation::http::v1::dto::filtering::ListAll;
+use crate::presentation::http::v1::requests::models::ModelMetadata;
+use crate::presentation::http::v1::requests::filtering::ListAll;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetInferenceServerDocsPath {

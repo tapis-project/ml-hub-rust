@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::responses;
-use crate::presentation::http::v1::dto::GetArtifactPublicationPath;
+use crate::presentation::http::v1::requests::GetArtifactPublicationPath;
 use crate::bootstrap::factories::artifact_service_factory;
 use crate::bootstrap::state::AppState;
 use actix_web::{get, web, HttpRequest, Responder};
@@ -63,10 +63,10 @@ async fn get_model_publication(
         None => return build_error_response(404, format!("ArtifactPublication with id {} not found", &publication_id))
     };
 
-    let dto = match to_value(responses::ArtifactPublication::from(publication)) {
+    let requests = match to_value(responses::ArtifactPublication::from(publication)) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };
     
-    build_success_response(Some(dto), None, None)
+    build_success_response(Some(requests), None, None)
 }

@@ -3,7 +3,7 @@ mod dto_to_input;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use super::headers::Headers;
-use crate::presentation::http::v1::dto::Parameters;
+use crate::presentation::http::v1::requests::Parameters;
 
 #[derive(Serialize, Deserialize)]
 pub struct GetArtifactPath {

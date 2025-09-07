@@ -1,6 +1,6 @@
 //! Contains conversions between web layer dtos and application layer inputs
-use crate::presentation::http::v1::dto::inference as dto;
-use crate::presentation::http::v1::dto::filtering::{FilterOperation, Filter, Order, ListAll};
+use crate::presentation::http::v1::requests::inference as requests;
+use crate::presentation::http::v1::requests::filtering::{FilterOperation, Filter, Order, ListAll};
 use crate::application::inputs::inference as inputs;
 use crate::application::inputs::model_metadata::ModelMetadata;
 use crate::errors::Error;
@@ -78,34 +78,34 @@ impl TryFrom<ListAll> for inputs::ListAll {
     }
 }
 
-impl TryFrom<dto::Kind> for inputs::Kind {
+impl TryFrom<requests::Kind> for inputs::Kind {
     type Error = Error;
     
-    fn try_from(value: dto::Kind) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::Kind) -> Result<Self, Self::Error> {
         match value {
-            dto::Kind::InferenceServer => Ok(Self::InferenceServer),
-            dto::Kind::InferenceServerDeployment => Ok(Self::InferenceServerDeployment),
-            dto::Kind::Interface => Ok(Self::Interface)
+            requests::Kind::InferenceServer => Ok(Self::InferenceServer),
+            requests::Kind::InferenceServerDeployment => Ok(Self::InferenceServerDeployment),
+            requests::Kind::Interface => Ok(Self::Interface)
         }
     }
 }
 
-impl TryFrom<dto::InterfaceType> for inputs::InterfaceType {
+impl TryFrom<requests::InterfaceType> for inputs::InterfaceType {
     type Error = Error;
     
-    fn try_from(value: dto::InterfaceType) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::InterfaceType) -> Result<Self, Self::Error> {
         match value {
-            dto::InterfaceType::Container => Ok(Self::Container),
-            dto::InterfaceType::Model => Ok(Self::Model),
-            dto::InterfaceType::RestApi => Ok(Self::RestApi)
+            requests::InterfaceType::Container => Ok(Self::Container),
+            requests::InterfaceType::Model => Ok(Self::Model),
+            requests::InterfaceType::RestApi => Ok(Self::RestApi)
         }
     }
 }
 
-impl TryFrom<dto::ContainerInterfaceMetadata> for inputs::ContainerInterfaceMetadata {
+impl TryFrom<requests::ContainerInterfaceMetadata> for inputs::ContainerInterfaceMetadata {
     type Error = Error;
     
-    fn try_from(value: dto::ContainerInterfaceMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ContainerInterfaceMetadata) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             description: value.description,
@@ -114,10 +114,10 @@ impl TryFrom<dto::ContainerInterfaceMetadata> for inputs::ContainerInterfaceMeta
     }
 }
 
-impl TryFrom<dto::ContainerInterface> for inputs::ContainerInterface {
+impl TryFrom<requests::ContainerInterface> for inputs::ContainerInterface {
     type Error = Error;
     
-    fn try_from(value: dto::ContainerInterface) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ContainerInterface) -> Result<Self, Self::Error> {
         let kind = inputs::Kind::try_from(value.kind)?;
         if kind != inputs::Kind::Interface {
             return Err(Error::from_str("Field 'kind' must be of variant Kind::Interface"))
@@ -137,21 +137,21 @@ impl TryFrom<dto::ContainerInterface> for inputs::ContainerInterface {
     }
 }
 
-impl TryFrom<dto::Protocol> for inputs::Protocol {
+impl TryFrom<requests::Protocol> for inputs::Protocol {
     type Error = Error;
     
-    fn try_from(value: dto::Protocol) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::Protocol) -> Result<Self, Self::Error> {
         match value {
-            dto::Protocol::Http => Ok(Self::Http),
-            dto::Protocol::Tcp => Ok(Self::Tcp),
+            requests::Protocol::Http => Ok(Self::Http),
+            requests::Protocol::Tcp => Ok(Self::Tcp),
         }
     }
 }
 
-impl TryFrom<dto::Port> for inputs::Port {
+impl TryFrom<requests::Port> for inputs::Port {
     type Error = Error;
     
-    fn try_from(value: dto::Port) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::Port) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             port: value.port,
@@ -160,10 +160,10 @@ impl TryFrom<dto::Port> for inputs::Port {
     }
 }
 
-impl TryFrom<dto::GpuResourceDefinition> for inputs::GpuResourceDefinition {
+impl TryFrom<requests::GpuResourceDefinition> for inputs::GpuResourceDefinition {
     type Error = Error;
     
-    fn try_from(value: dto::GpuResourceDefinition) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::GpuResourceDefinition) -> Result<Self, Self::Error> {
         Ok(Self {
             nvidia: value.nvidia,
             amd: value.amd
@@ -171,10 +171,10 @@ impl TryFrom<dto::GpuResourceDefinition> for inputs::GpuResourceDefinition {
     }
 }
 
-impl TryFrom<dto::ResourcesDefinition> for inputs::ResourcesDefinition {
+impl TryFrom<requests::ResourcesDefinition> for inputs::ResourcesDefinition {
     type Error = Error;
     
-    fn try_from(value: dto::ResourcesDefinition) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ResourcesDefinition) -> Result<Self, Self::Error> {
         let gpu = value.gpu
             .map(|gpu| inputs::GpuResourceDefinition::try_from(gpu))
             .transpose()?;
@@ -188,10 +188,10 @@ impl TryFrom<dto::ResourcesDefinition> for inputs::ResourcesDefinition {
     }
 }
 
-impl TryFrom<dto::Resources> for inputs::Resources {
+impl TryFrom<requests::Resources> for inputs::Resources {
     type Error = Error;
     
-    fn try_from(value: dto::Resources) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::Resources) -> Result<Self, Self::Error> {
         let limits = value.limits
             .map(|limits| inputs::ResourcesDefinition::try_from(limits))
             .transpose()?;
@@ -207,10 +207,10 @@ impl TryFrom<dto::Resources> for inputs::Resources {
     }
 }
 
-impl TryFrom<dto::ContainerInterfaceSpec> for inputs::ContainerInterfaceSpec {
+impl TryFrom<requests::ContainerInterfaceSpec> for inputs::ContainerInterfaceSpec {
     type Error = Error;
     
-    fn try_from(value: dto::ContainerInterfaceSpec) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ContainerInterfaceSpec) -> Result<Self, Self::Error> {
         let resources = value.resources
             .map(|resources| inputs::Resources::try_from(resources))
             .transpose()?;
@@ -228,10 +228,10 @@ impl TryFrom<dto::ContainerInterfaceSpec> for inputs::ContainerInterfaceSpec {
     }
 }
 
-impl TryFrom<dto::EndpointLabels> for inputs::EndpointLabels {
+impl TryFrom<requests::EndpointLabels> for inputs::EndpointLabels {
     type Error = Error;
     
-    fn try_from(value: dto::EndpointLabels) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::EndpointLabels) -> Result<Self, Self::Error> {
         Ok(Self {
             operation_id: value.operation_id,
             labels: value.labels
@@ -239,10 +239,10 @@ impl TryFrom<dto::EndpointLabels> for inputs::EndpointLabels {
     }
 }
 
-impl TryFrom<dto::OpenApiV3Spec> for inputs::OpenApiV3Spec {
+impl TryFrom<requests::OpenApiV3Spec> for inputs::OpenApiV3Spec {
     type Error = Error;
     
-    fn try_from(value: dto::OpenApiV3Spec) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::OpenApiV3Spec) -> Result<Self, Self::Error> {
         let endpoint_labels = value.endpoint_labels
             .map(|labels| inputs::EndpointLabels::try_from(labels))
             .transpose()?;
@@ -254,32 +254,32 @@ impl TryFrom<dto::OpenApiV3Spec> for inputs::OpenApiV3Spec {
     }
 }
 
-impl TryFrom<dto::RestApiInterfaceSpec> for inputs::RestApiInterfaceSpec {
+impl TryFrom<requests::RestApiInterfaceSpec> for inputs::RestApiInterfaceSpec {
     type Error = Error;
     
-    fn try_from(value: dto::RestApiInterfaceSpec) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::RestApiInterfaceSpec) -> Result<Self, Self::Error> {
         match value {
-            dto::RestApiInterfaceSpec::OpenApiV3(spec) => {
+            requests::RestApiInterfaceSpec::OpenApiV3(spec) => {
                 Ok(inputs::RestApiInterfaceSpec::OpenApiV3(inputs::OpenApiV3Spec::try_from(spec)?))
             },
         }
     }
 }
 
-impl TryFrom<dto::RestApiInterfaceFormat> for inputs::RestApiInterfaceFormat {
+impl TryFrom<requests::RestApiInterfaceFormat> for inputs::RestApiInterfaceFormat {
     type Error = Error;
     
-    fn try_from(value: dto::RestApiInterfaceFormat) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::RestApiInterfaceFormat) -> Result<Self, Self::Error> {
         match value {
-            dto::RestApiInterfaceFormat::OpenApiV3 => Ok(Self::OpenApiV3),
+            requests::RestApiInterfaceFormat::OpenApiV3 => Ok(Self::OpenApiV3),
         }
     }
 }
 
-impl TryFrom<dto::RestApiInterfaceMetadata> for inputs::RestApiInterfaceMetadata {
+impl TryFrom<requests::RestApiInterfaceMetadata> for inputs::RestApiInterfaceMetadata {
     type Error = Error;
 
-    fn try_from(value: dto::RestApiInterfaceMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::RestApiInterfaceMetadata) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             description: value.description,
@@ -288,10 +288,10 @@ impl TryFrom<dto::RestApiInterfaceMetadata> for inputs::RestApiInterfaceMetadata
     }
 }
 
-impl TryFrom<dto::RestApiInterface> for inputs::RestApiInterface {
+impl TryFrom<requests::RestApiInterface> for inputs::RestApiInterface {
     type Error = Error;
     
-    fn try_from(value: dto::RestApiInterface) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::RestApiInterface) -> Result<Self, Self::Error> {
         let kind = inputs::Kind::try_from(value.kind)?;
         if kind != inputs::Kind::Interface {
             return Err(Error::from_str("Field 'kind' must be variant Kind::Interface"))
@@ -315,10 +315,10 @@ impl TryFrom<dto::RestApiInterface> for inputs::RestApiInterface {
     }
 }
 
-impl TryFrom<dto::ModelInterfaceMetadataSelectors> for inputs::ModelInterfaceMetadataSelectors {
+impl TryFrom<requests::ModelInterfaceMetadataSelectors> for inputs::ModelInterfaceMetadataSelectors {
     type Error = Error;
 
-    fn try_from(value: dto::ModelInterfaceMetadataSelectors) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelInterfaceMetadataSelectors) -> Result<Self, Self::Error> {
         Ok(Self {
             match_server_labels: value.match_server_labels,
             match_endpoint_labels: value.match_endpoint_labels
@@ -326,10 +326,10 @@ impl TryFrom<dto::ModelInterfaceMetadataSelectors> for inputs::ModelInterfaceMet
     }
 }
 
-impl TryFrom<dto::ModelInterfaceMetadataDiscoveryCriteria> for inputs::ModelInterfaceMetadataDiscoveryCriteria {
+impl TryFrom<requests::ModelInterfaceMetadataDiscoveryCriteria> for inputs::ModelInterfaceMetadataDiscoveryCriteria {
     type Error = Error;
 
-    fn try_from(value: dto::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
         let mut criteria: Vec<ModelMetadata> = Vec::with_capacity(1);
         for criterion in value.criteria {
             criteria.push(ModelMetadata::try_from(criterion)?);
@@ -343,10 +343,10 @@ impl TryFrom<dto::ModelInterfaceMetadataDiscoveryCriteria> for inputs::ModelInte
     }
 }
 
-impl TryFrom<dto::ModelInterfaceMetadata> for inputs::ModelInterfaceMetadata {
+impl TryFrom<requests::ModelInterfaceMetadata> for inputs::ModelInterfaceMetadata {
     type Error = Error;
 
-    fn try_from(value: dto::ModelInterfaceMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelInterfaceMetadata) -> Result<Self, Self::Error> {
         let mut selectors: Vec<inputs::ModelInterfaceMetadataSelectors> = Vec::with_capacity(1);
         for request_selector in value.selectors.unwrap_or(Vec::with_capacity(0)) {
             let selector = inputs::ModelInterfaceMetadataSelectors::try_from(request_selector)?;
@@ -367,10 +367,10 @@ impl TryFrom<dto::ModelInterfaceMetadata> for inputs::ModelInterfaceMetadata {
     }
 }
 
-impl TryFrom<dto::ModelInterfaceSpec> for inputs::ModelInterfaceSpec {
+impl TryFrom<requests::ModelInterfaceSpec> for inputs::ModelInterfaceSpec {
     type Error = Error;
     
-    fn try_from(value: dto::ModelInterfaceSpec) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelInterfaceSpec) -> Result<Self, Self::Error> {
         Ok(Self {
             input: value.input,
             output: value.output
@@ -378,10 +378,10 @@ impl TryFrom<dto::ModelInterfaceSpec> for inputs::ModelInterfaceSpec {
     }
 }
 
-impl TryFrom<dto::ModelInterface> for inputs::ModelInterface {
+impl TryFrom<requests::ModelInterface> for inputs::ModelInterface {
     type Error = Error;
     
-    fn try_from(value: dto::ModelInterface) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelInterface) -> Result<Self, Self::Error> {
         let kind = inputs::Kind::try_from(value.kind)?;
         if kind != inputs::Kind::Interface {
             return Err(Error::from_str("Field 'kind' must be variant Kind::Interface"))
@@ -401,26 +401,26 @@ impl TryFrom<dto::ModelInterface> for inputs::ModelInterface {
     }
 }
 
-impl TryFrom<dto::InferenceServerInterface> for inputs::InferenceServerInterface {
+impl TryFrom<requests::InferenceServerInterface> for inputs::InferenceServerInterface {
     type Error = Error;
     
-    fn try_from(value: dto::InferenceServerInterface) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::InferenceServerInterface) -> Result<Self, Self::Error> {
         match value {
-            dto::InferenceServerInterface::Container(interface) => {
+            requests::InferenceServerInterface::Container(interface) => {
                 let r#type = inputs::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != inputs::InterfaceType::Container {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Container"))
                 }
                 Ok(inputs::InferenceServerInterface::Container(inputs::ContainerInterface::try_from(interface)?))
             },
-            dto::InferenceServerInterface::RestApi(interface) => {
+            requests::InferenceServerInterface::RestApi(interface) => {
                 let r#type = inputs::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != inputs::InterfaceType::RestApi {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::RestApi"))
                 }
                 Ok(inputs::InferenceServerInterface::RestApi(inputs::RestApiInterface::try_from(interface)?))
             },
-            dto::InferenceServerInterface::Model(interface) => {
+            requests::InferenceServerInterface::Model(interface) => {
                 let r#type = inputs::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != inputs::InterfaceType::Model {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Model"))
@@ -431,10 +431,10 @@ impl TryFrom<dto::InferenceServerInterface> for inputs::InferenceServerInterface
     }
 }
 
-impl TryFrom<dto::InferenceServerMetadata> for inputs::InferenceServerMetadata {
+impl TryFrom<requests::InferenceServerMetadata> for inputs::InferenceServerMetadata {
     type Error = Error;
     
-    fn try_from(value: dto::InferenceServerMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::InferenceServerMetadata) -> Result<Self, Self::Error> {
         
         Ok(Self {
             name: value.name,
@@ -445,10 +445,10 @@ impl TryFrom<dto::InferenceServerMetadata> for inputs::InferenceServerMetadata {
     }
 }
 
-impl TryFrom<dto::InferenceServerSpec> for inputs::InferenceServerSpec {
+impl TryFrom<requests::InferenceServerSpec> for inputs::InferenceServerSpec {
     type Error = Error;
     
-    fn try_from(value: dto::InferenceServerSpec) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::InferenceServerSpec) -> Result<Self, Self::Error> {
         let mut interfaces: Vec<inputs::InferenceServerInterface> = Vec::with_capacity(1);
         for inferface in value.interfaces.unwrap_or(Vec::with_capacity(0)) {
             interfaces.push(inputs::InferenceServerInterface::try_from(inferface)?);
@@ -459,10 +459,10 @@ impl TryFrom<dto::InferenceServerSpec> for inputs::InferenceServerSpec {
     }
 }
 
-impl TryFrom<dto::InferenceServer> for inputs::CreateInferenceServerInput {
+impl TryFrom<requests::InferenceServer> for inputs::CreateInferenceServerInput {
     type Error = Error;
     
-    fn try_from(value: dto::InferenceServer) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::InferenceServer) -> Result<Self, Self::Error> {
         let kind = inputs::Kind::try_from(value.kind)?;
         if kind != inputs::Kind::InferenceServer {
             return Err(Error::from_str("Field 'kind' on InferenceServer must be variant Kind::InferenceServer"));

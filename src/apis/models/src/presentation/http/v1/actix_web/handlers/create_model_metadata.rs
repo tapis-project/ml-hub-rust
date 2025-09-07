@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::dto::{
+use crate::presentation::http::v1::requests::{
     ModelMetadata,
     CreateModelMetadataPath,
     CreateModelMetadata as CreateModelMetadataDto
@@ -46,12 +46,12 @@ async fn create_model_metadata(
 
     let artifact_id = path.into_inner().artifact_id;
 
-    let dto = CreateModelMetadataDto {
+    let requests = CreateModelMetadataDto {
         artifact_id: artifact_id.clone(),
         metadata: body.into_inner()
     };
 
-    let input = match CreateModelMetadataInput::try_from(dto) {
+    let input = match CreateModelMetadataInput::try_from(requests) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

@@ -14,9 +14,9 @@ use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
-use shared::presentation::http::v1::dto::headers::{AuthorizationHeaderError, Headers};
-use shared::presentation::http::v1::dto::datasets::{
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactRequest;
+use shared::presentation::http::v1::requests::headers::{AuthorizationHeaderError, Headers};
+use shared::presentation::http::v1::requests::datasets::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
     PublishDatasetRequest
 };
@@ -25,7 +25,7 @@ use shared::domain::entities::{
     model_metadata::ModelMetadata
 };
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::dto::models::{
+use shared::presentation::http::v1::requests::models::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
 };
 use std::path::PathBuf;

@@ -1,10 +1,10 @@
 //! Contains conversions between domain entities and request and response dtos
-use crate::presentation::http::v1::dto::models::ModelMetadata as ModelMetadataDto;
+use crate::presentation::http::v1::requests::models::ModelMetadata as ModelMetadataDto;
 use crate::domain::entities::inference as entities;
-use crate::presentation::http::v1::dto::inference as dto;
+use crate::presentation::http::v1::requests::inference as requests;
 use crate::errors::Error;
 
-impl TryFrom<entities::Kind> for dto::Kind {
+impl TryFrom<entities::Kind> for requests::Kind {
     type Error = Error;
     
     fn try_from(value: entities::Kind) -> Result<Self, Self::Error> {
@@ -15,7 +15,7 @@ impl TryFrom<entities::Kind> for dto::Kind {
         }
     }
 }
-impl TryFrom<entities::InterfaceType> for dto::InterfaceType {
+impl TryFrom<entities::InterfaceType> for requests::InterfaceType {
     type Error = Error;
     
     fn try_from(value: entities::InterfaceType) -> Result<Self, Self::Error> {
@@ -26,7 +26,7 @@ impl TryFrom<entities::InterfaceType> for dto::InterfaceType {
         }
     }
 }
-impl TryFrom<entities::ContainerInterfaceMetadata> for dto::ContainerInterfaceMetadata {
+impl TryFrom<entities::ContainerInterfaceMetadata> for requests::ContainerInterfaceMetadata {
     type Error = Error;
     
     fn try_from(value: entities::ContainerInterfaceMetadata) -> Result<Self, Self::Error> {
@@ -37,29 +37,29 @@ impl TryFrom<entities::ContainerInterfaceMetadata> for dto::ContainerInterfaceMe
         })
     }
 }
-impl TryFrom<entities::ContainerInterface> for dto::ContainerInterface {
+impl TryFrom<entities::ContainerInterface> for requests::ContainerInterface {
     type Error = Error;
     
     fn try_from(value: entities::ContainerInterface) -> Result<Self, Self::Error> {
-        let kind = dto::Kind::try_from(value.kind)?;
-        if kind != dto::Kind::Interface {
+        let kind = requests::Kind::try_from(value.kind)?;
+        if kind != requests::Kind::Interface {
             return Err(Error::from_str("Field 'kind' must be of variant Kind::Interface"))
         }
 
-        let r#type = dto::InterfaceType::try_from(value.r#type)?;
-        if r#type != dto::InterfaceType::Container {
+        let r#type = requests::InterfaceType::try_from(value.r#type)?;
+        if r#type != requests::InterfaceType::Container {
             return Err(Error::from_str("Field 'type' must be of variant InterfaceType::Container"))
         }
 
         Ok(Self {
             kind,
             r#type,
-            metadata: dto::ContainerInterfaceMetadata::try_from(value.metadata)?,
-            spec: dto::ContainerInterfaceSpec::try_from(value.spec)?
+            metadata: requests::ContainerInterfaceMetadata::try_from(value.metadata)?,
+            spec: requests::ContainerInterfaceSpec::try_from(value.spec)?
         })
     }
 }
-impl TryFrom<entities::Protocol> for dto::Protocol {
+impl TryFrom<entities::Protocol> for requests::Protocol {
     type Error = Error;
     
     fn try_from(value: entities::Protocol) -> Result<Self, Self::Error> {
@@ -69,18 +69,18 @@ impl TryFrom<entities::Protocol> for dto::Protocol {
         }
     }
 }
-impl TryFrom<entities::Port> for dto::Port {
+impl TryFrom<entities::Port> for requests::Port {
     type Error = Error;
     
     fn try_from(value: entities::Port) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             port: value.port,
-            protocol: dto::Protocol::try_from(value.protocol)?
+            protocol: requests::Protocol::try_from(value.protocol)?
         })
     }
 }
-impl TryFrom<entities::GpuResourceDefinition> for dto::GpuResourceDefinition {
+impl TryFrom<entities::GpuResourceDefinition> for requests::GpuResourceDefinition {
     type Error = Error;
     
     fn try_from(value: entities::GpuResourceDefinition) -> Result<Self, Self::Error> {
@@ -90,12 +90,12 @@ impl TryFrom<entities::GpuResourceDefinition> for dto::GpuResourceDefinition {
         })
     }
 }
-impl TryFrom<entities::ResourcesDefinition> for dto::ResourcesDefinition {
+impl TryFrom<entities::ResourcesDefinition> for requests::ResourcesDefinition {
     type Error = Error;
     
     fn try_from(value: entities::ResourcesDefinition) -> Result<Self, Self::Error> {
         let gpu = value.gpu
-            .map(|gpu| dto::GpuResourceDefinition::try_from(gpu))
+            .map(|gpu| requests::GpuResourceDefinition::try_from(gpu))
             .transpose()?;
 
         Ok(Self {
@@ -106,16 +106,16 @@ impl TryFrom<entities::ResourcesDefinition> for dto::ResourcesDefinition {
         })
     }
 }
-impl TryFrom<entities::Resources> for dto::Resources {
+impl TryFrom<entities::Resources> for requests::Resources {
     type Error = Error;
     
     fn try_from(value: entities::Resources) -> Result<Self, Self::Error> {
         let limits = value.limits
-            .map(|limits| dto::ResourcesDefinition::try_from(limits))
+            .map(|limits| requests::ResourcesDefinition::try_from(limits))
             .transpose()?;
 
         let requests = value.requests
-            .map(|requests| dto::ResourcesDefinition::try_from(requests))
+            .map(|requests| requests::ResourcesDefinition::try_from(requests))
             .transpose()?;
 
         Ok(Self {
@@ -124,17 +124,17 @@ impl TryFrom<entities::Resources> for dto::Resources {
         })
     }
 }
-impl TryFrom<entities::ContainerInterfaceSpec> for dto::ContainerInterfaceSpec {
+impl TryFrom<entities::ContainerInterfaceSpec> for requests::ContainerInterfaceSpec {
     type Error = Error;
     
     fn try_from(value: entities::ContainerInterfaceSpec) -> Result<Self, Self::Error> {
         let resources = value.resources
-            .map(|resources| dto::Resources::try_from(resources))
+            .map(|resources| requests::Resources::try_from(resources))
             .transpose()?;
 
-        let mut ports: Vec<dto::Port> = Vec::with_capacity(1);
+        let mut ports: Vec<requests::Port> = Vec::with_capacity(1);
         for p in value.ports.unwrap_or(Vec::with_capacity(0)) {
-            ports.push(dto::Port::try_from(p)?)
+            ports.push(requests::Port::try_from(p)?)
         }
 
         Ok(Self {
@@ -144,7 +144,7 @@ impl TryFrom<entities::ContainerInterfaceSpec> for dto::ContainerInterfaceSpec {
         })
     }
 }
-impl TryFrom<entities::EndpointLabels> for dto::EndpointLabels {
+impl TryFrom<entities::EndpointLabels> for requests::EndpointLabels {
     type Error = Error;
     
     fn try_from(value: entities::EndpointLabels) -> Result<Self, Self::Error> {
@@ -154,12 +154,12 @@ impl TryFrom<entities::EndpointLabels> for dto::EndpointLabels {
         })
     }
 }
-impl TryFrom<entities::OpenApiV3Spec> for dto::OpenApiV3Spec {
+impl TryFrom<entities::OpenApiV3Spec> for requests::OpenApiV3Spec {
     type Error = Error;
     
     fn try_from(value: entities::OpenApiV3Spec) -> Result<Self, Self::Error> {
         let endpoint_labels = value.endpoint_labels
-            .map(|labels| dto::EndpointLabels::try_from(labels))
+            .map(|labels| requests::EndpointLabels::try_from(labels))
             .transpose()?;
 
         Ok(Self {
@@ -168,18 +168,18 @@ impl TryFrom<entities::OpenApiV3Spec> for dto::OpenApiV3Spec {
         })
     }
 }
-impl TryFrom<entities::RestApiInterfaceSpec> for dto::RestApiInterfaceSpec {
+impl TryFrom<entities::RestApiInterfaceSpec> for requests::RestApiInterfaceSpec {
     type Error = Error;
     
     fn try_from(value: entities::RestApiInterfaceSpec) -> Result<Self, Self::Error> {
         match value {
             entities::RestApiInterfaceSpec::OpenApiV3(spec) => {
-                Ok(dto::RestApiInterfaceSpec::OpenApiV3(dto::OpenApiV3Spec::try_from(spec)?))
+                Ok(requests::RestApiInterfaceSpec::OpenApiV3(requests::OpenApiV3Spec::try_from(spec)?))
             },
         }
     }
 }
-impl TryFrom<entities::RestApiInterfaceFormat> for dto::RestApiInterfaceFormat {
+impl TryFrom<entities::RestApiInterfaceFormat> for requests::RestApiInterfaceFormat {
     type Error = Error;
     
     fn try_from(value: entities::RestApiInterfaceFormat) -> Result<Self, Self::Error> {
@@ -188,7 +188,7 @@ impl TryFrom<entities::RestApiInterfaceFormat> for dto::RestApiInterfaceFormat {
         }
     }
 }
-impl TryFrom<entities::RestApiInterfaceMetadata> for dto::RestApiInterfaceMetadata {
+impl TryFrom<entities::RestApiInterfaceMetadata> for requests::RestApiInterfaceMetadata {
     type Error = Error;
 
     fn try_from(value: entities::RestApiInterfaceMetadata) -> Result<Self, Self::Error> {
@@ -199,33 +199,33 @@ impl TryFrom<entities::RestApiInterfaceMetadata> for dto::RestApiInterfaceMetada
         })
     }
 }
-impl TryFrom<entities::RestApiInterface> for dto::RestApiInterface {
+impl TryFrom<entities::RestApiInterface> for requests::RestApiInterface {
     type Error = Error;
     
     fn try_from(value: entities::RestApiInterface) -> Result<Self, Self::Error> {
-        let kind = dto::Kind::try_from(value.kind)?;
-        if kind != dto::Kind::Interface {
+        let kind = requests::Kind::try_from(value.kind)?;
+        if kind != requests::Kind::Interface {
             return Err(Error::from_str("Field 'kind' must be variant Kind::Interface"))
         }
 
-        let r#type = dto::InterfaceType::try_from(value.r#type)?;
-        if r#type != dto::InterfaceType::RestApi {
+        let r#type = requests::InterfaceType::try_from(value.r#type)?;
+        if r#type != requests::InterfaceType::RestApi {
             return Err(Error::from_str("Field 'type' must be variant InterfaceType::RestApi"))
         }
 
-        let format = dto::RestApiInterfaceFormat::try_from(value.format)?;
+        let format = requests::RestApiInterfaceFormat::try_from(value.format)?;
         
 
         Ok(Self {
             kind,
             r#type,
             format,
-            metadata: dto::RestApiInterfaceMetadata::try_from(value.metadata)?,
-            spec: dto::RestApiInterfaceSpec::try_from(value.spec)?
+            metadata: requests::RestApiInterfaceMetadata::try_from(value.metadata)?,
+            spec: requests::RestApiInterfaceSpec::try_from(value.spec)?
         })
     }
 }
-impl TryFrom<entities::ModelInterfaceMetadataSelectors> for dto::ModelInterfaceMetadataSelectors {
+impl TryFrom<entities::ModelInterfaceMetadataSelectors> for requests::ModelInterfaceMetadataSelectors {
     type Error = Error;
 
     fn try_from(value: entities::ModelInterfaceMetadataSelectors) -> Result<Self, Self::Error> {
@@ -235,7 +235,7 @@ impl TryFrom<entities::ModelInterfaceMetadataSelectors> for dto::ModelInterfaceM
         })
     }
 }
-impl TryFrom<entities::ModelInterfaceMetadataDiscoveryCriteria> for dto::ModelInterfaceMetadataDiscoveryCriteria {
+impl TryFrom<entities::ModelInterfaceMetadataDiscoveryCriteria> for requests::ModelInterfaceMetadataDiscoveryCriteria {
     type Error = Error;
 
     fn try_from(value: entities::ModelInterfaceMetadataDiscoveryCriteria) -> Result<Self, Self::Error> {
@@ -251,18 +251,18 @@ impl TryFrom<entities::ModelInterfaceMetadataDiscoveryCriteria> for dto::ModelIn
         })
     }
 }
-impl TryFrom<entities::ModelInterfaceMetadata> for dto::ModelInterfaceMetadata {
+impl TryFrom<entities::ModelInterfaceMetadata> for requests::ModelInterfaceMetadata {
     type Error = Error;
 
     fn try_from(value: entities::ModelInterfaceMetadata) -> Result<Self, Self::Error> {
-        let mut selectors: Vec<dto::ModelInterfaceMetadataSelectors> = Vec::with_capacity(1);
+        let mut selectors: Vec<requests::ModelInterfaceMetadataSelectors> = Vec::with_capacity(1);
         for request_selector in value.selectors.unwrap_or(Vec::with_capacity(0)) {
-            let selector = dto::ModelInterfaceMetadataSelectors::try_from(request_selector)?;
+            let selector = requests::ModelInterfaceMetadataSelectors::try_from(request_selector)?;
             selectors.push(selector)
         }
 
         let discovery_criteria = value.discovery_criteria
-            .map(|criteria| dto::ModelInterfaceMetadataDiscoveryCriteria::try_from(criteria))
+            .map(|criteria| requests::ModelInterfaceMetadataDiscoveryCriteria::try_from(criteria))
             .transpose()?;
 
         Ok(Self {
@@ -274,7 +274,7 @@ impl TryFrom<entities::ModelInterfaceMetadata> for dto::ModelInterfaceMetadata {
         })
     }
 }
-impl TryFrom<entities::ModelInterfaceSpec> for dto::ModelInterfaceSpec {
+impl TryFrom<entities::ModelInterfaceSpec> for requests::ModelInterfaceSpec {
     type Error = Error;
     
     fn try_from(value: entities::ModelInterfaceSpec) -> Result<Self, Self::Error> {
@@ -284,58 +284,58 @@ impl TryFrom<entities::ModelInterfaceSpec> for dto::ModelInterfaceSpec {
         })
     }
 }
-impl TryFrom<entities::ModelInterface> for dto::ModelInterface {
+impl TryFrom<entities::ModelInterface> for requests::ModelInterface {
     type Error = Error;
     
     fn try_from(value: entities::ModelInterface) -> Result<Self, Self::Error> {
-        let kind = dto::Kind::try_from(value.kind)?;
-        if kind != dto::Kind::Interface {
+        let kind = requests::Kind::try_from(value.kind)?;
+        if kind != requests::Kind::Interface {
             return Err(Error::from_str("Field 'kind' must be variant Kind::Interface"))
         }
 
-        let r#type = dto::InterfaceType::try_from(value.r#type)?;
-        if r#type != dto::InterfaceType::Model {
+        let r#type = requests::InterfaceType::try_from(value.r#type)?;
+        if r#type != requests::InterfaceType::Model {
             return Err(Error::from_str("Field 'type' must be variant InterfaceType::Model"))
         }
 
         Ok(Self {
             kind,
             r#type,
-            metadata: dto::ModelInterfaceMetadata::try_from(value.metadata)?,
-            spec: dto::ModelInterfaceSpec::try_from(value.spec)?
+            metadata: requests::ModelInterfaceMetadata::try_from(value.metadata)?,
+            spec: requests::ModelInterfaceSpec::try_from(value.spec)?
         })
     }
 }
-impl TryFrom<entities::InferenceServerInterface> for dto::InferenceServerInterface {
+impl TryFrom<entities::InferenceServerInterface> for requests::InferenceServerInterface {
     type Error = Error;
     
     fn try_from(value: entities::InferenceServerInterface) -> Result<Self, Self::Error> {
         match value {
             entities::InferenceServerInterface::Container(interface) => {
-                let r#type = dto::InterfaceType::try_from(interface.r#type.clone())?;
-                if r#type != dto::InterfaceType::Container {
+                let r#type = requests::InterfaceType::try_from(interface.r#type.clone())?;
+                if r#type != requests::InterfaceType::Container {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Container"))
                 }
-                Ok(dto::InferenceServerInterface::Container(dto::ContainerInterface::try_from(interface)?))
+                Ok(requests::InferenceServerInterface::Container(requests::ContainerInterface::try_from(interface)?))
             },
             entities::InferenceServerInterface::RestApi(interface) => {
-                let r#type = dto::InterfaceType::try_from(interface.r#type.clone())?;
-                if r#type != dto::InterfaceType::RestApi {
+                let r#type = requests::InterfaceType::try_from(interface.r#type.clone())?;
+                if r#type != requests::InterfaceType::RestApi {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::RestApi"))
                 }
-                Ok(dto::InferenceServerInterface::RestApi(dto::RestApiInterface::try_from(interface)?))
+                Ok(requests::InferenceServerInterface::RestApi(requests::RestApiInterface::try_from(interface)?))
             },
             entities::InferenceServerInterface::Model(interface) => {
-                let r#type = dto::InterfaceType::try_from(interface.r#type.clone())?;
-                if r#type != dto::InterfaceType::Model {
+                let r#type = requests::InterfaceType::try_from(interface.r#type.clone())?;
+                if r#type != requests::InterfaceType::Model {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Model"))
                 }
-                Ok(dto::InferenceServerInterface::Model(dto::ModelInterface::try_from(interface)?))
+                Ok(requests::InferenceServerInterface::Model(requests::ModelInterface::try_from(interface)?))
             },
         }
     }
 }
-impl TryFrom<entities::InferenceServerMetadata> for dto::InferenceServerMetadata {
+impl TryFrom<entities::InferenceServerMetadata> for requests::InferenceServerMetadata {
     type Error = Error;
     
     fn try_from(value: entities::InferenceServerMetadata) -> Result<Self, Self::Error> {
@@ -348,32 +348,32 @@ impl TryFrom<entities::InferenceServerMetadata> for dto::InferenceServerMetadata
         })
     }
 }
-impl TryFrom<entities::InferenceServerSpec> for dto::InferenceServerSpec {
+impl TryFrom<entities::InferenceServerSpec> for requests::InferenceServerSpec {
     type Error = Error;
     
     fn try_from(value: entities::InferenceServerSpec) -> Result<Self, Self::Error> {
-        let mut interfaces: Vec<dto::InferenceServerInterface> = Vec::with_capacity(1);
+        let mut interfaces: Vec<requests::InferenceServerInterface> = Vec::with_capacity(1);
         for inferface in value.interfaces.unwrap_or(Vec::with_capacity(0)) {
-            interfaces.push(dto::InferenceServerInterface::try_from(inferface)?);
+            interfaces.push(requests::InferenceServerInterface::try_from(inferface)?);
         }
         Ok(Self {
             interfaces: Some(interfaces)
         })
     }
 }
-impl TryFrom<entities::InferenceServer> for dto::InferenceServer {
+impl TryFrom<entities::InferenceServer> for requests::InferenceServer {
     type Error = Error;
     
     fn try_from(value: entities::InferenceServer) -> Result<Self, Self::Error> {
-        let kind = dto::Kind::try_from(value.kind)?;
-        if kind != dto::Kind::InferenceServer {
+        let kind = requests::Kind::try_from(value.kind)?;
+        if kind != requests::Kind::InferenceServer {
             return Err(Error::from_str("Field 'kind' on InferenceServer must be variant Kind::InferenceServer"));
         }
 
         Ok(Self {
             kind,
-            metadata: dto::InferenceServerMetadata::try_from(value.metadata)?,
-            spec: dto::InferenceServerSpec::try_from(value.spec)?
+            metadata: requests::InferenceServerMetadata::try_from(value.metadata)?,
+            spec: requests::InferenceServerSpec::try_from(value.spec)?
         })
     }
 }

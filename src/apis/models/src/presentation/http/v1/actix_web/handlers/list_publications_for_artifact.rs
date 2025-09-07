@@ -1,7 +1,7 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::ListArtifactPublicationsPath;
+use crate::presentation::http::v1::requests::ListArtifactPublicationsPath;
 use crate::presentation::http::v1::responses;
 use crate::bootstrap::factories::artifact_service_factory;
 use crate::bootstrap::state::AppState;
@@ -56,8 +56,8 @@ async fn list_publications_for_artifact(
         .collect();
 
     let mut result: Vec<Value> = Vec::with_capacity(response_dtos.len());
-    for dto in response_dtos {
-        match to_value(dto) {
+    for requests in response_dtos {
+        match to_value(requests) {
             Ok(v) => result.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

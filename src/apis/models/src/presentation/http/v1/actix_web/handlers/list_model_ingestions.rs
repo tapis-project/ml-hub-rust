@@ -42,8 +42,8 @@ async fn list_model_ingestions(
         .collect();
 
     let mut result: Vec<Value> = Vec::with_capacity(response_dtos.len());
-    for dto in response_dtos {
-        match to_value(dto) {
+    for requests in response_dtos {
+        match to_value(requests) {
             Ok(v) => result.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

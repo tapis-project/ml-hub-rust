@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::responses;
-use crate::presentation::http::v1::dto::GetArtifactIngestionPath;
+use crate::presentation::http::v1::requests::GetArtifactIngestionPath;
 use crate::bootstrap::factories::artifact_service_factory;
 use crate::bootstrap::state::AppState;
 use actix_web::{get, web, HttpRequest, Responder};
@@ -63,10 +63,10 @@ async fn get_model_ingestion(
         None => return build_error_response(404, format!("ArtifactIngestion with id {} not found", &ingestion_id))
     };
 
-    let dto = match to_value(responses::ArtifactIngestion::from(ingestion)) {
+    let requests = match to_value(responses::ArtifactIngestion::from(ingestion)) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };
     
-    build_success_response(Some(dto), None, None)
+    build_success_response(Some(requests), None, None)
 }

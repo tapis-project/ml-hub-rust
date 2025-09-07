@@ -1,8 +1,8 @@
-use crate::presentation::http::v1::dto::models as dto;
+use crate::presentation::http::v1::requests::models as requests;
 use crate::domain::entities::model_metadata as entities;
 use crate::errors::Error;
 
-impl TryFrom<entities::SystemRequirement> for dto::SystemRequirement {
+impl TryFrom<entities::SystemRequirement> for requests::SystemRequirement {
     type Error = Error;
     
     fn try_from(value: entities::SystemRequirement) -> Result<Self, Self::Error> {
@@ -12,13 +12,13 @@ impl TryFrom<entities::SystemRequirement> for dto::SystemRequirement {
         })
     }
 }
-impl TryFrom<entities::Accelerator> for dto::Accelerator {
+impl TryFrom<entities::Accelerator> for requests::Accelerator {
     type Error = Error;
     
     fn try_from(value: entities::Accelerator) -> Result<Self, Self::Error> {
-        let mut system_requirements: Vec<dto::SystemRequirement> = Vec::with_capacity(1);
+        let mut system_requirements: Vec<requests::SystemRequirement> = Vec::with_capacity(1);
         for requirement in value.system_requirements {
-            system_requirements.push(dto::SystemRequirement::try_from(requirement)?);
+            system_requirements.push(requests::SystemRequirement::try_from(requirement)?);
         }
 
         Ok(Self {
@@ -29,13 +29,13 @@ impl TryFrom<entities::Accelerator> for dto::Accelerator {
         })
     }
 }
-impl TryFrom<entities::HardwareRequirements> for dto::HardwareRequirements {
+impl TryFrom<entities::HardwareRequirements> for requests::HardwareRequirements {
     type Error = Error;
     
     fn try_from(value: entities::HardwareRequirements) -> Result<Self, Self::Error> {
-        let mut accelerators: Vec<dto::Accelerator> = Vec::with_capacity(1);
+        let mut accelerators: Vec<requests::Accelerator> = Vec::with_capacity(1);
         for accelerator in value.accelerators.unwrap_or(Vec::with_capacity(0)) {
-            accelerators.push(dto::Accelerator::try_from(accelerator)?);
+            accelerators.push(requests::Accelerator::try_from(accelerator)?);
         }
 
         Ok(Self {
@@ -47,7 +47,7 @@ impl TryFrom<entities::HardwareRequirements> for dto::HardwareRequirements {
         })
     }
 }
-impl TryFrom<entities::ModelIO> for dto::ModelIO {
+impl TryFrom<entities::ModelIO> for requests::ModelIO {
     type Error = Error;
     
     fn try_from(value: entities::ModelIO) -> Result<Self, Self::Error> {
@@ -57,26 +57,26 @@ impl TryFrom<entities::ModelIO> for dto::ModelIO {
         })
     }
 }
-impl TryFrom<entities::ModelMetadata> for dto::ModelMetadata {
+impl TryFrom<entities::ModelMetadata> for requests::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: entities::ModelMetadata) -> Result<Self, Self::Error> {
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
-            model_inputs.push(dto::ModelIO::try_from(input)?)
+            model_inputs.push(requests::ModelIO::try_from(input)?)
         }
         
         let mut model_outputs = Vec::with_capacity(1);
         for output in value.model_outputs.unwrap_or(Vec::with_capacity(0)) {
-            model_outputs.push(dto::ModelIO::try_from(output)?)
+            model_outputs.push(requests::ModelIO::try_from(output)?)
         }
 
         let inference_hardware = value.inference_hardware
-            .map(|hardware| dto::HardwareRequirements::try_from(hardware))
+            .map(|hardware| requests::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
         let training_hardware = value.training_hardware
-            .map(|hardware| dto::HardwareRequirements::try_from(hardware))
+            .map(|hardware| requests::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
         Ok(Self {

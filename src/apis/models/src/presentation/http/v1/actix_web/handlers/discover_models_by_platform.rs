@@ -1,7 +1,7 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{
+use crate::presentation::http::v1::requests::{
     DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody, Headers,
 };
 use actix_web::{post, web, HttpRequest, Responder};

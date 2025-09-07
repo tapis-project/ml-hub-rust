@@ -1,6 +1,6 @@
 use serde_json::Value;
 use utoipa::ToSchema;
-use crate::presentation::http::v1::{dto::models::ModelMetadata, responses::{Artifact, ArtifactIngestion, ArtifactPublication}};
+use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{Artifact, ArtifactIngestion, ArtifactPublication}};
 
 #[derive(ToSchema)]
 pub struct ListPlatformsResponse {

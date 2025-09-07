@@ -1,14 +1,14 @@
 use serde_json::to_vec;
-use crate::presentation::http::v1::dto::models as dto;
+use crate::presentation::http::v1::requests::models as requests;
 use crate::application::inputs::model_metadata as inputs;
 use crate::application::inputs::artifacts as artifact_inputs;
 use crate::errors::Error;
 use uuid::Uuid;
 
-impl TryFrom<dto::SystemRequirement> for inputs::SystemRequirement {
+impl TryFrom<requests::SystemRequirement> for inputs::SystemRequirement {
     type Error = Error;
     
-    fn try_from(value: dto::SystemRequirement) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::SystemRequirement) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             version: value.version
@@ -16,10 +16,10 @@ impl TryFrom<dto::SystemRequirement> for inputs::SystemRequirement {
     }
 }
 
-impl TryFrom<dto::Accelerator> for inputs::Accelerator {
+impl TryFrom<requests::Accelerator> for inputs::Accelerator {
     type Error = Error;
     
-    fn try_from(value: dto::Accelerator) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::Accelerator) -> Result<Self, Self::Error> {
         let mut system_requirements: Vec<inputs::SystemRequirement> = Vec::with_capacity(1);
         for requirement in value.system_requirements {
             system_requirements.push(inputs::SystemRequirement::try_from(requirement)?);
@@ -34,10 +34,10 @@ impl TryFrom<dto::Accelerator> for inputs::Accelerator {
     }
 }
 
-impl TryFrom<dto::HardwareRequirements> for inputs::HardwareRequirements {
+impl TryFrom<requests::HardwareRequirements> for inputs::HardwareRequirements {
     type Error = Error;
     
-    fn try_from(value: dto::HardwareRequirements) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::HardwareRequirements) -> Result<Self, Self::Error> {
         let mut accelerators: Vec<inputs::Accelerator> = Vec::with_capacity(1);
         for accelerator in value.accelerators.unwrap_or(Vec::with_capacity(0)) {
             accelerators.push(inputs::Accelerator::try_from(accelerator)?);
@@ -53,10 +53,10 @@ impl TryFrom<dto::HardwareRequirements> for inputs::HardwareRequirements {
     }
 }
 
-impl TryFrom<dto::ModelIO> for inputs::ModelIO {
+impl TryFrom<requests::ModelIO> for inputs::ModelIO {
     type Error = Error;
     
-    fn try_from(value: dto::ModelIO) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelIO) -> Result<Self, Self::Error> {
         Ok(Self {
             data_type: value.data_type,
             shape: value.shape
@@ -64,10 +64,10 @@ impl TryFrom<dto::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<dto::CreateModelMetadata> for inputs::CreateModelMetadata {
+impl TryFrom<requests::CreateModelMetadata> for inputs::CreateModelMetadata {
     type Error = Error;
 
-    fn try_from(value: dto::CreateModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::CreateModelMetadata) -> Result<Self, Self::Error> {
         let metadata = inputs::ModelMetadata::try_from(value.metadata)?;
         let artifact_id = Uuid::parse_str(&value.artifact_id)
             .map_err(|err| Self::Error::new(err.to_string()))?;
@@ -79,10 +79,10 @@ impl TryFrom<dto::CreateModelMetadata> for inputs::CreateModelMetadata {
     }
 }
 
-impl TryFrom<dto::ModelMetadata> for inputs::ModelMetadata {
+impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: dto::ModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::ModelMetadata) -> Result<Self, Self::Error> {
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(inputs::ModelIO::try_from(input)?)
@@ -143,9 +143,9 @@ impl TryFrom<dto::ModelMetadata> for inputs::ModelMetadata {
     }
 }
 
-impl TryFrom<dto::IngestModelRequest> for artifact_inputs::IngestArtifactInput {
+impl TryFrom<requests::IngestModelRequest> for artifact_inputs::IngestArtifactInput {
     type Error = Error;
-    fn try_from(value: dto::IngestModelRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::IngestModelRequest) -> Result<Self, Self::Error> {
         let serialized_client_request = to_vec(&value)
             .map_err(|err| Error::new(format!("Failed serialize the full client request: {}", err.to_string())))?;
         
@@ -159,18 +159,18 @@ impl TryFrom<dto::IngestModelRequest> for artifact_inputs::IngestArtifactInput {
     }
 }
 
-impl TryFrom<dto::UploadModelRequest> for artifact_inputs::UploadArtifactInput {
+impl TryFrom<requests::UploadModelRequest> for artifact_inputs::UploadArtifactInput {
     type Error = Error;
-    fn try_from(_value: dto::UploadModelRequest) -> Result<Self, Self::Error> {
+    fn try_from(_value: requests::UploadModelRequest) -> Result<Self, Self::Error> {
         Ok(Self {
             artifact_type: artifact_inputs::ArtifactType::Model
         })
     }
 }
 
-impl TryFrom<dto::DownloadModelRequest> for artifact_inputs::DownloadArtifactInput {
+impl TryFrom<requests::DownloadModelRequest> for artifact_inputs::DownloadArtifactInput {
     type Error = Error;
-    fn try_from(value: dto::DownloadModelRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::DownloadModelRequest) -> Result<Self, Self::Error> {
         let artifact_id= match Uuid::parse_str(&value.path.artifact_id) {
             Ok(uuid) => uuid,
             Err(_) => return Err(Error::new("Value provided for artifact_id is not a string".into()))

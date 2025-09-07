@@ -1,9 +1,9 @@
 use std::path::PathBuf;
-use shared::presentation::http::v1::dto::inference;
-use shared::presentation::http::v1::dto::training;
-use shared::presentation::http::v1::dto::models;
-use shared::presentation::http::v1::dto::datasets;
-use shared::presentation::http::v1::dto::artifacts;
+use shared::presentation::http::v1::requests::inference;
+use shared::presentation::http::v1::requests::training;
+use shared::presentation::http::v1::requests::models;
+use shared::presentation::http::v1::requests::datasets;
+use shared::presentation::http::v1::requests::artifacts;
 use shared::domain::entities;
 use serde::Serialize;
 use async_trait;
