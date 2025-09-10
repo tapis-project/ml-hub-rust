@@ -5,7 +5,7 @@ use bytes::Bytes;
 use crate::presentation::http::v1::requests::headers::Headers;
 use crate::presentation::http::v1::requests::artifacts::{
     DownloadArtifactBody,
-    IngestArtifactBody
+    IngestArtifactRequest
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -55,7 +55,7 @@ pub struct IngestDatasetRequest {
     pub headers: Headers,
     pub path: IngestDatasetPath,
     pub query: HashMap<String, String>,
-    pub body: IngestArtifactBody,
+    pub body: IngestArtifactRequest,
 }
 
 pub struct DownloadDatasetRequest {

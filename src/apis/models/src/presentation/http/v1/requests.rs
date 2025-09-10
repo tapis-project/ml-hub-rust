@@ -5,7 +5,7 @@ pub use shared::presentation::http::v1::requests::models::{
     GetModelRequest,
     DiscoverModelsPath,
     DiscoverModelsRequest,
-    DiscoveryCriteriaBody,
+    DiscoveryCriteria,
     IngestModelPath,
     IngestModelRequest,
     DownloadModelPath,
@@ -20,8 +20,8 @@ pub use shared::presentation::http::v1::requests::artifact_publications::GetArti
 pub use shared::presentation::http::v1::requests::artifacts::{
     PublishArtifactPath,
     PublishArtifactRequest,
-    PublishArtifactBody,
-    IngestArtifactBody,
+    PublishArtifactServiceRequest,
+    IngestArtifactRequest,
     ListArtifactIngestionsPath,
     ListArtifactPublicationsPath,
 };

@@ -11,7 +11,7 @@ use shared::logging::SharedLogger;
 use serde_json::to_value;
 use shared::presentation::http::v1::requests::artifacts::GetArtifactPath;
 use uuid::Uuid;
-use shared::presentation::http::v1::contracts::responses::GetModelArtifactResponse;
+use shared::presentation::http::v1::contracts;
 
 #[utoipa::path(
     get,
@@ -22,7 +22,10 @@ use shared::presentation::http::v1::contracts::responses::GetModelArtifactRespon
         ("artifact_id" = String, Path, description = "Artifact id")
     ),
     responses(
-        (status=200, description="Found model artifact", body=GetModelArtifactResponse)
+        (status=200, description="Found model artifact", body=contracts::responses::GetModelArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/artifacts/{artifact_id}")]

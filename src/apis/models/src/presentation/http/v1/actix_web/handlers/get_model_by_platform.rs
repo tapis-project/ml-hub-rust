@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::requests::{GetModelPath, GetModelRequest, Headers};
-use shared::presentation::http::v1::contracts::responses::GetModelByPlatformResponse;
+use shared::presentation::http::v1::contracts::responses;
 use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::{ClientProvider, Platform};
 use clients::GetModelClient;
@@ -19,7 +19,10 @@ use std::collections::HashMap;
         ("model_id"=String, Path, description="Id of the model the fetch from the source platform"),
     ),
     responses(
-        (status=200, description="Model fetched successfully", body=GetModelByPlatformResponse)
+        (status=200, description="Model fetched successfully", body=responses::GetModelByPlatformResponse),
+        (status=400, description="Not found", body=responses::BadRequestResponse),
+        (status=404, description="Not found", body=responses::NotFoundResponse),
+        (status=500, description="Not found", body=responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]

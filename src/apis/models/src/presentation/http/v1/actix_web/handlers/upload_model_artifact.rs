@@ -52,6 +52,7 @@ async fn upload_model_artifact(
             Ok(tuple) => tuple,
             Err(err) => return build_error_response(500, err.to_string()),
         };
+        
         while let Ok(Some(chunk)) = field.try_next().await {
             // Convert the `bytes::Bytes` chunk into a `Vec<u8>` before passing it
             if let Err(err) = uploading(chunk.to_vec()).await {

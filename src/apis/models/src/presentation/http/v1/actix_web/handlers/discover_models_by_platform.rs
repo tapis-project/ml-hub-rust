@@ -2,13 +2,13 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::requests::{
-    DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteriaBody, Headers,
+    DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteria, Headers,
 };
 use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::{ClientProvider, Platform};
 use clients::DiscoverModelsClient;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::contracts::responses::DiscoverModelsByPlatformResponse;
+use shared::presentation::http::v1::contracts::responses;
 use std::collections::HashMap;
 
 #[utoipa::path(
@@ -19,8 +19,12 @@ use std::collections::HashMap;
     params(
         ("platform" = Platform, Path, description = "The platform on which you want to discover models")
     ),
+    request_body=DiscoveryCriteria,
     responses(
-        (status=200, description="Discovered models", body=DiscoverModelsByPlatformResponse)
+        (status=200, description="Discovered models", body=responses::DiscoverModelsByPlatformResponse),
+        (status=400, description="Not found", body=responses::BadRequestResponse),
+        (status=404, description="Not found", body=responses::NotFoundResponse),
+        (status=500, description="Not found", body=responses::ServerErrorResponse),
     )
 )]
 #[post("models-api/platforms/{platform}/models")]
@@ -28,7 +32,7 @@ async fn discover_models_by_platform(
     req: HttpRequest,
     path: web::Path<DiscoverModelsPath>,
     query: web::Query<HashMap<String, String>>,
-    body: web::Json<DiscoveryCriteriaBody>,
+    body: web::Json<DiscoveryCriteria>,
 ) -> impl Responder {
     let logger = SharedLogger::new();
 

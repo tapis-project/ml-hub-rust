@@ -1,11 +1,12 @@
-pub mod domain_to_dto;
+pub mod enitity_to_dto;
 pub mod dto_to_input;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use utoipa::ToSchema;
 use std::collections::HashMap;
 use crate::presentation::http::v1::requests::headers::Headers;
-use crate::presentation::http::v1::requests::artifacts::IngestArtifactBody;
+use crate::presentation::http::v1::requests::artifacts;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {
@@ -45,7 +46,7 @@ pub struct DiscoverModelsRequest {
     pub headers: Headers,
     pub path: DiscoverModelsPath,
     pub query: HashMap<String, String>,
-    pub body: DiscoveryCriteriaBody
+    pub body: DiscoveryCriteria
 }
 
 pub struct GetModelRequest {
@@ -60,7 +61,7 @@ pub struct IngestModelRequest {
     pub headers: Headers,
     pub path: IngestModelPath,
     pub query: HashMap<String, String>,
-    pub body: IngestArtifactBody,
+    pub body: artifacts::IngestArtifactRequest,
 }
 
 pub struct DownloadModelRequest {
@@ -75,13 +76,13 @@ pub struct CreateModelMetadataPath {
     pub artifact_id: String
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct SystemRequirement {
     pub name: String,
     pub version: String
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct Accelerator {
     pub accelerator_type: String,
     pub memory_gb: Option<i32>,
@@ -90,7 +91,7 @@ pub struct Accelerator {
     pub system_requirements: Vec<SystemRequirement>
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
@@ -99,13 +100,13 @@ pub struct HardwareRequirements {
     pub architectures: Option<Vec<String>>
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
@@ -167,8 +168,8 @@ pub struct CreateModelMetadata {
     pub metadata: ModelMetadata
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct DiscoveryCriteriaBody {
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct DiscoveryCriteria {
     pub criteria: Vec<ModelMetadata>,
     pub confidence_threshold: Option<Vec<String>>,
 }

@@ -9,7 +9,7 @@ use actix_web::{get, web, Responder};
 use shared::application::inputs::artifacts::ListPublicationsByArtifactIdInput;
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
-use shared::presentation::http::v1::contracts::responses::ListModelPublicationsForArtifactResponse;
+use shared::presentation::http::v1::contracts;
 use uuid::Uuid;
 
 #[utoipa::path(
@@ -21,7 +21,10 @@ use uuid::Uuid;
         ("artifact_id" = String, Path, description = "The ID of the artifact")
     ),
     responses(
-        (status=200, description="Listed model publications for artifact", body=ListModelPublicationsForArtifactResponse)
+        (status=200, description="Listed model publications for artifact", body=contracts::responses::ListModelPublicationsForArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/artifacts/{artifact_id}/publications")]

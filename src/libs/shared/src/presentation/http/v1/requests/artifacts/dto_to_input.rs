@@ -1,13 +1,13 @@
 use uuid::Uuid;
-use super::PublishArtifactRequest;
+use super::PublishArtifactServiceRequest;
 use crate::application::inputs::artifact_publication::PublishArtifactInput;
 use crate::application::errors::ApplicationError;
 use serde_json::to_vec;
 
-impl TryFrom<PublishArtifactRequest> for PublishArtifactInput {
+impl TryFrom<PublishArtifactServiceRequest> for PublishArtifactInput {
     type Error = ApplicationError;
 
-    fn try_from(value: PublishArtifactRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: PublishArtifactServiceRequest) -> Result<Self, Self::Error> {
         let artifact_id = Uuid::parse_str(&value.path.artifact_id)
             .map_err(|err| ApplicationError::ConvesionError(err.to_string()))?;
 

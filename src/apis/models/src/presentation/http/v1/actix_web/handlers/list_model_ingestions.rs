@@ -8,7 +8,7 @@ use crate::bootstrap::state::AppState;
 use actix_web::{get, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
-use shared::presentation::http::v1::contracts::responses::ListModelIngestionsResponse;
+use shared::presentation::http::v1::contracts;
 
 #[utoipa::path(
     get,
@@ -16,7 +16,10 @@ use shared::presentation::http::v1::contracts::responses::ListModelIngestionsRes
     tag="Ingestions",
     description="List all model ingestions",
     responses(
-        (status=200, description="Listed model ingestions", body=ListModelIngestionsResponse)
+        (status=200, description="Listed model ingestions", body=contracts::responses::ListModelIngestionsResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/ingestions")]

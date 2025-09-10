@@ -6,7 +6,7 @@ use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use clients::ListModelsClient;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::contracts::responses::ListModelsByPlatformResponse;
+use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
 
 #[utoipa::path(
@@ -15,7 +15,10 @@ use std::collections::HashMap;
     tag="External Models",
     description="List models from an external platform",
     responses(
-        (status=200, description="Listed models", body=ListModelsByPlatformResponse)
+        (status=200, description="Listed models", body=contracts::responses::ListModelsByPlatformResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/platforms/{platform}/models")]

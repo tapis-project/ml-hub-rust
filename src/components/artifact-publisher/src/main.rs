@@ -25,7 +25,7 @@ use client_provider::ClientProvider;
 use shared::domain::entities::artifact_publication::{ArtifactPublicationFailureReason, ArtifactPublicationStatus};
 use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
-use shared::presentation::http::v1::requests::artifacts::PublishArtifactRequest;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::infra::system::Env;
 use shared::constants::ARTIFACT_PUBLICATION_DIR_NAME;
 // use shared::datasets::presentation::http::v1::requests::IngestDatasetRequest;
@@ -57,7 +57,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
         };
 
         // Deserialize the client request
-        let client_request: PublishArtifactRequest = serde_json::from_slice(&request.serialized_client_request)
+        let client_request: PublishArtifactServiceRequest = serde_json::from_slice(&request.serialized_client_request)
             .expect("Failed deserializing the client request");
 
         let publication_id = Uuid::parse_str(request.publication_id.as_str()).expect("Invalid Uuid. Cannot convert publication_id into Uuid");

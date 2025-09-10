@@ -8,7 +8,7 @@ use actix_web::{get, web, Responder};
 use shared::application::inputs::artifact_publication::ListModelPublicationsInput;
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
-use shared::presentation::http::v1::contracts::responses::ListModelPublicationsResponse;
+use shared::presentation::http::v1::contracts;
 
 #[utoipa::path(
     get,
@@ -16,7 +16,10 @@ use shared::presentation::http::v1::contracts::responses::ListModelPublicationsR
     tag="Publications",
     description="List all model publications",
     responses(
-        (status=200, description="Listed model publications", body=ListModelPublicationsResponse)
+        (status=200, description="Listed model publications", body=contracts::responses::ListModelPublicationsResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/publications")]

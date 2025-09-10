@@ -4,13 +4,13 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::requests::{Headers, PublishArtifactPath, PublishArtifactBody, PublishArtifactRequest};
+use crate::presentation::http::v1::requests::{Headers, PublishArtifactPath, PublishArtifactRequest, PublishArtifactServiceRequest};
 use crate::presentation::http::v1::requests::ArtifactPublication as ArtifactPublicationDto;
 use crate::application::artifact_publication_inputs::PublishArtifactInput;
 use client_provider::ClientProvider;
 use actix_web::{post, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::contracts::responses::PublishModelArtifactResponse;
+use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
 use serde_json::to_value;
 
@@ -22,8 +22,12 @@ use serde_json::to_value;
     params(
         ("artifact_id" = String, Path, description = "The ID of the model artifact")
     ),
+    request_body=contracts::requests::artifacts::PublishArtifactRequest,
     responses(
-        (status=200, description="Discovered models", body=PublishModelArtifactResponse)
+        (status=200, description="Discovered models", body=contracts::responses::PublishModelArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[post("models-api/artifacts/{artifact_id}/publications")]
@@ -31,7 +35,7 @@ async fn publish_model_artifact(
     req: HttpRequest,
     path: web::Path<PublishArtifactPath>,
     query: web::Query<HashMap<String, String>>,
-    body: web::Json<PublishArtifactBody>,
+    body: web::Json<PublishArtifactRequest>,
     data: web::Data<AppState>
 ) -> impl Responder {
     let logger = SharedLogger::new();
@@ -44,7 +48,7 @@ async fn publish_model_artifact(
         Err(err) => return build_error_response(400, String::from(err.to_string())),
     };
 
-    let request = PublishArtifactRequest {
+    let request = PublishArtifactServiceRequest {
         headers,
         path: path.into_inner(),
         query: query.into_inner(),

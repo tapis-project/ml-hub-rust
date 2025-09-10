@@ -4,14 +4,14 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::requests::{
-    Headers, IngestArtifactBody, IngestModelPath, IngestModelRequest,
+    Headers, IngestArtifactRequest, IngestModelPath, IngestModelRequest,
 };
 use crate::presentation::http::v1::responses::ArtifactIngestion;
 use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use serde_json::to_value;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::contracts::responses::IngestModelArtifactResponse;
+use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
 
 #[utoipa::path(
@@ -20,10 +20,15 @@ use std::collections::HashMap;
     tag="External Models",
     description="Ingest a model from an external platform",
     params(
-        ("artifact_id" = String, Path, description = "The ID of the model artifact")
+        ("platform" = String, Path, description = "The platform from which the model will be ingested from"),
+        ("model_id" = String, Path, description = "The platform-specific ID of the external model you want to ingest")
     ),
+    request_body=contracts::requests::artifacts::IngestArtifactRequest,
     responses(
-        (status=200, description="Discovered models", body=IngestModelArtifactResponse)
+        (status=200, description="Discovered models", body=contracts::responses::IngestModelArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
 #[post("models-api/platforms/{platform}/models/{model_id:.*}")]
@@ -31,7 +36,7 @@ async fn ingest_external_model(
     req: HttpRequest,
     path: web::Path<IngestModelPath>,
     query: web::Query<HashMap<String, String>>,
-    body: web::Json<IngestArtifactBody>,
+    body: web::Json<IngestArtifactRequest>,
     data: web::Data<AppState>,
 ) -> impl Responder {
     let logger = SharedLogger::new();

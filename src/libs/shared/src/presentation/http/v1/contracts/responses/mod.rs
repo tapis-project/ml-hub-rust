@@ -147,3 +147,39 @@ pub struct ListModelArtifactResponse {
     pub metadata: Value,
     pub version: String
 }
+
+#[derive(ToSchema)]
+pub struct BadRequestResponse {
+    #[schema(default=null)]
+    pub result: Value,
+    #[schema(default=400)]
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
+pub struct NotFoundResponse {
+    #[schema(default=null)]
+    pub result: Value,
+    #[schema(default=404)]
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
+pub struct ServerErrorResponse {
+    #[schema(default=null)]
+    pub result: Value,
+    #[schema(default=500)]
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}

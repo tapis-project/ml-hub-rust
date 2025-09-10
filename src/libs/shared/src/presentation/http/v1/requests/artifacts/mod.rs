@@ -2,6 +2,7 @@ mod dto_to_input;
 
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use super::headers::Headers;
 use crate::presentation::http::v1::requests::Parameters;
 
@@ -10,11 +11,12 @@ pub struct GetArtifactPath {
     pub artifact_id: String
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct IngestArtifactBody {
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub struct IngestArtifactRequest {
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
     pub webhook_url: Option<String>,
+    #[schema(value_type = Object)]
     pub params: Option<Parameters>,
 }
 
@@ -39,18 +41,18 @@ pub struct ListArtifactIngestionsPath {
     pub artifact_id: String
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct PublishArtifactBody {
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct PublishArtifactRequest {
     pub target_platform: String,
     pub webhook_url: Option<String>
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct PublishArtifactRequest {
+pub struct PublishArtifactServiceRequest {
     pub headers: Headers,
     pub path: PublishArtifactPath,
     pub query: HashMap<String, String>,
-    pub body: PublishArtifactBody,
+    pub body: PublishArtifactRequest,
 }
 
 #[derive(Clone, Debug)]

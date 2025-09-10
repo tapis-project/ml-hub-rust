@@ -14,7 +14,7 @@ use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::presentation::http::v1::requests::artifacts::PublishArtifactRequest;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::presentation::http::v1::requests::headers::{AuthorizationHeaderError, Headers};
 use shared::presentation::http::v1::requests::datasets::{
     GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
@@ -350,7 +350,7 @@ impl PublishModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         // Get the repo/model name from the metadata
         let model_name = match metadata.name.clone() {
             Some(n) => n,
@@ -516,7 +516,7 @@ impl PublishModelMetadataClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model_metadata(&self, _metadata: &ModelMetadata, _result: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model_metadata(&self, _metadata: &ModelMetadata, _result: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Ok(
             ClientJsonResponse::new(
                 None,

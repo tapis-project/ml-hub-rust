@@ -17,8 +17,7 @@ use actix_web::{
     Responder
 };
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::contracts::responses::CreateModelMetadataResponse;
-// use std::collections::HashMap;
+use shared::presentation::http::v1::contracts::responses;
 
 #[utoipa::path(
     post,
@@ -28,8 +27,12 @@ use shared::presentation::http::v1::contracts::responses::CreateModelMetadataRes
     params(
         ("artifact_id" = String, Path, description = "The ID of the model artifact")
     ),
+    request_body=ModelMetadata,
     responses(
-        (status=200, description="Discovered models", body=CreateModelMetadataResponse)
+        (status=200, description="Discovered models", body=responses::CreateModelMetadataResponse),
+        (status=400, description="Not found", body=responses::BadRequestResponse),
+        (status=404, description="Not found", body=responses::NotFoundResponse),
+        (status=500, description="Not found", body=responses::ServerErrorResponse),
     )
 )]
 #[post("models-api/artifacts/{artifact_id}/metadata")]
