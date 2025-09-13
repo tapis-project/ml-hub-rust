@@ -1,0 +1,13 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "agntcy-gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+shared = { version = "0.1.0", path = "../../libs/shared" }
+typify = "0.4.3"
+schemars = "1.0.4"
+
+[build-dependencies]
