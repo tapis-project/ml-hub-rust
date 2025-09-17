@@ -1,0 +1,1342 @@
+openapi: 3.1.0
+info:
+  title: MLHub Models API
+  description: ''
+  license:
+    name: ''
+  version: 0.1.0
+paths:
+  /models-api/artifacts:
+    get:
+      tags:
+        - Artifacts
+      description: List all model artifacts
+      operationId: list_model_artifacts
+      responses:
+        '200':
+          description: Listed model artifacts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelArtifactResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/artifacts/{artifact_id}':
+    get:
+      tags:
+        - Artifacts
+      description: Fetches the model artifact by the provided id
+      operationId: get_model_artifact
+      parameters:
+        - name: artifact_id
+          in: path
+          description: Artifact id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found model artifact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetModelArtifactResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/artifacts/{artifact_id}/metadata':
+    post:
+      tags:
+        - Metadata
+      description: Create metadata for a model artifact
+      operationId: create_model_metadata
+      parameters:
+        - name: artifact_id
+          in: path
+          description: The ID of the model artifact
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelMetadata'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateModelMetadataResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/artifacts/{artifact_id}/publications':
+    get:
+      tags:
+        - Publications
+      description: List all publications for an artifact
+      operationId: list_publications_for_artifact
+      parameters:
+        - name: artifact_id
+          in: path
+          description: The ID of the artifact
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listed model publications for artifact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelPublicationsForArtifactResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+    post:
+      tags:
+        - Publications
+      description: Publish a model artifact to an external platform
+      operationId: publish_model_artifact
+      parameters:
+        - name: artifact_id
+          in: path
+          description: The ID of the model artifact
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishArtifactRequest'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishModelArtifactResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/ingestions:
+    get:
+      tags:
+        - Ingestions
+      description: List all model ingestions
+      operationId: list_model_ingestions
+      responses:
+        '200':
+          description: Listed model ingestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelIngestionsResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/ingestions/{ingestion_id}':
+    get:
+      tags:
+        - Ingestions
+      description: Fetch an ingestion by id
+      operationId: get_model_ingestion
+      parameters:
+        - name: ingestion_id
+          in: path
+          description: The ID of the model ingestion
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fetched Model Ingestion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetModelIngestionResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/platforms:
+    get:
+      tags:
+        - Platforms
+      description: List all external platforms integrated with this deployment of MLHub
+      operationId: list_platforms
+      responses:
+        '200':
+          description: Listed platforms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPlatformsResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/platforms/{platform}/models':
+    get:
+      tags:
+        - External Models
+      description: List models from an external platform
+      operationId: list_models_by_platform
+      parameters:
+        - name: platform
+          in: path
+          description: The platform for which you want to list the models
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listed models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelsByPlatformResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+    post:
+      tags:
+        - External Models
+      description: Discover models from external platforms
+      operationId: discover_models_by_platform
+      parameters:
+        - name: platform
+          in: path
+          description: The platform on which you want to discover models
+          required: true
+          schema:
+            $ref: '#/components/schemas/Platform'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryCriteria'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoverModelsByPlatformResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/platforms/{platform}/models/{model_id}':
+    get:
+      tags:
+        - External Models
+      description: Fetch a model from an external platform by id
+      operationId: get_model_by_platform
+      parameters:
+        - name: platform
+          in: path
+          description: Name of the platform from which to fetch the model
+          required: true
+          schema:
+            $ref: '#/components/schemas/Platform'
+        - name: model_id
+          in: path
+          description: Id of the model the fetch from the source platform
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Model fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetModelByPlatformResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+    post:
+      tags:
+        - External Models
+      description: Ingest a model from an external platform
+      operationId: ingest_external_model
+      parameters:
+        - name: platform
+          in: path
+          description: The platform from which the model will be ingested from
+          required: true
+          schema:
+            type: string
+        - name: model_id
+          in: path
+          description: The platform-specific ID of the external model you want to ingest
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestArtifactRequest'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestModelArtifactResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/publications:
+    get:
+      tags:
+        - Publications
+      description: List all model publications
+      operationId: list_model_publications
+      responses:
+        '200':
+          description: Listed model publications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelPublicationsResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/publications/{publication_id}':
+    get:
+      tags:
+        - Publications
+      description: Fetch a publication by id
+      operationId: get_model_publication
+      parameters:
+        - name: publication_id
+          in: path
+          description: The ID of the model publication
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetModelPublicationResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+components:
+  schemas:
+    Accelerator:
+      type: object
+      required:
+        - accelerator_type
+        - system_requirements
+      properties:
+        accelerator_type:
+          type: string
+        cores:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        memory_gb:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        system_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemRequirement'
+          description: Firmware and software
+    Artifact:
+      type: object
+      required:
+        - id
+        - artifact_type
+        - created_at
+        - last_modified
+      properties:
+        artifact_type:
+          $ref: '#/components/schemas/ArtifactType'
+        created_at:
+          type: string
+        id:
+          type: string
+        last_modified:
+          type: string
+    ArtifactIngestion:
+      type: object
+      required:
+        - id
+        - artifact_id
+        - platform
+        - status
+        - created_at
+        - last_modified
+      properties:
+        artifact_id:
+          type: string
+        created_at:
+          type: string
+        id:
+          type: string
+        last_message:
+          type:
+            - string
+            - 'null'
+        last_modified:
+          type: string
+        platform:
+          type: string
+        status:
+          $ref: '#/components/schemas/ArtifactIngestionStatus'
+        webhook_url:
+          type:
+            - string
+            - 'null'
+    ArtifactIngestionStatus:
+      type: string
+      enum:
+        - Submitted
+        - Resubmitted
+        - Pending
+        - Downloading
+        - Downloaded
+        - Archiving
+        - Archived
+        - Finished
+        - Failed
+    ArtifactPublication:
+      type: object
+      required:
+        - id
+        - status
+        - artifact_id
+        - target_platform
+        - attempts
+        - created_at
+        - last_modified
+      properties:
+        artifact_id:
+          type: string
+        attempts:
+          type: integer
+          format: int32
+          minimum: 0
+        created_at:
+          type: string
+        id:
+          type: string
+        last_message:
+          type:
+            - string
+            - 'null'
+        last_modified:
+          type: string
+        status:
+          $ref: '#/components/schemas/ArtifactPublicationStatus'
+        target_platform:
+          type: string
+    ArtifactPublicationStatus:
+      type: string
+      enum:
+        - Submitted
+        - Pending
+        - Extracting
+        - Extracted
+        - PublishingMetadata
+        - PublishedMetadata
+        - PublishingArtifact
+        - PublishedArtifact
+        - Finished
+        - Failed
+    ArtifactType:
+      type: string
+      enum:
+        - Model
+        - Dataset
+    BadRequestResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result: {}
+        status:
+          type: integer
+          format: int32
+          default: 400
+          minimum: 0
+        version:
+          type: string
+    CreateModelMetadataResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    DiscoverModelsByPlatformResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    DiscoveryCriteria:
+      type: object
+      required:
+        - criteria
+      properties:
+        confidence_threshold:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelMetadata'
+    GetModelArtifactResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/Artifact'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    GetModelByPlatformResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    GetModelIngestionResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/ArtifactIngestion'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    GetModelPublicationResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/ArtifactPublication'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    HardwareRequirements:
+      type: object
+      properties:
+        accelerators:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/Accelerator'
+        architectures:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        cpus:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        disk_gb:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        memory_gb:
+          type:
+            - integer
+            - 'null'
+          format: int32
+    IngestArtifactRequest:
+      type: object
+      required:
+        - params
+      properties:
+        exclude_paths:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        include_paths:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        params:
+          type: object
+        webhook_url:
+          type:
+            - string
+            - 'null'
+    IngestModelArtifactResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/ArtifactIngestion'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListModelArtifactResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListModelIngestionsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactIngestion'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListModelPublicationsForArtifactResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactPublication'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListModelPublicationsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtifactPublication'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListModelsByPlatformResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListPlatformsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            type: string
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ModelIO:
+      type: object
+      properties:
+        data_type:
+          type:
+            - string
+            - 'null'
+        shape:
+          type:
+            - array
+            - 'null'
+          items:
+            type: integer
+            format: int32
+    ModelMetadata:
+      type: object
+      properties:
+        bias_evaluation_score:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        edge_optimized:
+          type:
+            - boolean
+            - 'null'
+        finetuning_datasets:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        framework:
+          type:
+            - string
+            - 'null'
+        image:
+          type:
+            - string
+            - 'null'
+        inference_distributed:
+          type:
+            - boolean
+            - 'null'
+        inference_hardware:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/HardwareRequirements'
+        inference_max_compute_utilization_percentage:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        inference_max_energy_consumption_watts:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        inference_max_latency_ms:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: Inference performance fields
+        inference_max_memory_usage_mb:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        inference_min_throughput:
+          type:
+            - integer
+            - 'null'
+          format: int32
+        inference_precision:
+          type:
+            - string
+            - 'null'
+        inference_software_dependencies:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        label_map: {}
+        labels:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: Arbitrary labels
+        license:
+          type:
+            - string
+            - 'null'
+        model_inputs:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/ModelIO'
+        model_outputs:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/ModelIO'
+        model_type:
+          type:
+            - string
+            - 'null'
+        multi_modal:
+          type:
+            - boolean
+            - 'null'
+          description: Architecture fields
+        name:
+          type:
+            - string
+            - 'null'
+        pretrained:
+          type:
+            - boolean
+            - 'null'
+        pretraining_datasets:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        pruned:
+          type:
+            - boolean
+            - 'null'
+        quantization_aware:
+          type:
+            - boolean
+            - 'null'
+        regulatory:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: |-
+            Regulatory and Compliance Fields
+            A vector or strings that represent regulatory standards. Ex HIPPA
+        slimmed:
+          type:
+            - boolean
+            - 'null'
+        supports_quantization:
+          type:
+            - boolean
+            - 'null'
+        task_types:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: Inference Fields
+        training_distributed:
+          type:
+            - boolean
+            - 'null'
+        training_hardware:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/HardwareRequirements'
+        training_max_energy_consumption_watts:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          description: Training performance fields
+        training_precision:
+          type:
+            - string
+            - 'null'
+        training_time:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          description: Training-related Fields
+        version:
+          type:
+            - string
+            - 'null'
+    NotFoundResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result: {}
+        status:
+          type: integer
+          format: int32
+          default: 404
+          minimum: 0
+        version:
+          type: string
+    Platform:
+      type: string
+      description: >-
+        Represents a platform for which there are clients registered for one or
+        more of
+
+        the following APIs: Models, Datasets, Inference, Training. The
+        strum(serialize="")
+
+        attribute corresponds to the desired "platform" path parameter passed to
+        the
+
+        `get_client` method of a registrar.
+      enum:
+        - huggingface
+        - github
+        - git
+        - patra
+    PublishArtifactRequest:
+      type: object
+      required:
+        - target_platform
+      properties:
+        target_platform:
+          type: string
+        webhook_url:
+          type:
+            - string
+            - 'null'
+    PublishModelArtifactResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/ArtifactPublication'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ServerErrorResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result: {}
+        status:
+          type: integer
+          format: int32
+          default: 500
+          minimum: 0
+        version:
+          type: string
+    SystemRequirement:
+      type: object
+      required:
+        - name
+        - version
+      properties:
+        name:
+          type: string
+        version:
+          type: string

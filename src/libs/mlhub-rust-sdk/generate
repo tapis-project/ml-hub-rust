@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -e
+
+rm -f Cargo.toml
+
+# Clean the previously generated libraries
+rm -rf ./models
+
+cargo ws init
+
+source=$2
+if [ -z "$2" ]; then
+    source=./specs/spec.yaml
+fi
+
+destination=$3
+if [ -z "$3" ]; then
+    destination=./specs/transformed-spec.yaml
+fi
+
+python3 scripts/transform.py $source $destination
+
+libninja gen --output-dir ./gen/models MLHubModels $destination
+
+cargo ws create --lib --name models --edition 2021 models
+
+mv gen/models/src/* models/src
+
+cargo ws version minor --allow-branch "*"
+
+# cp template.Cargo.toml models/src/Cargo.toml
