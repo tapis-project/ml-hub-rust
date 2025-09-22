@@ -1,9 +1,9 @@
-[package]
-name = "mlhub-models-api"
-edition = "2021"
-version = "0.1.0"
+# [package]
+# name = "mlhub-models-api"
+# edition = "2021"
+# version = "0.1.0"
 
-[dependencies]
+# [dependencies]
 base64 = "0.21.0"
 futures = "0.3.25"
 httpclient = "0.21.3"
@@ -27,13 +27,13 @@ features = ["derive"]
 version = "1.18.2"
 features = ["full"]
 
-[lib]
-path = "src/lib.rs"
-name = "plaid"
-doctest = false
-edition = "2021"
-crate-type = ["rlib"]
-required-features = []
+# [lib]
+# path = "src/lib.rs"
+# name = "models"
+# doctest = false
+# edition = "2021"
+# crate-type = ["rlib"]
+# required-features = []
 
 [profile.ci]
 debug = false

@@ -27,6 +27,9 @@ cargo ws create --lib --name models --edition 2021 models
 
 mv gen/models/src/* models/src
 
-cargo ws version minor --allow-branch "*"
+cat template.Cargo.toml >> models/Cargo.toml
 
-# cp template.Cargo.toml models/src/Cargo.toml
+cargo add strum_macros@=0.27.2 -p models
+
+cargo ws version patch --allow-branch "*" --no-global-tag
+
