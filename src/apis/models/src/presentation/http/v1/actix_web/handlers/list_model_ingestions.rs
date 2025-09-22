@@ -8,7 +8,20 @@ use crate::bootstrap::state::AppState;
 use actix_web::{get, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
+use shared::presentation::http::v1::contracts;
 
+#[utoipa::path(
+    get,
+    path="/models-api/ingestions",
+    tag="Ingestions",
+    description="List all model ingestions",
+    responses(
+        (status=200, description="Listed model ingestions", body=contracts::responses::ListModelIngestionsResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/ingestions")]
 async fn list_model_ingestions(
     _req: HttpRequest,
@@ -32,8 +45,8 @@ async fn list_model_ingestions(
         .collect();
 
     let mut result: Vec<Value> = Vec::with_capacity(response_dtos.len());
-    for dto in response_dtos {
-        match to_value(dto) {
+    for requests in response_dtos {
+        match to_value(requests) {
             Ok(v) => result.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

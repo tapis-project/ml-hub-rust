@@ -1,13 +1,30 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{GetModelPath, GetModelRequest, Headers};
+use crate::presentation::http::v1::requests::{GetModelPath, GetModelRequest, Headers};
+use shared::presentation::http::v1::contracts::responses;
 use actix_web::{get, web, HttpRequest, Responder};
-use client_provider::ClientProvider;
+use client_provider::{ClientProvider, Platform};
 use clients::GetModelClient;
 use shared::logging::SharedLogger;
 use std::collections::HashMap;
 
+#[utoipa::path(
+    get,
+    path="/models-api/platforms/{platform}/models/{model_id}",
+    tag="External Models",
+    description="Fetch a model from an external platform by id",
+    params(
+        ("platform"=Platform, Path, description="Name of the platform from which to fetch the model"),
+        ("model_id"=String, Path, description="Id of the model the fetch from the source platform"),
+    ),
+    responses(
+        (status=200, description="Model fetched successfully", body=responses::GetModelByPlatformResponse),
+        (status=400, description="Not found", body=responses::BadRequestResponse),
+        (status=404, description="Not found", body=responses::NotFoundResponse),
+        (status=500, description="Not found", body=responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]
 async fn get_model_by_platform(
     req: HttpRequest,
@@ -54,7 +71,3 @@ async fn get_model_by_platform(
         Err(err) => return build_client_error_response(err),
     }
 }
-
-#[cfg(test)]
-#[path = "get_model_by_platform.test.rs"]
-mod get_model_by_platform_test;

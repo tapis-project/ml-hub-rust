@@ -7,7 +7,20 @@ use crate::bootstrap::state::AppState;
 use actix_web::{get, web, HttpRequest, Responder};
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
+use shared::presentation::http::v1::contracts;
 
+#[utoipa::path(
+    get,
+    tag="Artifacts",
+    path = "/models-api/artifacts",
+    description="List all model artifacts",
+    responses(
+        (status=200, description="Listed model artifacts", body=contracts::responses::ListModelArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/artifacts")]
 async fn list_model_artifacts(
     _req: HttpRequest,
@@ -31,8 +44,8 @@ async fn list_model_artifacts(
         .collect();
 
     let mut result: Vec<Value> = Vec::with_capacity(response_dtos.len());
-    for dto in response_dtos {
-        match to_value(dto) {
+    for requests in response_dtos {
+        match to_value(requests) {
             Ok(v) => result.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

@@ -1,13 +1,29 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::{Headers, ListModelsPath, ListModelsRequest};
+use crate::presentation::http::v1::requests::{Headers, ListModelsPath, ListModelsRequest};
 use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use clients::ListModelsClient;
 use shared::logging::SharedLogger;
+use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
 
+#[utoipa::path(
+    get,
+    path="/models-api/platforms/{platform}/models",
+    tag="External Models",
+    description="List models from an external platform",
+    params(
+        ("platform" = String, Path, description = "The platform for which you want to list the models"),
+    ),
+    responses(
+        (status=200, description="Listed models", body=contracts::responses::ListModelsByPlatformResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models_by_platform(
     req: HttpRequest,

@@ -5,7 +5,7 @@ use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
-use shared::presentation::http::v1::dto::models::{
+use shared::presentation::http::v1::requests::models::{
     DiscoverModelsRequest,
     GetModelRequest,
     IngestModelRequest,
@@ -13,7 +13,7 @@ use shared::presentation::http::v1::dto::models::{
 };
 use shared::domain::entities::artifact::Artifact;
 use shared::domain::entities::model_metadata::ModelMetadata;
-use shared::presentation::http::v1::dto::artifacts::PublishArtifactRequest;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use std::path::PathBuf;
 
 pub enum ListModelsClient {
@@ -124,7 +124,7 @@ pub enum PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, extracted_artfiact_path: &PathBuf, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, extracted_artfiact_path: &PathBuf, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
             PublishModelClient::HuggingFace(c) => c.publish_model(extracted_artfiact_path, artifact, metadata, request).await,
         };
@@ -142,7 +142,7 @@ impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
             PublishModelMetadataClient::Patra(c) => c.publish_model_metadata(metadata, request).await,
         };

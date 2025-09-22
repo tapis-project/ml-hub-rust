@@ -2,8 +2,8 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::inputs;
 use crate::application::services::inference_server_service::InferenceServerService;
-use crate::presentation::http::v1::dto::InferenceServer as InferenceServerDto;
-use crate::presentation::http::v1::dto::ListAll;
+use crate::presentation::http::v1::requests::InferenceServer as InferenceServerDto;
+use crate::presentation::http::v1::requests::ListAll;
 use crate::presentation::http::v1::helpers::{
     build_error_response,
     build_success_response
@@ -62,7 +62,7 @@ async fn list_inference_servers(
     let mut dtos: Vec<InferenceServerDto> = Vec::with_capacity(inference_server_count);
     for inference_server in inference_servers {
         let inference_server_dto = match InferenceServerDto::try_from(inference_server) {
-            Ok(dto) => dto,
+            Ok(requests) => requests,
             Err(err) => {
                 return build_error_response(
                     500,
@@ -74,8 +74,8 @@ async fn list_inference_servers(
     }
 
     let mut serialized_dtos: serde_json::Value = Value::Array(Vec::with_capacity(inference_server_count));
-    for dto in dtos {
-        let serialized_dto = match serde_json::to_value(dto) {
+    for requests in dtos {
+        let serialized_dto = match serde_json::to_value(requests) {
             Ok(serialized_dto) => serialized_dto,
             Err(err) => {
                 return build_error_response(

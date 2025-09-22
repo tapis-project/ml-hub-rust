@@ -9,9 +9,25 @@ use shared::application::inputs::artifacts::GetModelArtifactInput;
 use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
 use serde_json::to_value;
-use shared::presentation::http::v1::dto::artifacts::GetArtifactPath;
+use shared::presentation::http::v1::requests::artifacts::GetArtifactPath;
 use uuid::Uuid;
+use shared::presentation::http::v1::contracts;
 
+#[utoipa::path(
+    get,
+    tag="Artifacts",
+    path = "/models-api/artifacts/{artifact_id}",
+    description="Fetches the model artifact by the provided id",
+    params(
+        ("artifact_id" = String, Path, description = "Artifact id")
+    ),
+    responses(
+        (status=200, description="Found model artifact", body=contracts::responses::GetModelArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/artifacts/{artifact_id}")]
 async fn get_model_artifact(
     _req: HttpRequest,
@@ -50,10 +66,10 @@ async fn get_model_artifact(
         None => return build_error_response(404, format!("Artifact with id {} not found", &artifact_id))
     };
 
-    let dto = match to_value(responses::Artifact::from(artifact)) {
+    let requests = match to_value(responses::Artifact::from(artifact)) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };
     
-    build_success_response(Some(dto), None, None)
+    build_success_response(Some(requests), None, None)
 }

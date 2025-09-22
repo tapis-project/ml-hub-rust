@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::dto::{
+use crate::presentation::http::v1::requests::{
     ModelMetadata,
     CreateModelMetadataPath,
     CreateModelMetadata as CreateModelMetadataDto
@@ -17,8 +17,24 @@ use actix_web::{
     Responder
 };
 use shared::logging::SharedLogger;
-// use std::collections::HashMap;
+use shared::presentation::http::v1::contracts::responses;
 
+#[utoipa::path(
+    post,
+    path="/models-api/artifacts/{artifact_id}/metadata",
+    tag="Metadata",
+    description="Create metadata for a model artifact",
+    params(
+        ("artifact_id" = String, Path, description = "The ID of the model artifact")
+    ),
+    request_body=ModelMetadata,
+    responses(
+        (status=200, description="Discovered models", body=responses::CreateModelMetadataResponse),
+        (status=400, description="Not found", body=responses::BadRequestResponse),
+        (status=404, description="Not found", body=responses::NotFoundResponse),
+        (status=500, description="Not found", body=responses::ServerErrorResponse),
+    )
+)]
 #[post("models-api/artifacts/{artifact_id}/metadata")]
 async fn create_model_metadata(
     // req: HttpRequest,
@@ -33,12 +49,12 @@ async fn create_model_metadata(
 
     let artifact_id = path.into_inner().artifact_id;
 
-    let dto = CreateModelMetadataDto {
+    let requests = CreateModelMetadataDto {
         artifact_id: artifact_id.clone(),
         metadata: body.into_inner()
     };
 
-    let input = match CreateModelMetadataInput::try_from(dto) {
+    let input = match CreateModelMetadataInput::try_from(requests) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

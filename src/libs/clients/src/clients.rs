@@ -1,9 +1,9 @@
 use std::path::PathBuf;
-use shared::presentation::http::v1::dto::inference;
-use shared::presentation::http::v1::dto::training;
-use shared::presentation::http::v1::dto::models;
-use shared::presentation::http::v1::dto::datasets;
-use shared::presentation::http::v1::dto::artifacts;
+use shared::presentation::http::v1::requests::inference;
+use shared::presentation::http::v1::requests::training;
+use shared::presentation::http::v1::requests::models;
+use shared::presentation::http::v1::requests::datasets;
+use shared::presentation::http::v1::requests::artifacts;
 use shared::domain::entities;
 use serde::Serialize;
 use async_trait;
@@ -60,7 +60,7 @@ pub trait PublishModelClient: Send + Sync {
         _extracted_artifact_path: &PathBuf,
         _artifact: &entities::artifact::Artifact,
         _metadata: &entities::model_metadata::ModelMetadata,
-        _request: &artifacts::PublishArtifactRequest
+        _request: &artifacts::PublishArtifactServiceRequest
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
@@ -71,7 +71,7 @@ pub trait PublishModelMetadataClient: Send + Sync {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn publish_model_metadata(&self, _metadata: &entities::model_metadata::ModelMetadata, _request: &artifacts::PublishArtifactRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model_metadata(&self, _metadata: &entities::model_metadata::ModelMetadata, _request: &artifacts::PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

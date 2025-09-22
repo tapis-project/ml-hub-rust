@@ -8,7 +8,20 @@ use actix_web::{get, web, Responder};
 use shared::application::inputs::artifact_publication::ListModelPublicationsInput;
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
+use shared::presentation::http::v1::contracts;
 
+#[utoipa::path(
+    get,
+    path="/models-api/publications",
+    tag="Publications",
+    description="List all model publications",
+    responses(
+        (status=200, description="Listed model publications", body=contracts::responses::ListModelPublicationsResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/publications")]
 async fn list_model_publications(
     data: web::Data<AppState>
@@ -31,8 +44,8 @@ async fn list_model_publications(
         .collect();
 
     let mut result: Vec<Value> = Vec::with_capacity(response_dtos.len());
-    for dto in response_dtos {
-        match to_value(dto) {
+    for requests in response_dtos {
+        match to_value(requests) {
             Ok(v) => result.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

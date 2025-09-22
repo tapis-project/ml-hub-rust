@@ -1,7 +1,7 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::dto::ListArtifactPublicationsPath;
+use crate::presentation::http::v1::requests::ListArtifactPublicationsPath;
 use crate::presentation::http::v1::responses;
 use crate::bootstrap::factories::artifact_service_factory;
 use crate::bootstrap::state::AppState;
@@ -9,8 +9,24 @@ use actix_web::{get, web, Responder};
 use shared::application::inputs::artifacts::ListPublicationsByArtifactIdInput;
 use shared::logging::SharedLogger;
 use serde_json::{to_value, Value};
+use shared::presentation::http::v1::contracts;
 use uuid::Uuid;
 
+#[utoipa::path(
+    get,
+    path="/models-api/artifacts/{artifact_id}/publications",
+    tag="Publications",
+    description="List all publications for an artifact",
+    params(
+        ("artifact_id" = String, Path, description = "The ID of the artifact")
+    ),
+    responses(
+        (status=200, description="Listed model publications for artifact", body=contracts::responses::ListModelPublicationsForArtifactResponse),
+        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
+        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
+        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
+    )
+)]
 #[get("models-api/artifacts/{artifact_id}/publications")]
 async fn list_publications_for_artifact(
     path: web::Path<ListArtifactPublicationsPath>,
@@ -43,8 +59,8 @@ async fn list_publications_for_artifact(
         .collect();
 
     let mut result: Vec<Value> = Vec::with_capacity(response_dtos.len());
-    for dto in response_dtos {
-        match to_value(dto) {
+    for requests in response_dtos {
+        match to_value(requests) {
             Ok(v) => result.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

@@ -2,7 +2,7 @@ use crate::bootstrap::factories::inference_server_repo_factory;
 use crate::bootstrap::state::AppState;
 use crate::application::services::inference_server_service::InferenceServerService;
 use crate::application::inputs;
-use crate::presentation::http::v1::dto;
+use crate::presentation::http::v1::requests;
 use crate::presentation::http::v1::helpers::{build_error_response, build_success_response};
 use shared::errors::Error;
 use actix_web::{web, post, Responder, HttpRequest as ActixHttpRequest};
@@ -24,14 +24,14 @@ async fn create_inference_server(
         .and_then(|value| value.to_str().ok())
         .unwrap_or("application/json");
 
-    let inference_server_dto: dto::InferenceServer = match if content_type.contains("yaml") {
-        yaml_from_slice::<dto::InferenceServer>(&body)
+    let inference_server_dto: requests::InferenceServer = match if content_type.contains("yaml") {
+        yaml_from_slice::<requests::InferenceServer>(&body)
             .map_err(|err| Error::new(String::from(format!("Deserialization error: {}", err.to_string()))))
     } else {
-        json_from_slice::<dto::InferenceServer>(&body)
+        json_from_slice::<requests::InferenceServer>(&body)
             .map_err(|err| Error::new(String::from(format!("Deserialization error: {}", err.to_string()))))
     } {
-        Ok(dto) => dto,
+        Ok(requests) => requests,
         Err(err) => {
             return build_error_response(400, String::from(format!("Yaml deserialization error: {}", err.to_string())))
         }
@@ -56,14 +56,14 @@ async fn create_inference_server(
         }
     };
 
-    let dto = match dto::InferenceServer::try_from(inference_server) {
-        Ok(dto) => dto,
+    let requests = match requests::InferenceServer::try_from(inference_server) {
+        Ok(requests) => requests,
         Err(err) => {
             return build_error_response(500, String::from(format!("Error converting inference server data: {}", err.to_string())));
         }
     };
 
-    match serde_json::to_value(dto) {
+    match serde_json::to_value(requests) {
         Ok(result) => {
             return build_success_response(Some(result), Some(String::from("success")), None)
         },

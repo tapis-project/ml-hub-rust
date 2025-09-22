@@ -4,9 +4,9 @@ use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
-use shared::presentation::http::v1::dto::datasets::IngestDatasetRequest;
+use shared::presentation::http::v1::requests::datasets::IngestDatasetRequest;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::dto::models::IngestModelRequest;
+use shared::presentation::http::v1::requests::models::IngestModelRequest;
 use std::path::PathBuf;
 
 #[derive(Debug)]

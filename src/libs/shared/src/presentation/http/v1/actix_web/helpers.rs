@@ -1,5 +1,5 @@
 use crate::presentation::http::v1::responses::JsonResponse;
-use crate::presentation::http::v1::dto::Parameters;
+use crate::presentation::http::v1::requests::Parameters;
 use crate::errors::Error;
 use serde_json::Value;
 use actix_web::{HttpRequest, HttpResponse, http::StatusCode};

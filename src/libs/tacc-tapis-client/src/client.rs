@@ -13,7 +13,7 @@ use clients::{
     PublishModelClient,
     // ClientErrorScope
 };
-use shared::presentation::http::v1::dto::artifacts;
+use shared::presentation::http::v1::requests::artifacts;
 use shared::logging::SharedLogger;
 
 #[derive(Debug)]
