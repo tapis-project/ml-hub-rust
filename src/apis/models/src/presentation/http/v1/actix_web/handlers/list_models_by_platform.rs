@@ -14,6 +14,9 @@ use std::collections::HashMap;
     path="/models-api/platforms/{platform}/models",
     tag="External Models",
     description="List models from an external platform",
+    params(
+        ("platform" = String, Path, description = "The platform for which you want to list the models"),
+    ),
     responses(
         (status=200, description="Listed models", body=contracts::responses::ListModelsByPlatformResponse),
         (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
