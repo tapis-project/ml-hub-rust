@@ -6,11 +6,11 @@ mod retry_test {
     mod calculate_delay_test {
         use super::*;
 
-        mod exponentional_backoff_test {
+        mod Exponential_backoff_test {
             use super::*;
             #[test]
             fn test_with_full_jitter() {
-                let policy = RetryPolicy::ExponentionalBackoff(retry::ExponentionalBackoff {
+                let policy = RetryPolicy::ExponentialBackoff(retry::ExponentialBackoff {
                     retries: retry::Retry::NTimes(4),
                     delay: 100,
                     base: Some(2),
@@ -28,7 +28,7 @@ mod retry_test {
 
             #[test]
             fn test_without_full_jitter() {
-                let policy = RetryPolicy::ExponentionalBackoff(retry::ExponentionalBackoff {
+                let policy = RetryPolicy::ExponentialBackoff(retry::ExponentialBackoff {
                     retries: retry::Retry::NTimes(4),
                     delay: 100,
                     base: Some(2),
@@ -100,7 +100,7 @@ mod retry_test {
         #[tokio::test]
         async fn test_with_exponential_backoff() {
             use super::*;
-            let policy = RetryPolicy::ExponentionalBackoff(retry::ExponentionalBackoff {
+            let policy = RetryPolicy::ExponentialBackoff(retry::ExponentialBackoff {
                 retries: retry::Retry::NTimes(5),
                 delay: 100,
                 base: Some(8),

@@ -1,0 +1,3 @@
+[toolchain]
+channel = "nightly-2025-08-30" # pick one a week or two back
+components = ["rust-src", "clippy", "rustfmt"]

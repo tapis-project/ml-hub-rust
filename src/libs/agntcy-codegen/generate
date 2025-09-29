@@ -1,0 +1,11 @@
+#!/urs/bin/env bash
+
+echo "Step O: Preprocess the spec:"
+
+docker build -f Dockerfile.node -t mlhub/typegen:latest
+
+docker run --mount type=bind,src=./,dst=/src -it mlhub/typegen:latest
+
+docker build -f Dockerfile.node -t mlhub/typegen:latest
+
+docker run --mount type=bind,src=./,dst=/src -it mlhub/typegen:latest   

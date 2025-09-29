@@ -152,7 +152,7 @@
     },
     {
       "name": "nfs",
-      "rootDir": "src/components/nfs",
+      "rootDir": "src/infra/nfs",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
@@ -162,13 +162,13 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} --container=\"nfs-server\" -- sh",
-        "code": "code src/components/{{ self.name }}",
+        "code": "code src/infra/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "traefik",
-      "rootDir": "src/components/traefik",
+      "rootDir": "src/infra/traefik",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
@@ -179,14 +179,14 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "expose": "minikube service expose mlhub-traefik-web-service --url",
-        "code": "code src/components/{{ self.name }}",
+        "code": "code src/infra/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-ingester",
-      "rootDir": "src/components/artifact-ingester",
-      "labels": ["component", "worker"],
+      "rootDir": "src/bins/artifact-ingester",
+      "labels": ["bin", "worker"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -213,8 +213,8 @@
     },
     {
       "name": "artifact-publisher",
-      "rootDir": "src/components/artifact-publisher",
-      "labels": ["component", "worker"],
+      "rootDir": "src/bins/artifact-publisher",
+      "labels": ["bin", "worker"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -241,7 +241,7 @@
     },
     {
       "name": "artifact-mq",
-      "rootDir": "src/components/artifact-mq",
+      "rootDir": "src/infra/artifact-mq",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
@@ -252,13 +252,13 @@
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/components/{{ self.name }}",
+        "code": "code src/infra/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-db",
-      "rootDir": "src/components/artifact-db",
+      "rootDir": "src/infra/artifact-db",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
@@ -269,14 +269,14 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-service 27017:27017", 
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code src/components/{{ self.name }}",
+        "code": "code src/infra/{{ self.name }}",
         "gui": "open -a \"MongoDB Compass\"",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "inference-db",
-      "rootDir": "src/components/inference-db",
+      "rootDir": "src/infra/inference-db",
       "labels": ["component"],
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
@@ -286,7 +286,7 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/components/{{ self.name }}",
+        "code": "code src/infra/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
@@ -418,6 +418,20 @@
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "code": "code {{ bins-dir }}/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+      }
+    },
+    {
+      "name": "agntcy-codegen",
+      "rootDir": "src/lib/agntcy-codegen",
+      "labels": ["lib"],
+      "commands": {
+        "initialize": "",
+        "compile": "cargo +nightly build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "code": "code src/libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },

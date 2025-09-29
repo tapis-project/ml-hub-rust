@@ -12,7 +12,7 @@ pub enum Jitter {
     Full,
 }
 
-pub struct ExponentionalBackoff {
+pub struct ExponentialBackoff {
     pub retries: Retry,
     pub delay: u64,
     pub base: Option<u32>,
@@ -39,14 +39,14 @@ pub struct LinearBackoff {
 
 pub enum RetryPolicy {
     NoBackoff(NoBackoff),
-    ExponentionalBackoff(ExponentionalBackoff),
+    ExponentialBackoff(ExponentialBackoff),
     FixedBackoff(FixedBackoff),
     LinearBackoff(LinearBackoff)
 }
 
 fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64 {
     match policy {
-        RetryPolicy::ExponentionalBackoff(backoff) => {
+        RetryPolicy::ExponentialBackoff(backoff) => {
             let base = backoff.base.unwrap_or(2) as u64;
             if let Some(jitter) = &backoff.jitter {
                 match jitter {
@@ -87,7 +87,7 @@ where
     let mut attempt: i16 = 0;
 
     match policy {
-        RetryPolicy::ExponentionalBackoff(ref backoff) => {
+        RetryPolicy::ExponentialBackoff(ref backoff) => {
             match backoff.retries {
                 Retry::NTimes(n) => {
                     retries = n as i16;
