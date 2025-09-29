@@ -1,3 +1,5 @@
+#!/usr/var/env bash
+
 set -e
 
 python3 manage.py "${@}"

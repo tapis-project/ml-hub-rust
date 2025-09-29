@@ -9,7 +9,7 @@ pub enum Jitter {
 
 }
 
-pub struct ExponentionalBackoff {
+pub struct ExponentialBackoff {
     pub retries: Retry,
     pub base: u32,
     pub exponent: u32,
@@ -17,7 +17,7 @@ pub struct ExponentionalBackoff {
 }
 
 pub enum RetryPolicy {
-    ExponentionalBackoff(ExponentionalBackoff)
+    ExponentialBackoff(ExponentialBackoff)
 }
 
 /// Retries an asynchronous function call based on the provided number of retries
@@ -29,7 +29,7 @@ where
 {
     let mut retries: i8 = 0;
     match policy {
-        RetryPolicy::ExponentionalBackoff(backoff) => {
+        RetryPolicy::ExponentialBackoff(backoff) => {
             retries = match backoff.retries {
                 Retry::Finite(r) => r,
                 Retry::Infinity => -1,

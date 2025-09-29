@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::future::Future;
 use std::pin::Pin;
-use crate::retry::{retry_async, RetryPolicy, ExponentionalBackoff, FixedBackoff, Retry, Jitter};
+use crate::retry::{retry_async, RetryPolicy, ExponentialBackoff, FixedBackoff, Retry, Jitter};
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, GetModelArtifactInput, IngestArtifactInput, ListIngestionsByArtifactIdInput, ListPublicationsByArtifactIdInput, UploadArtifactInput};
 use crate::application::inputs::artifact_publication::{GetModelPublicationInput, ListModelPublicationsInput, PublishArtifactInput};
@@ -85,8 +85,8 @@ impl ArtifactService {
         }
     ));
 
-    const MQ_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| RetryPolicy::ExponentionalBackoff(
-        ExponentionalBackoff {
+    const MQ_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| RetryPolicy::ExponentialBackoff(
+        ExponentialBackoff {
             retries: Retry::NTimes(3),
             delay: 50,
             base: Some(2),
