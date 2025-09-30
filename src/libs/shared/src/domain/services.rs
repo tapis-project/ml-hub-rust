@@ -44,7 +44,7 @@ pub enum ModelMetadataServiceError {
 pub struct ModelMetadataService {}
 
 impl ModelMetadataService {
-    /// Verifies the the artifact exists and that the artifact has is fully
+    /// Verifies that the artifact exists and that the artifact has been fully
     /// ingested or uploaded
     pub fn create<'a>(artifact: &Artifact, _metadata: ModelMetadata) -> Result<(), ModelMetadataServiceError> {
         if !artifact.is_fully_ingested() {
