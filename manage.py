@@ -67,7 +67,7 @@ def load(path, default=None):
         
         return default
     except Exception as e:
-        print(f"❌ An error has occured loading the config file: {e}")
+        print(f"❌ An error has occurred loading the config file: {e}")
         sys.exit(1)
 
     return obj
@@ -78,13 +78,13 @@ def save(obj: dict, path):
         with open(path, "w") as file:
             file.write(json.dumps(obj, indent=2))
     except Exception as e:
-        print(f"❌ An error has occured updating the config file: {e}")
+        print(f"❌ An error has occurred updating the config file: {e}")
         sys.exit(1)
 
     return obj
 
 def initialize_component(component, template_vars, skip_initialization=False):
-    # Skip the initializtion
+    # Skip the initialization
     if skip_initialization:
         return True
     
@@ -122,7 +122,7 @@ def initialize_component(component, template_vars, skip_initialization=False):
         print(f"❌ There was an error initializing component '{component.get('name')}': {result.stderr.decode('utf8')}")
         return False
     
-    # Add the initlaized component name to the config file
+    # Add the initialized component name to the config file
     initialized_components = lock_config.get("initialized", [])
     initialized_components.append(component["name"])
     lock_config["initialized"] = list(set(initialized_components))
@@ -212,13 +212,13 @@ def main():
         help="Forces a run the 'initialize' script for each component"
     )
 
-    # Skips the 'initialize' script for each component even if the component is uninitialzed
+    # Skips the 'initialize' script for each component even if the component is uninitialized
     group.add_argument(
         "-s",
         "--skip-initialization",
         default=False,
         action='store_true',
-        help="Skips the 'initialize' script for each component even if the component is uninitialzed"
+        help="Skips the 'initialize' script for each component even if the component is uninitialized"
     )
 
     # Arguments to be added to the end of the command
@@ -258,7 +258,7 @@ def main():
     selected_component_names = set(args.components)
     for selected_component_name in selected_component_names:
         if selected_component_name not in all_component_names:
-            print(f"❌ Invalid component. Expected one of: {all_component_names}. Recieved: '{selected_component_name}'")
+            print(f"❌ Invalid component. Expected one of: {all_component_names}. Received: '{selected_component_name}'")
             sys.exit(1)
     
     # The user provided command to be run on the selected components

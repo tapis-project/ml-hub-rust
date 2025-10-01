@@ -116,3 +116,61 @@ This layer ties the presentation and infrastructure layers to the application la
 ### Adding a new Library
 
 ### Adding a new Infrastructure component
+
+## Using the Lifecycle Management CLI
+
+The lifecycle manage script located in the root of the project enables developers to execute many command and workflows used for the development of this project. Below is the *help* documentation for the CLI which you can view by running `./manage --help`:
+
+```
+    A command line tool for managing the lifecycle of microservice components. Components are defined in a file at the
+    root directory of the project (components.json) that enumerate a set of commands to be run against them. These
+    commands can call scripts (ex. ./burnup) or run a one-line bash command. This tool offers functionality akin to the
+    `npm run` command of Node Package manager (npm)
+
+    positional arguments:
+    command               The command to run over the selected components
+    components            The name of one or more components upon which to run the command. If no value provided, the
+                            provided command will be run for all components
+
+    options:
+    -h, --help            show this help message and exit
+    -t, --template-vars key value
+                            Replaces all instances of the provided key (first argument) in a command with the provided
+                            value (second argument)
+    -l, --labels LABELS [LABELS ...]
+                            Selects only the components that have the provided labels
+    -v, --verbose         Shows the command to run before running it
+    -d, --dry-run         Echos all the commands that would be run during normal operation
+    -p, --prompt          Prompts the user to confirm the command to be run for each component
+    -i, --initialize      Forces a run the 'initialize' script for each component
+    -s, --skip-initialization
+                            Skips the 'initialize' script for each component even if the component is uninitialized
+    -a, --args ARGS [ARGS ...]
+                            Arguments that will be added to the end of the command
+```
+
+This management script allows you to run commands for components defined in the `components.json` file also located in the root of the project. In this file is a JSON object with two properties. The `components` property contains objects for each component in this project. This object is a key-value store in which the key is the name of the command and value is a bash command that can be invoked by the manage script. You can invoke those commands for a component by typing `./manage` followed by the command, followed by the component you want to run the command against.
+
+Example 1:
+Let's say you're running MLHub locally and you want to stop the Models API, then start it again; you can run the following:
+
+`./manage stop models && ./manage start models` or `./manage restart`
+
+Example 2:
+Or a more complex example; The following command will stop the service locally if running, build an image with a local tag, load the new image into Minkube, then restart the service (it does more than this actually, see below). In this example, we will run this against both the Models and the Datasets API, respectively:
+
+`./manage cyclel models datasets`
+
+This single command does quite a bit of work and it only cost you a few seconds to type! This is the power of the lifecycle management script. To see the actual bash command being run above, perform a dry run (don't worry, it's safe) with the following command:
+
+`./manage cyclel models datasets -d -v`
+
+Here is the output from the above script:
+
+```
+$ src/apis/models/scripts/burnup.sh src/apis/models $(kubectl get service mlhub-nfs-server-service -o jsonpath='{.spec.clusterIP}') && src/apis/models/scripts/burndown.sh src/apis/models $(kubectl get service mlhub-nfs-server-service -o jsonpath='{.spec.clusterIP}') && docker build -f src/apis/models/Dockerfile.local -t tapis/models-api:local --build-arg SERVICE_NAME=models --build-arg SERVICE_DIR="src/apis/models" --build-arg LIBS_DIR="src/libs" . && minikube image load tapis/models-api:local && src/apis/models/scripts/burnup.sh src/apis/models $(kubectl get service mlhub-nfs-server-service -o jsonpath='{.spec.clusterIP}'); src/apis/datasets/scripts/burnup.sh src/apis/datasets $(kubectl get service mlhub-nfs-server-service -o jsonpath='{.spec.clusterIP}') && src/apis/datasets/scripts/burndown.sh src/apis/datasets $(kubectl get service mlhub-nfs-server-service -o jsonpath='{.spec.clusterIP}') && docker build -f src/apis/datasets/Dockerfile.local -t tapis/datasets-api:local --build-arg SERVICE_NAME=datasets --build-arg SERVICE_DIR="src/apis/datasets" --build-arg LIBS_DIR="src/libs" . && minikube image load tapis/datasets-api:local && src/apis/datasets/scripts/burnup.sh src/apis/datasets $(kubectl get service mlhub-nfs-server-service -o jsonpath='{.spec.clusterIP}')
+```
+
+Which would you rather type out? 🧐
+
+For a full set of the possible components and commands, take a look at the [components.json](./components.json) file.
