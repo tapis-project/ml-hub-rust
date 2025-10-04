@@ -1,1 +1,0 @@
-docker build -f Dockerfile -t mlhub/typescript-sdk:latest .
