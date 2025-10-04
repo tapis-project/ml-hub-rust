@@ -8,7 +8,7 @@ import {
 } from '../../src';
 import { expect } from 'chai';
 import fetch from 'cross-fetch';
-import { CreateModelMetadataRequest, GetModelByPlatformRequest, ListModelsByPlatformRequest } from '@mlhub/models-ts-sdk';
+import { CreateModelMetadataRequest, DiscoverModelsByPlatformRequest, GetModelByPlatformRequest, ListModelsByPlatformRequest } from '@mlhub/models-ts-sdk';
 
 //   basePath: process.env.TEST_TENANT,
 const basePath = 'https://dev.develop.tapis.io/v3/mlhub';
@@ -60,6 +60,29 @@ describe('Models e2e tests', async () => {
 
     try {
         let response = await externalModelsApi.getModelByPlatform(request)
+        console.log({res: response.result})
+        // expect(response.result).to.be.an("object");
+    } catch (e) {
+      console.log({e})
+      expect.fail(`Test failed because an exception was thrown: ${e}`)
+    }
+  });
+
+  it("should discover models on HuggingFace", async () => {
+    let request: DiscoverModelsByPlatformRequest = {
+      platform: Models.Platform.Patra,
+      discoveryCriteria: {
+        confidence_threshold: null,
+        criteria: [
+          {
+            name: "Find image detection models"
+          }
+        ]
+      }
+    };
+
+    try {
+        let response = await externalModelsApi.discoverModelsByPlatform(request)
         console.log({res: response.result})
         // expect(response.result).to.be.an("object");
     } catch (e) {

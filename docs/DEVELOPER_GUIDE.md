@@ -103,7 +103,7 @@ The domain layer represents all business concepts and their relationships in the
 
 This layer encapsulates the implementation details of the actual technologies used in this project such as databases, message brokers, and external service calls.
 
-### 5. The Bootsrap Layer
+### 5. The Bootstrap Layer
 
 ## Adding New Components
 

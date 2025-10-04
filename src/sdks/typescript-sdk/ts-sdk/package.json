@@ -9,8 +9,8 @@
     "build": "tsc",
     "generate": "./generate_all",
     "build-services": "./build-services",
-    "test": "mocha -r ts-node/register 'tests/*.ts'",
-    "e2e": "mocha --timeout 10000 -r ts-node/register 'tests/e2e/*.ts'",
+    "test": "mocha -r ts-node/register 'tests/*.test.ts'",
+    "e2e": "mocha --timeout 10000 -r ts-node/register 'tests/e2e/*.test.ts'",
     "prepare": "tsc"
   },
   "repository": {
