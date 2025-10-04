@@ -4,6 +4,7 @@
     "tag": "dev",
     "local": "local",
     "libs-dir": "src/libs",
+    "sdks-dir": "src/sdks",
     "bins-dir": "src/bins",
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
@@ -28,6 +29,7 @@
       "name": "models",
       "rootDir": "src/apis/models",
       "labels": ["api"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -60,6 +62,7 @@
       "name": "datasets",
       "rootDir": "src/apis/datasets",
       "labels": ["api"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -92,6 +95,7 @@
       "name": "inference",
       "rootDir": "src/apis/inference",
       "labels": ["api"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -123,6 +127,7 @@
       "name": "training",
       "rootDir": "src/apis/training",
       "labels": ["api"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -154,6 +159,7 @@
       "name": "nfs",
       "rootDir": "src/infra/nfs",
       "labels": ["component"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -170,6 +176,7 @@
       "name": "traefik",
       "rootDir": "src/infra/traefik",
       "labels": ["component"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -187,6 +194,7 @@
       "name": "artifact-ingester",
       "rootDir": "src/bins/artifact-ingester",
       "labels": ["bin", "worker"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -215,6 +223,7 @@
       "name": "artifact-publisher",
       "rootDir": "src/bins/artifact-publisher",
       "labels": ["bin", "worker"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -242,7 +251,8 @@
     {
       "name": "artifact-mq",
       "rootDir": "src/infra/artifact-mq",
-      "labels": ["component"],
+      "labels": ["infra"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -259,7 +269,8 @@
     {
       "name": "artifact-db",
       "rootDir": "src/infra/artifact-db",
-      "labels": ["component"],
+      "labels": ["infra"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -278,6 +289,7 @@
       "name": "inference-db",
       "rootDir": "src/infra/inference-db",
       "labels": ["component"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
@@ -294,6 +306,7 @@
       "name": "huggingface-client",
       "rootDir": "src/libs/huggingface-client",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -307,6 +320,7 @@
       "name": "shared",
       "rootDir": "src/libs/shared",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -321,6 +335,7 @@
       "name": "clients",
       "rootDir": "src/libs/clients",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -334,6 +349,7 @@
       "name": "client-provider",
       "rootDir": "src/libs/client-provider",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -347,6 +363,7 @@
       "name": "github-lfs-client",
       "rootDir": "src/libs/github-lfs-client",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -360,6 +377,7 @@
       "name": "git-lfs-client",
       "rootDir": "src/libs/git-lfs-client",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -373,6 +391,7 @@
       "name": "tacc-tapis-client",
       "rootDir": "src/libs/tacc-tapis-client",
       "labels": ["lib"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -386,6 +405,7 @@
       "name": "s3-client",
       "rootDir": "src/libs/s3-client",
       "labels": ["lib"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -399,6 +419,7 @@
       "name": "patra-client",
       "rootDir": "src/libs/patra-client",
       "labels": ["lib"],
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -412,6 +433,7 @@
       "name": "cli",
       "rootDir": "src/bins/cli",
       "labels": ["bin", "cli"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "",
         "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -425,6 +447,7 @@
       "name": "agntcy-codegen",
       "rootDir": "src/lib/agntcy-codegen",
       "labels": ["lib"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "",
         "compile": "cargo +nightly build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
@@ -436,16 +459,26 @@
       }
     },
     {
-      "name": "mlhub-rust-sdk",
-      "rootDir": "src/libs/mlhub-rust-sdk",
-      "labels": ["lib"],
+      "name": "rust-sdk",
+      "rootDir": "src/sdks/rust-sdk",
+      "labels": ["sdk"],
+      "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path {{ sdks-dir }}/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code {{ libs-dir }}/{{ self.name }}",
+        "code": "code {{ sdks-dir }}/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+      }
+    },
+    {
+      "name": "typescript-sdk",
+      "lifecycle": "experimental",
+      "rootDir": "src/sdks/typescript-sdk",
+      "labels": ["sdk"],
+      "commands": {
+        "code": "code {{ sdks-dir }}/{{ self.name }}"
       }
     }
   ]
