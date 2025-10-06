@@ -1,0 +1,23 @@
+[workspace]
+members = [
+    # "src/apis/agents",
+    # "src/apis/datasets",
+    # "src/apis/deployments",
+    "src/apis/models",
+    "src/bins/artifact-ingester",
+    "src/bins/artifact-publisher",
+    # "src/bins/cli",
+    "src/libs/agntcy-codegen",
+    "src/libs/client-provider",
+    "src/libs/clients",
+    "src/libs/git-lfs-client",
+    "src/libs/github-lfs-client",
+    "src/libs/huggingface-client",
+    "src/libs/patra-client",
+    "src/libs/s3-client",
+    "src/libs/shared",
+    # "src/libs/tacc-tapis-client"
+]
+
+
+
