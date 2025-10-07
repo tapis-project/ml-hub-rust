@@ -33,10 +33,10 @@ export interface ListModelsByPlatformResponse {
     metadata: object;
     /**
      * 
-     * @type {object}
+     * @type {Array<{ [key: string]: any; }>}
      * @memberof ListModelsByPlatformResponse
      */
-    result: object;
+    result: Array<{ [key: string]: any; }>;
     /**
      * 
      * @type {number}

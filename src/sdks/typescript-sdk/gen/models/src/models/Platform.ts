@@ -24,7 +24,9 @@ export enum Platform {
     Huggingface = 'huggingface',
     Github = 'github',
     Git = 'git',
-    Patra = 'patra'
+    Patra = 'patra',
+    TaccTapis = 'tacc-tapis',
+    S3 = 's3'
 }
 
 export function PlatformFromJSON(json: any): Platform {

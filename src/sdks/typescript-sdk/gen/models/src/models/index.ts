@@ -28,6 +28,7 @@ export * from './ModelIO';
 export * from './ModelMetadata';
 export * from './NotFoundResponse';
 export * from './Platform';
+export * from './PlatformDetails';
 export * from './PublishArtifactRequest';
 export * from './PublishModelArtifactResponse';
 export * from './ServerErrorResponse';

@@ -7,7 +7,6 @@ import { expect } from 'chai';
 describe('tapis-typescript', () => {
   it('should have Models service', () => {
     expect(Models).to.have.property('ArtifactsApi');
-    expect(Models).to.have.property('ExternalModelsApi');
     expect(Models).to.have.property('IngestionsApi');
     expect(Models).to.have.property('MetadataApi');
     expect(Models).to.have.property('PlatformsApi');

@@ -4,7 +4,6 @@
 README.md
 package.json
 src/apis/ArtifactsApi.ts
-src/apis/ExternalModelsApi.ts
 src/apis/IngestionsApi.ts
 src/apis/MetadataApi.ts
 src/apis/PlatformsApi.ts
@@ -39,6 +38,7 @@ src/models/ModelIO.ts
 src/models/ModelMetadata.ts
 src/models/NotFoundResponse.ts
 src/models/Platform.ts
+src/models/PlatformDetails.ts
 src/models/PublishArtifactRequest.ts
 src/models/PublishModelArtifactResponse.ts
 src/models/ServerErrorResponse.ts

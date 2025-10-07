@@ -496,7 +496,9 @@
       "rootDir": "src/sdks/typescript-sdk",
       "labels": ["sdk"],
       "commands": {
-        "code": "code {{ sdks-dir }}/{{ self.name }}"
+        "code": "code {{ sdks-dir }}/{{ self.name }}",
+        "build": "./{{ self.rootDir }}/build",
+        "exec": "./{{ self.rootDir }}/exec `pwd`/src/assets"
       }
     },
     {
@@ -506,7 +508,7 @@
       "labels": ["devtool"],
       "commands": {
         "code": "code {{ devtools-dir }}/{{ self.name }}",
-        "models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) src/assets/apis/models/downgraded-spec.yml"
+        "downgrade-models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) src/assets/apis/models/spec.yml"
       }
     }
   ]

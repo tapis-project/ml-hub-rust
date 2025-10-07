@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    PlatformDetails,
+    PlatformDetailsFromJSON,
+    PlatformDetailsFromJSONTyped,
+    PlatformDetailsToJSON,
+} from './';
+
 /**
  * 
  * @export
@@ -33,10 +40,10 @@ export interface ListPlatformsResponse {
     metadata: object;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<PlatformDetails>}
      * @memberof ListPlatformsResponse
      */
-    result: Array<string>;
+    result: Array<PlatformDetails>;
     /**
      * 
      * @type {number}
@@ -63,7 +70,7 @@ export function ListPlatformsResponseFromJSONTyped(json: any, ignoreDiscriminato
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': json['result'],
+        'result': ((json['result'] as Array<any>).map(PlatformDetailsFromJSON)),
         'status': json['status'],
         'version': json['version'],
     };
@@ -80,7 +87,7 @@ export function ListPlatformsResponseToJSON(value?: ListPlatformsResponse | null
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': value.result,
+        'result': ((value.result as Array<any>).map(PlatformDetailsToJSON)),
         'status': value.status,
         'version': value.version,
     };

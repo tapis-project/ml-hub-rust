@@ -1007,8 +1007,6 @@ components:
           items:
             type: object
             additionalProperties: {}
-            propertyNames:
-              type: string
         status:
           type: integer
           format: int32

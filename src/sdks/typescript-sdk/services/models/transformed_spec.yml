@@ -303,7 +303,7 @@ paths:
   '/models-api/platforms/{platform}/models':
     get:
       tags:
-        - External Models
+        - Platforms
       description: List models from an external platform
       operationId: list_models_by_platform
       parameters:
@@ -312,7 +312,7 @@ paths:
           description: The platform for which you want to list the models
           required: true
           schema:
-            type: string
+            $ref: '#/components/schemas/Platform'
       responses:
         '200':
           description: Listed models
@@ -340,7 +340,7 @@ paths:
                 $ref: '#/components/schemas/ServerErrorResponse'
     post:
       tags:
-        - External Models
+        - Platforms
       description: Discover models from external platforms
       operationId: discover_models_by_platform
       parameters:
@@ -384,7 +384,7 @@ paths:
   '/models-api/platforms/{platform}/models/{model_id}':
     get:
       tags:
-        - External Models
+        - Platforms
       description: Fetch a model from an external platform by id
       operationId: get_model_by_platform
       parameters:
@@ -427,7 +427,7 @@ paths:
                 $ref: '#/components/schemas/ServerErrorResponse'
     post:
       tags:
-        - External Models
+        - Platforms
       description: Ingest a model from an external platform
       operationId: ingest_external_model
       parameters:
@@ -436,7 +436,7 @@ paths:
           description: The platform from which the model will be ingested from
           required: true
           schema:
-            type: string
+            $ref: '#/components/schemas/Platform'
         - name: model_id
           in: path
           description: The platform-specific ID of the external model you want to ingest
@@ -1003,7 +1003,10 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
         status:
           type: integer
           format: int32
@@ -1026,7 +1029,7 @@ components:
         result:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/PlatformDetails'
         status:
           type: integer
           format: int32
@@ -1048,6 +1051,7 @@ components:
     ModelMetadata:
       type: object
       properties:
+        annotation: {}
         bias_evaluation_score:
           type: integer
           nullable: true
@@ -1102,8 +1106,7 @@ components:
           nullable: true
           items:
             type: string
-        label_map: {}
-        labels:
+        keywords:
           type: array
           nullable: true
           items:
@@ -1228,6 +1231,20 @@ components:
         - github
         - git
         - patra
+        - tacc-tapis
+        - s3
+    PlatformDetails:
+      type: object
+      required:
+        - name
+        - capabilities
+      properties:
+        capabilities:
+          type: array
+          items:
+            type: string
+        name:
+          $ref: '#/components/schemas/Platform'
     PublishArtifactRequest:
       type: object
       required:

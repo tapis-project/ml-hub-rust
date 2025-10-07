@@ -14,12 +14,12 @@ import { CreateModelMetadataRequest, DiscoverModelsByPlatformRequest, GetModelBy
 const basePath = 'https://dev.develop.tapis.io/v3/mlhub';
 
 //////////////////////////////////////////////////////////
-/*                      ExternalModels                  */
+/*                      Platforms                  */
 //////////////////////////////////////////////////////////
 
-let externalModelsApi: Models.ExternalModelsApi;
+let externalModelsApi: Models.PlatformsApi;
 
-let externalModels: Array<object>
+let platforms: Array<object>
 let externalModel: object | undefined;
 
 describe('Models e2e tests', async () => {
@@ -32,17 +32,17 @@ describe('Models e2e tests', async () => {
     }
     const configuration: Models.Configuration = new Models.Configuration(configurationParameters);
     
-    externalModelsApi = new Models.ExternalModelsApi(configuration);
+    externalModelsApi = new Models.PlatformsApi(configuration);
   });
 
   it("should fetch a list of models from huggingface", async () => {
     let request: ListModelsByPlatformRequest = {
-      platform: "huggingface"
+      platform: Models.Platform.Huggingface
     };
 
     try {
         let response = await externalModelsApi.listModelsByPlatform(request)
-        externalModels = response.result as Array<{[key: string]: any}>;
+        platforms = response.result as Array<{[key: string]: any}>;
         expect(response.result).to.be.an("array");
     } catch (e) {
       expect.fail(`Test failed because an exception was thrown: ${e}`)
@@ -50,7 +50,7 @@ describe('Models e2e tests', async () => {
   });
 
   it("should get the metadata for the first model returned from huggingface", async () => {
-    externalModel = externalModels.pop();
+    externalModel = platforms.pop();
     expect(externalModel).to.be.not.undefined;
 
     let request: GetModelByPlatformRequest = {

@@ -12,12 +12,20 @@ def downgrade(spec):
     allOf = r"nullable: true\n          allOf:\n\1- \2"
     modified_spec = re.sub(oneOf, allOf, modified_spec)
 
+    # Remove all instances of the 'propertyNames' prop of additionalProperties object
+    modified_spec = remove_additionalProperties_propertyNames_prop(modified_spec)
+
     return modified_spec
 
     
 def downgrade_nullable_types(spec, _type):
     spec = re.sub(fr"type:\n\s{{12}}- {_type}", f"type: {_type}", spec, flags=re.MULTILINE)
     spec = spec.replace("  - 'null'", "nullable: true")
+
+    return spec
+
+def remove_additionalProperties_propertyNames_prop(spec):
+    spec = re.sub(r"\s{12}propertyNames:\n\s{14}type:\sstring\n", "", spec, flags=re.MULTILINE)
 
     return spec
 

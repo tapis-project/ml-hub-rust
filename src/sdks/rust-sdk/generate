@@ -19,7 +19,7 @@ if [ -z "$3" ]; then
     destination=./specs/transformed-spec.yaml
 fi
 
-python3 scripts/transform.py $src $destination
+# python3 scripts/transform.py $src $destination
 
 libninja gen --output-dir ./gen/models MLHubModels $destination
 

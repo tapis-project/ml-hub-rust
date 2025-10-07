@@ -32,6 +32,12 @@ import {
 export interface ModelMetadata {
     /**
      * 
+     * @type {any}
+     * @memberof ModelMetadata
+     */
+    annotation?: any | null;
+    /**
+     * 
      * @type {number}
      * @memberof ModelMetadata
      */
@@ -115,17 +121,11 @@ export interface ModelMetadata {
      */
     inference_software_dependencies?: Array<string> | null;
     /**
-     * 
-     * @type {any}
-     * @memberof ModelMetadata
-     */
-    label_map?: any | null;
-    /**
      * Arbitrary labels
      * @type {Array<string>}
      * @memberof ModelMetadata
      */
-    labels?: Array<string> | null;
+    keywords?: Array<string> | null;
     /**
      * 
      * @type {string}
@@ -259,6 +259,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
+        'annotation': !exists(json, 'annotation') ? undefined : json['annotation'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
@@ -273,8 +274,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'inference_min_throughput': !exists(json, 'inference_min_throughput') ? undefined : json['inference_min_throughput'],
         'inference_precision': !exists(json, 'inference_precision') ? undefined : json['inference_precision'],
         'inference_software_dependencies': !exists(json, 'inference_software_dependencies') ? undefined : json['inference_software_dependencies'],
-        'label_map': !exists(json, 'label_map') ? undefined : json['label_map'],
-        'labels': !exists(json, 'labels') ? undefined : json['labels'],
+        'keywords': !exists(json, 'keywords') ? undefined : json['keywords'],
         'license': !exists(json, 'license') ? undefined : json['license'],
         'model_inputs': !exists(json, 'model_inputs') ? undefined : (json['model_inputs'] === null ? null : (json['model_inputs'] as Array<any>).map(ModelIOFromJSON)),
         'model_outputs': !exists(json, 'model_outputs') ? undefined : (json['model_outputs'] === null ? null : (json['model_outputs'] as Array<any>).map(ModelIOFromJSON)),
@@ -307,6 +307,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
     }
     return {
         
+        'annotation': value.annotation,
         'bias_evaluation_score': value.bias_evaluation_score,
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,
@@ -321,8 +322,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'inference_min_throughput': value.inference_min_throughput,
         'inference_precision': value.inference_precision,
         'inference_software_dependencies': value.inference_software_dependencies,
-        'label_map': value.label_map,
-        'labels': value.labels,
+        'keywords': value.keywords,
         'license': value.license,
         'model_inputs': value.model_inputs === undefined ? undefined : (value.model_inputs === null ? null : (value.model_inputs as Array<any>).map(ModelIOToJSON)),
         'model_outputs': value.model_outputs === undefined ? undefined : (value.model_outputs === null ? null : (value.model_outputs as Array<any>).map(ModelIOToJSON)),

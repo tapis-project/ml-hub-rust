@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 if [ -z $1 ]; then
   echo "Missing parameter: service to be generated"
   exit 1
@@ -19,6 +21,8 @@ function postGen() {
     node ../../services/$1/post-gen.js
   fi
 }
+
+cp /src/assets/apis/$1/spec.yml /src/services/$1/spec.yml
 
 # Run the transform scripts
 transform $1
