@@ -13,7 +13,7 @@ use platforms::Platform;
 #[utoipa::path(
     get,
     path="/models-api/platforms/{platform}/models/{model_id}",
-    tag="External Models",
+    tag="Platforms",
     description="Fetch a model from an external platform by id",
     params(
         ("platform"=Platform, Path, description="Name of the platform from which to fetch the model"),
@@ -67,7 +67,7 @@ async fn get_model_by_platform(
     // Fetch the list of models
     match client.get_model(&request).await {
         Ok(resp) => {
-            return build_success_response(resp.result, Some(String::from("success")), None)
+            return build_success_response(resp.result, Some(String::from("success")), resp.metadata)
         }
         Err(err) => return build_client_error_response(err),
     }

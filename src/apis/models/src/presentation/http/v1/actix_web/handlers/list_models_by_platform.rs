@@ -5,6 +5,7 @@ use crate::presentation::http::v1::requests::{Headers, ListModelsPath, ListModel
 use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use clients::ListModelsClient;
+use platforms::Platform;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
@@ -12,10 +13,10 @@ use std::collections::HashMap;
 #[utoipa::path(
     get,
     path="/models-api/platforms/{platform}/models",
-    tag="External Models",
+    tag="Platforms",
     description="List models from an external platform",
     params(
-        ("platform" = String, Path, description = "The platform for which you want to list the models"),
+        ("platform" = Platform, Path, description = "The platform for which you want to list the models"),
     ),
     responses(
         (status=200, description="Listed models", body=contracts::responses::ListModelsByPlatformResponse),

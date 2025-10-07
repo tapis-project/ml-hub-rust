@@ -1,6 +1,6 @@
 use crate::constants;
 use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
-use crate::utils::deserialize_response_body;
+use crate::utils::{deserialize_response_body, build_client_response};
 use async_trait;
 use clients::{
     Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient, GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient, PublishModelClient, PublishModelMetadataClient
@@ -115,14 +115,7 @@ impl ListModelsClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response).await?;
-
-                Ok(ClientJsonResponse::new(
-                    Some(200),
-                    Some(String::from("success")),
-                    Some(body),
-                    Some(Value::Object(Map::new())),
-                ))
+                build_client_response(response).await
             }
 
             Err(err) => {
@@ -177,14 +170,7 @@ impl GetModelClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response).await?;
-
-                Ok(ClientJsonResponse::new(
-                    Some(200),
-                    Some(String::from("success")),
-                    Some(body),
-                    Some(Value::Object(Map::new())),
-                ))
+                build_client_response(response).await
             }
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
@@ -269,14 +255,7 @@ impl ListDatasetsClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response).await?;
-
-                Ok(ClientJsonResponse::new(
-                    Some(200),
-                    Some(String::from("success")),
-                    Some(body),
-                    Some(Value::Object(Map::new())),
-                ))
+                build_client_response(response).await
             }
 
             Err(err) => {
@@ -311,14 +290,7 @@ impl GetDatasetClient for HuggingFaceClient {
 
         match result {
             Ok(response) => {
-                let body = deserialize_response_body(response).await?;
-
-                Ok(ClientJsonResponse::new(
-                    Some(200),
-                    Some(String::from("success")),
-                    Some(body),
-                    Some(Value::Object(Map::new())),
-                ))
+                build_client_response(response).await
             }
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());

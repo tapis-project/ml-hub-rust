@@ -9,6 +9,7 @@ use crate::presentation::http::v1::requests::{
 use crate::presentation::http::v1::responses::ArtifactIngestion;
 use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
+use platforms::Platform;
 use serde_json::to_value;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::contracts;
@@ -17,10 +18,10 @@ use std::collections::HashMap;
 #[utoipa::path(
     post,
     path="/models-api/platforms/{platform}/models/{model_id}",
-    tag="External Models",
+    tag="Platforms",
     description="Ingest a model from an external platform",
     params(
-        ("platform" = String, Path, description = "The platform from which the model will be ingested from"),
+        ("platform" = Platform, Path, description = "The platform from which the model will be ingested from"),
         ("model_id" = String, Path, description = "The platform-specific ID of the external model you want to ingest")
     ),
     request_body=contracts::requests::artifacts::IngestArtifactRequest,

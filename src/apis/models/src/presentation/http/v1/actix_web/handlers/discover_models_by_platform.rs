@@ -15,7 +15,7 @@ use platforms::Platform;
 #[utoipa::path(
     post,
     path = "/models-api/platforms/{platform}/models",
-    tag="External Models",
+    tag="Platforms",
     description="Discover models from external platforms",
     params(
         ("platform" = Platform, Path, description = "The platform on which you want to discover models")
