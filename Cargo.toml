@@ -7,7 +7,7 @@ members = [
     "src/bins/artifact-ingester",
     "src/bins/artifact-publisher",
     # "src/bins/cli",
-    "src/libs/agntcy-codegen",
+    # "src/libs/agntcy-codegen",
     "src/libs/client-provider",
     "src/libs/clients",
     "src/libs/git-lfs-client",
