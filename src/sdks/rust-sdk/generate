@@ -9,9 +9,9 @@ rm -rf ./models
 
 cargo ws init
 
-source=$2
+src=$2
 if [ -z "$2" ]; then
-    source=./specs/spec.yaml
+    src=./specs/spec.yaml
 fi
 
 destination=$3
@@ -19,7 +19,7 @@ if [ -z "$3" ]; then
     destination=./specs/transformed-spec.yaml
 fi
 
-python3 scripts/transform.py $source $destination
+python3 scripts/transform.py $src $destination
 
 libninja gen --output-dir ./gen/models MLHubModels $destination
 

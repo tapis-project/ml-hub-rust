@@ -5,6 +5,7 @@
     "local": "local",
     "libs-dir": "src/libs",
     "sdks-dir": "src/sdks",
+    "devtools-dir": "src/devtools",
     "bins-dir": "src/bins",
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
@@ -30,6 +31,7 @@
       "rootDir": "src/apis/models",
       "labels": ["api"],
       "lifecycle": "production",
+      "specPath": "src/apis/models/spec/openapi/v1.yaml",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -51,7 +53,8 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "get-spec-path": "echo {{ self.specPath }}"
       },
       "dependencies": [
         "traefik",
@@ -494,6 +497,16 @@
       "labels": ["sdk"],
       "commands": {
         "code": "code {{ sdks-dir }}/{{ self.name }}"
+      }
+    },
+    {
+      "name": "oas-downgrader",
+      "lifecycle": "experimental",
+      "rootDir": "src/devtools/oas-downgrader",
+      "labels": ["devtool"],
+      "commands": {
+        "code": "code {{ devtools-dir }}/{{ self.name }}",
+        "models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) src/assets/apis/models/downgraded-spec.yml"
       }
     }
   ]

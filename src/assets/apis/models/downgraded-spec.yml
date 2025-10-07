@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: MLHub Models API
   description: ''
@@ -554,14 +554,12 @@ components:
         accelerator_type:
           type: string
         cores:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         memory_gb:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         system_requirements:
           type: array
@@ -601,9 +599,8 @@ components:
         id:
           type: string
         last_message:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         last_modified:
           type: string
         platform:
@@ -611,9 +608,8 @@ components:
         status:
           $ref: '#/components/schemas/ArtifactIngestionStatus'
         webhook_url:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
     ArtifactIngestionStatus:
       type: string
       enum:
@@ -648,9 +644,8 @@ components:
         id:
           type: string
         last_message:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         last_modified:
           type: string
         status:
@@ -744,9 +739,8 @@ components:
         - criteria
       properties:
         confidence_threshold:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         criteria:
@@ -841,31 +835,26 @@ components:
       type: object
       properties:
         accelerators:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/Accelerator'
         architectures:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         cpus:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         disk_gb:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         memory_gb:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
     IngestArtifactRequest:
       type: object
@@ -873,23 +862,20 @@ components:
         - params
       properties:
         exclude_paths:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         include_paths:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         params:
           type: object
         webhook_url:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
     IngestModelArtifactResponse:
       type: object
       required:
@@ -1056,13 +1042,11 @@ components:
       type: object
       properties:
         data_type:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         shape:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: integer
             format: int32
@@ -1071,178 +1055,145 @@ components:
       properties:
         annotation: {}
         bias_evaluation_score:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         edge_optimized:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         finetuning_datasets:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         framework:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         image:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         inference_distributed:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         inference_hardware:
-          oneOf:
-            - type: 'null'
+          nullable: true
+          allOf:
             - $ref: '#/components/schemas/HardwareRequirements'
         inference_max_compute_utilization_percentage:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         inference_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         inference_max_latency_ms:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
           description: Inference performance fields
         inference_max_memory_usage_mb:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         inference_min_throughput:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
         inference_precision:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         inference_software_dependencies:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         keywords:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
           description: Arbitrary labels
         license:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         model_inputs:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/ModelIO'
         model_outputs:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/ModelIO'
         model_type:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         multi_modal:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
           description: Architecture fields
         name:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         pretrained:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         pretraining_datasets:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
         pruned:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         quantization_aware:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         regulatory:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
           description: |-
             Regulatory and Compliance Fields
             A vector or strings that represent regulatory standards. Ex HIPPA
         slimmed:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         supports_quantization:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         task_types:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             type: string
           description: Inference Fields
         training_distributed:
-          type:
-            - boolean
-            - 'null'
+          type: boolean
+          nullable: true
         training_hardware:
-          oneOf:
-            - type: 'null'
+          nullable: true
+          allOf:
             - $ref: '#/components/schemas/HardwareRequirements'
         training_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int32
           description: Training performance fields
         training_precision:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         training_time:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           format: int64
           description: Training-related Fields
         version:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
     NotFoundResponse:
       type: object
       required:
@@ -1304,9 +1255,8 @@ components:
         target_platform:
           type: string
         webhook_url:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
     PublishModelArtifactResponse:
       type: object
       required:
