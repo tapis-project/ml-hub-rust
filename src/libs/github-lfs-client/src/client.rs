@@ -1,5 +1,5 @@
 use async_trait;
-use clients::{ClientError, ClientErrorScope, IngestDatasetClient, IngestModelClient};
+use clients::{Capability, Client, ClientError, ClientErrorScope, IngestDatasetClient, IngestModelClient};
 use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
@@ -8,10 +8,25 @@ use shared::presentation::http::v1::requests::datasets::IngestDatasetRequest;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::models::IngestModelRequest;
 use std::path::PathBuf;
+use platforms::Platform;
 
 #[derive(Debug)]
 pub struct GithubLfsClient {
     _logger: SharedLogger,
+}
+
+#[async_trait::async_trait]
+impl Client for GithubLfsClient {
+    fn platform(&self) -> Option<Platform> {
+        Some(Platform::Github)
+    }
+    
+    fn capabilities(&self) -> Option<Vec<Capability>> {
+        Some(vec![
+            Capability::IngestModel,
+            Capability::IngestDataset
+        ])
+    }
 }
 
 impl SyncGitRepository for GithubLfsClient {}

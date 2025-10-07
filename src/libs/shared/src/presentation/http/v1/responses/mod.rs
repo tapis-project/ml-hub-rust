@@ -2,6 +2,7 @@ mod domain_to_dto;
 
 use serde::Serialize;
 use serde_json::Value;
+use platforms::Platform;
 use utoipa::ToSchema;
 
 #[derive(Serialize)]
@@ -77,4 +78,10 @@ pub struct ArtifactPublication  {
     pub attempts: u8,
     pub created_at: String,
     pub last_modified: String,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct PlatformDetails {
+    pub name: Platform,
+    pub capabilities: Vec<String>,
 }

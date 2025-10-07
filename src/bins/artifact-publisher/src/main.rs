@@ -71,7 +71,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
 
         // Fetch artifact associated with the publication
         let artifact = self.artifact_service.find_artifact_by_artifact_id(
-            publication.artifact_id.clone().to_string()
+            publication.artifact_id.clone()
         ).await
             .expect("Failed to fetch artifact")
             .expect(format!("Could not find artifact '{}'", &publication.artifact_id).as_str());

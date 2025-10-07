@@ -3,9 +3,7 @@ use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
 use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
-    ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient,
-    GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient,
-    ListModelsClient, PublishDatasetClient, PublishModelClient, PublishModelMetadataClient
+    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient, GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient, PublishModelClient, PublishModelMetadataClient
 };
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::{Client as ReqwestClient, StatusCode};
@@ -31,6 +29,7 @@ use shared::presentation::http::v1::requests::models::{
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::process::Command;
+use platforms::Platform;
 
 struct HuggingFaceHeaders(Headers);
 
@@ -56,6 +55,25 @@ impl TryFrom<&HuggingFaceHeaders> for reqwest::header::HeaderMap {
 pub struct HuggingFaceClient {
     client: ReqwestClient,
     logger: SharedLogger,
+}
+
+#[async_trait::async_trait]
+impl Client for HuggingFaceClient {
+    fn platform(&self) -> Option<Platform> {
+        Some(Platform::HuggingFace)
+    }
+
+    fn capabilities(&self) -> Option<Vec<Capability>> {
+        Some(vec![
+            Capability::ListModels,
+            Capability::GetModel,
+            Capability::IngestModel,
+            Capability::PublishModel,
+            Capability::ListDatasets,
+            Capability::GetDataset,
+            Capability::IngestDataset
+        ])
+    }
 }
 
 #[async_trait::async_trait]
@@ -187,7 +205,7 @@ impl IngestModelClient for HuggingFaceClient {
         target_path: PathBuf,
     ) -> Result<(), ClientError> {
         // Get the authorization token from the request
-        let access_token = request.headers.get_first_value("Authroization")
+        let access_token = request.headers.get_first_value("Authorization")
             .map(|t| t.replace("Bearer ", ""));
 
         let branch = param_to_string(request.body.params.clone(), "branch")

@@ -1,4 +1,4 @@
-use shared::presentation::http::v1::requests::Headers;
+use shared::presentation::http::v1::requests::headers::Headers;
 
 pub fn build_tenant_base_url(tenant: String) -> String {
     format!(

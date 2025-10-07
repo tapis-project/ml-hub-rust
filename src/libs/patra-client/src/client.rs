@@ -1,8 +1,7 @@
 use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
-    ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient,
-    ListModelsClient, PublishModelMetadataClient
+    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient, ListModelsClient, PublishModelMetadataClient
 };
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
@@ -13,11 +12,27 @@ use shared::presentation::http::v1::requests::models::{
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::domain::entities:: model_metadata::ModelMetadata;
 use std::collections::hash_map::HashMap;
+use platforms::Platform;
 
 #[derive(Debug)]
 pub struct PatraClient {
     client: ReqwestClient,
     logger: SharedLogger,
+}
+
+#[async_trait::async_trait]
+impl Client for PatraClient {
+    fn platform(&self) -> Option<Platform> {
+        Some(Platform::Patra)
+    }
+    
+    fn capabilities(&self) -> Option<Vec<Capability>> {
+        Some(vec![
+            Capability::ListModels,
+            Capability::GetModel,
+            Capability::DiscoverModels
+        ])
+    }
 }
 
 #[async_trait::async_trait]

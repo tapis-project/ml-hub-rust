@@ -7,14 +7,51 @@ use shared::presentation::http::v1::requests::artifacts;
 use shared::domain::entities;
 use serde::Serialize;
 use async_trait;
+use strum_macros::{EnumString, EnumIter, Display};
+
 // Re-exporting here to make the api cleaner and more predictable. Everything
 // clients needs to implement should come from this module. Removing the 'pub'
 // keyword below will break this modules api for consumers
 pub use crate::errors::ClientError;
 pub use crate::responses::ClientJsonResponse;
+use platforms::Platform;
+
+#[derive(Eq, PartialEq, EnumIter, EnumString, Display)]
+pub enum Capability {
+    ListModels,
+    GetModel,
+    IngestModel,
+    DiscoverModels,
+    PublishModel,
+    PublishModelMetadata,
+    ListDatasets,
+    GetDataset,
+    IngestDataset,
+    DiscoverDatasets,
+    PublishDataset,
+    PublishDatasetMetadata
+}
 
 #[async_trait::async_trait]
-pub trait ListModelsClient: Send + Sync {
+pub trait Client: Send + Sync {
+    /// Returns the platform platform this client belongs to
+    fn platform(&self) -> Option<Platform>;
+
+    /// Lists the capabilities of the client
+    fn capabilities(&self) -> Option<Vec<Capability>>;
+
+    /// Determines if a client as a capability
+    fn has_capability(&self, capability: &Capability) -> bool {
+        if let Some(capabilities) = self.capabilities() {
+            return capabilities.contains(capability)
+        }
+
+        return false
+    }
+}
+
+#[async_trait::async_trait]
+pub trait ListModelsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -24,7 +61,7 @@ pub trait ListModelsClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait GetModelClient: Send + Sync {
+pub trait GetModelClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -34,14 +71,14 @@ pub trait GetModelClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait IngestModelClient: Send + Sync {
+pub trait IngestModelClient: Client {
     async fn ingest_model(&self, _request: &models::IngestModelRequest, _ingest_path: PathBuf) -> Result<(), ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
 
 #[async_trait::async_trait]
-pub trait DiscoverModelsClient: Send + Sync {
+pub trait DiscoverModelsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -51,7 +88,7 @@ pub trait DiscoverModelsClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait PublishModelClient: Send + Sync {
+pub trait PublishModelClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -67,7 +104,7 @@ pub trait PublishModelClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait PublishModelMetadataClient: Send + Sync {
+pub trait PublishModelMetadataClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -77,7 +114,7 @@ pub trait PublishModelMetadataClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait ListDatasetsClient: Send + Sync {
+pub trait ListDatasetsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -87,7 +124,7 @@ pub trait ListDatasetsClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait GetDatasetClient: Send + Sync {
+pub trait GetDatasetClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -97,14 +134,14 @@ pub trait GetDatasetClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait IngestDatasetClient: Send + Sync {
+pub trait IngestDatasetClient: Client {
     async fn ingest_dataset(&self, _request: &datasets::IngestDatasetRequest,  _ingest_path: PathBuf) -> Result<(), ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
 
 #[async_trait::async_trait]
-pub trait PublishDatasetClient: Send + Sync {
+pub trait PublishDatasetClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -114,7 +151,7 @@ pub trait PublishDatasetClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait CreateInferenceServerClient: Send + Sync {
+pub trait CreateInferenceServerClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
@@ -124,7 +161,7 @@ pub trait CreateInferenceServerClient: Send + Sync {
 }
 
 #[async_trait::async_trait]
-pub trait CreateTrainingServerClient: Send + Sync {
+pub trait CreateTrainingServerClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
