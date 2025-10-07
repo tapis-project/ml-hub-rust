@@ -504,7 +504,7 @@
             "description": "The platform for which you want to list the models",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/Platform"
             }
           }
         ],
@@ -705,7 +705,7 @@
             "description": "The platform from which the model will be ingested from",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/Platform"
             }
           },
           {
