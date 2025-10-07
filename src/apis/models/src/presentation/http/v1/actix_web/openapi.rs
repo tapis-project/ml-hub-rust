@@ -1,4 +1,4 @@
-use client_provider::Platform;
+use platforms::Platform;
 use shared::presentation::http::v1::responses::{Artifact, ArtifactPublication, ArtifactIngestion};
 use utoipa::OpenApi;
 use crate::config::VERSION;

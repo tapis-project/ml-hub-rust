@@ -602,6 +602,7 @@ dependencies = [
  "github-lfs-client",
  "huggingface-client",
  "patra-client",
+ "platforms",
  "serde",
  "serde_json",
  "shared",
@@ -618,8 +619,11 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures-util",
+ "platforms",
  "serde",
  "shared",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
  "thiserror 2.0.12",
  "uuid",
 ]
@@ -1171,6 +1175,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "clients",
+ "platforms",
  "shared",
 ]
 
@@ -1180,6 +1185,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "clients",
+ "platforms",
  "reqwest",
  "serde",
  "serde_json",
@@ -2216,6 +2222,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "clients",
+ "platforms",
  "reqwest",
  "serde",
  "serde_json",
@@ -2995,6 +3002,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "clients",
+ "platforms",
  "reqwest",
  "serde",
  "serde_json",
@@ -3065,6 +3073,16 @@ name = "pkg-config"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
+
+[[package]]
+name = "platforms"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "utoipa",
+]
 
 [[package]]
 name = "portable-atomic"

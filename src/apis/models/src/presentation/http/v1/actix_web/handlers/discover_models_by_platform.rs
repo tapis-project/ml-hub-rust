@@ -5,11 +5,12 @@ use crate::presentation::http::v1::requests::{
     DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteria, Headers,
 };
 use actix_web::{post, web, HttpRequest, Responder};
-use client_provider::{ClientProvider, Platform};
 use clients::DiscoverModelsClient;
+use client_provider::ClientProvider;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::contracts::responses;
 use std::collections::HashMap;
+use platforms::Platform;
 
 #[utoipa::path(
     post,

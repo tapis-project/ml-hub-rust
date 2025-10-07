@@ -9,6 +9,7 @@ actix = ["actix-web", "actix-multipart", "actix-files"]
 mongo = []
 
 [dependencies]
+platforms = { version = "0.1.0", path = "../../libs/platforms" }
 serde = { version = "1.0", features = ["derive"] }
 actix-multipart = {version = "0.7.2", optional = true}
 actix-web = {version = "4", optional = true}
@@ -27,3 +28,4 @@ async-trait = "0.1.88"
 futures = "0.3.31"
 once_cell = "1.21.3"
 mongodb = "2.8.2"
+strum = "0.26.3"

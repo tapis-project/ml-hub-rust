@@ -9,6 +9,7 @@ actix = ["actix-web", "actix-multipart"]
 mongo = ["mongodb"]
 
 [dependencies]
+platforms = { version = "0.1.0", path = "../../libs/platforms" }
 actix-multipart = {version = "0.7.2", optional = true}
 actix-web = {version = "4", optional = true}
 amqprs = "2.1.1"

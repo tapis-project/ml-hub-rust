@@ -1,0 +1,10 @@
+[package]
+name = "platforms"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+utoipa = { version = "5.4.0" }
+strum = "0.26.3"
+strum_macros = "0.26.4"
+serde = { version = "1.0", features = ["derive"] }

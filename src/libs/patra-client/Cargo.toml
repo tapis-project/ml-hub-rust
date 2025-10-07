@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+platforms = { version = "0.1.0", path = "../platforms" }
 serde = { version = "1.0.216", features = ["derive"]}
 reqwest = { version = "0.12", features = ["json", "blocking", "multipart"] }
 serde_json = "1.0.135"

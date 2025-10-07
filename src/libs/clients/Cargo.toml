@@ -4,10 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+platforms = { version = "0.1.0", path = "../platforms" }
+shared = { version = "0.1.0", path = "../shared" }
 bytes = "1.10.1"
 futures-util = "0.3"
 serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.12"
 uuid = { version = "1.15.1", features = ["v7"] }
-shared = { version = "0.1.0", path = "../shared" }
 async-trait = "0.1.88"
+strum = "0.26.3"
+strum_macros = "0.26.4"
