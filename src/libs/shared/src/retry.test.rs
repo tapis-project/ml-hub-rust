@@ -6,7 +6,7 @@ mod retry_test {
     mod calculate_delay_test {
         use super::*;
 
-        mod Exponential_backoff_test {
+        mod exponential_backoff_test {
             use super::*;
             #[test]
             fn test_with_full_jitter() {

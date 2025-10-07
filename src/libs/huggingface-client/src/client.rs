@@ -1,13 +1,13 @@
 use crate::constants;
 use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
-use crate::utils::{deserialize_response_body, build_client_response};
+use crate::utils::build_client_response;
 use async_trait;
 use clients::{
     Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, GetDatasetClient, GetModelClient, IngestDatasetClient, IngestModelClient, ListDatasetsClient, ListModelsClient, PublishDatasetClient, PublishModelClient, PublishModelMetadataClient
 };
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::{Client as ReqwestClient, StatusCode};
-use serde_json::{Map, Value};
+use serde_json::Value;
 use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
