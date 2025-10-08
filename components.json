@@ -492,13 +492,16 @@
     },
     {
       "name": "typescript-sdk",
+      "url": "https://www.npmjs.com/package/@mlhub/ts-sdk",
       "lifecycle": "experimental",
       "rootDir": "src/sdks/typescript-sdk",
       "labels": ["sdk"],
       "commands": {
         "code": "code {{ sdks-dir }}/{{ self.name }}",
         "build": "./{{ self.rootDir }}/build",
-        "exec": "./{{ self.rootDir }}/exec `pwd`/src/assets"
+        "exec": "./{{ self.rootDir }}/exec `pwd`/src/assets",
+        "publish-models": "npm publish {{ self.rootDir }}/gen/models --access public",
+        "publish-sdk": "npm publish {{ self.rootDir }}/ts-sdk --access public"
       }
     },
     {

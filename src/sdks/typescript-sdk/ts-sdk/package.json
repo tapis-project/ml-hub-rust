@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/tapis-project/ml-hub-rust#readme",
   "dependencies": {
-    "@mlhub/models-ts-sdk": "file:../gen/models",
+    "@mlhub/models-ts-sdk": "^0.0.0",
     "@types/mocha": "^9.0.0"
   },
   "devDependencies": {
