@@ -71,7 +71,7 @@ pub fn validate_system_dependencies(programs: SystemPrograms) -> Result<(), Syst
                 continue
             },
             Err(err) => {
-                let msg = format!("An error has occured checking for program '{}': {}", program, err.to_string());
+                let msg = format!("An error has occurred checking for program '{}': {}", program, err.to_string());
                 GlobalLogger::error(&msg.as_str());
                 SystemError::FileSystemError(msg)
             }

@@ -59,7 +59,7 @@ impl ListModelsClient for PatraClient {
                     ClientError::Unavailable(err.to_string())
                 } else {
                     ClientError::Internal {
-                        msg: "An unknown error occured".into(),
+                        msg: "An unknown error occurred".into(),
                         scope: ClientErrorScope::Client,
                     }
                 }
@@ -107,7 +107,7 @@ impl GetModelClient for PatraClient {
                     ClientError::Unavailable(err.to_string())
                 } else {
                     ClientError::Internal {
-                        msg: "An unknown error occured".into(),
+                        msg: "An unknown error occurred".into(),
                         scope: ClientErrorScope::Client,
                     }
                 }
@@ -137,15 +137,15 @@ impl DiscoverModelsClient for PatraClient {
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Discover models");
         let mut query_params = HashMap::new();
+
+        let prompt = match request.body.prompt.clone() {
+            Some(p) => p,
+            None => return Err(ClientError::BadRequest { msg: "Missing field 'prompt': Model discovery on Patra requires a natural language prompt support via the 'prompt' field of the DiscoverModelsRequest".into(), scope: ClientErrorScope::Client })
+        };
+        
         if request.body.criteria.len() > 0 {
-            // We are only taking the first critera because Patra has not implemented
-            // a way to search on more than one criterion
-            let name = request.body.criteria[0]
-                .name
-                .clone()
-                .unwrap_or(String::from(""));
-            query_params.insert("q", name);
-        }
+            query_params.insert("q", prompt);
+        };
 
         let resp = self
             .client
@@ -163,7 +163,7 @@ impl DiscoverModelsClient for PatraClient {
                     ClientError::Unavailable(err.to_string())
                 } else {
                     ClientError::Internal {
-                        msg: "An unknown error occured".into(),
+                        msg: "An unknown error occurred".into(),
                         scope: ClientErrorScope::Client,
                     }
                 }

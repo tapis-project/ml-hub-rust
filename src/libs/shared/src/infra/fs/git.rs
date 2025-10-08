@@ -8,7 +8,7 @@ use crate::infra::system::SystemError;
 
 #[derive(Debug, Error)]
 pub enum GitError {
-    #[error("A system error occured when attempting to set up a Git repository: {0}")]
+    #[error("A system error occurred when attempting to set up a Git repository: {0}")]
     SystemError(#[from] SystemError),
 
     #[error("Error cloning git repository: {0}")]

@@ -170,6 +170,9 @@ pub struct CreateModelMetadata {
 
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
 pub struct DiscoveryCriteria {
+    // Used for model discovery clients support model discovery through natural
+    // language search
+    pub prompt: Option<String>,
     pub criteria: Vec<ModelMetadata>,
     pub confidence_threshold: Option<Vec<String>>,
 }

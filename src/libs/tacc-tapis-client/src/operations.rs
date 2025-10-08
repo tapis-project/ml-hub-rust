@@ -63,7 +63,7 @@ pub(crate) mod files {
                 } else if err.is_connect() {
                     ClientError::Unavailable(err.to_string())
                 } else {
-                    ClientError::Internal { msg: "An unknown error occured".into(), scope: ClientErrorScope::Client }
+                    ClientError::Internal { msg: "An unknown error occurred".into(), scope: ClientErrorScope::Client }
                 }
             })
     }
