@@ -31,7 +31,7 @@
       "rootDir": "src/apis/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "src/apis/models/spec/openapi/v1.yaml",
+      "specPath": "src/apis/models/spec/openapi/v1.yml",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
