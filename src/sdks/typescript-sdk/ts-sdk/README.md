@@ -1,13 +1,13 @@
-# `@tapis/tapis-typescript`
+# `@mlhub/ts-sdk`
 
-TypeScript bindings for the [TAPIS v3 API](https://tapis.io/).
+TypeScript bindings for the MLHub APIs
 
 ## Usage 
 
 Install this package in your project with:
 
 ```
-npm install --save @tapis/tapis-typescript
+npm install --save @mlhub/ts-sdk
 ```
 
 ## Fetch Client
@@ -19,7 +19,3 @@ npm install --save node-fetch
 ```
 
 Otherwise, the default client will be the browser's `window` object's fetch client.
-
-## Using the API
-
-Examples of how to configure and use the API can be found in the examples of the `tapis-typescrip` [GitHub Respository](https://github.com/tapis-project/tapis-typescript/examples).

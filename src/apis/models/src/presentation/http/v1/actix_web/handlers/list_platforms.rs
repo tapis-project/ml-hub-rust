@@ -38,6 +38,4 @@ async fn list_platforms() -> impl Responder {
         Ok(v) => build_success_response(Some(v), Some("message".into()), None),
         Err(err) => build_error_response(500, err.to_string())
     }
-    
-    
 }
