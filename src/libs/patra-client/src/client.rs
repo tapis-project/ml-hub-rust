@@ -143,9 +143,7 @@ impl DiscoverModelsClient for PatraClient {
             None => return Err(ClientError::BadRequest { msg: "Missing field 'prompt': Model discovery on Patra requires a natural language prompt support via the 'prompt' field of the DiscoverModelsRequest".into(), scope: ClientErrorScope::Client })
         };
         
-        if request.body.criteria.len() > 0 {
-            query_params.insert("q", prompt);
-        };
+        query_params.insert("q", prompt);
 
         let resp = self
             .client
