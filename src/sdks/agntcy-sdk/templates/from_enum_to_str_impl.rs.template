@@ -1,0 +1,7 @@
+impl From<{{ Category }}> for &str {
+    fn from(value: {{ Category }}) -> &'static str {
+        match value {
+            {{ match_items }}
+        }
+    }
+}

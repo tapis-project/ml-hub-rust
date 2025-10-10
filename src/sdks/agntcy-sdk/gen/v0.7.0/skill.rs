@@ -1,7 +1,3 @@
-pub mod entities;
-pub mod services;
-pub mod external;
-
 #[doc = "A structured view of distinct abilities, defining the capabilities within the Open Agentic Schema Framework."]
 pub enum Skill {
     #[doc = "Natural Language Processing (NLP) tasks are the application of computational techniques to the analysis and synthesis of natural language and speech."]

@@ -7,7 +7,6 @@ members = [
     "src/bins/artifact-ingester",
     "src/bins/artifact-publisher",
     # "src/bins/cli",
-    # "src/libs/agntcy-codegen",
     "src/libs/client-provider",
     "src/libs/clients",
     "src/libs/git-lfs-client",
@@ -17,6 +16,7 @@ members = [
     "src/libs/s3-client",
     "src/libs/shared",
     # "src/libs/tacc-tapis-client"
+    # "src/sdks/agntcy-sdk",
 ]
 
 

@@ -1,0 +1,20 @@
+const $RefParser = require("@apidevtools/json-schema-ref-parser");
+const fs = require("fs");
+
+async function preprocess(spec) {
+  let spec = fs.readFileSync("specs/agntcy0.7.0-for-js.json");
+
+  // Singularize Enums
+  spec = spec.replace("\"Capabilities\"", "\"Capability\"") // Special case, only one ending in ies
+
+  // Remove the recursive reference to the env_var_values
+  let pattern = /(?<=\"env_deps\":) \{\n\s+\"items\": \{\n\s+\"\$ref\": \"#\/\$defs\/objects\/env_var_values\"\n\s+\},\n\s+\"title\": \"Values for Dependencies\",\n\s+\"type\": \"array\"\n\s+}/;
+  let modifiedSchema = spec.replace(pattern, "{ \"type\": \"object\", \"additionalProperties\": true }")
+
+
+  let dererencedSchema = await $RefParser.dereference(modifiedSchema);
+
+  fs.writeFileSync("specs/agntcy0.7.0-derefed.json", JSON.stringify(dererencedSchema, null, 2));
+}
+
+await preprocess()
