@@ -1,6 +1,6 @@
 {{ enum_docstring }}
 pub enum {{ EnumName }} {
-    {{ enum_items }}
+{{ enum_items }}
 }
 
 {{ enum_to_str_impl }}

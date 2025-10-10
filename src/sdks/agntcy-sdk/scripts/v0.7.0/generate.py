@@ -117,6 +117,7 @@ for duplicate_caption in duplicate_captions:
         el.caption = normalize_caption(el.key)
 
 # Load the enum template
+tab = "    "
 with open(os.path.join(templates_dir, "enum.rs.template"), mode="r") as file:
     enum_template = file.read()
 
@@ -126,7 +127,7 @@ partially_hydrated_template = enum_template.replace("{{ enum_docstring }}", f'#[
 partially_hydrated_template = partially_hydrated_template.replace("{{ EnumName }}", category)
 enum_items = ""
 for element in elements:
-    enum_items += f"#[doc = \"{element.description}\"]\n\t{element.caption},\n\t"
+    enum_items += f"{tab}#[doc = \"{element.description}\"]\n{tab}{element.caption},\n"
     
 partially_hydrated_template = partially_hydrated_template.replace("{{ enum_items }}", enum_items)
 
@@ -137,7 +138,7 @@ with open(os.path.join(templates_dir, "from_enum_to_str_impl.rs.template"), mode
 partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category)
 match_arms = ""
 for element in elements:
-    match_arms += f"{{{{ Category }}}}::{element.caption} => \"{element.name}\",\n\t".replace("{{ Category }}", category)
+    match_arms += f"{tab*3}{{{{ Category }}}}::{element.caption} => \"{element.name}\",\n".replace("{{ Category }}", category)
 
 hydrated_impl_template = partially_hydrated_impl_template.replace("{{ match_items }}", match_arms)
 
@@ -150,7 +151,7 @@ with open(os.path.join(templates_dir, "from_enum_to_u32_impl.rs.template"), mode
 partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category)
 match_arms = ""
 for element in elements:
-    match_arms += f"{{{{ Category }}}}::{element.caption} => {element.uid},\n\t".replace("{{ Category }}", category)
+    match_arms += f"{tab*3}{{{{ Category }}}}::{element.caption} => {element.uid},\n".replace("{{ Category }}", category)
 
 hydrated_impl_template = partially_hydrated_impl_template.replace("{{ match_items }}", match_arms)
 
