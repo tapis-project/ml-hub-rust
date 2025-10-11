@@ -5,5 +5,5 @@ get_oasf_version() {
 }
 
 get_gen_dir() {
-    echo $1/gen/v$version
+    echo $1/gen/v$(get_oasf_version)
 }

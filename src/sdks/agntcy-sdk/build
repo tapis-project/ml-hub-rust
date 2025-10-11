@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 
+set -e
+
+here=$(dirname "${BASH_SOURCE[0]}")
+
+source $here/utils
+
+genDir=$(get_gen_dir $here)
+
 for file in "$genDir"/*; do
   filename=$(basename $file)
   taxon=${filename%.*}
   mkdir -p $here/src/$taxon
+  rm -rf $here/src/$taxon/*
   cp $genDir/$taxon.rs $here/src/$taxon/mod.rs
 done

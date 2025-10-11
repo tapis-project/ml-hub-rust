@@ -475,7 +475,8 @@
         "code": "code src/sdks/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
         "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
-        "exec": "./{{ self.rootDir }}/exec `pwd`/src/assets",
+        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
+        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
         "init": "./{{ self.rootDir }}/initialize"
       }
     },

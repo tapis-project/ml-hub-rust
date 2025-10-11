@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+
 assetsPath=$1
 if [[ -z $assetsPath ]]; then
     echo ❌ Must provide the path to the assets directory

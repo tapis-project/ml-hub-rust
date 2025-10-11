@@ -4,6 +4,7 @@
       "name": "runtime",
       "description": "Runtime module set.",
       "uid": 3,
+      "caption": "Runtime",
       "classes": {
         "prompt": {
           "name": "prompt",
@@ -45,20 +46,20 @@
           "extends": "runtime",
           "caption": "MCP"
         }
-      },
-      "caption": "Runtime"
+      }
     },
     "identity": {
       "name": "identity",
       "description": "Identity module set.",
       "uid": 4,
-      "classes": {},
-      "caption": "Identity"
+      "caption": "Identity",
+      "classes": {}
     },
     "observability": {
       "name": "observability",
       "description": "Observability module set.",
       "uid": 1,
+      "caption": "Observability",
       "classes": {
         "observability": {
           "name": "observability",
@@ -68,13 +69,13 @@
           "extends": "base_module",
           "caption": "Observability"
         }
-      },
-      "caption": "Observability"
+      }
     },
     "evaluation": {
       "name": "evaluation",
       "description": "Evaluation module set.",
       "uid": 2,
+      "caption": "Evaluation",
       "classes": {
         "evaluation": {
           "name": "evaluation",
@@ -84,8 +85,7 @@
           "extends": "base_module",
           "caption": "Evaluation"
         }
-      },
-      "caption": "Evaluation"
+      }
     }
   },
   "name": "main_modules",

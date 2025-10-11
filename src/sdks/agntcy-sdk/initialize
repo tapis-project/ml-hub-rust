@@ -3,3 +3,5 @@
 here=$(dirname "${BASH_SOURCE[0]}")
 
 docker build -f $here/Dockerfile.python -t mlhub/agntcy-code-generator:latest $here
+
+docker build -f $here/Dockerfile.rust -t mlhub/agntcy-sdk-builder:latest $here
