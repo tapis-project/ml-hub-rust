@@ -1,3 +1,4 @@
+{{ feature_attr }}
 impl From<{{ Category }}> for u32 {
     fn from(value: {{ Category }}) -> u32 {
         match value {

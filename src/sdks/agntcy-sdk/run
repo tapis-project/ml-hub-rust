@@ -1,3 +1,5 @@
+#/usr/bin/env bash
+
 assetsPath=$1
 if [[ -z $assetsPath ]]; then
     echo ❌ Must provide the path to the assets directory
@@ -6,4 +8,4 @@ fi
 
 here=$(dirname "${BASH_SOURCE[0]}")
 
-docker run -it --rm --mount type=bind,source="$here",target=/src --mount type=bind,source="$assetsPath",target=/src/assets mlhub/agntcy-sdk-builder:latest ./src/generate
+docker run -it --rm --mount type=bind,source="$here",target=/src --mount type=bind,source="$assetsPath",target=/src/assets mlhub/agntcy-code-generator:latest ./src/generate

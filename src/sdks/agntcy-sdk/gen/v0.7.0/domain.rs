@@ -1,3 +1,4 @@
+{{ feature_attr }}
 #[doc = "A comprehensive table outlining distinct fields of application and knowledge areas within the framework."]
 pub enum Domain {
     #[doc = "Development, management, and use of systems, devices, and software to solve problems and enhance human capabilities."]
@@ -119,6 +120,11 @@ pub enum Domain {
 
 }
 
+{{ identify_trait }}
+
+{{ identify_impl }}
+
+{{ feature_attr }}
 impl From<Domain> for &str {
     fn from(value: Domain) -> &'static str {
         match value {
@@ -185,6 +191,7 @@ impl From<Domain> for &str {
     }
 }
 
+{{ feature_attr }}
 impl From<Domain> for u32 {
     fn from(value: Domain) -> u32 {
         match value {

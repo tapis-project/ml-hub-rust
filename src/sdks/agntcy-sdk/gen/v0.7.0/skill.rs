@@ -1,3 +1,4 @@
+{{ feature_attr }}
 #[doc = "A structured view of distinct abilities, defining the capabilities within the Open Agentic Schema Framework."]
 pub enum Skill {
     #[doc = "Natural Language Processing (NLP) tasks are the application of computational techniques to the analysis and synthesis of natural language and speech."]
@@ -187,6 +188,11 @@ pub enum Skill {
 
 }
 
+{{ identify_trait }}
+
+{{ identify_impl }}
+
+{{ feature_attr }}
 impl From<Skill> for &str {
     fn from(value: Skill) -> &'static str {
         match value {
@@ -287,6 +293,7 @@ impl From<Skill> for &str {
     }
 }
 
+{{ feature_attr }}
 impl From<Skill> for u32 {
     fn from(value: Skill) -> u32 {
         match value {

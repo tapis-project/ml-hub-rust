@@ -1,3 +1,4 @@
+{{ feature_attr }}
 impl From<{{ Category }}> for &str {
     fn from(value: {{ Category }}) -> &'static str {
         match value {

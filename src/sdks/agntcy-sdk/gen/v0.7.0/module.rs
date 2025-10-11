@@ -1,3 +1,4 @@
+{{ feature_attr }}
 #[doc = "A comprehensive table outlining module sets of application and knowledge areas within the framework."]
 pub enum Module {
     #[doc = "Runtime module set."]
@@ -25,6 +26,11 @@ pub enum Module {
 
 }
 
+{{ identify_trait }}
+
+{{ identify_impl }}
+
+{{ feature_attr }}
 impl From<Module> for &str {
     fn from(value: Module) -> &'static str {
         match value {
@@ -44,6 +50,7 @@ impl From<Module> for &str {
     }
 }
 
+{{ feature_attr }}
 impl From<Module> for u32 {
     fn from(value: Module) -> u32 {
         match value {

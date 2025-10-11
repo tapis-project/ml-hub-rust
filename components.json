@@ -474,9 +474,9 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "code": "code src/sdks/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "./{{ self.rootDir }}/run `pwd`/src/assets",
+        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
         "exec": "./{{ self.rootDir }}/exec `pwd`/src/assets",
-        "build": "./{{ self.rootDir }}/build"
+        "init": "./{{ self.rootDir }}/initialize"
       }
     },
     {

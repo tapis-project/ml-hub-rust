@@ -1,5 +1,7 @@
-FROM rust:latest
+FROM rust:1.82.0
 
-RUN rustup override set nightly
+RUN apt update
 
-RUN cargo install cargo-typify
+RUN apt install -y jq vim curl
+
+ENTRYPOINT [ "bash" ]
