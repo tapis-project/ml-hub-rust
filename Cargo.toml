@@ -16,7 +16,7 @@ members = [
     "src/libs/s3-client",
     "src/libs/shared",
     # "src/libs/tacc-tapis-client"
-    # "src/sdks/agntcy-sdk",
+    "src/sdks/agntcy-sdk",
 ]
 
 

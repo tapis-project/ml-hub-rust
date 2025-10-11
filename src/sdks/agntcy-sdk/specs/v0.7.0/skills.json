@@ -4,6 +4,7 @@
       "name": "natural_language_processing",
       "description": "Natural Language Processing (NLP) tasks are the application of computational techniques to the analysis and synthesis of natural language and speech.",
       "uid": 1,
+      "caption": "Natural Language Processing",
       "classes": {
         "storytelling": {
           "name": "storytelling",
@@ -621,13 +622,13 @@
           },
           "caption": "Inference and Deduction"
         }
-      },
-      "caption": "Natural Language Processing"
+      }
     },
     "images_computer_vision": {
       "name": "images_computer_vision",
       "description": "Images / Computer Vision tasks are the application of computational techniques to the analysis and synthesis of images.",
       "uid": 2,
+      "caption": "Images / Computer Vision",
       "classes": {
         "depth_estimation": {
           "name": "depth_estimation",
@@ -783,13 +784,13 @@
           },
           "caption": "Video Classification"
         }
-      },
-      "caption": "Images / Computer Vision"
+      }
     },
     "audio": {
       "name": "audio",
       "description": "Audio tasks are the application of computational techniques to the analysis and synthesis of audio data.",
       "uid": 3,
+      "caption": "Audio",
       "classes": {
         "audio_classification": {
           "name": "audio_classification",
@@ -819,13 +820,13 @@
           },
           "caption": "Audio to Audio"
         }
-      },
-      "caption": "Audio"
+      }
     },
     "tabular_text": {
       "name": "tabular_text",
       "description": "Tabular / Text tasks are the application of computational techniques to the analysis and synthesis of tabular data and text.",
       "uid": 4,
+      "caption": "Tabular / Text",
       "classes": {
         "tabular_classification": {
           "name": "tabular_classification",
@@ -855,13 +856,13 @@
           },
           "caption": "Tabular Regression"
         }
-      },
-      "caption": "Tabular / Text"
+      }
     },
     "analytical_skills": {
       "name": "analytical_skills",
       "description": "Analytical skills encompass a range of capabilities that involve logical reasoning, problem-solving, and the ability to process and interpret complex data.",
       "uid": 5,
+      "caption": "Analytical skills",
       "classes": {
         "code_optimization": {
           "name": "code_optimization",
@@ -1003,13 +1004,13 @@
           },
           "caption": "Automated Theorem Proving"
         }
-      },
-      "caption": "Analytical skills"
+      }
     },
     "retrieval_augmented_generation": {
       "name": "retrieval_augmented_generation",
       "description": "Retrieval Augmented Generation tasks are the application of computational techniques to the analysis and synthesis of data from multiple modalities.",
       "uid": 6,
+      "caption": "Retrieval Augmented Generation",
       "classes": {
         "document_or_database_question_answering": {
           "name": "document_or_database_question_answering",
@@ -1095,13 +1096,13 @@
           },
           "caption": "Search"
         }
-      },
-      "caption": "Retrieval Augmented Generation"
+      }
     },
     "multi_modal": {
       "name": "multi_modal",
       "description": "Multi-modal tasks are the application of computational techniques to the analysis and synthesis of data from multiple modalities.",
       "uid": 7,
+      "caption": "Multi-modal",
       "classes": {
         "any_to_any": {
           "name": "any_to_any",
@@ -1243,8 +1244,7 @@
           },
           "caption": "Visual Question Answering"
         }
-      },
-      "caption": "Multi-modal"
+      }
     }
   },
   "name": "main_skills",
