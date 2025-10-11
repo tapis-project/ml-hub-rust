@@ -4,7 +4,6 @@
       "name": "technology",
       "description": "Development, management, and use of systems, devices, and software to solve problems and enhance human capabilities.",
       "uid": 1,
-      "caption": "Technology",
       "classes": {
         "security": {
           "name": "security",
@@ -118,13 +117,13 @@
           },
           "caption": "Software Engineering"
         }
-      }
+      },
+      "caption": "Technology"
     },
     "finance_and_business": {
       "name": "finance_and_business",
       "description": "Managing money, investments, and financial risks within businesses or for individuals. Subdomains: Corporate Finance, Personal Finance, Risk Management, Accounting, and Financial Analysis.",
       "uid": 2,
-      "caption": "Finance and Business",
       "classes": {
         "banking": {
           "name": "banking",
@@ -196,13 +195,13 @@
           },
           "caption": "Retail"
         }
-      }
+      },
+      "caption": "Finance and Business"
     },
     "life_science": {
       "name": "life_science",
       "description": "cientific research and innovations in biology, genetics, biotechnology, and other related fields, with the goal of understanding life processes and advancing medical and environmental solutions. Subdomains: Biotechnology, Pharmaceutical Research, Genomics, Bioinformatics, and Molecular Biology.",
       "uid": 3,
-      "caption": "Life Science",
       "classes": {
         "bioinformatics": {
           "name": "bioinformatics",
@@ -274,13 +273,13 @@
           },
           "caption": "Pharmaceutical Research"
         }
-      }
+      },
+      "caption": "Life Science"
     },
     "trust_and_safety": {
       "name": "trust_and_safety",
       "description": "Maintaining a secure and reliable environment, primarily online, by managing risks, preventing harm, and ensuring safety and privacy. Subdomains: Online Safety, Content Moderation, Fraud Prevention, Data Privacy, and Risk Management.",
       "uid": 4,
-      "caption": "Trust and Safety",
       "classes": {
         "content_moderation": {
           "name": "content_moderation",
@@ -352,13 +351,13 @@
           },
           "caption": "Risk Management"
         }
-      }
+      },
+      "caption": "Trust and Safety"
     },
     "human_resources": {
       "name": "human_resources",
       "description": "Managing and optimizing the workforce of an organization, focusing on recruitment, employee development, and workplace culture. Subdomains: Recruitment, Employee Relations, Training and Development, Compensation and Benefits, and HR Analytics.",
       "uid": 5,
-      "caption": "Human Resources",
       "classes": {
         "compensation_and_benefits": {
           "name": "compensation_and_benefits",
@@ -430,13 +429,13 @@
           },
           "caption": "Training and Development"
         }
-      }
+      },
+      "caption": "Human Resources"
     },
     "education": {
       "name": "education",
       "description": "Systems, methods, and technologies used to teach, learn, and foster knowledge development in individuals and communities. Subdomains: E-Learning, Curriculum Design, Learning Management Systems, Educational Technology, and Pedagogy.",
       "uid": 6,
-      "caption": "Education",
       "classes": {
         "curriculum_design": {
           "name": "curriculum_design",
@@ -508,13 +507,13 @@
           },
           "caption": "Pedagogy"
         }
-      }
+      },
+      "caption": "Education"
     },
     "industrial_manufacturing": {
       "name": "industrial_manufacturing",
       "description": "Production of goods, use of automation and technology in manufacturing, and industrial processes to create products on a large scale. Subdomains: Automation, Robotics, Supply Chain Management, Lean Manufacturing, and Process Engineering.",
       "uid": 7,
-      "caption": "Industrial Manufacturing",
       "classes": {
         "automation": {
           "name": "automation",
@@ -586,13 +585,13 @@
           },
           "caption": "Supply Chain Management"
         }
-      }
+      },
+      "caption": "Industrial Manufacturing"
     },
     "transportation": {
       "name": "transportation",
       "description": "Systems and processes involved in the movement of goods and people, as well as the physical infrastructure supporting them. Subdomains: Logistics, Automotive, Public Transit, Supply Chain, Freight, and Autonomous Vehicles.",
       "uid": 8,
-      "caption": "Transportation",
       "classes": {
         "automotive": {
           "name": "automotive",
@@ -678,13 +677,13 @@
           },
           "caption": "Supply Chain"
         }
-      }
+      },
+      "caption": "Transportation"
     },
     "healthcare": {
       "name": "healthcare",
       "description": "Management, delivery, and innovation of medical services, treatments, and technologies aimed at improving the health and well-being of individuals and populations.",
       "uid": 9,
-      "caption": "Healthcare",
       "classes": {
         "health_information_systems": {
           "name": "health_information_systems",
@@ -756,7 +755,8 @@
           },
           "caption": "Telemedicine"
         }
-      }
+      },
+      "caption": "Healthcare"
     }
   },
   "name": "main_domains",

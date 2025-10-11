@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+for file in "$genDir"/*; do
+  filename=$(basename $file)
+  taxon=${filename%.*}
+  mkdir -p $here/src/$taxon
+  cp $genDir/$taxon.rs $here/src/$taxon/mod.rs
+done

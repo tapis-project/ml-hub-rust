@@ -4,17 +4,21 @@ set -e
 
 here=$(dirname "${BASH_SOURCE[0]}")
 
+source $here/utils
+
 # Get the current version of the OASF API
-version=$(curl -X 'GET' 'https://schema.oasf.outshift.com/api/version' -H 'accept: application/json' -s | jq -r '.version')
+version=$(get_oasf_version)
 
 echo "OASF API v$version"
 
 specsDir=$here/specs/v$version
 latestSpecsDir=$here/specs/latest
+genDir=$(get_gen_dir $here)
+templatesDir=$here/templates
 
-# Create the specs dir for this version of the API and the latest.
 mkdir -p $specsDir
 mkdir -p $latestSpecsDir
+mkdir -p $genDir
 
 # This array determines which APIs get called to fetch the schema
 taxa=("domains" "skills" "modules")
@@ -25,15 +29,5 @@ for taxon in "${taxa[@]}"; do
     output=$(curl -X 'GET' "https://schema.oasf.outshift.com/api/main_${taxon}" -H 'accept: application/json' -s)
     echo $output | jq . > $specsDir/$taxon.json
     echo $output | jq . > $latestSpecsDir/$taxon.json
-done
-
-genDir=$here/gen/v$version
-templatesDir=$here/templates
-
-# Create the gen dir for this version of the API
-mkdir -p $genDir
-
-for taxon in "${taxa[@]}"; do
     python3 $here/scripts/v$version/generate.py $here/specs/v$version/$taxon.json $genDir $templatesDir
 done
-
