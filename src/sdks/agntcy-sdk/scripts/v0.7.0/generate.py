@@ -116,13 +116,12 @@ for duplicate_caption in duplicate_captions:
     for el in dupe_captioned_elements:
         el.caption = normalize_caption(el.key)
 
-# Load the enum template
+# Load base enum template
 tab = "    "
 with open(os.path.join(templates_dir, "enum.rs.template"), mode="r") as file:
     enum_template = file.read()
 
-# Replace the num docstring
-partially_hydrated_template = enum_template.replace("{{ enum_docstring }}", f'#[doc = \"{spec["description"]}\"]')
+partially_hydrated_template = enum_template.replace("{{ enum_docstring }}", f'#[doc = \"{spec["description"]}\"]').replace("{{ feature_attr }}", f"#[cfg(feature = \"{category.lower()}\")]")
 
 partially_hydrated_template = partially_hydrated_template.replace("{{ EnumName }}", category)
 enum_items = ""
@@ -131,11 +130,37 @@ for element in elements:
     
 partially_hydrated_template = partially_hydrated_template.replace("{{ enum_items }}", enum_items)
 
-# impl From template (enum -> str)
+# Identify trait
+with open(os.path.join(templates_dir, "identify_trait.rs.template"), mode="r") as file:
+    identify_trait_template = file.read()
+
+hydrated_identify_trait_template = identify_trait_template.replace("{{ feature_attr }}", f"#[cfg(all(feature = \"{category.lower()}\", feature = \"identify\"))]")
+
+partially_hydrated_template = partially_hydrated_template.replace("{{ identify_trait }}", hydrated_identify_trait_template)
+
+# Identify impl
+with open(os.path.join(templates_dir, "identify_impl.rs.template"), mode="r") as file:
+    identify_impl_template = file.read()
+
+partially_hydrated_identify_impl_template = identify_impl_template.replace("{{ Category }}", category).replace("{{ feature_attr }}", f"#[cfg(all(feature = \"{category.lower()}\", feature = \"identify\"))]")
+
+uid_match_arms = ""
+for element in elements:
+    uid_match_arms += f"{tab*3}{{{{ Category }}}}::{element.caption} => {element.uid},\n".replace("{{ Category }}", category)
+
+name_match_arms = ""
+for element in elements:
+    name_match_arms += f"{tab*3}{{{{ Category }}}}::{element.caption} => \"{element.name}\",\n".replace("{{ Category }}", category)
+
+hydrated_identify_impl_template = partially_hydrated_identify_impl_template.replace("{{ uid_match_arms }}", uid_match_arms).replace("{{ name_match_arms }}", name_match_arms)
+
+partially_hydrated_template = partially_hydrated_template.replace("{{ identify_impl }}", hydrated_identify_impl_template)
+
+# Enum to &str impl
 with open(os.path.join(templates_dir, "from_enum_to_str_impl.rs.template"), mode="r") as file:
     impl_template = file.read()
 
-partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category)
+partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category).replace("{{ feature_attr }}", f"#[cfg(feature = \"{category.lower()}\")]")
 match_arms = ""
 for element in elements:
     match_arms += f"{tab*3}{{{{ Category }}}}::{element.caption} => \"{element.name}\",\n".replace("{{ Category }}", category)
@@ -144,11 +169,11 @@ hydrated_impl_template = partially_hydrated_impl_template.replace("{{ match_item
 
 partially_hydrated_template = partially_hydrated_template.replace("{{ enum_to_str_impl }}", hydrated_impl_template)
 
-# impl From template (enum -> str)
+# Enum to u32
 with open(os.path.join(templates_dir, "from_enum_to_u32_impl.rs.template"), mode="r") as file:
     impl_template = file.read()
 
-partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category)
+partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category).replace("{{ feature_attr }}", f"#[cfg(feature = \"{category.lower()}\")]")
 match_arms = ""
 for element in elements:
     match_arms += f"{tab*3}{{{{ Category }}}}::{element.caption} => {element.uid},\n".replace("{{ Category }}", category)
@@ -157,6 +182,7 @@ hydrated_impl_template = partially_hydrated_impl_template.replace("{{ match_item
 
 partially_hydrated_template = partially_hydrated_template.replace("{{ enum_to_u32_impl }}", hydrated_impl_template)
 
+# Combine everything
 hydrated_template = partially_hydrated_template
 with open(os.path.join(gen_dir, f"{category.lower()}.rs"), mode="w") as file:
     file.write(hydrated_template)

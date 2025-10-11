@@ -1,4 +1,4 @@
-{{ feature_attr }}
+#[cfg(feature = "domain")]
 #[doc = "A comprehensive table outlining distinct fields of application and knowledge areas within the framework."]
 pub enum Domain {
     #[doc = "Development, management, and use of systems, devices, and software to solve problems and enhance human capabilities."]
@@ -120,11 +120,143 @@ pub enum Domain {
 
 }
 
-{{ identify_trait }}
+#[cfg(all(feature = "domain", feature = "identify"))]
+pub trait Identify {
+    fn uid() -> u32;
+    fn name() -> &'static str;
+}
 
-{{ identify_impl }}
+#[cfg(all(feature = "domain", feature = "identify"))]
+impl Identify for Domain {
+    fn uid() -> u32 {
+        match Self {
+            Domain::Technology => 1,
+            Domain::Security => 107,
+            Domain::CommunicationSystems => 108,
+            Domain::InformationTechnology => 106,
+            Domain::InternetOfThings => 101,
+            Domain::NetworkManagement => 105,
+            Domain::NetworkOperations => 104,
+            Domain::Networking => 103,
+            Domain::SoftwareEngineering => 102,
+            Domain::FinanceAndBusiness => 2,
+            Domain::Banking => 201,
+            Domain::ConsumerGoods => 204,
+            Domain::Finance => 202,
+            Domain::InvestmentServices => 203,
+            Domain::Retail => 205,
+            Domain::LifeScience => 3,
+            Domain::Bioinformatics => 304,
+            Domain::Biotechnology => 301,
+            Domain::Genomics => 303,
+            Domain::MolecularBiology => 305,
+            Domain::PharmaceuticalResearch => 302,
+            Domain::TrustAndSafety => 4,
+            Domain::ContentModeration => 402,
+            Domain::DataPrivacy => 404,
+            Domain::FraudPrevention => 403,
+            Domain::OnlineSafety => 401,
+            Domain::RiskManagement => 405,
+            Domain::HumanResources => 5,
+            Domain::CompensationAndBenefits => 504,
+            Domain::EmployeeRelations => 502,
+            Domain::HrAnalytics => 505,
+            Domain::Recruitment => 501,
+            Domain::TrainingAndDevelopment => 503,
+            Domain::Education => 6,
+            Domain::CurriculumDesign => 602,
+            Domain::ELearning => 601,
+            Domain::EducationalTechnology => 604,
+            Domain::LearningManagementSystems => 603,
+            Domain::Pedagogy => 605,
+            Domain::IndustrialManufacturing => 7,
+            Domain::Automation => 701,
+            Domain::LeanManufacturing => 704,
+            Domain::ProcessEngineering => 705,
+            Domain::Robotics => 702,
+            Domain::SupplyChainManagement => 703,
+            Domain::Transportation => 8,
+            Domain::Automotive => 802,
+            Domain::AutonomousVehicles => 806,
+            Domain::Freight => 805,
+            Domain::Logistics => 801,
+            Domain::PublicTransit => 803,
+            Domain::SupplyChain => 804,
+            Domain::Healthcare => 9,
+            Domain::HealthInformationSystems => 905,
+            Domain::HealthcareInformatics => 903,
+            Domain::MedicalTechnology => 901,
+            Domain::PatientManagementSystems => 904,
+            Domain::Telemedicine => 902,
 
-{{ feature_attr }}
+        }
+    }
+    fn name() -> &'static str {
+        match Self {
+            Domain::Technology => "technology",
+            Domain::Security => "technology/security",
+            Domain::CommunicationSystems => "technology/communication_systems",
+            Domain::InformationTechnology => "technology/information_technology",
+            Domain::InternetOfThings => "technology/internet_of_things",
+            Domain::NetworkManagement => "technology/network_management",
+            Domain::NetworkOperations => "technology/network_operations",
+            Domain::Networking => "technology/networking",
+            Domain::SoftwareEngineering => "technology/software_engineering",
+            Domain::FinanceAndBusiness => "finance_and_business",
+            Domain::Banking => "finance_and_business/banking",
+            Domain::ConsumerGoods => "finance_and_business/consumer_goods",
+            Domain::Finance => "finance_and_business/finance",
+            Domain::InvestmentServices => "finance_and_business/investment_services",
+            Domain::Retail => "finance_and_business/retail",
+            Domain::LifeScience => "life_science",
+            Domain::Bioinformatics => "life_science/bioinformatics",
+            Domain::Biotechnology => "life_science/biotechnology",
+            Domain::Genomics => "life_science/genomics",
+            Domain::MolecularBiology => "life_science/molecular_biology",
+            Domain::PharmaceuticalResearch => "life_science/pharmaceutical_research",
+            Domain::TrustAndSafety => "trust_and_safety",
+            Domain::ContentModeration => "trust_and_safety/content_moderation",
+            Domain::DataPrivacy => "trust_and_safety/data_privacy",
+            Domain::FraudPrevention => "trust_and_safety/fraud_prevention",
+            Domain::OnlineSafety => "trust_and_safety/online_safety",
+            Domain::RiskManagement => "trust_and_safety/risk_management",
+            Domain::HumanResources => "human_resources",
+            Domain::CompensationAndBenefits => "human_resources/compensation_and_benefits",
+            Domain::EmployeeRelations => "human_resources/employee_relations",
+            Domain::HrAnalytics => "human_resources/hr_analytics",
+            Domain::Recruitment => "human_resources/recruitment",
+            Domain::TrainingAndDevelopment => "human_resources/training_and_development",
+            Domain::Education => "education",
+            Domain::CurriculumDesign => "education/curriculum_design",
+            Domain::ELearning => "education/e_learning",
+            Domain::EducationalTechnology => "education/educational_technology",
+            Domain::LearningManagementSystems => "education/learning_management_systems",
+            Domain::Pedagogy => "education/pedagogy",
+            Domain::IndustrialManufacturing => "industrial_manufacturing",
+            Domain::Automation => "industrial_manufacturing/automation",
+            Domain::LeanManufacturing => "industrial_manufacturing/lean_manufacturing",
+            Domain::ProcessEngineering => "industrial_manufacturing/process_engineering",
+            Domain::Robotics => "industrial_manufacturing/robotics",
+            Domain::SupplyChainManagement => "industrial_manufacturing/supply_chain_management",
+            Domain::Transportation => "transportation",
+            Domain::Automotive => "transportation/automotive",
+            Domain::AutonomousVehicles => "transportation/autonomous_vehicles",
+            Domain::Freight => "transportation/freight",
+            Domain::Logistics => "transportation/logistics",
+            Domain::PublicTransit => "transportation/public_transit",
+            Domain::SupplyChain => "transportation/supply_chain",
+            Domain::Healthcare => "healthcare",
+            Domain::HealthInformationSystems => "healthcare/health_information_systems",
+            Domain::HealthcareInformatics => "healthcare/healthcare_informatics",
+            Domain::MedicalTechnology => "healthcare/medical_technology",
+            Domain::PatientManagementSystems => "healthcare/patient_management_systems",
+            Domain::Telemedicine => "healthcare/telemedicine",
+
+        }
+    }
+}
+
+#[cfg(feature = "domain")]
 impl From<Domain> for &str {
     fn from(value: Domain) -> &'static str {
         match value {
@@ -191,7 +323,7 @@ impl From<Domain> for &str {
     }
 }
 
-{{ feature_attr }}
+#[cfg(feature = "domain")]
 impl From<Domain> for u32 {
     fn from(value: Domain) -> u32 {
         match value {

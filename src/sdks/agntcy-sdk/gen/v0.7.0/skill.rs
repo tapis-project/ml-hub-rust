@@ -1,4 +1,4 @@
-{{ feature_attr }}
+#[cfg(feature = "skill")]
 #[doc = "A structured view of distinct abilities, defining the capabilities within the Open Agentic Schema Framework."]
 pub enum Skill {
     #[doc = "Natural Language Processing (NLP) tasks are the application of computational techniques to the analysis and synthesis of natural language and speech."]
@@ -188,11 +188,211 @@ pub enum Skill {
 
 }
 
-{{ identify_trait }}
+#[cfg(all(feature = "skill", feature = "identify"))]
+pub trait Identify {
+    fn uid() -> u32;
+    fn name() -> &'static str;
+}
 
-{{ identify_impl }}
+#[cfg(all(feature = "skill", feature = "identify"))]
+impl Identify for Skill {
+    fn uid() -> u32 {
+        match Self {
+            Skill::NaturalLanguageProcessing => 1,
+            Skill::Storytelling => 10401,
+            Skill::FactAndClaimVerification => 10703,
+            Skill::NaturalLanguageGeneration => 102,
+            Skill::BiasMitigation => 10801,
+            Skill::StoryGeneration => 10207,
+            Skill::SentenceSimilarity => 10304,
+            Skill::TextClassification => 109,
+            Skill::DocumentAndPassageRetrieval => 10305,
+            Skill::NaturalLanguageInference => 10903,
+            Skill::ModuleExtraction => 110,
+            Skill::NaturalLanguageUnderstanding => 101,
+            Skill::ProblemSolving => 10702,
+            Skill::UserAdaptation => 10601,
+            Skill::QuestionGeneration => 10205,
+            Skill::ContextualComprehension => 10101,
+            Skill::Translation => 10501,
+            Skill::TextParaphrasing => 10203,
+            Skill::AnalyticalAndLogicalReasoning => 107,
+            Skill::FactExtraction => 10301,
+            Skill::LanguageTranslationAndMultilingualSupport => 105,
+            Skill::SemanticUnderstanding => 10102,
+            Skill::TextCompletion => 10201,
+            Skill::TextStyleTransfer => 10206,
+            Skill::PartOfSpeechTagging => 11102,
+            Skill::ModelModuleExtraction => 11001,
+            Skill::EthicalAndSafeInteraction => 108,
+            Skill::NamedEntityRecognition => 11101,
+            Skill::ContentModeration => 10802,
+            Skill::DialogueGeneration => 10204,
+            Skill::InformationRetrievalAndSynthesis => 103,
+            Skill::EntityRecognition => 10103,
+            Skill::TokenClassification => 111,
+            Skill::CreativeContentGeneration => 104,
+            Skill::InformationRetrievalSynthesisSearch => 10306,
+            Skill::QuestionAnswering => 10302,
+            Skill::ToneAndStyleAdjustment => 10602,
+            Skill::KnowledgeSynthesis => 10303,
+            Skill::TextSummarization => 10202,
+            Skill::SentimentAnalysis => 10902,
+            Skill::MultilingualUnderstanding => 10502,
+            Skill::PoetryAndCreativeWriting => 10402,
+            Skill::TopicLabellingAndTagging => 10901,
+            Skill::PersonalisationAndAdaptation => 106,
+            Skill::InferenceAndDeduction => 10701,
+            Skill::ImagesComputerVision => 2,
+            Skill::DepthEstimation => 207,
+            Skill::ImageClassification => 203,
+            Skill::ImageModuleExtraction => 208,
+            Skill::ImageGeneration => 206,
+            Skill::ImageSegmentation => 201,
+            Skill::ImageTo3d => 211,
+            Skill::ImageToImage => 210,
+            Skill::KeypointDetection => 205,
+            Skill::MaskGeneration => 209,
+            Skill::ObjectDetection => 204,
+            Skill::VideoClassification => 202,
+            Skill::Audio => 3,
+            Skill::AudioClassification => 301,
+            Skill::AudioToAudio => 302,
+            Skill::TabularText => 4,
+            Skill::TabularClassification => 401,
+            Skill::TabularRegression => 402,
+            Skill::AnalyticalSkills => 5,
+            Skill::CodeRefactoringAndOptimization => 50204,
+            Skill::CodeTemplateFilling => 50203,
+            Skill::CodeToDocstrings => 50202,
+            Skill::CodingSkills => 502,
+            Skill::TextToCode => 50201,
+            Skill::Geometry => 50103,
+            Skill::MathWordProblems => 50102,
+            Skill::MathematicalReasoning => 501,
+            Skill::PureMathematicalOperations => 50101,
+            Skill::AutomatedTheoremProving => 50104,
+            Skill::RetrievalAugmentedGeneration => 6,
+            Skill::DocumentOrDatabaseQuestionAnswering => 602,
+            Skill::GenerationOfAny => 603,
+            Skill::DocumentRetrieval => 60103,
+            Skill::Indexing => 60101,
+            Skill::RetrievalOfInformation => 601,
+            Skill::RetrievalOfInformationSearch => 60102,
+            Skill::MultiModal => 7,
+            Skill::AnyToAnyTransformation => 703,
+            Skill::AudioProcessing => 702,
+            Skill::AutomaticSpeechRecognition => 70202,
+            Skill::TextToSpeech => 70201,
+            Skill::ImageProcessing => 701,
+            Skill::ImageToText => 70101,
+            Skill::TextTo3d => 70104,
+            Skill::TextToImage => 70102,
+            Skill::TextToVideo => 70103,
+            Skill::VisualQuestionAnswering => 70105,
 
-{{ feature_attr }}
+        }
+    }
+    fn name() -> &'static str {
+        match Self {
+            Skill::NaturalLanguageProcessing => "natural_language_processing",
+            Skill::Storytelling => "natural_language_processing/creative_content/storytelling",
+            Skill::FactAndClaimVerification => "natural_language_processing/analytical_reasoning/fact_verification",
+            Skill::NaturalLanguageGeneration => "natural_language_processing/natural_language_generation",
+            Skill::BiasMitigation => "natural_language_processing/ethical_interaction/bias_mitigation",
+            Skill::StoryGeneration => "natural_language_processing/natural_language_generation/story_generation",
+            Skill::SentenceSimilarity => "natural_language_processing/information_retrieval_synthesis/sentence_similarity",
+            Skill::TextClassification => "natural_language_processing/text_classification",
+            Skill::DocumentAndPassageRetrieval => "natural_language_processing/information_retrieval_synthesis/document_passage_retrieval",
+            Skill::NaturalLanguageInference => "natural_language_processing/text_classification/natural_language_inference",
+            Skill::ModuleExtraction => "natural_language_processing/feature_extraction",
+            Skill::NaturalLanguageUnderstanding => "natural_language_processing/natural_language_understanding",
+            Skill::ProblemSolving => "natural_language_processing/analytical_reasoning/problem_solving",
+            Skill::UserAdaptation => "natural_language_processing/personalization/user_adaptation",
+            Skill::QuestionGeneration => "natural_language_processing/natural_language_generation/question_generation",
+            Skill::ContextualComprehension => "natural_language_processing/natural_language_understanding/contextual_comprehension",
+            Skill::Translation => "natural_language_processing/language_translation/translation",
+            Skill::TextParaphrasing => "natural_language_processing/natural_language_generation/paraphrasing",
+            Skill::AnalyticalAndLogicalReasoning => "natural_language_processing/analytical_reasoning",
+            Skill::FactExtraction => "natural_language_processing/information_retrieval_synthesis/fact_extraction",
+            Skill::LanguageTranslationAndMultilingualSupport => "natural_language_processing/language_translation",
+            Skill::SemanticUnderstanding => "natural_language_processing/natural_language_understanding/semantic_understanding",
+            Skill::TextCompletion => "natural_language_processing/natural_language_generation/text_completion",
+            Skill::TextStyleTransfer => "natural_language_processing/natural_language_generation/text_style_transfer",
+            Skill::PartOfSpeechTagging => "natural_language_processing/token_classification/pos_tagging",
+            Skill::ModelModuleExtraction => "natural_language_processing/feature_extraction/model_feature_extraction",
+            Skill::EthicalAndSafeInteraction => "natural_language_processing/ethical_interaction",
+            Skill::NamedEntityRecognition => "natural_language_processing/token_classification/named_entity_recognition",
+            Skill::ContentModeration => "natural_language_processing/ethical_interaction/content_moderation",
+            Skill::DialogueGeneration => "natural_language_processing/natural_language_generation/dialogue_generation",
+            Skill::InformationRetrievalAndSynthesis => "natural_language_processing/information_retrieval_synthesis",
+            Skill::EntityRecognition => "natural_language_processing/natural_language_understanding/entity_recognition",
+            Skill::TokenClassification => "natural_language_processing/token_classification",
+            Skill::CreativeContentGeneration => "natural_language_processing/creative_content",
+            Skill::InformationRetrievalSynthesisSearch => "natural_language_processing/information_retrieval_synthesis/information_retrieval_synthesis_search",
+            Skill::QuestionAnswering => "natural_language_processing/information_retrieval_synthesis/question_answering",
+            Skill::ToneAndStyleAdjustment => "natural_language_processing/personalization/style_adjustment",
+            Skill::KnowledgeSynthesis => "natural_language_processing/information_retrieval_synthesis/knowledge_synthesis",
+            Skill::TextSummarization => "natural_language_processing/natural_language_generation/summarization",
+            Skill::SentimentAnalysis => "natural_language_processing/text_classification/sentiment_analysis",
+            Skill::MultilingualUnderstanding => "natural_language_processing/language_translation/multilingual_understanding",
+            Skill::PoetryAndCreativeWriting => "natural_language_processing/creative_content/poetry_writing",
+            Skill::TopicLabellingAndTagging => "natural_language_processing/text_classification/topic_labeling",
+            Skill::PersonalisationAndAdaptation => "natural_language_processing/personalization",
+            Skill::InferenceAndDeduction => "natural_language_processing/analytical_reasoning/inference_deduction",
+            Skill::ImagesComputerVision => "images_computer_vision",
+            Skill::DepthEstimation => "images_computer_vision/depth_estimation",
+            Skill::ImageClassification => "images_computer_vision/image_classification",
+            Skill::ImageModuleExtraction => "images_computer_vision/image_feature_extraction",
+            Skill::ImageGeneration => "images_computer_vision/image_generation",
+            Skill::ImageSegmentation => "images_computer_vision/image_segmentation",
+            Skill::ImageTo3d => "images_computer_vision/image_to_3d",
+            Skill::ImageToImage => "images_computer_vision/image_to_image",
+            Skill::KeypointDetection => "images_computer_vision/keypoint_detection",
+            Skill::MaskGeneration => "images_computer_vision/mask_generation",
+            Skill::ObjectDetection => "images_computer_vision/object_detection",
+            Skill::VideoClassification => "images_computer_vision/video_classification",
+            Skill::Audio => "audio",
+            Skill::AudioClassification => "audio/audio_classification",
+            Skill::AudioToAudio => "audio/audio_to_audio",
+            Skill::TabularText => "tabular_text",
+            Skill::TabularClassification => "tabular_text/tabular_classification",
+            Skill::TabularRegression => "tabular_text/tabular_regression",
+            Skill::AnalyticalSkills => "analytical_skills",
+            Skill::CodeRefactoringAndOptimization => "analytical_skills/coding_skills/code_optimization",
+            Skill::CodeTemplateFilling => "analytical_skills/coding_skills/code_templates",
+            Skill::CodeToDocstrings => "analytical_skills/coding_skills/code_to_docstrings",
+            Skill::CodingSkills => "analytical_skills/coding_skills",
+            Skill::TextToCode => "analytical_skills/coding_skills/text_to_code",
+            Skill::Geometry => "analytical_skills/mathematical_reasoning/geometry",
+            Skill::MathWordProblems => "analytical_skills/mathematical_reasoning/math_word_problems",
+            Skill::MathematicalReasoning => "analytical_skills/mathematical_reasoning",
+            Skill::PureMathematicalOperations => "analytical_skills/mathematical_reasoning/pure_math_operations",
+            Skill::AutomatedTheoremProving => "analytical_skills/mathematical_reasoning/theorem_proving",
+            Skill::RetrievalAugmentedGeneration => "retrieval_augmented_generation",
+            Skill::DocumentOrDatabaseQuestionAnswering => "retrieval_augmented_generation/document_or_database_question_answering",
+            Skill::GenerationOfAny => "retrieval_augmented_generation/generation_of_any",
+            Skill::DocumentRetrieval => "retrieval_augmented_generation/retrieval_of_information/document_retrieval",
+            Skill::Indexing => "retrieval_augmented_generation/retrieval_of_information/indexing",
+            Skill::RetrievalOfInformation => "retrieval_augmented_generation/retrieval_of_information",
+            Skill::RetrievalOfInformationSearch => "retrieval_augmented_generation/retrieval_of_information/retrieval_of_information_search",
+            Skill::MultiModal => "multi_modal",
+            Skill::AnyToAnyTransformation => "multi_modal/any_to_any",
+            Skill::AudioProcessing => "multi_modal/audio_processing",
+            Skill::AutomaticSpeechRecognition => "multi_modal/audio_processing/speech_recognition",
+            Skill::TextToSpeech => "multi_modal/audio_processing/text_to_speech",
+            Skill::ImageProcessing => "multi_modal/image_processing",
+            Skill::ImageToText => "multi_modal/image_processing/image_to_text",
+            Skill::TextTo3d => "multi_modal/image_processing/text_to_3d",
+            Skill::TextToImage => "multi_modal/image_processing/text_to_image",
+            Skill::TextToVideo => "multi_modal/image_processing/text_to_video",
+            Skill::VisualQuestionAnswering => "multi_modal/image_processing/visual_qa",
+
+        }
+    }
+}
+
+#[cfg(feature = "skill")]
 impl From<Skill> for &str {
     fn from(value: Skill) -> &'static str {
         match value {
@@ -293,7 +493,7 @@ impl From<Skill> for &str {
     }
 }
 
-{{ feature_attr }}
+#[cfg(feature = "skill")]
 impl From<Skill> for u32 {
     fn from(value: Skill) -> u32 {
         match value {

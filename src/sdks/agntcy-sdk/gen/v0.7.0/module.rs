@@ -1,4 +1,4 @@
-{{ feature_attr }}
+#[cfg(feature = "module")]
 #[doc = "A comprehensive table outlining module sets of application and knowledge areas within the framework."]
 pub enum Module {
     #[doc = "Runtime module set."]
@@ -26,11 +26,49 @@ pub enum Module {
 
 }
 
-{{ identify_trait }}
+#[cfg(all(feature = "module", feature = "identify"))]
+pub trait Identify {
+    fn uid() -> u32;
+    fn name() -> &'static str;
+}
 
-{{ identify_impl }}
+#[cfg(all(feature = "module", feature = "identify"))]
+impl Identify for Module {
+    fn uid() -> u32 {
+        match Self {
+            Module::Runtime => 3,
+            Module::LlmPrompt => 304,
+            Module::LlmModel => 303,
+            Module::A2a => 305,
+            Module::Manifest => 301,
+            Module::Mcp => 302,
+            Module::Identity => 4,
+            Module::Observability => 1,
+            Module::Observability => 101,
+            Module::Evaluation => 2,
+            Module::Evaluation => 201,
 
-{{ feature_attr }}
+        }
+    }
+    fn name() -> &'static str {
+        match Self {
+            Module::Runtime => "runtime",
+            Module::LlmPrompt => "runtime/prompt",
+            Module::LlmModel => "runtime/model",
+            Module::A2a => "runtime/a2a",
+            Module::Manifest => "runtime/manifest",
+            Module::Mcp => "runtime/mcp",
+            Module::Identity => "identity",
+            Module::Observability => "observability",
+            Module::Observability => "observability/base_module/observability",
+            Module::Evaluation => "evaluation",
+            Module::Evaluation => "evaluation/base_module/evaluation",
+
+        }
+    }
+}
+
+#[cfg(feature = "module")]
 impl From<Module> for &str {
     fn from(value: Module) -> &'static str {
         match value {
@@ -50,7 +88,7 @@ impl From<Module> for &str {
     }
 }
 
-{{ feature_attr }}
+#[cfg(feature = "module")]
 impl From<Module> for u32 {
     fn from(value: Module) -> u32 {
         match value {

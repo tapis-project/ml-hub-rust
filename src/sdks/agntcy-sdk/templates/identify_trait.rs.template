@@ -1,5 +1,5 @@
 {{ feature_attr }}
 pub trait Identify {
     fn uid() -> u32;
-    fn name() -> &'static str
+    fn name() -> &'static str;
 }
