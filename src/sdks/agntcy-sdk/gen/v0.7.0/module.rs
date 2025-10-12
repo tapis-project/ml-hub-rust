@@ -15,12 +15,8 @@ pub enum Module {
     Mcp,
     #[doc = "Identity module set."]
     Identity,
-    #[doc = "Observability module set."]
-    Observability,
     #[doc = "A module describing how the agent can be observed."]
     Observability,
-    #[doc = "Evaluation module set."]
-    Evaluation,
     #[doc = "Assessing actions and outcomes to determine their effectiveness, guiding future decision-making and enhancing personal agency."]
     Evaluation,
 
@@ -43,9 +39,7 @@ impl Identify for Module {
             Module::Manifest => 301,
             Module::Mcp => 302,
             Module::Identity => 4,
-            Module::Observability => 1,
             Module::Observability => 101,
-            Module::Evaluation => 2,
             Module::Evaluation => 201,
 
         }
@@ -59,9 +53,7 @@ impl Identify for Module {
             Module::Manifest => "runtime/manifest",
             Module::Mcp => "runtime/mcp",
             Module::Identity => "identity",
-            Module::Observability => "observability",
             Module::Observability => "observability/base_module/observability",
-            Module::Evaluation => "evaluation",
             Module::Evaluation => "evaluation/base_module/evaluation",
 
         }
@@ -79,9 +71,7 @@ impl From<Module> for &str {
             Module::Manifest => "runtime/manifest",
             Module::Mcp => "runtime/mcp",
             Module::Identity => "identity",
-            Module::Observability => "observability",
             Module::Observability => "observability/base_module/observability",
-            Module::Evaluation => "evaluation",
             Module::Evaluation => "evaluation/base_module/evaluation",
 
         }
@@ -99,9 +89,7 @@ impl From<Module> for u32 {
             Module::Manifest => 301,
             Module::Mcp => 302,
             Module::Identity => 4,
-            Module::Observability => 1,
             Module::Observability => 101,
-            Module::Evaluation => 2,
             Module::Evaluation => 201,
 
         }

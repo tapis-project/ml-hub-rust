@@ -22,6 +22,9 @@ def normalize_category_caption(caption: str):
     
     category
 
+# NOTE These items seem to be duplicates in the spec. Further investigation requires. 2025/10/11
+TOP_LEVEL_ELEMENTS_TO_SKIP = ["Observability", "Evaluation"]
+
 class Element:
     def __init__(self, category=None, caption=None, uid=None, key: str=None, name=None, description=None):
         self.category: str = category
@@ -57,17 +60,18 @@ for key, value in spec["attributes"].items():
     # Tracks the size of the
     last_captions_size = len(captions)
 
-    # Create the top level elements
-    elements.append(
-        Element(
-            category=category, 
-            caption=normalize_caption(value["caption"]), 
-            key=key, 
-            name=value["name"], 
-            uid=value["uid"],
-            description=value["description"]
+    if normalize_caption(value["caption"]) not in TOP_LEVEL_ELEMENTS_TO_SKIP:
+        # Create the top level elements
+        elements.append(
+            Element(
+                category=category, 
+                caption=normalize_caption(value["caption"]), 
+                key=key, 
+                name=value["name"], 
+                uid=value["uid"],
+                description=value["description"]
+            )
         )
-    )
     
     # Each item in the classes array is an element. Each element be either the child
     # of a top level element or one of the other classes. Only the name will changed
@@ -76,7 +80,6 @@ for key, value in spec["attributes"].items():
     for k in value["classes"]:
         name = value["name"]
         caption = normalize_caption(value["classes"][k]["caption"])
-
         # Detect duplicate sets
         captions.add(caption)
         if len(captions) == last_captions_size:
