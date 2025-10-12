@@ -5,3 +5,5 @@ pub mod artifact_publication;
 pub mod model_metadata;
 pub mod model_metadata_new;
 pub mod inference;
+pub mod skills;
+pub mod domains;

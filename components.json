@@ -12,8 +12,8 @@
     "models-image": "tapis/models-api",
     "datasets-deployment": "mlhub-datasets-api-deployment",
     "datasets-image": "tapis/datasets-api",
-    "inference-deployment": "mlhub-inference-api-deployment",
-    "inference-image": "tapis/inference-api",
+    "deployments-deployment": "mlhub-deployments-api-deployment",
+    "deployments-image": "tapis/deployments-api",
     "training-deployment": "mlhub-training-api-deployment",
     "training-image": "tapis/training-api",
     "artifact-db-deployment": "mlhub-artifact-db-deployment",
@@ -95,8 +95,8 @@
       ]
     },
     {
-      "name": "inference",
-      "rootDir": "src/apis/inference",
+      "name": "deployments",
+      "rootDir": "src/apis/deployments",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -289,8 +289,8 @@
       }
     },
     {
-      "name": "inference-db",
-      "rootDir": "src/infra/inference-db",
+      "name": "deployments-db",
+      "rootDir": "src/infra/deployments-db",
       "labels": ["component"],
       "lifecycle": "experimental",
       "commands": {
