@@ -3,6 +3,10 @@ pub mod inputs_to_entities;
 
 use serde_json::Value;
 use uuid::Uuid;
+use crate::application::inputs::{
+    skills::Skill,
+    domains::Domain,
+};
 
 #[derive(Debug, Clone)]
 pub struct SystemRequirement {
@@ -42,6 +46,10 @@ pub struct ModelMetadata {
     pub version: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
+
+    // Knowledge and capabilities
+    pub skills: Option<Vec<Skill>>,
+    pub domains: Option<Vec<Domain>>,
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,

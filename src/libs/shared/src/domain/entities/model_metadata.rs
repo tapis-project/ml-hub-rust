@@ -1,4 +1,6 @@
 use serde_json::Value;
+use crate::domain::entities::domains::Domain;
+use crate::domain::entities::skills::Skill;
 
 pub struct SystemRequirement {
     pub name: String,
@@ -34,6 +36,10 @@ pub struct ModelMetadata {
     pub framework: Option<String>,
     pub image: Option<String>,
     // TODO pub artifact_uri: Option<String>
+
+    /// Capability and knowledge
+    pub domains: Option<Vec<Domain>>,
+    pub skills: Option<Vec<Skill>>,
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,

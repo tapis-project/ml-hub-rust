@@ -1,3 +1,3 @@
 pub mod entities;
 pub mod services;
-pub mod external;
+pub(super) mod external;
