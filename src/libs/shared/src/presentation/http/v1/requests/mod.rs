@@ -8,6 +8,8 @@ pub mod filtering;
 pub mod archive;
 pub mod artifact_ingestions;
 pub mod artifact_publications;
+pub mod skills;
+pub mod domains;
 
 use serde_json::Value;
 

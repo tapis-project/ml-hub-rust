@@ -1,4 +1,6 @@
 use crate::presentation::http::v1::requests::models as requests;
+use crate::presentation::http::v1::requests::skills;
+use crate::presentation::http::v1::requests::domains;
 use crate::domain::entities::model_metadata as entities;
 use crate::errors::Error;
 
@@ -61,6 +63,16 @@ impl TryFrom<entities::ModelMetadata> for requests::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: entities::ModelMetadata) -> Result<Self, Self::Error> {
+        let mut skills = Vec::with_capacity(1);
+        for skill in value.skills.unwrap_or(Vec::with_capacity(0)) {
+            skills.push(skills::Skill::from(skill));
+        }
+        
+        let mut domains = Vec::with_capacity(1);
+        for domain in value.domains.unwrap_or(Vec::with_capacity(0)) {
+            domains.push(domains::Domain::from(domain));
+        }
+
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(requests::ModelIO::try_from(input)?)
@@ -85,6 +97,8 @@ impl TryFrom<entities::ModelMetadata> for requests::ModelMetadata {
             model_type: value.model_type,
             version: value.version,
             image: value.image,
+            skills: Some(skills),
+            domains: Some(domains),
             keywords: value.keywords,
             annotation: value.annotation,
             multi_modal: value.multi_modal,

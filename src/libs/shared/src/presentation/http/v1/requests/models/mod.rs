@@ -7,6 +7,8 @@ use utoipa::ToSchema;
 use std::collections::HashMap;
 use crate::presentation::http::v1::requests::headers::Headers;
 use crate::presentation::http::v1::requests::artifacts;
+use crate::presentation::http::v1::requests::skills::Skill;
+use crate::presentation::http::v1::requests::domains::Domain;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {
@@ -114,6 +116,10 @@ pub struct ModelMetadata {
     pub version: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
+
+    // Knowledge and capabilities
+    pub skills: Option<Vec<Skill>>,
+    pub domains: Option<Vec<Domain>>,
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,

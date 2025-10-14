@@ -1,4 +1,6 @@
 use crate::infra::persistence::mongo::documents::model_metadata;
+use crate::infra::persistence::mongo::documents::skills;
+use crate::infra::persistence::mongo::documents::domains;
 use crate::application::inputs::model_metadata as inputs;
 use crate::errors::Error;
 use mongodb::bson::Uuid;
@@ -66,6 +68,16 @@ impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: &inputs::CreateModelMetadata) -> Result<Self, Self::Error> {
+        let mut skills = Vec::with_capacity(1);
+        for skill in value.metadata.skills.clone().unwrap_or(Vec::with_capacity(0)) {
+            skills.push(skills::Skill::from(skill));
+        }
+        
+        let mut domains = Vec::with_capacity(1);
+        for domain in value.metadata.domains.clone().unwrap_or(Vec::with_capacity(0)) {
+            domains.push(domains::Domain::from(domain));
+        }
+
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.metadata.model_inputs.clone().unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(model_metadata::ModelIO::try_from(input)?)
@@ -92,6 +104,8 @@ impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
             model_type: value.metadata.model_type.clone(),
             version: value.metadata.version.clone(),
             image: value.metadata.image.clone(),
+            skills: Some(skills),
+            domains: Some(domains),
             keywords: value.metadata.keywords.clone(),
             annotation: value.metadata.annotation.clone(),
             multi_modal: value.metadata.multi_modal.clone(),

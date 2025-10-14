@@ -153,6 +153,7 @@ impl TryFrom<inputs::CreateModelMetadata> for domain::ModelMetadata {
         for domain in value.metadata.domains.unwrap_or(Vec::with_capacity(0)) {
             domains.push(domains::Domain::from(domain));
         }
+        
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.metadata.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(domain::ModelIO::try_from(input)?)
