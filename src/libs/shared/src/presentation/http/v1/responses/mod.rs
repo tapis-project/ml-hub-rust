@@ -1,4 +1,6 @@
 mod domain_to_dto;
+mod output_to_response;
+pub mod models;
 
 use serde::Serialize;
 use serde_json::Value;
@@ -26,7 +28,6 @@ pub struct Artifact {
     pub artifact_type: ArtifactType,
     pub created_at: String,
     pub last_modified: String,
-    // pub metadata: Option<ModelMetadata>
 }
 
 #[derive(Serialize, ToSchema)]

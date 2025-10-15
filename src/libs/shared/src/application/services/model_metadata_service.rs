@@ -3,7 +3,7 @@ use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
 use crate::application::inputs::model_metadata::CreateModelMetadata;
-use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
     ModelMetadataServiceError as ModelMetadataDomainServiceError

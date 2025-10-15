@@ -7,6 +7,7 @@ use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, GetModelArtifactInput, IngestArtifactInput, ListIngestionsByArtifactIdInput, ListPublicationsByArtifactIdInput, UploadArtifactInput};
 use crate::application::inputs::artifact_publication::{GetModelPublicationInput, ListModelPublicationsInput, PublishArtifactInput};
 use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
+use crate::application::outputs::artifacts::ModelArtifactOutput;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
 use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
@@ -127,8 +128,9 @@ impl ArtifactService {
         };
 
         // Fetch artifact metadata
-        let _ = self.find_metadata_by_artifact_id(&input.artifact_id)
-            .await?;
+        if let None = self.find_metadata_by_artifact_id(&input.artifact_id).await? {
+            return Err(ArtifactServiceError::MissingMetadata("Artifact must have an associated metadata entry in order to be published. Create a metadata entry for this artifact and try again".into()))
+        };
 
         // Instantiate the ArtifactPublication
         let mut publication = ArtifactPublication::new(
@@ -140,7 +142,7 @@ impl ArtifactService {
         // Closure for saving the publication
         let save_publication = || self.publication_repo.save(&publication);
 
-        // Save publication with retries. Propogate error
+        // Save publication with retries. Propagate error
         retry_async(save_publication, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
@@ -180,7 +182,7 @@ impl ArtifactService {
         return Ok(publication)
     }
 
-    pub async fn find_metadata_by_artifact_id(&self, artifact_id: &Uuid) -> Result<ModelMetadata, ArtifactServiceError> {
+    pub async fn find_metadata_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<ModelMetadata>, ArtifactServiceError> {
         // Closure for fetching the metadata for this artifact
         let find_metadata = || self.metadata_repo.find_by_artifact_id(&artifact_id);
 
@@ -188,10 +190,14 @@ impl ArtifactService {
         let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
+        
         // Check that the artifact exists
         match maybe_metadata {
-            Some(m) => Ok(m),
-            None => Err(ArtifactServiceError::MissingMetadata("Artifact must have a an associated metadata in order to publish it. Create metadata for this artifact then try again".into()))
+            Some(m) => 
+            {
+                Ok(Some(m))
+            },
+            None => Ok(None)
         }
     }
 
@@ -500,19 +506,24 @@ impl ArtifactService {
         Ok(path)
     }
 
-    pub async fn get_model_artifact(&self, input: GetModelArtifactInput) -> Result<Option<Artifact>, ArtifactServiceError> {
-        let maybe_artifact = self.find_artifact_by_artifact_id(input.artifact_id).await?;
+    pub async fn get_model_artifact(&self, input: GetModelArtifactInput) -> Result<ModelArtifactOutput, ArtifactServiceError> {
+        let artifact_id = input.artifact_id;
+        
+        let maybe_artifact = self.find_artifact_by_artifact_id(artifact_id.clone()).await?;
 
-        match maybe_artifact {
-            Some(a) => {
-                if a.artifact_type != ArtifactTypeEntity::Model {
-                   return Err(ArtifactServiceError::IncorrectArtifactType("ArtifactPublication is not associated with a Model artifact".into()))
-                };
+        let artifact = match maybe_artifact {
+            Some(a) => a,
+            None => return Err(ArtifactServiceError::MissingArtifact(format!("Cannot find artifact with id {}", artifact_id)))
+        };
 
-                Ok(Some(a))
-            },
-            None => Ok(None)
-        }
+        if artifact.artifact_type != ArtifactTypeEntity::Model {
+            return Err(ArtifactServiceError::MissingArtifact(format!("Cannot find artifact with id {}", artifact_id)))
+        };
+
+        Ok(ModelArtifactOutput {
+            artifact,
+            metadata: self.find_metadata_by_artifact_id(&input.artifact_id).await?
+        })
     }
 
     pub async fn get_model_publication(&self, input: GetModelPublicationInput) -> Result<Option<ArtifactPublication>, ArtifactServiceError> {

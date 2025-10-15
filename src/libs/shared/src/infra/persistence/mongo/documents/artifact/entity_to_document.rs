@@ -38,7 +38,7 @@ impl TryFrom<entities::artifact::Artifact> for documents::artifact::UpdateArtifa
     fn try_from(value: entities::artifact::Artifact) -> Result<Self, Self::Error> {
         let path = match value.path {
             Some(p) => p,
-            None => return Err(ApplicationError::ConvesionError("Path".into()))
+            None => return Err(ApplicationError::ConversionError("Path".into()))
         };
 
         Ok(Self {
@@ -54,7 +54,7 @@ impl TryFrom<entities::artifact::Artifact> for documents::artifact::UpdateArtifa
     fn try_from(value: entities::artifact::Artifact) -> Result<Self, Self::Error> {
         let path = match value.path {
             Some(p) => p,
-            None => return Err(ApplicationError::ConvesionError("Path".into()))
+            None => return Err(ApplicationError::ConversionError("Path".into()))
         };
 
         Ok(Self {

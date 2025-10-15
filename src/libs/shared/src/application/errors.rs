@@ -10,5 +10,5 @@ pub enum ApplicationError {
     PublisherError(#[from] EventPublisherError),
 
     #[error("{0}")]
-    ConvesionError(String),
+    ConversionError(String),
 }

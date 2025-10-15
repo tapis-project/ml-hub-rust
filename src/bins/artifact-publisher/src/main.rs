@@ -189,7 +189,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         // client, or a publish model metadata client and a platform client
                         // only needs to implement one of those.
                         Err(ClientError::Unimplemented)  => {
-                            println!("What?");
+                            println!("Should be unreachable");
                         },
                         // All other errors are considered failure conditions. Handle them
                         // accordingly

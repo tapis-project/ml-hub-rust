@@ -34,7 +34,7 @@ impl ModelMetadataRepository {
 impl application::ports::repositories::ModelMetadataRepository for ModelMetadataRepository {
     async fn save(&self, input: &application::inputs::model_metadata::CreateModelMetadata) -> Result<(), ApplicationError> {
         let mut document = ModelMetadata::try_from(input)
-            .map_err(|err| ApplicationError::ConvesionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
+            .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
         
         let result = self.write_collection.insert_one(&document, None)
             .await
@@ -57,7 +57,7 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         let maybe_metadata = match cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))? {
             Some(m) => {
                 Some(domain::entities::model_metadata::ModelMetadata::try_from(m)
-                    .map_err(|err| ApplicationError::ConvesionError(err.to_string()))?)
+                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?)
 
             },
             None => None

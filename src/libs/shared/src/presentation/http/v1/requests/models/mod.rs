@@ -1,4 +1,4 @@
-pub mod enitity_to_dto;
+pub mod entity_to_dto;
 pub mod dto_to_input;
 
 use serde::{Deserialize, Serialize};
