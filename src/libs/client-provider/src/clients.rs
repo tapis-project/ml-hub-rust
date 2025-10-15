@@ -262,7 +262,7 @@ impl Client for PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, extracted_artifact_path: &PathBuf, artifact: &Artifact, metadata: Option<&ModelMetadata>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
             PublishModelClient::HuggingFace(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {

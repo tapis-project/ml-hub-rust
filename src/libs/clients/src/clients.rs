@@ -96,7 +96,7 @@ pub trait PublishModelClient: Client {
         &self,
         _extracted_artifact_path: &PathBuf,
         _artifact: &entities::artifact::Artifact,
-        _metadata: &entities::model_metadata::ModelMetadata,
+        _metadata: Option<&entities::model_metadata::ModelMetadata>,
         _request: &artifacts::PublishArtifactServiceRequest
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
