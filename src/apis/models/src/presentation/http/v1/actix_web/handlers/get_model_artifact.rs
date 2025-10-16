@@ -66,10 +66,10 @@ async fn get_model_artifact(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let requests = match to_value(model_artifact) {
+    let resp = match to_value(model_artifact) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };
     
-    build_success_response(Some(requests), None, None)
+    build_success_response(Some(resp), None, None)
 }

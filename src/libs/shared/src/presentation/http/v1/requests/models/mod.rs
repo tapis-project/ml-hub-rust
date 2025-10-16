@@ -186,5 +186,5 @@ pub struct DiscoveryCriteria {
     // language search
     pub prompt: Option<String>,
     pub criteria: Vec<ModelMetadata>,
-    pub confidence_threshold: Option<Vec<String>>,
+    pub confidence_threshold: Option<u8>,
 }

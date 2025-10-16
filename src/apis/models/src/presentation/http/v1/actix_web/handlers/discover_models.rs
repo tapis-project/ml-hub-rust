@@ -2,11 +2,14 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::requests::{DiscoveryCriteria, Headers};
-use actix_web::{post, web, HttpRequest, Responder};
+use crate::presentation::http::v1::requests::DiscoveryCriteria;
+use crate::bootstrap::factories::model_metadata_service_factory;
+use actix_web::{post, web, Responder};
 use shared::logging::SharedLogger;
-use std::collections::HashMap;
+use crate::application::model_metadata_inputs as inputs;
 use crate::presentation::http::v1::contracts;
+use crate::presentation::http::v1::requests::ModelMetadata;
+use crate::bootstrap::state::AppState;
 
 #[utoipa::path(
     post,
@@ -23,19 +26,50 @@ use crate::presentation::http::v1::contracts;
 )]
 #[post("models-api/models")]
 async fn discover_models(
-    req: HttpRequest,
-    query: web::Query<HashMap<String, String>>,
+    data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
 ) -> impl Responder {
     let logger = SharedLogger::new();
 
-    logger.debug("Start operation discover_models");
+    logger.debug("discover_models operation");
 
-    // Build the request used by the client
-    let headers = match Headers::try_from(req.headers()) {
-        Ok(h) => h,
-        Err(err) => return build_error_response(400, String::from(err.to_string())),
+    let model_metadata_service = match model_metadata_service_factory(&data.db).await {
+        Ok(s) => s,
+        Err(err) => return build_error_response(500, err.to_string())
     };
 
-    build_success_response(None, Some("testing".into()), None)
+    let discovery_criteria = match DiscoveryCriteria::try_from(body.into_inner()) {
+        Ok(c) => c,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    let mut criteria: Vec<inputs::ModelMetadata> = Vec::with_capacity(discovery_criteria.criteria.len());
+    for criterion in discovery_criteria.criteria {
+        let c = match inputs::ModelMetadata::try_from(criterion) {
+            Ok(c) => c,
+            Err(err) => return build_error_response(500, err.to_string())
+        };
+        
+        criteria.push(c);
+    }
+
+    let input = inputs::DiscoverModelsInput {
+        confidence: discovery_criteria.confidence_threshold,
+        criteria
+    };
+
+    let metadata_entries = match model_metadata_service.discover_models(input).await {
+        Ok(e) => e,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    let mut resp: Vec<ModelMetadata> = Vec::with_capacity(metadata_entries.len());
+    for entry in metadata_entries {
+        match ModelMetadata::try_from(entry) {
+            Ok(e) => resp.push(e),
+            Err(err) => return build_error_response(500, err.to_string())
+        };
+    }
+
+    build_success_response(None, Some(String::from("success")), None)
 }
