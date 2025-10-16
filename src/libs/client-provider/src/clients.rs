@@ -6,7 +6,7 @@ use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
 use shared::presentation::http::v1::requests::models::{
-    DiscoverModelsRequest,
+    DiscoverModelsByPlatformRequest,
     GetModelRequest,
     IngestModelRequest,
     ListModelsRequest,
@@ -223,7 +223,7 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
     type Metadata = Value;
     async fn discover_models(
         &self,
-        request: &DiscoverModelsRequest,
+        request: &DiscoverModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp = match self {
             DiscoverModelsClient::Patra(c) => {

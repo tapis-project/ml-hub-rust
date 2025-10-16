@@ -7,7 +7,7 @@ use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::models::{
-    DiscoverModelsRequest, GetModelRequest, ListModelsRequest,
+    DiscoverModelsByPlatformRequest, GetModelRequest, ListModelsRequest,
 };
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::domain::entities:: model_metadata::ModelMetadata;
@@ -133,14 +133,14 @@ impl DiscoverModelsClient for PatraClient {
 
     async fn discover_models(
         &self,
-        request: &DiscoverModelsRequest,
+        request: &DiscoverModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Discover models");
         let mut query_params = HashMap::new();
 
         let prompt = match request.body.prompt.clone() {
             Some(p) => p,
-            None => return Err(ClientError::BadRequest { msg: "Missing field 'prompt': Model discovery with Patra requires a natural language prompt support via the 'prompt' field of the DiscoverModelsRequest".into(), scope: ClientErrorScope::Client })
+            None => return Err(ClientError::BadRequest { msg: "Missing field 'prompt': Model discovery with Patra requires a natural language prompt support via the 'prompt' field of the DiscoverModelsByPlatformRequest".into(), scope: ClientErrorScope::Client })
         };
         
         query_params.insert("q", prompt);

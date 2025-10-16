@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
-use crate::application::inputs::model_metadata::CreateModelMetadata;
+use crate::application::inputs::model_metadata::{CreateModelMetadata, DiscoverModelsInput};
 use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
@@ -50,11 +50,11 @@ impl ModelMetadataService {
         }
     }
 
-    pub async fn create_metadata(&self, input: CreateModelMetadata) -> Result<(), ModelMetadataServiceError> {
+    pub async fn associate_metadata_with_artifact(&self, input: CreateModelMetadata) -> Result<(), ModelMetadataServiceError> {
         // Get the artifact_id from the input
         let artifact_id = input.artifact_id.clone();
 
-        // Convert from service input to domain entitiy
+        // Convert from service input to domain entity
         let metadata = ModelMetadata::try_from(input.clone())?;
 
         let find_artifact = || self.artifact_repo.get_by_id(&artifact_id);
@@ -84,5 +84,15 @@ impl ModelMetadataService {
             .await?;
 
         return Ok(())
+    }
+
+    pub async fn discover_models(&self, input: DiscoverModelsInput) -> Result<Vec<ModelMetadata>, ModelMetadataServiceError> {
+        let discover_metadata = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
+       
+       // Find model metadata by discovery criteria
+        let metadata_entries = retry_async(discover_metadata, &Self::REPO_RETRY_POLICY).await
+            .map_err(|err| ModelMetadataServiceError::RepoError(err))?;
+
+        Ok(metadata_entries)
     }
 }

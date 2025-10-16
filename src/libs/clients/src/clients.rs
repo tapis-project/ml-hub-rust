@@ -82,7 +82,7 @@ pub trait DiscoverModelsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn discover_models(&self, _request: &models::DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn discover_models(&self, _request: &models::DiscoverModelsByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

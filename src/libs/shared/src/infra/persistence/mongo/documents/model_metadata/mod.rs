@@ -44,7 +44,7 @@ pub struct ModelMetadata {
     pub _id: Option<ObjectId>,
     
     // Unique ID of the artifact that this metadata is related to
-    pub artifact_id: Uuid,
+    pub artifact_id: Option<Uuid>,
 
     // General fields
     pub name: Option<String>,

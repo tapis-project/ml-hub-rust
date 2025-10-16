@@ -98,7 +98,7 @@ impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
 
         Ok(Self {
             _id: None,
-            artifact_id: Uuid::from_bytes(value.artifact_id.into_bytes()),
+            artifact_id: Some(Uuid::from_bytes(value.artifact_id.into_bytes())),
             name: value.metadata.name.clone(),
             framework: value.metadata.framework.clone(),
             model_type: value.metadata.model_type.clone(),
@@ -137,6 +137,84 @@ impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
             regulatory: value.metadata.regulatory.clone(),
             license: value.metadata.license.clone(),
             bias_evaluation_score: value.metadata.bias_evaluation_score,
+
+        })
+    }
+}
+
+impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
+    type Error = Error;
+    
+    fn try_from(value: &inputs::ModelMetadata) -> Result<Self, Self::Error> {
+        let mut skills = Vec::with_capacity(1);
+        for skill in value.skills.clone().unwrap_or(Vec::with_capacity(0)) {
+            skills.push(skills::Skill::from(skill));
+        }
+        
+        let mut domains = Vec::with_capacity(1);
+        for domain in value.domains.clone().unwrap_or(Vec::with_capacity(0)) {
+            domains.push(domains::Domain::from(domain));
+        }
+
+        let mut model_inputs = Vec::with_capacity(1);
+        for input in value.model_inputs.clone().unwrap_or(Vec::with_capacity(0)) {
+            model_inputs.push(model_metadata::ModelIO::try_from(input)?)
+        }
+        
+        let mut model_outputs = Vec::with_capacity(1);
+        for output in value.model_outputs.clone().unwrap_or(Vec::with_capacity(0)) {
+            model_outputs.push(model_metadata::ModelIO::try_from(output)?)
+        }
+
+        let inference_hardware = value.inference_hardware.clone()
+            .map(|hardware| model_metadata::HardwareRequirements::try_from(hardware))
+            .transpose()?;
+
+        let training_hardware = value.training_hardware.clone()
+            .map(|hardware| model_metadata::HardwareRequirements::try_from(hardware))
+            .transpose()?;
+
+        Ok(Self {
+            _id: None,
+            artifact_id: None,
+            name: value.name.clone(),
+            framework: value.framework.clone(),
+            model_type: value.model_type.clone(),
+            version: value.version.clone(),
+            image: value.image.clone(),
+            skills: Some(skills),
+            domains: Some(domains),
+            keywords: value.keywords.clone(),
+            annotation: value.annotation.clone(),
+            multi_modal: value.multi_modal.clone(),
+            model_inputs: Some(model_inputs),
+            model_outputs: Some(model_outputs),
+            task_types: value.task_types.clone(),
+            inference_precision: value.inference_precision.clone(),
+            inference_hardware,
+            inference_software_dependencies: value.inference_software_dependencies.clone(),
+            inference_max_energy_consumption_watts: value.inference_max_energy_consumption_watts,
+            inference_max_latency_ms: value.inference_max_latency_ms,
+            inference_min_throughput: value.inference_min_throughput,
+            inference_max_compute_utilization_percentage: value.inference_max_compute_utilization_percentage,
+            inference_max_memory_usage_mb: value.inference_max_memory_usage_mb,
+            inference_distributed: value.inference_distributed,
+            training_time: value.training_time,
+            training_precision: value.training_precision.clone(),
+            training_hardware,
+            pretraining_datasets: value.pretraining_datasets.clone(),
+            finetuning_datasets: value.finetuning_datasets.clone(),
+            edge_optimized: value.edge_optimized,
+            quantization_aware: value.quantization_aware,
+            supports_quantization: value.supports_quantization,
+            pretrained: value.pretrained,
+            pruned: value.pruned,
+            slimmed: value.slimmed,
+            training_distributed: value.training_distributed,
+            training_max_energy_consumption_watts: value.training_max_energy_consumption_watts,
+            regulatory: value.regulatory.clone(),
+            license: value.license.clone(),
+            bias_evaluation_score: value.bias_evaluation_score,
 
         })
     }

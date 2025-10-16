@@ -33,7 +33,7 @@ pub struct IngestModelPath {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct DiscoverModelsPath {
+pub struct DiscoverModelsByPlatformPath {
     pub platform: String
 }
 
@@ -46,7 +46,13 @@ pub struct ListModelsRequest {
 
 pub struct DiscoverModelsRequest {
     pub headers: Headers,
-    pub path: DiscoverModelsPath,
+    pub query: HashMap<String, String>,
+    pub body: DiscoveryCriteria
+}
+
+pub struct DiscoverModelsByPlatformRequest {
+    pub headers: Headers,
+    pub path: DiscoverModelsByPlatformPath,
     pub query: HashMap<String, String>,
     pub body: DiscoveryCriteria
 }

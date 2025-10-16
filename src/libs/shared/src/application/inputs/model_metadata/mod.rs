@@ -103,3 +103,11 @@ pub struct CreateModelMetadata {
     pub artifact_id: Uuid,
     pub metadata: ModelMetadata,
 }
+
+/// Each field in the ModelMetadata will be ANDed and each individual ModelMetadata
+/// themselves will be ORed
+#[derive(Debug, Clone)]
+pub struct DiscoverModelsInput {
+    pub confidence: Option<u8>,
+    pub criteria: Vec<ModelMetadata>
+}

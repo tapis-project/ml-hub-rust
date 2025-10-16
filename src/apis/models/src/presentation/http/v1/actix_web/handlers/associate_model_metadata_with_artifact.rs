@@ -36,7 +36,7 @@ use shared::presentation::http::v1::contracts::responses;
     )
 )]
 #[post("models-api/artifacts/{artifact_id}/metadata")]
-async fn create_model_metadata(
+async fn associate_model_metadata_with_artifact(
     // req: HttpRequest,
     path: web::Path<CreateModelMetadataPath>,
     // query: web::Query<HashMap<String, String>>,
@@ -64,7 +64,7 @@ async fn create_model_metadata(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    match model_metadata_service.create_metadata(input).await {
+    match model_metadata_service.associate_metadata_with_artifact(input).await {
         Ok(_) => (),
         Err(err) => return build_error_response(500, err.to_string())
     };

@@ -4,7 +4,9 @@ use crate::domain::entities;
 use mongodb::{
     bson::{
         doc,
-        Uuid
+        Uuid,
+        to_bson,
+        Bson,
     },
     Database,
     Collection,
@@ -64,5 +66,36 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         };
 
         Ok(maybe_metadata)
+    }
+
+    async fn filter_model_metadata_by_criteria(&self, input: &application::inputs::model_metadata::DiscoverModelsInput) -> Result<Vec<entities::model_metadata::ModelMetadata>, ApplicationError> {
+        let mut filters: Vec<Bson> = Vec::new();
+        for criterion in input.criteria.clone() {
+            let metadata = ModelMetadata::try_from(&criterion)
+                .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+
+            let serialized_metadata = to_bson(&metadata)
+                .map_err(|err| ApplicationError::ConversionError(format!("Failed to serialize ModelMetadata: {}", err.to_string())))?;
+            
+            filters.push(serialized_metadata);
+        }
+        
+        let filter = doc! {
+            "$or": filters
+        };
+
+        let mut cursor = self.read_collection.find(filter, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        let mut metadata_entries: Vec<entities::model_metadata::ModelMetadata> = Vec::new();
+        while let Some(entry) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+            let metadata = entities::model_metadata::ModelMetadata::try_from(entry)
+                .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+            metadata_entries.push(metadata)
+        }
+
+        return Ok(metadata_entries)
     }
 }

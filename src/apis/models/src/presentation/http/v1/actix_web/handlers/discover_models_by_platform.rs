@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::requests::{
-    DiscoverModelsPath, DiscoverModelsRequest, DiscoveryCriteria, Headers,
+    DiscoverModelsByPlatformPath, DiscoverModelsByPlatformRequest, DiscoveryCriteria, Headers,
 };
 use actix_web::{post, web, HttpRequest, Responder};
 use clients::DiscoverModelsClient;
@@ -31,7 +31,7 @@ use platforms::Platform;
 #[post("models-api/platforms/{platform}/models")]
 async fn discover_models_by_platform(
     req: HttpRequest,
-    path: web::Path<DiscoverModelsPath>,
+    path: web::Path<DiscoverModelsByPlatformPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Json<DiscoveryCriteria>,
 ) -> impl Responder {
@@ -45,7 +45,7 @@ async fn discover_models_by_platform(
         Err(err) => return build_error_response(400, String::from(err.to_string())),
     };
 
-    let request = DiscoverModelsRequest {
+    let request = DiscoverModelsByPlatformRequest {
         headers,
         path: path.into_inner(),
         query: query.into_inner(),
