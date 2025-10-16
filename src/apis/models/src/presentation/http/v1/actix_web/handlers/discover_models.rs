@@ -10,6 +10,7 @@ use crate::application::model_metadata_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
 use crate::bootstrap::state::AppState;
+use serde_json::{to_value, Value};
 
 #[utoipa::path(
     post,
@@ -63,13 +64,23 @@ async fn discover_models(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let mut resp: Vec<ModelMetadata> = Vec::with_capacity(metadata_entries.len());
-    for entry in metadata_entries {
-        match ModelMetadata::try_from(entry) {
-            Ok(e) => resp.push(e),
+    let mut values: Vec<Value> = Vec::with_capacity(metadata_entries.len());
+    for metadata_entity in metadata_entries {
+        let metadata = match ModelMetadata::try_from(metadata_entity) {
+            Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string())
         };
+
+        match to_value(metadata) {
+            Ok(v) => values.push(v),
+            Err(err) => return build_error_response(500, err.to_string())
+        }
     }
 
-    build_success_response(None, Some(String::from("success")), None)
+    let resp = match to_value(values) {
+        Ok(v) => v,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
+
+    build_success_response(Some(resp), Some(String::from("success")), None)
 }
