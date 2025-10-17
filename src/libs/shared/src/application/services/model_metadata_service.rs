@@ -2,7 +2,8 @@ use std::sync::Arc;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
-use crate::application::inputs::model_metadata::{CreateModelMetadata, DiscoverModelsInput};
+use crate::application::inputs::model_metadata::CreateModelMetadata;
+use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,

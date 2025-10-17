@@ -15,6 +15,7 @@ use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 
 use super::super::database::MODEL_METADATA_COLLECTION;
+use super::super::documents::model_metadata_filter::ModelMetadataFilter;
 use super::super::documents::model_metadata::ModelMetadata;
 
 pub struct ModelMetadataRepository {
@@ -68,10 +69,10 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         Ok(maybe_metadata)
     }
 
-    async fn filter_model_metadata_by_criteria(&self, input: &application::inputs::model_metadata::DiscoverModelsInput) -> Result<Vec<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn filter_model_metadata_by_criteria(&self, input: &application::inputs::discover_models::DiscoverModelsInput) -> Result<Vec<entities::model_metadata::ModelMetadata>, ApplicationError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
-            let metadata = ModelMetadata::try_from(&criterion)
+            let metadata = ModelMetadataFilter::try_from(&criterion)
                 .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
 
             let serialized_metadata = to_bson(&metadata)
@@ -83,6 +84,8 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         let filter = doc! {
             "$or": filters
         };
+
+        println!("{}", filter);
 
         let mut cursor = self.read_collection.find(filter, None)
             .await

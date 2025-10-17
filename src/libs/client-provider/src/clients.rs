@@ -6,11 +6,11 @@ use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
 use shared::presentation::http::v1::requests::models::{
-    DiscoverModelsByPlatformRequest,
     GetModelRequest,
     IngestModelRequest,
     ListModelsRequest,
 };
+use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::domain::entities::artifact::Artifact;
 use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;

@@ -6,7 +6,7 @@ use crate::presentation::http::v1::requests::DiscoveryCriteria;
 use crate::bootstrap::factories::model_metadata_service_factory;
 use actix_web::{post, web, Responder};
 use shared::logging::SharedLogger;
-use crate::application::model_metadata_inputs as inputs;
+use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
 use crate::bootstrap::state::AppState;
@@ -44,9 +44,9 @@ async fn discover_models(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let mut criteria: Vec<inputs::ModelMetadata> = Vec::with_capacity(discovery_criteria.criteria.len());
+    let mut criteria: Vec<inputs::SearchCriterion> = Vec::with_capacity(discovery_criteria.criteria.len());
     for criterion in discovery_criteria.criteria {
-        let c = match inputs::ModelMetadata::try_from(criterion) {
+        let c = match inputs::SearchCriterion::try_from(&criterion) {
             Ok(c) => c,
             Err(err) => return build_error_response(500, err.to_string())
         };

@@ -32,29 +32,11 @@ pub struct IngestModelPath {
     pub model_id: String
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct DiscoverModelsByPlatformPath {
-    pub platform: String
-}
-
 pub struct ListModelsRequest {
     pub headers: Headers,
     pub path: ListModelsPath,
     pub query: HashMap<String, String>,
     pub body: bytes::Bytes,
-}
-
-pub struct DiscoverModelsRequest {
-    pub headers: Headers,
-    pub query: HashMap<String, String>,
-    pub body: DiscoveryCriteria
-}
-
-pub struct DiscoverModelsByPlatformRequest {
-    pub headers: Headers,
-    pub path: DiscoverModelsByPlatformPath,
-    pub query: HashMap<String, String>,
-    pub body: DiscoveryCriteria
 }
 
 pub struct GetModelRequest {
@@ -178,13 +160,4 @@ pub struct ModelMetadata {
 pub struct CreateModelMetadata {
     pub artifact_id: String,
     pub metadata: ModelMetadata
-}
-
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
-pub struct DiscoveryCriteria {
-    // Used for model discovery clients support model discovery through natural
-    // language search
-    pub prompt: Option<String>,
-    pub criteria: Vec<ModelMetadata>,
-    pub confidence_threshold: Option<u8>,
 }

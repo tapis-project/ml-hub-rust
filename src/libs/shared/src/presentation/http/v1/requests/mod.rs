@@ -10,6 +10,7 @@ pub mod artifact_ingestions;
 pub mod artifact_publications;
 pub mod skills;
 pub mod domains;
+pub mod discover_models;
 
 use serde_json::Value;
 

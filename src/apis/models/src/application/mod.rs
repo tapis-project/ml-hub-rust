@@ -1,4 +1,5 @@
 pub use shared::application::inputs::model_metadata as model_metadata_inputs;
+pub use shared::application::inputs::discover_models as discover_model_inputs;
 pub use shared::application::inputs::artifacts as artifact_inputs;
 pub use shared::application::inputs::artifact_publication as artifact_publication_inputs;
 pub use shared::application::inputs::artifact_ingestion as artifact_ingestion_inputs;

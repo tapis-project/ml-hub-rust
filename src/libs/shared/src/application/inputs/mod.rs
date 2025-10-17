@@ -5,3 +5,4 @@ pub mod model_metadata;
 pub mod inference;
 pub mod skills;
 pub mod domains;
+pub mod discover_models;

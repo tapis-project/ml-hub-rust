@@ -1,8 +1,4 @@
-pub mod inputs_to_entities;
-// pub mod entities_to_inputs;
-
 use serde_json::Value;
-use uuid::Uuid;
 use crate::application::inputs::{
     skills::Skill,
     domains::Domain,
@@ -10,17 +6,17 @@ use crate::application::inputs::{
 
 #[derive(Debug, Clone)]
 pub struct SystemRequirement {
-    pub name: String,
-    pub version: String
+    pub name: Option<String>,
+    pub version: Option<String>
 }
 
 #[derive(Debug, Clone)]
 pub struct Accelerator {
-    pub accelerator_type: String,
+    pub accelerator_type: Option<String>,
     pub memory_gb: Option<i32>,
     pub cores: Option<i32>,
     /// Firmware and software
-    pub system_requirements: Vec<SystemRequirement>
+    pub system_requirements: Option<Vec<SystemRequirement>>
 }
 
 #[derive(Debug, Clone)]
@@ -39,11 +35,11 @@ pub struct ModelIO {
 }
 
 #[derive(Debug, Clone)]
-pub struct ModelMetadata {
+pub struct SearchCriterion {
     // General fields
     pub name: Option<String>,
-    pub model_type: Option<String>,
     pub version: Option<String>,
+    pub model_type: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
 
@@ -98,8 +94,10 @@ pub struct ModelMetadata {
     pub bias_evaluation_score: Option<i8>,
 }
 
+/// Each field in the ModelMetadata will be ANDed and each individual ModelMetadata
+/// themselves will be ORed
 #[derive(Debug, Clone)]
-pub struct CreateModelMetadata {
-    pub artifact_id: Uuid,
-    pub metadata: ModelMetadata,
+pub struct DiscoverModelsInput {
+    pub confidence: Option<u8>,
+    pub criteria: Vec<SearchCriterion>
 }

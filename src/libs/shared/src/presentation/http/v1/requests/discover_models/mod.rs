@@ -1,29 +1,58 @@
-pub mod inputs_to_entities;
-// pub mod entities_to_inputs;
+pub mod to_input;
 
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+use crate::presentation::http::v1::requests::headers::Headers;
+use std::collections::HashMap;
 use serde_json::Value;
-use uuid::Uuid;
-use crate::application::inputs::{
+use crate::presentation::http::v1::requests::{
     skills::Skill,
     domains::Domain,
 };
 
-#[derive(Debug, Clone)]
-pub struct SystemRequirement {
-    pub name: String,
-    pub version: String
+#[derive(Deserialize, Serialize, Debug)]
+pub struct DiscoverModelsByPlatformPath {
+    pub platform: String
 }
 
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct DiscoveryCriteria {
+    // Used for model discovery clients support model discovery through natural
+    // language search
+    pub prompt: Option<String>,
+    pub criteria: Vec<DiscoveryCriterion>,
+    pub confidence_threshold: Option<u8>,
+}
+
+pub struct DiscoverModelsRequest {
+    pub headers: Headers,
+    pub query: HashMap<String, String>,
+    pub body: DiscoveryCriteria
+}
+
+pub struct DiscoverModelsByPlatformRequest {
+    pub headers: Headers,
+    pub path: DiscoverModelsByPlatformPath,
+    pub query: HashMap<String, String>,
+    pub body: DiscoveryCriteria
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub struct SystemRequirement {
+    pub name: Option<String>,
+    pub version: Option<String>
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct Accelerator {
-    pub accelerator_type: String,
+    pub accelerator_type: Option<String>,
     pub memory_gb: Option<i32>,
     pub cores: Option<i32>,
     /// Firmware and software
-    pub system_requirements: Vec<SystemRequirement>
+    pub system_requirements: Option<Vec<SystemRequirement>>
 }
 
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
@@ -32,18 +61,18 @@ pub struct HardwareRequirements {
     pub architectures: Option<Vec<String>>
 }
 
-#[derive(Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
 }
 
-#[derive(Debug, Clone)]
-pub struct ModelMetadata {
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub struct DiscoveryCriterion {
     // General fields
     pub name: Option<String>,
-    pub model_type: Option<String>,
     pub version: Option<String>,
+    pub model_type: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
 
@@ -96,10 +125,4 @@ pub struct ModelMetadata {
     pub regulatory: Option<Vec<String>>,
     pub license: Option<String>,
     pub bias_evaluation_score: Option<i8>,
-}
-
-#[derive(Debug, Clone)]
-pub struct CreateModelMetadata {
-    pub artifact_id: Uuid,
-    pub metadata: ModelMetadata,
 }
