@@ -1,5 +1,0 @@
-FROM rust:latest
-
-RUN rustup override set nightly
-
-RUN cargo install cargo-typify

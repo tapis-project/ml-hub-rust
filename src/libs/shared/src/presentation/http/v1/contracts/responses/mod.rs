@@ -1,6 +1,6 @@
 use serde_json::{Value, Map};
 use utoipa::ToSchema;
-use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
+use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{models::ModelArtifact, Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
 
 #[derive(ToSchema)]
 pub struct ListPlatformsResponse {
@@ -106,6 +106,18 @@ pub struct DiscoverModelsByPlatformResponse {
     pub version: String
 }
 
+
+#[derive(ToSchema)]
+pub struct DiscoverModelsResponse {
+    #[schema(value_type = Object)]
+    pub result: Vec<ModelMetadata>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
 #[derive(ToSchema)]
 pub struct GetModelByPlatformResponse {
     #[schema(value_type = Object)]
@@ -129,7 +141,7 @@ pub struct ListModelsByPlatformResponse {
 
 #[derive(ToSchema)]
 pub struct GetModelArtifactResponse {
-    pub result: Artifact,
+    pub result: ModelArtifact,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

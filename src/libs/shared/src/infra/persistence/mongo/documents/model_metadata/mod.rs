@@ -5,6 +5,8 @@ mod input_to_document;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use mongodb::bson::{Uuid, oid::ObjectId};
+use crate::infra::persistence::mongo::documents::skills::Skill;
+use crate::infra::persistence::mongo::documents::domains::Domain;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SystemRequirement {
@@ -42,7 +44,7 @@ pub struct ModelMetadata {
     pub _id: Option<ObjectId>,
     
     // Unique ID of the artifact that this metadata is related to
-    pub artifact_id: Uuid,
+    pub artifact_id: Option<Uuid>,
 
     // General fields
     pub name: Option<String>,
@@ -50,6 +52,10 @@ pub struct ModelMetadata {
     pub version: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
+
+    // Knowledge and capabilities
+    pub skills: Option<Vec<Skill>>,
+    pub domains: Option<Vec<Domain>>,
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,

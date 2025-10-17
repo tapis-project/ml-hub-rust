@@ -35,7 +35,7 @@ async fn get_model_artifact(
     path: web::Path<GetArtifactPath>
 ) -> impl Responder {
     let logger = SharedLogger::new();
-    logger.debug("Get model artifact operation");
+    logger.debug("get_model_artifact operation");
     
     let artifact_service = match artifact_service_factory(&data.db) {
         Ok(s) => s,
@@ -51,25 +51,25 @@ async fn get_model_artifact(
         artifact_id
     };
 
-    let maybe_artifact = match artifact_service.get_model_artifact(input).await {
-        Ok(a) => a,
+    let model_artifact_output = match artifact_service.get_model_artifact(input).await {
+        Ok(o) => o,
         Err(err) => {
             match err {
-                ArtifactServiceError::IncorrectArtifactType(_) => return build_error_response(404, format!("Model Artifact not found for id '{}'", &artifact_id)),
-                _ => return build_error_response(500, err.to_string())
+                ArtifactServiceError::NotFound(msg) => return build_error_response(404, msg),
+                _ => return build_error_response(500, format!("Error fetching artifact {}", &artifact_id))
             }
         }
     };
 
-    let artifact = match maybe_artifact {
-        Some(i) => i,
-        None => return build_error_response(404, format!("Artifact with id {} not found", &artifact_id))
+    let model_artifact = match responses::ModelArtifact::try_from(model_artifact_output) {
+        Ok(ma) => ma,
+        Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let requests = match to_value(responses::Artifact::from(artifact)) {
+    let resp = match to_value(model_artifact) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };
     
-    build_success_response(Some(requests), None, None)
+    build_success_response(Some(resp), None, None)
 }

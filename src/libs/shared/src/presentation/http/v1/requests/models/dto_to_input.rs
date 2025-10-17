@@ -2,6 +2,8 @@ use serde_json::to_vec;
 use crate::presentation::http::v1::requests::models as requests;
 use crate::application::inputs::model_metadata as inputs;
 use crate::application::inputs::artifacts as artifact_inputs;
+use crate::application::inputs::skills;
+use crate::application::inputs::domains;
 use crate::errors::Error;
 use uuid::Uuid;
 
@@ -83,6 +85,16 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: requests::ModelMetadata) -> Result<Self, Self::Error> {
+        let mut skills = Vec::with_capacity(1);
+        for skill in value.skills.clone().unwrap_or(Vec::with_capacity(0)) {
+            skills.push(skills::Skill::from(skill));
+        }
+        
+        let mut domains = Vec::with_capacity(1);
+        for domain in value.domains.clone().unwrap_or(Vec::with_capacity(0)) {
+            domains.push(domains::Domain::from(domain));
+        }
+
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(inputs::ModelIO::try_from(input)?)
@@ -107,6 +119,8 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
             model_type: value.model_type,
             version: value.version,
             image: value.image,
+            skills: Some(skills),
+            domains: Some(domains),
             keywords: value.keywords,
             annotation: value.annotation,
             multi_modal: value.multi_modal,

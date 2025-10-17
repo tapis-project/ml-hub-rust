@@ -3,9 +3,6 @@ pub use shared::presentation::http::v1::requests::models::{
     ListModelsRequest,
     GetModelPath,
     GetModelRequest,
-    DiscoverModelsPath,
-    DiscoverModelsRequest,
-    DiscoveryCriteria,
     IngestModelPath,
     IngestModelRequest,
     DownloadModelPath,
@@ -14,6 +11,12 @@ pub use shared::presentation::http::v1::requests::models::{
     ModelMetadata,
     CreateModelMetadataPath,
     CreateModelMetadata
+};
+pub use shared::presentation::http::v1::requests::discover_models::{
+    DiscoverModelsByPlatformPath,
+    DiscoverModelsByPlatformRequest,
+    DiscoverModelsRequest,
+    DiscoveryCriteria,
 };
 pub use shared::presentation::http::v1::requests::artifact_ingestions::GetArtifactIngestionPath;
 pub use shared::presentation::http::v1::requests::artifact_publications::GetArtifactPublicationPath;

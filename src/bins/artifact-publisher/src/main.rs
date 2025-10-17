@@ -91,7 +91,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
         match artifact.artifact_type {
             ArtifactType::Model => {
                 // Fetch metadata associated with the model
-                let metadata = self.artifact_service.find_metadata_by_artifact_id(
+                let maybe_metadata = self.artifact_service.find_metadata_by_artifact_id(
                     &publication.artifact_id
                 ).await
                     .expect(format!("Failed to fetch metadata for artifact '{}'", &artifact.id.to_string()).as_str());
@@ -171,7 +171,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         }).unwrap();
                     
                     // Publish the model files to the target platform
-                    match client.publish_model(&extracted_artifact_path, &artifact, &metadata, &client_request).await {
+                    match client.publish_model(&extracted_artifact_path, &artifact, maybe_metadata.as_ref(), &client_request).await {
                         Ok(_) => {            
                             // Update publication status to PublishedArtifact
                             self.artifact_service.change_publication_status_by_publication_id(
@@ -189,7 +189,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         // client, or a publish model metadata client and a platform client
                         // only needs to implement one of those.
                         Err(ClientError::Unimplemented)  => {
-                            println!("What?");
+                            println!("Should be unreachable");
                         },
                         // All other errors are considered failure conditions. Handle them
                         // accordingly
@@ -229,6 +229,15 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                             panic!("Error updating publication status: {}", err.to_string())
                         }).unwrap();
                     
+                    let metadata = match maybe_metadata {
+                        Some(m) => m,
+                        None => {
+                            eprintln!("Cannot publish metadata without metadata (:");
+                            nack(&channel, &deliver, None, None).await;
+                            return;
+                        }
+                    };
+
                     // Publish the model files to the target platform
                     match client.publish_model_metadata(&metadata, &client_request).await {
                         Ok(_) => {

@@ -9,10 +9,10 @@ impl TryFrom<PublishArtifactServiceRequest> for PublishArtifactInput {
 
     fn try_from(value: PublishArtifactServiceRequest) -> Result<Self, Self::Error> {
         let artifact_id = Uuid::parse_str(&value.path.artifact_id)
-            .map_err(|err| ApplicationError::ConvesionError(err.to_string()))?;
+            .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
 
         let serialized_client_request = to_vec(&value)
-            .map_err(|err| ApplicationError::ConvesionError(format!("Failed serialize the full client request: {}", err.to_string())))?;
+            .map_err(|err| ApplicationError::ConversionError(format!("Failed serialize the full client request: {}", err.to_string())))?;
         
         Ok(Self {
             artifact_id,

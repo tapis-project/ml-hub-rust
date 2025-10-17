@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use shared::presentation::http::v1::requests::inference;
 use shared::presentation::http::v1::requests::training;
 use shared::presentation::http::v1::requests::models;
+use shared::presentation::http::v1::requests::discover_models;
 use shared::presentation::http::v1::requests::datasets;
 use shared::presentation::http::v1::requests::artifacts;
 use shared::domain::entities;
@@ -82,7 +83,7 @@ pub trait DiscoverModelsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn discover_models(&self, _request: &models::DiscoverModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn discover_models(&self, _request: &discover_models::DiscoverModelsByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -96,7 +97,7 @@ pub trait PublishModelClient: Client {
         &self,
         _extracted_artifact_path: &PathBuf,
         _artifact: &entities::artifact::Artifact,
-        _metadata: &entities::model_metadata::ModelMetadata,
+        _metadata: Option<&entities::model_metadata::ModelMetadata>,
         _request: &artifacts::PublishArtifactServiceRequest
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);

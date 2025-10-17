@@ -1,4 +1,4 @@
-pub mod enitity_to_dto;
+pub mod entity_to_dto;
 pub mod dto_to_input;
 
 use serde::{Deserialize, Serialize};
@@ -7,6 +7,8 @@ use utoipa::ToSchema;
 use std::collections::HashMap;
 use crate::presentation::http::v1::requests::headers::Headers;
 use crate::presentation::http::v1::requests::artifacts;
+use crate::presentation::http::v1::requests::skills::Skill;
+use crate::presentation::http::v1::requests::domains::Domain;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsPath {
@@ -30,23 +32,11 @@ pub struct IngestModelPath {
     pub model_id: String
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct DiscoverModelsPath {
-    pub platform: String
-}
-
 pub struct ListModelsRequest {
     pub headers: Headers,
     pub path: ListModelsPath,
     pub query: HashMap<String, String>,
     pub body: bytes::Bytes,
-}
-
-pub struct DiscoverModelsRequest {
-    pub headers: Headers,
-    pub path: DiscoverModelsPath,
-    pub query: HashMap<String, String>,
-    pub body: DiscoveryCriteria
 }
 
 pub struct GetModelRequest {
@@ -115,6 +105,10 @@ pub struct ModelMetadata {
     pub framework: Option<String>,
     pub image: Option<String>,
 
+    // Knowledge and capabilities
+    pub skills: Option<Vec<Skill>>,
+    pub domains: Option<Vec<Domain>>,
+
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
     pub annotation: Option<Value>,
@@ -166,13 +160,4 @@ pub struct ModelMetadata {
 pub struct CreateModelMetadata {
     pub artifact_id: String,
     pub metadata: ModelMetadata
-}
-
-#[derive(Deserialize, Serialize, Debug, ToSchema)]
-pub struct DiscoveryCriteria {
-    // Used for model discovery clients support model discovery through natural
-    // language search
-    pub prompt: Option<String>,
-    pub criteria: Vec<ModelMetadata>,
-    pub confidence_threshold: Option<Vec<String>>,
 }

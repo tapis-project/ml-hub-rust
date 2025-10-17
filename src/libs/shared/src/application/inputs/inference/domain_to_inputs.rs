@@ -46,12 +46,12 @@ impl TryFrom<inputs::ContainerInterface> for entities::ContainerInterface {
     fn try_from(value: inputs::ContainerInterface) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::Interface {
-            return Err(ApplicationError::ConvesionError("Field 'kind' must be of variant Kind::Interface".to_string()))
+            return Err(ApplicationError::ConversionError("Field 'kind' must be of variant Kind::Interface".to_string()))
         }
 
         let r#type = entities::InterfaceType::try_from(value.r#type)?;
         if r#type != entities::InterfaceType::Container {
-            return Err(ApplicationError::ConvesionError("Field 'type' must be of variant InterfaceType::Container".to_string()))
+            return Err(ApplicationError::ConversionError("Field 'type' must be of variant InterfaceType::Container".to_string()))
         }
 
         Ok(Self {
@@ -220,12 +220,12 @@ impl TryFrom<inputs::RestApiInterface> for entities::RestApiInterface {
     fn try_from(value: inputs::RestApiInterface) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::Interface {
-            return Err(ApplicationError::ConvesionError("Field 'kind' must be variant Kind::Interface".to_string()))
+            return Err(ApplicationError::ConversionError("Field 'kind' must be variant Kind::Interface".to_string()))
         }
 
         let r#type = entities::InterfaceType::try_from(value.r#type)?;
         if r#type != entities::InterfaceType::RestApi {
-            return Err(ApplicationError::ConvesionError("Field 'type' must be variant InterfaceType::RestApi".to_string()))
+            return Err(ApplicationError::ConversionError("Field 'type' must be variant InterfaceType::RestApi".to_string()))
         }
 
         let format = entities::RestApiInterfaceFormat::try_from(value.format)?;
@@ -313,12 +313,12 @@ impl TryFrom<inputs::ModelInterface> for entities::ModelInterface {
     fn try_from(value: inputs::ModelInterface) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::Interface {
-            return Err(ApplicationError::ConvesionError("Field 'kind' must be variant Kind::Interface".to_string()))
+            return Err(ApplicationError::ConversionError("Field 'kind' must be variant Kind::Interface".to_string()))
         }
 
         let r#type = entities::InterfaceType::try_from(value.r#type)?;
         if r#type != entities::InterfaceType::Model {
-            return Err(ApplicationError::ConvesionError("Field 'type' must be variant InterfaceType::Model".to_string()))
+            return Err(ApplicationError::ConversionError("Field 'type' must be variant InterfaceType::Model".to_string()))
         }
 
         Ok(Self {
@@ -338,21 +338,21 @@ impl TryFrom<inputs::InferenceServerInterface> for entities::InferenceServerInte
             inputs::InferenceServerInterface::Container(interface) => {
                 let r#type = entities::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != entities::InterfaceType::Container {
-                    return Err(ApplicationError::ConvesionError("Inference server interface field 'type' must be of of type InterfaceType::Container".to_string()))
+                    return Err(ApplicationError::ConversionError("Inference server interface field 'type' must be of of type InterfaceType::Container".to_string()))
                 }
                 Ok(entities::InferenceServerInterface::Container(entities::ContainerInterface::try_from(interface)?))
             },
             inputs::InferenceServerInterface::RestApi(interface) => {
                 let r#type = entities::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != entities::InterfaceType::RestApi {
-                    return Err(ApplicationError::ConvesionError("Inference server interface field 'type' must be of of type InterfaceType::RestApi".to_string()))
+                    return Err(ApplicationError::ConversionError("Inference server interface field 'type' must be of of type InterfaceType::RestApi".to_string()))
                 }
                 Ok(entities::InferenceServerInterface::RestApi(entities::RestApiInterface::try_from(interface)?))
             },
             inputs::InferenceServerInterface::Model(interface) => {
                 let r#type = entities::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != entities::InterfaceType::Model {
-                    return Err(ApplicationError::ConvesionError("Inference server interface field 'type' must be of of type InterfaceType::Model".to_string()))
+                    return Err(ApplicationError::ConversionError("Inference server interface field 'type' must be of of type InterfaceType::Model".to_string()))
                 }
                 Ok(entities::InferenceServerInterface::Model(entities::ModelInterface::try_from(interface)?))
             },
@@ -394,7 +394,7 @@ impl TryFrom<inputs::CreateInferenceServerInput> for entities::InferenceServer {
     fn try_from(value: inputs::CreateInferenceServerInput) -> Result<Self, Self::Error> {
         let kind = entities::Kind::try_from(value.kind)?;
         if kind != entities::Kind::InferenceServer {
-            return Err(ApplicationError::ConvesionError("Field 'kind' on InferenceServer must be variant Kind::InferenceServer".to_string()));
+            return Err(ApplicationError::ConversionError("Field 'kind' on InferenceServer must be variant Kind::InferenceServer".to_string()));
         }
 
         Ok(Self {

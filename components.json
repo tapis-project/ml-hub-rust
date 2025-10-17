@@ -12,8 +12,8 @@
     "models-image": "tapis/models-api",
     "datasets-deployment": "mlhub-datasets-api-deployment",
     "datasets-image": "tapis/datasets-api",
-    "inference-deployment": "mlhub-inference-api-deployment",
-    "inference-image": "tapis/inference-api",
+    "deployments-deployment": "mlhub-deployments-api-deployment",
+    "deployments-image": "tapis/deployments-api",
     "training-deployment": "mlhub-training-api-deployment",
     "training-image": "tapis/training-api",
     "artifact-db-deployment": "mlhub-artifact-db-deployment",
@@ -31,7 +31,7 @@
       "rootDir": "src/apis/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "src/apis/models/spec/openapi/v1.yaml",
+      "specPath": "src/apis/models/spec/openapi/v1.yml",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -42,7 +42,7 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
-        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
         "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
@@ -95,8 +95,8 @@
       ]
     },
     {
-      "name": "inference",
-      "rootDir": "src/apis/inference",
+      "name": "deployments",
+      "rootDir": "src/apis/deployments",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -289,8 +289,8 @@
       }
     },
     {
-      "name": "inference-db",
-      "rootDir": "src/infra/inference-db",
+      "name": "deployments-db",
+      "rootDir": "src/infra/deployments-db",
       "labels": ["component"],
       "lifecycle": "experimental",
       "commands": {
@@ -462,18 +462,22 @@
       }
     },
     {
-      "name": "agntcy-codegen",
-      "rootDir": "src/lib/agntcy-codegen",
-      "labels": ["lib"],
+      "name": "agntcy-sdk",
+      "rootDir": "src/sdks/agntcy-sdk",
+      "labels": ["sdk"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "compile": "cargo +nightly build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo +nightly build --manifest-path src/sdks/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+        "code": "code src/sdks/{{ self.name }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
+        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
+        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "init": "./{{ self.rootDir }}/initialize"
       }
     },
     {
@@ -493,7 +497,7 @@
     {
       "name": "typescript-sdk",
       "url": "https://www.npmjs.com/package/@mlhub/ts-sdk",
-      "lifecycle": "experimental",
+      "lifecycle": "development",
       "rootDir": "src/sdks/typescript-sdk",
       "labels": ["sdk"],
       "commands": {

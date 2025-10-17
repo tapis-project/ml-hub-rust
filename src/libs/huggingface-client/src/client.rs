@@ -340,7 +340,12 @@ impl PublishModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, maybe_metadata: Option<&ModelMetadata>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let metadata = match maybe_metadata {
+            Some(m) => m,
+            None => return Err(ClientError::BadRequest { msg: "A model metadata entry must exist for this artifact in order to publish to huggingface".into(), scope: ClientErrorScope::Client })
+        };
+        
         // Get the repo/model name from the metadata
         let model_name = match metadata.name.clone() {
             Some(n) => n,

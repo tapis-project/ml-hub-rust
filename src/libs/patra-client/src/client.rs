@@ -7,8 +7,10 @@ use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::models::{
-    DiscoverModelsRequest, GetModelRequest, ListModelsRequest,
+    GetModelRequest,
+    ListModelsRequest,
 };
+use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::domain::entities:: model_metadata::ModelMetadata;
 use std::collections::hash_map::HashMap;
@@ -133,7 +135,7 @@ impl DiscoverModelsClient for PatraClient {
 
     async fn discover_models(
         &self,
-        request: &DiscoverModelsRequest,
+        request: &DiscoverModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Discover models");
         let mut query_params = HashMap::new();

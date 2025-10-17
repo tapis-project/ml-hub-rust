@@ -79,7 +79,7 @@ impl From<entities::artifact::Artifact> for responses::Artifact {
             id: value.id.to_string(),
             created_at: String::from(value.created_at),
             last_modified: String::from(value.last_modified),
-            artifact_type: responses::ArtifactType::from(value.artifact_type)
+            artifact_type: responses::ArtifactType::from(value.artifact_type),
         }
     }
 }

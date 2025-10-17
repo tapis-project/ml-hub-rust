@@ -6,11 +6,11 @@ use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
 use shared::presentation::http::v1::requests::models::{
-    DiscoverModelsRequest,
     GetModelRequest,
     IngestModelRequest,
     ListModelsRequest,
 };
+use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::domain::entities::artifact::Artifact;
 use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
@@ -223,7 +223,7 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
     type Metadata = Value;
     async fn discover_models(
         &self,
-        request: &DiscoverModelsRequest,
+        request: &DiscoverModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp = match self {
             DiscoverModelsClient::Patra(c) => {
@@ -262,7 +262,7 @@ impl Client for PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, artifact: &Artifact, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, extracted_artifact_path: &PathBuf, artifact: &Artifact, metadata: Option<&ModelMetadata>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
             PublishModelClient::HuggingFace(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {

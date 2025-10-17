@@ -1,4 +1,5 @@
 pub mod discover_models_by_platform;
+pub mod discover_models;
 pub mod ingest_external_model;
 pub mod get_model_artifact;
 pub mod get_model_by_platform;
@@ -9,7 +10,7 @@ pub mod publish_model_artifact;
 pub mod list_platforms;
 pub mod upload_model_artifact;
 pub mod download_artifact;
-pub mod create_model_metadata;
+pub mod associate_model_metadata_with_artifact;
 pub mod list_model_artifacts;
 pub mod list_model_ingestions;
 pub mod list_publications_for_artifact;
