@@ -517,6 +517,20 @@
         "code": "code {{ devtools-dir }}/{{ self.name }}",
         "downgrade-models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) src/assets/apis/models/spec.yml"
       }
+    },
+    {
+      "name": "hf-metadata-ingester",
+      "rootDir": "src/devtools/hf-metadata-ingester",
+      "labels": ["devtool"],
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "",
+        "code": "code src/devtools/{{ self.name }}",
+        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
+        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
+        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "init": "./{{ self.rootDir }}/initialize"
+      }
     }
   ]
 }

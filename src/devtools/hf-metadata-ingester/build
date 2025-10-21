@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+
+here=$(dirname "${BASH_SOURCE[0]}")
+
+source $here/utils
+
+genDir=$(get_gen_dir $here)
+
+# Even with 10+ years of Linux experience, I DELETED A FULL DAY'S WORTH OF CODE BY NOT REPSECTING THE LINE BELOW
+rm -rf $here/src
+
+rm $here/Cargo.toml
+
+cargo init --lib --name hf-skills --vcs none $here
+
+: > $here/src/lib.rs
+
+echo >> $here/Cargo.toml
+
+for file in "$genDir"/*; do
+    filename=$(basename $file)
+    taxon=${filename%.*}
+    mkdir -p $here/src/$taxon
+    cp $genDir/$taxon.rs $here/src/$taxon/mod.rs
+    echo "pub mod $taxon;" >> $here/src/lib.rs
+done
+
+# Dependencies
+
