@@ -15,8 +15,10 @@ members = [
     "src/libs/patra-client",
     "src/libs/s3-client",
     "src/libs/shared",
+    "src/libs/huggingface-tasks",
     # "src/libs/tacc-tapis-client"
     "src/sdks/agntcy-sdk",
+    # "src/devtools/hf-metadata-ingester",
 ]
 
 

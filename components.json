@@ -519,6 +519,20 @@
       }
     },
     {
+      "name": "huggingface-tasks",
+      "rootDir": "src/libs/huggingface-tasks",
+      "labels": ["lib"],
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "",
+        "code": "code src/libs/{{ self.name }}",
+        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
+        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
+        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "init": "./{{ self.rootDir }}/initialize"
+      }
+    },
+    {
       "name": "hf-metadata-ingester",
       "rootDir": "src/devtools/hf-metadata-ingester",
       "labels": ["devtool"],

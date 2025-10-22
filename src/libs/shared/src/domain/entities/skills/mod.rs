@@ -1,4 +1,4 @@
-mod agntcy_to_entity;
+mod agntcy_skill_to_skill;
 
 #[doc = "A structured view of distinct abilities, defining the capabilities within the Open Agentic Schema Framework."]
 pub enum Skill {

@@ -9,11 +9,15 @@ source $here/utils
 genDir=$(get_gen_dir $here)
 
 # Even with 10+ years of Linux experience, I DELETED A FULL DAY'S WORTH OF CODE BY NOT REPSECTING THE LINE BELOW
-rm -rf $here/src
+rm -rf $here/src/task
+rm $here/src/lib.rs
 
-rm $here/Cargo.toml
+if [ -f $here/Cargo.toml ]; then
+    rm $here/Cargo.toml
+fi
 
-cargo init --lib --name hf-skills --vcs none $here
+
+cargo init --lib --name huggingface-tasks --vcs none $here
 
 : > $here/src/lib.rs
 
@@ -26,6 +30,3 @@ for file in "$genDir"/*; do
     cp $genDir/$taxon.rs $here/src/$taxon/mod.rs
     echo "pub mod $taxon;" >> $here/src/lib.rs
 done
-
-# Dependencies
-
