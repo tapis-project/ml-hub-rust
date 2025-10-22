@@ -533,8 +533,8 @@
       }
     },
     {
-      "name": "hf-metadata-ingester",
-      "rootDir": "src/devtools/hf-metadata-ingester",
+      "name": "hf-model-metadata-ingester",
+      "rootDir": "src/devtools/hf-model-metadata-ingester",
       "labels": ["devtool"],
       "lifecycle": "experimental",
       "commands": {
