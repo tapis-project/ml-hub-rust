@@ -20,7 +20,7 @@ def normalize_category_caption(caption: str):
     if category[-1] == "s":
         return category[:-1]
     
-    category
+    return category
 
 # NOTE These items seem to be duplicates in the spec. Further investigation requires. 2025/10/11
 TOP_LEVEL_ELEMENTS_TO_SKIP = ["Observability", "Evaluation"]
@@ -159,8 +159,8 @@ hydrated_identify_impl_template = partially_hydrated_identify_impl_template.repl
 
 partially_hydrated_template = partially_hydrated_template.replace("{{ identify_impl }}", hydrated_identify_impl_template)
 
-# Enum to &str impl
-with open(os.path.join(templates_dir, "from_enum_to_str_impl.rs.template"), mode="r") as file:
+# Enum to String impl
+with open(os.path.join(templates_dir, "from_enum_to_string_impl.rs.template"), mode="r") as file:
     impl_template = file.read()
 
 partially_hydrated_impl_template = f"{impl_template}".replace("{{ Category }}", category).replace("{{ feature_attr }}", f"#[cfg(feature = \"{category.lower()}\")]")
@@ -170,7 +170,7 @@ for element in elements:
 
 hydrated_impl_template = partially_hydrated_impl_template.replace("{{ match_items }}", match_arms)
 
-partially_hydrated_template = partially_hydrated_template.replace("{{ enum_to_str_impl }}", hydrated_impl_template)
+partially_hydrated_template = partially_hydrated_template.replace("{{ enum_to_string_impl }}", hydrated_impl_template)
 
 # Enum to u32
 with open(os.path.join(templates_dir, "from_enum_to_u32_impl.rs.template"), mode="r") as file:

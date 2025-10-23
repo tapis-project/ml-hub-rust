@@ -1,4 +1,5 @@
-#[cfg(feature = "domain")]
+pub mod agntcy_domain_to_domain;
+
 #[doc = "Distinct fields of application and knowledge areas"]
 pub enum Domain {
     #[doc = "Software platforms for delivering, tracking, and managing educational courses and training programs. Subdomains: User Experience Design, Content Management, Reporting and Analytics, and System Integration."]
@@ -366,13 +367,11 @@ pub enum Domain {
 
 }
 
-#[cfg(all(feature = "domain", feature = "identify"))]
 pub trait Identify {
     fn uid(&self) -> u32;
     fn name(&self) -> String;
 }
 
-#[cfg(all(feature = "domain", feature = "identify"))]
 impl Identify for Domain {
     fn uid(&self) -> u32 {
         match self {
@@ -748,7 +747,6 @@ impl Identify for Domain {
     }
 }
 
-#[cfg(feature = "domain")]
 impl From<Domain> for String {
     fn from(value: Domain) -> String {
         match value {
@@ -938,7 +936,7 @@ impl From<Domain> for String {
     }
 }
 
-#[cfg(feature = "domain")]
+
 impl From<Domain> for u32 {
     fn from(value: Domain) -> u32 {
         match value {

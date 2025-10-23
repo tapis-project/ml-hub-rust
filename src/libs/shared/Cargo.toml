@@ -9,7 +9,7 @@ actix = ["actix-web", "actix-multipart"]
 mongo = ["mongodb"]
 
 [dependencies]
-agntcy-sdk = { version = "0.1.0", path = "../../sdks/agntcy-sdk" }
+agntcy-sdk = { version = "0.8.0", path = "../../sdks/agntcy-sdk" }
 platforms = { version = "0.1.0", path = "../../libs/platforms" }
 huggingface-tasks = { version = "0.1.0", path = "../../libs/huggingface-tasks" }
 actix-multipart = {version = "0.7.2", optional = true}

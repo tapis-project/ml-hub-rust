@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+fetch() {
+    curl -X 'GET' "https://schema.oasf.outshift.com/api/main_$1" -H 'accept: application/json' -s
+}

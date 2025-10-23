@@ -1,4 +1,3 @@
-#[cfg(feature = "skill")]
 #[doc = "Distinct abilities"]
 pub enum Skill {
     #[doc = "Capabilities for adapting and personalizing content based on user context and preferences."]
@@ -248,13 +247,11 @@ pub enum Skill {
 
 }
 
-#[cfg(all(feature = "skill", feature = "identify"))]
 pub trait Identify {
     fn uid(&self) -> u32;
     fn name(&self) -> String;
 }
 
-#[cfg(all(feature = "skill", feature = "identify"))]
 impl Identify for Skill {
     fn uid(&self) -> u32 {
         match self {
@@ -512,7 +509,6 @@ impl Identify for Skill {
     }
 }
 
-#[cfg(feature = "skill")]
 impl From<Skill> for String {
     fn from(value: Skill) -> String {
         match value {
@@ -643,7 +639,6 @@ impl From<Skill> for String {
     }
 }
 
-#[cfg(feature = "skill")]
 impl From<Skill> for u32 {
     fn from(value: Skill) -> u32 {
         match value {

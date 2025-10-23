@@ -1,13 +1,13 @@
 {{ feature_attr }}
 impl Identify for {{ Category }} {
-    fn uid() -> u32 {
-        match Self {
+    fn uid(&self) -> u32 {
+        match self {
 {{ uid_match_arms }}
         }
     }
-    fn name() -> &'static str {
-        match Self {
+    fn name(&self) -> String {
+        match self {
 {{ name_match_arms }}
-        }
+        }.to_string()
     }
 }

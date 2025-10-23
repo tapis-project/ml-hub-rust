@@ -9,6 +9,8 @@ source $here/utils
 # Get the current version of the OASF API
 version=$(get_oasf_version)
 
+source $here/scripts/v$version/fetch
+
 echo "OASF API v$version"
 
 specsDir=$here/specs/v$version
@@ -21,13 +23,13 @@ mkdir -p $latestSpecsDir
 mkdir -p $genDir
 
 # This array determines which APIs get called to fetch the schema
-taxa=("domains" "skills" "modules")
+taxa=("skills" "domains" "modules")
 
 # Fetch OASF Domains, Skills, and Modules and pretty-print them into the specs dir
 for taxon in "${taxa[@]}"; do
     echo "Fetching $taxon"
-    output=$(curl -X 'GET' "https://schema.oasf.outshift.com/api/main_${taxon}" -H 'accept: application/json' -s)
+    output=$(fetch $taxon)
     echo $output | jq . > $specsDir/$taxon.json
     echo $output | jq . > $latestSpecsDir/$taxon.json
-    python3 $here/scripts/v$version/generate.py $here/specs/v$version/$taxon.json $genDir $templatesDir
+    python3 $here/scripts/v$version/generate.py $here/specs/v$version/$taxon.json $genDir $templatesDir $taxon
 done

@@ -8,6 +8,6 @@ pub enum {{ EnumName }} {
 
 {{ identify_impl }}
 
-{{ enum_to_str_impl }}
+{{ enum_to_string_impl }}
 
 {{ enum_to_u32_impl }}
