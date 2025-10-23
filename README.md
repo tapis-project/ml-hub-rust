@@ -89,14 +89,15 @@ In this section, we will describe the service and components comprising MLHub an
 **APIs**
 Models API
 Datasets API
-Inference API
-Training API
+Deployments API
+Agents API
 
 **Components**
 NFS Server
 Artifacts Database - MongoDB
 Artifact Operations Message Broker - RabbitMQ
 Artifact Ingester - Asynch workers for model/dataset ingestion
+Artifact Publisher - Asynch workers for model/dataset publication
 Inference Database - MongoDB
 Traefik
 
