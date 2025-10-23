@@ -1,5 +1,5 @@
 use crate::infra::persistence::mongo::documents::domains as documents;
-use crate::domain::entities::domains as entities;
+use crate::domain::entities::domain as entities;
 
 impl From<documents::Domain> for entities::Domain {
     fn from(value: documents::Domain) -> Self {

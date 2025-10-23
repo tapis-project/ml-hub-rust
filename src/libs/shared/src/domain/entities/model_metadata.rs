@@ -1,4 +1,5 @@
 use serde_json::Value;
+use crate::domain::entities::task::Task;
 
 pub struct SystemRequirement {
     pub name: String,
@@ -45,7 +46,7 @@ pub struct ModelMetadata {
     pub model_outputs: Option<Vec<ModelIO>>,
 
     /// Inference Fields
-    pub task_types: Option<Vec<String>>,
+    pub task_types: Option<Vec<Task>>,
     pub inference_precision: Option<String>,
     pub inference_hardware: Option<HardwareRequirements>,
     pub inference_software_dependencies: Option<Vec<String>>,

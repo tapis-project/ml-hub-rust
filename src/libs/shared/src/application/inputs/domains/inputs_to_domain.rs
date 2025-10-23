@@ -1,5 +1,5 @@
 use crate::application::inputs::domains as inputs;
-use crate::domain::entities::domains as entities;
+use crate::domain::entities::domain as entities;
 
 impl From<inputs::Domain> for entities::Domain {
     fn from(value: inputs::Domain) -> Self {

@@ -1,4 +1,4 @@
-use crate::domain::entities::skills as entities;
+use crate::domain::entities::skill as entities;
 use crate::presentation::http::v1::requests::skills as dtos;
 
 impl From<entities::Skill> for dtos::Skill {

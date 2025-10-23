@@ -1,6 +1,6 @@
 use crate::infra::persistence::mongo::documents::model_metadata;
-use crate::domain::entities::domains;
-use crate::domain::entities::skills;
+use crate::domain::entities::domain;
+use crate::domain::entities::skill;
 use crate::domain::entities::model_metadata as domain;
 use crate::errors::Error;
 
@@ -69,12 +69,12 @@ impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
     fn try_from(value: model_metadata::ModelMetadata) -> Result<Self, Self::Error> {
         let mut skills = Vec::with_capacity(1);
         for skill in value.skills.unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skills::Skill::from(skill));
+            skills.push(skill::Skill::from(skill));
         }
         
         let mut domains = Vec::with_capacity(1);
         for domain in value.domains.unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domains::Domain::from(domain));
+            domains.push(domain::Domain::from(domain));
         }
 
         let mut model_inputs = Vec::with_capacity(1);

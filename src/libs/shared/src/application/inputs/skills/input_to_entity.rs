@@ -1,4 +1,4 @@
-use crate::domain::entities::skills as entities;
+use crate::domain::entities::skill as entities;
 use crate::application::inputs::skills as inputs;
 
 impl From<inputs::Skill> for entities::Skill {

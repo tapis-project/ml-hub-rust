@@ -1,5 +1,5 @@
 use crate::presentation::http::v1::requests::domains as dtos;
-use crate::domain::entities::domains as entities;
+use crate::domain::entities::domain as entities;
 
 impl From<entities::Domain> for dtos::Domain {
     fn from(value: entities::Domain) -> Self {

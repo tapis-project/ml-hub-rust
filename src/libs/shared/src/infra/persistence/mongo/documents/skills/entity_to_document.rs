@@ -1,4 +1,4 @@
-use crate::domain::entities::skills as entities;
+use crate::domain::entities::skill as entities;
 use crate::infra::persistence::mongo::documents::skills as documents;
 
 impl From<entities::Skill> for documents::Skill {
