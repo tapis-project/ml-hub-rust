@@ -1,3 +1,5 @@
+pub mod agntcy_skill_to_skill;
+
 #[doc = "Distinct abilities"]
 pub enum Skill {
     #[doc = "Capabilities for adapting and personalizing content based on user context and preferences."]
