@@ -1,8 +1,5 @@
 use serde_json::Value;
-use crate::application::inputs::{
-    skills::Skill,
-    domains::Domain,
-};
+use crate::application::inputs::task::Task;
 
 #[derive(Debug, Clone)]
 pub struct SystemRequirement {
@@ -43,10 +40,6 @@ pub struct SearchCriterion {
     pub framework: Option<String>,
     pub image: Option<String>,
 
-    // Knowledge and capabilities
-    pub skills: Option<Vec<Skill>>,
-    pub domains: Option<Vec<Domain>>,
-
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
     pub annotation: Option<Value>,
@@ -57,7 +50,7 @@ pub struct SearchCriterion {
     pub model_outputs: Option<Vec<ModelIO>>,
 
     /// Inference Fields
-    pub task_types: Option<Vec<String>>,
+    pub task_types: Option<Vec<Task>>,
     pub inference_precision: Option<String>,
     pub inference_hardware: Option<HardwareRequirements>,
     pub inference_software_dependencies: Option<Vec<String>>,

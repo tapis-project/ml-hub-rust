@@ -2,8 +2,7 @@ use serde_json::to_vec;
 use crate::presentation::http::v1::requests::models as requests;
 use crate::application::inputs::model_metadata as inputs;
 use crate::application::inputs::artifacts as artifact_inputs;
-use crate::application::inputs::skills;
-use crate::application::inputs::domains;
+use crate::application::inputs::task as input_task;
 use crate::errors::Error;
 use uuid::Uuid;
 
@@ -85,14 +84,9 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: requests::ModelMetadata) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.skills.clone().unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skills::Skill::from(skill));
-        }
-        
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.domains.clone().unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domains::Domain::from(domain));
+        let mut task_types: Vec<input_task::Task> = Vec::new();
+        for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(input_task::Task::from(task_type))
         }
 
         let mut model_inputs = Vec::with_capacity(1);
@@ -119,14 +113,12 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
             model_type: value.model_type,
             version: value.version,
             image: value.image,
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.keywords,
             annotation: value.annotation,
             multi_modal: value.multi_modal,
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.task_types,
+            task_types: Some(task_types),
             inference_precision: value.inference_precision,
             inference_hardware,
             inference_software_dependencies: value.inference_software_dependencies,

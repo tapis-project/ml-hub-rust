@@ -1,6 +1,5 @@
 use crate::infra::persistence::mongo::documents::model_metadata;
-use crate::infra::persistence::mongo::documents::skills;
-use crate::infra::persistence::mongo::documents::domains;
+use crate::infra::persistence::mongo::documents::task as document_task;
 use crate::application::inputs::model_metadata as inputs;
 use crate::errors::Error;
 use mongodb::bson::Uuid;
@@ -68,14 +67,9 @@ impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: &inputs::CreateModelMetadata) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.metadata.skills.clone().unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skills::Skill::from(skill));
-        }
-        
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.metadata.domains.clone().unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domains::Domain::from(domain));
+        let mut task_types: Vec<document_task::Task> = Vec::new();
+        for task_type in value.metadata.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(document_task::Task::from(task_type))
         }
 
         let mut model_inputs = Vec::with_capacity(1);
@@ -104,14 +98,12 @@ impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
             model_type: value.metadata.model_type.clone(),
             version: value.metadata.version.clone(),
             image: value.metadata.image.clone(),
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.metadata.keywords.clone(),
             annotation: value.metadata.annotation.clone(),
             multi_modal: value.metadata.multi_modal.clone(),
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.metadata.task_types.clone(),
+            task_types: Some(task_types),
             inference_precision: value.metadata.inference_precision.clone(),
             inference_hardware,
             inference_software_dependencies: value.metadata.inference_software_dependencies.clone(),
@@ -146,14 +138,9 @@ impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: &inputs::ModelMetadata) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.skills.clone().unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skills::Skill::from(skill));
-        }
-        
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.domains.clone().unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domains::Domain::from(domain));
+        let mut task_types: Vec<document_task::Task> = Vec::new();
+        for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(document_task::Task::from(task_type))
         }
 
         let mut model_inputs = Vec::with_capacity(1);
@@ -182,14 +169,12 @@ impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
             model_type: value.model_type.clone(),
             version: value.version.clone(),
             image: value.image.clone(),
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.keywords.clone(),
             annotation: value.annotation.clone(),
             multi_modal: value.multi_modal.clone(),
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.task_types.clone(),
+            task_types: Some(task_types),
             inference_precision: value.inference_precision.clone(),
             inference_hardware,
             inference_software_dependencies: value.inference_software_dependencies.clone(),

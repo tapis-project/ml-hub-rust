@@ -1,7 +1,7 @@
 use crate::application::inputs::model_metadata as inputs;
+use crate::domain::entities::task as domain_task;
 use crate::domain::entities::model_metadata as domain;
-use crate::domain::entities::skill;
-use crate::domain::entities::domain;
+
 use crate::application::errors::ApplicationError;
 
 impl TryFrom<inputs::SystemRequirement> for domain::SystemRequirement {
@@ -68,16 +68,11 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
     type Error = ApplicationError;
     
     fn try_from(value: inputs::ModelMetadata) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.skills.unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skill::Skill::from(skill));
+        let mut task_types: Vec<domain_task::Task> = Vec::new();
+        for task_type in value.task_types.unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(domain_task::Task::from(task_type))
         }
         
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.domains.unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domain::Domain::from(domain));
-        }
-
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(domain::ModelIO::try_from(input)?)
@@ -102,14 +97,12 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
             model_type: value.model_type,
             version: value.version,
             image: value.image,
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.keywords,
             annotation: value.annotation,
             multi_modal: value.multi_modal,
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.task_types,
+            task_types: Some(task_types),
             inference_precision: value.inference_precision,
             inference_hardware,
             inference_software_dependencies: value.inference_software_dependencies,
@@ -144,16 +137,11 @@ impl TryFrom<inputs::CreateModelMetadata> for domain::ModelMetadata {
     type Error = ApplicationError;
     
     fn try_from(value: inputs::CreateModelMetadata) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.metadata.skills.unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skill::Skill::from(skill));
+        let mut task_types: Vec<domain_task::Task> = Vec::new();
+        for task_type in value.metadata.task_types.unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(domain_task::Task::from(task_type))
         }
-        
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.metadata.domains.unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domain::Domain::from(domain));
-        }
-        
+
         let mut model_inputs = Vec::with_capacity(1);
         for input in value.metadata.model_inputs.unwrap_or(Vec::with_capacity(0)) {
             model_inputs.push(domain::ModelIO::try_from(input)?)
@@ -178,14 +166,12 @@ impl TryFrom<inputs::CreateModelMetadata> for domain::ModelMetadata {
             model_type: value.metadata.model_type,
             version: value.metadata.version,
             image: value.metadata.image,
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.metadata.keywords,
             annotation: value.metadata.annotation,
             multi_modal: value.metadata.multi_modal,
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.metadata.task_types,
+            task_types: Some(task_types),
             inference_precision: value.metadata.inference_precision,
             inference_hardware,
             inference_software_dependencies: value.metadata.inference_software_dependencies,

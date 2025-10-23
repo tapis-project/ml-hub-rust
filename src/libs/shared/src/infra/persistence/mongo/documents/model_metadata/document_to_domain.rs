@@ -1,7 +1,6 @@
 use crate::infra::persistence::mongo::documents::model_metadata;
-use crate::domain::entities::domain;
-use crate::domain::entities::skill;
 use crate::domain::entities::model_metadata as domain;
+use crate::domain::entities::task as domain_task;
 use crate::errors::Error;
 
 impl TryFrom<model_metadata::SystemRequirement> for domain::SystemRequirement {
@@ -67,14 +66,9 @@ impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
     type Error = Error;
     
     fn try_from(value: model_metadata::ModelMetadata) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.skills.unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skill::Skill::from(skill));
-        }
-        
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.domains.unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domain::Domain::from(domain));
+        let mut task_types: Vec<domain_task::Task> = Vec::new();
+        for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(domain_task::Task::from(task_type))
         }
 
         let mut model_inputs = Vec::with_capacity(1);
@@ -101,14 +95,12 @@ impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
             model_type: value.model_type,
             version: value.version,
             image: value.image,
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.keywords,
             annotation: value.annotation,
             multi_modal: value.multi_modal,
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.task_types,
+            task_types: Some(task_types),
             inference_precision: value.inference_precision,
             inference_hardware,
             inference_software_dependencies: value.inference_software_dependencies,

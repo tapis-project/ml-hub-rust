@@ -2,8 +2,7 @@ mod input_to_document;
 
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
-use crate::infra::persistence::mongo::documents::skills::Skill;
-use crate::infra::persistence::mongo::documents::domains::Domain;
+use crate::infra::persistence::mongo::documents::task::Task;
 use crate::infra::persistence::mongo::utils::is_vec_empty;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -63,12 +62,6 @@ pub struct ModelMetadataFilter {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<String>,
 
-    // Knowledge and capabilities
-    #[serde(skip_serializing_if = "is_vec_empty")]
-    pub skills: Option<Vec<Skill>>,
-    #[serde(skip_serializing_if = "is_vec_empty")]
-    pub domains: Option<Vec<Domain>>,
-
     /// Arbitrary labels
     #[serde(skip_serializing_if = "is_vec_empty")]
     pub keywords: Option<Vec<String>>,
@@ -85,7 +78,7 @@ pub struct ModelMetadataFilter {
 
     /// Inference Fields
     #[serde(skip_serializing_if = "is_vec_empty")]
-    pub task_types: Option<Vec<String>>,
+    pub task_types: Option<Vec<Task>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inference_precision: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

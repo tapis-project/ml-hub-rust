@@ -1,7 +1,6 @@
 use crate::presentation::http::v1::requests::discover_models;
-use crate::application::inputs::skills;
-use crate::application::inputs::domains;
 use crate::application::inputs::discover_models as inputs;
+use crate::application::inputs::task as input_task;
 use crate::errors::Error;
 
 impl TryFrom<discover_models::SystemRequirement> for inputs::SystemRequirement {
@@ -74,14 +73,9 @@ impl TryFrom<&discover_models::DiscoveryCriterion> for inputs::SearchCriterion {
     type Error = Error;
     
     fn try_from(value: &discover_models::DiscoveryCriterion) -> Result<Self, Self::Error> {
-        let mut skills = Vec::with_capacity(1);
-        for skill in value.skills.clone().unwrap_or(Vec::with_capacity(0)) {
-            skills.push(skills::Skill::from(skill));
-        }
-        
-        let mut domains = Vec::with_capacity(1);
-        for domain in value.domains.clone().unwrap_or(Vec::with_capacity(0)) {
-            domains.push(domains::Domain::from(domain));
+        let mut task_types: Vec<input_task::Task> = Vec::new();
+        for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(input_task::Task::from(task_type))
         }
 
         let mut model_inputs = Vec::with_capacity(1);
@@ -108,14 +102,12 @@ impl TryFrom<&discover_models::DiscoveryCriterion> for inputs::SearchCriterion {
             model_type: value.model_type.clone(),
             version: value.version.clone(),
             image: value.image.clone(),
-            skills: Some(skills),
-            domains: Some(domains),
             keywords: value.keywords.clone(),
             annotation: value.annotation.clone(),
             multi_modal: value.multi_modal.clone(),
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),
-            task_types: value.task_types.clone(),
+            task_types: Some(task_types),
             inference_precision: value.inference_precision.clone(),
             inference_hardware,
             inference_software_dependencies: value.inference_software_dependencies.clone(),

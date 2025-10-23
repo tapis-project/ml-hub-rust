@@ -2,13 +2,10 @@ pub mod to_input;
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use crate::presentation::http::v1::requests::headers::Headers;
 use std::collections::HashMap;
 use serde_json::Value;
-use crate::presentation::http::v1::requests::{
-    skills::Skill,
-    domains::Domain,
-};
+use crate::presentation::http::v1::requests::headers::Headers;
+use crate::presentation::http::v1::requests::task::Task;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DiscoverModelsByPlatformPath {
@@ -76,10 +73,6 @@ pub struct DiscoveryCriterion {
     pub framework: Option<String>,
     pub image: Option<String>,
 
-    // Knowledge and capabilities
-    pub skills: Option<Vec<Skill>>,
-    pub domains: Option<Vec<Domain>>,
-
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
     pub annotation: Option<Value>,
@@ -90,7 +83,7 @@ pub struct DiscoveryCriterion {
     pub model_outputs: Option<Vec<ModelIO>>,
 
     /// Inference Fields
-    pub task_types: Option<Vec<String>>,
+    pub task_types: Option<Vec<Task>>,
     pub inference_precision: Option<String>,
     pub inference_hardware: Option<HardwareRequirements>,
     pub inference_software_dependencies: Option<Vec<String>>,

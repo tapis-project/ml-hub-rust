@@ -5,8 +5,8 @@ mod input_to_document;
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use mongodb::bson::{Uuid, oid::ObjectId};
-use crate::infra::persistence::mongo::documents::skills::Skill;
-use crate::infra::persistence::mongo::documents::domains::Domain;
+
+use crate::infra::persistence::mongo::documents::task::Task;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SystemRequirement {
@@ -53,10 +53,6 @@ pub struct ModelMetadata {
     pub framework: Option<String>,
     pub image: Option<String>,
 
-    // Knowledge and capabilities
-    pub skills: Option<Vec<Skill>>,
-    pub domains: Option<Vec<Domain>>,
-
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
     pub annotation: Option<Value>,
@@ -67,7 +63,7 @@ pub struct ModelMetadata {
     pub model_outputs: Option<Vec<ModelIO>>,
 
     /// Inference Fields
-    pub task_types: Option<Vec<String>>,
+    pub task_types: Option<Vec<Task>>,
     pub inference_precision: Option<String>,
     pub inference_hardware: Option<HardwareRequirements>,
     pub inference_software_dependencies: Option<Vec<String>>,
