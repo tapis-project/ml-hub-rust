@@ -1,5 +1,5 @@
 use crate::domain::external::agntcy::domain as agntcy;
-use crate::domain::entities::domains as entities;
+use crate::domain::entities::domain as entities;
 
 impl From<agntcy::Domain> for entities::Domain {
     fn from(value: agntcy::Domain) -> Self {

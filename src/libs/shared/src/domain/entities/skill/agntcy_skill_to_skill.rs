@@ -1,5 +1,5 @@
 use crate::domain::external::agntcy::skill as agntcy;
-use crate::domain::entities::skills as entities;
+use crate::domain::entities::skill as entities;
 
 impl From<agntcy::Skill> for entities::Skill {
     fn from(value: agntcy::Skill) -> Self {

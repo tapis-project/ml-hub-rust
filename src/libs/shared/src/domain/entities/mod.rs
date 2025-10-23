@@ -1,5 +1,5 @@
-pub mod domains;
-pub mod skills;
+pub mod domain;
+pub mod skill;
 pub mod artifact;
 pub mod artifact_ingestion;
 pub mod timestamp;
