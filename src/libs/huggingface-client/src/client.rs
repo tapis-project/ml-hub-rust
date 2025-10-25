@@ -27,7 +27,6 @@ use shared::presentation::http::v1::requests::models::{
     GetModelRequest, IngestModelRequest, ListModelsRequest,
 };
 use std::path::PathBuf;
-use std::str::FromStr;
 use std::process::Command;
 use platforms::Platform;
 
@@ -139,25 +138,21 @@ impl GetModelClient for HuggingFaceClient {
         request: &GetModelRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
-        if let Err(my_error) =
-            request.headers.validate_authorization_header(None)
-        {
-            return Err(ClientError::Internal {
-                msg: my_error.to_string(),
-                scope: ClientErrorScope::Server,
-            });
-        }
-        let fail_message = String::from_str("failed to convert to header map")
-            .expect("won't fail");
         let headers = match HeaderMap::try_from(&HuggingFaceHeaders(request.headers.clone())) {
-            Ok(header_map) => header_map,
+            Ok(_header_map) => {
+                // TODO Add the authorization header and value if one exists
+                let map = HeaderMap::new();
+                map
+            },
             Err(_) => {
                 return Err(ClientError::Internal {
-                    msg: fail_message,
+                    msg: "failed to convert to header map".into(),
                     scope: ClientErrorScope::Server,
                 })
             }
         };
+
+        println!("{:#?}", headers);
 
         let result = self
             .client
@@ -353,7 +348,7 @@ impl PublishModelClient for HuggingFaceClient {
         };
 
         // Get the access token from the headers
-        let access_token = match request.headers.get_first_value("authorization") {
+        let access_token = match request.headers.get_first_value("Authorization") {
             Some(t) => t.replace("Bearer ", ""),
             None => return Err(ClientError::BadRequest { msg: "Missing Authorization header".into(), scope: ClientErrorScope::Client })
         };
