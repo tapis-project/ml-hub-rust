@@ -10,7 +10,7 @@ impl From<entities::artifact_ingestion::ArtifactIngestionStatus> for responses::
             entities::artifact_ingestion::ArtifactIngestionStatus::Archiving => responses::ArtifactIngestionStatus::Archiving,
             entities::artifact_ingestion::ArtifactIngestionStatus::Pending => responses::ArtifactIngestionStatus::Pending,
             entities::artifact_ingestion::ArtifactIngestionStatus::Finished => responses::ArtifactIngestionStatus::Finished,
-            entities::artifact_ingestion::ArtifactIngestionStatus::Failed(_) => responses::ArtifactIngestionStatus::Failed,
+            entities::artifact_ingestion::ArtifactIngestionStatus::Failed => responses::ArtifactIngestionStatus::Failed,
             entities::artifact_ingestion::ArtifactIngestionStatus::Downloaded => responses::ArtifactIngestionStatus::Downloaded,
             entities::artifact_ingestion::ArtifactIngestionStatus::Downloading => responses::ArtifactIngestionStatus::Downloading,
         }

@@ -58,41 +58,41 @@ impl ArtifactIngestion {
         match from {
             Status::Submitted | Status::Resubmitted => {
                 match to {
-                    Status::Pending | Status::Failed(_)  => true,
+                    Status::Pending | Status::Failed  => true,
                     _ => false
                 }
             }
             Status::Pending => {
                 match to {
-                    Status::Downloading | Status::Failed(_) => true,
+                    Status::Downloading | Status::Failed => true,
                     _ => false
                 }
             }
             Status::Downloading => {
                 match to {
-                    Status::Downloaded | Status::Failed(_) => true,
+                    Status::Downloaded | Status::Failed => true,
                     _ => false
                 }
             }, 
             Status::Downloaded => {
                 match to {
-                    Status::Archiving | Status::Finished | Status::Failed(_) => true,
+                    Status::Archiving | Status::Finished | Status::Failed => true,
                     _ => false
                 }
             },
             Status::Archiving => {
                 match to {
-                    Status::Archived | Status::Failed(_) => true,
+                    Status::Archived | Status::Failed => true,
                     _ => false
                 }
             },
             Status::Archived => {
                 match to {
-                    Status::Finished | Status::Failed(_) => true,
+                    Status::Finished | Status::Failed => true,
                     _ => false
                 }
             },
-            Status::Finished | Status::Failed(_)=> match to {
+            Status::Finished | Status::Failed=> match to {
                 Status::Resubmitted => true,
                 _ => false
             },
@@ -143,7 +143,7 @@ pub enum ArtifactIngestionStatus {
     Archiving,
     Archived,
     Finished,
-    Failed(Reason),
+    Failed,
 }
 
 type Status = ArtifactIngestionStatus;
@@ -159,7 +159,7 @@ impl From<Status> for String {
             Status::Archiving => "Archiving".into(),
             Status::Archived => "Archived".into(),
             Status::Finished => "Finished".into(),
-            Status::Failed(_) => "Failed".into(),
+            Status::Failed => "Failed".into(),
         }
     }
 }

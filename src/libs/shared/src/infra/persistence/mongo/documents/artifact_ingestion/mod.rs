@@ -52,7 +52,7 @@ pub enum ArtifactIngestionStatus {
     Archiving,
     Archived,
     Finished,
-    Failed(Reason),
+    Failed,
 }
 
 type Status = ArtifactIngestionStatus;
@@ -68,7 +68,7 @@ impl From<Status> for String {
             Status::Archiving => "Archiving".into(),
             Status::Archived => "Archived".into(),
             Status::Finished => "Finished".into(),
-            Status::Failed(_) => "Failed".into(),
+            Status::Failed => "Failed".into(),
         }
     }
 }

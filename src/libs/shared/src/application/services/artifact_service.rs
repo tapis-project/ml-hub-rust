@@ -291,7 +291,7 @@ impl ArtifactService {
         if let Err(err) = submit_result {
             GlobalLogger::error(format!("Failed to submit ArtifactIngestion: {}", &err.to_string()).as_str());
 
-            ingestion.change_status(ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToQueue))
+            ingestion.change_status(ArtifactIngestionStatus::Failed)
                 .map_err(|err| ArtifactServiceError::ArtifactIngestionError(err))?;
 
             let update_ingestion = || 

@@ -97,7 +97,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
 
         let mut cursor = self.read_collection.find(filter, None)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|err| ApplicationError::RepoError(format!("Error fetching artifact ingestion: {}", err)))?;
 
         let mut ingestions: Vec<entities::artifact_ingestion::ArtifactIngestion> = Vec::new();
         while let Some(ingestion_doc) = cursor.try_next()
@@ -105,7 +105,7 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
             .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
         {
             let ingestion = entities::artifact_ingestion::ArtifactIngestion::try_from(ingestion_doc)
-                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+                    .map_err(|err| ApplicationError::RepoError(format!("Error converting artifact ingestion: {}", err)))?;
 
             ingestions.push(ingestion);
         }
@@ -120,12 +120,12 @@ impl application::ports::repositories::ArtifactIngestionRepository for ArtifactI
 
         let mut cursor = self.read_collection.find(filter, None)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|err| ApplicationError::RepoError(format!("Error fetching artifact ingestions: {}", err)))?;
         
         let mut ingestions: Vec<entities::artifact_ingestion::ArtifactIngestion> = Vec::new();
         while let Some(ingestion_doc) = cursor.try_next()
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))? 
+            .map_err(|err| ApplicationError::RepoError(format!("Error fetching next artifact ingestion: {}", err)))? 
         {
             let ingestion = entities::artifact_ingestion::ArtifactIngestion::from(ingestion_doc);
 

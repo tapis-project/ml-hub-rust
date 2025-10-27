@@ -46,9 +46,7 @@ impl From<documents::artifact_ingestion::ArtifactIngestionStatus> for entities::
             documents::artifact_ingestion::ArtifactIngestionStatus::Downloaded => entities::artifact_ingestion::ArtifactIngestionStatus::Downloaded,
             documents::artifact_ingestion::ArtifactIngestionStatus::Downloading=> entities::artifact_ingestion::ArtifactIngestionStatus::Downloading,
             documents::artifact_ingestion::ArtifactIngestionStatus::Finished => entities::artifact_ingestion::ArtifactIngestionStatus::Finished,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Failed(r) => {
-                entities::artifact_ingestion::ArtifactIngestionStatus::Failed(entities::artifact_ingestion::ArtifactIngestionFailureReason::from(r))
-            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Failed => entities::artifact_ingestion::ArtifactIngestionStatus::Failed
         }
     }
 }
