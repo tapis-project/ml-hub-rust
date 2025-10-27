@@ -22,7 +22,7 @@ use amqprs::{
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::domain::entities::artifact_publication::{ArtifactPublicationFailureReason, ArtifactPublicationStatus};
+use shared::domain::entities::artifact_publication::ArtifactPublicationStatus;
 use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
@@ -197,7 +197,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                             println!("Failed: {}", err.to_string());
                             self.artifact_service.change_publication_status_by_publication_id(
                                 publication_id.clone(),
-                                ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToPublishArtifact(err.to_string())),
+                                ArtifactPublicationStatus::Failed,
                                 Some(err.to_string())
                             )
                                 .await
@@ -262,7 +262,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         Err(err) => {
                             self.artifact_service.change_publication_status_by_publication_id(
                                 publication_id.clone(),
-                                ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToPublishArtifact(err.to_string())),
+                                ArtifactPublicationStatus::Failed,
                                 Some(err.to_string())
                             )
                                 .await

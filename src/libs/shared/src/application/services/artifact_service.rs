@@ -11,8 +11,8 @@ use crate::application::outputs::artifacts::ModelArtifactOutput;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
 use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
-use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionFailureReason, ArtifactIngestionStatus};
-use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError, ArtifactPublicationFailureReason};
+use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionStatus};
+use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError};
 use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::services::{
     ArtifactService as DomainArtifactService,
@@ -167,7 +167,7 @@ impl ArtifactService {
         if let Err(err) = publish_result {
             GlobalLogger::error(format!("Failed to publish ArtifactIngestion: {}", &err.to_string()).as_str());
 
-            publication.change_status(&ArtifactPublicationStatus::Failed(ArtifactPublicationFailureReason::FailedToQueue("Failed to queue".into())))
+            publication.change_status(&ArtifactPublicationStatus::Failed)
                 .map_err(|err| ArtifactServiceError::ArtifactPublicationError(err))?;
 
             let update_ingestion = || 

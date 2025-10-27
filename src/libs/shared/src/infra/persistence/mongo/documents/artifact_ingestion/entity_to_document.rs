@@ -77,14 +77,3 @@ impl From<entities::artifact_ingestion::ArtifactIngestionStatus> for documents::
         }
     }
 }
-
-impl From<entities::artifact_ingestion::ArtifactIngestionFailureReason> for documents::artifact_ingestion::ArtifactIngestionFailureReason {
-    fn from(value: entities::artifact_ingestion::ArtifactIngestionFailureReason) -> Self {
-        match value {
-            entities::artifact_ingestion::ArtifactIngestionFailureReason::FailedToArchive => documents::artifact_ingestion::ArtifactIngestionFailureReason::FailedToArchive,
-            entities::artifact_ingestion::ArtifactIngestionFailureReason::FailedToDownload => documents::artifact_ingestion::ArtifactIngestionFailureReason::FailedToDownload,
-            entities::artifact_ingestion::ArtifactIngestionFailureReason::FailedToQueue => documents::artifact_ingestion::ArtifactIngestionFailureReason::FailedToQueue,
-            entities::artifact_ingestion::ArtifactIngestionFailureReason::Unknown => documents::artifact_ingestion::ArtifactIngestionFailureReason::Unknown,
-        }
-    }
-}

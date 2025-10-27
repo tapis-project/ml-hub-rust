@@ -18,18 +18,6 @@ pub enum ArtifactType {
     Dataset
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub enum ArtifactPublicationFailureReason {
-    FailedToQueue(String),
-    FailedToExtract(String),
-    FailedToPublishArtifact(String),
-    FailedToPublishMetadata(String),
-    InternalError(String),
-    PlatformError(String),
-}
-
-type Reason = ArtifactPublicationFailureReason;
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
 pub enum ArtifactPublicationStatus {
     Submitted,
@@ -41,7 +29,7 @@ pub enum ArtifactPublicationStatus {
     PublishingArtifact,
     PublishedArtifact,
     Finished,
-    Failed(Reason)
+    Failed
 }
 
 type Status = ArtifactPublicationStatus;

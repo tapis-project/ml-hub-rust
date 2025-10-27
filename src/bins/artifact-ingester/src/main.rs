@@ -23,7 +23,7 @@ use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
 use shared::constants::ARTIFACT_INGEST_DIR_NAME;
-use shared::domain::entities::artifact_ingestion::{ArtifactIngestionFailureReason, ArtifactIngestionStatus};
+use shared::domain::entities::artifact_ingestion::ArtifactIngestionStatus;
 use shared::domain::entities::artifact::ArtifactType;
 use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
 use shared::presentation::http::v1::requests::models::IngestModelRequest;
@@ -146,7 +146,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                                     Err(err) => {
                                         self.artifact_service.change_ingestion_status_by_ingestion_id(
                                             ingestion_id.clone(),
-                                            ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToArchive),
+                                            ArtifactIngestionStatus::Failed,
                                             Some(err.to_string())
                                         )
                                             .await
@@ -187,7 +187,7 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
                             Err(err) => {
                                 self.artifact_service.change_ingestion_status_by_ingestion_id(
                                     ingestion_id.clone(),
-                                    ArtifactIngestionStatus::Failed(ArtifactIngestionFailureReason::FailedToDownload),
+                                    ArtifactIngestionStatus::Failed,
                                     Some(err.to_string())
                                 )
                                     .await

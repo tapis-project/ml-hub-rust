@@ -42,22 +42,7 @@ impl From<documents::ArtifactPublicationStatus> for entities::ArtifactPublicatio
             documents::ArtifactPublicationStatus::PublishingArtifact => entities::ArtifactPublicationStatus::PublishingArtifact,
             documents::ArtifactPublicationStatus::PublishedArtifact => entities::ArtifactPublicationStatus::PublishedArtifact,
             documents::ArtifactPublicationStatus::Finished => entities::ArtifactPublicationStatus::Finished,
-            documents::ArtifactPublicationStatus::Failed(r) => {
-                entities::ArtifactPublicationStatus::Failed(entities::ArtifactPublicationFailureReason::from(r))
-            },
-        }
-    }
-}
-
-impl From<documents::ArtifactPublicationFailureReason> for entities::ArtifactPublicationFailureReason {
-    fn from(value: documents::ArtifactPublicationFailureReason) -> Self {
-        match value {
-            documents::ArtifactPublicationFailureReason::FailedToQueue(s) => entities::ArtifactPublicationFailureReason::FailedToQueue(s),
-            documents::ArtifactPublicationFailureReason::FailedToExtract(s) => entities::ArtifactPublicationFailureReason::FailedToExtract(s),
-            documents::ArtifactPublicationFailureReason::FailedToPublishArtifact(s) => entities::ArtifactPublicationFailureReason::FailedToPublishArtifact(s),
-            documents::ArtifactPublicationFailureReason::FailedToPublishMetadata(s) => entities::ArtifactPublicationFailureReason::FailedToPublishMetadata(s),
-            documents::ArtifactPublicationFailureReason::InternalError(s) => entities::ArtifactPublicationFailureReason::InternalError(s),
-            documents::ArtifactPublicationFailureReason::PlatformError(s) => entities::ArtifactPublicationFailureReason::PlatformError(s),
+            documents::ArtifactPublicationStatus::Failed => entities::ArtifactPublicationStatus::Failed,
         }
     }
 }

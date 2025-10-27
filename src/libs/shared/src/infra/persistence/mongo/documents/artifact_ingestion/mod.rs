@@ -72,13 +72,3 @@ impl From<Status> for String {
         }
     }
 }
-
-#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
-pub enum ArtifactIngestionFailureReason {
-    FailedToQueue,
-    FailedToDownload,
-    FailedToArchive,
-    Unknown
-}
-
-type Reason = ArtifactIngestionFailureReason;

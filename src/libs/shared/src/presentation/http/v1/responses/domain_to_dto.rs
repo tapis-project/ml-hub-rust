@@ -44,7 +44,7 @@ impl From<entities::artifact_publication::ArtifactPublicationStatus> for respons
             entities::artifact_publication::ArtifactPublicationStatus::PublishingMetadata => responses::ArtifactPublicationStatus::PublishingMetadata,
             entities::artifact_publication::ArtifactPublicationStatus::PublishedMetadata => responses::ArtifactPublicationStatus::PublishedMetadata,
             entities::artifact_publication::ArtifactPublicationStatus::Finished => responses::ArtifactPublicationStatus::Finished,
-            entities::artifact_publication::ArtifactPublicationStatus::Failed(_) => responses::ArtifactPublicationStatus::Failed,
+            entities::artifact_publication::ArtifactPublicationStatus::Failed => responses::ArtifactPublicationStatus::Failed,
         }
     }
 }

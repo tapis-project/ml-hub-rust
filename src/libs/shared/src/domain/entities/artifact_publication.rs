@@ -65,7 +65,7 @@ impl ArtifactPublication {
             Status::Submitted => {
                 match to {
                     Status::Pending
-                    | Status::Failed(_) => true,
+                    | Status::Failed => true,
                     _ => false
                 }
             },
@@ -73,26 +73,26 @@ impl ArtifactPublication {
                 match to {
                     Status::Extracting
                     | Status::PublishingMetadata
-                    | Status::Failed(_) => true,
+                    | Status::Failed => true,
                     _ => false
                 }
             },
             Status::Extracting => {
                 match to {
                     Status::Extracted
-                    | Status::Failed(_) => true,
+                    | Status::Failed => true,
                     _ => false
                 }
             },
             Status::Extracted => {
                 match to {
-                    Status::PublishingArtifact | Status::Failed(_) => true,
+                    Status::PublishingArtifact | Status::Failed => true,
                     _ => false
                 }
             },
             Status::PublishingArtifact => {
                 match to {
-                    Status::PublishedArtifact | Status::Failed(_) => true,
+                    Status::PublishedArtifact | Status::Failed => true,
                     _ => false
                 }
             },
@@ -100,21 +100,21 @@ impl ArtifactPublication {
                 match to {
                     Status::Finished
                     | Status::PublishingMetadata
-                    | Status::Failed(_) => true,
+                    | Status::Failed => true,
                     _ => false
                 }
             },
             Status::PublishingMetadata => {
                 match to {
                     Status::PublishedMetadata
-                    | Status::Failed(_) => true,
+                    | Status::Failed => true,
                     _ => false
                 }
             },
             Status::PublishedMetadata => {
                 match to {
                     Status::Finished
-                    | Status::Failed(_) => true,
+                    | Status::Failed => true,
                     _ => false
                 }
             },
@@ -122,7 +122,7 @@ impl ArtifactPublication {
             Status::Finished => false,
 
             // Cannot transition from Failed to any other status (NOTE This will not be true once publication is a recoverable operation)
-            Status::Failed(_) => false,
+            Status::Failed => false,
         };
 
         is_valid
@@ -140,7 +140,7 @@ pub enum ArtifactPublicationStatus {
     PublishingArtifact,
     PublishedArtifact,
     Finished,
-    Failed(Reason)
+    Failed
 }
 
 type Status = ArtifactPublicationStatus;
@@ -157,32 +157,7 @@ impl ArtifactPublicationStatus {
             Self::PublishingArtifact => "PublishingArtifact",
             Self::PublishedArtifact => "PublishedArtifact",
             Self::Finished => "Finished",
-            Self::Failed(_) => "Failed"
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ArtifactPublicationFailureReason {
-    FailedToQueue(String),
-    FailedToExtract(String),
-    FailedToPublishArtifact(String),
-    FailedToPublishMetadata(String),
-    InternalError(String),
-    PlatformError(String),
-}
-
-type Reason = ArtifactPublicationFailureReason;
-
-impl ArtifactPublicationFailureReason {
-    fn _kind(&self) -> &str {
-        match self {
-            Self::FailedToQueue(_) => "FailedToQueue",
-            Self::FailedToExtract(_) => "FailedToExtract",
-            Self::FailedToPublishArtifact(_) => "FailedToPublishArtifact",
-            Self::FailedToPublishMetadata(_) => "FailedToPublishMetadata",
-            Self::InternalError(_) => "InternalError",
-            Self::PlatformError(_) => "PlatformError",
+            Self::Failed => "Failed"
         }
     }
 }

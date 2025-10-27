@@ -164,16 +164,6 @@ impl From<Status> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub enum ArtifactIngestionFailureReason {
-    FailedToQueue,
-    FailedToDownload,
-    FailedToArchive,
-    Unknown
-}
-
-type Reason = ArtifactIngestionFailureReason;
-
 // Unit tests
 #[cfg(test)]
 #[path = "artifact_ingestion.test.rs"]
