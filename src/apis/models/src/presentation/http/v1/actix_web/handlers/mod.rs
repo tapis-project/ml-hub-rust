@@ -17,4 +17,5 @@ pub mod list_publications_for_artifact;
 pub mod list_model_publications;
 pub mod get_model_ingestion;
 pub mod get_model_publication;
+pub mod list_tasks;
 pub mod openapi;

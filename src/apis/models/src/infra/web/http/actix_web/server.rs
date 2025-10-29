@@ -66,6 +66,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::get_model_ingestion::get_model_ingestion)
             .service(presentation::http::v1::actix_web::handlers::get_model_publication::get_model_publication)
             .service(presentation::http::v1::actix_web::handlers::get_model_artifact::get_model_artifact)
+            .service(presentation::http::v1::actix_web::handlers::list_tasks::list_tasks)
             .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
             .service(
                 SwaggerUi::new("models-api/swagger-ui/{_:.*}")

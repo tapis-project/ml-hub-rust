@@ -1,6 +1,17 @@
 use serde_json::{Value, Map};
 use utoipa::ToSchema;
 use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{models::ModelArtifact, Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
+use crate::presentation::http::v1::requests::task::Task;
+
+#[derive(ToSchema)]
+pub struct ListTasksResponse {
+    pub result: Vec<Task>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
 
 #[derive(ToSchema)]
 pub struct ListPlatformsResponse {

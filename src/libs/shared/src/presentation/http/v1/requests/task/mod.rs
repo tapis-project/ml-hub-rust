@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use strum::IntoEnumIterator;
+use strum_macros::{AsRefStr, Display, EnumIter};
 
 pub mod dto_to_input;
 pub mod entity_to_dto;
 
 #[doc = "An enum of all task types available on Huggingface"]
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, ToSchema, EnumIter, Display, AsRefStr)]
 pub enum Task {
     #[doc = "Any-to-any models can understand two or more modalities and output two or more modalities."]
     AnyToAny,
@@ -98,4 +100,15 @@ pub enum Task {
     #[doc = "Image-to-3D models take in image input and produce 3D output."]
     ImageTo3d,
 
+}
+
+impl Task {
+    pub fn as_vec() -> Vec<String> {
+        let mut tasks: Vec<String> = Vec::new();
+        for task in Task::iter() {
+            tasks.push(task.as_ref().into())
+        }
+
+        tasks
+    }
 }

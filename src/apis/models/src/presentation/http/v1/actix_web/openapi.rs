@@ -20,6 +20,7 @@ use super::handlers::list_models_by_platform::__path_list_models_by_platform;
 use super::handlers::list_platforms::__path_list_platforms;
 use super::handlers::list_publications_for_artifact::__path_list_publications_for_artifact;
 use super::handlers::discover_models::__path_discover_models;
+use super::handlers::list_tasks::__path_list_tasks;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -39,6 +40,7 @@ use super::handlers::discover_models::__path_discover_models;
         list_models_by_platform,
         list_platforms,
         discover_models,
+        list_tasks,
     ),
     components(
         schemas(

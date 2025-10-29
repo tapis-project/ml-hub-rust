@@ -35,7 +35,7 @@ async fn list_platforms() -> impl Responder {
     }
 
     match to_value(response) {
-        Ok(v) => build_success_response(Some(v), Some("message".into()), None),
+        Ok(v) => build_success_response(Some(v), Some("Success".into()), None),
         Err(err) => build_error_response(500, err.to_string())
     }
 }
