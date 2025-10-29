@@ -93,6 +93,7 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
 
         Ok(Self {
             name: value.name,
+            author: value.author,
             framework: value.framework,
             model_type: value.model_type,
             version: value.version,
@@ -162,6 +163,7 @@ impl TryFrom<inputs::AssociateModelMetadata> for domain::ModelMetadata {
 
         Ok(Self {
             name: value.metadata.name,
+            author: value.metadata.author,
             framework: value.metadata.framework,
             model_type: value.metadata.model_type,
             version: value.metadata.version,

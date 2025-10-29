@@ -107,6 +107,17 @@ pub struct AssociateModelMetadataResponse {
 }
 
 #[derive(ToSchema)]
+pub struct CreateModelMetadataResponse {
+    #[schema(value_type = Object)]
+    pub result: ModelMetadata,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
 pub struct DiscoverModelsByPlatformResponse {
     #[schema(value_type = Object)]
     pub result: Vec<Value>,

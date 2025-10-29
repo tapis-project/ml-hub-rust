@@ -10,7 +10,8 @@ pub use shared::presentation::http::v1::requests::models::{
     UploadModelRequest,
     ModelMetadata,
     AssociateModelMetadataPath,
-    AssociateModelMetadata
+    AssociateModelMetadata,
+    CreateModelMetadataPath,
 };
 pub use shared::presentation::http::v1::requests::discover_models::{
     DiscoverModelsByPlatformPath,

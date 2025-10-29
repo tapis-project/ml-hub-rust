@@ -14,7 +14,7 @@ use serde_json::{to_value, Value};
 
 #[utoipa::path(
     post,
-    path = "/models-api/models",
+    path = "/models-api/models/search",
     tag="Models",
     description="Discover models known to MLHub",
     request_body=DiscoveryCriteria,

@@ -39,6 +39,7 @@ pub struct ModelIO {
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
+    pub author: Option<String>,
     pub model_type: Option<String>,
     pub version: Option<String>,
     pub framework: Option<String>,

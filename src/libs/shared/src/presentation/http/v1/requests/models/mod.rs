@@ -65,6 +65,12 @@ pub struct AssociateModelMetadataPath {
     pub artifact_id: String
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CreateModelMetadataPath {
+    pub name: String,
+    pub version: String
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct SystemRequirement {
     pub name: String,
@@ -99,6 +105,7 @@ pub struct ModelIO {
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
+    pub author: Option<String>,
     pub model_type: Option<String>,
     pub version: Option<String>,
     pub framework: Option<String>,

@@ -109,6 +109,7 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
 
         Ok(Self {
             name: value.name,
+            author: value.author,
             framework: value.framework,
             model_type: value.model_type,
             version: value.version,

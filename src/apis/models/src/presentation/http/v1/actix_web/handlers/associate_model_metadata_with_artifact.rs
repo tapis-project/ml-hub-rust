@@ -22,14 +22,14 @@ use shared::presentation::http::v1::contracts::responses;
 #[utoipa::path(
     post,
     path="/models-api/artifacts/{artifact_id}/metadata",
-    tag="Metadata",
-    description="Create metadata for a model artifact",
+    tag="Artifacts",
+    description="Associate metadata for a model artifact",
     params(
         ("artifact_id" = String, Path, description = "The ID of the model artifact")
     ),
     request_body=ModelMetadata,
     responses(
-        (status=200, description="Discovered models", body=responses::AssociateModelMetadataResponse),
+        (status=200, description="Successfully associated metadata with artifact", body=responses::AssociateModelMetadataResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
         (status=404, description="Not found", body=responses::NotFoundResponse),
         (status=500, description="Not found", body=responses::ServerErrorResponse),
