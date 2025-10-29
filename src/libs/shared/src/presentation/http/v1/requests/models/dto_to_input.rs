@@ -112,7 +112,6 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
             author: value.author,
             framework: value.framework,
             model_type: value.model_type,
-            version: value.version,
             image: value.image,
             keywords: value.keywords,
             annotation: value.annotation,

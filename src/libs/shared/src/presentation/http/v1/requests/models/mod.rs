@@ -68,7 +68,7 @@ pub struct AssociateModelMetadataPath {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateModelMetadataPath {
     pub name: String,
-    pub version: String
+    pub author: String
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -107,7 +107,6 @@ pub struct ModelMetadata {
     pub name: Option<String>,
     pub author: Option<String>,
     pub model_type: Option<String>,
-    pub version: Option<String>,
     pub framework: Option<String>,
     pub image: Option<String>,
 
