@@ -92,7 +92,7 @@ pub struct ModelMetadata {
 }
 
 #[derive(Debug, Clone)]
-pub struct CreateModelMetadata {
+pub struct AssociateModelMetadata {
     pub artifact_id: Uuid,
     pub metadata: ModelMetadata,
 }

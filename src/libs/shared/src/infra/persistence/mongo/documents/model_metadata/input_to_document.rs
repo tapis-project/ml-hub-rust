@@ -63,10 +63,10 @@ impl TryFrom<inputs::ModelIO> for model_metadata::ModelIO {
     }
 }
 
-impl TryFrom<&inputs::CreateModelMetadata> for model_metadata::ModelMetadata {
+impl TryFrom<&inputs::AssociateModelMetadata> for model_metadata::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: &inputs::CreateModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: &inputs::AssociateModelMetadata) -> Result<Self, Self::Error> {
         let mut task_types: Vec<document_task::Task> = Vec::new();
         for task_type in value.metadata.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
             task_types.push(document_task::Task::from(task_type))

@@ -61,7 +61,7 @@ pub struct DownloadModelRequest {
 pub struct UploadModelRequest {}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CreateModelMetadataPath {
+pub struct AssociateModelMetadataPath {
     pub artifact_id: String
 }
 
@@ -152,7 +152,7 @@ pub struct ModelMetadata {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateModelMetadata {
+pub struct AssociateModelMetadata {
     pub artifact_id: String,
     pub metadata: ModelMetadata
 }

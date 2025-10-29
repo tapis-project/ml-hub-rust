@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
-use crate::application::inputs::model_metadata::CreateModelMetadata;
+use crate::application::inputs::model_metadata::AssociateModelMetadata;
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
 use crate::domain::services::{
@@ -51,7 +51,7 @@ impl ModelMetadataService {
         }
     }
 
-    pub async fn associate_metadata_with_artifact(&self, input: CreateModelMetadata) -> Result<(), ModelMetadataServiceError> {
+    pub async fn associate_metadata_with_artifact(&self, input: AssociateModelMetadata) -> Result<(), ModelMetadataServiceError> {
         // Get the artifact_id from the input
         let artifact_id = input.artifact_id.clone();
 

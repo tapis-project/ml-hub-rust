@@ -100,7 +100,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateModelMetadataResponse'
+                $ref: '#/components/schemas/AssociateModelMetadataResponse'
         '400':
           description: Not found
           content:
@@ -696,7 +696,7 @@ components:
           minimum: 0
         version:
           type: string
-    CreateModelMetadataResponse:
+    AssociateModelMetadataResponse:
       type: object
       required:
         - result

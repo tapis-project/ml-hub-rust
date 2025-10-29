@@ -4,12 +4,12 @@ use crate::presentation::http::v1::actix_web::helpers::{
 };
 use crate::presentation::http::v1::requests::{
     ModelMetadata,
-    CreateModelMetadataPath,
-    CreateModelMetadata as CreateModelMetadataDto
+    AssociateModelMetadataPath,
+    AssociateModelMetadata as AssociateModelMetadataDto
 };
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::model_metadata_service_factory;
-use crate::application::model_metadata_inputs::CreateModelMetadata as CreateModelMetadataInput;
+use crate::application::model_metadata_inputs::AssociateModelMetadata as AssociateModelMetadataInput;
 use actix_web::{
     post,
     web, 
@@ -29,7 +29,7 @@ use shared::presentation::http::v1::contracts::responses;
     ),
     request_body=ModelMetadata,
     responses(
-        (status=200, description="Discovered models", body=responses::CreateModelMetadataResponse),
+        (status=200, description="Discovered models", body=responses::AssociateModelMetadataResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
         (status=404, description="Not found", body=responses::NotFoundResponse),
         (status=500, description="Not found", body=responses::ServerErrorResponse),
@@ -38,7 +38,7 @@ use shared::presentation::http::v1::contracts::responses;
 #[post("models-api/artifacts/{artifact_id}/metadata")]
 async fn associate_model_metadata_with_artifact(
     // req: HttpRequest,
-    path: web::Path<CreateModelMetadataPath>,
+    path: web::Path<AssociateModelMetadataPath>,
     // query: web::Query<HashMap<String, String>>,
     body: web::Json<ModelMetadata>,
     data: web::Data<AppState>,
@@ -49,12 +49,12 @@ async fn associate_model_metadata_with_artifact(
 
     let artifact_id = path.into_inner().artifact_id;
 
-    let requests = CreateModelMetadataDto {
+    let requests = AssociateModelMetadataDto {
         artifact_id: artifact_id.clone(),
         metadata: body.into_inner()
     };
 
-    let input = match CreateModelMetadataInput::try_from(requests) {
+    let input = match AssociateModelMetadataInput::try_from(requests) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

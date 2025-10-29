@@ -133,10 +133,10 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
     }
 }
 
-impl TryFrom<inputs::CreateModelMetadata> for domain::ModelMetadata {
+impl TryFrom<inputs::AssociateModelMetadata> for domain::ModelMetadata {
     type Error = ApplicationError;
     
-    fn try_from(value: inputs::CreateModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: inputs::AssociateModelMetadata) -> Result<Self, Self::Error> {
         let mut task_types: Vec<domain_task::Task> = Vec::new();
         for task_type in value.metadata.task_types.unwrap_or(Vec::with_capacity(0)) {
             task_types.push(domain_task::Task::from(task_type))

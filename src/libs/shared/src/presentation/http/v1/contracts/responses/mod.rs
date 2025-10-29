@@ -96,7 +96,7 @@ pub struct ListModelIngestionsResponse {
 
 
 #[derive(ToSchema)]
-pub struct CreateModelMetadataResponse {
+pub struct AssociateModelMetadataResponse {
     #[schema(value_type = Object)]
     pub result: ModelMetadata,
     pub status: u16,

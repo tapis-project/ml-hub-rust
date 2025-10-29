@@ -65,10 +65,10 @@ impl TryFrom<requests::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<requests::CreateModelMetadata> for inputs::CreateModelMetadata {
+impl TryFrom<requests::AssociateModelMetadata> for inputs::AssociateModelMetadata {
     type Error = Error;
 
-    fn try_from(value: requests::CreateModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::AssociateModelMetadata) -> Result<Self, Self::Error> {
         let metadata = inputs::ModelMetadata::try_from(value.metadata)?;
         let artifact_id = Uuid::parse_str(&value.artifact_id)
             .map_err(|err| Self::Error::new(err.to_string()))?;
