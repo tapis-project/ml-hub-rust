@@ -12,6 +12,7 @@ pub mod artifact_publications;
 // pub mod domains;
 pub mod discover_models;
 pub mod task;
+pub mod errors;
 
 use serde_json::Value;
 

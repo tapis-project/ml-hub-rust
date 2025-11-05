@@ -25,7 +25,7 @@ use serde_json::{to_value, Value};
         (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
     )
 )]
-#[post("models-api/models")]
+#[post("models-api/models/search")]
 async fn discover_models(
     data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,

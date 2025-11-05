@@ -8,16 +8,24 @@ use std::collections::HashMap;
 use crate::presentation::http::v1::requests::headers::Headers;
 use crate::presentation::http::v1::requests::artifacts;
 use crate::presentation::http::v1::requests::task::Task;
+use crate::presentation::http::v1::requests::errors::PresentationError;
+use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ListModelsPath {
+pub struct ListModelsByPlatformPath {
     pub platform: String
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct GetModelPath {
+pub struct GetModelByPlatformPath {
     pub platform: String,
     pub model_id: String
+}
+
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
+pub struct GetModelPath {
+    pub name: String,
+    pub author: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -31,16 +39,16 @@ pub struct IngestModelPath {
     pub model_id: String
 }
 
-pub struct ListModelsRequest {
+pub struct ListModelsByPlatformRequest {
     pub headers: Headers,
-    pub path: ListModelsPath,
+    pub path: ListModelsByPlatformPath,
     pub query: HashMap<String, String>,
     pub body: bytes::Bytes,
 }
 
-pub struct GetModelRequest {
+pub struct GetModelByPlatformRequest {
     pub headers: Headers,
-    pub path: GetModelPath,
+    pub path: GetModelByPlatformPath,
     pub query: HashMap<String, String>,
     pub body: bytes::Bytes,
 }
@@ -61,23 +69,20 @@ pub struct DownloadModelRequest {
 pub struct UploadModelRequest {}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct AssociateModelMetadataPath {
     pub artifact_id: String
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CreateModelMetadataPath {
-    pub name: String,
-    pub author: String
-}
-
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct SystemRequirement {
     pub name: String,
     pub version: String
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Accelerator {
     pub accelerator_type: String,
     pub memory_gb: Option<i32>,
@@ -87,6 +92,7 @@ pub struct Accelerator {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
@@ -96,15 +102,19 @@ pub struct HardwareRequirements {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+#[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct ModelMetadata {
     // General fields
+    #[validate(required, length(min=1))]
     pub name: Option<String>,
+    #[validate(required, length(min=1))]
     pub author: Option<String>,
     pub model_type: Option<String>,
     pub framework: Option<String>,
@@ -157,8 +167,27 @@ pub struct ModelMetadata {
     pub bias_evaluation_score: Option<i8>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, ToSchema)]
 pub struct AssociateModelMetadata {
-    pub artifact_id: String,
-    pub metadata: ModelMetadata
+    pub name: String,
+    pub author: String,
+}
+
+pub struct CreateModelMetadata {
+    metadata: ModelMetadata
+}
+
+impl CreateModelMetadata {
+    pub fn new(metadata: ModelMetadata) -> Result<Self, PresentationError> {
+        metadata.validate()
+            .map_err(|err| PresentationError::ValidationError(err.to_string()))?;
+
+        Ok(Self {
+            metadata
+        })
+    }
+
+    pub fn metadata(&self) -> ModelMetadata {
+        self.metadata.clone()
+    }
 }

@@ -1,4 +1,5 @@
 pub mod inputs_to_entities;
+pub mod input_to_input;
 
 use crate::application::inputs::task::Task;
 
@@ -94,5 +95,18 @@ pub struct ModelMetadata {
 #[derive(Debug, Clone)]
 pub struct AssociateModelMetadata {
     pub artifact_id: Uuid,
+    pub name: String,
+    pub author: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct UpdateModelMetadataArtifactId {
+    pub artifact_id: Uuid,
+    pub name: String,
+    pub author: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct CreateModelMetadata {
     pub metadata: ModelMetadata,
 }

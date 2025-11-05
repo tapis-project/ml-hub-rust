@@ -46,7 +46,7 @@ pub struct ModelMetadataService {}
 impl ModelMetadataService {
     /// Verifies the the artifact exists and that the artifact has is fully
     /// ingested or uploaded
-    pub fn create<'a>(artifact: &Artifact, _metadata: ModelMetadata) -> Result<(), ModelMetadataServiceError> {
+    pub fn associate_metadata_with_artifact<'a>(artifact: &Artifact, _metadata: ModelMetadata) -> Result<(), ModelMetadataServiceError> {
         if !artifact.is_fully_ingested() {
             return Err(ModelMetadataServiceError::ArtifactNotReady);
         }

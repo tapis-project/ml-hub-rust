@@ -1,7 +1,7 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::requests::{Headers, ListModelsPath, ListModelsRequest};
+use crate::presentation::http::v1::requests::{Headers, ListModelsByPlatformPath, ListModelsByPlatformRequest};
 use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use clients::ListModelsClient;
@@ -28,7 +28,7 @@ use std::collections::HashMap;
 #[get("models-api/platforms/{platform}/models")]
 async fn list_models_by_platform(
     req: HttpRequest,
-    path: web::Path<ListModelsPath>,
+    path: web::Path<ListModelsByPlatformPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Bytes,
 ) -> impl Responder {
@@ -55,7 +55,7 @@ async fn list_models_by_platform(
         Err(err) => return build_error_response(400, String::from(err.to_string())),
     };
 
-    let request = ListModelsRequest {
+    let request = ListModelsByPlatformRequest {
         headers,
         path: path.into_inner(),
         query: query.into_inner(),

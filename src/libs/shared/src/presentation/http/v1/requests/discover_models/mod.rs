@@ -68,6 +68,7 @@ pub struct ModelIO {
 pub struct DiscoveryCriterion {
     // General fields
     pub name: Option<String>,
+    pub author: Option<String>,
     pub version: Option<String>,
     pub model_type: Option<String>,
     pub framework: Option<String>,

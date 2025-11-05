@@ -1,8 +1,8 @@
 pub use shared::presentation::http::v1::requests::models::{
-    ListModelsPath,
-    ListModelsRequest,
-    GetModelPath,
-    GetModelRequest,
+    ListModelsByPlatformPath,
+    ListModelsByPlatformRequest,
+    GetModelByPlatformPath,
+    GetModelByPlatformRequest,
     IngestModelPath,
     IngestModelRequest,
     DownloadModelPath,
@@ -11,7 +11,8 @@ pub use shared::presentation::http::v1::requests::models::{
     ModelMetadata,
     AssociateModelMetadataPath,
     AssociateModelMetadata,
-    CreateModelMetadataPath,
+    CreateModelMetadata,
+    GetModelPath,
 };
 pub use shared::presentation::http::v1::requests::discover_models::{
     DiscoverModelsByPlatformPath,

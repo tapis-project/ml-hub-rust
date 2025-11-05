@@ -21,6 +21,10 @@ use super::handlers::list_platforms::__path_list_platforms;
 use super::handlers::list_publications_for_artifact::__path_list_publications_for_artifact;
 use super::handlers::discover_models::__path_discover_models;
 use super::handlers::list_tasks::__path_list_tasks;
+use super::handlers::list_models::__path_list_models;
+use super::handlers::list_models_by_author::__path_list_models_by_author;
+use super::handlers::get_model::__path_get_model;
+use super::handlers::create_model_metadata::__path_create_model_metadata;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -41,6 +45,10 @@ use super::handlers::list_tasks::__path_list_tasks;
         list_platforms,
         discover_models,
         list_tasks,
+        list_models,
+        list_models_by_author,
+        get_model,
+        create_model_metadata,
     ),
     components(
         schemas(

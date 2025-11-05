@@ -1,12 +1,11 @@
 use crate::presentation::http::v1::actix_web::helpers::{
     build_client_error_response, build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::requests::{GetModelPath, GetModelRequest, Headers};
+use crate::presentation::http::v1::requests::{GetModelByPlatformPath, GetModelByPlatformRequest, Headers};
 use shared::presentation::http::v1::contracts::responses;
 use actix_web::{get, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use clients::GetModelClient;
-use shared::logging::SharedLogger;
 use std::collections::HashMap;
 use platforms::Platform;
 
@@ -29,21 +28,17 @@ use platforms::Platform;
 #[get("models-api/platforms/{platform}/models/{model_id:.*}")]
 async fn get_model_by_platform(
     req: HttpRequest,
-    path: web::Path<GetModelPath>,
+    path: web::Path<GetModelByPlatformPath>,
     query: web::Query<HashMap<String, String>>,
     body: web::Bytes,
 ) -> impl Responder {
-    let logger = SharedLogger::new();
-
-    logger.debug("Start operation get_model");
-
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
         Err(err) => return build_error_response(400, String::from(err.to_string())),
     };
 
-    let request = GetModelRequest {
+    let request = GetModelByPlatformRequest {
         headers,
         path: path.into_inner(),
         query: query.into_inner(),

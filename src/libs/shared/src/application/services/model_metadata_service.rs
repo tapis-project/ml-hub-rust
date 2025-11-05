@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
-use crate::application::inputs::model_metadata::AssociateModelMetadata;
+use crate::application::inputs::model_metadata::{AssociateModelMetadata, CreateModelMetadata, UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
 use crate::domain::services::{
@@ -20,6 +20,9 @@ pub enum ModelMetadataServiceError {
 
     #[error("Artifact not found: {0}")]
     ArtifactNotFound(String),
+
+    #[error("Metadata not found: {0}")]
+    MetdataNotFound(String),
 
     #[error("{0}")]
     DomainServiceError(#[from] ModelMetadataDomainServiceError),
@@ -55,9 +58,6 @@ impl ModelMetadataService {
         // Get the artifact_id from the input
         let artifact_id = input.artifact_id.clone();
 
-        // Convert from service input to domain entity
-        let metadata = ModelMetadata::try_from(input.clone())?;
-
         let find_artifact = || self.artifact_repo.get_by_id(&artifact_id);
 
         // Find the artifact by id
@@ -65,20 +65,31 @@ impl ModelMetadataService {
             .await?
             .ok_or_else(|| ModelMetadataServiceError::ArtifactNotFound(format!("Artifact with id {} does not exist", &artifact_id)))?;
 
-        // Determine if we are allowed to create the metadata for this artifact
-        ModelMetadataDomainService::create(&artifact, metadata)?;
-
         // Ensure no metadata already exists for this artifact
         let find_metadata = || self.model_metadata_repo.find_by_artifact_id(&artifact_id);
 
         let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY)
             .await?;
 
-        // Check if duplicate metadata
-        if maybe_metadata.is_some() {
-            return Err(ModelMetadataServiceError::DuplicateMetadataError(artifact_id.to_string()));
+        let metadata = match maybe_metadata {
+            Some(m) => m,
+            None => return Err(ModelMetadataServiceError::MetdataNotFound(format!("No metadata found with author {} and name {}", input.author, input.name)))
         };
 
+        // Determine if we are allowed to create the metadata for this artifact
+        ModelMetadataDomainService::associate_metadata_with_artifact(&artifact, metadata)?;
+
+        let update_input = UpdateModelMetadataArtifactId::from(input);
+        
+        let update_metadata = || self.model_metadata_repo.update_artifact_id(&update_input);
+
+        retry_async(update_metadata, &Self::REPO_RETRY_POLICY)
+            .await?;
+
+        return Ok(())
+    }
+
+    pub async fn create_model_metadata(&self, input: CreateModelMetadata) -> Result<(), ModelMetadataServiceError> {
         let create_metadata = || self.model_metadata_repo.save(&input);
 
         retry_async(create_metadata, &Self::REPO_RETRY_POLICY)

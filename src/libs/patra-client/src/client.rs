@@ -7,8 +7,8 @@ use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::models::{
-    GetModelRequest,
-    ListModelsRequest,
+    GetModelByPlatformRequest,
+    ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
@@ -43,7 +43,7 @@ impl ListModelsClient for PatraClient {
     type Metadata = Value;
     async fn list_models(
         &self,
-        _request: &ListModelsRequest,
+        _request: &ListModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("List models");
         let resp = self
@@ -87,7 +87,7 @@ impl GetModelClient for PatraClient {
 
     async fn get_model(
         &self,
-        request: &GetModelRequest,
+        request: &GetModelByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         self.logger.debug("Get model");
 

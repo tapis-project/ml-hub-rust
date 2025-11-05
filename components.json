@@ -533,13 +533,13 @@
       }
     },
     {
-      "name": "hf-model-metadata-ingester",
-      "rootDir": "src/devtools/hf-model-metadata-ingester",
-      "labels": ["devtool"],
+      "name": "hf-model-etl",
+      "rootDir": "src/devtools/hf-model-etl",
+      "labels": ["bin"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "code": "code src/devtools/{{ self.name }}",
+        "code": "code src/bin/{{ self.name }}",
         "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
         "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
         "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",

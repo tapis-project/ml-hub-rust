@@ -4,7 +4,6 @@ use crate::presentation::http::v1::actix_web::helpers::{
 };
 use crate::presentation::http::v1::requests::{
     ModelMetadata,
-    CreateModelMetadataPath,
     AssociateModelMetadata as AssociateModelMetadataDto
 };
 use crate::bootstrap::state::AppState;
@@ -23,49 +22,20 @@ use shared::presentation::http::v1::contracts::responses;
     get,
     path="/models-api/models",
     tag="Models",
-    description="Create a model metadata",
+    description="List all models",
     request_body=ModelMetadata,
     responses(
-        (status=200, description="Discovered models", body=responses::CreateModelMetadataResponse),
+        (status=200, description="Discovered models", body=responses::ListModelsResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
         (status=404, description="Not found", body=responses::NotFoundResponse),
         (status=500, description="Not found", body=responses::ServerErrorResponse),
     )
 )]
 #[get("models-api/models")]
-async fn create_model_metadata(
-    // req: HttpRequest,
-    path: web::Path<CreateModelMetadataPath>,
+async fn list_models(
     // query: web::Query<HashMap<String, String>>,
     body: web::Json<ModelMetadata>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    // let logger = SharedLogger::new();
-
-    // logger.debug("Start create model metadata operation");
-
-    // let artifact_id = path.into_inner().artifact_id;
-
-    // let requests = AssociateModelMetadataDto {
-    //     artifact_id: artifact_id.clone(),
-    //     metadata: body.into_inner()
-    // };
-
-    // let input = match AssociateModelMetadataInput::try_from(requests) {
-    //     Ok(i) => i,
-    //     Err(err) => return build_error_response(500, err.to_string())
-    // };
-
-    // let model_metadata_service = match model_metadata_service_factory(&data.db).await {
-    //     Ok(s) => s,
-    //     Err(err) => return build_error_response(500, err.to_string())
-    // };
-
-    // match model_metadata_service.associate_metadata_with_artifact(input).await {
-    //     Ok(_) => (),
-    //     Err(err) => return build_error_response(500, err.to_string())
-    // };
-
-    // build_success_response(None, Some(format!("Successfully created metadata for artifact {}", artifact_id)), None)
     build_error_response(501, "Not Implemnted".into())
 }

@@ -65,18 +65,34 @@ impl TryFrom<requests::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<requests::AssociateModelMetadata> for inputs::AssociateModelMetadata {
+impl TryFrom<requests::CreateModelMetadata> for inputs::CreateModelMetadata {
     type Error = Error;
 
-    fn try_from(value: requests::AssociateModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::CreateModelMetadata) -> Result<Self, Self::Error> {
         let metadata = inputs::ModelMetadata::try_from(value.metadata)?;
-        let artifact_id = Uuid::parse_str(&value.artifact_id)
-            .map_err(|err| Self::Error::new(err.to_string()))?;
         
         return Ok(Self {
-            artifact_id,
             metadata
         })
+    }
+}
+
+impl TryFrom<(&String, requests::AssociateModelMetadata)> for inputs::AssociateModelMetadata {
+    type Error = Error;
+
+    fn try_from(value: (&String, requests::AssociateModelMetadata)) -> Result<Self, Self::Error> {  
+        let artifact_id= match Uuid::parse_str(&value.0) {
+            Ok(uuid) => uuid,
+            Err(_) => return Err(Error::new("Value provided for artifact_id is not a UUID".into()))
+        };
+
+        Ok(
+            Self {
+                artifact_id,
+                name: value.1.name,
+                author: value.1.author,
+            }
+        )
     }
 }
 
@@ -179,7 +195,7 @@ impl TryFrom<requests::DownloadModelRequest> for artifact_inputs::DownloadArtifa
     fn try_from(value: requests::DownloadModelRequest) -> Result<Self, Self::Error> {
         let artifact_id= match Uuid::parse_str(&value.path.artifact_id) {
             Ok(uuid) => uuid,
-            Err(_) => return Err(Error::new("Value provided for artifact_id is not a string".into()))
+            Err(_) => return Err(Error::new("Value provided for artifact_id is not a UUID".into()))
         };
         
         Ok(Self {

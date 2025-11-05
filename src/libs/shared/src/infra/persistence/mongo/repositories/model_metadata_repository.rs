@@ -32,11 +32,10 @@ impl ModelMetadataRepository {
     }
 }
 
-
 #[async_trait]
 impl application::ports::repositories::ModelMetadataRepository for ModelMetadataRepository {
-    async fn save(&self, input: &application::inputs::model_metadata::AssociateModelMetadata) -> Result<(), ApplicationError> {
-        let mut document = ModelMetadata::try_from(input)
+    async fn save(&self, input: &application::inputs::model_metadata::CreateModelMetadata) -> Result<(), ApplicationError> {
+        let mut document = ModelMetadata::try_from(&input.metadata)
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
         
         let result = self.write_collection.insert_one(&document, None)
@@ -44,6 +43,26 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
         document._id = result.inserted_id.as_object_id();
+
+        Ok(())
+    }
+
+    async fn update_artifact_id(&self, input: &application::inputs::model_metadata::UpdateModelMetadataArtifactId) -> Result<(), ApplicationError> {
+        let filter = doc! {
+            "name": input.name.clone(),
+            "author": input.author.clone(),
+        };
+        
+        let document = doc! {
+            "$set": {
+                "artifact_id": Uuid::from_bytes(*input.artifact_id.as_bytes())
+            }
+        };
+
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
         Ok(())
     }

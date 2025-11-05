@@ -56,7 +56,7 @@ pub trait ListModelsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn list_models(&self, _request: &models::ListModelsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn list_models(&self, _request: &models::ListModelsByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -66,7 +66,7 @@ pub trait GetModelClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn get_model(&self, _request: &models::GetModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn get_model(&self, _request: &models::GetModelByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

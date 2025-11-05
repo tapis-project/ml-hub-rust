@@ -58,6 +58,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::download_artifact::download_artifact)
             .service(presentation::http::v1::actix_web::handlers::upload_model_artifact::upload_model_artifact)
             .service(presentation::http::v1::actix_web::handlers::associate_model_metadata_with_artifact::associate_model_metadata_with_artifact)
+            .service(presentation::http::v1::actix_web::handlers::create_model_metadata::create_model_metadata)
             .service(presentation::http::v1::actix_web::handlers::publish_model_artifact::publish_model_artifact)
             .service(presentation::http::v1::actix_web::handlers::list_model_artifacts::list_model_artifacts)
             .service(presentation::http::v1::actix_web::handlers::list_model_publications::list_model_publications)

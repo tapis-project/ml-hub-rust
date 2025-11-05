@@ -24,7 +24,7 @@ use shared::domain::entities::{
 };
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::models::{
-    GetModelRequest, IngestModelRequest, ListModelsRequest,
+    GetModelByPlatformRequest, IngestModelRequest, ListModelsByPlatformRequest,
 };
 use std::path::PathBuf;
 use std::process::Command;
@@ -82,7 +82,7 @@ impl ListModelsClient for HuggingFaceClient {
 
     async fn list_models(
         &self,
-        request: &ListModelsRequest,
+        request: &ListModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
         // Parse the limit from the query string
@@ -135,7 +135,7 @@ impl GetModelClient for HuggingFaceClient {
 
     async fn get_model(
         &self,
-        request: &GetModelRequest,
+        request: &GetModelByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
         let headers = match HeaderMap::try_from(&HuggingFaceHeaders(request.headers.clone())) {

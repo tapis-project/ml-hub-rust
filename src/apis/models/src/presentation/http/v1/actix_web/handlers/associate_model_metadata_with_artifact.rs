@@ -3,7 +3,6 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_success_response,
 };
 use crate::presentation::http::v1::requests::{
-    ModelMetadata,
     AssociateModelMetadataPath,
     AssociateModelMetadata as AssociateModelMetadataDto
 };
@@ -13,7 +12,6 @@ use crate::application::model_metadata_inputs::AssociateModelMetadata as Associa
 use actix_web::{
     post,
     web, 
-    // HttpRequest, 
     Responder
 };
 use shared::logging::SharedLogger;
@@ -23,11 +21,11 @@ use shared::presentation::http::v1::contracts::responses;
     post,
     path="/models-api/artifacts/{artifact_id}/metadata",
     tag="Artifacts",
-    description="Associate metadata for a model artifact",
+    description="Associate existing model metadata to a model artifact",
     params(
         ("artifact_id" = String, Path, description = "The ID of the model artifact")
     ),
-    request_body=ModelMetadata,
+    request_body=AssociateModelMetadataDto,
     responses(
         (status=200, description="Successfully associated metadata with artifact", body=responses::AssociateModelMetadataResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
@@ -40,7 +38,7 @@ async fn associate_model_metadata_with_artifact(
     // req: HttpRequest,
     path: web::Path<AssociateModelMetadataPath>,
     // query: web::Query<HashMap<String, String>>,
-    body: web::Json<ModelMetadata>,
+    body: web::Json<AssociateModelMetadataDto>,
     data: web::Data<AppState>,
 ) -> impl Responder {
     let logger = SharedLogger::new();
@@ -49,12 +47,7 @@ async fn associate_model_metadata_with_artifact(
 
     let artifact_id = path.into_inner().artifact_id;
 
-    let requests = AssociateModelMetadataDto {
-        artifact_id: artifact_id.clone(),
-        metadata: body.into_inner()
-    };
-
-    let input = match AssociateModelMetadataInput::try_from(requests) {
+    let input = match AssociateModelMetadataInput::try_from((&artifact_id, body.into_inner())) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

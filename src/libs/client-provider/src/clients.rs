@@ -6,9 +6,9 @@ use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
 use shared::presentation::http::v1::requests::models::{
-    GetModelRequest,
+    GetModelByPlatformRequest,
     IngestModelRequest,
-    ListModelsRequest,
+    ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::domain::entities::artifact::Artifact;
@@ -43,7 +43,7 @@ impl clients::ListModelsClient for ListModelsClient {
 
     async fn list_models(
         &self,
-        request: &ListModelsRequest,
+        request: &ListModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: ClientJsonResponse<Value, Value> = match self {
             ListModelsClient::HuggingFace(c) => {
@@ -93,7 +93,7 @@ impl clients::GetModelClient for GetModelClient {
 
     async fn get_model(
         &self,
-        request: &GetModelRequest,
+        request: &GetModelByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: ClientJsonResponse<Value, Value> = match self {
             GetModelClient::HuggingFace(c) => {
