@@ -2,8 +2,8 @@
 
 ## Project Structure & Components 📁
 
-This project is structured as a monorepo. Each component of this project is grouped into one of four categories.
-APIs, libraries, binaries, and infrastructure.
+This project is structured as a monorepo. Each component of this project is grouped into one of the following categories.
+APIs, libraries, binaries, infrastructure, dev tools, and sdks.
 
 ### APIs (src/apis)
 
@@ -89,11 +89,27 @@ This project takes a Domain Driven Design (DDD)-styled architectural approach. E
 
 ### 1. The Presentation Layer
 
-The presentation layer the outermost layer responsible processing the user's requests, serving the responses, and calling to the application layer to perform the operations related to the request. The input DTOs to this layer are called **requests** and the output DTOs are called **responses**. Requests represent data sent by a user to one of this projects APIs or services. Responses represent the data sent back to those users.
+The presentation layer the outermost layer responsible receiving and validating the user's requests, serving the responses, and calling out to the application layer to perform the operations related to the request. The inputs to this layer are called **requests** and the outputs are called **responses**. Requests represent data sent by a user to one of the APIs or services. Responses represent the data sent back to those users.
 
 ### 2. The Application Layer
 
-The application layer is responsible for orchestrating business logic.
+The application layer is responsible for orchestrating business logic. Service's in this layer are invoked by handlers in the presentation layer to perform the work for a given request. This layer is comprises 4 components: **inputs**, **outputs**, **ports**, and **services**,
+
+#### 2.1 Inputs
+
+**Inputs** are the values that are passed into the **Application Layer** from the **Presentation Layer**.
+
+#### 2.2 Outputs
+
+**Outputs** are the values that are returned from the **Application Layer** back to the **Presentation Layer**.
+
+#### 2.3 Ports
+
+**Ports** are the interfaces that the **Infrastructure Layer** implements. These interfaces allow the **Application Layer** to call into the **Infrastructure Layer** in a way that decouples the **Appliaction Layer** from the concrete implementations of the **Infrastructure Layer**.
+
+#### 2.4 Services
+
+**Services** and their methods encapsulate the logic for every use case/operation.
 
 ### 3. The Domain Layer
 
@@ -101,7 +117,7 @@ The domain layer represents all business concepts and their relationships in the
 
 ### 4. The Infrastructure Layer
 
-This layer encapsulates the implementation details of the actual technologies used in this project such as databases, message brokers, and external service calls.
+This layer encapsulates the implementation details of the technologies used in this project such as databases, message brokers, and external service calls.
 
 ### 5. The Bootstrap Layer
 

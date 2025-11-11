@@ -4,7 +4,7 @@ Thank you for considering contributing to **MLHub!** We welcome all kinds of con
 
 Please take a few minutes to review this document so you can understand the standards we follow and help us keep the project consistent and high-quality.
 
-Before contributing to this project, please read the [DEVELOPERS GUIDE](./docs/DEVELOPER_GUIDE.md) for a more in-depth explanation of this project's components, structure, and architecture.
+Before contributing to this project, please read this document as well as the [DEVELOPERS GUIDE](./DEVELOPERS_GUIDE.md) for a more in-depth explanation of this project's components, structure, and architecture.
 
 ---
 

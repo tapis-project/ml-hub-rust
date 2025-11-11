@@ -1,0 +1,1151 @@
+{
+    "id": "deepseek-ai/DeepSeek-V3.1",
+    "author": "deepseek-ai",
+    "sha": "c0781d039fb7a1ba2abc4add0bdc293e92d2b8db",
+    "created_at": "2025-08-21T02:37:52+00:00",
+    "last_modified": "2025-09-05T11:30:15+00:00",
+    "private": false,
+    "disabled": null,
+    "downloads": 479568,
+    "downloads_all_time": null,
+    "gated": false,
+    "gguf": null,
+    "inference": null,
+    "inference_provider_mapping": null,
+    "likes": 798,
+    "library_name": "transformers",
+    "tags": [
+        "transformers",
+        "safetensors",
+        "deepseek_v3",
+        "text-generation",
+        "conversational",
+        "custom_code",
+        "arxiv:2412.19437",
+        "base_model:deepseek-ai/DeepSeek-V3.1-Base",
+        "base_model:quantized:deepseek-ai/DeepSeek-V3.1-Base",
+        "license:mit",
+        "autotrain_compatible",
+        "text-generation-inference",
+        "endpoints_compatible",
+        "fp8",
+        "region:us"
+    ],
+    "pipeline_tag": "text-generation",
+    "mask_token": null,
+    "card_data": {},
+    "widget_data": null,
+    "model_index": null,
+    "config": {
+        "architectures": [
+            "DeepseekV3ForCausalLM"
+        ],
+        "auto_map": {
+            "AutoConfig": "configuration_deepseek.DeepseekV3Config",
+            "AutoModel": "modeling_deepseek.DeepseekV3Model",
+            "AutoModelForCausalLM": "modeling_deepseek.DeepseekV3ForCausalLM"
+        },
+        "model_type": "deepseek_v3",
+        "quantization_config": {
+            "quant_method": "fp8"
+        },
+        "tokenizer_config": {
+            "bos_token": {
+                "__type": "AddedToken",
+                "content": "<｜begin▁of▁sentence｜>",
+                "lstrip": false,
+                "normalized": true,
+                "rstrip": false,
+                "single_word": false
+            },
+            "eos_token": {
+                "__type": "AddedToken",
+                "content": "<｜end▁of▁sentence｜>",
+                "lstrip": false,
+                "normalized": true,
+                "rstrip": false,
+                "single_word": false
+            },
+            "pad_token": {
+                "__type": "AddedToken",
+                "content": "<｜end▁of▁sentence｜>",
+                "lstrip": false,
+                "normalized": true,
+                "rstrip": false,
+                "single_word": false
+            },
+            "unk_token": null,
+            "chat_template": "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% if not thinking is defined %}{% set thinking = false %}{% endif %}{% set ns = namespace(is_first=false, is_tool=false, system_prompt='', is_first_sp=true, is_last_user=false) %}{%- for message in messages %}{%- if message['role'] == 'system' %}{%- if ns.is_first_sp %}{% set ns.system_prompt = ns.system_prompt + message['content'] %}{% set ns.is_first_sp = false %}{%- else %}{% set ns.system_prompt = ns.system_prompt + '\n\n' + message['content'] %}{%- endif %}{%- endif %}{%- endfor %}{{ bos_token }}{{ ns.system_prompt }}{%- for message in messages %}{%- if message['role'] == 'user' %}{%- set ns.is_tool = false -%}{%- set ns.is_first = false -%}{%- set ns.is_last_user = true -%}{{'<｜User｜>' + message['content']}}{%- endif %}{%- if message['role'] == 'assistant' and message['tool_calls'] is defined and message['tool_calls'] is not none %}{%- if ns.is_last_user %}{{'<｜Assistant｜></think>'}}{%- endif %}{%- set ns.is_last_user = false -%}{%- set ns.is_first = false %}{%- set ns.is_tool = false -%}{%- for tool in message['tool_calls'] %}{%- if not ns.is_first %}{%- if message['content'] is none %}{{'<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>'+ tool['function']['name'] + '<｜tool▁sep｜>' + tool['function']['arguments'] + '<｜tool▁call▁end｜>'}}{%- else %}{{message['content'] + '<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>' + tool['function']['name'] + '<｜tool▁sep｜>' + tool['function']['arguments'] + '<｜tool▁call▁end｜>'}}{%- endif %}{%- set ns.is_first = true -%}{%- else %}{{'<｜tool▁call▁begin｜>'+ tool['function']['name'] + '<｜tool▁sep｜>' + tool['function']['arguments'] + '<｜tool▁call▁end｜>'}}{%- endif %}{%- endfor %}{{'<｜tool▁calls▁end｜><｜end▁of▁sentence｜>'}}{%- endif %}{%- if message['role'] == 'assistant' and (message['tool_calls'] is not defined or message['tool_calls'] is none) %}{%- if ns.is_last_user %}{{'<｜Assistant｜>'}}{%- if message['prefix'] is defined and message['prefix'] and thinking %}{{'<think>'}}  {%- else %}{{'</think>'}}{%- endif %}{%- endif %}{%- set ns.is_last_user = false -%}{%- if ns.is_tool %}{{message['content'] + '<｜end▁of▁sentence｜>'}}{%- set ns.is_tool = false -%}{%- else %}{%- set content = message['content'] -%}{%- if '</think>' in content %}{%- set content = content.split('</think>', 1)[1] -%}{%- endif %}{{content + '<｜end▁of▁sentence｜>'}}{%- endif %}{%- endif %}{%- if message['role'] == 'tool' %}{%- set ns.is_last_user = false -%}{%- set ns.is_tool = true -%}{{'<｜tool▁output▁begin｜>' + message['content'] + '<｜tool▁output▁end｜>'}}{%- endif %}{%- endfor -%}{%- if add_generation_prompt and ns.is_last_user and not ns.is_tool %}{{'<｜Assistant｜>'}}{%- if not thinking %}{{'</think>'}}{%- else %}{{'<think>'}}{%- endif %}{% endif %}"
+        }
+    },
+    "transformers_info": null,
+    "trending_score": null,
+    "siblings": [
+        {
+            "rfilename": ".gitattributes",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "LICENSE",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "README.md",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "assets/chat_template.jinja",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "assets/code_agent_trajectory.html",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "assets/search_python_tool_trajectory.html",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "assets/search_tool_trajectory.html",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "config.json",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "configuration_deepseek.py",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "generation_config.json",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00001-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00002-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00003-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00004-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00005-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00006-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00007-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00008-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00009-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00010-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00011-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00012-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00013-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00014-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00015-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00016-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00017-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00018-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00019-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00020-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00021-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00022-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00023-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00024-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00025-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00026-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00027-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00028-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00029-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00030-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00031-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00032-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00033-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00034-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00035-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00036-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00037-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00038-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00039-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00040-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00041-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00042-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00043-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00044-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00045-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00046-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00047-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00048-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00049-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00050-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00051-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00052-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00053-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00054-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00055-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00056-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00057-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00058-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00059-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00060-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00061-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00062-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00063-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00064-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00065-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00066-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00067-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00068-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00069-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00070-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00071-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00072-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00073-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00074-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00075-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00076-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00077-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00078-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00079-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00080-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00081-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00082-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00083-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00084-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00085-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00086-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00087-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00088-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00089-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00090-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00091-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00092-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00093-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00094-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00095-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00096-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00097-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00098-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00099-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00100-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00101-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00102-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00103-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00104-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00105-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00106-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00107-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00108-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00109-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00110-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00111-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00112-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00113-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00114-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00115-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00116-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00117-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00118-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00119-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00120-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00121-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00122-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00123-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00124-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00125-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00126-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00127-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00128-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00129-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00130-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00131-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00132-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00133-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00134-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00135-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00136-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00137-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00138-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00139-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00140-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00141-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00142-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00143-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00144-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00145-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00146-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00147-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00148-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00149-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00150-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00151-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00152-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00153-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00154-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00155-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00156-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00157-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00158-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00159-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00160-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00161-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00162-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model-00163-of-000163.safetensors",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "model.safetensors.index.json",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "modeling_deepseek.py",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "tokenizer.json",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        },
+        {
+            "rfilename": "tokenizer_config.json",
+            "size": null,
+            "blob_id": null,
+            "lfs": null
+        }
+    ],
+    "spaces": null,
+    "safetensors": null,
+    "security_repo_status": null,
+    "xet_enabled": null
+}

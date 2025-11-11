@@ -17,8 +17,8 @@ members = [
     "src/libs/shared",
     "src/libs/huggingface-tasks",
     # "src/libs/tacc-tapis-client"
-    "src/sdks/agntcy-sdk"
-    # "src/devtools/hf-metadata-ingester",
+    "src/sdks/agntcy-sdk",
+    "src/bins/hf-model-etl",
 ]
 
 
