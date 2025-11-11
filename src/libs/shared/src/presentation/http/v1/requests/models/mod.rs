@@ -117,7 +117,7 @@ pub struct ModelMetadata {
     #[validate(required, length(min=1))]
     pub author: Option<String>,
     pub model_type: Option<String>,
-    pub framework: Option<String>,
+    pub frameworks: Option<Vec<String>>,
     pub image: Option<String>,
 
     /// Arbitrary labels
