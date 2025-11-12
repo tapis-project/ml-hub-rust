@@ -1,18 +1,65 @@
 {
     "client": "TapisClient",
+    "description": "A set of strategies for deploying models to HPC systems and Tapis Pods",
+    "strategies": [
+        {
+            "name": "Stampede3",
+            "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
+            "rule_sets": [
+                {
+                    "name": "IsNotNotDeepseek",
+                    "rules": [
+                        {"field": "author", "operator": "Neq", "value": "hf.deepseek"}
+                    ]
+                }
+            ],
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "Frontera",
+            "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "LoneStar6",
+            "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "Vista",
+            "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "BYOSystem",
+            "description": "Deploys a model to a user defined system",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "BYOSystem"
+        },
+        {
+            "name": "Pods",
+            "description": "Deploys a model as an HTTP server in Pods",
+            "use_rule_sets": ["TransformerCompatibleOnPods"],
+            "use_parameter_set": "Pods"
+        }
+    ],
     "rule_sets": [
         {
-            "name": "HPCDeployableModels",
+            "name": "TransformerCompatibleOnHPC",
             "rules": [
-                {"field": "frameworks", "operator": "contains", "value": "transformers"},
-                {"field": "task_types", "operator": "any_in", "value": ["ImageClassification", "TextToText", "ImageToText"]}
+                {"field": "frameworks", "operator": "Contains", "value": "transformers"},
+                {"field": "task_types", "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]}
             ]
         },
         {
-            "name": "PodsDeployableModels",
+            "name": "TransformerCompatibleOnPods",
             "rules": [
-                {"field": "frameworks", "operator": "contains", "value": "transformers"},
-                {"field": "task_types", "operator": "any_in", "value": ["ImageClassification", "TextToText", "ImageToText"]},
+                {"field": "frameworks", "operator": "Contains", "value": "transformers"},
+                {"field": "task_types", "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]},
                 {"field": "inference_hardware.memory_gb", "operator": "lte", "value": "32"}
             ]
         }
@@ -20,6 +67,13 @@
     "parameter_sets": [
         {
             "name": "Jobs",
+            "parameters": [
+                {"name": "allocation", "in": "request_body"},
+                {"name": "X-Tapis-Token", "in": "headers"}
+            ]
+        },
+        {
+            "name": "BYOSystem",
             "parameters": [
                 {"name": "allocation", "in": "request_body"},
                 {"name": "system_id", "in": "request_body"},
@@ -31,38 +85,6 @@
             "parameters": [
                 {"name": "X-Tapis-Token", "in": "headers"}
             ]
-        }
-    ],
-    "strategies": [
-        {
-            "name": "Frontera",
-            "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
-            "use_rule_sets": ["PodDeployableModels"],
-            "use_parameter_set": "Jobs"
-        },
-        {
-            "strategy": "LoneStar6",
-            "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
-            "use_rule_sets": ["PodDeployableModels"],
-            "use_parameter_set": "Jobs"
-        },
-        {
-            "strategy": "Vista",
-            "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
-            "use_rule_sets": ["PodDeployableModels"],
-            "use_parameter_set": "Jobs"
-        },
-        {
-            "strategy": "Stampede3",
-            "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
-            "use_rule_sets": ["PodDeployableModels"],
-            "use_parameter_set": "Jobs"
-        },
-        {
-            "strategy": "Pods",
-            "description": "Deploys a model as an HTTP server in Pods",
-            "use_rule_sets": ["PodDeployableModels"],
-            "use_parameter_set": "Pods"
         }
     ]
 }

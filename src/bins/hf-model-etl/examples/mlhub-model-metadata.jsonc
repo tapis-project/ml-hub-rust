@@ -19,7 +19,10 @@
         },
         "$internal": {
             "metadata_created_at": "",
-            "ingested": false
+            "ingested": false,
+            "deployment_strat": [
+                
+            ]
         }
     },
     "multi_modal": true, // can infer from task type // may not be necessary
