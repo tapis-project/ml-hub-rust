@@ -9,7 +9,7 @@
                 {
                     "name": "IsNotNotDeepseek",
                     "rules": [
-                        {"field": "author", "operator": "Neq", "value": "hf.deepseek"}
+                        {"field_path": "author", "operator": "Neq", "value": "hf.deepseek"}
                     ]
                 }
             ],
@@ -51,16 +51,16 @@
         {
             "name": "TransformerCompatibleOnHPC",
             "rules": [
-                {"field": "frameworks", "operator": "Contains", "value": "transformers"},
-                {"field": "task_types", "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]}
+                {"field_path": ["frameworks"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]}
             ]
         },
         {
             "name": "TransformerCompatibleOnPods",
             "rules": [
-                {"field": "frameworks", "operator": "Contains", "value": "transformers"},
-                {"field": "task_types", "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]},
-                {"field": "inference_hardware.memory_gb", "operator": "lte", "value": "32"}
+                {"field_path": ["frameworks"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]},
+                {"field_path": ["inference_hardware", "memory_gb"], "operator": "lte", "value": "32"}
             ]
         }
     ],

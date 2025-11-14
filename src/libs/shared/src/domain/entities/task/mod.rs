@@ -1,6 +1,7 @@
 pub mod huggingface_task_to_task;
 
 #[doc = "An enum of all task types available on Huggingface"]
+#[derive(Clone)]
 pub enum Task {
     #[doc = "Any-to-any models can understand two or more modalities and output two or more modalities."]
     AnyToAny,
@@ -92,5 +93,56 @@ pub enum Task {
     TextTo3d,
     #[doc = "Image-to-3D models take in image input and produce 3D output."]
     ImageTo3d,
+}
 
+impl From<Task> for String {
+    fn from(value: Task) -> Self {
+        match value {
+            Task::AnyToAny => "AnyToAny".into(),
+            Task::AutomaticSpeechRecognition => "AutomaticSpeechRecognition".into(),
+            Task::AudioToAudio => "AudioToAudio".into(),
+            Task::AudioClassification => "AudioClassification".into(),
+            Task::AudioTextToText => "AudioTextToText".into(),
+            Task::DepthEstimation => "DepthEstimation".into(),
+            Task::DocumentQuestionAnswering => "DocumentQuestionAnswering".into(),
+            Task::FeatureExtraction => "FeatureExtraction".into(),
+            Task::FillMask => "FillMask".into(),
+            Task::ImageFeatureExtraction => "ImageFeatureExtraction".into(),
+            Task::ImageTextToText => "ImageTextToText".into(),
+            Task::ImageToVideo => "ImageToVideo".into(),
+            Task::ImageSegmentation => "ImageSegmentation".into(),
+            Task::ImageClassification => "ImageClassification".into(),
+            Task::ImageTo3d => "ImageTo3d".into(),
+            Task::ImageToImage => "ImageToImage".into(),
+            Task::ImageToText => "ImageToText".into(),
+            Task::KeypointDetection => "KeypointDetection".into(),
+            Task::MaskGeneration => "MaskGeneration".into(),
+            Task::ObjectDetection => "ObjectDetection".into(),
+            Task::QuestionAnswering => "QuestionAnswering".into(),
+            Task::ReinforcementLearning => "ReinforcementLearning".into(),
+            Task::SentenceSimilarity => "SentenceSimilarity".into(),
+            Task::Summarization => "Summarization".into(),
+            Task::TableQuestionAnswering => "TableQuestionAnswering".into(),
+            Task::TextGeneration => "TextGeneration".into(),
+            Task::TextRanking => "TextRanking".into(),
+            Task::TabularClassification => "TabularClassification".into(),
+            Task::TextTo3d => "TextTo3d".into(),
+            Task::TextClassification => "TextClassification".into(),
+            Task::TextToImage => "TextToImage".into(),
+            Task::Translation => "Translation".into(),
+            Task::TabularRegression => "TabularRegression".into(),
+            Task::TextToSpeech => "TextToSpeech".into(),
+            Task::TextToVideo => "TextToVideo".into(),
+            Task::TokenClassification => "TokenClassification".into(),
+            Task::UnconditionalImageGeneration => "UnconditionalImageGeneration".into(),
+            Task::VideoClassification => "VideoClassification".into(),
+            Task::VideoTextToText => "VideoTextToText".into(),
+            Task::VideoToVideo => "VideoToVideo".into(),
+            Task::VisualQuestionAnswering => "VisualQuestionAnswering".into(),
+            Task::VisualDocumentRetrieval => "VisualDocumentRetrieval".into(),
+            Task::ZeroShotClassification => "ZeroShotClassification".into(),
+            Task::ZeroShotImageClassification => "ZeroShotClassification".into(),
+            Task::ZeroShotObjectDetection => "ZeroShotObjectDetection".into(),
+        }
+    }
 }

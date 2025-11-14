@@ -1,18 +1,8 @@
-#[derive(Clone)]
-pub enum Operator {
-    Contains,
-    AnyIn,
-    Lte,
-    Lt,
-    Gte,
-    Gt,
-    Eq,
-    Neq,
-}
+use crate::domain::entities::operator::Operator;
 
 #[derive(Clone)]
 pub struct Rule {
-    pub field: String,
+    pub field_path: Vec<String>,
     pub operator: Operator,
     pub value: String,
 }

@@ -9,6 +9,7 @@ pub enum StrategyError {
     DuplicateRuleSetName(String)
 }
 
+#[derive(Clone)]
 pub struct Strategy {
     pub name: String,
     pub description: Option<String>,
@@ -23,7 +24,6 @@ impl Strategy {
         rule_sets: Vec<RuleSet>,
         parameter_set: Option<ParameterSet>,
     ) -> Result<Self, StrategyError> {
-        
         let mut rule_set_names: Vec<String> = Vec::new();
         for rule_set in &rule_sets {
             let rule_set_name = rule_set.name.clone();
@@ -41,11 +41,23 @@ impl Strategy {
             parameter_set
         })
     }
+
+    pub fn rule_sets(&self) -> &Vec<RuleSet> {
+        &self.rule_sets
+    }
+
+    pub fn parameter_set(&self) -> &Option<ParameterSet> {
+        &self.parameter_set
+    }
 }
 
 pub struct ViableStrategy(Strategy);
 
 impl ViableStrategy {
+    pub fn new(strategy: Strategy) -> ViableStrategy {
+        ViableStrategy(strategy)
+    }
+    
     pub fn into_inner(self) -> Strategy {
         self.0
     }

@@ -8,3 +8,4 @@ pub mod model_metadata;
 pub mod inference;
 pub mod task;
 pub mod automated_deployment_strategy;
+pub mod operator;

@@ -111,6 +111,18 @@ impl ClientStrategySet {
         })
     }
 
+    pub fn rule_sets(&self) -> &Option<Vec<RuleSet>> {
+        &self.rule_sets
+    }
+
+    pub fn parameter_sets(&self) -> &Option<Vec<ParameterSet>> {
+        &self.parameter_sets
+    }
+
+    pub fn strategies(&self) -> &Vec<Strategy> {
+        &self.strategies
+    }
+
     fn resolve_rule_set_refs(rule_set_refs: Vec<String>, rule_sets: &Vec<RuleSet>) -> Result<Vec<RuleSet>, ClientStrategySetError>{
         let mut resolved_rule_sets: Vec<RuleSet> = Vec::new();
         for name in rule_set_refs {

@@ -1,32 +1,44 @@
-use serde_json::Value;
 use crate::domain::entities::task::Task;
+use serde_json::Value;
+use thiserror::Error;
 
-pub struct SystemRequirement {
-    pub name: String,
-    pub version: String
+#[derive(Error, Debug)]
+pub enum ModelMetadataError {
+    #[error("Invalid or disallowed field path: {0:?}")]
+    InvalidFieldPath(Vec<String>),
 }
 
+#[derive(Clone)]
+pub struct SystemRequirement {
+    pub name: String,
+    pub version: String,
+}
+
+#[derive(Clone)]
 pub struct Accelerator {
     pub accelerator_type: String,
     pub memory_gb: Option<i32>,
     pub cores: Option<i32>,
     /// Firmware and software
-    pub system_requirements: Vec<SystemRequirement>
+    pub system_requirements: Vec<SystemRequirement>,
 }
 
+#[derive(Clone)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
     pub disk_gb: Option<i32>,
     pub accelerators: Option<Vec<Accelerator>>,
-    pub architectures: Option<Vec<String>>
+    pub architectures: Option<Vec<String>>,
 }
 
+#[derive(Clone)]
 pub struct ModelIO {
     pub data_type: Option<String>,
-    pub shape: Option<Vec<i32>>
+    pub shape: Option<Vec<i32>>,
 }
 
+#[derive(Clone)]
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
@@ -35,7 +47,6 @@ pub struct ModelMetadata {
     pub frameworks: Option<Vec<String>>,
     pub image: Option<String>,
     // TODO pub artifact_uri: Option<String>
-
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
     pub annotation: Option<Value>,
@@ -81,4 +92,38 @@ pub struct ModelMetadata {
     pub regulatory: Option<Vec<String>>,
     pub license: Option<String>,
     pub bias_evaluation_score: Option<i8>,
+}
+
+pub enum FieldValue {
+    Name(Option<String>),
+    Author(Option<String>),
+    Frameworks(Option<Vec<String>>),
+    Keywords(Option<Vec<String>>),
+    TaskTypes(Option<Vec<Task>>),
+    InferenceHardwareMemory(Option<i32>),
+}
+
+impl ModelMetadata {
+    /// Fetches the value for a select number of field paths on the metdata struct.
+    pub fn get_field_value_at_field_path(
+        &self,
+        field_path: &Vec<String>,
+    ) -> Result<FieldValue, ModelMetadataError> {
+        let fp: Vec<&str> = field_path.iter().map(|v| v.as_str()).collect();
+        match fp.as_slice() {
+            ["name"] => Ok(FieldValue::Name(self.name.clone())),
+            ["author"] => Ok(FieldValue::Author(self.author.clone())),
+            ["frameworks"] => Ok(FieldValue::Frameworks(self.frameworks.clone())),
+            ["keywords"] => Ok(FieldValue::Keywords(self.keywords.clone())),
+            ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
+            ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
+                self.inference_hardware.clone().and_then(|hr| hr.memory_gb),
+            )),
+            other => {
+                return Err(ModelMetadataError::InvalidFieldPath(
+                    other.to_vec().iter().map(|s| s.to_string()).collect(),
+                ))
+            }
+        }
+    }
 }
