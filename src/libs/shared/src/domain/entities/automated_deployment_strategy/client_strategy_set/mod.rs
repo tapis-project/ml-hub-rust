@@ -150,3 +150,7 @@ impl ClientStrategySet {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "client_strategy_set.test.rs"]
+mod client_strategy_set_test;

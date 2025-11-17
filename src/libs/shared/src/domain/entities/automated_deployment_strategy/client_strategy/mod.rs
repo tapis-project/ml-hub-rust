@@ -30,6 +30,18 @@ impl ClientStrategy {
         if rule_sets.is_none() && use_rule_sets.is_none() {
             return Err(ClientStrategyError::MissingRuleSets("Must provide 1 or more rule set or 1 or more rule set reference.".into()))
         }
+
+        if let Some(rs) = rule_sets.as_ref() {
+            if rs.is_empty() {
+                return Err(ClientStrategyError::MissingRuleSets("Must provide at least one rule set in the rule_sets array".into()))
+            }
+        }
+
+        if let Some(rsr) = use_rule_sets.as_ref() {
+            if rsr.is_empty() {
+                return Err(ClientStrategyError::MissingRuleSets("Must provide at least one rule set reference in the use_rule_sets array".into()))
+            }
+        }
         
         Ok(Self {
             name,
@@ -57,3 +69,7 @@ impl ClientStrategy {
         &self.use_parameter_set
     }
 }
+
+#[cfg(test)]
+#[path = "client_strategy.test.rs"]
+mod client_strategy_test;
