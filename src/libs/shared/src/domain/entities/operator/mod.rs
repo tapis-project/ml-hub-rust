@@ -23,7 +23,7 @@ pub enum OperandError {
     InvalidRightOperand(String, String),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Operator {
     Eq,
     Neq,
@@ -31,6 +31,7 @@ pub enum Operator {
     Lte,
     Gt,
     Lt,
+    In,
     Contains,
     NotIn,
     NoneIn,
@@ -75,7 +76,7 @@ impl Operator {
                     .ok_or_else(|| OperandError::InvalidLeftOperand("number".into(), get_type(&left)))?
                     .clone();
                 let r = right.as_number()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&left)))?
+                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&right)))?
                     .clone();
 
                 Ok(l.as_f64() > r.as_f64())
@@ -85,10 +86,17 @@ impl Operator {
                     .ok_or_else(|| OperandError::InvalidLeftOperand("number".into(), get_type(&left)))?
                     .clone();
                 let r = right.as_number()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&left)))?
+                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&right)))?
                     .clone();
 
                 Ok(l.as_f64() < r.as_f64())
+            },
+            Operator::In => {
+                let r = right.as_array()
+                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
+                    .clone();
+
+                Ok(r.contains(&left))
             },
             Operator::Contains => {
                 let l = left.as_array()
@@ -98,7 +106,7 @@ impl Operator {
             },
             Operator::NotIn => {
                 let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&left)))?
+                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
                     .clone();
 
                 Ok(!r.contains(&left))
@@ -108,7 +116,7 @@ impl Operator {
                     .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
                     .clone();
                 let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&left)))?
+                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
                     .clone();
                 for item in l {
                     if r.contains(&item) {
@@ -123,7 +131,7 @@ impl Operator {
                     .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
                     .clone();
                 let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&left)))?
+                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
                     .clone();
 
                 for item in l {
@@ -139,7 +147,7 @@ impl Operator {
                     .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
                     .clone();
                 let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&left)))?
+                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
                     .clone();
 
                 for item in l {

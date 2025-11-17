@@ -41,7 +41,7 @@ pub fn resolve_viable_strategies(model_metadata: &ModelMetadata, strategies: &Ve
     Ok(viable_strategies)
 }
 
-fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Result<bool, StrategyEvaluationError> {
+pub(super) fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Result<bool, StrategyEvaluationError> {
     let field_value = model_metadata.get_field_value_at_field_path(&rule.field_path)?;
     let value: Value = match field_value {
         FieldValue::Name(name) => {
@@ -95,6 +95,7 @@ fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Result<bool, St
         Operator::Gt => Ok(Operator::Gt.evaluate(&value, &rule.value)?),
         Operator::Lte => Ok(Operator::Lte.evaluate(&value, &rule.value)?),
         Operator::Lt => Ok(Operator::Lt.evaluate(&value, &rule.value)?),
+        Operator::In => Ok(Operator::In.evaluate(&value, &rule.value)?),
         Operator::Contains => Ok(Operator::Contains.evaluate(&value, &rule.value)?),
         Operator::NotIn => Ok(Operator::NotIn.evaluate(&value, &rule.value)?),
         Operator::AllIn => Ok(Operator::AllIn.evaluate(&value, &rule.value)?),
@@ -102,3 +103,7 @@ fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Result<bool, St
         Operator::NoneIn => Ok(Operator::NoneIn.evaluate(&value, &rule.value)?),
     }
 }
+
+#[cfg(test)]
+#[path = "automated_deployment_strategy.test.rs"]
+mod automated_deployment_strategy_test;

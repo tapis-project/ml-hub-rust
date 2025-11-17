@@ -1,3 +1,6 @@
+#[cfg(test)]
+pub mod fixtures;
+
 use crate::domain::entities::task::Task;
 use serde_json::Value;
 use thiserror::Error;
