@@ -39,3 +39,4 @@ utoipa = { version = "5.4.0" }
 utoipa-swagger-ui = "9.0.2"
 validator = { version = "0.20.0", features = ["derive"] }
 partially = { version = "0.2.1", features = ["derive"] }
+heck = "0.5.0"

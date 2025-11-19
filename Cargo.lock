@@ -1303,6 +1303,14 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hf-model-etl"
 version = "0.1.0"
+dependencies = [
+ "mongodb",
+ "serde",
+ "serde_json",
+ "shared",
+ "thiserror 2.0.17",
+ "tokio",
+]
 
 [[package]]
 name = "hmac"
@@ -2878,6 +2886,7 @@ dependencies = [
  "chrono",
  "futures",
  "futures-util",
+ "heck 0.5.0",
  "huggingface-tasks",
  "log",
  "mongodb",

@@ -141,7 +141,7 @@ impl From<Task> for String {
             Task::VisualQuestionAnswering => "VisualQuestionAnswering".into(),
             Task::VisualDocumentRetrieval => "VisualDocumentRetrieval".into(),
             Task::ZeroShotClassification => "ZeroShotClassification".into(),
-            Task::ZeroShotImageClassification => "ZeroShotClassification".into(),
+            Task::ZeroShotImageClassification => "ZeroShotImageClassification".into(),
             Task::ZeroShotObjectDetection => "ZeroShotObjectDetection".into(),
         }
     }

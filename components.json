@@ -534,7 +534,7 @@
     },
     {
       "name": "hf-model-etl",
-      "rootDir": "src/devtools/hf-model-etl",
+      "rootDir": "src/bins/hf-model-etl",
       "labels": ["bin"],
       "lifecycle": "experimental",
       "commands": {
@@ -543,6 +543,7 @@
         "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
         "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
         "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "init": "./{{ self.rootDir }}/initialize"
       }
     }
