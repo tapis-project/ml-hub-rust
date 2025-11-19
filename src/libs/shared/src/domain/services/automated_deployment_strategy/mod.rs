@@ -56,7 +56,7 @@ pub(super) fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Resu
                 None => Value::Null
             }
         },
-        FieldValue::libraries(libraries) => {
+        FieldValue::Libraries(libraries) => {
             match libraries {
                 Some(fws) => {
                     fws.iter().map(|fw| Value::String(fw.clone())).collect()

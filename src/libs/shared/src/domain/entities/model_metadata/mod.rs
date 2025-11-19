@@ -100,7 +100,7 @@ pub struct ModelMetadata {
 pub enum FieldValue {
     Name(Option<String>),
     Author(Option<String>),
-    libraries(Option<Vec<String>>),
+    Libraries(Option<Vec<String>>),
     Keywords(Option<Vec<String>>),
     TaskTypes(Option<Vec<Task>>),
     InferenceHardwareMemory(Option<i32>),
@@ -116,7 +116,7 @@ impl ModelMetadata {
         match fp.as_slice() {
             ["name"] => Ok(FieldValue::Name(self.name.clone())),
             ["author"] => Ok(FieldValue::Author(self.author.clone())),
-            ["libraries"] => Ok(FieldValue::libraries(self.libraries.clone())),
+            ["libraries"] => Ok(FieldValue::Libraries(self.libraries.clone())),
             ["keywords"] => Ok(FieldValue::Keywords(self.keywords.clone())),
             ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
             ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
