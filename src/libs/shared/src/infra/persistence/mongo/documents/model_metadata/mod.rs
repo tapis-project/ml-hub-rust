@@ -50,7 +50,7 @@ pub struct ModelMetadata {
     pub name: Option<String>,
     pub author: Option<String>,
     pub model_type: Option<String>,
-    pub frameworks: Option<Vec<String>>,
+    pub libraries: Option<Vec<String>>,
     pub image: Option<String>,
 
     /// Arbitrary labels

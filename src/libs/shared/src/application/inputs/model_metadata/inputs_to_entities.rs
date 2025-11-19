@@ -94,7 +94,7 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
         Ok(Self {
             name: value.name,
             author: value.author,
-            frameworks: value.frameworks,
+            libraries: value.libraries,
             model_type: value.model_type,
             image: value.image,
             keywords: value.keywords,

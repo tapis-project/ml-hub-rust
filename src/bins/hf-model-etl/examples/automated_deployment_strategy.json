@@ -55,14 +55,14 @@
         {
             "name": "TransformerCompatibleOnHPC",
             "rules": [
-                {"field_path": ["frameworks"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
                 {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]}
             ]
         },
         {
             "name": "TransformerCompatibleOnPods",
             "rules": [
-                {"field_path": ["frameworks"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
                 {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextToText", "ImageToText"]},
                 {"field_path": ["inference_hardware", "memory_gb"], "operator": "lte", "value": "32"}
             ]

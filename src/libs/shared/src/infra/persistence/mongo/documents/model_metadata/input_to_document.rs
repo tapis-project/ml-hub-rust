@@ -94,7 +94,7 @@ impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
             artifact_id: None,
             name: value.name.clone(),
             author: value.author.clone(),
-            frameworks: value.frameworks.clone(),
+            libraries: value.libraries.clone(),
             model_type: value.model_type.clone(),
             image: value.image.clone(),
             keywords: value.keywords.clone(),

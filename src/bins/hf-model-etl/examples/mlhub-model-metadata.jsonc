@@ -2,7 +2,7 @@
     "name": "hf.author.original-model-name", // "hf.<model.modelId>"
     "author": "hf.author", // "hf.<model.author>"
     "model_type": "", // no mapping // change to array
-    "frameworks": "", // transformers | litserve | ollama | llamacpp // change to array
+    "libraries": "", // transformers | litserve | ollama | llamacpp // change to array
     "image": "", // not used
     "keywords": null, // model.tags
     "annotations": {
@@ -21,7 +21,7 @@
             "metadata_created_at": "",
             "ingested": false,
             "deployment_strat": [
-                
+
             ]
         }
     },

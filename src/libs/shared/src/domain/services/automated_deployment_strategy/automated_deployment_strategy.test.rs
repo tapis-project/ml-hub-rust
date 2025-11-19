@@ -46,17 +46,17 @@ mod automated_deployment_strategy_test {
 
     #[test]
     fn test_contains() {
-        let frameworks_contains_value = Rule {
-            field_path: vec!["frameworks".into()],
+        let libraries_contains_value = Rule {
+            field_path: vec!["libraries".into()],
             operator: Operator::Contains,
             value: Value::String("transformers".into()),
         };
 
         let model_metadata = full_model_metadata();
 
-        assert!(model_metadata.frameworks.is_some());
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("transformers")));
-        assert!(evaluate_rule(&model_metadata, &frameworks_contains_value).unwrap());
+        assert!(model_metadata.libraries.is_some());
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("transformers")));
+        assert!(evaluate_rule(&model_metadata, &libraries_contains_value).unwrap());
     }
 
     #[test]
@@ -121,52 +121,52 @@ mod automated_deployment_strategy_test {
 
     #[test]
     fn test_all_in() {
-        let frameworks_all_in = Rule {
-            field_path: vec!["frameworks".into()],
+        let libraries_all_in = Rule {
+            field_path: vec!["libraries".into()],
             operator: Operator::AllIn,
             value: Value::Array(vec!["transformers".into(), "diffusers".into()]),
         };
 
         let model_metadata = full_model_metadata();
-        assert!(model_metadata.frameworks.is_some());
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("transformers")));
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("diffusers")));
-        assert!(model_metadata.frameworks.clone().unwrap().len() == 2);
+        assert!(model_metadata.libraries.is_some());
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("transformers")));
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("diffusers")));
+        assert!(model_metadata.libraries.clone().unwrap().len() == 2);
 
-        assert!(evaluate_rule(&model_metadata, &frameworks_all_in).unwrap());
+        assert!(evaluate_rule(&model_metadata, &libraries_all_in).unwrap());
     }
 
     #[test]
     fn test_any_in() {
-        let frameworks_all_in = Rule {
-            field_path: vec!["frameworks".into()],
+        let libraries_all_in = Rule {
+            field_path: vec!["libraries".into()],
             operator: Operator::AnyIn,
             value: Value::Array(vec!["transformers".into()]),
         };
 
         let model_metadata = full_model_metadata();
-        assert!(model_metadata.frameworks.is_some());
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("transformers")));
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("diffusers")));
-        assert!(model_metadata.frameworks.clone().unwrap().len() == 2);
+        assert!(model_metadata.libraries.is_some());
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("transformers")));
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("diffusers")));
+        assert!(model_metadata.libraries.clone().unwrap().len() == 2);
 
-        assert!(evaluate_rule(&model_metadata, &frameworks_all_in).unwrap());
+        assert!(evaluate_rule(&model_metadata, &libraries_all_in).unwrap());
     }
 
     #[test]
     fn test_none_in() {
-        let frameworks_all_in = Rule {
-            field_path: vec!["frameworks".into()],
+        let libraries_all_in = Rule {
+            field_path: vec!["libraries".into()],
             operator: Operator::NoneIn,
             value: Value::Array(vec!["foo".into(), "bar".into()]),
         };
 
         let model_metadata = full_model_metadata();
-        assert!(model_metadata.frameworks.is_some());
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("transformers")));
-        assert!(model_metadata.frameworks.clone().unwrap().contains(&String::from("diffusers")));
-        assert!(model_metadata.frameworks.clone().unwrap().len() == 2);
+        assert!(model_metadata.libraries.is_some());
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("transformers")));
+        assert!(model_metadata.libraries.clone().unwrap().contains(&String::from("diffusers")));
+        assert!(model_metadata.libraries.clone().unwrap().len() == 2);
 
-        assert!(evaluate_rule(&model_metadata, &frameworks_all_in).unwrap());
+        assert!(evaluate_rule(&model_metadata, &libraries_all_in).unwrap());
     }
 }

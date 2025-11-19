@@ -19,7 +19,7 @@ pub fn full_model_metadata() -> ModelMetadata {
             }]
         ),
         model_type: Some("cnn".into()),
-        frameworks: Some(vec!["transformers".into(), "diffusers".into()]),
+        libraries: Some(vec!["transformers".into(), "diffusers".into()]),
         image: Some("dockerhub://my/model".into()),
         keywords: Some(vec!["text-generation".into(), "transformers".into()]),
         multi_modal: Some(true),

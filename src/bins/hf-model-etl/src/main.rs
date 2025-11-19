@@ -114,11 +114,11 @@ async fn main() {
                         };
 
                         // Determine which python libraries this model can be used with
-                        let mut frameworks: Vec<String> = Vec::new();
+                        let mut libraries: Vec<String> = Vec::new();
                         let known_libs: &[String] = &["transformers".into(), "diffusors".into(), "tensorflow".into(), "pytorch".into()];
                         for lib in known_libs {
-                            if keywords.contains(lib) && !frameworks.contains(lib) {
-                                frameworks.push(lib.clone())
+                            if keywords.contains(lib) && !libraries.contains(lib) {
+                                libraries.push(lib.clone())
                             }
                         }
 
@@ -139,7 +139,7 @@ async fn main() {
                                 model_inputs: None,
                                 model_outputs: None,
                                 model_type: None,
-                                frameworks: Some(frameworks),
+                                libraries: Some(libraries),
                                 image: None,
                                 keywords: Some(keywords),
                                 multi_modal: None,
