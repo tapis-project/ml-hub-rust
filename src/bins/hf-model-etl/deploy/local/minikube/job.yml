@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mlhub-hf-model-etl
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: mlhub-hf-model-etl
+    spec:
+      restartPolicy: Never
+      nodeName: minikube-m02 # Ensure this runs on the node where the data has been loaded by the transform-load script
+      containers:
+        - env:
+            - name: RUST_LOG
+              value: debug
+            - name: ARTIFACTS_DB_HOST
+              value: mlhub-artifact-db-service
+            - name: ARTIFACTS_DB_PORT
+              value: "27017"
+            - name: ARTIFACTS_DB_NAME
+              value: mlhub
+            - name: ARTIFACTS_DB_PASSWORD
+              value: password
+            - name: ARTIFACTS_DB_USERNAME
+              value: mlhub
+            - name: MAX_PROCESSABLE_ENTRIES
+              value: "10000"
+            - name: INBOX
+              value: /srv/hf-model-etl/data/inbox
+          image: mlhub/hf-model-etl-transform-load:local
+          imagePullPolicy: Never
+          name: hf-model-etl
+          resources: {}
+          tty: true
+          volumeMounts:
+            - name: inbox
+              mountPath: /srv/hf-model-etl/data/inbox
+      volumes:
+        - name: inbox
+          hostPath:
+            path: /srv/hf-model-etl/data/inbox
+            type: DirectoryOrCreate

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+here=$(dirname "${BASH_SOURCE[0]}")
+
+docker build -f $here/Dockerfile.rust -t mlhub/hf-model-etl-transform-load:latest $here

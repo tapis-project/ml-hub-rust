@@ -1,12 +1,12 @@
 {
-    "name": "hf.author.original-model-name", // "hf.<model.modelId>"
+    "name": "hf.author.original-model-name", // "<model.modelId>"
     "author": "hf.author", // "hf.<model.author>"
     "model_type": "", // no mapping // change to array
     "libraries": "", // transformers | litserve | ollama | llamacpp // change to array
     "image": "", // not used
     "keywords": null, // model.tags
     "annotations": {
-        "$upstream": {
+        "_canonical": {
             "platform": "huggingface",
             "author": "", // model.author
             "name": "", // model.modelId.split("/")[1]
@@ -17,7 +17,7 @@
             "trendingScore": "", // models.trendingScore
             "visibility": "" // models.private ? "private" : "public"
         },
-        "$internal": {
+        "_internal": {
             "metadata_created_at": "",
             "ingested": false,
             "deployment_strat": [

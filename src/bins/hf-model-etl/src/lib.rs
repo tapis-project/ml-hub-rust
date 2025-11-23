@@ -61,7 +61,7 @@ impl HFModelMetadata {
             .map(|p| String::from(p))
             .collect();
 
-        match parts.get(0) {
+        match parts.get(1) {
             Some(p) => Ok(String::from(p)),
             None => Err(HFModelMetadataError::MalformedModelId(format!("Expected there to be a '/' in the model's id but none found. Found '{}'", &self.id)))
         }

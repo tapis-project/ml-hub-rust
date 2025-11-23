@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -e
+
+rootDir=$1
+localDataPath=$2
+hostDataPath=/srv/hf-model-etl/data
+hostInboxPath=$hostDataPath/inbox
+zippedInboxFilename="inbox.tar.gz"
+hostTarget=$hostDataPath/$zippedInboxFilename
+k8sNode=minikube-m02
+
+echo $hostDataPath
+echo $hostInboxPath
+echo $hostTarget
+
+# # Prepare the host file system
+# echo "Preparing K8s host file system"
+# minikube ssh -n $k8sNode "sudo mkdir -p $hostInboxPath && sudo chown root:root -R $hostDataPath && sudo chmod 755 -R $hostDataPath"
+
+# # Remove xattr files if this script runs on MacOS
+# if [[ "$(uname)" == "Darwin" ]]; then
+#     echo "MacOS detected. Removing xattr files."
+#     xattr -c -r $localDataPath
+# fi
+
+# # Tar the local inbox files
+# echo "Zipping local inbox files"
+# tar czf $localDataPath/../$zippedInboxFilename -C $localDataPath .
+
+# # Copy the zipped inbox files onto the k8s host
+# echo "Moving the zipped inbox files onto the K8s host"
+# minikube cp $rootDir/data/$zippedInboxFilename $k8sNode:$hostTarget
+
+# # Unzip the zipped inbox files on the k8s host
+# echo "Unzipping the zipped inbox files on the host"
+# minikube ssh -n $k8sNode "sudo tar xzf $hostTarget -C $hostInboxPath"
+
+# # Delete the tar.gz file
+# echo "Deleting $zippedInboxFilename"
+# minikube ssh -n $k8sNode "sudo rm $hostTarget"
+
+# Start the Job
+kubectl apply -f "$rootDir/deploy/local/minikube/job.yml"

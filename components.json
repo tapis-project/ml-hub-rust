@@ -23,7 +23,8 @@
     "artifact-ingester-deployment": "mlhub-artifact-ingester-deployment",
     "artifact-ingester-image": "tapis/mlhub-artifact-ingester",
     "artifact-publisher-deployment": "mlhub-artifact-publisher-deployment",
-    "artifact-publisher-image": "tapis/mlhub-artifact-publisher"
+    "artifact-publisher-image": "tapis/mlhub-artifact-publisher",
+    "hf-model-etl-transform-load-image": "mlhub/hf-model-etl-transform-load"
   },
   "components": [
     {
@@ -540,11 +541,11 @@
       "commands": {
         "initialize": "",
         "code": "code src/bin/{{ self.name }}",
-        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
-        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
-        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "buildl-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust -t {{ hf-model-etl-transform-load-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ hf-model-etl-transform-load-image }}:{{ local }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "init": "./{{ self.rootDir }}/initialize"
+        "init": "./{{ self.rootDir }}/initialize",
+        "extract": "echo Unimplemented",
+        "transform-load": "./{{ self.rootDir }}/transform-load {{ self.rootDir }} $(readlink -f {{ self.rootDir }}/data/inbox)"
       }
     }
   ]

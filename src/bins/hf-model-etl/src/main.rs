@@ -25,11 +25,16 @@ async fn main() {
         })
         .expect("Datbase initialization error");
 
+    let max_processable_entries = env::var("MAX_PROCESSABLE_ENTRIES").expect("MAX_PROCESSABLE_ENTRIES env var not set")
+        .parse::<i128>().expect("Failed to parse MAX_PROCESSABLE_ENTRIES into an i128");
+
     let artifact_service = model_metadata_service_factory(&db)
         .await
         .expect("failed to initialize artifact service");
 
-    let inbox = Path::new("../inbox");
+    let inbox_path = env::var("INBOX").expect("INBOX env var not set");
+
+    let inbox = Path::new(&inbox_path);
     if !inbox.is_dir() {
         panic!("Expected inbox path to be a directory")
     }
@@ -40,24 +45,33 @@ async fn main() {
         Ok(entries) => {
             for maybe_entry in entries {
                 match maybe_entry {
-                    Ok(entry) => file_paths.push(entry.path()),
+                    Ok(entry) => {
+                        println!("{:#?}", &entry);
+                        println!("entry path: {:#?}", entry.path());
+                        file_paths.push(entry.path())
+                    },
                     Err(err) => panic!("Error with dir entry: {}", err.to_string())
                 }
             }
         },
-        Err(err) => panic!("{}", err.to_string())
+        Err(err) => panic!("Error reading dir: {}", err.to_string())
     };
 
+    let mut entries_processed = 0;
     for path in file_paths {
         let file = match File::open(&path) {
             Ok(f) => f,
             Err(err) => {
-                println!("Error opening file at path '{}': {}", &path.to_string_lossy().to_string().as_str(), err.to_string());
+                eprintln!("Error opening file at path '{}': {}", &path.to_string_lossy().to_string().as_str(), err.to_string());
                 continue
             }
         };
         let reader = BufReader::new(file);
         for maybe_line in reader.lines() {
+            if entries_processed > max_processable_entries {
+                return
+            }
+            entries_processed += 1;
             match maybe_line {
                 Ok(line) => {
                     if let Ok(hf_model) = serde_json::from_str::<HFModelMetadata>(line.as_str()) {
@@ -66,6 +80,7 @@ async fn main() {
                         let mut canonical = Map::new();
                         let mut locator = Map::new();
                         locator.insert("url".into(), Value::String(format!("https://huggingface.co/{}", &hf_model.id)));
+                        canonical.insert("platform".into(), Value::String("huggingface".into()));
                         canonical.insert("locator".into(), Value::Object(locator));
                         canonical.insert("model_id".into(), Value::String(hf_model.id.clone()));
                         canonical.insert("author".into(), Value::String(hf_model.author.clone()));
@@ -83,7 +98,7 @@ async fn main() {
                         // if none are found
                         let mut derived_task_types: Vec<Task> = Vec::new();
                         for keyword in keywords.clone() {
-                            match Task::try_from(keyword.as_str()) {
+                            match Task::try_from(Task::normalize_string(keyword).as_str()) {
                                 Ok(t) => derived_task_types.push(t),
                                 Err(_) => continue // Ignore as they keyword cannot be interpreted as a task type
                             }
@@ -93,6 +108,8 @@ async fn main() {
                         // From these compund tags we can derive properties we are interested in like
                         // license and task type
                         let compound_tags = hf_model.parse_compound_tags();
+
+                        // Derive the license
                         let license = compound_tags.iter()
                             .filter(|ct| ct.name == "license")
                             .collect::<Vec<&CompoundTag>>()
@@ -108,14 +125,14 @@ async fn main() {
                                 }
                             },
                             Err(err) => {
-                                println!("Failed to convert pipeline tag to Task for model {}: {}", &hf_model.id, err.to_string());
+                                eprintln!("Failed to convert pipeline tag to Task for model {}: {}", &hf_model.id, err.to_string());
                                 continue;
                             }
                         };
 
                         // Determine which python libraries this model can be used with
                         let mut libraries: Vec<String> = Vec::new();
-                        let known_libs: &[String] = &["transformers".into(), "diffusors".into(), "tensorflow".into(), "pytorch".into()];
+                        let known_libs: &[String] = &["transformers".into(), "diffusers".into(), "tensorflow".into(), "pytorch".into()];
                         for lib in known_libs {
                             if keywords.contains(lib) && !libraries.contains(lib) {
                                 libraries.push(lib.clone())
@@ -126,7 +143,7 @@ async fn main() {
                         let name = match hf_model.get_model_name() {
                             Ok(n) => n,
                             Err(err) => {
-                                println!("{}", err.to_string());
+                                eprintln!("{}", err.to_string());
                                 continue
                             }
                         };
@@ -135,7 +152,7 @@ async fn main() {
                             metadata: ModelMetadata {
                                 name: Some(name),
                                 annotation: Some(Value::Object(annotations)),
-                                author: Some(format!("hf.{}", hf_model.author)),
+                                author: Some(format!("_{}", hf_model.author)),
                                 model_inputs: None,
                                 model_outputs: None,
                                 model_type: None,
@@ -143,7 +160,7 @@ async fn main() {
                                 image: None,
                                 keywords: Some(keywords),
                                 multi_modal: None,
-                                task_types: Some(vec![Task::ImageClassification]),
+                                task_types: Some(task_types),
                                 inference_distributed: None,
                                 inference_hardware: None,
                                 inference_max_compute_utilization_percentage: None,
@@ -153,7 +170,7 @@ async fn main() {
                                 inference_min_throughput: None,
                                 inference_precision: None,
                                 inference_software_dependencies: None,
-                                training_distributed: Some(true),
+                                training_distributed: None,
                                 training_hardware: None,
                                 training_max_energy_consumption_watts: None,
                                 training_precision: None,
@@ -173,13 +190,13 @@ async fn main() {
                         }).await {
                             Ok(_) => (),
                             Err(err) => {
-                                println!("Error saving metadata to the database: {}", err.to_string())
+                                eprintln!("Error saving metadata to the database: {}", err.to_string())
                             }
                         }
                     };
                 },
                 Err(err) => {
-                    println!("Error reading line: {}", err.to_string());
+                    eprintln!("Error reading line: {}", err.to_string());
                     continue
                 }
             }
