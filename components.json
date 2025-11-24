@@ -10,6 +10,7 @@
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/models-api",
+    "models-migrator-image": "tapis/models-migrator",
     "datasets-deployment": "mlhub-datasets-api-deployment",
     "datasets-image": "tapis/datasets-api",
     "deployments-deployment": "mlhub-deployments-api-deployment",
@@ -61,6 +62,24 @@
         "traefik",
         "nfs"
       ]
+    },
+    {
+      "name": "models-migrator",
+      "description": "This is a standalone binary for managing the migrations of the models api. This has no seperate deployment. It must be deployed as an init container on the models api deployment",
+      "rootDir": "src/bins/models-migrator",
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+      }
     },
     {
       "name": "datasets",

@@ -125,7 +125,7 @@ async fn main() {
                                 }
                             },
                             Err(err) => {
-                                eprintln!("Failed to convert pipeline tag to Task for model {}: {}", &hf_model.id, err.to_string());
+                                eprintln!("Failed to convert pipeline tag '{}' to Task for model {}: {}", &hf_model.pipeline_tag, &hf_model.id, err.to_string());
                                 continue;
                             }
                         };

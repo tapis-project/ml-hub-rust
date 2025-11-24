@@ -25,7 +25,7 @@ spec:
             - name: ARTIFACTS_DB_USERNAME
               value: mlhub
             - name: MAX_PROCESSABLE_ENTRIES
-              value: "10000"
+              value: "1000000"
             - name: INBOX
               value: /srv/hf-model-etl/data/inbox
           image: mlhub/hf-model-etl-transform-load:local

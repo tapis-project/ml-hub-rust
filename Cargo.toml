@@ -4,6 +4,7 @@ members = [
     # "src/apis/datasets",
     # "src/apis/deployments",
     "src/apis/models",
+    "src/bins/models-migrator",
     "src/bins/artifact-ingester",
     "src/bins/artifact-publisher",
     # "src/bins/cli",
@@ -20,6 +21,3 @@ members = [
     "src/sdks/agntcy-sdk",
     "src/bins/hf-model-etl",
 ]
-
-
-
