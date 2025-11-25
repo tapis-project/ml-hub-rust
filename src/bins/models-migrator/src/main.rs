@@ -14,8 +14,6 @@ async fn main() -> anyhow::Result<()> {
     })
         .await?;
 
-    
-
     tfiala_mongodb_migrator::migrator::default::DefaultMigrator::new()
         .with_conn(db.clone())
         .with_migrations_vec(get_migrations())

@@ -6,15 +6,15 @@ use shared::infra::persistence::mongo::documents::model_metadata::ModelMetadata;
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
     vec![
-        Box::new(CreateModelAuthorNameIndex),
-        Box::new(CreateTaskTypesIndex),
+        Box::new(CreateModelAuthorNameIndex {}),
+        Box::new(CreateTaskTypesIndex {}),
     ]
 }
 
 pub struct CreateModelAuthorNameIndex;
 
 #[async_trait]
-impl Migration for CreateModelAuthorNameIndex {
+impl Migration for CreateModelAuthorNameIndex {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
         db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
@@ -45,6 +45,7 @@ pub struct CreateTaskTypesIndex;
 #[async_trait]
 impl Migration for CreateTaskTypesIndex {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
+        println!("INSIDE");
         let db: &Database = &env.db.unwrap();
         db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
             .create_index(
