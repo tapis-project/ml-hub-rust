@@ -1,5 +1,14 @@
 # MLHub Developer Guide
 
+## Development Environement Setup
+
+You may use whichever IDE you please! But it is recommended to use VSCode. This project
+makes use of features from the latest stable version of Rust (**1.91.1** as of **Nov 25, 2025**).
+The VSCode `rust-analyzer` extension may be on an older version that is incompatible
+with this version of rust.
+
+First, ensure that the version of `rustc` on your machine is **1.91.1** or higher. Next, install `rust-analyzer` using the `rustup` toolchain. Check that the version is also **1.91.1** or higher with `rust-analyzer --version`. Then in your VSCode settings, change the path of `rust-analyzer` to the path of the rust-analyzer binary (`which rust-analyzer`).
+
 ## Project Structure & Components 📁
 
 This project is structured as a monorepo. Each component of this project is grouped into one of the following categories.

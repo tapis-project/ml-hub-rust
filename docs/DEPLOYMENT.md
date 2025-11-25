@@ -14,7 +14,7 @@ After installation, run `rustup default stable`. This command sets the default t
 Follow the installation guide for your local machine on the official docker website: 
 https://docs.docker.com/desktop/setup/install/mac-install/
 
-> **Note** Must use version `24.0.2` or later
+> Must use version `24.0.2` or later
 
 ## 0.3. Install Minkube 📦📦
 
@@ -26,11 +26,15 @@ https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fbinary
 You will need to start Minikube with at least 2 nodes. Run the following command:
 `minikube start --nodes 2`
 
+**Note** If you are going to be running the Huggingface Model ETL Pipeline to populate the
+database with models, you will need more disk space than is allocated by default to the Minikube
+VM. When running `minikube start`, use the following flag: `--disk-space='50g'`.
+
 ## 2. Start your Engines! 🏎️
 
 Now that you have all the necessary tools installed, we can start up the MLHub suite. 
 
-> **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project and in the root directory of each component to ensure that you will not be utilizing more resources than you want to. You can find the root configuration files in the `/deploy/local/minikube` directory and each individual service's configuration files in the `/src/<service_name>/deploy/local/minikube`
+> **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project and in the root directory of each component to ensure that you will not be utilizing more resources than you want to. You can find the root configuration files in the `/deploy/local/minikube` directory and each individual component's configuration files found in `/src/<component_name>/deploy/local/minikube`
 
 This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
 
@@ -38,19 +42,21 @@ From the project's root directory, run the following commands to initalize the p
 
 1. `chmod +x manage` - Makes the lifecycle script executable
 
-2. `./manage start nfs` - Starts the shared file system
+1. `./manage start nfs` - Starts the shared file system
 
-3. `./manage start artifact-mq` - Starts the artifact message broker
+1. `./manage start artifact-mq` - Starts the artifact message broker
 
-4. `./manage start artifact-db` - Starts the artifact database
+1. `./manage start artifact-db` - Starts the artifact database
 
-5. `./manage start artifact-ingester` - Start up the artifact ingestion workers
+1. `./manage start artifact-ingester` - Start up the artifact ingestion workers
 
-6. `./manage start traefik` - Starts the revers proxy
+1. `./manage start artifact-publisher` - Start up the artifact publisher workers
 
-7. `./manage buildl models -s` - Builds the Models API image with the `local` tag
+1. `./manage start traefik` - Starts the reverse proxy that routes traffic to the APIs
 
-8. `./manage start models` - Starts the Models API pod
+1. `./manage buildl models -s` - Builds the Models API image with the `local` tag
+
+1. `./manage start models` - Starts the Models API pod
 
 Congrats! You know have a fully-functional local deployment of the MLHub Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
