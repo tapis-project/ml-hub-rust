@@ -32,7 +32,7 @@ VM. When running `minikube start`, use the following flag: `--disk-space='50g'`.
 
 ## 2. Start your Engines! 🏎️
 
-Now that you have all the necessary tools installed, we can start up the MLHub suite. 
+Now that you have all the necessary tools installed, we can start up the MLHub Models suite. 
 
 > **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project and in the root directory of each component to ensure that you will not be utilizing more resources than you want to. You can find the root configuration files in the `/deploy/local/minikube` directory and each individual component's configuration files found in `/src/<component_name>/deploy/local/minikube`
 
@@ -54,11 +54,13 @@ From the project's root directory, run the following commands to initalize the p
 
 1. `./manage start traefik` - Starts the reverse proxy that routes traffic to the APIs
 
-1. `./manage buildl models -s` - Builds the Models API image with the `local` tag
+1. `./manage buildl models-migrator -s` - Builds the Models API migrator image and loads it into minikube.
+
+1. `./manage buildl models -s` - Builds the Models API image and loads it into minikube
 
 1. `./manage start models` - Starts the Models API pod
 
-Congrats! You know have a fully-functional local deployment of the MLHub Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
+Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
 `./manage expose traefik`
 
@@ -84,26 +86,10 @@ Example (Returns a list of machine learning models from the Models API):
 
 The Lifecycle Management CLI is a python tool that can be invoked from the command line to run bash commands and scripts that control the lifecycle of the various microservices and components of MLHub. This is the same script invoked previously to initialize the MLHub project locally.
 
-### Managing MLHub Services and Components
+### The Components File
 
-In this section, we will describe the service and components comprising MLHub and their relationships to eachother.
+The `components.json` file contains and exhaustive list of every component in the MLHub suite and every command you can run against those components using the CLI.
 
-**APIs**
-Models API
-Datasets API
-Deployments API
-Agents API
-
-**Components**
-NFS Server
-Artifacts Database - MongoDB
-Artifact Operations Message Broker - RabbitMQ
-Artifact Ingester - Asynch workers for model/dataset ingestion
-Artifact Publisher - Asynch workers for model/dataset publication
-Inference Database - MongoDB
-Traefik
-
-## Developing in MLHub
 
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI
