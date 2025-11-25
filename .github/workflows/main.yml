@@ -99,7 +99,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/models/**/*
+            src/apis/models-migrator/**/*
 
       # Setup rust
       - name: Setup Rust
