@@ -6,8 +6,9 @@ use shared::infra::persistence::mongo::documents::model_metadata::ModelMetadata;
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
     vec![
-        Box::new(CreateModelAuthorNameIndex {}),
-        Box::new(CreateTaskTypesIndex {}),
+        Box::new(CreateModelAuthorNameIndex),
+        Box::new(CreateTaskTypesIndex),
+        Box::new(CreateArtifactIdIndex),
     ]
 }
 
@@ -45,7 +46,6 @@ pub struct CreateTaskTypesIndex;
 #[async_trait]
 impl Migration for CreateTaskTypesIndex {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
-        println!("INSIDE");
         let db: &Database = &env.db.unwrap();
         db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
             .create_index(
@@ -65,6 +65,34 @@ impl Migration for CreateTaskTypesIndex {
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
         db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION).drop_index("create_task_types_index").await?;
+        Ok(())
+    }
+}
+
+pub struct CreateArtifactIdIndex;
+
+#[async_trait]
+impl Migration for CreateArtifactIdIndex {
+    async fn up(&self, env: Env) -> anyhow::Result<()> {
+        let db: &Database = &env.db.unwrap();
+        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
+            .create_index(
+                mongodb::IndexModel::builder()
+                    .keys(doc! { "artifact_id": 1 })
+                    .options(
+                        Some(mongodb::options::IndexOptions::builder()
+                            .name("create_artifact_id_index".to_string())
+                            .build())
+                    )
+                    .build()
+            )
+            .await?;
+        Ok(())
+    }
+
+    async fn down(&self, env: Env) -> anyhow::Result<()> {
+        let db: &Database = &env.db.unwrap();
+        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION).drop_index("create_artifact_id_index").await?;
         Ok(())
     }
 }
