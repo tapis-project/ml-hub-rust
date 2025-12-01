@@ -78,9 +78,9 @@ paths:
   '/models-api/artifacts/{artifact_id}/metadata':
     post:
       tags:
-        - Metadata
-      description: Create metadata for a model artifact
-      operationId: create_model_metadata
+        - Artifacts
+      description: Associate existing model metadata to a model artifact
+      operationId: associate_model_metadata_with_artifact
       parameters:
         - name: artifact_id
           in: path
@@ -92,15 +92,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ModelMetadata'
+              $ref: '#/components/schemas/AssociateModelMetadata'
         required: true
       responses:
         '200':
-          description: Discovered models
+          description: Successfully associated metadata with artifact
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateModelMetadataResponse'
+                $ref: '#/components/schemas/AssociateModelMetadataResponse'
         '400':
           description: Not found
           content:
@@ -251,6 +251,198 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetModelIngestionResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/models:
+    get:
+      tags:
+        - Models
+      description: List all models
+      operationId: list_models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelMetadata'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelsResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+    post:
+      tags:
+        - Models
+      description: Create a model metadata
+      operationId: create_model_metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelMetadata'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateModelMetadataResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/models/search:
+    post:
+      tags:
+        - Models
+      description: Discover models known to MLHub
+      operationId: discover_models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryCriteria'
+        required: true
+      responses:
+        '200':
+          description: Discovered models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoverModelsResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/models/{author}':
+    get:
+      tags:
+        - Models
+      description: List models by author
+      operationId: list_models_by_author
+      parameters:
+        - name: author
+          in: path
+          description: The author of the models
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listed models by author
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelsResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  '/models-api/models/{author}/{name}':
+    get:
+      tags:
+        - Models
+      description: Get model by the author and name
+      operationId: get_model
+      parameters:
+        - name: author
+          in: path
+          description: The author of the model
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          description: The name of the model
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully fetched model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetModelResponse'
         '400':
           description: Not found
           content:
@@ -543,6 +735,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/tasks:
+    get:
+      tags:
+        - Tasks
+      description: List all model tasks/capabilities
+      operationId: list_tasks
+      responses:
+        '200':
+          description: Listed tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTasksResponse'
+        '400':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
 components:
   schemas:
     Accelerator:
@@ -566,6 +789,7 @@ components:
           items:
             $ref: '#/components/schemas/SystemRequirement'
           description: Firmware and software
+      additionalProperties: false
     Artifact:
       type: object
       required:
@@ -670,6 +894,37 @@ components:
       enum:
         - Model
         - Dataset
+    AssociateModelMetadata:
+      type: object
+      required:
+        - name
+        - author
+      properties:
+        author:
+          type: string
+        name:
+          type: string
+    AssociateModelMetadataResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
     BadRequestResponse:
       type: object
       required:
@@ -733,20 +988,191 @@ components:
           minimum: 0
         version:
           type: string
+    DiscoverModelsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
     DiscoveryCriteria:
       type: object
       required:
         - criteria
       properties:
         confidence_threshold:
+          type: integer
+          nullable: true
+          format: int32
+          minimum: 0
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiscoveryCriterion'
+        prompt:
+          type: string
+          nullable: true
+    DiscoveryCriterion:
+      type: object
+      properties:
+        annotation: {}
+        author:
+          type: string
+          nullable: true
+        bias_evaluation_score:
+          type: integer
+          nullable: true
+          format: int32
+        edge_optimized:
+          type: boolean
+          nullable: true
+        finetuning_datasets:
           type: array
           nullable: true
           items:
             type: string
-        criteria:
+        framework:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        inference_distributed:
+          type: boolean
+          nullable: true
+        inference_hardware:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/HardwareRequirements'
+        inference_max_compute_utilization_percentage:
+          type: integer
+          nullable: true
+          format: int32
+        inference_max_energy_consumption_watts:
+          type: integer
+          nullable: true
+          format: int32
+        inference_max_latency_ms:
+          type: integer
+          nullable: true
+          format: int32
+          description: Inference performance fields
+        inference_max_memory_usage_mb:
+          type: integer
+          nullable: true
+          format: int32
+        inference_min_throughput:
+          type: integer
+          nullable: true
+          format: int32
+        inference_precision:
+          type: string
+          nullable: true
+        inference_software_dependencies:
           type: array
+          nullable: true
           items:
-            $ref: '#/components/schemas/ModelMetadata'
+            type: string
+        keywords:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Arbitrary labels
+        license:
+          type: string
+          nullable: true
+        model_inputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ModelIO'
+        model_outputs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ModelIO'
+        model_type:
+          type: string
+          nullable: true
+        multi_modal:
+          type: boolean
+          nullable: true
+          description: Architecture fields
+        name:
+          type: string
+          nullable: true
+        pretrained:
+          type: boolean
+          nullable: true
+        pretraining_datasets:
+          type: array
+          nullable: true
+          items:
+            type: string
+        pruned:
+          type: boolean
+          nullable: true
+        quantization_aware:
+          type: boolean
+          nullable: true
+        regulatory:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: |-
+            Regulatory and Compliance Fields
+            A vector or strings that represent regulatory standards. Ex HIPPA
+        slimmed:
+          type: boolean
+          nullable: true
+        supports_quantization:
+          type: boolean
+          nullable: true
+        task_types:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/Task'
+          description: Inference Fields
+        training_distributed:
+          type: boolean
+          nullable: true
+        training_hardware:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/HardwareRequirements'
+        training_max_energy_consumption_watts:
+          type: integer
+          nullable: true
+          format: int32
+          description: Training performance fields
+        training_precision:
+          type: string
+          nullable: true
+        training_time:
+          type: integer
+          nullable: true
+          format: int64
+          description: Training-related Fields
+        version:
+          type: string
+          nullable: true
     GetModelArtifactResponse:
       type: object
       required:
@@ -761,7 +1187,7 @@ components:
         metadata:
           type: object
         result:
-          $ref: '#/components/schemas/Artifact'
+          $ref: '#/components/schemas/ModelArtifact'
         status:
           type: integer
           format: int32
@@ -831,6 +1257,27 @@ components:
           minimum: 0
         version:
           type: string
+    GetModelResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
     HardwareRequirements:
       type: object
       properties:
@@ -856,6 +1303,7 @@ components:
           type: integer
           nullable: true
           format: int32
+      additionalProperties: false
     IngestArtifactRequest:
       type: object
       required:
@@ -1013,6 +1461,27 @@ components:
           minimum: 0
         version:
           type: string
+    ListModelsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: object
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
     ListPlatformsResponse:
       type: object
       required:
@@ -1036,6 +1505,49 @@ components:
           minimum: 0
         version:
           type: string
+    ListTasksResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ModelArtifact:
+      type: object
+      required:
+        - id
+        - artifact_type
+        - created_at
+        - last_modified
+      properties:
+        artifact_type:
+          $ref: '#/components/schemas/ArtifactType'
+        created_at:
+          type: string
+        id:
+          type: string
+        last_modified:
+          type: string
+        metadata:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ModelMetadata'
     ModelIO:
       type: object
       properties:
@@ -1048,10 +1560,14 @@ components:
           items:
             type: integer
             format: int32
+      additionalProperties: false
     ModelMetadata:
       type: object
       properties:
         annotation: {}
+        author:
+          type: string
+          nullable: true
         bias_evaluation_score:
           type: integer
           nullable: true
@@ -1064,9 +1580,6 @@ components:
           nullable: true
           items:
             type: string
-        framework:
-          type: string
-          nullable: true
         image:
           type: string
           nullable: true
@@ -1112,6 +1625,11 @@ components:
           items:
             type: string
           description: Arbitrary labels
+        libraries:
+          type: array
+          nullable: true
+          items:
+            type: string
         license:
           type: string
           nullable: true
@@ -1167,7 +1685,7 @@ components:
           type: array
           nullable: true
           items:
-            type: string
+            $ref: '#/components/schemas/Task'
           description: Inference Fields
         training_distributed:
           type: boolean
@@ -1189,9 +1707,7 @@ components:
           nullable: true
           format: int64
           description: Training-related Fields
-        version:
-          type: string
-          nullable: true
+      additionalProperties: false
     NotFoundResponse:
       type: object
       required:
@@ -1307,3 +1823,53 @@ components:
           type: string
         version:
           type: string
+      additionalProperties: false
+    Task:
+      type: string
+      description: An enum of all task types available on Huggingface
+      enum:
+        - AnyToAny
+        - AudioClassification
+        - AudioToAudio
+        - AudioTextToText
+        - AutomaticSpeechRecognition
+        - DepthEstimation
+        - DocumentQuestionAnswering
+        - VisualDocumentRetrieval
+        - FeatureExtraction
+        - FillMask
+        - ImageClassification
+        - ImageFeatureExtraction
+        - ImageSegmentation
+        - ImageToImage
+        - ImageTextToText
+        - ImageToText
+        - ImageToVideo
+        - KeypointDetection
+        - MaskGeneration
+        - ObjectDetection
+        - VideoClassification
+        - QuestionAnswering
+        - ReinforcementLearning
+        - SentenceSimilarity
+        - Summarization
+        - TableQuestionAnswering
+        - TabularClassification
+        - TabularRegression
+        - TextClassification
+        - TextGeneration
+        - TextRanking
+        - TextToImage
+        - TextToSpeech
+        - TextToVideo
+        - TokenClassification
+        - Translation
+        - UnconditionalImageGeneration
+        - VideoTextToText
+        - VideoToVideo
+        - VisualQuestionAnswering
+        - ZeroShotClassification
+        - ZeroShotImageClassification
+        - ZeroShotObjectDetection
+        - TextTo3d
+        - ImageTo3d
