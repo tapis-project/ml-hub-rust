@@ -31,233 +31,239 @@ import {
 /**
  * 
  * @export
- * @interface ModelMetadata
+ * @interface DiscoveryCriterion
  */
-export interface ModelMetadata {
+export interface DiscoveryCriterion {
     /**
      * 
      * @type {any}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     annotation?: any | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     author?: string | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     bias_evaluation_score?: number | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     edge_optimized?: boolean | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     finetuning_datasets?: Array<string> | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
+     */
+    framework?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof DiscoveryCriterion
      */
     image?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_distributed?: boolean | null;
     /**
      * 
      * @type {HardwareRequirements}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_hardware?: HardwareRequirements | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_max_compute_utilization_percentage?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_max_energy_consumption_watts?: number | null;
     /**
      * Inference performance fields
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_max_latency_ms?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_max_memory_usage_mb?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_min_throughput?: number | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_precision?: string | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     inference_software_dependencies?: Array<string> | null;
     /**
      * Arbitrary labels
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     keywords?: Array<string> | null;
     /**
      * 
-     * @type {Array<string>}
-     * @memberof ModelMetadata
-     */
-    libraries?: Array<string> | null;
-    /**
-     * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     license?: string | null;
     /**
      * 
      * @type {Array<ModelIO>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     model_inputs?: Array<ModelIO> | null;
     /**
      * 
      * @type {Array<ModelIO>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     model_outputs?: Array<ModelIO> | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     model_type?: string | null;
     /**
      * Architecture fields
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     multi_modal?: boolean | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     name?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     pretrained?: boolean | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     pretraining_datasets?: Array<string> | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     pruned?: boolean | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     quantization_aware?: boolean | null;
     /**
      * Regulatory and Compliance Fields
      * A vector or strings that represent regulatory standards. Ex HIPPA
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     regulatory?: Array<string> | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     slimmed?: boolean | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     supports_quantization?: boolean | null;
     /**
      * Inference Fields
      * @type {Array<Task>}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     task_types?: Array<Task> | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     training_distributed?: boolean | null;
     /**
      * 
      * @type {HardwareRequirements}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     training_hardware?: HardwareRequirements | null;
     /**
      * Training performance fields
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     training_max_energy_consumption_watts?: number | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     training_precision?: string | null;
     /**
      * Training-related Fields
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof DiscoveryCriterion
      */
     training_time?: number | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof DiscoveryCriterion
+     */
+    version?: string | null;
 }
 
-export function ModelMetadataFromJSON(json: any): ModelMetadata {
-    return ModelMetadataFromJSONTyped(json, false);
+export function DiscoveryCriterionFromJSON(json: any): DiscoveryCriterion {
+    return DiscoveryCriterionFromJSONTyped(json, false);
 }
 
-export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelMetadata {
+export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: boolean): DiscoveryCriterion {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -268,6 +274,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
+        'framework': !exists(json, 'framework') ? undefined : json['framework'],
         'image': !exists(json, 'image') ? undefined : json['image'],
         'inference_distributed': !exists(json, 'inference_distributed') ? undefined : json['inference_distributed'],
         'inference_hardware': !exists(json, 'inference_hardware') ? undefined : HardwareRequirementsFromJSON(json['inference_hardware']),
@@ -279,7 +286,6 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'inference_precision': !exists(json, 'inference_precision') ? undefined : json['inference_precision'],
         'inference_software_dependencies': !exists(json, 'inference_software_dependencies') ? undefined : json['inference_software_dependencies'],
         'keywords': !exists(json, 'keywords') ? undefined : json['keywords'],
-        'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
         'license': !exists(json, 'license') ? undefined : json['license'],
         'model_inputs': !exists(json, 'model_inputs') ? undefined : (json['model_inputs'] === null ? null : (json['model_inputs'] as Array<any>).map(ModelIOFromJSON)),
         'model_outputs': !exists(json, 'model_outputs') ? undefined : (json['model_outputs'] === null ? null : (json['model_outputs'] as Array<any>).map(ModelIOFromJSON)),
@@ -299,10 +305,11 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'training_max_energy_consumption_watts': !exists(json, 'training_max_energy_consumption_watts') ? undefined : json['training_max_energy_consumption_watts'],
         'training_precision': !exists(json, 'training_precision') ? undefined : json['training_precision'],
         'training_time': !exists(json, 'training_time') ? undefined : json['training_time'],
+        'version': !exists(json, 'version') ? undefined : json['version'],
     };
 }
 
-export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
+export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -316,6 +323,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'bias_evaluation_score': value.bias_evaluation_score,
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,
+        'framework': value.framework,
         'image': value.image,
         'inference_distributed': value.inference_distributed,
         'inference_hardware': HardwareRequirementsToJSON(value.inference_hardware),
@@ -327,7 +335,6 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'inference_precision': value.inference_precision,
         'inference_software_dependencies': value.inference_software_dependencies,
         'keywords': value.keywords,
-        'libraries': value.libraries,
         'license': value.license,
         'model_inputs': value.model_inputs === undefined ? undefined : (value.model_inputs === null ? null : (value.model_inputs as Array<any>).map(ModelIOToJSON)),
         'model_outputs': value.model_outputs === undefined ? undefined : (value.model_outputs === null ? null : (value.model_outputs as Array<any>).map(ModelIOToJSON)),
@@ -347,6 +354,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'training_max_energy_consumption_watts': value.training_max_energy_consumption_watts,
         'training_precision': value.training_precision,
         'training_time': value.training_time,
+        'version': value.version,
     };
 }
 

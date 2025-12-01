@@ -14,55 +14,55 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    ModelArtifact,
-    ModelArtifactFromJSON,
-    ModelArtifactFromJSONTyped,
-    ModelArtifactToJSON,
+    Task,
+    TaskFromJSON,
+    TaskFromJSONTyped,
+    TaskToJSON,
 } from './';
 
 /**
  * 
  * @export
- * @interface GetModelArtifactResponse
+ * @interface ListTasksResponse
  */
-export interface GetModelArtifactResponse {
+export interface ListTasksResponse {
     /**
      * 
      * @type {string}
-     * @memberof GetModelArtifactResponse
+     * @memberof ListTasksResponse
      */
     message: string;
     /**
      * 
      * @type {object}
-     * @memberof GetModelArtifactResponse
+     * @memberof ListTasksResponse
      */
     metadata: object;
     /**
      * 
-     * @type {ModelArtifact}
-     * @memberof GetModelArtifactResponse
+     * @type {Array<Task>}
+     * @memberof ListTasksResponse
      */
-    result: ModelArtifact;
+    result: Array<Task>;
     /**
      * 
      * @type {number}
-     * @memberof GetModelArtifactResponse
+     * @memberof ListTasksResponse
      */
     status: number;
     /**
      * 
      * @type {string}
-     * @memberof GetModelArtifactResponse
+     * @memberof ListTasksResponse
      */
     version: string;
 }
 
-export function GetModelArtifactResponseFromJSON(json: any): GetModelArtifactResponse {
-    return GetModelArtifactResponseFromJSONTyped(json, false);
+export function ListTasksResponseFromJSON(json: any): ListTasksResponse {
+    return ListTasksResponseFromJSONTyped(json, false);
 }
 
-export function GetModelArtifactResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetModelArtifactResponse {
+export function ListTasksResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): ListTasksResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -70,13 +70,13 @@ export function GetModelArtifactResponseFromJSONTyped(json: any, ignoreDiscrimin
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': ModelArtifactFromJSON(json['result']),
+        'result': ((json['result'] as Array<any>).map(TaskFromJSON)),
         'status': json['status'],
         'version': json['version'],
     };
 }
 
-export function GetModelArtifactResponseToJSON(value?: GetModelArtifactResponse | null): any {
+export function ListTasksResponseToJSON(value?: ListTasksResponse | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -87,7 +87,7 @@ export function GetModelArtifactResponseToJSON(value?: GetModelArtifactResponse 
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': ModelArtifactToJSON(value.result),
+        'result': ((value.result as Array<any>).map(TaskToJSON)),
         'status': value.status,
         'version': value.version,
     };

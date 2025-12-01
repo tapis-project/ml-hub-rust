@@ -15,6 +15,12 @@
 
 import * as runtime from '../runtime';
 import {
+    AssociateModelMetadata,
+    AssociateModelMetadataFromJSON,
+    AssociateModelMetadataToJSON,
+    AssociateModelMetadataResponse,
+    AssociateModelMetadataResponseFromJSON,
+    AssociateModelMetadataResponseToJSON,
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
@@ -32,6 +38,11 @@ import {
     ServerErrorResponseToJSON,
 } from '../models';
 
+export interface AssociateModelMetadataWithArtifactRequest {
+    artifactId: string;
+    associateModelMetadata: AssociateModelMetadata;
+}
+
 export interface GetModelArtifactRequest {
     artifactId: string;
 }
@@ -40,6 +51,43 @@ export interface GetModelArtifactRequest {
  * 
  */
 export class ArtifactsApi extends runtime.BaseAPI {
+
+    /**
+     * Associate existing model metadata to a model artifact
+     */
+    async associateModelMetadataWithArtifactRaw(requestParameters: AssociateModelMetadataWithArtifactRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<AssociateModelMetadataResponse>> {
+        if (requestParameters.artifactId === null || requestParameters.artifactId === undefined) {
+            throw new runtime.RequiredError('artifactId','Required parameter requestParameters.artifactId was null or undefined when calling associateModelMetadataWithArtifact.');
+        }
+
+        if (requestParameters.associateModelMetadata === null || requestParameters.associateModelMetadata === undefined) {
+            throw new runtime.RequiredError('associateModelMetadata','Required parameter requestParameters.associateModelMetadata was null or undefined when calling associateModelMetadataWithArtifact.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/models-api/artifacts/{artifact_id}/metadata`.replace(`{${"artifact_id"}}`, encodeURIComponent(String(requestParameters.artifactId))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AssociateModelMetadataToJSON(requestParameters.associateModelMetadata),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AssociateModelMetadataResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Associate existing model metadata to a model artifact
+     */
+    async associateModelMetadataWithArtifact(requestParameters: AssociateModelMetadataWithArtifactRequest, initOverrides?: RequestInit): Promise<AssociateModelMetadataResponse> {
+        const response = await this.associateModelMetadataWithArtifactRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Fetches the model artifact by the provided id

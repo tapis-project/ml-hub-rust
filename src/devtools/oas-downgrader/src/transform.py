@@ -7,10 +7,13 @@ def downgrade(spec):
     for t in ["string", "integer", "array", "boolean"]:
         modified_spec = downgrade_nullable_types(modified_spec, t)
 
-    # Transform the nullable oneOfs to allOfs + nullable: true
-    oneOf = r"oneOf:\n(\s+)\- type: 'null'\n\s+\- (\$ref: '#/components/schemas/HardwareRequirements')"
-    allOf = r"nullable: true\n          allOf:\n\1- \2"
-    modified_spec = re.sub(oneOf, allOf, modified_spec)
+    # Transform the nullable oneOfs to allOfs + nullable: true in order to be
+    # be compatible with OAS v3.0.3
+    nullable_refs = ["HardwareRequirements", "ModelMetadata"]
+    for nullable_ref in nullable_refs:
+        oneOf = rf"oneOf:\n(\s+)\- type: 'null'\n\s+\- (\$ref: '#/components/schemas/{nullable_ref}')"
+        allOf = r"nullable: true\n          allOf:\n\1- \2"
+        modified_spec = re.sub(oneOf, allOf, modified_spec)
 
     # Remove all instances of the 'propertyNames' prop of additionalProperties object
     modified_spec = remove_additionalProperties_propertyNames_prop(modified_spec)

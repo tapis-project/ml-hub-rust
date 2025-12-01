@@ -14,10 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    ModelMetadata,
-    ModelMetadataFromJSON,
-    ModelMetadataFromJSONTyped,
-    ModelMetadataToJSON,
+    DiscoveryCriterion,
+    DiscoveryCriterionFromJSON,
+    DiscoveryCriterionFromJSONTyped,
+    DiscoveryCriterionToJSON,
 } from './';
 
 /**
@@ -28,16 +28,22 @@ import {
 export interface DiscoveryCriteria {
     /**
      * 
-     * @type {Array<string>}
+     * @type {number}
      * @memberof DiscoveryCriteria
      */
-    confidence_threshold?: Array<string> | null;
+    confidence_threshold?: number | null;
     /**
      * 
-     * @type {Array<ModelMetadata>}
+     * @type {Array<DiscoveryCriterion>}
      * @memberof DiscoveryCriteria
      */
-    criteria: Array<ModelMetadata>;
+    criteria: Array<DiscoveryCriterion>;
+    /**
+     * 
+     * @type {string}
+     * @memberof DiscoveryCriteria
+     */
+    prompt?: string | null;
 }
 
 export function DiscoveryCriteriaFromJSON(json: any): DiscoveryCriteria {
@@ -51,7 +57,8 @@ export function DiscoveryCriteriaFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'confidence_threshold': !exists(json, 'confidence_threshold') ? undefined : json['confidence_threshold'],
-        'criteria': ((json['criteria'] as Array<any>).map(ModelMetadataFromJSON)),
+        'criteria': ((json['criteria'] as Array<any>).map(DiscoveryCriterionFromJSON)),
+        'prompt': !exists(json, 'prompt') ? undefined : json['prompt'],
     };
 }
 
@@ -65,7 +72,8 @@ export function DiscoveryCriteriaToJSON(value?: DiscoveryCriteria | null): any {
     return {
         
         'confidence_threshold': value.confidence_threshold,
-        'criteria': ((value.criteria as Array<any>).map(ModelMetadataToJSON)),
+        'criteria': ((value.criteria as Array<any>).map(DiscoveryCriterionToJSON)),
+        'prompt': value.prompt,
     };
 }
 

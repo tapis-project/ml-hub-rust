@@ -8,18 +8,18 @@ import {
 } from '../../src';
 import { expect } from 'chai';
 import fetch from 'cross-fetch';
-import { CreateModelMetadataRequest, DiscoverModelsByPlatformRequest, GetModelByPlatformRequest, ListModelsByPlatformRequest } from '@mlhub/models-ts-sdk';
+import { CreateModelMetadataRequest, DiscoverModelsRequest, Task, DiscoverModelsByPlatformRequest, GetModelByPlatformRequest, ListModelsByPlatformRequest } from '@mlhub/models-ts-sdk';
 
 //   basePath: process.env.TEST_TENANT,
-const basePath = 'https://dev.develop.tapis.io/v3/mlhub';
+const basePath = process.env.TEST_BASE_URL;
 
 //////////////////////////////////////////////////////////
-/*                      Platforms                  */
+/*                      Platforms                       */
 //////////////////////////////////////////////////////////
 
 let externalModelsApi: Models.PlatformsApi;
 
-let platforms: Array<object>
+let externalModels: Array<object>
 let externalModel: object | undefined;
 
 describe('Models e2e tests', async () => {
@@ -42,7 +42,7 @@ describe('Models e2e tests', async () => {
 
     try {
         let response = await externalModelsApi.listModelsByPlatform(request)
-        platforms = response.result as Array<{[key: string]: any}>;
+        externalModels = response.result as Array<{[key: string]: any}>;
         expect(response.result).to.be.an("array");
     } catch (e) {
       expect.fail(`Test failed because an exception was thrown: ${e}`)
@@ -50,7 +50,7 @@ describe('Models e2e tests', async () => {
   });
 
   it("should get the metadata for the first model returned from huggingface", async () => {
-    externalModel = platforms.pop();
+    externalModel = externalModels.pop();
     expect(externalModel).to.be.not.undefined;
 
     let request: GetModelByPlatformRequest = {
@@ -68,16 +68,13 @@ describe('Models e2e tests', async () => {
     }
   });
 
-  it("should discover models on HuggingFace", async () => {
+  it("should discover models on Patra", async () => {
     let request: DiscoverModelsByPlatformRequest = {
       platform: Models.Platform.Patra,
       discoveryCriteria: {
         confidence_threshold: null,
-        criteria: [
-          {
-            name: "Find image detection models"
-          }
-        ]
+        prompt: "Find image detection models",
+        criteria: []
       }
     };
 
@@ -179,40 +176,6 @@ describe('Ingestions e2e tests', async () => {
   });
 });
 
-// //////////////////////////////////////////////////////////
-// /*                      ModelMetadata                   */
-// //////////////////////////////////////////////////////////
-
-// let modelMetadataApi: Models.MetadataApi;
-
-// describe('ModelMetadata e2e tests', async () => {
-//   before(async () => {
-//     // Tenants configuration for all tests
-//     const configurationParameters: Models.ConfigurationParameters = {
-//       basePath,
-//       headers: {},
-//       fetchApi: fetch
-//     }
-//     const configuration: Models.Configuration = new Models.Configuration(configurationParameters);
-    
-//     modelMetadataApi = new Models.MetadataApi(configuration);
-//   });
-
-//   let request: CreateModelMetadataRequest = {
-//     artifactId: "",
-//     modelMetadata: {}
-//   };
-
-//   it("should create a model metadata entry for an artifact", async () => {
-//     try {
-//         let response = await modelMetadataApi.createModelMetadata(request)
-//         expect(response.result).to.be.an("object");
-//     } catch (e) {
-//       expect.fail(`Test failed because an exception was thrown: ${e}`)
-//     }
-//   });
-// });
-
 //////////////////////////////////////////////////////////
 /*                      Publications                    */
 //////////////////////////////////////////////////////////
@@ -238,6 +201,88 @@ describe('Publications e2e tests', async () => {
         expect(response.result).to.be.an("array");
     } catch (e) {
       console.log({e})
+      expect.fail(`Test failed because an exception was thrown: ${e}`)
+    }
+  });
+});
+
+// //////////////////////////////////////////////////////////
+// /*                      Models                          */
+// //////////////////////////////////////////////////////////
+
+let modelsApi: Models.ModelsApi;
+
+describe('Models e2e tests', async () => {
+  before(async () => {
+    // Tenants configuration for all tests
+    const configurationParameters: Models.ConfigurationParameters = {
+      basePath,
+      headers: {},
+      fetchApi: fetch
+    }
+    const configuration: Models.Configuration = new Models.Configuration(configurationParameters);
+    
+    modelsApi = new Models.ModelsApi(configuration);
+  });
+
+  // let request: CreateModelMetadataRequest = {
+  //   modelMetadata: {}
+  // };
+
+  // it("should create a model metadata entry", async () => {
+  //   try {
+  //       let response = await modelsApi.createModelMetadata(request)
+  //       expect(response.result).to.be.an("object");
+  //   } catch (e) {
+  //     expect.fail(`Test failed because an exception was thrown: ${e}`)
+  //   }
+  // });
+
+  let request: DiscoverModelsRequest = {
+    discoveryCriteria: {
+      criteria: [
+        {
+          "task_types": [ Task.FillMask ]
+        }
+      ]
+    }
+  };
+
+  it("should discover models that can perform the fill-mask task", async () => {
+    try {
+        let response = await modelsApi.discoverModels(request)
+        expect(response.result).to.be.an("array");
+    } catch (e) {
+      expect.fail(`Test failed because an exception was thrown: ${e}`)
+    }
+  });
+});
+
+// //////////////////////////////////////////////////////////
+// /*                      Models                          */
+// //////////////////////////////////////////////////////////
+
+let tasksApi: Models.TasksApi;
+
+describe('Tasks e2e tests', async () => {
+  before(async () => {
+    // Tenants configuration for all tests
+    const configurationParameters: Models.ConfigurationParameters = {
+      basePath,
+      headers: {},
+      fetchApi: fetch
+    }
+    const configuration: Models.Configuration = new Models.Configuration(configurationParameters);
+    
+    tasksApi = new Models.TasksApi(configuration);
+  });
+
+  it("should list all task types for MLHub models", async () => {
+    try {
+        let response = await tasksApi.listTasks()
+        expect(response.result).to.be.an("array");
+        expect(response.result).to.contain(Task.FillMask)
+    } catch (e) {
       expect.fail(`Test failed because an exception was thrown: ${e}`)
     }
   });

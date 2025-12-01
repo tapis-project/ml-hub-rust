@@ -1545,8 +1545,8 @@ components:
         last_modified:
           type: string
         metadata:
-          oneOf:
-            - type: 'null'
+          nullable: true
+          allOf:
             - $ref: '#/components/schemas/ModelMetadata'
     ModelIO:
       type: object

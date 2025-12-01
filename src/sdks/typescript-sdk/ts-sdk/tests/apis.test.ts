@@ -5,11 +5,12 @@ import {
 import { expect } from 'chai';
 
 describe('tapis-typescript', () => {
-  it('should have Models service', () => {
+  it('should have APIs', () => {
     expect(Models).to.have.property('ArtifactsApi');
-    expect(Models).to.have.property('IngestionsApi');
-    expect(Models).to.have.property('MetadataApi');
-    expect(Models).to.have.property('PlatformsApi');
     expect(Models).to.have.property('PublicationsApi');
+    expect(Models).to.have.property('IngestionsApi');
+    expect(Models).to.have.property('ModelsApi');
+    expect(Models).to.have.property('PlatformsApi');
+    expect(Models).to.have.property('TasksApi');
   });
 });

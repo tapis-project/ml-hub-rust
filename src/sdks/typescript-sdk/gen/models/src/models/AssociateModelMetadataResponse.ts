@@ -13,56 +13,49 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import {
-    ModelArtifact,
-    ModelArtifactFromJSON,
-    ModelArtifactFromJSONTyped,
-    ModelArtifactToJSON,
-} from './';
-
 /**
  * 
  * @export
- * @interface GetModelArtifactResponse
+ * @interface AssociateModelMetadataResponse
  */
-export interface GetModelArtifactResponse {
+export interface AssociateModelMetadataResponse {
     /**
      * 
      * @type {string}
-     * @memberof GetModelArtifactResponse
+     * @memberof AssociateModelMetadataResponse
      */
     message: string;
     /**
      * 
      * @type {object}
-     * @memberof GetModelArtifactResponse
+     * @memberof AssociateModelMetadataResponse
      */
     metadata: object;
     /**
      * 
-     * @type {ModelArtifact}
-     * @memberof GetModelArtifactResponse
+     * @type {object}
+     * @memberof AssociateModelMetadataResponse
      */
-    result: ModelArtifact;
+    result: object;
     /**
      * 
      * @type {number}
-     * @memberof GetModelArtifactResponse
+     * @memberof AssociateModelMetadataResponse
      */
     status: number;
     /**
      * 
      * @type {string}
-     * @memberof GetModelArtifactResponse
+     * @memberof AssociateModelMetadataResponse
      */
     version: string;
 }
 
-export function GetModelArtifactResponseFromJSON(json: any): GetModelArtifactResponse {
-    return GetModelArtifactResponseFromJSONTyped(json, false);
+export function AssociateModelMetadataResponseFromJSON(json: any): AssociateModelMetadataResponse {
+    return AssociateModelMetadataResponseFromJSONTyped(json, false);
 }
 
-export function GetModelArtifactResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): GetModelArtifactResponse {
+export function AssociateModelMetadataResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssociateModelMetadataResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -70,13 +63,13 @@ export function GetModelArtifactResponseFromJSONTyped(json: any, ignoreDiscrimin
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': ModelArtifactFromJSON(json['result']),
+        'result': json['result'],
         'status': json['status'],
         'version': json['version'],
     };
 }
 
-export function GetModelArtifactResponseToJSON(value?: GetModelArtifactResponse | null): any {
+export function AssociateModelMetadataResponseToJSON(value?: AssociateModelMetadataResponse | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -87,7 +80,7 @@ export function GetModelArtifactResponseToJSON(value?: GetModelArtifactResponse 
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': ModelArtifactToJSON(value.result),
+        'result': value.result,
         'status': value.status,
         'version': value.version,
     };
