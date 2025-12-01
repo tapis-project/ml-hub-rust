@@ -23,6 +23,9 @@ use shared::presentation::http::v1::contracts::responses;
     path="/models-api/models/{author}",
     tag="Models",
     description="List models by author",
+    params(
+        ("author" = String, Path, description = "The author of the models")
+    ),
     responses(
         (status=200, description="Listed models by author", body=responses::ListModelsResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
