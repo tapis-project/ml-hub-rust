@@ -4,7 +4,8 @@ from datetime import datetime, date
 from pathlib import Path
 
 HF_TOKEN = os.environ.get("HF_TOKEN") 
-INBOX = os.environ.get("MLHUB_INBOX", "inbox")
+INBOX = os.environ.get("INBOX", "inbox")
+MAX_RECORDS = int(os.environ.get("MAX_RECORDS", -1))
 os.makedirs(INBOX, exist_ok=True)
 
 api = HfApi(token=HF_TOKEN)
@@ -45,13 +46,15 @@ def save_jsonl(records, shard_idx, compress=False):
                 f.write(json.dumps(r, ensure_ascii=False, default=json_default) + "\n")
     return path
 
-print(api)
-
 i = 0
-for info in api.list_models(full=True, cardData=True, fetch_config=True, limit=None, sort='last_modified', direction=-1):
+for info in api.list_models(full=True, cardData=True, fetch_config=True, limit=None, sort='likes', direction=-1):
+    if i >= MAX_RECORDS:
+        break
+
     rec = dataclasses.asdict(info)
     buffer.append(rec)
     i += 1
+
 
     if i % 1000 == 0:
         time.sleep(PAGE_SLEEP) 

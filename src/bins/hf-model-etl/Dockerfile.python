@@ -1,0 +1,7 @@
+FROM python:3.12.8
+
+ARG SERVICE_DIR
+
+RUN pip install huggingface-hub
+
+COPY ${SERVICE_DIR}/scripts/extract.py /src/extract.py

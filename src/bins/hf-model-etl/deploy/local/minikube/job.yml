@@ -9,9 +9,25 @@ spec:
       name: mlhub-hf-model-etl
     spec:
       restartPolicy: Never
-      nodeName: minikube-m02 # Ensure this runs on the node where the data has been loaded by the transform-load script
+      initContainers:
+        - name: extract
+          env:
+            - name: RUST_LOG
+              value: debug
+            - name: INBOX
+              value: /srv/mlhub/hf-model-etl/inbox
+            - name: HF_TOKEN
+              value: '{{ HF_TOKEN }}'
+            - name: MAX_RECORDS
+              value: '10000'
+          image: mlhub/hf-model-etl-extract:local
+          command: ["sh", "-c", "python3 src/extract.py"]
+          volumeMounts:
+            - name: nfs-server-mount
+              mountPath: /srv/mlhub/
       containers:
-        - env:
+        - name: hf-model-etl
+          env:
             - name: RUST_LOG
               value: debug
             - name: ARTIFACTS_DB_HOST
@@ -25,19 +41,26 @@ spec:
             - name: ARTIFACTS_DB_USERNAME
               value: mlhub
             - name: MAX_PROCESSABLE_ENTRIES
-              value: "1000000"
+              value: "10000"
             - name: INBOX
-              value: /srv/hf-model-etl/data/inbox
+              value: /srv/mlhub/hf-model-etl/inbox
           image: mlhub/hf-model-etl-transform-load:local
           imagePullPolicy: Never
-          name: hf-model-etl
           resources: {}
           tty: true
           volumeMounts:
-            - name: inbox
-              mountPath: /srv/hf-model-etl/data/inbox
+            - name: nfs-server-mount
+              mountPath: /srv/mlhub/
       volumes:
-        - name: inbox
-          hostPath:
-            path: /srv/hf-model-etl/data/inbox
-            type: DirectoryOrCreate
+      - name: nfs-server-mount
+        nfs:
+          server: '{{ NFS_SERVER_COMPONENT_IP }}'
+          path: /
+      #     volumeMounts:
+      #       - name: inbox
+      #         mountPath: /srv/hf-model-etl/data/inbox
+      # volumes:
+      #   - name: inbox
+      #     hostPath:
+      #       path: /srv/hf-model-etl/data/inbox
+      #       type: DirectoryOrCreate
