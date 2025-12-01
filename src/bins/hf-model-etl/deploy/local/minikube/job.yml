@@ -56,11 +56,3 @@ spec:
         nfs:
           server: '{{ NFS_SERVER_COMPONENT_IP }}'
           path: /
-      #     volumeMounts:
-      #       - name: inbox
-      #         mountPath: /srv/hf-model-etl/data/inbox
-      # volumes:
-      #   - name: inbox
-      #     hostPath:
-      #       path: /srv/hf-model-etl/data/inbox
-      #       type: DirectoryOrCreate
