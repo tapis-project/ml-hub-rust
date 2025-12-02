@@ -97,6 +97,7 @@ pub struct ModelMetadata {
     pub bias_evaluation_score: Option<i8>,
 }
 
+#[derive(Clone, Debug)]
 pub enum FieldValue {
     Name(Option<String>),
     Author(Option<String>),
@@ -106,6 +107,67 @@ pub enum FieldValue {
     InferenceHardwareMemory(Option<i32>),
     AnnotationsCanonicalPrivate(Option<bool>),
     AnnotationsCanonicalGated(Option<bool>),
+}
+
+impl Into<Value> for FieldValue {
+    fn into(self) -> Value {
+        match self {
+            FieldValue::Name(name) => {
+                match name {
+                    Some(n) => Value::String(n),
+                    None => Value::Null
+                }
+            },
+            FieldValue::Author(author) => {
+                match author {
+                    Some(a) => Value::String(a),
+                    None => Value::Null
+                }
+            },
+            FieldValue::Libraries(libraries) => {
+                match libraries {
+                    Some(fws) => {
+                        fws.iter().map(|fw| Value::String(fw.clone())).collect()
+                    },
+                    None => Value::Null,
+                }
+            },
+            FieldValue::Keywords(keywords) => {
+                match keywords {
+                    Some(kws) => {
+                        kws.iter().map(|kw| Value::String(kw.clone())).collect()
+                    },
+                    None => Value::Null,
+                }
+            },
+            FieldValue::TaskTypes(tasks) => {
+                match tasks {
+                    Some(ts) => {
+                        ts.iter().map(|t| Value::String(String::from(t.clone()))).collect()
+                    },
+                    None => Value::Null,
+                }
+            },
+            FieldValue::InferenceHardwareMemory(memory) => {
+                match memory {
+                    Some(m) => Value::Number(m.into()),
+                    None => Value::Null
+                }
+            },
+            FieldValue::AnnotationsCanonicalGated(gated) => {
+                match gated {
+                    Some(g) => Value::Bool(g),
+                    None => Value::Null
+                }
+            },
+            FieldValue::AnnotationsCanonicalPrivate(private) => {
+                match private {
+                    Some(p) => Value::Bool(p),
+                    None => Value::Null
+                }
+            }
+        }
+    }
 }
 
 impl ModelMetadata {
@@ -144,3 +206,7 @@ impl ModelMetadata {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "model_metadata.test.rs"]
+mod model_metadata_test;

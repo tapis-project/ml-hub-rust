@@ -1,7 +1,7 @@
 pub mod huggingface_task_to_task;
 
 #[doc = "An enum of all task types available on Huggingface"]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Task {
     #[doc = "Any-to-any models can understand two or more modalities and output two or more modalities."]
     AnyToAny,

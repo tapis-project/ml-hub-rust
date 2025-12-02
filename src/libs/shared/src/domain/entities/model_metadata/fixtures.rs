@@ -1,10 +1,15 @@
 use crate::domain::entities::{model_metadata::{HardwareRequirements, ModelIO, ModelMetadata, Accelerator, SystemRequirement}, task::Task};
-use serde_json::{Value, Map};
+use serde_json::json;
 
 pub fn full_model_metadata() -> ModelMetadata {
     ModelMetadata {
         name: Some("foo".into()),
-        annotations: Some(Value::Object(Map::new())),
+        annotations: Some(json!({
+            "canonical": {
+                "gated": false,
+                "private": true
+            }
+        })),
         author: Some("bar".into()),
         model_inputs: Some(
             vec![ModelIO {
