@@ -86,6 +86,18 @@ pub(super) fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Resu
                 None => Value::Null
             }
         },
+        FieldValue::AnnotationsCanonicalGated(gated) => {
+            match gated {
+                Some(g) => Value::Bool(g),
+                None => Value::Null
+            }
+        },
+        FieldValue::AnnotationsCanonicalPrivate(private) => {
+            match private {
+                Some(p) => Value::Bool(p),
+                None => Value::Null
+            }
+        }
     };
 
     match rule.operator {

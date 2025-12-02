@@ -104,6 +104,8 @@ pub enum FieldValue {
     Keywords(Option<Vec<String>>),
     TaskTypes(Option<Vec<Task>>),
     InferenceHardwareMemory(Option<i32>),
+    AnnotationsCanonicalPrivate(Option<bool>),
+    AnnotationsCanonicalGated(Option<bool>),
 }
 
 impl ModelMetadata {
@@ -121,6 +123,18 @@ impl ModelMetadata {
             ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
             ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
                 self.inference_hardware.clone().and_then(|hr| hr.memory_gb),
+            )),
+            ["annotations", "canonical", "gated"] => Ok(FieldValue::AnnotationsCanonicalGated(
+                self.annotations
+                    .as_ref()
+                    .and_then(|a| a.pointer("/canonical/gated"))
+                    .and_then(|g| g.clone().as_bool())
+            )),
+            ["annotations", "canonical", "private"] => Ok(FieldValue::AnnotationsCanonicalPrivate(
+                self.annotations
+                    .as_ref()
+                    .and_then(|a| a.pointer("/canonical/private"))
+                    .and_then(|g| g.clone().as_bool())
             )),
             other => {
                 return Err(ModelMetadataError::InvalidFieldPath(
