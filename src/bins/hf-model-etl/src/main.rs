@@ -151,7 +151,7 @@ async fn main() {
                         match artifact_service.create_model_metadata(CreateModelMetadata {
                             metadata: ModelMetadata {
                                 name: Some(name),
-                                annotation: Some(Value::Object(annotations)),
+                                annotations: Some(Value::Object(annotations)),
                                 author: Some(format!("_{}", hf_model.author)),
                                 model_inputs: None,
                                 model_outputs: None,

@@ -5,31 +5,31 @@
         {
             "name": "Stampede3",
             "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
             "use_parameter_set": "Jobs"
         },
         {
             "name": "Frontera",
             "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
             "use_parameter_set": "Jobs"
         },
         {
             "name": "LoneStar6",
             "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
             "use_parameter_set": "Jobs"
         },
         {
             "name": "Vista",
             "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
             "use_parameter_set": "Jobs"
         },
         {
             "name": "HPC w/ GPUs",
             "description": "Deploys a model to a user defined system",
-            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
             "use_parameter_set": "Jobs"
         },
         {
@@ -41,17 +41,17 @@
     ],
     "rule_sets": [
         {
-            "name": "TransformerCompatibleOnHPC",
+            "name": "TransformerCompatible",
             "rules": [
                 {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
                 {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration"]}
             ]
         },
         {
-            "name": "TransformerCompatibleOnPods",
+            "name": "VisibilePublic",
             "rules": [
-                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
-                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration"]}
+                {"field_path": ["annotations", "canonical", "gated"], "operator": "Eq", "value": false},
+                {"field_path": ["annotations", "canonical", "private"], "operator": "Eq", "value": false}
             ]
         }
     ],

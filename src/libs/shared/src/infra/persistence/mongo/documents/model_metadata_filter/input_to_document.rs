@@ -104,7 +104,7 @@ impl TryFrom<&inputs::SearchCriterion> for model_metadata_filter::ModelMetadataF
             version: value.version.clone(),
             image: value.image.clone(),
             keywords: value.keywords.clone(),
-            annotation: value.annotation.clone(),
+            annotations: value.annotations.clone(),
             multi_modal: value.multi_modal.clone(),
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),

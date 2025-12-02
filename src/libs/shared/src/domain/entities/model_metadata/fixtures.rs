@@ -4,7 +4,7 @@ use serde_json::{Value, Map};
 pub fn full_model_metadata() -> ModelMetadata {
     ModelMetadata {
         name: Some("foo".into()),
-        annotation: Some(Value::Object(Map::new())),
+        annotations: Some(Value::Object(Map::new())),
         author: Some("bar".into()),
         model_inputs: Some(
             vec![ModelIO {

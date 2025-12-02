@@ -68,7 +68,7 @@ pub struct ModelMetadataFilter {
     #[serde(skip_serializing_if = "is_vec_empty")]
     pub keywords: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub annotation: Option<Value>,
+    pub annotations: Option<Value>,
 
     /// Architecture fields
     #[serde(skip_serializing_if = "Option::is_none")]

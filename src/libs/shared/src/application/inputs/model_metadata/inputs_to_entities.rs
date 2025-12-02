@@ -98,7 +98,7 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
             model_type: value.model_type,
             image: value.image,
             keywords: value.keywords,
-            annotation: value.annotation,
+            annotations: value.annotations,
             multi_modal: value.multi_modal,
             model_inputs: Some(model_inputs),
             model_outputs: Some(model_outputs),

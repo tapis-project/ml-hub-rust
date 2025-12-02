@@ -52,7 +52,7 @@ pub struct ModelMetadata {
     // TODO pub artifact_uri: Option<String>
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
-    pub annotation: Option<Value>,
+    pub annotations: Option<Value>,
 
     /// Architecture fields
     pub multi_modal: Option<bool>,

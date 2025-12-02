@@ -47,7 +47,7 @@ pub struct ModelMetadata {
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
-    pub annotation: Option<Value>,
+    pub annotations: Option<Value>,
 
     /// Architecture fields
     pub multi_modal: Option<bool>,
