@@ -39,7 +39,7 @@ export interface DiscoveryCriterion {
      * @type {any}
      * @memberof DiscoveryCriterion
      */
-    annotation?: any | null;
+    annotations?: any | null;
     /**
      * 
      * @type {string}
@@ -269,7 +269,7 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'annotation': !exists(json, 'annotation') ? undefined : json['annotation'],
+        'annotations': !exists(json, 'annotations') ? undefined : json['annotations'],
         'author': !exists(json, 'author') ? undefined : json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
@@ -318,7 +318,7 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
     }
     return {
         
-        'annotation': value.annotation,
+        'annotations': value.annotations,
         'author': value.author,
         'bias_evaluation_score': value.bias_evaluation_score,
         'edge_optimized': value.edge_optimized,

@@ -850,7 +850,7 @@ components:
     DiscoveryCriterion:
       type: object
       properties:
-        annotation: {}
+        annotations: {}
         bias_evaluation_score:
           type:
             - integer
@@ -1383,7 +1383,7 @@ components:
     ModelMetadata:
       type: object
       properties:
-        annotation: {}
+        annotations: {}
         bias_evaluation_score:
           type:
             - integer
