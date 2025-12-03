@@ -11,8 +11,6 @@ mod model_metadata_test {
             .unwrap()
             .into();
 
-        println!("GATED: {:#?}", gated);
-
         let private: Value = model_metadata
             .get_field_value_at_field_path(&vec!["annotations".into(), "canonical".into(), "private".into()])
             .unwrap()
