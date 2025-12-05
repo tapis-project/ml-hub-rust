@@ -162,29 +162,6 @@ impl IngestModelClient {
     }
 }
 
-pub enum IngestDatasetClient {
-    
-}
-
-impl IngestDatasetClient {
-    const CAPABILITY: Capability = Capability::IngestDataset;
-}
-
-// This impl for the enum is merely to satisfy the compiler
-impl Client for IngestDatasetClient {
-    fn platform(&self) -> Option<platforms::Platform> { None }
-    fn capabilities(&self) -> Option<Vec<Capability>> { None }
-}
-
-impl IngestDatasetClient {
-    pub async fn ingest_dataset(
-        &self,
-        _request: &IngestModelRequest,
-        _ingest_path: PathBuf,
-    ) -> Result<(), ClientError> {
-        Err(ClientError::Unimplemented)
-    }
-}
 
 pub enum DiscoverModelsClient {
     Patra(PatraClient),
@@ -213,11 +190,11 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
-
+                
                 c.discover_models(request).await?
             }
         };
-
+        
         return Ok(resp);
     }
 }
@@ -246,11 +223,11 @@ impl clients::PublishModelClient for PublishModelClient {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
-
+                
                 c.publish_model(extracted_artifact_path, artifact, metadata, request).await
             }
         };
-
+        
         resp
     }
 }
@@ -273,18 +250,18 @@ impl Client for PublishModelMetadataClient {
 impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
     type Data = Value;
     type Metadata = Value;
-
+    
     async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
             PublishModelMetadataClient::Patra(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
-
+                
                 c.publish_model_metadata(metadata, request).await
             }
         };
-
+        
         resp
     }
 }
@@ -305,25 +282,95 @@ impl Client for ModelMetadataConversionClient {
 
 impl ModelMetadataConversionClient {
     pub fn from_platform_metadata<T>(&self, metadata: T) -> Result<shared::application::inputs::model_metadata::ModelMetadata, ClientError>
-        where T: serde::Serialize
+    where T: serde::Serialize
     {
         let resp = match self {
             ModelMetadataConversionClient::HuggingFace(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
-
-
+                
+                
                 c.from_platform_metadata(metadata)
             }
         };
-
+        
         resp
     }
-
+    
     pub fn to_platform_metadata<T>(&self, _metadata: shared::application::inputs::model_metadata::ModelMetadata) -> Result<T, ClientError>
-        where T: serde::Serialize 
+    where T: serde::Serialize 
     {
+        Err(ClientError::Unimplemented)
+    }
+}
+
+pub enum ListDatasetsClient {
+    HuggingFace(HuggingFaceClient),
+    Patra(PatraClient),
+}
+
+impl ListDatasetsClient {
+    const CAPABILITY: Capability = Capability::ListDatasets;
+}
+
+// This impl for the enum is merely to satisfy the compiler
+impl Client for ListDatasetsClient {
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    
+        fn capabilities(&self) -> Option<Vec<Capability>> { None }
+}
+
+#[async_trait::async_trait]
+impl clients::ListDatasetsClient for ListDatasetsClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn list_datasets(
+        &self,
+        request: &ListDatasetsByPlatformRequest,
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let resp: ClientJsonResponse<Value, Value> = match self {
+            ListDatasetsClient::HuggingFace(c) => {
+                if !c.has_capability(&Self::CAPABILITY) {
+                    return Err(ClientError::Unimplemented)
+                }
+
+                c.list_datasets(request).await?
+            },
+            ListDatasetsClient::Patra(c) => {
+                if !c.has_capability(&Self::CAPABILITY) {
+                    return Err(ClientError::Unimplemented)
+                }
+
+                c.list_datasets(request).await?
+            },
+        };
+
+        Ok(resp)
+    }
+}
+
+pub enum IngestDatasetClient {
+    
+}
+
+impl IngestDatasetClient {
+    const CAPABILITY: Capability = Capability::IngestDataset;
+}
+
+// This impl for the enum is merely to satisfy the compiler
+impl Client for IngestDatasetClient {
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
+}
+
+impl IngestDatasetClient {
+    pub async fn ingest_dataset(
+        &self,
+        _request: &IngestModelRequest,
+        _ingest_path: PathBuf,
+    ) -> Result<(), ClientError> {
         Err(ClientError::Unimplemented)
     }
 }
