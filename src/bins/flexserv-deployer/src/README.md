@@ -52,17 +52,6 @@ Query the Hugging Face `/models` endpoint and optionally forward every supported
   --direction=-1 \
   --limit=25 \
   --full --config
-### `test_infer_pod.sh`
-Once a deployment is live, use the `test_infer_pod.sh` helper to hit the pod endpoints directly. Provide the pod host (and optional port) via environment variables:
-
-```bash
-cd deployment/src
-BASE_HOST="c1899de2.pods.dev.develop.tapis.io" ./test_infer_pod.sh responses
-# commands: show_model | chat | chat_comp | responses | audio_trans
-```
-
-Use `--port=####` to override the port or set `BASE_URL`/`AUDIO_FILE` if you need custom values.
-
 ```
 
 ### `info`
@@ -71,6 +60,7 @@ Fetch metadata for a single repo (optional revision). Repo IDs that include a `/
 ```bash
 ./run_rest_demo.sh info 'Qwen/Qwen3-0.6B'
 ./run_rest_demo.sh info 'Qwen/Qwen3-0.6B' main
+./run_rest_demo.sh info 'openai/whisper-tiny' main
 ```
 
 ### `auth`
@@ -91,6 +81,8 @@ Trigger a FlexServ pod deployment through the REST API using a Tapis access toke
 ./run_rest_demo.sh deploy 'Qwen/Qwen3-0.6B' main
 # or specify a different auth cache
 ./run_rest_demo.sh deploy 'Qwen/Qwen3-0.6B' main --auth-file=/tmp/tapis_auth.json
+# you can deploy a audio-txt model as well
+./run_rest_demo.sh deploy 'openai/whisper-tiny' main
 ```
 
 The script posts `repo_id`, `revision`, `tenant_host`, and `tapis_token` (loaded from the auth file) to `/pod_deployment`. Check the server logs for deployment progress.
@@ -109,6 +101,20 @@ Inspect a specific deployment by ID (use an ID returned from `deploy`).
 ./run_rest_demo.sh status 123e4567-e89b-12d3-a456-426614174000
 ```
 
+
+### `test_infer_pod.sh`
+Once a deployment is live, use the `test_infer_pod.sh` helper to hit the pod endpoints directly. Provide the pod host (and optional port) via environment variables:
+
+```bash
+cd deployment/src
+BASE_HOST="c1899de2.pods.dev.develop.tapis.io" ./test_infer_pod.sh responses
+BASE_HOST="c1899de2.pods.dev.develop.tapis.io" ./test_infer_pod.sh audio_trans # if you deployed 'openai/whisper-tiny'
+# commands: show_model | chat | chat_comp | responses | audio_trans
+```
+
+Use `--port=####` to override the port or set `BASE_URL`/`AUDIO_FILE` if you need custom values.
+
+
 ### `cancel`
 Delete a running pod (plus optionally its cached volume) using the recorded deployment ID. Pass the same Tapis token you used for deployment:
 
@@ -117,6 +123,8 @@ Delete a running pod (plus optionally its cached volume) using the recorded depl
 ```
 
 Pass `--auth-file` or `--tenant` if you need to override the stored credentials.
+
+
 
 
 ## Tips

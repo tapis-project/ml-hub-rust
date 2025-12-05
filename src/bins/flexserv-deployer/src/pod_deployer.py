@@ -183,6 +183,9 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
         )
 
         volume_id = pod_request.volume_id or artifact.sha[:tenant_cfg.short_sha_id_length]
+        # if volume_id is not started with an lowercase alpha, prepend 'v' to make it valid.
+        if not volume_id[0].isalpha() or not volume_id[0].islower():
+            volume_id = f"v{volume_id}"
         computed_limit = artifact.unpacked_size_mb + artifact.archive_size_mb + self._volume_buffer_mb
         size_limit = max(pod_request.volume_size_limit, computed_limit)
         volume_spec = VolumeSpec(
@@ -363,8 +366,11 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
             "mem_limit": 15001,
             "gpus": 0,
         }
+        resolved_pod_id = req.pod_id or f"{model.sha[:8]}"
+        if not resolved_pod_id[0].isalpha() or not resolved_pod_id[0].islower():
+            resolved_pod_id = f"p{resolved_pod_id}"
         return PodSpec(
-            pod_id=req.pod_id or f"{model.sha[:8]}",
+            pod_id=resolved_pod_id,
             image=req.image,
             command=req.command,
             arguments=req.arguments,

@@ -51,7 +51,7 @@ fi
 
 BASE_HOST=${BASE_HOST:-"localhost"}
 BASE_URL=${BASE_URL:-"https://${BASE_HOST}${PORT}"}
-AUDIO_FILE=${AUDIO_FILE:-"thank_you_for_the_call.wav"}
+AUDIO_FILE=${AUDIO_FILE:-"data/thank_you_for_the_call.wav"}
 
 case "$command" in
     show_model)
@@ -77,7 +77,7 @@ case "$command" in
             echo "Audio file '$AUDIO_FILE' not found. Set AUDIO_FILE to an existing file." >&2
             exit 1
         fi
-        curl -sS -X POST "http://localhost:8000/v1/audio/transcriptions" \
+        curl -sS -X POST "$BASE_URL/v1/audio/transcriptions" \
         -F "file=@${AUDIO_FILE}" | jq .
     ;;
     *)
