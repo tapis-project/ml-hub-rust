@@ -1,0 +1,13 @@
+huggingface_hub
+orjson
+fastapi
+transformers
+torch
+uvicorn
+pydantic
+tapipy
+matplotlib
+seaborn
+plotly
+kaleido
+pandas
