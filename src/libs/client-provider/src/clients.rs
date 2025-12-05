@@ -1,5 +1,12 @@
 use async_trait;
-use clients::{Client, Capability, ClientError, ClientJsonResponse, IngestModelClient as _};
+use clients::{
+    Client, 
+    Capability, 
+    ClientError, 
+    ClientJsonResponse, 
+    IngestModelClient as _,
+    ModelMetadataConversionClient as _,
+};
 use git_lfs_client::client::GitLfsClient;
 use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
@@ -27,13 +34,9 @@ impl ListModelsClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for ListModelsClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
     
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+        fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 #[async_trait::async_trait]
@@ -77,13 +80,8 @@ impl GetModelClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for GetModelClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
-
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 #[async_trait::async_trait]
@@ -128,13 +126,8 @@ impl IngestModelClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for IngestModelClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
-
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 impl IngestModelClient {
@@ -179,13 +172,8 @@ impl IngestDatasetClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for IngestDatasetClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
-
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 impl IngestDatasetClient {
@@ -208,13 +196,8 @@ impl DiscoverModelsClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for DiscoverModelsClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
-
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 #[async_trait::async_trait]
@@ -249,13 +232,8 @@ impl PublishModelClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for PublishModelClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
-
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 #[async_trait::async_trait]
@@ -287,13 +265,8 @@ impl PublishModelMetadataClient {
 
 // This impl for the enum is merely to satisfy the compiler
 impl Client for PublishModelMetadataClient {
-    fn platform(&self) -> Option<platforms::Platform> {
-        None
-    }
-
-    fn capabilities(&self) -> Option<Vec<Capability> > {
-        None
-    }
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 #[async_trait::async_trait]
@@ -313,5 +286,44 @@ impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
         };
 
         resp
+    }
+}
+
+pub enum ModelMetadataConversionClient {
+    HuggingFace(HuggingFaceClient)
+}
+
+impl ModelMetadataConversionClient {
+    const CAPABILITY: Capability = Capability::PublishModelMetadata;
+}
+
+// This impl for the enum is merely to satisfy the compiler
+impl Client for ModelMetadataConversionClient {
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
+}
+
+impl ModelMetadataConversionClient {
+    pub fn from_platform_metadata<T>(&self, metadata: T) -> Result<shared::application::inputs::model_metadata::ModelMetadata, ClientError>
+        where T: serde::Serialize
+    {
+        let resp = match self {
+            ModelMetadataConversionClient::HuggingFace(c) => {
+                if !c.has_capability(&Self::CAPABILITY) {
+                    return Err(ClientError::Unimplemented)
+                }
+
+
+                c.from_platform_metadata(metadata)
+            }
+        };
+
+        resp
+    }
+
+    pub fn to_platform_metadata<T>(&self, _metadata: shared::application::inputs::model_metadata::ModelMetadata) -> Result<T, ClientError>
+        where T: serde::Serialize 
+    {
+        Err(ClientError::Unimplemented)
     }
 }

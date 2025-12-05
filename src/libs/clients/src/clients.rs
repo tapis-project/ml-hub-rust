@@ -6,6 +6,7 @@ use shared::presentation::http::v1::requests::discover_models;
 use shared::presentation::http::v1::requests::datasets;
 use shared::presentation::http::v1::requests::artifacts;
 use shared::domain::entities;
+use shared::application::inputs;
 use serde::Serialize;
 use async_trait;
 use strum_macros::{EnumString, EnumIter, Display};
@@ -30,7 +31,8 @@ pub enum Capability {
     IngestDataset,
     DiscoverDatasets,
     PublishDataset,
-    PublishDatasetMetadata
+    PublishDatasetMetadata,
+    ConvertModelMetadata
 }
 
 #[async_trait::async_trait]
@@ -167,6 +169,21 @@ pub trait CreateTrainingServerClient: Client {
     type Metadata: Serialize;
 
     async fn create_training_server(&self, _request: &training::CreateTrainingServerRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        return Err(ClientError::Unimplemented);
+    }
+}
+
+/// Converts platform specific metadata into MLHub model metadata
+pub trait ModelMetadataConversionClient: Client {
+    fn from_platform_metadata<T>(&self, _metadata: T) -> Result<inputs::model_metadata::ModelMetadata, ClientError>
+        where T: Serialize
+    {
+        return Err(ClientError::Unimplemented);
+    }
+
+    fn to_platform_metadata<T>(&self, _metadata: inputs::model_metadata::ModelMetadata) -> Result<T, ClientError>
+        where T: Serialize
+    {
         return Err(ClientError::Unimplemented);
     }
 }

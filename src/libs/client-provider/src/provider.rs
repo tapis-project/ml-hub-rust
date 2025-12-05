@@ -14,6 +14,7 @@ use crate::clients::{
     IngestModelClient,
     IngestDatasetClient,
     PublishModelMetadataClient,
+    ModelMetadataConversionClient,
 };
 use clients::{Client, Capability};
 
@@ -57,8 +58,7 @@ impl ClientProvider {
     }
 
     pub fn provide_list_models_client(platform_name: &str) -> Result<ListModelsClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(ListModelsClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(ListModelsClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("listing")))
@@ -66,8 +66,7 @@ impl ClientProvider {
     }
 
     pub fn provide_get_model_client(platform_name: &str) -> Result<GetModelClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(GetModelClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(GetModelClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("fetching")))
@@ -75,16 +74,14 @@ impl ClientProvider {
     }
 
     pub fn provide_discover_models_client(platform_name: &str) -> Result<DiscoverModelsClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             Platform::Patra => Ok(DiscoverModelsClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("discovery")))
         }
     }
 
     pub fn provide_ingest_model_client(platform_name: &str) -> Result<IngestModelClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             Platform::Git => Ok(IngestModelClient::Git(GitLfsClient::new())),
             Platform::Github => Ok(IngestModelClient::Github(GithubLfsClient::new())),
             Platform::HuggingFace => Ok(IngestModelClient::HuggingFace(HuggingFaceClient::new())),
@@ -93,25 +90,29 @@ impl ClientProvider {
     }
 
     pub fn provide_publish_model_client(platform_name: &str) -> Result<PublishModelClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(PublishModelClient::HuggingFace(HuggingFaceClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model publishing")))
         }
     }
 
     pub fn provide_publish_metadata_client(platform_name: &str) -> Result<PublishModelMetadataClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             Platform::Patra => Ok(PublishModelMetadataClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model publishing")))
         }
     }
 
     pub fn provide_ingest_dataset_client(platform_name: &str) -> Result<IngestDatasetClient, ClientProviderError> {
-        let platform = resolve_platform(platform_name)?;
-        match platform {
+        match resolve_platform(platform_name)? {
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("dataset ingesting")))
+        }
+    }
+
+    pub fn provide_model_metadata_conversion_client(platform_name: &str) -> Result<ModelMetadataConversionClient, ClientProviderError> {
+        match resolve_platform(platform_name)? {
+            Platform::HuggingFace => Ok(ModelMetadataConversionClient::HuggingFace(HuggingFaceClient::new())),
+            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model metadata")))
         }
     }
 }
