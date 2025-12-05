@@ -129,6 +129,6 @@ Pass `--auth-file` or `--tenant` if you need to override the stored credentials.
 
 ## Tips
 
-- Override `API_BASE_URL` when hitting a remote FastAPI instance: `API_BASE_URL=https://example.net ./run_rest_demo.sh search llama`.
-- The FastAPI server also accepts raw HTTP requests (e.g., via Postman); the demo script simply illustrates the supported parameters and payloads.
-- Logs from `run_rest_server.sh` show Hugging Face requests and deployment lifecycle messages—keep an eye there while running longer deployments.
+* No database or MQ is used in this quick-and-dirty implementation. If the server crashes unfortunately, all submitted deployment will be lost.
+* The model search/list functionality is pure wrapper of HF APIs, those are made to complete a demo but not for real and serious use. 
+
