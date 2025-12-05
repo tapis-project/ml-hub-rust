@@ -15,6 +15,8 @@ use crate::clients::{
     IngestDatasetClient,
     PublishModelMetadataClient,
     ModelMetadataConversionClient,
+    ListDatasetsClient,
+    GetDatasetClient
 };
 use clients::{Client, Capability};
 
@@ -113,6 +115,20 @@ impl ClientProvider {
         match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(ModelMetadataConversionClient::HuggingFace(HuggingFaceClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model metadata")))
+        }
+    }
+
+    pub fn provide_get_dataset_client(platform_name: &str) -> Result<GetDatasetClient, ClientProviderError> {
+        match resolve_platform(platform_name)? {
+            Platform::HuggingFace => Ok(GetDatasetClient::HuggingFace(HuggingFaceClient::new())),
+            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("listing")))
+        }
+    }
+
+    pub fn provide_list_datasets_client(platform_name: &str) -> Result<ListDatasetsClient, ClientProviderError> {
+        match resolve_platform(platform_name)? {
+            Platform::HuggingFace => Ok(ListDatasetsClient::HuggingFace(HuggingFaceClient::new())),
+            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("listing")))
         }
     }
 }

@@ -121,7 +121,7 @@ pub trait ListDatasetsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn list_datasets(&self, _request: &datasets::ListDatasetsRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn list_datasets(&self, _request: &datasets::ListDatasetsByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -131,7 +131,7 @@ pub trait GetDatasetClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn get_dataset(&self, _request: &datasets::GetDatasetRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn get_dataset(&self, _request: &datasets::GetDatasetByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

@@ -30,7 +30,9 @@ use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::presentation::http::v1::requests::headers::{AuthorizationHeaderError, Headers};
 use shared::presentation::http::v1::requests::datasets::{
-    GetDatasetRequest, IngestDatasetRequest, ListDatasetsRequest,
+    GetDatasetByPlatformRequest,
+    IngestDatasetRequest,
+    ListDatasetsByPlatformRequest,
     PublishDatasetRequest
 };
 use shared::domain::entities::{
@@ -87,7 +89,7 @@ impl Client for HuggingFaceClient {
             Capability::PublishModel,
             Capability::ListDatasets,
             Capability::GetDataset,
-            Capability::IngestDataset,
+            // Capability::IngestDataset,
             Capability::ConvertModelMetadata,
         ])
     }
@@ -236,7 +238,7 @@ impl ListDatasetsClient for HuggingFaceClient {
 
     async fn list_datasets(
         &self,
-        request: &ListDatasetsRequest,
+        request: &ListDatasetsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
         // Parse the limit from the query string
@@ -288,7 +290,7 @@ impl GetDatasetClient for HuggingFaceClient {
 
     async fn get_dataset(
         &self,
-        request: &GetDatasetRequest,
+        request: &GetDatasetByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
         let result = self

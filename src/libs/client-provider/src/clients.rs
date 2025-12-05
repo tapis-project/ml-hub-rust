@@ -18,9 +18,13 @@ use shared::presentation::http::v1::requests::models::{
     ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
+use shared::presentation::http::v1::requests::datasets::{
+    ListDatasetsByPlatformRequest,
+    GetDatasetByPlatformRequest
+};
 use shared::domain::entities::artifact::Artifact;
 use shared::domain::entities::model_metadata::ModelMetadata;
-use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use std::path::PathBuf;
 
 pub enum ListModelsClient {
@@ -307,7 +311,6 @@ impl ModelMetadataConversionClient {
 
 pub enum ListDatasetsClient {
     HuggingFace(HuggingFaceClient),
-    Patra(PatraClient),
 }
 
 impl ListDatasetsClient {
@@ -317,8 +320,7 @@ impl ListDatasetsClient {
 // This impl for the enum is merely to satisfy the compiler
 impl Client for ListDatasetsClient {
     fn platform(&self) -> Option<platforms::Platform> { None }
-    
-        fn capabilities(&self) -> Option<Vec<Capability>> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
 #[async_trait::async_trait]
@@ -337,14 +339,44 @@ impl clients::ListDatasetsClient for ListDatasetsClient {
                 }
 
                 c.list_datasets(request).await?
-            },
-            ListDatasetsClient::Patra(c) => {
+            }
+        };
+
+        Ok(resp)
+    }
+}
+
+pub enum GetDatasetClient {
+    HuggingFace(HuggingFaceClient),
+}
+
+impl GetDatasetClient {
+    const CAPABILITY: Capability = Capability::GetDataset;
+}
+
+// This impl for the enum is merely to satisfy the compiler
+impl Client for GetDatasetClient {
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
+}
+
+#[async_trait::async_trait]
+impl clients::GetDatasetClient for GetDatasetClient {
+    type Data = Value;
+    type Metadata = Value;
+
+    async fn get_dataset(
+        &self,
+        request: &GetDatasetByPlatformRequest,
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let resp: ClientJsonResponse<Value, Value> = match self {
+            GetDatasetClient::HuggingFace(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
 
-                c.list_datasets(request).await?
-            },
+                c.get_dataset(request).await?
+            }
         };
 
         Ok(resp)
