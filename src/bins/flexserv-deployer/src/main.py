@@ -23,12 +23,13 @@ app = FastAPI(title="HF Models Wrapper API")
 
 deployment_registry = DeploymentRegistry()
 
+
 # Dependency to create an HfApi client, optionally with a token
 def get_hf_api(
     hf_token: Optional[str] = Header(
         default=None,
         alias="X-HF-Token",  # custom header name, e.g. X-HF-Token: <your_token>
-    )
+    ),
 ) -> HfApi:
     # If hf_token is None, this will just use anon or env-configured token
     return HfApi(token=hf_token)
@@ -36,7 +37,9 @@ def get_hf_api(
 
 @app.get("/models")
 async def list_models(
-    search: Optional[str] = Query(None, description="Substring search on repo or username"),
+    search: Optional[str] = Query(
+        None, description="Substring search on repo or username"
+    ),
     author: Optional[str] = Query(None, description="Filter by author/org name"),
     filter: Optional[str] = Query(
         None,
@@ -119,7 +122,9 @@ async def get_model_info(
     if "/revisions/" in path_after_models:
         repo_segment, revision_segment = path_after_models.split("/revisions/", 1)
         if not repo_segment:
-            raise HTTPException(status_code=400, detail="Missing repo_id before /revisions/")
+            raise HTTPException(
+                status_code=400, detail="Missing repo_id before /revisions/"
+            )
         repo_id = repo_segment
         revision_from_path = revision_segment or None
 
@@ -146,7 +151,7 @@ def deploy_model(request: PodDeploymentRequest, api: HfApi = Depends(get_hf_api)
     )
     try:
         state = workflow.submit(request, api)
-    except Exception as exc:  
+    except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
     return state
 
@@ -172,7 +177,7 @@ def delete_deployment(deployment_id: str, payload: PodDeploymentCancelRequest):
             deployment_id,
             payload,
         )
-    except Exception as exc:  
+    except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
     return result
@@ -180,7 +185,9 @@ def delete_deployment(deployment_id: str, payload: PodDeploymentCancelRequest):
 
 @app.post("/tapis_auth", response_model=TapisAuthResponse)
 def tapis_auth(payload: TapisAuthRequest):
-    if not payload.tapis_token and (not payload.tapis_username or not payload.tapis_password):
+    if not payload.tapis_token and (
+        not payload.tapis_username or not payload.tapis_password
+    ):
         raise HTTPException(
             status_code=400,
             detail="Provide either tapis_token or both tapis_username and tapis_password",
@@ -197,13 +204,16 @@ def tapis_auth(payload: TapisAuthRequest):
         }
     else:
         try:
-            jwt = session.authenticate(payload.tapis_username, payload.tapis_password, None)
+            jwt = session.authenticate(
+                payload.tapis_username, payload.tapis_password, None
+            )
             print(type(jwt))
         except Exception as exc:
-            raise HTTPException(status_code=502, detail=f"Tapis authentication failed: {exc}")
+            raise HTTPException(
+                status_code=502, detail=f"Tapis authentication failed: {exc}"
+            )
         token_payload = {
             "access_token": jwt,
             "token_source": "password",
         }
     return TapisAuthResponse(tenant_host=payload.tenant_host, tokens=token_payload)
-

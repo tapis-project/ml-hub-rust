@@ -79,8 +79,8 @@ Trigger a FlexServ pod deployment through the REST API using a Tapis access toke
 
 ```bash
 ./run_rest_demo.sh deploy 'Qwen/Qwen3-0.6B' main
-# or specify a different auth cache
-./run_rest_demo.sh deploy 'Qwen/Qwen3-0.6B' main --auth-file=/tmp/tapis_auth.json
+# or specify a different auth cache, enforce model/cache downloading and updating
+./run_rest_demo.sh deploy 'Qwen/Qwen3-0.6B' main --auth-file=/tmp/tapis_auth.json --force-model --force-dataset
 # you can deploy a audio-txt model as well
 ./run_rest_demo.sh deploy 'openai/whisper-tiny' main
 ```
@@ -119,16 +119,13 @@ Use `--port=####` to override the port or set `BASE_URL`/`AUDIO_FILE` if you nee
 Delete a running pod (plus optionally its cached volume) using the recorded deployment ID. Pass the same Tapis token you used for deployment:
 
 ```bash
-./run_rest_demo.sh cancel 123e4567-e89b-12d3-a456-426614174000 --delete-cache
+./run_rest_demo.sh cancel 123e4567-e89b-12d3-a456-426614174000 --delete-cache 
 ```
 
 Pass `--auth-file` or `--tenant` if you need to override the stored credentials.
-
-
-
+`--delete-cache` is for removing the local model/dataset cache and also the related volume or scratch directories
 
 ## Tips
 
 * No database or MQ is used in this quick-and-dirty implementation. If the server crashes unfortunately, all submitted deployment will be lost.
 * The model search/list functionality is pure wrapper of HF APIs, those are made to complete a demo but not for real and serious use. 
-

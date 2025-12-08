@@ -129,10 +129,14 @@ case "$command" in
 
         auth_file="$AUTH_FILE_DEFAULT"
         tenant_override=""
+        force_model=false
+        force_dataset=false
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 --auth-file=*) auth_file="${1#--auth-file=}" ;;
                 --tenant=*) tenant_override="${1#--tenant=}" ;;
+                --force-model) force_model=true ;;
+                --force-dataset) force_dataset=true ;;
                 *)
                     echo "Error: unknown option '$1' for deploy command." >&2
                     usage
@@ -154,7 +158,9 @@ case "$command" in
             --arg rev "$revision" \
             --arg token "$tapis_token" \
             --arg tenant "$tenant_host" \
-            '{repo_id: $repo, revision: $rev, tenant_host: $tenant, tapis_token: $token}')
+            --argjson force_model "$force_model" \
+            --argjson force_dataset "$force_dataset" \
+            '{repo_id: $repo, revision: $rev, tenant_host: $tenant, tapis_token: $token, force_model: $force_model, force_dataset: $force_dataset}')
 
         curl -sS -X POST "${API_BASE_URL}/pod_deployment" \
             -H "Content-Type: application/json" \
@@ -209,7 +215,7 @@ case "$command" in
             --arg token "$tapis_token" \
             --arg tenant "$tenant_host" \
             --argjson delete_cache "$delete_cache" \
-            '{tapis_token: $token, tenant_host: $tenant, delete_model_cache: $delete_cache}')
+            '{tapis_token: $token, tenant_host: $tenant, delete_cache: $delete_cache}')
 
         curl -sS -X DELETE "${API_BASE_URL}/deployments/${deployment_id}" \
             -H "Content-Type: application/json" \
