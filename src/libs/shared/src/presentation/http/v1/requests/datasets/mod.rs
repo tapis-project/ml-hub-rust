@@ -9,12 +9,12 @@ use crate::presentation::http::v1::requests::artifacts::{
 };
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ListDatasetsPath {
+pub struct ListDatasetsByPlatformPath {
     pub platform: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct GetDatasetPath {
+pub struct GetDatasetByPlatformPath {
     pub platform: String,
     pub dataset_id: String
 }
@@ -37,16 +37,16 @@ pub struct PublishDatasetPath {
     pub dataset_id: String
 }
 
-pub struct ListDatasetsRequest {
+pub struct ListDatasetsByPlatformRequest {
     pub headers: Headers,
-    pub path: ListDatasetsPath,
+    pub path: ListDatasetsByPlatformPath,
     pub query: HashMap<String, String>,
     pub body: Bytes,
 }
 
-pub struct GetDatasetRequest {
+pub struct GetDatasetByPlatformRequest {
     pub headers: Headers,
-    pub path: GetDatasetPath,
+    pub path: GetDatasetByPlatformPath,
     pub query: HashMap<String, String>,
     pub body: Bytes,
 }
