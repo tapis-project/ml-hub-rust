@@ -26,6 +26,7 @@ from flexserv_deployer import (
 
 logger = logging.getLogger(__name__)
 
+
 class PodDeploymentRequest(FlexDeploymentRequest):
     volume_id: Optional[str] = None
     volume_size_limit: int = 10240
@@ -43,7 +44,6 @@ class PodDeploymentRequest(FlexDeploymentRequest):
     model_mount_path: str = "/models"
     dataset_mount_path: str = "/datasets"
     pod_id: Optional[str] = None
-    cleanup: bool = True
     poll_interval: int = 5
     extra_env: Dict[str, str] = Field(default_factory=dict)
     resources: Optional[Dict[str, int]] = None
@@ -53,11 +53,13 @@ class PodDeploymentRequest(FlexDeploymentRequest):
 class PodDeploymentCancelRequest(FlexDeploymentCancelRequest):
     pass
 
+
 @dataclass(frozen=True)
 class VolumeSpec:
     volume_id: str
     description: str
     size_limit: int
+
 
 @dataclass(frozen=True)
 class PodSpec:
@@ -70,6 +72,7 @@ class PodSpec:
     networking: Dict[str, Dict[str, str]]
     resources: Dict[str, int]
     description: str
+
 
 class VolumeManager:
     def __init__(self, tapis: Tapis) -> None:
@@ -104,6 +107,9 @@ class PodManager:
     def __init__(self, tapis: Tapis, poll_interval: int = 5) -> None:
         self.tapis = tapis
         self.poll_interval = poll_interval
+
+    def get_pod(self, pod_id: str) -> Dict:
+        return self.tapis.pods.get_pod(pod_id=pod_id)
 
     def delete_pod(self, pod_id: str) -> None:
         try:
@@ -155,6 +161,7 @@ class PodDeploymentContext:
     pod_result: Optional[Any] = None
     pod_summary: Optional[Dict[str, Any]] = None
 
+
 class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
     def __init__(
         self,
@@ -182,11 +189,17 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
             artifact_dir=artifact.archive_path.parent,
         )
 
-        volume_id = pod_request.volume_id or artifact.sha[:tenant_cfg.short_sha_id_length]
+        volume_id = (
+            pod_request.volume_id or artifact.sha[: tenant_cfg.short_sha_id_length]
+        )
         # if volume_id is not started with an lowercase alpha, prepend 'v' to make it valid.
         if not volume_id[0].isalpha() or not volume_id[0].islower():
             volume_id = f"v{volume_id}"
-        computed_limit = artifact.unpacked_size_mb + artifact.archive_size_mb + self._volume_buffer_mb
+        computed_limit = (
+            artifact.unpacked_size_mb
+            + artifact.archive_size_mb
+            + self._volume_buffer_mb
+        )
         size_limit = max(pod_request.volume_size_limit, computed_limit)
         volume_spec = VolumeSpec(
             volume_id=volume_id,
@@ -196,22 +209,30 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
 
         session = self._build_session(tenant_cfg, pod_request)
         volume_mgr = VolumeManager(session.client)
-        
+
         # check if volume exists and if the size of the file is correct.
-        # if so, we just reuse the volume. 
+        # if so, we just reuse the volume.
         # otherwise, we delete and recreate it.
         try:
             files = volume_mgr.list_files(volume_spec.volume_id)
             for f in files:
-                # TODO: we need to probably run a different template pod to get the checksum of the file in a volume. 
+                # TODO: we need to probably run a different template pod to get the checksum of the file in a volume.
                 # we can run the pod quickly to mount the volume and once the checksum is aquired, we can delete the pod.
                 # but this quick-and-dirty check should work for now.
-                if f.name == model_info.archive_name and f.size == artifact.total_archive_size_bytes:
-                    logger.info(f"Volume {volume_spec.volume_id} already has correct model file; skipping upload")
+                if (
+                    f.name == model_info.archive_name
+                    and f.size == artifact.total_archive_size_bytes
+                ):
+                    logger.info(
+                        f"Volume {volume_spec.volume_id} already has correct model file; skipping upload"
+                    )
                     self.registry.update(
                         deployment_id,
                         message="Model already present in volume; skipping upload",
-                        metadata={"volume_id": volume_spec.volume_id, "model_sha": artifact.sha},
+                        metadata={
+                            "volume_id": volume_spec.volume_id,
+                            "model_sha": artifact.sha,
+                        },
                     )
                     with self._ctx_lock:
                         self._contexts[deployment_id] = PodDeploymentContext(
@@ -220,15 +241,17 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
                             model_volume_spec=volume_spec,
                             request=pod_request,
                         )
-                    return 
+                    return
         except Exception:
             pass  # volume does not exist or cannot be accessed; proceed to create it
-        
+
         try:
-            if pod_request.cleanup:
+            if pod_request.force_model:
                 volume_mgr.delete_volume(volume_spec.volume_id)
         except Exception:
-            logger.warning(f"Failed to delete existing volume {volume_spec.volume_id}; continuing")
+            logger.warning(
+                f"Failed to delete existing volume {volume_spec.volume_id}; continuing"
+            )
             pass  # ignore errors during deletion
 
         volume_mgr.create_volume(volume_spec)
@@ -270,21 +293,30 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
         pod_mgr = PodManager(session.client, self.poll_interval)
 
         pod_spec = self._build_pod_spec(ctx, model)
-        if ctx.request.cleanup:
+        self.registry.update(
+            deployment_id,
+            message=f"Pod spec resolved, targeting pod id {pod_spec.pod_id}",
+        )
+        if ctx.request.force_model or pod_mgr.get_pod(pod_id=pod_spec.pod_id):
+            self.registry.update(
+                deployment_id,
+                message=f"target pod {pod_spec.pod_id} exists, deleting it first",
+            )
             pod_mgr.delete_pod(pod_spec.pod_id)
+
         pod_creation_result = pod_mgr.create_pod(pod_spec)
 
         pod_summary = {
-            "pod_id": pod_spec.pod_id, 
-            "tenant": ctx.tenant_cfg.tenant_host, 
-            "pod_host": f"{pod_creation_result.networking.default.url}"
+            "pod_id": pod_spec.pod_id,
+            "tenant": ctx.tenant_cfg.tenant_host,
+            "pod_host": f"{pod_creation_result.networking.default.url}",
         }
-        
+
         with self._ctx_lock:
             self._contexts[deployment_id].pod_spec = pod_spec
             self._contexts[deployment_id].pod_result = pod_creation_result
             self._contexts[deployment_id].pod_summary = pod_summary
-            
+
         self.registry.update(
             deployment_id,
             message=f"Pod {pod_spec.pod_id} created",
@@ -312,22 +344,28 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
             stage=DeploymentStage.MONITORING,
             message=f"checking status for pod {pod_spec.pod_id}",
         )
-        pod_mgr.check_status_until_ready(pod_spec.pod_id, ctx.request.success_log_marker)
+        pod_mgr.check_status_until_ready(
+            pod_spec.pod_id, ctx.request.success_log_marker
+        )
         self.registry.update(
             deployment_id,
             message=f"Pod {pod_spec.pod_id} is up and running, proceeding to smoke test",
         )
-        inference = InferenceClient(ctx.pod_summary["pod_host"], ctx.pod_spec.env.get("FLEXSERV_SECRET", ""))
+        inference = InferenceClient(
+            ctx.pod_summary["pod_host"], ctx.pod_spec.env.get("FLEXSERV_SECRET", "")
+        )
         try:
             smoke_result = inference.run_smoke_test()
             if smoke_result["status_code"] != 200:
                 self.registry.update(
                     deployment_id,
-                    stage = DeploymentStage.FAILED,
+                    stage=DeploymentStage.FAILED,
                     message="Smoke test failed",
                     metadata={"smoke_test_result": smoke_result},
                 )
-                raise RuntimeError(f"Smoke test failed with status {smoke_result['status_code']}")
+                raise RuntimeError(
+                    f"Smoke test failed with status {smoke_result['status_code']}"
+                )
             self.registry.update(
                 deployment_id,
                 stage=DeploymentStage.COMPLETED,
@@ -339,14 +377,24 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
                 self._contexts.pop(deployment_id, None)
         return {"smoke_test": smoke_result}
 
-    def _build_session(self, tenant_cfg: TenantConfig, request: "PodDeploymentRequest") -> TapisSession:
+    def _build_session(
+        self, tenant_cfg: TenantConfig, request: "PodDeploymentRequest"
+    ) -> TapisSession:
         session = TapisSession(tenant_cfg)
-        session.authenticate(request.tapis_username, request.tapis_password, request.tapis_token)
+        session.authenticate(
+            request.tapis_username, request.tapis_password, request.tapis_token
+        )
         return session
 
-    def _build_pod_spec(self, ctx: PodDeploymentContext, model: ModelArtifact) -> PodSpec:
+    def _build_pod_spec(
+        self, ctx: PodDeploymentContext, model: ModelArtifact
+    ) -> PodSpec:
         req = ctx.request
-        env = {"MODEL_HASH": model.sha,  "FLEXSERV_SECRET": req.deployment_secret, **req.extra_env}
+        env = {
+            "MODEL_HASH": model.sha,
+            "FLEXSERV_SECRET": req.deployment_secret,
+            **req.extra_env,
+        }
         volume_mounts = {
             ctx.model_volume_spec.volume_id: {
                 "type": "tapisvolume",
@@ -358,7 +406,7 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
                 "type": "tapisvolume",
                 "mount_path": req.dataset_mount_path,
             }
-        # TODO: resource estimator here. 
+        # TODO: resource estimator here.
         resources = req.resources or {
             "cpu_request": 10001,
             "cpu_limit": 10001,
@@ -392,13 +440,16 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
         if not isinstance(request, PodDeploymentRequest):
             raise TypeError("PodDeploymentWorkflow expects a PodDeploymentRequest")
         return request
-    
+
     @staticmethod
-    def _ensure_pod_cancel_request(request: FlexDeploymentCancelRequest) -> "PodDeploymentCancelRequest":
+    def _ensure_pod_cancel_request(
+        request: FlexDeploymentCancelRequest,
+    ) -> "PodDeploymentCancelRequest":
         if not isinstance(request, PodDeploymentCancelRequest):
-            raise TypeError("PodDeploymentWorkflow expects a PodDeploymentCancelRequest")
+            raise TypeError(
+                "PodDeploymentWorkflow expects a PodDeploymentCancelRequest"
+            )
         return request
-    
 
     def revoke_deployment(
         self,
@@ -408,42 +459,44 @@ class PodDeploymentWorkflow(BaseFlexDeploymentWorkflow):
         request = self._ensure_pod_cancel_request(request)
         tenant_cfg = TenantConfig(request.tenant_host)
         session = TapisSession(tenant_cfg)
-        session.authenticate(request.tapis_username, request.tapis_password, request.tapis_token)
+        session.authenticate(
+            request.tapis_username, request.tapis_password, request.tapis_token
+        )
         tapis_client = session.client
-        
+
         state = self.registry.get(deployment_id)
-        if state is None: # TODO: better exception types need to be defined.
+        if state is None:  # TODO: better exception types need to be defined.
             raise RuntimeError(f"Deployment {deployment_id} not found")
-        
+
         pod_id = state.metadata.get("pod_id")
         volume_id = state.metadata.get("volume_id")
         actions: List[str] = []
-        
+
         if pod_id:
             try:
                 tapis_client.pods.delete_pod(pod_id=pod_id)
                 actions.append(f"Pod {pod_id} deleted")
-            except Exception as exc:  
+            except Exception as exc:
                 raise RuntimeError(f"Failed to delete pod {pod_id}: {exc}")
         else:
             actions.append("No pod_id recorded; skipping pod deletion")
 
-        if request.delete_model_cache:
+        if request.delete_cache:
             if volume_id:
                 try:
                     tapis_client.pods.delete_volume(volume_id=volume_id)
                     actions.append(f"Volume {volume_id} deleted")
-                except Exception as exc:  
+                except Exception as exc:
                     raise RuntimeError(f"Failed to delete volume {volume_id}: {exc}")
             else:
                 actions.append("No volume_id recorded; skipping volume deletion")
-            
+
         self.registry.delete(deployment_id)
         actions.append("Deployment removed from registry")
 
         return {
             "deployment_id": deployment_id,
             "pod_id": pod_id,
-            "volume_id": volume_id if request.delete_model_cache else None,
+            "volume_id": volume_id if request.delete_cache else None,
             "actions": actions,
         }
