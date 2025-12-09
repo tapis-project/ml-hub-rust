@@ -53,14 +53,14 @@
     ],
     "rule_sets": [
         {
-            "name": "TransformerCompatibleOnHPC",
+            "name": "FlexServerDeployerCompatibleOnHPC",
             "rules": [
                 {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
-                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextClassification", "ImageToText"]}
+                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration", "TextClassification", "ImageToText"]}
             ]
         },
         {
-            "name": "TransformerCompatibleOnPods",
+            "name": "FlexServerDeployerCompatibleOnPods",
             "rules": [
                 {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
                 {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextClassification", "ImageToText"]},

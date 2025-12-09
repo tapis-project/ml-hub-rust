@@ -5,32 +5,32 @@
         {
             "name": "Stampede3",
             "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
-            "use_parameter_set": "Jobs"
+            "use_rule_sets": ["FlexServerDeployerCompatible", "VisiblePublic"],
+            "use_parameter_set": "TapisJobs"
         },
         {
             "name": "Frontera",
             "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
-            "use_parameter_set": "Jobs"
+            "use_rule_sets": ["FlexServerDeployerCompatible", "VisiblePublic"],
+            "use_parameter_set": "TapisJobs"
         },
         {
             "name": "LoneStar6",
             "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
-            "use_parameter_set": "Jobs"
+            "use_rule_sets": ["FlexServerDeployerCompatible", "VisiblePublic"],
+            "use_parameter_set": "TapisJobs"
         },
         {
             "name": "Vista",
             "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
-            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
-            "use_parameter_set": "Jobs"
+            "use_rule_sets": ["FlexServerDeployerCompatible", "VisiblePublic"],
+            "use_parameter_set": "TapisJobs"
         },
         {
             "name": "HPC w/ GPUs",
             "description": "Deploys a model to a user defined system",
-            "use_rule_sets": ["TransformerCompatible", "VisiblePublic"],
-            "use_parameter_set": "Jobs"
+            "use_rule_sets": ["FlexServerDeployerCompatible", "VisiblePublic"],
+            "use_parameter_set": "TapisJobs"
         },
         {
             "name": "Pods",
@@ -41,7 +41,7 @@
     ],
     "rule_sets": [
         {
-            "name": "TransformerCompatible",
+            "name": "FlexServerDeployerCompatible",
             "rules": [
                 {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
                 {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration"]}
@@ -57,7 +57,7 @@
     ],
     "parameter_sets": [
         {
-            "name": "Jobs",
+            "name": "TapisJob",
             "parameters": [
                 [
                     {"name": "X-Tapis-Token", "in": "headers"},
