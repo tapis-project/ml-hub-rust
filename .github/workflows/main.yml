@@ -2,11 +2,11 @@ name: Tapis MLHub CI
 
 on:
   push:
-    branches: [ dev, staging, main ]
+    branches: [ dev, staging, test, main ]
     tags:
       - 'v*.*.*'
   pull_request:
-    branches: [ dev, staging, main ]
+    branches: [ dev, staging, test, main ]
 
 jobs:
   Set_Image_Tag:

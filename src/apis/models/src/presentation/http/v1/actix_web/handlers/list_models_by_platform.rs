@@ -17,6 +17,8 @@ use std::collections::HashMap;
     description="List models from an external platform",
     params(
         ("platform" = Platform, Path, description = "The platform for which you want to list the models"),
+        ("limit" = Option<u32>, Query, description = "Maximum number of items to return"),
+        ("offset" = Option<u32>, Query, description = "Number of items to skip")
     ),
     responses(
         (status=200, description="Listed models", body=contracts::responses::ListModelsByPlatformResponse),
