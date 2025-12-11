@@ -1,5 +1,5 @@
-pub mod application_mappings;
-pub mod domain_mappings;
+// pub mod application_mappings;
+// pub mod domain_mappings;
 
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
@@ -10,12 +10,12 @@ use crate::presentation::http::v1::requests::models::ModelMetadata;
 use crate::presentation::http::v1::requests::filtering::ListAll;
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct GetInferenceServerDocsPath {
+pub struct GetModelServerDocsPath {
     pub inference_server_name: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct StartInferenceServerPath {
+pub struct StartModelServerPath {
     pub platform: String,
     pub inference_id: String
 }
@@ -27,7 +27,7 @@ pub struct RunInferencePath {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateInferenceServerPath {
+pub struct CreateModelServerPath {
     pub platform: String
 }
 
@@ -36,14 +36,14 @@ pub struct CreateInferencePath {
     pub inference_service_id: String
 }
 
-pub struct CreateInferenceServerRequest {
-    pub path: CreateInferenceServerPath,
+pub struct CreateModelServerRequest {
+    pub path: CreateModelServerPath,
     pub query: HashMap<String, String>,
     pub body: Bytes,
 }
 
 
-pub struct ListAllInferenceServersRequest {
+pub struct ListAllModelServersRequest {
     pub path: String,
     pub query: Option<ListAll>,
     pub body: Bytes,
@@ -55,8 +55,8 @@ pub struct CreateInferenceRequest {
     pub body: Bytes,
 }
 
-pub struct StartInferenceServerRequest {
-    pub path: StartInferenceServerPath,
+pub struct StartModelServerRequest {
+    pub path: StartModelServerPath,
     pub query: HashMap<String, String>,
     pub body: Bytes,
 }
@@ -72,8 +72,8 @@ pub type Description = String;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub enum Kind {
-    InferenceServer,
-    InferenceServerDeployment,
+    ModelServer,
+    ModelServerDeployment,
     Interface,
 }
 
@@ -215,14 +215,14 @@ pub struct ModelInterface {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
-pub enum InferenceServerInterface {
+pub enum ModelServerInterface {
     Container(ContainerInterface),
     RestApi(RestApiInterface),
     Model(ModelInterface),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InferenceServerMetadata {
+pub struct ModelServerMetadata {
     pub name: String,
     pub version: String,
     pub description: Option<Description>,
@@ -230,13 +230,16 @@ pub struct InferenceServerMetadata {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InferenceServerSpec {
-    pub interfaces: Option<Vec<InferenceServerInterface>>
+pub struct ModelServerSpec {
+    pub interfaces: Option<Vec<ModelServerInterface>>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InferenceServer {
+pub struct ModelServer {
     pub kind: Kind,
-    pub metadata: InferenceServerMetadata,
-    pub spec: InferenceServerSpec
+    pub metadata: ModelServerMetadata,
+    pub spec: ModelServerSpec
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeployModelRequest {}

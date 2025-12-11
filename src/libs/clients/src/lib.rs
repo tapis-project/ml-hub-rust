@@ -1,6 +1,12 @@
 pub mod responses;
 mod errors;
-mod clients;
+mod client;
+mod models;
+mod datasets;
+mod deployments;
 
 pub use errors::*;
-pub use clients::*;
+pub use client::*;
+pub use models::*;
+pub use datasets::*;
+pub use deployments::*;

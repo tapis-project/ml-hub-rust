@@ -1,7 +1,7 @@
 //! Contains conversions between domain entities and request and response dtos
 use crate::presentation::http::v1::requests::models::ModelMetadata as ModelMetadataDto;
-use crate::domain::entities::inference as entities;
-use crate::presentation::http::v1::requests::inference as requests;
+use crate::domain::entities::deployments as entities;
+use crate::presentation::http::v1::requests::deployments as requests;
 use crate::errors::Error;
 
 impl TryFrom<entities::Kind> for requests::Kind {
@@ -9,8 +9,8 @@ impl TryFrom<entities::Kind> for requests::Kind {
     
     fn try_from(value: entities::Kind) -> Result<Self, Self::Error> {
         match value {
-            entities::Kind::InferenceServer => Ok(Self::InferenceServer),
-            entities::Kind::InferenceServerDeployment => Ok(Self::InferenceServerDeployment),
+            entities::Kind::ModelServer => Ok(Self::ModelServer),
+            entities::Kind::ModelServerDeployment => Ok(Self::ModelServerDeployment),
             entities::Kind::Interface => Ok(Self::Interface)
         }
     }
@@ -306,39 +306,39 @@ impl TryFrom<entities::ModelInterface> for requests::ModelInterface {
         })
     }
 }
-impl TryFrom<entities::InferenceServerInterface> for requests::InferenceServerInterface {
+impl TryFrom<entities::ModelServerInterface> for requests::ModelServerInterface {
     type Error = Error;
     
-    fn try_from(value: entities::InferenceServerInterface) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::ModelServerInterface) -> Result<Self, Self::Error> {
         match value {
-            entities::InferenceServerInterface::Container(interface) => {
+            entities::ModelServerInterface::Container(interface) => {
                 let r#type = requests::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != requests::InterfaceType::Container {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Container"))
                 }
-                Ok(requests::InferenceServerInterface::Container(requests::ContainerInterface::try_from(interface)?))
+                Ok(requests::ModelServerInterface::Container(requests::ContainerInterface::try_from(interface)?))
             },
-            entities::InferenceServerInterface::RestApi(interface) => {
+            entities::ModelServerInterface::RestApi(interface) => {
                 let r#type = requests::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != requests::InterfaceType::RestApi {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::RestApi"))
                 }
-                Ok(requests::InferenceServerInterface::RestApi(requests::RestApiInterface::try_from(interface)?))
+                Ok(requests::ModelServerInterface::RestApi(requests::RestApiInterface::try_from(interface)?))
             },
-            entities::InferenceServerInterface::Model(interface) => {
+            entities::ModelServerInterface::Model(interface) => {
                 let r#type = requests::InterfaceType::try_from(interface.r#type.clone())?;
                 if r#type != requests::InterfaceType::Model {
                     return Err(Error::from_str("Inference server interface field 'type' must be of of type InterfaceType::Model"))
                 }
-                Ok(requests::InferenceServerInterface::Model(requests::ModelInterface::try_from(interface)?))
+                Ok(requests::ModelServerInterface::Model(requests::ModelInterface::try_from(interface)?))
             },
         }
     }
 }
-impl TryFrom<entities::InferenceServerMetadata> for requests::InferenceServerMetadata {
+impl TryFrom<entities::ModelServerMetadata> for requests::ModelServerMetadata {
     type Error = Error;
     
-    fn try_from(value: entities::InferenceServerMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::ModelServerMetadata) -> Result<Self, Self::Error> {
         
         Ok(Self {
             name: value.name,
@@ -348,32 +348,32 @@ impl TryFrom<entities::InferenceServerMetadata> for requests::InferenceServerMet
         })
     }
 }
-impl TryFrom<entities::InferenceServerSpec> for requests::InferenceServerSpec {
+impl TryFrom<entities::ModelServerSpec> for requests::ModelServerSpec {
     type Error = Error;
     
-    fn try_from(value: entities::InferenceServerSpec) -> Result<Self, Self::Error> {
-        let mut interfaces: Vec<requests::InferenceServerInterface> = Vec::with_capacity(1);
+    fn try_from(value: entities::ModelServerSpec) -> Result<Self, Self::Error> {
+        let mut interfaces: Vec<requests::ModelServerInterface> = Vec::with_capacity(1);
         for inferface in value.interfaces.unwrap_or(Vec::with_capacity(0)) {
-            interfaces.push(requests::InferenceServerInterface::try_from(inferface)?);
+            interfaces.push(requests::ModelServerInterface::try_from(inferface)?);
         }
         Ok(Self {
             interfaces: Some(interfaces)
         })
     }
 }
-impl TryFrom<entities::InferenceServer> for requests::InferenceServer {
+impl TryFrom<entities::ModelServer> for requests::ModelServer {
     type Error = Error;
     
-    fn try_from(value: entities::InferenceServer) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::ModelServer) -> Result<Self, Self::Error> {
         let kind = requests::Kind::try_from(value.kind)?;
-        if kind != requests::Kind::InferenceServer {
-            return Err(Error::from_str("Field 'kind' on InferenceServer must be variant Kind::InferenceServer"));
+        if kind != requests::Kind::ModelServer {
+            return Err(Error::from_str("Field 'kind' on ModelServer must be variant Kind::ModelServer"));
         }
 
         Ok(Self {
             kind,
-            metadata: requests::InferenceServerMetadata::try_from(value.metadata)?,
-            spec: requests::InferenceServerSpec::try_from(value.spec)?
+            metadata: requests::ModelServerMetadata::try_from(value.metadata)?,
+            spec: requests::ModelServerSpec::try_from(value.spec)?
         })
     }
 }

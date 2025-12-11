@@ -9,8 +9,8 @@ pub type Description = String;
 
 #[derive(PartialEq, Eq)]
 pub enum Kind {
-    InferenceServer,
-    InferenceServerDeployment,
+    ModelServer,
+    ModelServerDeployment,
     Interface,
 }
 
@@ -131,28 +131,28 @@ pub struct ModelInterface {
     pub spec: ModelInterfaceSpec,
 }
 
-pub enum InferenceServerInterface {
+pub enum ModelServerInterface {
     Container(ContainerInterface),
     RestApi(RestApiInterface),
     Model(ModelInterface),
 }
 
-pub struct InferenceServerMetadata {
+pub struct ModelServerMetadata {
     pub name: String,
     pub version: String,
     pub description: Option<Description>,
     pub labels: Labels
 }
 
-pub struct InferenceServerSpec {
-    pub interfaces: Option<Vec<InferenceServerInterface>>
+pub struct ModelServerSpec {
+    pub interfaces: Option<Vec<ModelServerInterface>>
 }
 
-pub struct InferenceServer {
+pub struct ModelServer {
     pub kind: Kind,
-    pub metadata: InferenceServerMetadata,
-    pub spec: InferenceServerSpec
+    pub metadata: ModelServerMetadata,
+    pub spec: ModelServerSpec
 }
 
 // TODO
-pub struct InferenceServerDeployment;
+pub struct ModelServerDeployment;
