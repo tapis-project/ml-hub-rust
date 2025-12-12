@@ -8,6 +8,7 @@ use mongodb::{
         to_bson,
         Bson,
     },
+    options::FindOptions,
     Database,
     Collection,
 };
@@ -104,9 +105,12 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             "$or": filters
         };
 
-        println!("{}", filter);
+        let options = FindOptions::builder()
+            .sort(doc! { "_id": 1 })
+            .limit(500)
+            .build();
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter, options)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
