@@ -132,12 +132,12 @@ jobs:
 
       # Build the image for the extract step
       - name: Build_Extract_Image
-        run: "./manage build-extract hf-model-etl -sv -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build-extract hf-model-etl -sv -t hf-model-etl-extract-image tapis/mlhub-hf-model-etl-extract -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Build the image for the transform-load step
       - name: Build_Transform_Load_Image
-        run: "./manage build-transform-load hf-model-etl -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        run: "./manage build-transform-load hf-model-etl -sv -t hf-model-etl-extract-image tapis/mlhub-hf-model-etl-transform-load -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
         if: steps.git-diff.outputs.diff
 
       # Push the all tags for the image
