@@ -142,7 +142,7 @@ jobs:
 
       # Push the all tags for the image
       - name: Push All Tags
-        run: ./manage pusht hf-model-etl -sv
+        run: ./manage pusht hf-model-etl -sv -t transform-load-img tapis/mlhub-hf-model-etl-transform-load -t extract-img tapis/mlhub-hf-model-etl-extract -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}
         if: steps.git-diff.outputs.diff
 
   Models_Migrator:
