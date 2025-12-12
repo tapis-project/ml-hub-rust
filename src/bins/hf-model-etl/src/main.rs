@@ -7,6 +7,7 @@ use hf_model_etl::database::{get_db, ClientParams};
 use hf_model_etl::bootstrap::model_metadata_service_factory;
 use shared::application::inputs::model_metadata::CreateModelMetadata;
 use client_provider::ClientProvider;
+use clients::ClientError;
 
 #[tokio::main]
 async fn main() {
@@ -82,8 +83,16 @@ async fn main() {
                         let metadata = match huggingface_client.from_platform_metadata(hf_model) {
                             Ok(m) => m,
                             Err(err) => {
-                                eprintln!("Error converting metadata: {}", err.to_string());
-                                continue
+                                match err {
+                                    ClientError::Unimplemented => {
+                                        eprintln!("Metadata client not implemented");
+                                        return 
+                                    },
+                                    _ => {
+                                        eprintln!("Error converting metadata: {}", err.to_string());
+                                        continue
+                                    }
+                                }
                             }
                         };
                         match artifact_service.create_model_metadata(CreateModelMetadata { metadata }).await {
