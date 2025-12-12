@@ -99,7 +99,7 @@ impl TryFrom<&discover_models::DiscoveryCriterion> for inputs::SearchCriterion {
         Ok(Self {
             name: value.name.clone(),
             author: value.author.clone(),
-            framework: value.framework.clone(),
+            libraries: value.libraries.clone(),
             model_type: value.model_type.clone(),
             version: value.version.clone(),
             image: value.image.clone(),
