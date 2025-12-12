@@ -505,6 +505,22 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/Platform'
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - name: offset
+          in: query
+          description: Number of items to skip
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
       responses:
         '200':
           description: Listed models
@@ -1029,7 +1045,7 @@ components:
     DiscoveryCriterion:
       type: object
       properties:
-        annotation: {}
+        annotations: {}
         author:
           type: string
           nullable: true
@@ -1045,9 +1061,6 @@ components:
           nullable: true
           items:
             type: string
-        framework:
-          type: string
-          nullable: true
         image:
           type: string
           nullable: true
@@ -1093,6 +1106,11 @@ components:
           items:
             type: string
           description: Arbitrary labels
+        libraries:
+          type: array
+          nullable: true
+          items:
+            type: string
         license:
           type: string
           nullable: true
@@ -1564,7 +1582,7 @@ components:
     ModelMetadata:
       type: object
       properties:
-        annotation: {}
+        annotations: {}
         author:
           type: string
           nullable: true

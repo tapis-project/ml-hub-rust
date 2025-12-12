@@ -567,7 +567,10 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "buildl-extract": "docker build -f {{ self.rootDir }}/Dockerfile.python -t {{ hf-model-etl-extract-image }}:{{ local }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" . && minikube image load {{ hf-model-etl-extract-image }}:{{ local }} --overwrite",
         "buildl-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust -t {{ hf-model-etl-transform-load-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ hf-model-etl-transform-load-image }}:{{ local }} --overwrite",
-        "run": "{{ self.rootDir }}/run {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')"
+        "build-extract": "docker build -f {{ self.rootDir }}/Dockerfile.python -t {{ hf-model-etl-extract-image }}:{{ tag }} .",
+        "build-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust.{{ env }} -t {{ hf-model-etl-transform-load-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" .",
+        "run": "{{ self.rootDir }}/run {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "install": "cargo install --path {{ self.rootDir }}"
       }
     }
   ]
