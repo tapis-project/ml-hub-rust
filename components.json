@@ -571,7 +571,7 @@
         "build-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust.{{ env }} -t {{ transform-load-img }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" .",
         "run": "{{ self.rootDir }}/run {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
         "install": "cargo install --path {{ self.rootDir }}",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}"
+        "pusht": "docker push --all-tags {{ extract-img }}:{{ tag }} && docker push --all-tags {{ transform-load-img }}:{{ tag }}"
       }
     }
   ]
