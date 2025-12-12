@@ -1036,7 +1036,7 @@ components:
     DiscoveryCriterion:
       type: object
       properties:
-        annotations: {}
+        annotation: {}
         author:
           type:
             - string
@@ -1617,7 +1617,7 @@ components:
     ModelMetadata:
       type: object
       properties:
-        annotations: {}
+        annotation: {}
         author:
           type:
             - string
