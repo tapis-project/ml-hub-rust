@@ -39,7 +39,7 @@ export interface DiscoveryCriterion {
      * @type {any}
      * @memberof DiscoveryCriterion
      */
-    annotation?: any | null;
+    annotations?: any | null;
     /**
      * 
      * @type {string}
@@ -64,12 +64,6 @@ export interface DiscoveryCriterion {
      * @memberof DiscoveryCriterion
      */
     finetuning_datasets?: Array<string> | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof DiscoveryCriterion
-     */
-    framework?: string | null;
     /**
      * 
      * @type {string}
@@ -136,6 +130,12 @@ export interface DiscoveryCriterion {
      * @memberof DiscoveryCriterion
      */
     keywords?: Array<string> | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DiscoveryCriterion
+     */
+    libraries?: Array<string> | null;
     /**
      * 
      * @type {string}
@@ -269,12 +269,11 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'annotation': !exists(json, 'annotation') ? undefined : json['annotation'],
+        'annotations': !exists(json, 'annotations') ? undefined : json['annotations'],
         'author': !exists(json, 'author') ? undefined : json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
-        'framework': !exists(json, 'framework') ? undefined : json['framework'],
         'image': !exists(json, 'image') ? undefined : json['image'],
         'inference_distributed': !exists(json, 'inference_distributed') ? undefined : json['inference_distributed'],
         'inference_hardware': !exists(json, 'inference_hardware') ? undefined : HardwareRequirementsFromJSON(json['inference_hardware']),
@@ -286,6 +285,7 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
         'inference_precision': !exists(json, 'inference_precision') ? undefined : json['inference_precision'],
         'inference_software_dependencies': !exists(json, 'inference_software_dependencies') ? undefined : json['inference_software_dependencies'],
         'keywords': !exists(json, 'keywords') ? undefined : json['keywords'],
+        'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
         'license': !exists(json, 'license') ? undefined : json['license'],
         'model_inputs': !exists(json, 'model_inputs') ? undefined : (json['model_inputs'] === null ? null : (json['model_inputs'] as Array<any>).map(ModelIOFromJSON)),
         'model_outputs': !exists(json, 'model_outputs') ? undefined : (json['model_outputs'] === null ? null : (json['model_outputs'] as Array<any>).map(ModelIOFromJSON)),
@@ -318,12 +318,11 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
     }
     return {
         
-        'annotation': value.annotation,
+        'annotations': value.annotations,
         'author': value.author,
         'bias_evaluation_score': value.bias_evaluation_score,
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,
-        'framework': value.framework,
         'image': value.image,
         'inference_distributed': value.inference_distributed,
         'inference_hardware': HardwareRequirementsToJSON(value.inference_hardware),
@@ -335,6 +334,7 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
         'inference_precision': value.inference_precision,
         'inference_software_dependencies': value.inference_software_dependencies,
         'keywords': value.keywords,
+        'libraries': value.libraries,
         'license': value.license,
         'model_inputs': value.model_inputs === undefined ? undefined : (value.model_inputs === null ? null : (value.model_inputs as Array<any>).map(ModelIOToJSON)),
         'model_outputs': value.model_outputs === undefined ? undefined : (value.model_outputs === null ? null : (value.model_outputs as Array<any>).map(ModelIOToJSON)),
