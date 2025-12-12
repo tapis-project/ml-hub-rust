@@ -275,7 +275,7 @@ pub enum ModelMetadataConversionClient {
 }
 
 impl ModelMetadataConversionClient {
-    const CAPABILITY: Capability = Capability::PublishModelMetadata;
+    const CAPABILITY: Capability = Capability::ConvertModelMetadata;
 }
 
 // This impl for the enum is merely to satisfy the compiler
