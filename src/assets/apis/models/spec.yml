@@ -1029,7 +1029,7 @@ components:
     DiscoveryCriterion:
       type: object
       properties:
-        annotations: {}
+        annotation: {}
         author:
           type: string
           nullable: true
@@ -1564,7 +1564,7 @@ components:
     ModelMetadata:
       type: object
       properties:
-        annotations: {}
+        annotation: {}
         author:
           type: string
           nullable: true
