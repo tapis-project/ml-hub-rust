@@ -161,7 +161,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/models-migrator/**/*
+            src/bins/models-migrator/**/*
 
       # Setup rust
       - name: Setup Rust
