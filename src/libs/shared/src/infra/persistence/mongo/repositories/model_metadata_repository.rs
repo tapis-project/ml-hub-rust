@@ -151,6 +151,8 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             .max_time(Some(Duration::from_secs(2)))
             .build();
 
+        println!("Mongo aggregate pipeline: {:#?}", &aggregate);
+
         let mut cursor = self.read_collection.aggregate(aggregate, Some(options))
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
