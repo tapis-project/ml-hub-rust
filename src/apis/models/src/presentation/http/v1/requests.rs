@@ -19,6 +19,7 @@ pub use shared::presentation::http::v1::requests::discover_models::{
     DiscoverModelsByPlatformRequest,
     DiscoverModelsRequest,
     DiscoveryCriteria,
+    DisocverModelsQueryParams,
 };
 pub use shared::presentation::http::v1::requests::artifact_ingestions::GetArtifactIngestionPath;
 pub use shared::presentation::http::v1::requests::artifact_publications::GetArtifactPublicationPath;

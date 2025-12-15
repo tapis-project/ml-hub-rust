@@ -4,7 +4,7 @@ use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
 use crate::application::inputs::model_metadata::{AssociateModelMetadata, CreateModelMetadata, UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
-use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
+use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
     ModelMetadataServiceError as ModelMetadataDomainServiceError
@@ -98,13 +98,13 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn discover_models(&self, input: DiscoverModelsInput) -> Result<Vec<ModelMetadata>, ModelMetadataServiceError> {
-        let discover_metadata = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
+    pub async fn discover_models(&self, input: DiscoverModelsInput) -> Result<DiscoverModelsOutput, ModelMetadataServiceError> {
+        let discover_models = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
        
        // Find model metadata by discovery criteria
-        let metadata_entries = retry_async(discover_metadata, &Self::REPO_RETRY_POLICY).await
+        let output = retry_async(discover_models, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ModelMetadataServiceError::RepoError(err))?;
 
-        Ok(metadata_entries)
+        Ok(output)
     }
 }

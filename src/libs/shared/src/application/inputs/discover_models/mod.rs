@@ -93,5 +93,51 @@ pub struct SearchCriterion {
 #[derive(Debug, Clone)]
 pub struct DiscoverModelsInput {
     pub confidence: Option<u8>,
-    pub criteria: Vec<SearchCriterion>
+    pub criteria: Vec<SearchCriterion>,
+    pub options: SearchOptions
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchOptions {
+    limit: Option<u16>,
+    cursor: Option<String>,
+    include_count: Option<bool>
+}
+
+impl SearchOptions {
+    pub const MAX_LIMIT: u16 = 1000;
+    pub const DEFAULT_LIMIT: u16 = 100;
+    pub const DEFAULT_INCLUDE_COUNT: bool = false;
+
+    pub fn new(limit: Option<u16>, cursor: Option<String>, include_count: Option<bool>) -> Self {
+        let limit_final = if let Some(l) = limit {
+            l.min(Self::MAX_LIMIT)
+        } else {
+            Self::DEFAULT_LIMIT
+        };
+
+        let include_count_final = if let Some(ic) = include_count {
+            ic
+        } else {
+            Self::DEFAULT_INCLUDE_COUNT
+        };
+
+        Self {
+            limit: Some(limit_final),
+            cursor,
+            include_count: Some(include_count_final)
+        }
+    }
+
+    pub fn limit(&self) -> Option<u16> {
+        return self.limit.clone()
+    }
+
+    pub fn cursor(&self) -> Option<String> {
+        return self.cursor.clone()
+    }
+
+    pub fn include_count(&self) -> Option<bool> {
+        return self.include_count.clone()
+    }
 }
