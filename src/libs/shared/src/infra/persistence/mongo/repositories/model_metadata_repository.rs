@@ -15,7 +15,7 @@ use mongodb::{
         Bson,
         Document,
     },
-    options::AggregateOptions,
+    options::{AggregateOptions, EstimatedDocumentCountOptions},
     Database,
     Collection,
 };
@@ -180,7 +180,14 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         // Return the count if requested
         let mut count: Option<i64> = None;
         if input.options.include_count().unwrap_or_else(|| false) {
-            count = Some(models.len() as i64);
+            let estimate_count_options = EstimatedDocumentCountOptions::builder()
+                .max_time(Duration::from_millis(100))
+                .build();
+
+            let returned_count = self.read_collection.estimated_document_count(estimate_count_options).await
+                .map_err(|err| ApplicationError::RepoError(format!("Error fetching count: {}", err.to_string())))?;
+            
+            count = Some(returned_count as i64)
         }
 
         return Ok(
