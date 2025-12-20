@@ -1,5 +1,4 @@
 use std::time::Duration;
-
 use crate::application::errors::ApplicationError;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::{application, domain};
@@ -134,14 +133,13 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             }
         );
 
-        // Return a limited number of docuemtns
-        if let Some(limit) = input.options.limit() {
-            aggregate.push(
-                doc! {
-                    "$limit": limit as i64
-                }
-            )
-        }
+        // Return a limited number of documents
+        let limit = input.options.limit().unwrap_or_else(|| 0);
+        aggregate.push(
+            doc! {
+                "$limit": (limit + 1) as i64
+            }
+        );
 
         // Aggregate options
         let options = AggregateOptions::builder()
@@ -151,31 +149,31 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             .max_time(Some(Duration::from_secs(2)))
             .build();
 
-        println!("Mongo aggregate pipeline: {:#?}", &aggregate);
-
         let mut cursor = self.read_collection.aggregate(aggregate, Some(options))
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-        let mut models: Vec<entities::model_metadata::ModelMetadata> = Vec::new();
+        let mut models: Vec<entities::model_metadata::ModelMetadata> = Vec::with_capacity(limit as usize);
         let mut pagination_cursor: Option<String> = None;
-        let mut last_id: Option<ObjectId> = None;
+        let mut returned_model_count = 0;
         while let Some(entry) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+            returned_model_count += 1;
             let doc: ModelMetadata = from_document(entry)
                 .map_err(|err| ApplicationError::RepoError(format!("Failed to convert Document to ModelMetadata: {}", err.to_string())))?;
-            // TODO Find a better way to get the last item's _id in the list of returned
-            // documents
-            last_id = doc._id;
-
-            let model = entities::model_metadata::ModelMetadata::try_from(doc)
-                .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
             
-            models.push(model);
+            if returned_model_count <= limit {
+                pagination_cursor = doc._id.and_then(|oid| Some(oid.to_string()));
+                let model = entities::model_metadata::ModelMetadata::try_from(doc)
+                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+                
+                models.push(model);
+            }
         }
 
-        if let Some(_id) = last_id {
-            pagination_cursor = last_id.clone().and_then(|oid| Some(oid.to_string()));
-        };
+        // Determine whether a pagination cursor should be sent back
+        if returned_model_count <= limit {
+            pagination_cursor = None;
+        }
 
         // Return the count if requested
         let mut count: Option<i64> = None;

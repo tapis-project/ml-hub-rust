@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    ModelMetadata,
+    ModelMetadataFromJSON,
+    ModelMetadataFromJSONTyped,
+    ModelMetadataToJSON,
+} from './';
+
 /**
  * 
  * @export
@@ -33,10 +40,10 @@ export interface DiscoverModelsResponse {
     metadata: object;
     /**
      * 
-     * @type {object}
+     * @type {Array<ModelMetadata>}
      * @memberof DiscoverModelsResponse
      */
-    result: object;
+    result: Array<ModelMetadata>;
     /**
      * 
      * @type {number}
@@ -63,7 +70,7 @@ export function DiscoverModelsResponseFromJSONTyped(json: any, ignoreDiscriminat
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': json['result'],
+        'result': ((json['result'] as Array<any>).map(ModelMetadataFromJSON)),
         'status': json['status'],
         'version': json['version'],
     };
@@ -80,7 +87,7 @@ export function DiscoverModelsResponseToJSON(value?: DiscoverModelsResponse | nu
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': value.result,
+        'result': ((value.result as Array<any>).map(ModelMetadataToJSON)),
         'status': value.status,
         'version': value.version,
     };

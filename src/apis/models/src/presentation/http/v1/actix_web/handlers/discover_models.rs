@@ -19,9 +19,9 @@ use serde_json::{to_value, Value, Map};
     description="Discover models on MLHub",
     request_body=DiscoveryCriteria,
     params(
-        ("limit" = String, Query, description = "The maximum number of models to return"),
-        ("cursor" = String, Query, description = "The pagination cursor for fetching the next batch of models"),
-        ("include_count" = bool, Query, description = "A flag for including the total count of available models"),
+        ("limit" = Option<u16>, Query, description = "The maximum number of models to return"),
+        ("cursor" = Option<String>, Query, description = "The pagination cursor for fetching the next batch of models"),
+        ("include_count" = Option<bool>, Query, description = "A flag for including the total count of available models"),
     ),
     responses(
         (status=200, description="Discovered models", body=contracts::responses::DiscoverModelsResponse),

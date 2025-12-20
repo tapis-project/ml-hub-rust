@@ -5,6 +5,22 @@ metadata:
 data:
   dynamic-config.yaml: |-
     http:
+      middlewares:
+        cors:
+          headers:
+            accessControlAllowOriginList:
+              - http://localhost:3000
+            accessControlAllowMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            accessControlAllowHeaders:
+              - Content-Type
+              - Authorization
+              - X-Tapis-Token
+            accessControlAllowCredentials: true
       routers:
         dashboard:
           rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
@@ -13,18 +29,26 @@ data:
         models-api:
           rule: "PathPrefix(`/models-api`)"
           service: models-api
+          middlewares:
+            - cors
         
         datasets-api:
           rule: "PathPrefix(`/datasets-api`)"
           service: datasets-api
+          middlewares:
+            - cors
 
         inference-api:
           rule: "PathPrefix(`/inference-api`)"
           service: inference-api
+          middlewares:
+            - cors
 
         training-api:
           rule: "PathPrefix(`/training-api`)"
           service: training-api
+          middlewares:
+            - cors
 
       services:
         models-api:
@@ -43,12 +67,3 @@ data:
           loadBalancer:
             servers:
             - url: http://mlhub-training-api-service:8000
-
-
-
-
-
-
-
-
-
