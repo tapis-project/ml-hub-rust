@@ -4,7 +4,6 @@ use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::{application, domain};
 use crate::domain::entities;
 use bson::oid::ObjectId;
-use bson::to_document;
 use mongodb::{
     bson::{
         doc,
@@ -133,7 +132,8 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             }
         );
 
-        // Return a limited number of documents
+        // Return a limited number of documents + 1 to help use determine
+        // if we should return a pagination cursor
         let limit = input.options.limit().unwrap_or_else(|| 0);
         aggregate.push(
             doc! {
@@ -141,7 +141,7 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             }
         );
 
-        // Aggregate options
+        // Limits batch size and max query time to ensure we don't dos the db
         let options = AggregateOptions::builder()
             .allow_disk_use(true)
             .batch_size(100)
