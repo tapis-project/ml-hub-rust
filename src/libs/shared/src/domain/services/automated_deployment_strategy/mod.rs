@@ -9,6 +9,7 @@ use thiserror::Error;
 pub enum StrategyEvaluationError {
     #[error("Error evaluation strategy: {0}")]
     RuleError(#[from] OperandError),
+    
     #[error("Model Metadata Error: {0}")]
     MetadataError(#[from] ModelMetadataError),
 }

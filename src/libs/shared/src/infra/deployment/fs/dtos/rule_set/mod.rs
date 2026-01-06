@@ -11,7 +11,6 @@ pub struct Rule {
     pub value: Value,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RuleSet {
     pub name: String,

@@ -40,7 +40,7 @@ async fn discover_models(
 
     logger.debug("discover_models operation");
 
-    let model_metadata_service = match model_metadata_service_factory(&data.db).await {
+    let model_metadata_service = match model_metadata_service_factory(&data.db, data.client_strategy_sets.clone()).await {
         Ok(s) => s,
         Err(err) => return build_error_response(500, err.to_string())
     };

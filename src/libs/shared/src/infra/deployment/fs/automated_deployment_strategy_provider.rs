@@ -62,7 +62,7 @@ impl AutomatedDeploymentStrategyProviderFs {
 }
 
 impl AutomatedDeploymentStrategyProvider for AutomatedDeploymentStrategyProviderFs {
-    fn list_all(&self) -> &Vec<ClientStrategySet> {
+    fn provide(&self) -> &Vec<ClientStrategySet> {
         &self.client_strategy_sets
     }
 }

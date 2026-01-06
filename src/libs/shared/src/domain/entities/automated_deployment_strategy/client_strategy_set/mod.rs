@@ -22,6 +22,7 @@ pub enum ClientStrategySetError {
     StrategyError(#[from] StrategyError)
 }
 
+#[derive(Clone)]
 pub struct ClientStrategySet {
     pub client: String,
     pub description: Option<String>,

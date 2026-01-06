@@ -4,10 +4,12 @@ use std::path::Path;
 use std::env;
 use serde_json::Value;
 use hf_model_etl::database::{get_db, ClientParams};
-use hf_model_etl::bootstrap::model_metadata_service_factory;
+use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
 use shared::application::inputs::model_metadata::CreateModelMetadata;
 use client_provider::ClientProvider;
 use clients::ClientError;
+use std::sync::Arc;
+use shared::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
 
 #[tokio::main]
 async fn main() {
@@ -28,7 +30,17 @@ async fn main() {
     let max_processable_entries = env::var("MAX_PROCESSABLE_ENTRIES").expect("MAX_PROCESSABLE_ENTRIES env var not set")
         .parse::<i128>().expect("Failed to parse MAX_PROCESSABLE_ENTRIES into an i128");
 
-    let artifact_service = model_metadata_service_factory(&db)
+    let deployment_strategy_provider = build_deployment_strategy_provider();
+
+    let client_strategy_sets = match deployment_strategy_provider {
+        Ok(p) => Arc::new(p.provide().clone()),
+        Err(_) => {
+            // TODO Log the error
+            Arc::new(vec![])
+        }
+    };
+
+    let artifact_service = model_metadata_service_factory(&db, client_strategy_sets)
         .await
         .expect("failed to initialize artifact service");
 

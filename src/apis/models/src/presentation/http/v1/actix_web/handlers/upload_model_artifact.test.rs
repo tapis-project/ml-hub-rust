@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod upload_artifact_test {
+    use std::sync::Arc;
     use actix_web::{test, web, App, http::header};
     use bytes::Bytes;
     use shared::infra::persistence::mongo::database::{get_db, ClientParams};
@@ -10,6 +11,7 @@ mod upload_artifact_test {
     #[ignore]
     async fn setup_test_app_state() -> web::Data<AppState> {
         web::Data::new(AppState {
+            client_strategy_sets: Arc::new(vec![]),
             db: get_db(ClientParams{
                 username: String::from("myuser"),
                 password: String::from("mypassword"),

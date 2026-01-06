@@ -1,6 +1,10 @@
+use std::sync::Arc;
+
 use mongodb::Database;
+use shared::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: Database
+    pub client_strategy_sets: Arc<Vec<ClientStrategySet>>,
+    pub db: Database,
 }

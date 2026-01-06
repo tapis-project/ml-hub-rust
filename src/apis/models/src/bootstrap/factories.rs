@@ -2,6 +2,8 @@
 //! with application-level concerns
 use mongodb::Database;
 use shared::application::errors::ApplicationError;
+use shared::application::ports::deployment::AutomatedDeploymentStrategyProvider;
+use shared::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::application::ports::repositories::{
     ArtifactRepository,
     ArtifactIngestionRepository,
@@ -16,6 +18,7 @@ use crate::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
 };
+use crate::infra::deployment::fs::automated_deployment_strategy_provider::AutomatedDeploymentStrategyProviderFs;
 use crate::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
 use std::sync::Arc;
 
@@ -49,9 +52,21 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
     ))
 }
 
-pub async fn model_metadata_service_factory(db: &Database) -> Result<ModelMetadataService, ApplicationError> {    
+pub fn build_deployment_strategy_provider() -> Result<Arc<dyn AutomatedDeploymentStrategyProvider>, ApplicationError> {
+    let provider = AutomatedDeploymentStrategyProviderFs::new();
+    match provider {
+        Ok(p) => Ok(Arc::new(p)),
+        Err(err) => Err(err)
+    }
+}
+
+pub async fn model_metadata_service_factory(
+    db: &Database,
+    client_strategy_sets: Arc<Vec<ClientStrategySet>>
+) -> Result<ModelMetadataService, ApplicationError> {    
     Ok(ModelMetadataService::new(
         model_metadata_repo_factory(db),
         artifact_repo_factory(db),
+        client_strategy_sets,
     ))
 }

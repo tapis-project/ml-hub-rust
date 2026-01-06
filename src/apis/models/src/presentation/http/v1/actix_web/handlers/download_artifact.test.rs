@@ -4,6 +4,7 @@ mod download_artifact_test {
     use bytes::Bytes;
     use std::fs;
     use std::io::Write;
+    use std::sync::Arc;
     use shared::infra::persistence::mongo::database::{get_db, ClientParams};
     use crate::bootstrap::state::AppState;
     use crate::presentation::http::v1::actix_web::handlers::download_artifact::download_artifact;
@@ -12,6 +13,7 @@ mod download_artifact_test {
     #[ignore]
     async fn setup_test_app_state() -> web::Data<AppState> {
         web::Data::new(AppState {
+            client_strategy_sets: Arc::new(vec![]),
             db: get_db(ClientParams{
                 username: String::from("myuser"),
                 password: String::from("mypassword"),
