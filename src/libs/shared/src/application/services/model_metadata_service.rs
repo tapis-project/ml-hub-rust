@@ -14,8 +14,8 @@ use crate::domain::services::{
 };
 use thiserror::Error;
 use once_cell::sync::Lazy;
-use serde_json::{Value, to_value};
-use log::{error, debug};
+use serde_json::{Value, to_value, json};
+use log::error;
 // use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
@@ -128,7 +128,9 @@ impl ModelMetadataService {
 
     fn annotate_with_deployment_strategies(&self, model: &ModelMetadata) -> ModelMetadata {
         let mut modified_annotations = serde_json::Map::new();
-
+        
+        let mut deployment_strategies: Vec<Value> = vec![];
+        
         for set in self.client_strategy_sets.iter() {
             // Ignore if there is in error resolving strategies
             match resolve_viable_strategies(model, set.strategies()) {
@@ -145,26 +147,26 @@ impl ModelMetadataService {
                             .map(|v| strategies.push(v));
                     }
                     
-                    modified_annotations.insert(
-                        "deployment_strategies".into(),
-                        Value::Array(strategies)
+                    deployment_strategies.push(
+                        json!({
+                            "client": set.client,
+                            "strategies": Value::Array(strategies)
+                        })
                     );
-                },
+                }
                 Err(err) => {
                     error!("Error resolving viable strategies for model annotation: {}", err.to_string())
                 }
             } 
         }
+
+        modified_annotations.insert("deployment_strategies".into(), Value::Array(deployment_strategies));
         
         if let Some(value) = model.annotations.clone() {
             for (k, v) in value.as_object().unwrap_or(&serde_json::Map::new()) {
                 modified_annotations.insert(k.clone(), v.clone());
             }
         };
-
-        if modified_annotations.is_empty() {
-            return model.clone()
-        } 
 
         ModelMetadata {
             annotations: Some(Value::from(modified_annotations)),
