@@ -141,7 +141,7 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             }
         );
 
-        // Limits batch size and max query time to ensure we don't dos the db
+        // Limits batch size and max query time to ensure we don't DOS the db
         let options = AggregateOptions::builder()
             .allow_disk_use(true)
             .batch_size(100)

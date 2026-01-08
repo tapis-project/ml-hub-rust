@@ -1,5 +1,4 @@
 use std::sync::Arc;
-
 use mongodb::Database;
 use shared::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
 

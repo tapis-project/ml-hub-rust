@@ -35,6 +35,8 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
+            - name: CLIENT_DEPLOYMENT_STRATEGIES_DIR
+              value: /etc/mlhub/deployment-strategies.d
           image: tapis/models-migrator:local
           imagePullPolicy: Never
           name: models-migrator
@@ -79,10 +81,16 @@ spec:
           resources: {}
           tty: true
           volumeMounts:
-              - name: nfs-server-mount
-                mountPath: /srv/mlhub/
+            - name: nfs-server-mount
+              mountPath: /srv/mlhub/
+            - name: tapis-deployment-strategies
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis.json
+              subPath: tapis.json
       volumes:
         - name: nfs-server-mount
           nfs:
             server: '{{ NFS_SERVER_COMPONENT_IP }}'
             path: /
+        - name: tapis-deployment-strategies
+          configMap:
+            name: tapis-deployment-strategies

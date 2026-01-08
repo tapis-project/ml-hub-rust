@@ -5,7 +5,7 @@ metadata:
 data:
   tapis.json: |
     {
-      "client": "TapisClient",
+      "client": "Tapis",
       "description": "A set of strategies for deploying models to HPC systems and Tapis Pods",
       "strategies": [
         {
@@ -41,7 +41,7 @@ data:
         {
           "name": "Pods",
           "description": "Deploys a model as an HTTP server in Pods",
-          "use_rule_sets": ["TransformerCompatibleOnPods"],
+          "use_rule_sets": ["FlexServerDeployerCompatible", "VisiblePublic"],
           "use_parameter_set": "Pods"
         }
       ],
@@ -54,7 +54,7 @@ data:
           ]
         },
         {
-          "name": "VisibilePublic",
+          "name": "VisiblePublic",
           "rules": [
               {"field_path": ["annotations", "canonical", "gated"], "operator": "Eq", "value": false},
               {"field_path": ["annotations", "canonical", "private"], "operator": "Eq", "value": false}
@@ -63,16 +63,14 @@ data:
       ],
       "parameter_sets": [
         {
-          "name": "TapisJob",
+          "name": "TapisJobs",
           "parameters": [
-            [
-              {"name": "X-Tapis-Token", "in": "headers"},
-              {"name": "allocation", "in": "request_body", "required": false},
-              {"name": "system_id", "in": "request_body"},
-              {"name": "jobParameterSet", "in": "request_body", "type": "object", "required": false},
-              {"name": "backend", "in": "request_body", "choices": ["vllm", "transformers"]},
-              {"name": "inference_server_config", "in": "request_body", "type": "object"}
-            ]
+            {"name": "X-Tapis-Token", "in": "headers"},
+            {"name": "allocation", "in": "request_body", "required": false},
+            {"name": "system_id", "in": "request_body"},
+            {"name": "jobParameterSet", "in": "request_body", "type": "object", "required": false},
+            {"name": "backend", "in": "request_body", "choices": ["vllm", "transformers"]},
+            {"name": "inference_server_config", "in": "request_body", "type": "object"}
           ]
         },
         {

@@ -2,12 +2,13 @@ use crate::domain::entities::model_metadata::{ModelMetadata, ModelMetadataError}
 use crate::domain::entities::automated_deployment_strategy::strategy::{Strategy, ViableStrategy};
 use crate::domain::entities::automated_deployment_strategy::rule_set::Rule;
 use crate::domain::entities::operator::{Operator, OperandError};
+use log::debug;
 use serde_json::Value;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum StrategyEvaluationError {
-    #[error("Error evaluation strategy: {0}")]
+    #[error("Error evaluating strategy rule: {0}")]
     RuleError(#[from] OperandError),
     
     #[error("Model Metadata Error: {0}")]
@@ -19,11 +20,13 @@ pub enum StrategyEvaluationError {
 /// are false, then the strategy is not valid.
 pub fn resolve_viable_strategies(model_metadata: &ModelMetadata, strategies: &Vec<Strategy>) -> Result<Vec<ViableStrategy>, StrategyEvaluationError> {
     let mut viable_strategies: Vec<ViableStrategy> = Vec::new();
+    
     for strat in strategies {
         let mut is_viable_strat = true;
+
         for rule_set in strat.rule_sets() {
             for rule in rule_set.rules.clone() {
-                is_viable_strat = is_viable_strat & evaluate_rule(model_metadata, &rule)?;
+                is_viable_strat = is_viable_strat && evaluate_rule(model_metadata, &rule)?;
                 if !is_viable_strat {
                     break
                 }

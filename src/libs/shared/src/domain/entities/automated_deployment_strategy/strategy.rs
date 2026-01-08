@@ -10,7 +10,7 @@ pub enum StrategyError {
     DuplicateRuleSetName(String)
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Strategy {
     pub name: String,
     pub description: Option<String>,
@@ -52,7 +52,7 @@ impl Strategy {
     }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ViableStrategy(Strategy);
 
 impl ViableStrategy {

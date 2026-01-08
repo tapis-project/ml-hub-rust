@@ -15,6 +15,7 @@ use crate::domain::services::{
 use thiserror::Error;
 use once_cell::sync::Lazy;
 use serde_json::{Value, to_value};
+use log::{error, debug};
 // use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
@@ -125,27 +126,33 @@ impl ModelMetadataService {
         Ok(modified_output)
     }
 
-    fn annotate_with_deployment_strategies(&self, model: &ModelMetadata) -> ModelMetadata {  
+    fn annotate_with_deployment_strategies(&self, model: &ModelMetadata) -> ModelMetadata {
         let mut modified_annotations = serde_json::Map::new();
 
         for set in self.client_strategy_sets.iter() {
             // Ignore if there is in error resolving strategies
-            // TODO log the error
-            if let Ok(viable_strategies) = resolve_viable_strategies(model, set.strategies()) {
-                let mut strategies: Vec<Value> = Vec::with_capacity(viable_strategies.len());
+            match resolve_viable_strategies(model, set.strategies()) {
+                Ok(viable_strategies) => {
+                    let mut strategies: Vec<Value> = Vec::with_capacity(viable_strategies.len());
                 
-                // Ignore strategies that cannot be converted to a Value.
-                // TODO log the error
-                for viable_strat in viable_strategies {
-                    to_value(viable_strat.into_inner())
-                        .ok()
-                        .map(|v| strategies.push(v));
+                    // Ignore strategies that cannot be converted to a Value.
+                    for viable_strat in viable_strategies {
+                        to_value(viable_strat.into_inner())
+                            .map_err(|err| {
+                                error!("Error converting viable strategy to Value: {}", err.to_string())
+                            })
+                            .ok()
+                            .map(|v| strategies.push(v));
+                    }
+                    
+                    modified_annotations.insert(
+                        "deployment_strategies".into(),
+                        Value::Array(strategies)
+                    );
+                },
+                Err(err) => {
+                    error!("Error resolving viable strategies for model annotation: {}", err.to_string())
                 }
-                
-                modified_annotations.insert(
-                    "deployment_strategies".into(),
-                    Value::Array(strategies)
-                );
             } 
         }
         

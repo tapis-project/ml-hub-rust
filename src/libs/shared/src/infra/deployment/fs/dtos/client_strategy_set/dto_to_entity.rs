@@ -1,11 +1,13 @@
 use crate::domain::entities::automated_deployment_strategy as entities;
 use crate::infra::deployment::fs::dtos;
+use log::debug;
 
 impl TryFrom<dtos::client_strategy_set::ClientStrategySet> for entities::client_strategy_set::ClientStrategySet {
     type Error = entities::client_strategy_set::ClientStrategySetError;
     
     fn try_from(value: dtos::client_strategy_set::ClientStrategySet) -> Result<Self, Self::Error> {
         let mut client_strategies: Vec<entities::client_strategy::ClientStrategy> = vec![];
+
         for strat in value.strategies {
             let maybe_strat = entities::client_strategy::ClientStrategy::try_from(strat.clone());
             match maybe_strat {

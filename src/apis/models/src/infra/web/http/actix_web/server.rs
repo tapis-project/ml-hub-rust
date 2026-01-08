@@ -7,6 +7,7 @@ use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
 use std::env;
 use actix_web::middleware::Logger;
+use shared::logging::SharedLogger;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
 
@@ -17,6 +18,8 @@ pub async fn run_server() -> std::io::Result<()> {
     
     // Initialize the logger
     env_logger::init();
+
+    let logger = SharedLogger::new();
 
     // Set the address from env vars HOST and PORT, fallback to default values
     // if values for these env vars are not defined
@@ -29,11 +32,11 @@ pub async fn run_server() -> std::io::Result<()> {
     );
 
     let deployment_strategy_provider = build_deployment_strategy_provider();
-    
+
     let client_strategy_sets = match deployment_strategy_provider {
         Ok(p) => Arc::new(p.provide().clone()),
-        Err(_) => {
-            // TODO Log the error
+        Err(err) => {
+            logger.warn(format!("Error initializing deployment strategy provider: {}", err.to_string()).as_str());
             Arc::new(vec![])
         }
     };

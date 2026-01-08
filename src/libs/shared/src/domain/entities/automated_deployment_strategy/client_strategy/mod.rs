@@ -8,6 +8,7 @@ pub enum ClientStrategyError {
     MissingRuleSets(String)
 }
 
+#[derive(Debug, Clone)]
 pub struct ClientStrategy {
     pub name: String,
     pub description: Option<String>,
