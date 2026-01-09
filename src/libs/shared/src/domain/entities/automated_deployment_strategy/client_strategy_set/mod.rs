@@ -2,7 +2,7 @@ use thiserror::Error;
 use super::rule_set::RuleSet;
 use super::strategy::{Strategy, StrategyError};
 use super::parameter_set::ParameterSet;
-use super::client_strategy::ClientStrategy;
+use super::client_strategy::{ClientStrategy, ClientStrategyError};
 
 #[derive(Error, Debug)]
 pub enum ClientStrategySetError {
@@ -16,9 +16,13 @@ pub enum ClientStrategySetError {
     InvalidClientParameterSetReference(String),
 
     #[error("{0}")]
+    ClientStrategyError(#[from] ClientStrategyError),
+
+    #[error("{0}")]
     StrategyError(#[from] StrategyError)
 }
 
+#[derive(Debug, Clone)]
 pub struct ClientStrategySet {
     pub client: String,
     pub description: Option<String>,
@@ -99,8 +103,6 @@ impl ClientStrategySet {
                 )?
             );
         }
-
-        let strategies: Vec<Strategy> = Vec::new();
 
         Ok(Self {
             client,

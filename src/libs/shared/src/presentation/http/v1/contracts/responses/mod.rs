@@ -119,7 +119,6 @@ pub struct CreateModelMetadataResponse {
 
 #[derive(ToSchema)]
 pub struct DiscoverModelsByPlatformResponse {
-    #[schema(value_type = Object)]
     pub result: Vec<Value>,
     pub status: u16,
     pub message: String,
@@ -131,7 +130,6 @@ pub struct DiscoverModelsByPlatformResponse {
 
 #[derive(ToSchema)]
 pub struct DiscoverModelsResponse {
-    #[schema(value_type = Object)]
     pub result: Vec<ModelMetadata>,
     pub status: u16,
     pub message: String,
@@ -153,7 +151,6 @@ pub struct GetModelResponse {
 
 #[derive(ToSchema)]
 pub struct ListModelsResponse {
-    #[schema(value_type = Object)]
     pub result: Vec<ModelMetadata>,
     pub status: u16,
     pub message: String,
@@ -175,7 +172,7 @@ pub struct GetModelByPlatformResponse {
 
 #[derive(ToSchema)]
 pub struct ListModelsByPlatformResponse {
-    pub result: Vec<Map<String, Value>>,
+    pub result: Vec<Value>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

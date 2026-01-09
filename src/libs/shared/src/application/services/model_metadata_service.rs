@@ -1,16 +1,21 @@
 use std::sync::Arc;
+use crate::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
+use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::services::automated_deployment_strategy::resolve_viable_strategies;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
 use crate::application::inputs::model_metadata::{AssociateModelMetadata, CreateModelMetadata, UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
-use crate::domain::entities::model_metadata::ModelMetadata as ModelMetadata;
+use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
     ModelMetadataServiceError as ModelMetadataDomainServiceError
 };
 use thiserror::Error;
 use once_cell::sync::Lazy;
+use serde_json::{Value, to_value, json};
+use log::error;
 // use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
@@ -33,7 +38,8 @@ pub enum ModelMetadataServiceError {
 
 pub struct ModelMetadataService {
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
-    artifact_repo: Arc<dyn ArtifactRepository>
+    artifact_repo: Arc<dyn ArtifactRepository>,
+    client_strategy_sets: Arc<Vec<ClientStrategySet>>,
 }
 
 impl ModelMetadataService {
@@ -46,11 +52,13 @@ impl ModelMetadataService {
 
     pub fn new(
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
-        artifact_repo: Arc<dyn ArtifactRepository>
+        artifact_repo: Arc<dyn ArtifactRepository>,
+        client_strategy_sets: Arc<Vec<ClientStrategySet>>,
     ) -> Self {
         Self {
             model_metadata_repo,
-            artifact_repo
+            artifact_repo,
+            client_strategy_sets
         }
     }
 
@@ -98,13 +106,71 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn discover_models(&self, input: DiscoverModelsInput) -> Result<Vec<ModelMetadata>, ModelMetadataServiceError> {
-        let discover_metadata = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
-       
-       // Find model metadata by discovery criteria
-        let metadata_entries = retry_async(discover_metadata, &Self::REPO_RETRY_POLICY).await
+    pub async fn discover_models(&self, input: DiscoverModelsInput) -> Result<DiscoverModelsOutput, ModelMetadataServiceError> {
+        let discover_models = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
+        
+        // Find model metadata by discovery criteria
+        let output = retry_async(discover_models, &Self::REPO_RETRY_POLICY).await
             .map_err(|err| ModelMetadataServiceError::RepoError(err))?;
 
-        Ok(metadata_entries)
+        let modified_models: Vec<_> = output.models
+            .iter()
+            .map(|m| self.annotate_with_deployment_strategies(m))
+            .collect();
+
+        let modified_output = DiscoverModelsOutput {
+            models: modified_models,
+            ..output
+        };
+        
+        Ok(modified_output)
+    }
+
+    fn annotate_with_deployment_strategies(&self, model: &ModelMetadata) -> ModelMetadata {
+        let mut modified_annotations = serde_json::Map::new();
+        
+        let mut deployment_strategies: Vec<Value> = vec![];
+        
+        for set in self.client_strategy_sets.iter() {
+            // Ignore if there is in error resolving strategies
+            match resolve_viable_strategies(model, set.strategies()) {
+                Ok(viable_strategies) => {
+                    let mut strategies: Vec<Value> = Vec::with_capacity(viable_strategies.len());
+                
+                    // Ignore strategies that cannot be converted to a Value.
+                    for viable_strat in viable_strategies {
+                        to_value(viable_strat.into_inner())
+                            .map_err(|err| {
+                                error!("Error converting viable strategy to Value: {}", err.to_string())
+                            })
+                            .ok()
+                            .map(|v| strategies.push(v));
+                    }
+                    
+                    deployment_strategies.push(
+                        json!({
+                            "client": set.client,
+                            "strategies": Value::Array(strategies)
+                        })
+                    );
+                }
+                Err(err) => {
+                    error!("Error resolving viable strategies for model annotation: {}", err.to_string())
+                }
+            } 
+        }
+
+        modified_annotations.insert("deployment_strategies".into(), Value::Array(deployment_strategies));
+        
+        if let Some(value) = model.annotations.clone() {
+            for (k, v) in value.as_object().unwrap_or(&serde_json::Map::new()) {
+                modified_annotations.insert(k.clone(), v.clone());
+            }
+        };
+
+        ModelMetadata {
+            annotations: Some(Value::from(modified_annotations)),
+            ..model.clone()
+        }
     }
 }

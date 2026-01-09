@@ -23,7 +23,7 @@ pub enum OperandError {
     InvalidRightOperand(String, String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum Operator {
     Eq,
     Neq,

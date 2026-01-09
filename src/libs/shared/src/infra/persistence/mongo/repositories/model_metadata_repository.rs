@@ -1,13 +1,19 @@
+use std::time::Duration;
 use crate::application::errors::ApplicationError;
+use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::{application, domain};
 use crate::domain::entities;
+use bson::oid::ObjectId;
 use mongodb::{
     bson::{
         doc,
+        from_document,
         Uuid,
         to_bson,
         Bson,
+        Document,
     },
+    options::{AggregateOptions, EstimatedDocumentCountOptions},
     Database,
     Collection,
 };
@@ -88,7 +94,7 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
         Ok(maybe_metadata)
     }
 
-    async fn filter_model_metadata_by_criteria(&self, input: &application::inputs::discover_models::DiscoverModelsInput) -> Result<Vec<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn filter_model_metadata_by_criteria(&self, input: &application::inputs::discover_models::DiscoverModelsInput) -> Result<DiscoverModelsOutput, ApplicationError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
             let metadata = ModelMetadataFilter::try_from(&criterion)
@@ -99,25 +105,91 @@ impl application::ports::repositories::ModelMetadataRepository for ModelMetadata
             
             filters.push(serialized_metadata);
         }
-        
-        let filter = doc! {
-            "$or": filters
+
+        let mut aggregate: Vec<Document> = vec![];
+
+        // Return documents the meet the criteria and sort by _id
+        let mut match_document_value = doc! { "$or": filters };
+
+        // Find all documents after the cursor
+        if let Some(pagination_cursor) = input.options.cursor() {
+            let oid = ObjectId::parse_str(pagination_cursor)
+                .map_err(|err| ApplicationError::RepoError(format!("Invalid cursor value: {}", err.to_string())))?;
+
+            match_document_value.extend(doc! { "_id": { "$gt": oid }});
+        }
+
+        let match_document = doc! {
+            "$match": match_document_value,
         };
 
-        println!("{}", filter);
+        aggregate.push(match_document);
+        
+        // Sort by _id by default
+        aggregate.push(
+            doc! {
+                "$sort": { "_id": 1 }
+            }
+        );
 
-        let mut cursor = self.read_collection.find(filter, None)
+        // Return a limited number of documents + 1 to help use determine
+        // if we should return a pagination cursor
+        let limit = input.options.limit().unwrap_or_else(|| 0);
+        aggregate.push(
+            doc! {
+                "$limit": (limit + 1) as i64
+            }
+        );
+
+        // Limits batch size and max query time to ensure we don't DOS the db
+        let options = AggregateOptions::builder()
+            .allow_disk_use(true)
+            .batch_size(100)
+            .comment(Some("Model Discovery Search".into()))
+            .max_time(Some(Duration::from_secs(2)))
+            .build();
+
+        let mut cursor = self.read_collection.aggregate(aggregate, Some(options))
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-        let mut metadata_entries: Vec<entities::model_metadata::ModelMetadata> = Vec::new();
+        let mut models: Vec<entities::model_metadata::ModelMetadata> = Vec::with_capacity(limit as usize);
+        let mut pagination_cursor: Option<String> = None;
+        let mut returned_model_count = 0;
         while let Some(entry) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
-            let metadata = entities::model_metadata::ModelMetadata::try_from(entry)
-                .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
-
-            metadata_entries.push(metadata)
+            returned_model_count += 1;
+            let doc: ModelMetadata = from_document(entry)
+                .map_err(|err| ApplicationError::RepoError(format!("Failed to convert Document to ModelMetadata: {}", err.to_string())))?;
+            
+            if returned_model_count <= limit {
+                pagination_cursor = doc._id.and_then(|oid| Some(oid.to_string()));
+                let model = entities::model_metadata::ModelMetadata::try_from(doc)
+                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+                
+                models.push(model);
+            }
         }
 
-        return Ok(metadata_entries)
+        // Determine whether a pagination cursor should be sent back
+        if returned_model_count <= limit {
+            pagination_cursor = None;
+        }
+
+        // Return the count if requested
+        let mut count: Option<i64> = None;
+        if input.options.include_count().unwrap_or_else(|| false) {
+            let estimate_count_options = EstimatedDocumentCountOptions::builder()
+                .max_time(Duration::from_millis(100))
+                .build();
+
+            let returned_count = self.read_collection.estimated_document_count(estimate_count_options).await
+                .map_err(|err| ApplicationError::RepoError(format!("Error fetching count: {}", err.to_string())))?;
+            
+            count = Some(returned_count as i64)
+        }
+
+        return Ok(
+            DiscoverModelsOutput { models, count, cursor: pagination_cursor }
+        )
     }
 }

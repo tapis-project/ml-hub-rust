@@ -33,10 +33,10 @@ export interface DiscoverModelsByPlatformResponse {
     metadata: object;
     /**
      * 
-     * @type {object}
+     * @type {Array<any>}
      * @memberof DiscoverModelsByPlatformResponse
      */
-    result: object;
+    result: Array<any>;
     /**
      * 
      * @type {number}

@@ -11,13 +11,13 @@ pub enum ModelMetadataError {
     InvalidFieldPath(Vec<String>),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct SystemRequirement {
     pub name: String,
     pub version: String,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Accelerator {
     pub accelerator_type: String,
     pub memory_gb: Option<i32>,
@@ -26,7 +26,7 @@ pub struct Accelerator {
     pub system_requirements: Vec<SystemRequirement>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HardwareRequirements {
     pub cpus: Option<i32>,
     pub memory_gb: Option<i32>,
@@ -35,13 +35,13 @@ pub struct HardwareRequirements {
     pub architectures: Option<Vec<String>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,

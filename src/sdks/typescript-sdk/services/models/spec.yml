@@ -346,8 +346,29 @@ paths:
     post:
       tags:
         - Models
-      description: Discover models known to MLHub
+      description: Discover models on MLHub
       operationId: discover_models
+      parameters:
+        - name: limit
+          in: query
+          description: The maximum number of models to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - name: cursor
+          in: query
+          description: The pagination cursor for fetching the next batch of models
+          required: false
+          schema:
+            type: string
+        - name: include_count
+          in: query
+          description: A flag for including the total count of available models
+          required: false
+          schema:
+            type: boolean
       requestBody:
         content:
           application/json:
@@ -997,7 +1018,8 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          type: array
+          items: {}
         status:
           type: integer
           format: int32
@@ -1018,7 +1040,9 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelMetadata'
         status:
           type: integer
           format: int32
@@ -1470,9 +1494,7 @@ components:
           type: object
         result:
           type: array
-          items:
-            type: object
-            additionalProperties: {}
+          items: {}
         status:
           type: integer
           format: int32
@@ -1493,7 +1515,9 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelMetadata'
         status:
           type: integer
           format: int32

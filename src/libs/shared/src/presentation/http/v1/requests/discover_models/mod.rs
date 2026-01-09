@@ -21,6 +21,13 @@ pub struct DiscoveryCriteria {
     pub confidence_threshold: Option<u8>,
 }
 
+#[derive(Deserialize, Debug, ToSchema)]
+pub struct DisocverModelsQueryParams {
+    pub limit: Option<u16>,
+    pub cursor: Option<String>,
+    pub include_count: Option<bool>
+}
+
 pub struct DiscoverModelsRequest {
     pub headers: Headers,
     pub query: HashMap<String, String>,

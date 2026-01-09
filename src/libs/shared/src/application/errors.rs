@@ -11,4 +11,7 @@ pub enum ApplicationError {
 
     #[error("{0}")]
     ConversionError(String),
+
+    #[error("Deployment strategy provider initialization error: {0}")]
+    DeploymentStrategyProviderInitialization(String),
 }

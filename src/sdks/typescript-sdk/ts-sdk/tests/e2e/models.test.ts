@@ -239,19 +239,23 @@ describe('Models e2e tests', async () => {
   // });
 
   let request: DiscoverModelsRequest = {
+    limit: 2,
+    includeCount: true,
     discoveryCriteria: {
       criteria: [
         {
-          "task_types": [ Task.FillMask ]
+          "libraries": ["transformers"],
+          "task_types": [ Task.TextGeneration ]
         }
       ]
     }
   };
 
-  it("should discover models that can perform the fill-mask task", async () => {
+  it("should discover 2 models that can perform the text-generation task", async () => {
     try {
         let response = await modelsApi.discoverModels(request)
         expect(response.result).to.be.an("array");
+        expect(response.result.length).to.be.eq(2);
     } catch (e) {
       expect.fail(`Test failed because an exception was thrown: ${e}`)
     }

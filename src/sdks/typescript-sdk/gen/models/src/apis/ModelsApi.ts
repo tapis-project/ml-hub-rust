@@ -50,6 +50,9 @@ export interface CreateModelMetadataRequest {
 
 export interface DiscoverModelsRequest {
     discoveryCriteria: DiscoveryCriteria;
+    limit?: number;
+    cursor?: string;
+    includeCount?: boolean;
 }
 
 export interface GetModelRequest {
@@ -104,7 +107,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Discover models known to MLHub
+     * Discover models on MLHub
      */
     async discoverModelsRaw(requestParameters: DiscoverModelsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DiscoverModelsResponse>> {
         if (requestParameters.discoveryCriteria === null || requestParameters.discoveryCriteria === undefined) {
@@ -112,6 +115,18 @@ export class ModelsApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.cursor !== undefined) {
+            queryParameters['cursor'] = requestParameters.cursor;
+        }
+
+        if (requestParameters.includeCount !== undefined) {
+            queryParameters['include_count'] = requestParameters.includeCount;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -129,7 +144,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Discover models known to MLHub
+     * Discover models on MLHub
      */
     async discoverModels(requestParameters: DiscoverModelsRequest, initOverrides?: RequestInit): Promise<DiscoverModelsResponse> {
         const response = await this.discoverModelsRaw(requestParameters, initOverrides);
