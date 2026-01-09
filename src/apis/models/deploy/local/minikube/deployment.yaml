@@ -64,6 +64,8 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
+            - name: CLIENT_DEPLOYMENT_STRATEGIES_DIR
+              value: /etc/mlhub/deployment-strategies.d
           image: tapis/models-api:local
           imagePullPolicy: Never
           name: models-api

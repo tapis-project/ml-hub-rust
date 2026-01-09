@@ -3,7 +3,6 @@ use super::rule_set::RuleSet;
 use super::strategy::{Strategy, StrategyError};
 use super::parameter_set::ParameterSet;
 use super::client_strategy::{ClientStrategy, ClientStrategyError};
-use log::debug;
 
 #[derive(Error, Debug)]
 pub enum ClientStrategySetError {
