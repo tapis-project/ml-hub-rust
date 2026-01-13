@@ -38,9 +38,9 @@ data:
           middlewares:
             - cors
 
-        inference-api:
-          rule: "PathPrefix(`/inference-api`)"
-          service: inference-api
+        deployments-api:
+          rule: "PathPrefix(`/deployments-api`)"
+          service: deployments-api
           middlewares:
             - cors
 
@@ -55,14 +55,14 @@ data:
           loadBalancer:
             servers:
             - url: http://mlhub-models-api-service:8000
+        deployments-api:
+          loadBalancer:
+            servers:
+            - url: http://mlhub-deployments-api-service:8000
         datasets-api:
           loadBalancer:
             servers:
             - url: http://mlhub-datasets-api-service:8000
-        inference-api:
-          loadBalancer:
-            servers:
-            - url: http://mlhub-inference-api-service:8000
         training-api:
           loadBalancer:
             servers:

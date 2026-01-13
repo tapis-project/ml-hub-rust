@@ -1,10 +1,16 @@
-use crate::bootstrap::state::AppState;
-use crate::infra::db::mongo::database::{get_db, ClientParams};
+use std::sync::Arc;
 use crate::presentation;
-// use shared::infra::system::Env;
-use std::env;
-use log::error;
+use crate::bootstrap::state::AppState;
+use crate::bootstrap::factories::build_deployment_strategy_provider;
+use crate::infra::persistence::mongo::database::{ClientParams, get_db};
+use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
+use std::env;
+use actix_web::middleware::Logger;
+use shared::logging::SharedLogger;
+use utoipa_swagger_ui::SwaggerUi;
+use utoipa::OpenApi;
+
 
 pub async fn run_server() -> std::io::Result<()> {
     pub const DEFAULT_PORT: u16 = 8000;
@@ -12,56 +18,57 @@ pub async fn run_server() -> std::io::Result<()> {
     
     // Initialize the logger
     env_logger::init();
-    
+
+    let logger = SharedLogger::new();
+
     // Set the address from env vars HOST and PORT, fallback to default values
     // if values for these env vars are not defined
     let addrs = (
         env::var("HOST").unwrap_or(DEFAULT_HOST.into()),
         env::var("PORT")
-        .ok()
-        .and_then(|port| port.parse::<u16>().ok())
-        .unwrap_or(DEFAULT_PORT)
+            .ok()
+            .and_then(|port| port.parse::<u16>().ok())
+            .unwrap_or(DEFAULT_PORT)
     );
 
-    // let env = Env::new()
-    //     .map_err(|err| {
-    //         error!("Shared environment initialization error: {}", err.to_string().as_str());
-    //         err 
-    //     })
-    //     .expect("Shared environment initialization error");
+    let deployment_strategy_provider = build_deployment_strategy_provider();
 
-    let inference_db: String = std::env::var("INFERENCE_DB").expect("Missing env var: INFERENCE_DB");
-    let inference_db_host: String = std::env::var("INFERENCE_DB_HOST").expect("Missing env var: INFERENCE_DB_HOST");
-    let inference_db_port: String = std::env::var("INFERENCE_DB_PORT").expect("Missing env var: INFERENCE_DB_PORT");
-    let inference_db_user: String = std::env::var("INFERENCE_DB_USER").expect("Missing env var: INFERENCE_DB_USER");
-    let inference_db_password: String = std::env::var("INFERENCE_DB_PASSWORD").expect("Missing env var: INFERENCE_DB_PASSWORD");
+    let client_strategy_sets = match deployment_strategy_provider {
+        Ok(p) => Arc::new(p.provide().clone()),
+        Err(err) => {
+            logger.warn(format!("Error initializing deployment strategy provider: {}", err.to_string()).as_str());
+            Arc::new(vec![])
+        }
+    };
 
     // Initialize AppState
     let state = AppState {
+        client_strategy_sets,
         db: get_db(ClientParams{
-            username: inference_db_user,
-            password: inference_db_password,
-            host: inference_db_host,
-            port: inference_db_port,
-            db: inference_db
+            username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
+            password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
+            host: env::var("ARTIFACTS_DB_HOST").expect("ARTIFACTS_DB_HOST env var not set"),
+            port: env::var("ARTIFACTS_DB_PORT").expect("ARTIFACTS_DB_PORT env var not set"),
+            db: env::var("ARTIFACTS_DB_NAME").expect("ARTIFACTS_DB_NAME env var not set"),
         })
             .await
             .map_err(|err| {
-                error!("Database initialization error: {}", err.to_string().as_str());
-                err 
+                panic!("Database initialization error: {}", err.to_string().as_str()); 
             })
             .expect("Datbase initialization error")
     };
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .app_data(actix_web::web::Data::new(state.clone()))
-            .service(presentation::http::v1::handlers::get_inference_server::get_inference_server)
-            .service(presentation::http::v1::handlers::list_inference_servers::list_inference_servers)
-            .service(presentation::http::v1::handlers::get_inference_server_docs::get_inference_server_docs)
-            .service(presentation::http::v1::handlers::create_inference_server::create_inference_server)
-            .service(presentation::http::v1::handlers::update_inference_server::update_inference_server)
-            .service(presentation::http::v1::handlers::delete_inference_server::delete_inference_server)
+            .service(presentation::http::v1::actix_web::handlers::index::index)
+            .service(presentation::http::v1::actix_web::handlers::list_strategies::list_strategies)
+            .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
+            .service(
+                SwaggerUi::new("deployments-api/swagger-ui/{_:.*}")
+                    .url("/deployments-api/specs/openapi.json", ApiDoc::openapi()),
+            )
     })
         .bind(addrs)?
         .run()

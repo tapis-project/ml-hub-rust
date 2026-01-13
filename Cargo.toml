@@ -2,7 +2,7 @@
 members = [
     # "src/apis/agents",
     # "src/apis/datasets",
-    # "src/apis/deployments",
+    "src/apis/deployments",
     "src/apis/models",
     "src/bins/models-migrator",
     "src/bins/artifact-ingester",

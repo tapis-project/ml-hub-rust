@@ -1,6 +1,8 @@
 mod domain_to_dto;
 mod output_to_response;
 pub mod models;
+pub mod deployment;
+pub mod operators;
 
 use serde::Serialize;
 use serde_json::Value;
