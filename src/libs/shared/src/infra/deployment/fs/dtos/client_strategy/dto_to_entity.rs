@@ -1,4 +1,4 @@
-use crate::domain::entities::automated_deployment_strategy as entities;
+use crate::domain::entities::deployment_strategy as entities;
 use crate::infra::deployment::fs::dtos;
 
 impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strategy::ClientStrategy {

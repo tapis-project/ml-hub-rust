@@ -2,7 +2,7 @@
 mod client_strategy_test {
     use serde_json::Value;
 
-    use crate::domain::entities::automated_deployment_strategy::{client_strategy::ClientStrategy, parameter_set::{Parameter, ParameterSet}, rule_set::{Rule, RuleSet}};
+    use crate::domain::entities::deployment_strategy::{client_strategy::ClientStrategy, parameter_set::{Parameter, ParameterSet}, rule_set::{Rule, RuleSet}};
 
     #[test]
     fn test_init() {

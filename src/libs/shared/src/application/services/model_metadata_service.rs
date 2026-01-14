@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
+use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::services::automated_deployment_strategy::resolve_viable_strategies;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};

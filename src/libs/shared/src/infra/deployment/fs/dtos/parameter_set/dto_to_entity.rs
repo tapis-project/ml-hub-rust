@@ -1,4 +1,4 @@
-use crate::domain::entities::automated_deployment_strategy as entities;
+use crate::domain::entities::deployment_strategy as entities;
 use crate::infra::deployment::fs::dtos;
 
 impl From<dtos::parameter_set::Parameter> for entities::parameter_set::Parameter {

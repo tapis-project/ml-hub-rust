@@ -7,6 +7,6 @@ pub mod artifact_publication;
 pub mod model_metadata;
 pub mod deployments;
 pub mod task;
-pub mod automated_deployment_strategy;
+pub mod deployment_strategy;
 pub mod operator;
 pub mod visibility;

@@ -1,4 +1,4 @@
-use crate::domain::entities::automated_deployment_strategy::rule_set as entities;
+use crate::domain::entities::deployment_strategy::rule_set as entities;
 use crate::presentation::http::v1::responses::deployment::rule_set as dtos;
 use crate::presentation::http::v1::responses::operators::Operator;
 

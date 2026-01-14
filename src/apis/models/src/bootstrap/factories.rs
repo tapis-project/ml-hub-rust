@@ -3,7 +3,7 @@
 use mongodb::Database;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::deployment::AutomatedDeploymentStrategyProvider;
-use shared::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
+use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::application::ports::repositories::{
     ArtifactRepository,
     ArtifactIngestionRepository,

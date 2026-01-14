@@ -1,4 +1,4 @@
-use crate::domain::entities::automated_deployment_strategy::strategy as entities;
+use crate::domain::entities::deployment_strategy::strategy as entities;
 use crate::presentation::http::v1::responses::deployment::{
     rule_set::RuleSet,
     parameter_set::ParameterSet,

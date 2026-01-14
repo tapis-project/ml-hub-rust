@@ -4,7 +4,7 @@
 use std::sync::Arc;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::deployment::AutomatedDeploymentStrategyProvider;
-use shared::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
+use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use shared::infra::deployment::fs::automated_deployment_strategy_provider::AutomatedDeploymentStrategyProviderFs;
 
 // #[cfg(feature = "mongodb")]

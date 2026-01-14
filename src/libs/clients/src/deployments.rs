@@ -9,7 +9,7 @@ pub trait CreateModelDeploymentClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn deploy_model(&self, _request: &deployments::DeployModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn deploy_model_with_strategy(&self, _request: &deployments::DeployModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }

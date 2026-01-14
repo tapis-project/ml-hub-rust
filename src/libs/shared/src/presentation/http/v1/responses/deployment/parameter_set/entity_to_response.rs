@@ -1,4 +1,4 @@
-use crate::domain::entities::automated_deployment_strategy::parameter_set as entities;
+use crate::domain::entities::deployment_strategy::parameter_set as entities;
 use crate::presentation::http::v1::responses::deployment::parameter_set as dtos;
 
 impl From<entities::Parameter> for dtos::Parameter {

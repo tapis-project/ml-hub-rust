@@ -1,8 +1,7 @@
 use crate::domain::entities::model_metadata::{ModelMetadata, ModelMetadataError};
-use crate::domain::entities::automated_deployment_strategy::strategy::{Strategy, ViableStrategy};
-use crate::domain::entities::automated_deployment_strategy::rule_set::Rule;
+use crate::domain::entities::deployment_strategy::strategy::{Strategy, ViableStrategy};
+use crate::domain::entities::deployment_strategy::rule_set::Rule;
 use crate::domain::entities::operator::{Operator, OperandError};
-use log::debug;
 use serde_json::Value;
 use thiserror::Error;
 

@@ -1,7 +1,7 @@
 use std::fs;
 use log::error;
 use serde_json;
-use crate::domain::entities::automated_deployment_strategy::client_strategy_set::ClientStrategySet;
+use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::infra::deployment::fs::dtos::{
     client_strategy_set::ClientStrategySet as Config
 };
