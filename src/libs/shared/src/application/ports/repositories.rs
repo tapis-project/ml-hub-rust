@@ -5,6 +5,9 @@ use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::model_metadata::{CreateModelMetadata, UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
+use crate::domain::entities::dataset_metadata::DatasetMetadata;
+use crate::application::inputs::dataset_metadata::{CreateDatasetMetadata, UpdateDatasetMetadataArtifactId};
+use crate::application::inputs::discover_datasets::DiscoverDatasetsInput;
 use uuid::Uuid;
 use async_trait::async_trait;
 
@@ -34,6 +37,15 @@ pub trait ModelMetadataRepository: Send + Sync {
     async fn filter_model_metadata_by_criteria(&self, input: &DiscoverModelsInput) -> Result<Vec<ModelMetadata>, ApplicationError>;
     async fn update_artifact_id(&self, input: &UpdateModelMetadataArtifactId) -> Result<(), ApplicationError>;
     // async fn list(&self) -> Result<Vec<ModelMetadata>, ApplicationError>;
+}
+
+#[async_trait]
+pub trait DatasetMetadataRepository: Send + Sync {
+    async fn save(&self, input: &CreateDatasetMetadata) -> Result<(), ApplicationError>;
+    async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<DatasetMetadata>, ApplicationError>;
+    async fn filter_dataset_metadata_by_criteria(&self, input: &DiscoverDatasetsInput) -> Result<Vec<DatasetMetadata>, ApplicationError>;
+    async fn update_artifact_id(&self, input: &UpdateDatasetMetadataArtifactId) -> Result<(), ApplicationError>;
+    // async fn list(&self) -> Result<Vec<DatasetMetadata>, ApplicationError>;
 }
 
 #[async_trait]

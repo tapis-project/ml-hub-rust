@@ -5,6 +5,7 @@ pub mod artifact_ingestion;
 pub mod timestamp;
 pub mod artifact_publication;
 pub mod model_metadata;
+pub mod dataset_metadata;
 pub mod inference;
 pub mod task;
 pub mod automated_deployment_strategy;

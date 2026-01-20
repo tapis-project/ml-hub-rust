@@ -9,7 +9,7 @@ use crate::application::inputs::artifact_publication::{GetModelPublicationInput,
 use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
 use crate::application::outputs::artifacts::ModelArtifactOutput;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
-use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
+use crate::application::ports::repositories::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository, DatasetMetadataRepository};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionStatus};
 use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError};
@@ -70,11 +70,16 @@ pub enum UuidOrString {
     String(String),
 }
 
+pub enum MetadataRepoVariant {
+    Single(Arc<dyn ModelMetadataRepository>),
+    Other(Arc<dyn DatasetMetadataRepository>),
+}
+
 pub struct ArtifactService {
     artifact_repo: Arc<dyn ArtifactRepository>,
     ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
     publication_repo: Arc<dyn ArtifactPublicationRepository>,
-    metadata_repo: Arc<dyn ModelMetadataRepository>,
+    metadata_repo: MetadataRepoVariant,
     event_publisher: Arc<dyn EventPublisher>,
 }
 
@@ -100,7 +105,7 @@ impl ArtifactService {
         artifact_repo: Arc<dyn ArtifactRepository>,
         ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
         publication_repo: Arc<dyn ArtifactPublicationRepository>,
-        metadata_repo: Arc<dyn ModelMetadataRepository>,
+        metadata_repo: MetadataRepoVariant,
         event_publisher: Arc<dyn EventPublisher>,
     ) -> Self {
         Self {
@@ -184,7 +189,16 @@ impl ArtifactService {
 
     pub async fn find_metadata_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<ModelMetadata>, ArtifactServiceError> {
         // Closure for fetching the metadata for this artifact
-        let find_metadata = || self.metadata_repo.find_by_artifact_id(&artifact_id);
+        // let find_metadata = || self.metadata_repo.find_by_artifact_id(&artifact_id);
+
+        let find_metadata = || {
+            match &self.metadata_repo {
+                MetadataRepoVariant::Single(repo) => repo.find_by_artifact_id(artifact_id),
+
+                // MetadataRepoVariant::Other(repo) => repo.find_by_artifact_id(artifact_id),
+                MetadataRepoVariant::Other(_) => unimplemented!("Second variant is not implemented yet!"),
+            }
+        };
 
         // Find the metadata with retries
         let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY).await

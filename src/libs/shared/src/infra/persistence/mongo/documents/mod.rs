@@ -1,5 +1,7 @@
 pub mod model_metadata;
 pub mod model_metadata_filter;
+pub mod dataset_metadata;
+pub mod dataset_metadata_filter;
 pub mod artifact;
 pub mod artifact_ingestion;
 pub mod artifact_publication;

@@ -1,0 +1,1 @@
+pub use shared::infra::messaging::rabbitmq::artifact_op_message_publisher;

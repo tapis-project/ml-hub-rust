@@ -6,6 +6,7 @@ use thiserror::Error;
 
 use super::entities::artifact::ArtifactType;
 use super::entities::model_metadata::ModelMetadata;
+use super::entities::dataset_metadata::DatasetMetadata;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
@@ -55,6 +56,33 @@ impl ModelMetadataService {
 
         if artifact.artifact_type != ArtifactType::Model {
             return Err(ModelMetadataServiceError::InvalidArtifactType);
+        }
+
+        return Ok(());
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum DatasetMetadataServiceError {
+    #[error("Cannot create metadata for an artifact that is not fully ingested")]
+    ArtifactNotReady,
+
+    #[error("Invalid artifact type. Artifact must be of type 'Dataset'")]
+    InvalidArtifactType
+}
+
+pub struct DatasetMetadataService {}
+
+impl DatasetMetadataService {
+    /// Verifies the the artifact exists and that the artifact has is fully
+    /// ingested or uploaded
+    pub fn associate_metadata_with_artifact<'a>(artifact: &Artifact, _metadata: DatasetMetadata) -> Result<(), DatasetMetadataServiceError> {
+        if !artifact.is_fully_ingested() {
+            return Err(DatasetMetadataServiceError::ArtifactNotReady);
+        }
+
+        if artifact.artifact_type != ArtifactType::Dataset {
+            return Err(DatasetMetadataServiceError::InvalidArtifactType);
         }
 
         return Ok(());

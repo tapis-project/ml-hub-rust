@@ -10,6 +10,7 @@ use crate::presentation::http::v1::requests::artifacts;
 use crate::presentation::http::v1::requests::task::Task;
 use crate::presentation::http::v1::requests::errors::PresentationError;
 use validator::Validate;
+use crate::presentation::http::v1::requests::datasets::GetDatasetByPlatformPath;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListModelsByPlatformPath {
@@ -49,6 +50,13 @@ pub struct ListModelsByPlatformRequest {
 pub struct GetModelByPlatformRequest {
     pub headers: Headers,
     pub path: GetModelByPlatformPath,
+    pub query: HashMap<String, String>,
+    pub body: bytes::Bytes,
+}
+
+pub struct GetDatasetByPlatformRequest {
+    pub headers: Headers,
+    pub path: GetDatasetByPlatformPath,
     pub query: HashMap<String, String>,
     pub body: bytes::Bytes,
 }

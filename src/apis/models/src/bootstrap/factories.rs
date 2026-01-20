@@ -8,7 +8,7 @@ use crate::application::ports::repositories::{
     ModelMetadataRepository,
     ArtifactPublicationRepository,
 };
-use crate::application::services::artifact_service::ArtifactService;
+use crate::application::services::artifact_service::{ArtifactService, MetadataRepoVariant};
 use crate::application::services::model_metadata_service::ModelMetadataService;
 use crate::infra::persistence::mongo::repositories::{
     ArtifactRepository as MongoArtifactRepository,
@@ -44,7 +44,7 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
-        model_metadata_repo_factory(db),
+        MetadataRepoVariant::Single(model_metadata_repo_factory(db)),
         Arc::new(RabbitMQArtifactOpMessagePublisher {})
     ))
 }
