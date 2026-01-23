@@ -2,9 +2,9 @@
 //! with application-level concerns
 use mongodb::Database;
 use shared::application::errors::ApplicationError;
-use shared::application::ports::deployment::AutomatedDeploymentStrategyProvider;
+use shared::application::ports::deployment::DeploymentStrategyProvider;
 use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
-use crate::application::ports::repositories::{
+use crate::application::ports::artifacts::{
     ArtifactRepository,
     ArtifactIngestionRepository,
     ModelMetadataRepository,
@@ -18,7 +18,7 @@ use crate::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
 };
-use crate::infra::deployment::fs::automated_deployment_strategy_provider::AutomatedDeploymentStrategyProviderFs;
+use crate::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
 use crate::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
 use std::sync::Arc;
 
@@ -52,8 +52,8 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
     ))
 }
 
-pub fn build_deployment_strategy_provider() -> Result<Arc<dyn AutomatedDeploymentStrategyProvider>, ApplicationError> {
-    let provider = AutomatedDeploymentStrategyProviderFs::new();
+pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategyProvider>, ApplicationError> {
+    let provider = DeploymentStrategyProviderFs::new();
     match provider {
         Ok(p) => Ok(Arc::new(p)),
         Err(err) => Err(err)

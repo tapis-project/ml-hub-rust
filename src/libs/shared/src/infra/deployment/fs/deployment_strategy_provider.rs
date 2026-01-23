@@ -6,14 +6,14 @@ use crate::infra::deployment::fs::dtos::{
     client_strategy_set::ClientStrategySet as Config
 };
 use crate::application::errors::ApplicationError;
-use crate::application::ports::deployment::AutomatedDeploymentStrategyProvider;
+use crate::application::ports::deployment::DeploymentStrategyProvider;
 use crate::constants::DEFAULT_CLIENT_DEPLOYMENT_STRATEGIES_DIR;
 
-pub struct AutomatedDeploymentStrategyProviderFs {
+pub struct DeploymentStrategyProviderFs {
     pub client_strategy_sets: Vec<ClientStrategySet>
 }
 
-impl AutomatedDeploymentStrategyProviderFs {
+impl DeploymentStrategyProviderFs {
     pub fn new() -> Result<Self, ApplicationError> {
         let config_dir = std::env::var("CLIENT_DEPLOYMENT_STRATEGIES_DIR")
             .unwrap_or(DEFAULT_CLIENT_DEPLOYMENT_STRATEGIES_DIR.into());
@@ -78,7 +78,7 @@ impl AutomatedDeploymentStrategyProviderFs {
     }
 }
 
-impl AutomatedDeploymentStrategyProvider for AutomatedDeploymentStrategyProviderFs {
+impl DeploymentStrategyProvider for DeploymentStrategyProviderFs {
     fn provide(&self) -> &Vec<ClientStrategySet> {
         &self.client_strategy_sets
     }

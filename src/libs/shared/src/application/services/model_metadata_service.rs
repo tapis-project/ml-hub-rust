@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::services::automated_deployment_strategy::resolve_viable_strategies;
+use crate::domain::services::deployment_strategy::resolve_viable_strategies;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
-use crate::application::ports::repositories::{ArtifactRepository, ModelMetadataRepository};
+use crate::application::ports::artifacts::{ArtifactRepository, ModelMetadataRepository};
 use crate::application::inputs::model_metadata::{AssociateModelMetadata, CreateModelMetadata, UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;

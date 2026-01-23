@@ -30,7 +30,6 @@ pub struct ArtifactIngestion {
     pub webhook_url: Option<String>,
 }
 
-/// Represent the ingestion
 impl ArtifactIngestion {
     pub fn new(artifact_id: Uuid, artifact_type: ArtifactType, platform: String, webhook_url: Option<String>) -> Self {
         let now = TimeStamp::now();

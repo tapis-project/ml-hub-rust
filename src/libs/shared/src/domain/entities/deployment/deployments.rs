@@ -1,12 +1,5 @@
 use crate::domain::entities::visibility::Visiblity;
 
-pub enum ModelDeploymentStatus {
-    Pending,
-    Running,
-    Finished,
-    Failed,
-}
-
 pub enum ModelDeploymentInterface {
     RestApi,
     Grpc,
@@ -21,17 +14,11 @@ pub enum Accelerator {
     }
 }
 
-
 pub struct Resources {
     pub memory_gb: u64,
     pub disk_gb: u64,
     pub cpu_millicores: u32,
     pub accelerator: Option<Accelerator>,
-}
-
-pub struct ModelReference {
-    pub name: String,
-    pub author: String,
 }
 
 pub struct ModelDeployent {

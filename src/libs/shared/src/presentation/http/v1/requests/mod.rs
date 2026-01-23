@@ -1,7 +1,7 @@
 pub mod datasets;
 pub mod models;
 pub mod training;
-pub mod deployments;
+pub mod deployment;
 pub mod artifacts;
 pub mod headers;
 pub mod filtering;

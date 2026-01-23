@@ -30,7 +30,7 @@ impl ArtifactRepository {
 }
 
 #[async_trait]
-impl application::ports::repositories::ArtifactRepository for ArtifactRepository {
+impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
     async fn save(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError> {
         let mut document = Artifact::from(artifact.clone());
         

@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod automated_deployment_strategy_test {
+mod deployment_strategy_test {
     use super::super::evaluate_rule;
     use crate::domain::entities::deployment_strategy::rule_set::Rule;
     use crate::domain::entities::model_metadata::fixtures::full_model_metadata;

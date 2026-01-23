@@ -19,7 +19,7 @@ use serde_json::{Value, to_value};
     tag="Strategies",
     description="Deploy a model to a target platform",
     request_body=DeployModelWithStrategyBody,
-    path=(
+    params(
         ("platform" = Platform, Path, description = "The target platform for the Model Deployment")
     ),
     responses(

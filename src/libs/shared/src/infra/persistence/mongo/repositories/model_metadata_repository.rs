@@ -39,7 +39,7 @@ impl ModelMetadataRepository {
 }
 
 #[async_trait]
-impl application::ports::repositories::ModelMetadataRepository for ModelMetadataRepository {
+impl application::ports::artifacts::ModelMetadataRepository for ModelMetadataRepository {
     async fn save(&self, input: &application::inputs::model_metadata::CreateModelMetadata) -> Result<(), ApplicationError> {
         let mut document = ModelMetadata::try_from(&input.metadata)
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;

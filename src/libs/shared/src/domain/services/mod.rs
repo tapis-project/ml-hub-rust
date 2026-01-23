@@ -1,4 +1,4 @@
-pub mod automated_deployment_strategy;
+pub mod deployment_strategy;
 
 use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};

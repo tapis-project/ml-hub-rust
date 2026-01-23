@@ -1,1 +1,1 @@
-pub use shared::application::inputs::inference::*;
+pub use shared::application::inputs::deployment::DeployWithStrategyInput;

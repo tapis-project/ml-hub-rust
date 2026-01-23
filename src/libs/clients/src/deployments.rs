@@ -1,15 +1,17 @@
-use shared::presentation::http::v1::requests::deployments;
-use serde::Serialize;
-use crate::errors::ClientError;
-use crate::responses::ClientJsonResponse;
+use shared::application::inputs::deployment;
 use crate::client::Client;
+use shared::domain::entities::deployment::ModelDeployment;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ModelDeployentError {
+    #[error("{0}")]
+    Unimplemented(String),
+}
 
 #[async_trait::async_trait]
 pub trait CreateModelDeploymentClient: Client {
-    type Data: Serialize;
-    type Metadata: Serialize;
-
-    async fn deploy_model_with_strategy(&self, _request: &deployments::DeployModelRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::Unimplemented);
+    async fn deploy_model_with_strategy(&self, _request: &deployment::DeployWithStrategyInput) -> Result<ModelDeployment, ModelDeployentError> {
+        return Err(ModelDeployentError::Unimplemented("Not implemented".into()));
     }
 }

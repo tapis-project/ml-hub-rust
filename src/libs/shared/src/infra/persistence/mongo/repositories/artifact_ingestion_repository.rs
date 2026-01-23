@@ -30,7 +30,7 @@ impl ArtifactIngestionRepository {
 }
 
 #[async_trait]
-impl application::ports::repositories::ArtifactIngestionRepository for ArtifactIngestionRepository {
+impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactIngestionRepository {
     async fn save(&self, ingestion: &entities::artifact_ingestion::ArtifactIngestion) -> Result<(), ApplicationError> {
         let mut document = ArtifactIngestion::from(ingestion.clone());
         

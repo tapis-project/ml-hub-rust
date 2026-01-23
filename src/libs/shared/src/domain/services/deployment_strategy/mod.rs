@@ -64,5 +64,5 @@ pub(super) fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Resu
 }
 
 #[cfg(test)]
-#[path = "automated_deployment_strategy.test.rs"]
-mod automated_deployment_strategy_test;
+#[path = "deployment_strategy.test.rs"]
+mod deployment_strategy_test;

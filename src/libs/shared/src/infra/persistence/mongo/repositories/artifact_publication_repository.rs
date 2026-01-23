@@ -31,7 +31,7 @@ impl ArtifactPublicationRepository {
 }
 
 #[async_trait]
-impl application::ports::repositories::ArtifactPublicationRepository for ArtifactPublicationRepository {
+impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPublicationRepository {
     async fn save(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ApplicationError> {
         let mut document = ArtifactPublication::from(publication);
         

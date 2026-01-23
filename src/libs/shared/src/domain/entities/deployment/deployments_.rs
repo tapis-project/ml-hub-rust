@@ -45,23 +45,6 @@ pub struct Port {
     pub protocol: Protocol
 }
 
-pub struct GpuResourceDefinition {
-    pub nvidia: Option<String>,
-    pub amd: Option<String>
-}
-
-pub struct ResourcesDefinition {
-    pub cpu: Option<String>,
-    pub disk: Option<String>,
-    pub memory: Option<String>,
-    pub gpu: Option<GpuResourceDefinition>
-}
-
-pub struct Resources {
-    pub limits: Option<ResourcesDefinition>,
-    pub requests: Option<ResourcesDefinition>
-}
-
 pub struct ContainerInterfaceSpec {
     pub image: String,
     pub ports: Option<Vec<Port>>,
