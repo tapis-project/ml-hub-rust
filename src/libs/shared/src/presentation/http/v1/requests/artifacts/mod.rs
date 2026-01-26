@@ -61,3 +61,11 @@ pub struct Artifact {
     pub include_paths: Option<Vec<String>>,
     pub exclude_paths: Option<Vec<String>>,
 }
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteArtifactRequest{
+    pub id: String,
+    pub artifact_id: String,
+    pub webhook_url: String,
+}

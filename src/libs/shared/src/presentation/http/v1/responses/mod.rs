@@ -86,3 +86,11 @@ pub struct PlatformDetails {
     pub name: Platform,
     pub capabilities: Vec<String>,
 }
+
+
+#[derive(Serialize, ToSchema)]
+pub struct DeleteArtifact {
+    pub id: String,
+    pub artifact_id: String,
+    pub webhook_url: String,
+}

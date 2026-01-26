@@ -194,3 +194,12 @@ pub struct ServerErrorResponse {
     pub metadata: Value,
     pub version: String
 }
+
+
+#[derive(ToSchema)]
+pub struct DeleteArtifact{
+    #[schema(default=200)]
+    pub result: Value,
+    pub status: u16,
+    pub message: String
+}
