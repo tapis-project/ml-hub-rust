@@ -6,8 +6,7 @@ pub(crate) mod files {
     use std::collections::hash_map::HashMap;
     use clients::{ClientError, ClientErrorScope};
     use reqwest::header::{HeaderMap, HeaderValue};
-    use reqwest::blocking::{Client, Response};
-    // use reqwest::blocking::multipart::{Form, Part};
+    use reqwest::{Client, Response};
     use serde::Deserialize;
     use serde_json::Value;
 
@@ -22,7 +21,7 @@ pub(crate) mod files {
         pub _metadata: HashMap<String, Value>
     }
 
-    pub fn mkdir(tenant: String, system_id: String, path: String, token: Option<String>) -> Result<Response, ClientError> {
+    pub async fn mkdir(tenant: String, system_id: String, path: String, token: Option<String>) -> Result<Response, ClientError> {
         let client = Client::new();
 
         let url = build_operation_url(
@@ -56,6 +55,7 @@ pub(crate) mod files {
         // Add token header
         request.headers(headers)
             .send()
+            .await
             .map_err(|err| {
                 let msg = err.to_string();
                 if err.is_body() {

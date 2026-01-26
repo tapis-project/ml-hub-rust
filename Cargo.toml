@@ -17,7 +17,7 @@ members = [
     "src/libs/s3-client",
     "src/libs/shared",
     "src/libs/huggingface-tasks",
-    # "src/libs/tacc-tapis-client"
+    "src/libs/tapis-client",
     "src/sdks/agntcy-sdk",
     "src/bins/hf-model-etl",
 ]

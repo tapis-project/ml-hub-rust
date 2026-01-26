@@ -7,9 +7,9 @@ use shared::domain::entities::deployment_strategy::client_strategy_set::ClientSt
 use crate::application::ports::artifacts::{
     ArtifactRepository,
     ArtifactIngestionRepository,
-    ModelMetadataRepository,
     ArtifactPublicationRepository,
 };
+use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::services::artifact_service::ArtifactService;
 use crate::application::services::model_metadata_service::ModelMetadataService;
 use crate::infra::persistence::mongo::repositories::{
@@ -48,7 +48,12 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
         model_metadata_repo_factory(db),
-        Arc::new(RabbitMQArtifactOpMessagePublisher {})
+        Arc::new(RabbitMQArtifactOpMessagePublisher {
+            host: std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables"),
+            port: std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables"),
+            username: std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables"),
+            password: std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables"),
+        })
     ))
 }
 

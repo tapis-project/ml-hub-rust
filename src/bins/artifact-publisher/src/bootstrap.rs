@@ -6,8 +6,8 @@ use shared::application::ports::artifacts::{
     ArtifactRepository,
     ArtifactIngestionRepository,
     ArtifactPublicationRepository,
-    ModelMetadataRepository,
 };
+use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::artifact_service::ArtifactService;
 use shared::infra::persistence::mongo::repositories::{
     ArtifactRepository as MongoArtifactRepository,
@@ -40,6 +40,11 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
         model_metadata_repo_factory(db),
-        Arc::new(RabbitMQArtifactOpMessagePublisher {})
+        Arc::new(RabbitMQArtifactOpMessagePublisher {
+            host: std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables"),
+            port: std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables"),
+            username: std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables"),
+            password: std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables"),
+        })
     ))
 }

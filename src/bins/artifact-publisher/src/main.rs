@@ -24,7 +24,7 @@ use uuid::Uuid;
 use client_provider::ClientProvider;
 use shared::domain::entities::artifact_publication::ArtifactPublicationStatus;
 use shared::domain::entities::artifact::ArtifactType;
-use shared::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
+use shared::infra::messaging::rabbitmq::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::infra::system::Env;
 use shared::constants::ARTIFACT_PUBLICATION_DIR_NAME;

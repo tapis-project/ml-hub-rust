@@ -4,14 +4,14 @@ use shared::domain::entities::deployment::ModelDeployment;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ModelDeployentError {
+pub enum ModelDeploymentError {
     #[error("{0}")]
     Unimplemented(String),
 }
 
 #[async_trait::async_trait]
-pub trait CreateModelDeploymentClient: Client {
-    async fn deploy_model_with_strategy(&self, _request: &deployment::DeployWithStrategyInput) -> Result<ModelDeployment, ModelDeployentError> {
-        return Err(ModelDeployentError::Unimplemented("Not implemented".into()));
+pub trait ModelDeploymentClient: Client {
+    async fn deploy_model_with_strategy(&self, _input: &deployment::DeployWithStrategyInput, _provisioner: ()) -> Result<ModelDeployment, ModelDeploymentError> {
+        return Err(ModelDeploymentError::Unimplemented("Not implemented".into()));
     }
 }

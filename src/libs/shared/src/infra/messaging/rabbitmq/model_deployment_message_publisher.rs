@@ -29,24 +29,23 @@ pub enum ArtifactOpMessagePublisherError {
     AmqpError(#[from] amqprs::error::Error)
 }
 
-pub struct RabbitMQArtifactOpMessagePublisher {
-    pub host: String,
-    pub port: String,
-    pub username: String,
-    pub password: String,
+pub struct RabbitMQModelDeploymentMessagePublisher {
+    host: String,
+    port: String,
+    username: String,
+    password: String,
 }
 
-impl RabbitMQArtifactOpMessagePublisher {
-    pub fn new(host: String, port: String, username: String, password: String) -> Self {
+impl RabbitMQModelDeploymentMessagePublisher {
+    pub fn new() -> Self {
         Self {
-            host,
-            port,
-            username,
-            password
+            host: std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables"),
+            port: std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables"),
+            username: std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables"),
+            password: std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables"),
         }
     }
 }
-
 fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherError> {
     match event {
         Event::IngestArtifactEvent(payload) => {
@@ -71,7 +70,7 @@ fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherE
 
 
 #[async_trait]
-impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
+impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
     async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
         let payload = get_serialized_event_payload(&event)?;
 

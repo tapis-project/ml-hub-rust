@@ -3,7 +3,8 @@
 use mongodb::Database;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::deployment::DeploymentStrategyProvider;
-use shared::application::ports::artifacts::{ModelMetadataRepository, ArtifactRepository};
+use shared::application::ports::artifacts::ArtifactRepository;
+use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;

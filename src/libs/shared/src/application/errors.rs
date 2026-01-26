@@ -10,6 +10,9 @@ pub enum ApplicationError {
     PublisherError(#[from] EventPublisherError),
 
     #[error("{0}")]
+    DomainError(String),
+
+    #[error("{0}")]
     ConversionError(String),
 
     #[error("Deployment strategy provider initialization error: {0}")]

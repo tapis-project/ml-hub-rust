@@ -10,15 +10,20 @@ use async_trait;
 use platforms::Platform;
 use serde_json::Value;
 use clients::{
-    Capability, Client, ClientError, ClientJsonResponse, PublishModelClient
-    // ClientErrorScope
+    Capability,
+    Client,
+    ClientError,
+    ClientJsonResponse,
+    ModelDeploymentClient,
+    ModelDeploymentError,
 };
 use shared::domain::entities::{
     artifact::Artifact,
     model_metadata::ModelMetadata
 };
-use shared::presentation::http::v1::requests::artifacts;
+use shared::domain::entities::deployment::ModelDeployment;
 use shared::logging::SharedLogger;
+use shared::application::inputs::deployment;
 
 #[derive(Debug)]
 pub struct TapisClient {
@@ -37,12 +42,9 @@ impl Client for TapisClient {
 }
 
 #[async_trait::async_trait]
-impl PublishModelClient for TapisClient {
-    type Data = Value;
-    type Metadata = Value;
-
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, metadata: &ModelMetadata, request: &artifacts::PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Err(ClientError::Unimplemented);
+impl ModelDeploymentClient for TapisClient {
+    async fn deploy_model_with_strategy(&self, _input: &deployment::DeployWithStrategyInput, _provisioner: ()) -> Result<ModelDeployment, ModelDeploymentError> {
+        return Err(ModelDeploymentError::Unimplemented("Not implemented".into()));
     }
 }
 

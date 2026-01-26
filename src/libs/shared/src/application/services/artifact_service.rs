@@ -9,7 +9,8 @@ use crate::application::inputs::artifact_publication::{GetModelPublicationInput,
 use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
 use crate::application::outputs::artifacts::ModelArtifactOutput;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
-use crate::application::ports::artifacts::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository, ModelMetadataRepository};
+use crate::application::ports::artifacts::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository};
+use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionStatus};
 use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError};

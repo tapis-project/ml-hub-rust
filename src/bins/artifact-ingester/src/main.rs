@@ -25,7 +25,7 @@ use client_provider::ClientProvider;
 use shared::constants::ARTIFACT_INGEST_DIR_NAME;
 use shared::domain::entities::artifact_ingestion::ArtifactIngestionStatus;
 use shared::domain::entities::artifact::ArtifactType;
-use shared::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
+use shared::infra::messaging::rabbitmq::constants::{ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_INGESTION_QUEUE, ARTIFACT_INGESTION_ROUTING_KEY};
 use shared::presentation::http::v1::requests::models::IngestModelRequest;
 use shared::infra::system::Env;
 // use shared::datasets::presentation::http::v1::requests::IngestDatasetRequest;
