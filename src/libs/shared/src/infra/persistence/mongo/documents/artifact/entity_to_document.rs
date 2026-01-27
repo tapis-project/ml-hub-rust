@@ -30,8 +30,6 @@ impl From<entities::artifact::Artifact> for documents::artifact::Artifact {
     }
 }
 
-
-
 impl TryFrom<entities::artifact::Artifact> for documents::artifact::UpdateArtifactPathRequest {
     type Error = ApplicationError;
 

@@ -8,10 +8,7 @@ use crate::infra::messaging::rabbitmq::helpers::{
     get_exchange,
     get_routing_key,
     amqp_connection_builder,
-};
-use crate::infra::messaging::messages::{
-    IngestArtifactMessage,
-    PublishArtifactMessage
+    get_serialized_event_payload,
 };
 use amqprs::{
     channel::BasicPublishArguments,
@@ -37,37 +34,15 @@ pub struct RabbitMQModelDeploymentMessagePublisher {
 }
 
 impl RabbitMQModelDeploymentMessagePublisher {
-    pub fn new() -> Self {
+    pub fn new(host: String, port: String, username: String, password: String) -> Self {
         Self {
-            host: std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables"),
-            port: std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables"),
-            username: std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables"),
-            password: std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables"),
+            host,
+            port,
+            username,
+            password
         }
     }
 }
-fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherError> {
-    match event {
-        Event::IngestArtifactEvent(payload) => {
-            match serde_json::to_string(&IngestArtifactMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        Event::PublishArtifactEvent(payload) => {
-            match serde_json::to_string(&PublishArtifactMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        _ => Err(EventPublisherError::SerializationError("Invalid Event for Artifact Op Message Publisher".into())),
-    }
-}
-
 
 #[async_trait]
 impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {

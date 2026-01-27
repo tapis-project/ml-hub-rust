@@ -6,3 +6,5 @@ pub mod artifact_publication;
 // pub mod skills;
 // pub mod domains;
 pub mod task;
+pub mod deployment;
+pub mod visibility;

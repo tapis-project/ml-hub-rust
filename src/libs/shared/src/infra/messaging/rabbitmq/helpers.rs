@@ -1,7 +1,7 @@
 use crate::infra::messaging::rabbitmq::constants;
 use crate::application::ports::events::{
     EventPublisherError,
-    Event
+    Event,
 };
 use amqprs::{
     channel::{
@@ -13,6 +13,40 @@ use amqprs::{
         OpenConnectionArguments,
     }
 };
+use crate::infra::messaging::messages::{
+    IngestArtifactMessage,
+    PublishArtifactMessage,
+    DeployModelWithStrategyMessage,
+};
+
+pub fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherError> {
+    match event {
+        Event::IngestArtifactEvent(payload) => {
+            match serde_json::to_string(&IngestArtifactMessage::from(payload)) {
+                Ok(p) => return Ok(p),
+                Err(err) => {
+                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                }
+            };
+        },
+        Event::PublishArtifactEvent(payload) => {
+            match serde_json::to_string(&PublishArtifactMessage::from(payload)) {
+                Ok(p) => return Ok(p),
+                Err(err) => {
+                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                }
+            };
+        },
+        Event::DeployModelWithStrategyEvent(payload) => {
+            match serde_json::to_string(&DeployModelWithStrategyMessage::from(payload)) {
+                Ok(p) => return Ok(p),
+                Err(err) => {
+                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                }
+            };
+        },
+    }
+}
 
 pub fn get_exchange(event: &Event) -> &'static str {
     match event {

@@ -8,10 +8,7 @@ use crate::infra::messaging::rabbitmq::helpers::{
     get_exchange,
     get_routing_key,
     amqp_connection_builder,
-};
-use crate::infra::messaging::messages::{
-    IngestArtifactMessage,
-    PublishArtifactMessage
+    get_serialized_event_payload,
 };
 use amqprs::{
     channel::BasicPublishArguments,
@@ -46,29 +43,6 @@ impl RabbitMQArtifactOpMessagePublisher {
         }
     }
 }
-
-fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherError> {
-    match event {
-        Event::IngestArtifactEvent(payload) => {
-            match serde_json::to_string(&IngestArtifactMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        Event::PublishArtifactEvent(payload) => {
-            match serde_json::to_string(&PublishArtifactMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        _ => Err(EventPublisherError::SerializationError("Invalid Event for Artifact Op Message Publisher".into())),
-    }
-}
-
 
 #[async_trait]
 impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
