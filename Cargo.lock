@@ -2251,6 +2251,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "model-deployer"
+version = "0.1.0"
+
+[[package]]
 name = "models"
 version = "0.1.0"
 dependencies = [
