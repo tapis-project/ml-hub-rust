@@ -1,7 +1,7 @@
 #[cfg(test)]
-mod retry_test {
-    use crate::retry;
-    use crate::retry::{Jitter, RetryPolicy};
+mod retries_test {
+    use crate::application::retries;
+    use crate::application::retries::{Jitter, RetryPolicy};
 
     mod calculate_delay_test {
         use super::*;
@@ -10,86 +10,86 @@ mod retry_test {
             use super::*;
             #[test]
             fn test_with_full_jitter() {
-                let policy = RetryPolicy::ExponentialBackoff(retry::ExponentialBackoff {
-                    retries: retry::Retry::NTimes(4),
+                let policy = RetryPolicy::ExponentialBackoff(retries::ExponentialBackoff {
+                    retries: retries::Retry::NTimes(4),
                     delay: 100,
                     base: Some(2),
                     max_delay: 1000,
                     jitter: Some(Jitter::Full),
                 });
 
-                assert!(retry::calculate_delay(&100, &0, &policy) < 100);
-                assert!(retry::calculate_delay(&100, &1, &policy) < 200);
-                assert!(retry::calculate_delay(&100, &2, &policy) < 400);
-                assert!(retry::calculate_delay(&100, &3, &policy) < 800);
+                assert!(retries::calculate_delay(&100, &0, &policy) < 100);
+                assert!(retries::calculate_delay(&100, &1, &policy) < 200);
+                assert!(retries::calculate_delay(&100, &2, &policy) < 400);
+                assert!(retries::calculate_delay(&100, &3, &policy) < 800);
                 // limit to max_delay
-                assert!(retry::calculate_delay(&100, &4, &policy) < 1000);
+                assert!(retries::calculate_delay(&100, &4, &policy) < 1000);
             }
 
             #[test]
             fn test_without_full_jitter() {
-                let policy = RetryPolicy::ExponentialBackoff(retry::ExponentialBackoff {
-                    retries: retry::Retry::NTimes(4),
+                let policy = RetryPolicy::ExponentialBackoff(retries::ExponentialBackoff {
+                    retries: retries::Retry::NTimes(4),
                     delay: 100,
                     base: Some(2),
                     max_delay: 1000,
                     jitter: None,
                 });
 
-                assert_eq!(retry::calculate_delay(&100, &0, &policy), 100);
-                assert_eq!(retry::calculate_delay(&100, &1, &policy), 200);
-                assert_eq!(retry::calculate_delay(&100, &2, &policy), 400);
-                assert_eq!(retry::calculate_delay(&100, &3, &policy), 800);
+                assert_eq!(retries::calculate_delay(&100, &0, &policy), 100);
+                assert_eq!(retries::calculate_delay(&100, &1, &policy), 200);
+                assert_eq!(retries::calculate_delay(&100, &2, &policy), 400);
+                assert_eq!(retries::calculate_delay(&100, &3, &policy), 800);
                 // limit to max_delay
-                assert_eq!(retry::calculate_delay(&100, &4, &policy), 1000);
+                assert_eq!(retries::calculate_delay(&100, &4, &policy), 1000);
             }
         }
 
         mod no_backoff_test {
-            use super::retry;
-            use super::retry::RetryPolicy;
+            use super::retries;
+            use super::retries::RetryPolicy;
             #[test]
             fn test() {
-                let policy = RetryPolicy::NoBackoff(retry::NoBackoff {
-                    retries: retry::Retry::NTimes(4),
+                let policy = RetryPolicy::NoBackoff(retries::NoBackoff {
+                    retries: retries::Retry::NTimes(4),
                 });
 
-                assert_eq!(retry::calculate_delay(&100, &1, &policy), 0);
-                assert_eq!(retry::calculate_delay(&100, &2, &policy), 0);
-                assert_eq!(retry::calculate_delay(&100, &3, &policy), 0);
+                assert_eq!(retries::calculate_delay(&100, &1, &policy), 0);
+                assert_eq!(retries::calculate_delay(&100, &2, &policy), 0);
+                assert_eq!(retries::calculate_delay(&100, &3, &policy), 0);
             }
         }
 
         mod fixed_backoff_test {
-            use super::retry;
-            use super::retry::RetryPolicy;
+            use super::retries;
+            use super::retries::RetryPolicy;
             #[test]
             fn test() {
-                let policy = RetryPolicy::FixedBackoff(retry::FixedBackoff {
-                    retries: retry::Retry::NTimes(4),
+                let policy = RetryPolicy::FixedBackoff(retries::FixedBackoff {
+                    retries: retries::Retry::NTimes(4),
                     delay: 100,
                 });
 
-                assert_eq!(retry::calculate_delay(&100, &1, &policy), 100);
-                assert_eq!(retry::calculate_delay(&100, &2, &policy), 100);
-                assert_eq!(retry::calculate_delay(&100, &3, &policy), 100);
+                assert_eq!(retries::calculate_delay(&100, &1, &policy), 100);
+                assert_eq!(retries::calculate_delay(&100, &2, &policy), 100);
+                assert_eq!(retries::calculate_delay(&100, &3, &policy), 100);
             }
         }
 
         mod linear_backoff_test {
-            use super::retry;
-            use super::retry::RetryPolicy;
+            use super::retries;
+            use super::retries::RetryPolicy;
             #[test]
             fn test() {
-                let policy = RetryPolicy::LinearBackoff(retry::LinearBackoff {
-                    retries: retry::Retry::NTimes(4),
+                let policy = RetryPolicy::LinearBackoff(retries::LinearBackoff {
+                    retries: retries::Retry::NTimes(4),
                     delay: 100,
                 });
 
-                assert_eq!(retry::calculate_delay(&100, &0, &policy), 100);
-                assert_eq!(retry::calculate_delay(&100, &1, &policy), 200);
-                assert_eq!(retry::calculate_delay(&100, &2, &policy), 300);
-                assert_eq!(retry::calculate_delay(&100, &3, &policy), 400);
+                assert_eq!(retries::calculate_delay(&100, &0, &policy), 100);
+                assert_eq!(retries::calculate_delay(&100, &1, &policy), 200);
+                assert_eq!(retries::calculate_delay(&100, &2, &policy), 300);
+                assert_eq!(retries::calculate_delay(&100, &3, &policy), 400);
             }
         }
     }
@@ -100,8 +100,8 @@ mod retry_test {
         #[tokio::test]
         async fn test_with_exponential_backoff() {
             use super::*;
-            let policy = RetryPolicy::ExponentialBackoff(retry::ExponentialBackoff {
-                retries: retry::Retry::NTimes(5),
+            let policy = RetryPolicy::ExponentialBackoff(retries::ExponentialBackoff {
+                retries: retries::Retry::NTimes(5),
                 delay: 100,
                 base: Some(8),
                 max_delay: 1000,
@@ -110,7 +110,7 @@ mod retry_test {
 
             let attempts = Cell::new(0);
             let timestamp = Cell::new(std::time::Instant::now());
-            let result = retry::retry_async(
+            let result = retries::retry_async(
                 || async {
                     let now = std::time::Instant::now();
                     let delay = now - timestamp.get();
@@ -139,14 +139,14 @@ mod retry_test {
         #[tokio::test]
         async fn test_with_fixed_backoff() {
             use super::*;
-            let policy = RetryPolicy::FixedBackoff(retry::FixedBackoff {
-                retries: retry::Retry::NTimes(3),
+            let policy = RetryPolicy::FixedBackoff(retries::FixedBackoff {
+                retries: retries::Retry::NTimes(3),
                 delay: 100,
             });
 
             let attempts = Cell::new(0);
             let timestamp = Cell::new(std::time::Instant::now());
-            let result = retry::retry_async(
+            let result = retries::retry_async(
                 || async {
                     let now = std::time::Instant::now();
                     let delay = now - timestamp.get();
@@ -176,14 +176,14 @@ mod retry_test {
         #[tokio::test]
         async fn test_with_linear_backoff() {
             use super::*;
-            let policy = RetryPolicy::LinearBackoff(retry::LinearBackoff {
-                retries: retry::Retry::NTimes(3),
+            let policy = RetryPolicy::LinearBackoff(retries::LinearBackoff {
+                retries: retries::Retry::NTimes(3),
                 delay: 100,
             });
 
             let attempts = Cell::new(0);
             let timestamp = Cell::new(std::time::Instant::now());
-            let result = retry::retry_async(
+            let result = retries::retry_async(
                 || async {
                     let now = std::time::Instant::now();
                     let delay = now - timestamp.get();
@@ -212,13 +212,13 @@ mod retry_test {
         #[tokio::test]
         async fn test_with_no_backoff() {
             use super::*;
-            let policy = RetryPolicy::NoBackoff(retry::NoBackoff {
-                retries: retry::Retry::NTimes(3),
+            let policy = RetryPolicy::NoBackoff(retries::NoBackoff {
+                retries: retries::Retry::NTimes(3),
             });
 
             let attempts = Cell::new(0);
             let timestamp = Cell::new(std::time::Instant::now());
-            let result = retry::retry_async(
+            let result = retries::retry_async(
                 || async {
                     let now = std::time::Instant::now();
                     let delay = now - timestamp.get();
@@ -248,12 +248,12 @@ mod retry_test {
         async fn test_with_unmatched_number_of_retries() {
             let number_of_retries = 5;
             use super::*;
-            let policy = RetryPolicy::NoBackoff(retry::NoBackoff {
-                retries: retry::Retry::NTimes(number_of_retries -3),
+            let policy = RetryPolicy::NoBackoff(retries::NoBackoff {
+                retries: retries::Retry::NTimes(number_of_retries -3),
             });
 
             let attempts = Cell::new(0);
-            let result = retry::retry_async(
+            let result = retries::retry_async(
                 || async {
                     attempts.set(attempts.get() + 1);
                     if attempts.get() < number_of_retries {

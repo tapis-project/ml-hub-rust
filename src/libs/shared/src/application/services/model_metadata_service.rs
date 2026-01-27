@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::services::deployment_strategy::resolve_viable_strategies;
-use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
+use crate::application::retries::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;

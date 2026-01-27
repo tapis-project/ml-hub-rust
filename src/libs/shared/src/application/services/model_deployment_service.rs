@@ -4,12 +4,11 @@ use crate::application::inputs::deployment::DeployWithStrategyInput;
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
 use crate::application::ports::deployment::ModelDeploymentRepository;
 use crate::application::ports::commands::{DeployModelWithStrategyCommandPayload, Command, CommandPublisher};
-
 use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::retries::{retry_async, RetryPolicy, FixedBackoff, Retry, Jitter, ExponentialBackoff};
 use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentStatus, ModelReference, DeploymentStrategyReference};
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
-use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry, Jitter, ExponentialBackoff};
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use log::error;
