@@ -53,6 +53,18 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(())
     }
 
+    async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+        let result = self.read_collection
+            .find_one(doc!{ name: name, author: author }, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?
+            .map(entities::model_metadata::ModelMetadata::try_from)
+            .transpose()
+            .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+
+        Ok(result)
+    }
+
     async fn update_artifact_id(&self, input: &application::inputs::model_metadata::UpdateModelMetadataArtifactId) -> Result<(), ApplicationError> {
         let filter = doc! {
             "name": input.name.clone(),

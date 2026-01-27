@@ -1,7 +1,7 @@
 use crate::infra::messaging::rabbitmq::constants;
-use crate::application::ports::events::{
-    EventPublisherError,
-    Event,
+use crate::application::ports::commands::{
+    CommandPublisherError,
+    Command,
 };
 use amqprs::{
     channel::{
@@ -19,61 +19,61 @@ use crate::infra::messaging::messages::{
     DeployModelWithStrategyMessage,
 };
 
-pub fn get_serialized_event_payload(event: &Event) -> Result<String, EventPublisherError> {
-    match event {
-        Event::IngestArtifactEvent(payload) => {
+pub fn get_serialized_command_payload(command: &Command) -> Result<String, CommandPublisherError> {
+    match command {
+        Command::IngestArtifactCommand(payload) => {
             match serde_json::to_string(&IngestArtifactMessage::from(payload)) {
                 Ok(p) => return Ok(p),
                 Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                    return Err(CommandPublisherError::SerializationError(err.to_string()));
                 }
             };
         },
-        Event::PublishArtifactEvent(payload) => {
+        Command::PublishArtifactCommand(payload) => {
             match serde_json::to_string(&PublishArtifactMessage::from(payload)) {
                 Ok(p) => return Ok(p),
                 Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                    return Err(CommandPublisherError::SerializationError(err.to_string()));
                 }
             };
         },
-        Event::DeployModelWithStrategyEvent(payload) => {
+        Command::DeployModelWithStrategyCommand(payload) => {
             match serde_json::to_string(&DeployModelWithStrategyMessage::from(payload)) {
                 Ok(p) => return Ok(p),
                 Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
+                    return Err(CommandPublisherError::SerializationError(err.to_string()));
                 }
             };
         },
     }
 }
 
-pub fn get_exchange(event: &Event) -> &'static str {
-    match event {
-        Event::IngestArtifactEvent(_) => constants::ARTIFACT_INGESTION_EXCHANGE,
-        Event::PublishArtifactEvent(_) => constants::ARTIFACT_PUBLICATION_EXCHANGE,
-        Event::DeployModelWithStrategyEvent(_) => constants::MODEL_DEPLOYMENT_WITH_STRATEGY_EXCHANGE,
+pub fn get_exchange(command: &Command) -> &'static str {
+    match command {
+        Command::IngestArtifactCommand(_) => constants::ARTIFACT_INGESTION_EXCHANGE,
+        Command::PublishArtifactCommand(_) => constants::ARTIFACT_PUBLICATION_EXCHANGE,
+        Command::DeployModelWithStrategyCommand(_) => constants::MODEL_DEPLOYMENT_WITH_STRATEGY_EXCHANGE,
     }
 }
 
-pub fn get_routing_key(event: &Event) -> &'static str {
-    match event {
-        Event::IngestArtifactEvent(_) => constants::ARTIFACT_INGESTION_ROUTING_KEY,
-        Event::PublishArtifactEvent(_) => constants::ARTIFACT_PUBLICATION_ROUTING_KEY,
-        Event::DeployModelWithStrategyEvent(_) => constants::MODEL_DEPLOYMENT_WITH_STRATEGY_ROUTING_KEY,
+pub fn get_routing_key(command: &Command) -> &'static str {
+    match command {
+        Command::IngestArtifactCommand(_) => constants::ARTIFACT_INGESTION_ROUTING_KEY,
+        Command::PublishArtifactCommand(_) => constants::ARTIFACT_PUBLICATION_ROUTING_KEY,
+        Command::DeployModelWithStrategyCommand(_) => constants::MODEL_DEPLOYMENT_WITH_STRATEGY_ROUTING_KEY,
     }
 }
 
-pub async fn delcare_exchanges(channel: &Channel, exchanges: Vec<(&'static str, &str)>) -> Result<(), EventPublisherError> {
+pub async fn delcare_exchanges(channel: &Channel, exchanges: Vec<(&'static str, &str)>) -> Result<(), CommandPublisherError> {
     for (exchange, exchange_type) in exchanges {
         let exchange_args = ExchangeDeclareArguments::new(exchange, exchange_type);
         channel.exchange_declare(exchange_args).await
-            .map_err(|err| EventPublisherError::ConnectionError(err.to_string()))?
+            .map_err(|err| CommandPublisherError::ConnectionError(err.to_string()))?
     }
     Ok(())
 }
 
-pub async fn amqp_connection_builder(host: &String, port: &String, username: &String, password: &String) -> Result<Channel, EventPublisherError> {
+pub async fn amqp_connection_builder(host: &String, port: &String, username: &String, password: &String) -> Result<Channel, CommandPublisherError> {
     let connection_args = OpenConnectionArguments::new(
         host.as_str(),
         port.parse::<u16>().unwrap_or(5672),
@@ -83,7 +83,7 @@ pub async fn amqp_connection_builder(host: &String, port: &String, username: &St
 
     let conn = match Connection::open(&connection_args).await {
         Ok(conn) => conn,
-        Err(err) => return Err(EventPublisherError::AmqpError(err.to_string()))
+        Err(err) => return Err(CommandPublisherError::AmqpError(err.to_string()))
     };
 
     let channel = conn.open_channel(None).await.expect("Open channel failed");

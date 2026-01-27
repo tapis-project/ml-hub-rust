@@ -1,14 +1,14 @@
 use thiserror::Error;
-use crate::application::ports::events::{
-    EventPublisherError,
-    EventPublisher,
-    Event
+use crate::application::ports::commands::{
+    CommandPublisherError,
+    CommandPublisher,
+    Command
 };
 use crate::infra::messaging::rabbitmq::helpers::{
     get_exchange,
     get_routing_key,
     amqp_connection_builder,
-    get_serialized_event_payload,
+    get_serialized_command_payload,
 };
 use amqprs::{
     channel::BasicPublishArguments,
@@ -45,14 +45,14 @@ impl RabbitMQArtifactOpMessagePublisher {
 }
 
 #[async_trait]
-impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
-    async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
-        let payload = get_serialized_event_payload(&event)?;
+impl CommandPublisher for RabbitMQArtifactOpMessagePublisher {
+    async fn publish(&self, command: &Command) -> Result<(), CommandPublisherError> {    
+        let payload = get_serialized_command_payload(&command)?;
 
         // Publish to exchange
         let args = BasicPublishArguments::new(
-            get_exchange(event),
-            get_routing_key(event),
+            get_exchange(command),
+            get_routing_key(command),
         ).mandatory(true)
             .finish();
 
@@ -67,7 +67,7 @@ impl EventPublisher for RabbitMQArtifactOpMessagePublisher {
             .await
             .map_err(|err| {
                 error!("Failed basic publish: {:#?}", err);
-                EventPublisherError::AmqpError(err.to_string())
+                CommandPublisherError::AmqpError(err.to_string())
             })?;
        
         Ok(())

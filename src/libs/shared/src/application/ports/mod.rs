@@ -1,4 +1,4 @@
 pub mod artifacts;
-pub mod events;
+pub mod commands;
 pub mod deployment;
 pub mod model_metadata;

@@ -3,16 +3,22 @@ use crate::application::errors::ApplicationError;
 use crate::application::inputs::deployment::DeployWithStrategyInput;
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
 use crate::application::ports::deployment::ModelDeploymentRepository;
+use crate::application::ports::commands::{DeployModelWithStrategyCommandPayload, Command, CommandPublisher, CommandPublisherError};
+
+use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentStatus, ModelReference, DeploymentStrategyReference};
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
-use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry};
+use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry, Jitter, ExponentialBackoff};
+use platforms::Platform;
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use log::error;
 
 pub struct  ModelDeploymentService {
-    model_deployment_repo: Arc<dyn ModelDeploymentRepository>
+    model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
+    model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+    command_publisher: Arc<dyn CommandPublisher>,
 }
 
 impl ModelDeploymentService {
@@ -23,23 +29,49 @@ impl ModelDeploymentService {
         }
     ));
 
-    pub fn new(model_deployment_repo: Arc<dyn ModelDeploymentRepository>) -> Self {
+    const EVENT_PUBLISHER_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| RetryPolicy::ExponentialBackoff(
+        ExponentialBackoff {
+            retries: Retry::NTimes(3),
+            delay: 50,
+            base: Some(2),
+            max_delay: 500,
+            jitter: Some(Jitter::Full)
+        }
+    ));
+
+    pub fn new(
+        model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
+        model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+        command_publisher: Arc<dyn CommandPublisher>,
+    ) -> Self {
         Self {
-            model_deployment_repo
+            model_deployment_repo,
+            model_metadata_repo,
+            command_publisher,
         }
     }
 
     pub async fn deploy_model_with_strategy(&self, input: DeployWithStrategyInput) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
+        // Fetch the metadata for the model of this deployment
+        let maybe_model_metadata = retry_async(|| self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author), &Self::REPO_RETRY_POLICY)
+            .await?;
+
+        let model_metadata = match maybe_model_metadata {
+            Some(mm) => mm,
+            None => return Err(ApplicationError::DomainError("Model referenced in model deployment does not exist".into()))
+        };
+
+        // Create the model deployment
         let now = TimeStamp::now();
         
         let mut deployment = ModelDeployment {
             id: Uuid::now_v7(),
-            owner: input.owner,
-            model: ModelReference { name: input.model_name, author: input.model_author },
+            owner: input.owner.clone(),
+            model: ModelReference { name: input.model_name.clone(), author: input.model_author.clone()},
             status: ModelDeploymentStatus::Submitted,
             last_message: Some("Deployment submitted".into()),
             deployment_strategy: Some(DeploymentStrategyReference {
-                name: input.strategy_name,
+                name: input.strategy_name.clone(),
                 client: input.platform.to_string(),
             }),
             visibility: Visibility::Private,
@@ -53,6 +85,25 @@ impl ModelDeploymentService {
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY)
             .await?;
             // .map_err(|err| error!("Failed to save deployment: {}", err.to_string()));
+
+        let payload = DeployModelWithStrategyCommandPayload {
+            model_name: deployment.model.name.clone(),
+            model_author: deployment.model.author.clone(),
+            owner: deployment.owner.clone(),
+            params: input.params.clone(),
+            strategy_name: input.strategy_name.clone(),
+            platform: input.platform,
+        };
+
+        let command = Command::DeployModelWithStrategyCommand(payload.clone());
+
+        // Closure for publishing model deployment
+        let publish_model_deployment = || self.command_publisher.publish(
+            &command
+        );
+        
+        // Publish the deployment command
+        let publish_result = retry_async(publish_model_deployment, &Self::EVENT_PUBLISHER_RETRY_POLICY).await?;
 
         deployment.change_status(ModelDeploymentStatus::Queued)
             .map_err(|err| {

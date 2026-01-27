@@ -8,7 +8,7 @@ use crate::application::inputs::artifacts::{DownloadArtifactInput, GetModelArtif
 use crate::application::inputs::artifact_publication::{GetModelPublicationInput, ListModelPublicationsInput, PublishArtifactInput};
 use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
 use crate::application::outputs::artifacts::ModelArtifactOutput;
-use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, IngestArtifactEventPayload, PublishArtifactEventPayload};
+use crate::application::ports::commands::{Command, CommandPublisher, CommandPublisherError, IngestArtifactCommandPayload, PublishArtifactCommandPayload};
 use crate::application::ports::artifacts::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
@@ -30,7 +30,7 @@ use crate::infra::system::Env;
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
     #[error("Message broker error: {0}")]
-    PubisherError(#[from] EventPublisherError),
+    PubisherError(#[from] CommandPublisherError),
 
     #[error("Repository error: {0}")]
     RepoError(#[from] ApplicationError),
@@ -76,7 +76,7 @@ pub struct ArtifactService {
     ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
     publication_repo: Arc<dyn ArtifactPublicationRepository>,
     metadata_repo: Arc<dyn ModelMetadataRepository>,
-    event_publisher: Arc<dyn EventPublisher>,
+    command_publisher: Arc<dyn CommandPublisher>,
 }
 
 impl ArtifactService {
@@ -102,14 +102,14 @@ impl ArtifactService {
         ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
         publication_repo: Arc<dyn ArtifactPublicationRepository>,
         metadata_repo: Arc<dyn ModelMetadataRepository>,
-        event_publisher: Arc<dyn EventPublisher>,
+        command_publisher: Arc<dyn CommandPublisher>,
     ) -> Self {
         Self {
             artifact_repo,
             ingestion_repo,
             publication_repo,
             metadata_repo,
-            event_publisher,
+            command_publisher,
         }
     }
 
@@ -148,22 +148,22 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
         
-        let payload = PublishArtifactEventPayload {
+        let payload = PublishArtifactCommandPayload {
             publication_id: publication.id.clone(),
             webhook_url: input.webhook_url.clone(),
             serialized_client_request: input.serialized_client_request.clone(),
         };
 
-        let event = Event::PublishArtifactEvent(payload.clone());
+        let command = Command::PublishArtifactCommand(payload.clone());
 
         // Closure for publishing artifact
-        let publish_artifact = || self.event_publisher.publish(
-            &event
+        let publish_artifact = || self.command_publisher.publish(
+            &command
         );
         
         // Handle the artifact publication with retries
         let publish_result = retry_async(publish_artifact, &Self::MQ_RETRY_POLICY).await
-            .map_err(|err| {ArtifactServiceError::PubisherError(err)});
+            .map_err(|err| { ArtifactServiceError::PubisherError(err) });
 
         if let Err(err) = publish_result {
             GlobalLogger::error(format!("Failed to publish ArtifactIngestion: {}", &err.to_string()).as_str());
@@ -272,7 +272,7 @@ impl ArtifactService {
             .map_err(|err| ArtifactServiceError::RepoError(err));
 
         // Closure for submitting the artifact ingestion request
-        let payload = IngestArtifactEventPayload {
+        let payload = IngestArtifactCommandPayload {
             ingestion_id: ingestion.id.clone(),
             artifact_type: input.artifact_type.clone(),
             platform: ingestion.platform.clone(),
@@ -280,9 +280,9 @@ impl ArtifactService {
             webhook_url: input.webhook_url.clone()
         };
 
-        let event = Event::IngestArtifactEvent(payload.clone());
-        let submit_ingestion = || self.event_publisher.publish(
-            &event
+        let command = Command::IngestArtifactCommand(payload.clone());
+        let submit_ingestion = || self.command_publisher.publish(
+            &command
         );
         
         // Submit the artifact ingestion request to the queue

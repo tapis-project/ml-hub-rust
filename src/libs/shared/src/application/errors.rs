@@ -1,5 +1,5 @@
 use thiserror::Error;
-use crate::application::ports::events::EventPublisherError;
+use crate::application::ports::commands::CommandPublisherError;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -7,7 +7,7 @@ pub enum ApplicationError {
     RepoError(String),
 
     #[error("{0}")]
-    PublisherError(#[from] EventPublisherError),
+    PublisherError(#[from] CommandPublisherError),
 
     #[error("{0}")]
     DomainError(String),

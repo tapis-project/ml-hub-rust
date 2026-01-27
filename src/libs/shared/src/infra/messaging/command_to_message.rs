@@ -1,12 +1,12 @@
-use crate::application::ports::events::{
-    IngestArtifactEventPayload,
-    PublishArtifactEventPayload,
-    DeployModelWithStrategyEventPayload,
+use crate::application::ports::commands::{
+    IngestArtifactCommandPayload,
+    PublishArtifactCommandPayload,
+    DeployModelWithStrategyCommandPayload,
 };
 use crate::infra::messaging::messages;
 
-impl From<&IngestArtifactEventPayload> for messages::IngestArtifactMessage {
-    fn from(value: &IngestArtifactEventPayload) -> Self {
+impl From<&IngestArtifactCommandPayload> for messages::IngestArtifactMessage {
+    fn from(value: &IngestArtifactCommandPayload) -> Self {
         Self {
             ingestion_id: value.ingestion_id.to_string(),
             platform: value.platform.clone(),
@@ -16,8 +16,8 @@ impl From<&IngestArtifactEventPayload> for messages::IngestArtifactMessage {
     }
 }
 
-impl From<&PublishArtifactEventPayload> for messages::PublishArtifactMessage {
-    fn from(value: &PublishArtifactEventPayload) -> Self {
+impl From<&PublishArtifactCommandPayload> for messages::PublishArtifactMessage {
+    fn from(value: &PublishArtifactCommandPayload) -> Self {
         Self {
             publication_id: value.publication_id.to_string(),
             webhook_url: value.webhook_url.clone(),
@@ -26,8 +26,8 @@ impl From<&PublishArtifactEventPayload> for messages::PublishArtifactMessage {
     }
 }
 
-impl From<&DeployModelWithStrategyEventPayload> for messages::DeployModelWithStrategyMessage {
-    fn from(value: &DeployModelWithStrategyEventPayload) -> Self {
+impl From<&DeployModelWithStrategyCommandPayload> for messages::DeployModelWithStrategyMessage {
+    fn from(value: &DeployModelWithStrategyCommandPayload) -> Self {
         Self {
             owner: value.owner.clone(),
             platform: value.platform.clone(),
