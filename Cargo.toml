@@ -7,7 +7,6 @@ members = [
     "src/bins/models-migrator",
     "src/bins/artifact-ingester",
     "src/bins/artifact-publisher",
-    # "src/bins/cli",
     "src/libs/client-provider",
     "src/libs/clients",
     "src/libs/git-lfs-client",
