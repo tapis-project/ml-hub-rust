@@ -102,13 +102,18 @@ impl ModelDeployment {
     }
 
     /// Changes the status. Returns an error if invalid status transition is detected
-    pub fn change_status(&mut self, new_status: ModelDeploymentStatus) -> Result<(), ModelDeploymentError> {
+    pub fn change_status(&mut self, new_status: ModelDeploymentStatus, message: Option<String>) -> Result<(), ModelDeploymentError> {
         if !Self::is_valid_status_transition(&self.status, &new_status) {
             return Err(ModelDeploymentError::InvalidStatusTransition(self.status.clone().into(), new_status.into()))
         }
 
         // Changes the status
         self.status = new_status;
+
+        // Update the last message if provided
+        if let Some(m) = message {
+            self.last_message = Some(m);
+        }
 
         // Updates last_modified
         self.touch();

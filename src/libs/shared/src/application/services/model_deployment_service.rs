@@ -3,14 +3,13 @@ use crate::application::errors::ApplicationError;
 use crate::application::inputs::deployment::DeployWithStrategyInput;
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
 use crate::application::ports::deployment::ModelDeploymentRepository;
-use crate::application::ports::commands::{DeployModelWithStrategyCommandPayload, Command, CommandPublisher, CommandPublisherError};
+use crate::application::ports::commands::{DeployModelWithStrategyCommandPayload, Command, CommandPublisher};
 
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentStatus, ModelReference, DeploymentStrategyReference};
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
 use crate::retry::{retry_async, RetryPolicy, FixedBackoff, Retry, Jitter, ExponentialBackoff};
-use platforms::Platform;
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use log::error;
@@ -29,7 +28,7 @@ impl ModelDeploymentService {
         }
     ));
 
-    const EVENT_PUBLISHER_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| RetryPolicy::ExponentialBackoff(
+    const COMMAND_PUBLISHER_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| RetryPolicy::ExponentialBackoff(
         ExponentialBackoff {
             retries: Retry::NTimes(3),
             delay: 50,
@@ -56,7 +55,7 @@ impl ModelDeploymentService {
         let maybe_model_metadata = retry_async(|| self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author), &Self::REPO_RETRY_POLICY)
             .await?;
 
-        let model_metadata = match maybe_model_metadata {
+        let _ = match maybe_model_metadata {
             Some(mm) => mm,
             None => return Err(ApplicationError::DomainError("Model referenced in model deployment does not exist".into()))
         };
@@ -82,9 +81,7 @@ impl ModelDeploymentService {
         };
 
         // Save the deployment 
-        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY)
-            .await?;
-            // .map_err(|err| error!("Failed to save deployment: {}", err.to_string()));
+        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
 
         let payload = DeployModelWithStrategyCommandPayload {
             model_name: deployment.model.name.clone(),
@@ -103,19 +100,34 @@ impl ModelDeploymentService {
         );
         
         // Publish the deployment command
-        let publish_result = retry_async(publish_model_deployment, &Self::EVENT_PUBLISHER_RETRY_POLICY).await?;
+        deployment = match retry_async(publish_model_deployment, &Self::COMMAND_PUBLISHER_RETRY_POLICY).await {
+            Ok(_) => {
+                // Publishing command failed, update the deployment to Failed
+                deployment.change_status(ModelDeploymentStatus::Queued, Some("Successfully queued".into()))
+                    .map_err(|err| {
+                        error!("Error when changing the status of a ModelDeployment: {}", err.to_string());
+                        ApplicationError::DomainError(err.to_string())
+                    })?;
 
-        deployment.change_status(ModelDeploymentStatus::Queued)
-            .map_err(|err| {
-                let message = format!("Error when changing the status of a ModelDeployment: {}", err.to_string());
-                error!("{}", message);
-                ApplicationError::DomainError(message)
-            })?;
+                deployment
+            },
+            Err(err) => {
+                error!("Failed to publish model deployment command: {}", err.to_string());
 
-        // Save the deployment 
-        retry_async(|| self.model_deployment_repo.update_status(&deployment), &Self::REPO_RETRY_POLICY)
-            .await?;
-            // .map_err(|err| error!("Failed to update status of model deployment: {}", err.to_string()));
+                // Publishing of the command failed, mark the deployment as failed
+                deployment
+                    .change_status(ModelDeploymentStatus::Failed, Some("Internal error: Failed to publish".into()))
+                    .map_err(|err| {
+                        error!("Error when changing the status of a ModelDeployment: {}", err.to_string());
+                        ApplicationError::DomainError(err.to_string())
+                    })?;
+
+                deployment
+            }
+        };
+
+        // Update the status of the deployment
+        retry_async(|| self.model_deployment_repo.update_status(&deployment), &Self::REPO_RETRY_POLICY).await?;
         
         Ok(DeployModelWithStrategyOutput { deployment })    
     }
