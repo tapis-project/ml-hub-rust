@@ -4,12 +4,10 @@ use crate::application::ports::commands::{
     CommandPublisher,
     Command
 };
-use crate::infra::messaging::rabbitmq::helpers::{
-    get_exchange,
-    get_routing_key,
-    amqp_connection_builder,
-    get_serialized_command_payload,
-};
+use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_command;
+use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_command;
+use crate::infra::messaging::rabbitmq::connection::amqp_connection_builder;
+use crate::infra::messaging::codec::serialize_command_payload;
 use amqprs::{
     channel::BasicPublishArguments,
     BasicProperties
@@ -47,12 +45,12 @@ impl RabbitMQArtifactOpMessagePublisher {
 #[async_trait]
 impl CommandPublisher for RabbitMQArtifactOpMessagePublisher {
     async fn publish(&self, command: &Command) -> Result<(), CommandPublisherError> {    
-        let payload = get_serialized_command_payload(&command)?;
+        let payload = serialize_command_payload(&command)?;
 
         // Publish to exchange
         let args = BasicPublishArguments::new(
-            get_exchange(command),
-            get_routing_key(command),
+            get_exchange_for_command(command),
+            get_routing_key_for_command(command),
         ).mandatory(true)
             .finish();
 

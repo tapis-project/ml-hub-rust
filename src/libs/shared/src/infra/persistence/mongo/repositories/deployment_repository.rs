@@ -24,7 +24,7 @@ impl ModelDeploymentRepository {
     }
 }
 
-#[async_trait]
+
 impl application::ports::deployment::ModelDeploymentRepository for ModelDeploymentRepository {
     async fn save(&self, input: &entities::deployment::ModelDeployment) -> Result<(), ApplicationError> {
         let mut document = ModelDeployment::from(input);
@@ -38,7 +38,54 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         Ok(())
     }
 
-    async fn update_status(&self, input: &entities::deployment::ModelDeployment) -> Result<(), ApplicationError> {
-        return Err(ApplicationError::RepoError("Not implemented".into()))
+    async fn update_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*deployment.id.as_bytes())
+        };
+        
+        let document = doc! {
+            "$set": {
+                "state": deployment.state
+            }
+        };
+
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+    }
+
+    async fn update_desired_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*deployment.id.as_bytes())
+        };
+        
+        let document = doc! {
+            "$set": {
+                "state": deployment.state
+            }
+        };
+
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+    }
+
+    async fn find_for_reconciliation(self, input: FindForReconciliationInput) -> Result<ModelDeployment, ApplicationError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*deployment.id.as_bytes())
+        };
+        
+        let document = doc! {
+            "$set": {
+                "state": deployment.state
+            }
+        };
+
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
     }
 }

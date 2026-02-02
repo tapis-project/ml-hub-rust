@@ -30,23 +30,23 @@ pub struct ModelDeploymentStateDriftDetectedPayload {
 
 #[derive(Debug, Clone)]
 pub struct ModelDeploymentStartedPayload {
-    deployment_id: Uuid,
-    deployment_revision: u32,
-    timestamp: TimeStamp,
+    pub deployment_id: Uuid,
+    pub deployment_revision: u32,
+    pub timestamp: TimeStamp,
 }
 
 #[derive(Debug, Clone)]
 pub struct ModelDeploymentStoppedPayload {
-    deployment_id: Uuid,
-    deployment_revision: u32,
-    timestamp: TimeStamp,
+    pub deployment_id: Uuid,
+    pub deployment_revision: u32,
+    pub timestamp: TimeStamp,
 }
 
 #[derive(Debug, Clone)]
 pub struct ModelDeploymentDeletedPayload {
-    deployment_id: Uuid,
-    deployment_revision: u32,
-    timestamp: TimeStamp,
+    pub deployment_id: Uuid,
+    pub deployment_revision: u32,
+    pub timestamp: TimeStamp,
 }
 
 pub enum Event {

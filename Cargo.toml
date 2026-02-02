@@ -19,5 +19,5 @@ members = [
     "src/libs/tapis-client",
     "src/sdks/agntcy-sdk",
     "src/bins/hf-model-etl",
-    "src/bins/model-deployer",
+    "src/bins/model-deployment-controller",
 ]

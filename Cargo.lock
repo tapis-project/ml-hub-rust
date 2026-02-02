@@ -2251,8 +2251,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "model-deployer"
+name = "model-deployment-controller"
 version = "0.1.0"
+dependencies = [
+ "amqprs",
+ "async-trait",
+ "client-provider",
+ "clients",
+ "env_logger",
+ "futures-util",
+ "mongodb 2.8.2",
+ "serde",
+ "serde_json",
+ "shared",
+ "tokio",
+ "uuid",
+]
 
 [[package]]
 name = "models"

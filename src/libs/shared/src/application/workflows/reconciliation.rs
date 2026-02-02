@@ -36,6 +36,7 @@ pub struct UndeployedOutcomePayload {
     pub message: Option<String>,
 }
 
+#[derive(Clone, Debug)]
 pub struct ObeservedOutcomePayload {
     pub message: Option<String>,
     pub state: State,

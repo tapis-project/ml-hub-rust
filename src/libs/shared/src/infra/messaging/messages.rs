@@ -1,6 +1,4 @@
 use serde::{Serialize, Deserialize};
-use platforms::Platform;
-use serde_json::Value;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct IngestArtifactMessage {
@@ -18,11 +16,31 @@ pub struct PublishArtifactMessage {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct DeployModelWithStrategyMessage {
-    pub owner: String,
-    pub platform: Platform,
-    pub model_name: String,
-    pub model_author: String,
-    pub strategy_name: String,
-    pub params: Value,
+pub struct ModelDeploymentStateDriftDetectedMessage {
+    pub deployment_id: String,
+    pub deployment_revision: u32,
+    pub desired_state: String,
+    pub acutal_state: String,
+    pub timestamp: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct ModelDeploymentStartedMessage {
+    pub deployment_id: String,
+    pub deployment_revision: u32,
+    pub timestamp: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct ModelDeploymentStoppedMessage {
+    pub deployment_id: String,
+    pub deployment_revision: u32,
+    pub timestamp: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct ModelDeploymentDeletedMessage {
+    pub deployment_id: String,
+    pub deployment_revision: u32,
+    pub timestamp: String,
 }

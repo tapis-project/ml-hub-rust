@@ -26,7 +26,9 @@
     "artifact-publisher-deployment": "mlhub-artifact-publisher-deployment",
     "artifact-publisher-image": "tapis/mlhub-artifact-publisher",
     "hf-model-etl-transform-load-image": "mlhub/hf-model-etl-transform-load",
-    "hf-model-etl-extract-image": "mlhub/hf-model-etl-extract"
+    "hf-model-etl-extract-image": "mlhub/hf-model-etl-extract",
+    "deployment-controller-deployment": "mlhub-model-deployment-controller",
+    "deployment-controller-image": "mlhub/model-deployment-controller"
   },
   "components": [
     {
@@ -573,6 +575,35 @@
         "run": "{{ self.rootDir }}/run {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
         "install": "cargo install --path {{ self.rootDir }}",
         "pusht": "docker push --all-tags {{ extract-img }} && docker push --all-tags {{ transform-load-img }}"
+      }
+    },
+    {
+      "name": "deployment-controller",
+      "rootDir": "src/bins/model-deployment-controller",
+      "labels": ["bin", "worker"],
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
+        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
+        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     }
   ]

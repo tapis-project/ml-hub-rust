@@ -1,5 +1,5 @@
 [package]
-name = "artifact-publisher"
+name = "model-deployment-controller"
 version = "0.1.0"
 edition = "2021"
 

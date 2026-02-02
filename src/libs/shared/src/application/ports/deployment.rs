@@ -12,7 +12,7 @@ pub trait DeploymentStrategyProvider {
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
     async fn save(&self, model_deployment: &ModelDeployment) -> Result<(), ApplicationError>;
-    async fn update_status(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
+    async fn update_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
+    async fn update_desired_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
     async fn find_for_reconciliation(self, input: FindForReconciliationInput) -> Result<ModelDeployment, ApplicationError>;
-    // async fn list_model_deployments(&self, artifact_type: ArtifactType) -> Result<Vec<Artifact>, ApplicationError>;
 }
