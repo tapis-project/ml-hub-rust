@@ -1,11 +1,24 @@
+use std::sync::Arc;
 use uuid::Uuid;
-use crate::application::ports::events::Event;
-use crate::application::services::model_deployment_service::ModelDeploymentService;
+use crate::application::errors::ApplicationError;
+use crate::application::inputs::deployment::FindForReconciliationInput;
+use crate::application::ports::events::{Event, EventPublisher};
+use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationOutcome};
 use crate::domain::entities::deployment::{ModelDeployment, State, DesiredState};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ModelDeploymentControllerError {
+    #[error("Failed to find model deployment: {0}")]
+    DeploymentRetrievalFailed(#[from] ModelDeploymentServiceError),
+
+
+}
 
 struct ModelDeploymentController {
-    model_deployment_service: ModelDeploymentService
+    model_deployment_service: ModelDeploymentService,
+    event_publisher: Arc<dyn EventPublisher>,
 }
 
 impl ModelDeploymentController {
@@ -25,8 +38,16 @@ impl ModelDeploymentController {
         }
     }
 
-    fn dispatch_reconciler(&self, deployment_id: &Uuid, revision: &u32, state: &State, desired_state: &DesiredState) {
-        let deployment = self.model_deployment_service.find(deployment_id, revision, state);
+    async fn dispatch_reconciler(&self, deployment_id: &Uuid, revision: &u32, state: &State, desired_state: &DesiredState) -> Result<(), ModelDeploymentControllerError> {
+        let deployment = self.model_deployment_service
+            .find_for_reconciliation(
+                FindForReconciliationInput{
+                    deployment_id: deployment_id.clone(),
+                    revision: revision.clone(),
+                    state: state.clone(),
+                }
+            )
+            .await?;
         
         let action = Self::resolve_reconciliation_action(&deployment);
         
@@ -40,15 +61,15 @@ impl ModelDeploymentController {
                 deployment.change_state(payload.state, Some(payload.message));
                 Event::ModelDeploymentStateDriftDetected(())
             },
-            ReconciliationOutcome::Started => {
+            ReconciliationOutcome::Started(payload) => {
                 deployment.change_state(State::Running, Some(payload.message));
                 Event::ModelDeploymentStarted(())
             },
-            ReconciliationOutcome::Stopped => {
+            ReconciliationOutcome::Stopped(payload) => {
                 deployment.change_state(State::Stopped, Some(payload.message));
                 Event::ModelDeploymentStopped(())
             },
-            ReconciliationOutcome::Undeployed => {
+            ReconciliationOutcome::Undeployed(payload) => {
                 deployment.change_state(State::NotDeployed, Some(payload.message));
                 Event::ModelDeploymentDeleted(())
             },

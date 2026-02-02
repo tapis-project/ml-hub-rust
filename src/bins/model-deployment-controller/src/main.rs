@@ -57,18 +57,18 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
             }
         };
 
-        let event = ??
+        // let event = ??
 
-        let controller = model_deployment_controller_factory();
+        // let controller = model_deployment_controller_factory();
 
-        match controller.handle(event) {
-            Ok(_) => {
-                // TODO Ack?
-            },
-            Err(_) => {
-                // TODO Nack? Reject?
-            }
-        }
+        // match controller.handle(event) {
+        //     Ok(_) => {
+        //         // TODO Ack?
+        //     },
+        //     Err(_) => {
+        //         // TODO Nack? Reject?
+        //     }
+        // }
     }
 }
 

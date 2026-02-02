@@ -74,6 +74,26 @@ impl From<DesiredState> for String {
 }
 
 #[derive(Clone, Debug)]
+pub struct RehydrateModelDeploymentProps {
+    pub id: Uuid,
+    pub owner: String,
+    pub model: ModelReference,
+    pub state: State,
+    pub desired_state: DesiredState,
+    pub last_message: Option<String>,
+    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub visibility: Visibility,
+    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub parallelism: Option<ReplicaGroup>,
+    pub revision: u32,
+    pub last_modified: TimeStamp,
+    pub last_state_change: TimeStamp,
+    pub last_desired_state_change: TimeStamp,
+    pub created_at: TimeStamp,
+    pub metadata: Option<HashMap<String, Value>>,
+}
+
+#[derive(Clone, Debug)]
 pub struct ModelDeploymentProps {
     pub id: Uuid,
     pub owner: String,
@@ -97,7 +117,7 @@ pub struct ModelDeployment {
     pub model: ModelReference,
     /// The curent state of the delpoyment
     pub state: State,
-    /// The state the user would like the deployemnt to be in
+    /// The state the user would like the deployment to be in
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
@@ -138,6 +158,27 @@ impl ModelDeployment {
             parallelism: props.parallelism,
             metadata: None,
             revision: 0,
+        }
+    }
+
+    pub fn rehydrate(props: RehydrateModelDeploymentProps) -> Self {
+        Self {
+            id: props.id,
+            owner: props.owner,
+            model: props.model,
+            state: props.state,
+            desired_state: props.desired_state,
+            last_message: props.last_message,
+            deployment_strategy: props.deployment_strategy,
+            visibility: props.visibility,
+            created_at: props.created_at,
+            last_modified: props.last_modified,
+            last_state_change: props.last_state_change,
+            last_desired_state_change: props.last_desired_state_change,
+            deployment_interface: props.deployment_interface,
+            parallelism: props.parallelism,
+            metadata: props.metadata,
+            revision: props.revision,
         }
     }
 

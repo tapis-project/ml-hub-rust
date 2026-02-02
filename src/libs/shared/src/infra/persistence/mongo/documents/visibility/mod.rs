@@ -1,4 +1,5 @@
 mod entity_to_document;
+mod document_to_entity;
 
 use serde::{Deserialize, Serialize};
 

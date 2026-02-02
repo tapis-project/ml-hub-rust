@@ -8,9 +8,11 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
+            revision: value.revision().clone(),
             owner: value.owner.clone(),
             model: documents::ModelReference::from(value.model.clone()),
-            status: documents::ModelDeploymentStatus::from(value.status.clone()),
+            state: documents::State::from(value.state.clone()),
+            desired_state: documents::DesiredState::from(value.desired_state.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
             deployment_interface: value.deployment_interface
@@ -23,7 +25,10 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
                 .clone()
                 .and_then(|rg| Some(documents::ReplicaGroup::from(rg))),
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_desired_state_change: DateTime::from_chrono(value.last_desired_state_change.into_inner()),
+            last_state_change: DateTime::from_chrono(value.last_state_change.into_inner()),
             created_at: DateTime::from_chrono(value.created_at.into_inner()),
+            metadata: value.metadata.clone(),
         }
     }
 }
@@ -74,17 +79,25 @@ impl From<entities::ParallelismStrategy> for documents::ParallelismStrategy {
     }
 }
 
-impl From<entities::ModelDeploymentStatus> for documents::ModelDeploymentStatus {
-    fn from(value: entities::ModelDeploymentStatus) -> Self {
+impl From<entities::State> for documents::State {
+    fn from(value: entities::State) -> Self {
         match value {
-            entities::ModelDeploymentStatus::Failed => documents::ModelDeploymentStatus::Failed,
-            entities::ModelDeploymentStatus::Submitted => documents::ModelDeploymentStatus::Submitted,
-            entities::ModelDeploymentStatus::Queued => documents::ModelDeploymentStatus::Queued,
-            entities::ModelDeploymentStatus::Provisioning => documents::ModelDeploymentStatus::Provisioning,
-            entities::ModelDeploymentStatus::Starting => documents::ModelDeploymentStatus::Starting,
-            entities::ModelDeploymentStatus::Running => documents::ModelDeploymentStatus::Running,
-            entities::ModelDeploymentStatus::Stopping => documents::ModelDeploymentStatus::Stopping,
-            entities::ModelDeploymentStatus::Stopped => documents::ModelDeploymentStatus::Stopped,
+            entities::State::Blocked => documents::State::Blocked,
+            entities::State::Failed => documents::State::Failed,
+            entities::State::NotDeployed => documents::State::NotDeployed,
+            entities::State::Running => documents::State::Running,
+            entities::State::Stopped => documents::State::Stopped,
+            entities::State::Unknown => documents::State::Unknown,
+        }
+    }
+}
+
+impl From<entities::DesiredState> for documents::DesiredState {
+    fn from(value: entities::DesiredState) -> Self {
+        match value {
+            entities::DesiredState::NotDeployed => documents::DesiredState::NotDeployed,
+            entities::DesiredState::Running => documents::DesiredState::Running,
+            entities::DesiredState::Stopped => documents::DesiredState::Stopped,
         }
     }
 }

@@ -10,8 +10,8 @@ impl From<&ModelDeploymentStateDriftDetectedPayload> for messages::ModelDeployme
     fn from(value: &ModelDeploymentStateDriftDetectedPayload) -> Self {
         Self {
             deployment_id: String::from(value.deployment_id),
-            acutal_state: String::from(value.acutal_state),
-            desired_state: String::from(value.desired_state),
+            acutal_state: String::from(value.acutal_state.clone()),
+            desired_state: String::from(value.desired_state.clone()),
             deployment_revision: value.deployment_revision,
             timestamp: value.timestamp.into_inner().to_string(),
         }

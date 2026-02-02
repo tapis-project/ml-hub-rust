@@ -1,9 +1,12 @@
 pub mod entity_to_document;
+pub mod document_to_entity;
 
+use std::collections::HashMap;
 use openapiv3::OpenAPI;
 use serde::{Deserialize, Serialize};
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
+use serde_json::Value;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelReference {
@@ -18,15 +21,26 @@ pub struct DeploymentStrategyReference {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub enum ModelDeploymentStatus {
-    Submitted,
-    Queued,
-    Provisioning,
-    Starting,
+pub enum State {
+    /// The deployment infrastructure does not exist
+    NotDeployed,
+    /// The deployment infrastructure exists and is running
     Running,
-    Stopping,
+    /// The client has successfully stopped the deployment
     Stopped,
+    /// The deployment has failed (never started or crashed)
     Failed,
+    /// The deployment cannot be acted up or controlled
+    Blocked,
+    /// Observability gap. The state of the deployment cannot be known
+    Unknown,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+pub enum DesiredState {
+    Running,
+    Stopped,
+    NotDeployed,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -36,14 +50,19 @@ pub struct ModelDeployment {
     pub id: Uuid,
     pub owner: String,
     pub model: ModelReference,
-    pub status: ModelDeploymentStatus,
+    pub state: State,
+    pub desired_state: DesiredState,
     pub last_message: Option<String>,
     pub deployment_strategy: Option<DeploymentStrategyReference>,
     pub visibility: Visibility,
     pub created_at: DateTime,
     pub last_modified: DateTime,
+    pub last_state_change: DateTime,
+    pub last_desired_state_change: DateTime,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub parallelism: Option<ReplicaGroup>,
+    pub metadata: Option<HashMap<String, Value>>,
+    pub revision: u32, 
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

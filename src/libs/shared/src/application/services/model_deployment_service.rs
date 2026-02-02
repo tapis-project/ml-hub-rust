@@ -1,5 +1,5 @@
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::deployment::DeployWithStrategyInput;
+use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput};
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
 use crate::application::ports::events::{Event, EventPublisher, ModelDeploymentStateDriftDetectedPayload};
 use crate::application::ports::deployment::ModelDeploymentRepository;
@@ -17,6 +17,16 @@ use log::error;
 use once_cell::sync::Lazy;
 use std::sync::Arc;
 use uuid::Uuid;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ModelDeploymentServiceError {
+    #[error("Repository error: {0}")]
+    RepoError(#[from] ApplicationError),
+
+    #[error("Model Deployment not found: {0}")]
+    DeploymentNotFound(String),
+}
 
 pub struct ModelDeploymentService {
     model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
@@ -54,19 +64,32 @@ impl ModelDeploymentService {
         }
     }
 
+    pub async fn find_for_reconciliation(&self, input: FindForReconciliationInput) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+        let filter = FilterInput {
+            deployment_id: Some(input.deployment_id),
+            revision: Some(input.revision),
+            state: Some(input.state),
+        };
+
+        let find_model_deployment = || self.model_deployment_repo.find(&filter);
+
+        // Fetch the deployment
+        let maybe_model_deployment = retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY).await?;
+
+        match maybe_model_deployment {
+            Some(d) => Ok(d),
+            None => Err(ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string()))
+        }
+    }
+
     pub async fn deploy_model_with_strategy(
         &self,
         input: DeployWithStrategyInput,
     ) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
+        let find_model_metadata = || self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author);
+        
         // Fetch the metadata for the model of this deployment
-        let maybe_model_metadata = retry_async(
-            || {
-                self.model_metadata_repo
-                    .get_by_name_and_author(&input.model_name, &input.model_author)
-            },
-            &Self::REPO_RETRY_POLICY,
-        )
-        .await?;
+        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY).await?;
 
         let _ = match maybe_model_metadata {
             Some(mm) => mm,
@@ -99,11 +122,7 @@ impl ModelDeploymentService {
         );
 
         // Save the deployment
-        retry_async(
-            || self.model_deployment_repo.save(&deployment),
-            &Self::REPO_RETRY_POLICY,
-        )
-            .await?;
+        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: deployment.id,
@@ -116,10 +135,10 @@ impl ModelDeploymentService {
         let event = Event::ModelDeploymentStateDriftDetected(payload.clone());
 
         // Closure for publishing model deployment
-        let publish_state_drift = || self.event_publisher.publish(&event);
+        let publish_state_drift_event = || self.event_publisher.publish(&event);
 
         // Publish the state drift event event
-        match retry_async(publish_state_drift, &Self::EVENT_PUBLISHER_RETRY_POLICY,).await {
+        match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY,).await {
             Ok(_) => (),
             Err(err) => {
                 error!("Failed to publish statue drift event for deployment {}: {}", &deployment.id, err.to_string());

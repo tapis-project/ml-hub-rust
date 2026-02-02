@@ -12,9 +12,15 @@ pub struct ClientModelDeploymentRequest {
 }
 
 pub struct FindForReconciliationInput {
-    pub deployemnt_id: Uuid,
+    pub deployment_id: Uuid,
     pub revision: u32,
     pub state: State,
+}
+
+pub struct FilterInput {
+    pub deployment_id: Option<Uuid>,
+    pub revision: Option<u32>,
+    pub state: Option<State>,
 }
 
 pub struct DeployWithStrategyInput {
@@ -29,5 +35,5 @@ pub struct DeployWithStrategyInput {
 pub struct ReconcileDeploymentInput {
     action: ReconciliationAction,
     model_metadata: ModelMetadata,
-    deployemnt: ModelDeployment,
+    deployment: ModelDeployment,
 }
