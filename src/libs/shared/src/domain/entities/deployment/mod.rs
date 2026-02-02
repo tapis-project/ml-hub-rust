@@ -4,11 +4,15 @@ use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
+use serde_json::Value;
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentError {
-    #[error("Invalid status change. Cannot move from status '{0}' to {1}")]
-    InvalidStatusTransition(String, String),
+    #[error("Invalid state change. Cannot move from state '{0}' to {1}")]
+    InvalidStateTransition(String, String),
+
+    #[error("Invalid desired state change. Cannot move from desired state '{0}' to {1}")]
+    InvalidDesiredStateTransition(String, String),
 }
 
 #[derive(Clone, Debug)]
@@ -24,91 +28,171 @@ pub struct DeploymentStrategyReference {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum ModelDeploymentStatus {
-    /// A model deployment has been requested
-    Submitted,
-    /// The request has successfully been added to the queue
-    Queued,
-    /// Preparing the model artifact for the deployment. Pull, uploading, etc.
-    Provisioning,
-    /// The client responsible for deploying the model has picked up and is now
-    /// processing the request
-    Starting,
-    /// The client has successfully started the model deployment
+pub enum State {
+    /// The deployment infrastructure does not exist
+    NotDeployed,
+    /// The deployment infrastructure exists and is running
     Running,
-    /// A request to stop the deployment has been picked and the client is now
-    /// processing it
-    Stopping,
     /// The client has successfully stopped the deployment
     Stopped,
     /// The deployment has failed (never started or crashed)
     Failed,
+    /// The deployment cannot be acted up or controlled
+    Blocked,
+    /// Observability gap. The state of the deployment cannot be known
+    Unknown,
 }
 
-impl From<ModelDeploymentStatus> for String {
-    fn from(value: ModelDeploymentStatus) -> Self {
+impl From<State> for String {
+    fn from(value: State) -> Self {
         match value {
-            ModelDeploymentStatus::Submitted => "Submitted".into(),
-            ModelDeploymentStatus::Queued => "Queued".into(),
-            ModelDeploymentStatus::Provisioning => "Provisioning".into(),
-            ModelDeploymentStatus::Starting => "Starting".into(),
-            ModelDeploymentStatus::Running => "Running".into(),
-            ModelDeploymentStatus::Stopping => "Stopping".into(),
-            ModelDeploymentStatus::Stopped => "Stopped".into(),
-            ModelDeploymentStatus::Failed => "Failed".into(),
+            State::NotDeployed => "NotDeployed".into(),
+            State::Running => "Running".into(),
+            State::Stopped => "Stopped".into(),
+            State::Failed => "Failed".into(),
+            State::Blocked => "Blocked".into(),
+            State::Unknown => "Unknown".into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum DesiredState {
+    Running,
+    Stopped,
+    NotDeployed,
+}
+
+impl From<DesiredState> for String {
+    fn from(value: DesiredState) -> Self {
+        match value {
+            DesiredState::Running => "Running".into(),
+            DesiredState::Stopped => "Stopped".into(),
+            DesiredState::NotDeployed => "NotDeployed".into(),
         }
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct ModelDeployment {
+pub struct ModelDeploymentProps {
     pub id: Uuid,
     pub owner: String,
     pub model: ModelReference,
-    pub status: ModelDeploymentStatus,
+    pub state: State,
+    pub desired_state: DesiredState,
+    pub last_message: Option<String>,
+    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub visibility: Visibility,
+    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub parallelism: Option<ReplicaGroup>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ModelDeployment {
+    /// The unique identifier of this deployment
+    pub id: Uuid,
+    /// The user that owns this deployment
+    pub owner: String,
+    /// A reference to the model metadata
+    pub model: ModelReference,
+    /// The curent state of the delpoyment
+    pub state: State,
+    /// The state the user would like the deployemnt to be in
+    pub desired_state: DesiredState,
+    /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
     pub deployment_strategy: Option<DeploymentStrategyReference>,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
+    pub last_state_change: TimeStamp,
+    pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub parallelism: Option<ReplicaGroup>,
+    /// Metadata provided by and for deployment clients
+    pub metadata: Option<HashMap<String, Value>>,
+    /// Indicates changes to desired state over time. This field is incremented
+    /// every time desired state changes.
+    revision: u32, 
 }
 
 impl ModelDeployment {
-    /// Updates last modified to the UTC timestamp
-    fn touch(&mut self) {
-        self.last_modified = TimeStamp::now()
+    /// Create the model deployment from props
+    pub fn new(props: ModelDeploymentProps) -> Self {
+        let now = TimeStamp::now();
+
+        Self {
+            id: props.id,
+            owner: props.owner,
+            model: props.model,
+            state: props.state,
+            desired_state: props.desired_state,
+            last_message: props.last_message,
+            deployment_strategy: props.deployment_strategy,
+            visibility: props.visibility,
+            created_at: now.clone(),
+            last_modified: now.clone(),
+            last_state_change: now.clone(),
+            last_desired_state_change: now.clone(),
+            deployment_interface: props.deployment_interface,
+            parallelism: props.parallelism,
+            metadata: None,
+            revision: 0,
+        }
     }
 
-    fn valid_transitions() -> HashMap<ModelDeploymentStatus, Vec<ModelDeploymentStatus>> {
+    pub fn revision(&self) -> &u32 {
+        &self.revision
+    }
+
+    /// Updates last modified to the UTC timestamp
+    fn touch(&mut self, state_updated: Option<bool>) {
+        let now = TimeStamp::now();
+        self.last_modified = now.clone();
+
+        if state_updated.unwrap_or(false) {
+            self.last_state_change = now;
+        }
+    }
+
+    fn valid_state_transitions() -> HashMap<State, Vec<State>> {
         let mut transitions = HashMap::new();
-        transitions.insert(ModelDeploymentStatus::Submitted, vec![ModelDeploymentStatus::Queued]);
-        transitions.insert(ModelDeploymentStatus::Queued, vec![ModelDeploymentStatus::Provisioning]);
-        transitions.insert(ModelDeploymentStatus::Provisioning, vec![ModelDeploymentStatus::Starting]);
-        transitions.insert(ModelDeploymentStatus::Starting, vec![ModelDeploymentStatus::Running, ModelDeploymentStatus::Failed]);
-        transitions.insert(ModelDeploymentStatus::Running, vec![ModelDeploymentStatus::Stopping, ModelDeploymentStatus::Failed]);
-        transitions.insert(ModelDeploymentStatus::Stopping, vec![ModelDeploymentStatus::Stopped, ModelDeploymentStatus::Failed]);
-        transitions.insert(ModelDeploymentStatus::Stopped, vec![ModelDeploymentStatus::Provisioning]);
-        transitions.insert(ModelDeploymentStatus::Failed, vec![ModelDeploymentStatus::Provisioning]);
+        transitions.insert(State::NotDeployed, vec![State::Blocked, State::Running, State::Failed]);
+        transitions.insert(State::Running, vec![State::Blocked, State::Stopped, State::Failed]);
+        transitions.insert(State::Stopped, vec![State::Blocked, State::Running, State::Failed]);
+        transitions.insert(State::Failed, vec![State::Blocked, State::Running]);
+        transitions.insert(State::Blocked, vec![State::Running, State::Stopped, State::Failed]);
         transitions
     }
 
-    /// Returns whether a transition from one status to another is valid
-    fn is_valid_status_transition(from: &ModelDeploymentStatus, to: &ModelDeploymentStatus) -> bool {
-        Self::valid_transitions()
+    pub fn is_state_syncronized(&self) -> bool {
+        match (&self.state, &self.desired_state) {
+            (State::Running, DesiredState::Running) => true,
+            (State::Stopped, DesiredState::Stopped) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns whether a transition from one state to another is valid
+    fn is_valid_state_transition(from: &State, to: &State) -> bool {
+        // Unknown can transition to any state 
+        if from == &State::Unknown {
+            return true
+        }
+
+        Self::valid_state_transitions()
             .get(from)
             .map_or(false, |allowed| allowed.contains(to))
     }
 
-    /// Changes the status. Returns an error if invalid status transition is detected
-    pub fn change_status(&mut self, new_status: ModelDeploymentStatus, message: Option<String>) -> Result<(), ModelDeploymentError> {
-        if !Self::is_valid_status_transition(&self.status, &new_status) {
-            return Err(ModelDeploymentError::InvalidStatusTransition(self.status.clone().into(), new_status.into()))
+    /// Changes the state. Returns an error if invalid state transition is detected
+    pub fn change_state(&mut self, new_state: State, message: Option<String>) -> Result<(), ModelDeploymentError> {
+        if !Self::is_valid_state_transition(&self.state, &new_state) {
+            return Err(ModelDeploymentError::InvalidStateTransition(self.state.clone().into(), new_state.into()))
         }
 
-        // Changes the status
-        self.status = new_status;
+        // Changes the state
+        self.state = new_state;
 
         // Update the last message if provided
         if let Some(m) = message {
@@ -116,7 +200,40 @@ impl ModelDeployment {
         }
 
         // Updates last_modified
-        self.touch();
+        self.touch(Some(true));
+
+        Ok(())
+    }
+
+    fn valid_desired_state_transitions() -> HashMap<DesiredState, Vec<DesiredState>> {
+        let mut transitions = HashMap::new();
+        transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
+        transitions.insert(DesiredState::Stopped, vec![DesiredState::Running]);
+        transitions
+    }
+
+    /// Returns whether a transition from one state to another is valid
+    fn is_valid_desired_state_transition(from: &DesiredState, to: &DesiredState) -> bool {
+        Self::valid_desired_state_transitions()
+            .get(from)
+            .map_or(false, |allowed| allowed.contains(to))
+    }
+
+    /// Changes the state. Returns an error if invalid state transition is detected
+    pub fn change_desired_state(&mut self, new_state: DesiredState, message: Option<String>) -> Result<(), ModelDeploymentError> {
+        if !Self::is_valid_desired_state_transition(&self.desired_state, &new_state) {
+            return Err(ModelDeploymentError::InvalidDesiredStateTransition(self.state.clone().into(), new_state.into()))
+        }
+
+        self.desired_state = new_state;
+
+        // Update the last message if provided
+        if let Some(m) = message {
+            self.last_message = Some(m);
+        }
+
+        // Updates last_modified
+        self.touch(Some(false));
 
         Ok(())
     }

@@ -19,6 +19,10 @@ use crate::infra::messaging::messages::{
     DeployModelWithStrategyMessage,
 };
 
+pub enum MessageType {
+    Command(Command),
+}
+
 pub fn get_serialized_command_payload(command: &Command) -> Result<String, CommandPublisherError> {
     match command {
         Command::IngestArtifactCommand(payload) => {
@@ -97,4 +101,60 @@ pub async fn amqp_connection_builder(host: &String, port: &String, username: &St
     ).await?;
 
     Ok(channel)
-}    
+}
+
+async fn connect_to_channel(args: &OpenConnectionArguments, max_connection_attempts: i8) -> Connection {
+    println!("Attempting to connect to broker");
+    
+    let mut connection_attempts: i8 = 0;
+    while connection_attempts <= max_connection_attempts {
+        // Attempt to connect. Out of all the possible errors, we only want to retry
+        // the connection on the two IO errors below
+        
+        // Open connection
+        let maybe_connection = Connection::open(args)
+            .await;
+
+        match maybe_connection {
+            Ok(conn) => return conn, // Return the successful connection
+            Err(err) => {
+                connection_attempts += 1;
+                match err {
+                    Error::NetworkError(_) => {
+                        println!("Failed to connect to message broker: Attempt {} of {}", connection_attempts, max_connection_attempts);
+                        connection_attempts += 1;
+                        continue;
+                    },
+                    other => panic!("Failed to connect to message broker: {}", other.to_string())
+                };
+            }
+        }
+    }
+
+    panic!("Failed to connect to message broker. Max attempts reached: {}", max_connection_attempts);
+}
+
+async fn ack(channel: &Channel, deliver: &Deliver, multiple: Option<bool>) {
+    let args = BasicAckArguments {
+        delivery_tag: deliver.delivery_tag(),
+        multiple: multiple.unwrap_or(false)
+    };
+
+    if let Err(err) = channel.basic_ack(args).await {
+        eprintln!("CRITICAL: Failed to ack message: {}", err.to_string());
+        panic!("Cannot ack. Shutting down to avoid inconsistent state.");
+    }
+}
+
+async fn nack(channel: &Channel, deliver: &Deliver, requeue: Option<bool>, multiple: Option<bool>) {
+    let args = BasicNackArguments {
+        delivery_tag: deliver.delivery_tag(),
+        requeue: requeue.unwrap_or(false),
+        multiple: multiple.unwrap_or(false)
+    };
+
+    if let Err(err) = channel.basic_nack(args).await {
+        eprintln!("CRITICAL: Failed to nack message: {}", err.to_string());
+        panic!("Cannot nack. Shutting down to avoid inconsistent state.");
+    }
+}

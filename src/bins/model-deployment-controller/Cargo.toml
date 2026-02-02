@@ -1,0 +1,18 @@
+[package]
+name = "artifact-publisher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shared = { version = "0.1.0", path = "../../libs/shared" }
+client-provider = { version = "0.1.0", path = "../../libs/client-provider" }
+clients = { version = "0.1.0", path = "../../libs/clients" }
+env_logger = "0.11.8"
+futures-util = "0.3.31"
+tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
+uuid = { version = "1.17.0", features = ["v7"] }
+serde_json = "1.0.140"
+serde = "1.0.219"
+amqprs = "2.1.1"
+async-trait = "0.1.88"
+mongodb = { version = "2.8" }

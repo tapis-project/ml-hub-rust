@@ -36,16 +36,3 @@ pub trait Client: Send + Sync {
         return false
     }
 }
-
-
-
-// #[async_trait::async_trait]
-// pub trait CreateTrainingServerClient: Client {
-//     type Data: Serialize;
-//     type Metadata: Serialize;
-
-//     async fn create_training_server(&self, _request: &training::CreateTrainingServerRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-//         return Err(ClientError::Unimplemented);
-//     }
-// }
-

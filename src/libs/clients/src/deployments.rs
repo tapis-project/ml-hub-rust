@@ -1,4 +1,5 @@
-use shared::application::inputs::deployment;
+use shared::application::inputs::deployment::ReconcileDeploymentInput;
+use shared::application::workflows::reconciliation::ReconciliationOutcome;
 use crate::client::Client;
 use shared::domain::entities::deployment::ModelDeployment;
 use thiserror::Error;
@@ -10,8 +11,10 @@ pub enum ModelDeploymentError {
 }
 
 #[async_trait::async_trait]
-pub trait ModelDeploymentClient: Client {
-    async fn deploy_model_with_strategy(&self, _input: &deployment::DeployWithStrategyInput, _provisioner: ()) -> Result<ModelDeployment, ModelDeploymentError> {
+pub trait ModelDeploymentReconciliationClient: Client {
+    async fn reconcile(&self, input: &ReconcileDeploymentInput) -> Result<ReconciliationOutcome, ModelDeploymentError> {
         return Err(ModelDeploymentError::Unimplemented("Not implemented".into()));
     }
+
+    fn capabilities(&self) -> ModelDeploymentCapabilities;
 }

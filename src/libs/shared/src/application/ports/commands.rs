@@ -2,8 +2,6 @@ use async_trait::async_trait;
 use thiserror::Error;
 use uuid::Uuid;
 use crate::application::inputs::artifacts::ArtifactType;
-use platforms::Platform;
-use serde_json::Value;
 
 // TODO Message borker related errors should be factored out of these ports
 #[derive(Debug, Error)]
@@ -37,21 +35,10 @@ pub struct PublishArtifactCommandPayload {
     pub serialized_client_request: Vec<u8>,
 }
 
-#[derive(Clone, Debug)]
-pub struct DeployModelWithStrategyCommandPayload {
-    pub owner: String,
-    pub platform: Platform,
-    pub model_name: String,
-    pub model_author: String,
-    pub strategy_name: String,
-    pub params: Value,
-}
-
 #[derive(Clone)]
 pub enum Command {
     IngestArtifactCommand(IngestArtifactCommandPayload),
     PublishArtifactCommand(PublishArtifactCommandPayload),
-    DeployModelWithStrategyCommand(DeployModelWithStrategyCommandPayload),
 }
 
 #[async_trait]
