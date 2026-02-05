@@ -5,7 +5,6 @@
 // };
 // use crate::utils::token_from_headers;
 // use crate::tokens::decode_jwt;
-use shared::application::ports::commands::DeployModelWithStrategyCommandPayload;
 use std::path::PathBuf;
 use async_trait;
 use platforms::Platform;
@@ -15,9 +14,6 @@ use clients::{
     Client,
     ClientError,
     ClientJsonResponse,
-    ModelDeploymentClient,
-    ModelDeploymentError,
-    ModelDeploymentCapabilities
 };
 use shared::domain::entities::deployment::ModelDeployment;
 use shared::logging::SharedLogger;
@@ -31,22 +27,12 @@ pub struct TapisClient {
 #[async_trait::async_trait]
 impl Client for TapisClient {
     fn platform(&self) -> Option<Platform> {
-        Some(Platform::TaccTapis)
+        None
+        // Some(Platform::TaccTapis)
     }
     
     fn capabilities(&self) -> Option<Vec<Capability>> {
         Some(vec![])
-    }
-}
-
-#[async_trait::async_trait]
-impl ModelDeploymentClient for TapisClient {
-    async fn deploy_model_with_strategy(&self, _input: &DeployModelWithStrategyCommandPayload) -> Result<ModelDeployment, ModelDeploymentError> {
-        return Err(ModelDeploymentError::Unimplemented("Not implemented".into()));
-    }
-
-    fn capabilities(&self) -> ModelDeploymentCapabilities {
-        ModelDeploymentCapabilities { can_self_provision_model: true }
     }
 }
 

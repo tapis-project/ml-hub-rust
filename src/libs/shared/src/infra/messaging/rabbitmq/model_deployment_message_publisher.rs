@@ -4,7 +4,7 @@ use crate::application::ports::events::{
     EventPublisher,
     Event
 };
-use crate::infra::messaging::codec::serialize_event_payload;
+use crate::infra::messaging::codec::serialize_event;
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_event;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_event;
 use crate::infra::messaging::rabbitmq::connection::amqp_connection_builder;
@@ -46,7 +46,7 @@ impl RabbitMQModelDeploymentMessagePublisher {
 #[async_trait]
 impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
     async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
-        let payload = serialize_event_payload(&event)?;
+        let payload = serialize_event(&event)?;
 
         // Publish to exchange
         let args = BasicPublishArguments::new(

@@ -21,54 +21,74 @@ use amqprs::{
 };
 use tokio;
 use uuid::Uuid;
-use client_provider::ClientProvider;
-use shared::domain::entities::artifact_publication::ArtifactPublicationStatus;
-use shared::domain::entities::artifact::ArtifactType;
-use shared::infra::messaging::rabbitmq::constants::{ARTIFACT_PUBLICATION_EXCHANGE, ARTIFACT_PUBLICATION_QUEUE, ARTIFACT_PUBLICATION_ROUTING_KEY};
-use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
+use shared::{application::ports::events::Event, infra::messaging::{messages::{EventType, ModelDeploymentStateDriftDetectedMessage}, rabbitmq::exchanges::MODEL_DEPLOYMENT_EXCHANGE}};
+use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_QUEUE;
+use shared::infra::messaging::rabbitmq::routing::MODEL_DEPLOYMENT_ROUTING_KEY;
 use shared::infra::system::Env;
 use shared::constants::ARTIFACT_PUBLICATION_DIR_NAME;
 // use shared::datasets::presentation::http::v1::requests::IngestDatasetRequest;
-use shared::infra::messaging::messages::PublishArtifactMessage;
+use shared::infra::messaging::messages::EventMessageEnvelope;
 use async_trait::async_trait;
 use shared::application::services::artifact_service::ArtifactService;
 use std::env;
-use artifact_publisher::bootstrap::model_deployment_controller_factory;
-use artifact_publisher::database::{get_db, ClientParams};
-use shared::infra::fs::archiver::Archiver;
-use shared::application::services::ModelDeploymentController;
+use model_deployment_controller::bootstrap::model_deployment_controller_factory;
+use model_deployment_controller::database::{get_db, ClientParams};
+use shared::application::services::model_deployment_controller::ModelDeploymentController;
+use log::error;
 
 
-struct ArtifactPublisherConsumer {
+struct ModelDeploymentControllerConsumer {
     artifact_service: ArtifactService,
     publications_work_dir: PathBuf,
 }
 
 #[async_trait]
-impl AsyncConsumer for ArtifactPublisherConsumer {
+impl AsyncConsumer for ModelDeploymentControllerConsumer {
     async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
-        // Deserialize the message
-        let message: PublishArtifactMessage = match serde_json::from_slice(&content) {
-            Ok(m) => m,
+        // Deserialize the event envelope message
+        let envelope: EventMessageEnvelope = match serde_json::from_slice(&content) {
+            Ok(e) => e,
             Err(err) => {
-                eprintln!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
-                nack(&channel, &deliver, None, None).await;
+                error!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
+                // nack(&channel, &deliver, None, None).await;
                 return;
             }
         };
 
-        // let event = ??
+        let event_message: ModelDeploymentStateDriftDetectedMessage = match envelope.event_type {
+            EventType::ModelDeploymentDriftDetected => {
+                match serde_json::from_value(envelope.event) {
+                    Ok(e) => e,
+                    Err(err) => {
+                        error!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
+                        // nack(&channel, &deliver, None, None).await;
+                        return
+                    }
+                }
+            },
+            _ => {
+                error!("Unexpected event type made it to this consumer queue '{}': {}", &deliver.consumer_tag(), err.to_string());
+                // nack(&channel, &deliver, None, None).await;
+                return
+            }
+        };
 
+        let event = Event::from(message);
         // let controller = model_deployment_controller_factory();
 
-        // match controller.handle(event) {
-        //     Ok(_) => {
-        //         // TODO Ack?
-        //     },
-        //     Err(_) => {
-        //         // TODO Nack? Reject?
-        //     }
-        // }
+        match event {
+            Event::ModelDeploymentStateDriftDetected(payload) => {
+                controller.dispatch_reconciler(
+                    &payload.deployment_id,
+                    &payload.deployment_revision,
+                    &payload.actual_state,
+                    &payload.desired_state,
+                ).await;
+            },
+            _ => {
+                // NoOp
+            }
+        }
     }
 }
 
@@ -98,14 +118,14 @@ async fn main() -> () {
     };
 
     // Declare queue
-    let _ = match channel.queue_declare(QueueDeclareArguments::new(ARTIFACT_PUBLICATION_QUEUE.into())).await {
+    let _ = match channel.queue_declare(QueueDeclareArguments::new(MODEL_DEPLOYMENT_QUEUE.into())).await {
         Ok(q) => q,
         Err(err) => panic!("Failed to create channel: {}", err.to_string())
     };
 
     match channel.exchange_declare(
         ExchangeDeclareArguments::new(
-            ARTIFACT_PUBLICATION_EXCHANGE,
+            MODEL_DEPLOYMENT_EXCHANGE,
             ExchangeType::Topic.to_string().as_str()
         )
     ).await {
@@ -115,9 +135,9 @@ async fn main() -> () {
     
      match channel.queue_bind(
         QueueBindArguments::new(
-            ARTIFACT_PUBLICATION_QUEUE,
-            ARTIFACT_PUBLICATION_EXCHANGE, 
-            ARTIFACT_PUBLICATION_ROUTING_KEY
+            MODEL_DEPLOYMENT_QUEUE,
+            MODEL_DEPLOYMENT_EXCHANGE, 
+            MODEL_DEPLOYMENT_ROUTING_KEY
         )
     ).await {
         Ok(_) => {},
@@ -143,14 +163,14 @@ async fn main() -> () {
     
     let environment = Env::new().expect("Env could not be initialized");
 
-    let consumer = ArtifactPublisherConsumer {
+    let consumer = ModelDeploymentControllerConsumer {
         artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
         publications_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_PUBLICATION_DIR_NAME),
         // artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
      
     let args = BasicConsumeArguments::default()
-        .queue(ARTIFACT_PUBLICATION_QUEUE.into())
+        .queue(MODEL_DEPLOYMENT_QUEUE.into())
         .consumer_tag(consumer_tag.to_string())
         .finish();
 

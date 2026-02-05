@@ -8,3 +8,4 @@ pub mod messaging;
 pub mod persistence;
 pub mod operators;
 pub mod deployment;
+pub mod reconciliation;

@@ -1,4 +1,11 @@
 use crate::domain::entities::deployment::State;
+use thiserror::Error;
+
+#[derive(Debug, Clone, Error)]
+pub enum ReconciliationError {
+    #[error("{0}")]
+    Unimplemented(String)
+}
 
 #[derive(Clone, Debug)]
 pub enum ReconciliationAction {
@@ -10,15 +17,6 @@ pub enum ReconciliationAction {
     Observe,
     /// Delete the infra
     Undeploy,
-}
-
-#[derive(Clone, Debug)]
-struct Reason(String);
-
-impl Reason {
-    pub fn into_inner(&self) -> String {
-        self.0.clone()
-    }
 }
 
 #[derive(Clone, Debug)]

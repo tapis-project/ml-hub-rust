@@ -24,10 +24,14 @@ pub enum Platform {
     #[strum(serialize="patra")]
     #[schema(rename="patra")]
     Patra,
-    /// This variant corresponds to the TaccTapis client
-    #[strum(serialize="tacc-tapis")]
-    #[schema(rename="tacc-tapis")]
-    TaccTapis,
+    /// This variant corresponds to the TapisPods client
+    #[strum(serialize="tapis-pods")]
+    #[schema(rename="tapis-pods")]
+    TapisPods,
+    /// This variant corresponds to the TapisJobs client
+    #[strum(serialize="tapis-jobs")]
+    #[schema(rename="tapis-jobs")]
+    TapisJobs,
     /// This variant corresponds to the S3 client
     #[strum(serialize="s3")]
     #[schema(rename="s3")]
@@ -36,6 +40,6 @@ pub enum Platform {
 
 impl Platform {
     pub fn list_all() -> Vec<Self> {
-        return vec![Self::HuggingFace, Self::Git, Self::Github, Self::Patra]
+        return vec![Self::HuggingFace, Self::Git, Self::Github, Self::Patra, Self::TapisPods]
     }
 }

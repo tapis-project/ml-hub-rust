@@ -48,6 +48,7 @@ pub struct ModelDeployment {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>,
     pub id: Uuid,
+    pub platform: platforms::Platform,
     pub owner: String,
     pub model: ModelReference,
     pub state: State,

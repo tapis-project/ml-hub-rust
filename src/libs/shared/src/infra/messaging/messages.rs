@@ -1,4 +1,6 @@
 use serde::{Serialize, Deserialize};
+use serde_json::Value;
+use uuid::Uuid;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct IngestArtifactMessage {
@@ -16,31 +18,55 @@ pub struct PublishArtifactMessage {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct ModelDeploymentStateDriftDetectedMessage {
+pub struct ModelDeploymentStateDriftDetectedPayload {
     pub deployment_id: String,
     pub deployment_revision: u32,
     pub desired_state: String,
-    pub acutal_state: String,
-    pub timestamp: String,
+    pub actual_state: String,
+    pub message: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct ModelDeploymentStartedMessage {
+pub struct ModelDeploymentStartedPayload {
     pub deployment_id: String,
     pub deployment_revision: u32,
-    pub timestamp: String,
+    pub message: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct ModelDeploymentStoppedMessage {
+pub struct ModelDeploymentStoppedPayload {
     pub deployment_id: String,
     pub deployment_revision: u32,
-    pub timestamp: String,
+    pub message: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct ModelDeploymentDeletedMessage {
+pub struct ModelDeploymentDeletedPayload {
     pub deployment_id: String,
     pub deployment_revision: u32,
+    pub message: Option<String>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct EventEnvelope {
+    pub payload: Value,
+    pub metadata: EventMetadata,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EventMetadata {
+    pub id: Uuid,
+    pub correlation_id: Uuid,
+    pub causation_id: Uuid,
     pub timestamp: String,
+    pub kind: String,
+}
+
+// This struct services as an envelope for messages. The consumer can desirialize
+// this struct, determine which ...Message struct corresponds to the event_type field
+// then desirialize the event using the correct struct.
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct EventMessageEnvelope {
+    pub kind: String,
+    pub event_envelope: EventEnvelope,
 }

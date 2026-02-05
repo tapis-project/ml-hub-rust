@@ -2260,6 +2260,7 @@ dependencies = [
  "clients",
  "env_logger",
  "futures-util",
+ "log",
  "mongodb 2.8.2",
  "serde",
  "serde_json",

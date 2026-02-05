@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use openapiv3::OpenAPI;
+use platforms::Platform;
 use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
@@ -76,6 +77,7 @@ impl From<DesiredState> for String {
 #[derive(Clone, Debug)]
 pub struct RehydrateModelDeploymentProps {
     pub id: Uuid,
+    pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,
     pub state: State,
@@ -96,6 +98,7 @@ pub struct RehydrateModelDeploymentProps {
 #[derive(Clone, Debug)]
 pub struct ModelDeploymentProps {
     pub id: Uuid,
+    pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,
     pub state: State,
@@ -108,9 +111,16 @@ pub struct ModelDeploymentProps {
 }
 
 #[derive(Clone, Debug)]
+pub enum RevisionType {
+    StateChange,
+    DesiredStateChange,
+}
+
+#[derive(Clone, Debug)]
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
     pub id: Uuid,
+    pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
     /// A reference to the model metadata
@@ -143,6 +153,7 @@ impl ModelDeployment {
 
         Self {
             id: props.id,
+            platform: props.platform,
             owner: props.owner,
             model: props.model,
             state: props.state,
@@ -164,6 +175,7 @@ impl ModelDeployment {
     pub fn rehydrate(props: RehydrateModelDeploymentProps) -> Self {
         Self {
             id: props.id,
+            platform: props.platform,
             owner: props.owner,
             model: props.model,
             state: props.state,
@@ -187,13 +199,26 @@ impl ModelDeployment {
     }
 
     /// Updates last modified to the UTC timestamp
-    fn touch(&mut self, state_updated: Option<bool>) {
-        let now = TimeStamp::now();
+    fn touch(&mut self, at: Option<TimeStamp>) {
+        let now = at.unwrap_or(TimeStamp::now());
         self.last_modified = now.clone();
+    }
 
-        if state_updated.unwrap_or(false) {
-            self.last_state_change = now;
+    fn revise(&mut self, revision_type: RevisionType) {
+        self.revision = self.revision + 1;
+
+        let now = TimeStamp::now();
+
+        match revision_type {
+            RevisionType::StateChange => {
+                self.last_state_change = now.clone();
+            },
+            RevisionType::DesiredStateChange => {
+                self.last_desired_state_change = now.clone();
+            },
         }
+
+        self.touch(Some(now));
     }
 
     fn valid_state_transitions() -> HashMap<State, Vec<State>> {
@@ -240,8 +265,11 @@ impl ModelDeployment {
             self.last_message = Some(m);
         }
 
-        // Updates last_modified
-        self.touch(Some(true));
+        self.revision = self.revision + 1;
+
+        self.last_state_change = TimeStamp::now();
+
+        self.revise(RevisionType::StateChange);
 
         Ok(())
     }
@@ -273,8 +301,11 @@ impl ModelDeployment {
             self.last_message = Some(m);
         }
 
-        // Updates last_modified
-        self.touch(Some(false));
+        self.revision = self.revision + 1;
+
+        self.last_desired_state_change = TimeStamp::now();
+
+        self.revise(RevisionType::DesiredStateChange);
 
         Ok(())
     }

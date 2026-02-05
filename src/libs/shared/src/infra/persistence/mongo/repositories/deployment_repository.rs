@@ -79,10 +79,6 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             filter.insert("deployment_id", Uuid::from_bytes(*id.clone().as_bytes()));
         }
 
-        if let Some(revision) = input.revision {
-            filter.insert("revision", revision.clone());
-        }
-
         if let Some(state) = input.state.clone() {
             match bson::to_bson(&State::from(state)) {
                 Ok(state) => {

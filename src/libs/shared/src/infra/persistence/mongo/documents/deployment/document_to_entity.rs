@@ -8,6 +8,7 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
     fn from(value: &documents::ModelDeployment) -> Self {
         let props = entities::RehydrateModelDeploymentProps {
             id: Uuid::from_bytes(value.id.bytes()),
+            platform: value.platform.clone(),
             revision: value.revision.clone(),
             owner: value.owner.clone(),
             model: entities::ModelReference::from(value.model.clone()),

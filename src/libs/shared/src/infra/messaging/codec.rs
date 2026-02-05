@@ -1,20 +1,18 @@
 use crate::infra::messaging::messages::{
     IngestArtifactMessage,
     PublishArtifactMessage,
-    ModelDeploymentStateDriftDetectedMessage,
-    ModelDeploymentDeletedMessage,
-    ModelDeploymentStartedMessage,
-    ModelDeploymentStoppedMessage,
+    EventMessageEnvelope,
 };
 
 use crate::application::ports::events::{
-    EventPublisherError,
     Event,
+    EventPublisherError,
 };
 use crate::application::ports::commands::{
     CommandPublisherError,
     Command,
 };
+use serde_json::to_string;
 
 pub fn serialize_command_payload(command: &Command) -> Result<String, CommandPublisherError> {
     match command {
@@ -37,39 +35,16 @@ pub fn serialize_command_payload(command: &Command) -> Result<String, CommandPub
     }
 }
 
-pub fn serialize_event_payload(event: &Event) -> Result<String, EventPublisherError> {
-    match event {
-        Event::ModelDeploymentStateDriftDetected(payload) => {
-            match serde_json::to_string(&ModelDeploymentStateDriftDetectedMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        Event::ModelDeploymentDeleted(payload) => {
-            match serde_json::to_string(&ModelDeploymentDeletedMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        Event::ModelDeploymentStarted(payload) => {
-            match serde_json::to_string(&ModelDeploymentStartedMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        },
-        Event::ModelDeploymentStopped(payload) => {
-            match serde_json::to_string(&ModelDeploymentStoppedMessage::from(payload)) {
-                Ok(p) => return Ok(p),
-                Err(err) => {
-                    return Err(EventPublisherError::SerializationError(err.to_string()));
-                }
-            };
-        }
+pub fn serialize_event(event: &Event) -> Result<String, EventPublisherError> {
+    let event_message_envelope = match event {
+        Event::ModelDeploymentStateDriftDetected(e) => EventMessageEnvelope::try_from(e)?,
+        Event::ModelDeploymentStarted(e) => EventMessageEnvelope::try_from(e)?,
+        Event::ModelDeploymentStopped(e) => EventMessageEnvelope::try_from(e)?,
+        Event::ModelDeploymentDeleted(e) => EventMessageEnvelope::try_from(e)?,
+    };
+
+    match to_string(&event_message_envelope) {
+        Ok(s) => Ok(s),
+        Err(err) => Err(EventPublisherError::SerializationError(err.to_string()))
     }
 }

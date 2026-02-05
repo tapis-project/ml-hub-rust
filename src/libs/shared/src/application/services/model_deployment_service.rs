@@ -1,18 +1,16 @@
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput};
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
-use crate::application::ports::events::{Event, EventPublisher, ModelDeploymentStateDriftDetectedPayload};
+use crate::application::ports::events::{Event,EventPayload, Kind, EventEnvelope, EventMetadata, EventPublisher, ModelDeploymentStateDriftDetectedPayload};
 use crate::application::ports::deployment::ModelDeploymentRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::retries::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{
-    DeploymentStrategyReference, DesiredState, ModelDeployment, ModelDeploymentProps,
-    ModelReference, State,
+    DeploymentStrategyReference, DesiredState, ModelDeployment, ModelDeploymentProps, ModelReference, State
 };
 use crate::domain::entities::visibility::Visibility;
-use crate::domain::entities::timestamp::TimeStamp;
 use log::error;
 use once_cell::sync::Lazy;
 use std::sync::Arc;
@@ -21,6 +19,15 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentServiceError {
+    #[error("Revision mismatch: Expected to find revision `{0}` but found `{1}`")]
+    RevisionMismatch(String, String),
+
+    #[error("State mismatch: Expected to find state `{0}` but found `{1}`")]
+    StateMismatch(String, String),
+
+    #[error("Desired state mismatch: Expected to find desired state `{0}` but found `{1}`")]
+    DesiredStateMismatch(String, String),
+
     #[error("Repository error: {0}")]
     RepoError(#[from] ApplicationError),
 
@@ -64,11 +71,16 @@ impl ModelDeploymentService {
         }
     }
 
+    /// Fetches a model deployment only if its current `revision`, `state`, and
+    /// `desired_state` match the expected values provided in `input`.
+    ///
+    /// Returns an error if the deployment does not exist or if any of the expected
+    /// values differ from those stored.
     pub async fn find_for_reconciliation(&self, input: FindForReconciliationInput) -> Result<ModelDeployment, ModelDeploymentServiceError> {
         let filter = FilterInput {
             deployment_id: Some(input.deployment_id),
-            revision: Some(input.revision),
-            state: Some(input.state),
+            state: None,
+            revision: None,
         };
 
         let find_model_deployment = || self.model_deployment_repo.find(&filter);
@@ -76,10 +88,24 @@ impl ModelDeploymentService {
         // Fetch the deployment
         let maybe_model_deployment = retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY).await?;
 
-        match maybe_model_deployment {
-            Some(d) => Ok(d),
-            None => Err(ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string()))
+        let deployment = match maybe_model_deployment {
+            Some(d) => d,
+            None => return Err(ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string()))
+        };
+
+        if deployment.revision() != &input.revision {
+            return Err(ModelDeploymentServiceError::RevisionMismatch(input.revision.clone().to_string(), deployment.revision().to_string()));
         }
+
+        if deployment.state != input.state {
+            return Err(ModelDeploymentServiceError::StateMismatch(String::from(input.state), String::from(deployment.state.clone())));
+        }
+
+        if deployment.desired_state != input.desired_state {
+            return Err(ModelDeploymentServiceError::DesiredStateMismatch(String::from(input.desired_state), String::from(deployment.desired_state.clone())));
+        }
+
+        Ok(deployment)
     }
 
     pub async fn deploy_model_with_strategy(
@@ -103,6 +129,7 @@ impl ModelDeploymentService {
         let deployment = ModelDeployment::new(
             ModelDeploymentProps {
                 id: Uuid::now_v7(),
+                platform: input.platform.clone(),
                 owner: input.owner.clone(),
                 model: ModelReference {
                     name: input.model_name.clone(),
@@ -124,16 +151,18 @@ impl ModelDeploymentService {
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
 
-        let payload = ModelDeploymentStateDriftDetectedPayload {
-            deployment_id: deployment.id,
-            deployment_revision: deployment.revision().clone(),
-            desired_state: deployment.desired_state.clone(),
-            acutal_state: deployment.state.clone(),
-            timestamp: TimeStamp::now(),
-        };
+        let payload = EventPayload::ModelDeploymentStateDriftDetectedPayload(
+            ModelDeploymentStateDriftDetectedPayload {
+                deployment_id: deployment.id,
+                message: Some("Model deployment initiated with StateDriftDetected event".into()),
+                deployment_revision: deployment.revision().clone(),
+                desired_state: deployment.desired_state.clone(),
+                actual_state: deployment.state.clone(),
+            }
+        );
 
-        let event = Event::ModelDeploymentStateDriftDetected(payload.clone());
-
+        let event = Event::from_payload(&payload, None);
+         
         // Closure for publishing model deployment
         let publish_state_drift_event = || self.event_publisher.publish(&event);
 
@@ -141,7 +170,7 @@ impl ModelDeploymentService {
         match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY,).await {
             Ok(_) => (),
             Err(err) => {
-                error!("Failed to publish statue drift event for deployment {}: {}", &deployment.id, err.to_string());
+                error!("Failed to publish state drift event for deployment {}: {}", &deployment.id, err.to_string());
             }
         };
 

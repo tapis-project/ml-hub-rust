@@ -16,3 +16,4 @@ serde = "1.0.219"
 amqprs = "2.1.1"
 async-trait = "0.1.88"
 mongodb = { version = "2.8" }
+log = "0.4"
