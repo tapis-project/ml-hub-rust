@@ -1,7 +1,8 @@
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput};
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
-use crate::application::ports::events::{Event,EventPayload, Kind, EventEnvelope, EventMetadata, EventPublisher, ModelDeploymentStateDriftDetectedPayload};
+use crate::application::ports::events::{Event, Payload, EventPublisher};
+use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
 use crate::application::ports::deployment::ModelDeploymentRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::retries::{
@@ -151,17 +152,15 @@ impl ModelDeploymentService {
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
 
-        let payload = EventPayload::ModelDeploymentStateDriftDetectedPayload(
-            ModelDeploymentStateDriftDetectedPayload {
-                deployment_id: deployment.id,
-                message: Some("Model deployment initiated with StateDriftDetected event".into()),
-                deployment_revision: deployment.revision().clone(),
-                desired_state: deployment.desired_state.clone(),
-                actual_state: deployment.state.clone(),
-            }
-        );
+        let payload = ModelDeploymentStateDriftDetectedPayload {
+            deployment_id: deployment.id,
+            message: Some("Model deployment initiated with StateDriftDetected event".into()),
+            deployment_revision: deployment.revision().clone(),
+            desired_state: deployment.desired_state.clone(),
+            actual_state: deployment.state.clone(),
+        };
 
-        let event = Event::from_payload(&payload, None);
+        let event = Event::from_payload(&Payload::ModelDeploymentStateDriftDetectedPayload(payload), None);
          
         // Closure for publishing model deployment
         let publish_state_drift_event = || self.event_publisher.publish(&event);

@@ -1,43 +1,51 @@
-use crate::application::ports::events::{
+use crate::application::ports::events::payloads::{
     ModelDeploymentStateDriftDetectedPayload,
     ModelDeploymentDeletedPayload,
     ModelDeploymentStartedPayload,
     ModelDeploymentStoppedPayload,
+};
+use crate::application::ports::events::{
     EventMetadata,
-    EventPayload,
-    EventEnvelope,
+    Payload,
+    Event,
     EventPublisherError,
-    Kind,
 };
 use crate::infra::messaging::messages;
 use serde_json::{to_value, Value};
 
-impl TryFrom<&EventEnvelope> for messages::EventMessageEnvelope {
+impl TryFrom<&Event> for messages::EventEnvelope {
     type Error = EventPublisherError;
 
-    fn try_from(value: &EventEnvelope) -> Result<Self, Self::Error> {
-        Ok(messages::EventMessageEnvelope {
-            kind: String::from(Kind::from(value.payload())),
-            event_envelope: messages::EventEnvelope {
-                payload: Value::try_from(value.payload())?,
-                metadata: messages::EventMetadata::from(&value.metadata().clone())
-            },
+    fn try_from(value: &Event) -> Result<Self, Self::Error> {
+        let kind = match value {
+            Event::ModelDeploymentDeleted { payload, .. } => &Payload::ModelDeploymentDeletedPayload(payload.clone()).kind(),
+            Event::ModelDeploymentStarted { payload, .. } => &Payload::ModelDeploymentStartedPayload(payload.clone()).kind(),
+            Event::ModelDeploymentStopped { payload, .. } => &Payload::ModelDeploymentStoppedPayload(payload.clone()).kind(),
+            Event::ModelDeploymentStateDriftDetected { payload, .. } => &Payload::ModelDeploymentStateDriftDetectedPayload(payload.clone()).kind(),
+        };
+
+        Ok(messages::EventEnvelope {
+            kind: String::from(kind),
+            event: messages::Event {
+                payload: Value::try_from(&value.payload())?,
+                metadata: messages::EventMetadata::from(value.metadata()),
+            }
         })
     }
 }
 
-impl TryFrom<&EventPayload> for Value {
+impl TryFrom<&Payload> for Value {
     type Error = EventPublisherError;
 
-    fn try_from(value: &EventPayload) -> Result<Self, Self::Error> {
+    fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         let payload = match value {
-            EventPayload::ModelDeploymentDeletedPayload(p) => to_value(messages::ModelDeploymentDeletedPayload::from(p))
+            Payload::ModelDeploymentDeletedPayload(p) => to_value(messages::ModelDeploymentDeletedPayload::from(p))
                 .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
-            EventPayload::ModelDeploymentStartedPayload(p) => to_value(messages::ModelDeploymentStartedPayload::from(p))
+            Payload::ModelDeploymentStartedPayload(p) => to_value(messages::ModelDeploymentStartedPayload::from(p))
                 .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
-            EventPayload::ModelDeploymentStateDriftDetectedPayload(p) => to_value(messages::ModelDeploymentStateDriftDetectedPayload::from(p))
+            Payload::ModelDeploymentStateDriftDetectedPayload(p) => to_value(messages::ModelDeploymentStateDriftDetectedPayload::from(p))
                 .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
-            EventPayload::ModelDeploymentStoppedPayload(p) => to_value(messages::ModelDeploymentStoppedPayload::from(p))
+            Payload::ModelDeploymentStoppedPayload(p) => to_value(messages::ModelDeploymentStoppedPayload::from(p))
                 .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
         };
 
@@ -48,11 +56,10 @@ impl TryFrom<&EventPayload> for Value {
 impl From<&EventMetadata> for messages::EventMetadata {
     fn from(value: &EventMetadata) -> Self {
         Self {
-            id: value.id.clone(),
-            kind: String::from(value.kind.clone()),
-            correlation_id: value.correlation_id.clone(),
-            causation_id: value.causation_id.clone(),
-            timestamp: String::from(value.timestamp.clone()),
+            id: value.id().clone(),
+            correlation_id: value.correlation_id().clone(),
+            causation_id: value.causation_id().clone(),
+            timestamp: String::from(value.timestamp().clone()),
         }
     }
 }

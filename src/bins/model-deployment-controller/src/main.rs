@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::sync::Arc;
 use amqprs::{
     channel::{
         BasicAckArguments, 
@@ -19,17 +19,16 @@ use amqprs::{
     BasicProperties,
     Deliver
 };
+use serde_json::Value;
 use tokio;
 use uuid::Uuid;
-use shared::{application::ports::events::Event, infra::messaging::{messages::{EventType, ModelDeploymentStateDriftDetectedMessage}, rabbitmq::exchanges::MODEL_DEPLOYMENT_EXCHANGE}};
+use shared::{application::ports::events::{Event, EventPublisher, Kind, EventMetadata}, infra::messaging::{rabbitmq::exchanges::MODEL_DEPLOYMENT_EXCHANGE}};
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::MODEL_DEPLOYMENT_ROUTING_KEY;
+use shared::infra::messaging::codec::deserialize_event_message;
+use shared::infra::messaging::messages::{EventMessageEnvelope, ModelDeploymentStateDriftDetectedPayload};
 use shared::infra::system::Env;
-use shared::constants::ARTIFACT_PUBLICATION_DIR_NAME;
-// use shared::datasets::presentation::http::v1::requests::IngestDatasetRequest;
-use shared::infra::messaging::messages::EventMessageEnvelope;
 use async_trait::async_trait;
-use shared::application::services::artifact_service::ArtifactService;
 use std::env;
 use model_deployment_controller::bootstrap::model_deployment_controller_factory;
 use model_deployment_controller::database::{get_db, ClientParams};
@@ -38,55 +37,32 @@ use log::error;
 
 
 struct ModelDeploymentControllerConsumer {
-    artifact_service: ArtifactService,
-    publications_work_dir: PathBuf,
+    event_publisher: Arc<dyn EventPublisher>
 }
 
 #[async_trait]
 impl AsyncConsumer for ModelDeploymentControllerConsumer {
     async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
-        // Deserialize the event envelope message
-        let envelope: EventMessageEnvelope = match serde_json::from_slice(&content) {
+        let event = match deserialize_event_message(content) {
             Ok(e) => e,
             Err(err) => {
-                error!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
-                // nack(&channel, &deliver, None, None).await;
-                return;
-            }
-        };
-
-        let event_message: ModelDeploymentStateDriftDetectedMessage = match envelope.event_type {
-            EventType::ModelDeploymentDriftDetected => {
-                match serde_json::from_value(envelope.event) {
-                    Ok(e) => e,
-                    Err(err) => {
-                        error!("Deserialization error in consumer '{}': {}", &deliver.consumer_tag(), err.to_string());
-                        // nack(&channel, &deliver, None, None).await;
-                        return
-                    }
-                }
-            },
-            _ => {
-                error!("Unexpected event type made it to this consumer queue '{}': {}", &deliver.consumer_tag(), err.to_string());
-                // nack(&channel, &deliver, None, None).await;
+                // TODO nack
                 return
             }
         };
 
-        let event = Event::from(message);
-        // let controller = model_deployment_controller_factory();
-
         match event {
-            Event::ModelDeploymentStateDriftDetected(payload) => {
+            Event::ModelDeploymentStateDriftDetected { metadata, payload } => {
                 controller.dispatch_reconciler(
                     &payload.deployment_id,
                     &payload.deployment_revision,
                     &payload.actual_state,
                     &payload.desired_state,
                 ).await;
-            },
+            }
             _ => {
-                // NoOp
+                // TODO publish to dead letter queue
+                // TODO nack
             }
         }
     }
@@ -164,9 +140,7 @@ async fn main() -> () {
     let environment = Env::new().expect("Env could not be initialized");
 
     let consumer = ModelDeploymentControllerConsumer {
-        artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
-        publications_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_PUBLICATION_DIR_NAME),
-        // artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
+        event_publisher:
     };
      
     let args = BasicConsumeArguments::default()

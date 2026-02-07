@@ -1,8 +1,10 @@
 use std::sync::Arc;
 use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput};
 use crate::application::ports::events::{
-    EventPayload, EventPublisher, ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload
+    Payload,
+    EventPublisher,
 };
+use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationError, ReconciliationOutcome};
@@ -43,7 +45,7 @@ pub enum ModelDeploymentControllerError {
 }
 
 pub struct DispatchReconcilerResult {
-    events: Vec<EventPayload>
+    events: Vec<Payload>
 }
 
 pub struct ModelDeploymentController {
@@ -128,12 +130,12 @@ impl ModelDeploymentController {
         ).await?;
 
         // Determene which event to publish based on the reconciliation outcome
-        let mut events: Vec<EventPayload> = Vec::with_capacity(1);
+        let mut events: Vec<Payload> = Vec::with_capacity(1);
         match outcome {
             ReconciliationOutcome::Observed(payload) => {
                 deployment.change_state(payload.state.clone(), payload.message.clone())?;
                 events.push(
-                    EventPayload::ModelDeploymentStateDriftDetectedPayload(
+                    Payload::ModelDeploymentStateDriftDetectedPayload(
                         ModelDeploymentStateDriftDetectedPayload {
                             deployment_id: deployment.id.clone(),
                             deployment_revision: deployment.revision().clone(),
@@ -147,7 +149,7 @@ impl ModelDeploymentController {
             ReconciliationOutcome::Started(payload) => {
                 deployment.change_state(State::Running, payload.message.clone())?;
                 events.push(
-                    EventPayload::ModelDeploymentStartedPayload(
+                    Payload::ModelDeploymentStartedPayload(
                         ModelDeploymentStartedPayload {
                             deployment_id: deployment.id.clone(),
                             deployment_revision: deployment.revision().clone(),
@@ -159,7 +161,7 @@ impl ModelDeploymentController {
             ReconciliationOutcome::Stopped(payload) => {
                 deployment.change_state(State::Stopped, payload.message.clone())?;
                 events.push(
-                    EventPayload::ModelDeploymentStoppedPayload(
+                    Payload::ModelDeploymentStoppedPayload(
                         ModelDeploymentStoppedPayload {
                             deployment_id: deployment.id.clone(),
                             deployment_revision: deployment.revision().clone(),
@@ -171,7 +173,7 @@ impl ModelDeploymentController {
             ReconciliationOutcome::Undeployed(payload) => {
                 deployment.change_state(State::NotDeployed, payload.message.clone())?;
                 events.push(
-                    EventPayload::ModelDeploymentDeletedPayload(
+                    Payload::ModelDeploymentDeletedPayload(
                         ModelDeploymentDeletedPayload {
                             deployment_id: deployment.id.clone(),
                             deployment_revision: deployment.revision().clone(),

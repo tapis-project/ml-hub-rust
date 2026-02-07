@@ -1,4 +1,12 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, ParseError};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum TimeStampError {
+    #[error("{0}")]
+    ParseError(#[from] ParseError)
+}
+
 
 #[derive(Eq, PartialEq, Clone, Debug)]
 pub struct TimeStamp {
@@ -10,6 +18,15 @@ impl TimeStamp {
         Self {
             inner: Utc::now()
         }
+    }
+
+    pub fn parse_string(s: &str) -> Result<Self, TimeStampError> {
+        let inner = DateTime::parse_from_rfc3339(s)?
+            .with_timezone(&Utc);
+
+        Ok(Self {
+            inner
+        })
     }
 
     pub fn into_inner(&self) -> DateTime<Utc>{
