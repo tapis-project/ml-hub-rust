@@ -4,14 +4,14 @@ use crate::application::ports::events::{self, EventMetadata};
 use crate::infra::messaging::messages;
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::deployment::{State, DesiredState};
-use crate::application::ports::events::EventPublisherError;
+use crate::infra::messaging::errors::SerializationError;
 
 impl TryFrom<messages::EventEnvelope> for events::Event {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: messages::EventEnvelope) -> Result<events::Event, Self::Error> {
         let kind = events::Kind::try_from(value.kind.as_str())
-            .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?;
+            .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?;
 
         let metadata = events::EventMetadata::try_from((&kind, value.event.metadata))?;
         let payload = value.event.payload;
@@ -54,7 +54,7 @@ impl TryFrom<messages::EventEnvelope> for events::Event {
 }
 
 impl TryFrom<(&events::Kind, messages::EventMetadata)> for events::EventMetadata {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: (&events::Kind, messages::EventMetadata)) -> Result<Self, Self::Error> {
         Ok(EventMetadata::rehydrate(
@@ -63,22 +63,22 @@ impl TryFrom<(&events::Kind, messages::EventMetadata)> for events::EventMetadata
             value.1.correlation_id,
             value.1.causation_id,
             TimeStamp::parse_string(value.1.timestamp.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
         ))
     }
 }
 
 impl TryFrom<&messages::ModelDeploymentStateDriftDetectedPayload> for events::payloads::ModelDeploymentStateDriftDetectedPayload {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentStateDriftDetectedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
             deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             actual_state: State::try_from(value.actual_state.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             desired_state: DesiredState::try_from(value.desired_state.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })
@@ -86,12 +86,12 @@ impl TryFrom<&messages::ModelDeploymentStateDriftDetectedPayload> for events::pa
 }
 
 impl TryFrom<&messages::ModelDeploymentDeletedPayload> for events::payloads::ModelDeploymentDeletedPayload {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentDeletedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
             deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })
@@ -99,12 +99,12 @@ impl TryFrom<&messages::ModelDeploymentDeletedPayload> for events::payloads::Mod
 }
 
 impl TryFrom<&messages::ModelDeploymentStartedPayload> for events::payloads::ModelDeploymentStartedPayload {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentStartedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
             deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })
@@ -112,12 +112,12 @@ impl TryFrom<&messages::ModelDeploymentStartedPayload> for events::payloads::Mod
 }
 
 impl TryFrom<&messages::ModelDeploymentStoppedPayload> for events::payloads::ModelDeploymentStoppedPayload {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentStoppedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
             deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| EventPublisherError::DeserializationError(err.to_string()))?,
+                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })

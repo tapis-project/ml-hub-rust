@@ -140,20 +140,17 @@ impl EventMetadata {
 
 #[derive(Debug, Error)]
 pub enum EventPublisherError {
-    #[error("Event broker error: {0}")]
-    AmqpError(String),
-
     #[error("Serialization error: {0}")]
-    SerializationError(String),
+    Serialization(String),
 
-    #[error("Deserialization error: {0}")]
-    DeserializationError(String),
+    #[error("Routing error: {0}")]
+    Routing(String),
 
-    #[error("Internal error: {0}")]
-    InternalError(String),
+    #[error("Publishing failed: {0}")]
+    Publishing(String),
 
     #[error("Connection: {0}")]
-    ConnectionError(String),
+    Connection(String),
 }
 
 #[async_trait]

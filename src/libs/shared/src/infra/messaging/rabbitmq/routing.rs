@@ -3,7 +3,7 @@ use crate::application::ports::commands::Command;
 
 pub const ARTIFACT_INGESTION_ROUTING_KEY: &'static str = "artifact.ingest.queue";
 pub const ARTIFACT_PUBLICATION_ROUTING_KEY: &'static str = "artifact.publish.queue";
-pub const MODEL_DEPLOYMENT_ROUTING_KEY: &'static str = "model.deploy.queue";
+pub const MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY: &'static str = "model_deployment.reconcile.queue";
 
 pub fn get_routing_key_for_command(command: &Command) -> &'static str {
     match command {
@@ -14,6 +14,6 @@ pub fn get_routing_key_for_command(command: &Command) -> &'static str {
 
 pub fn get_routing_key_for_event(event: &Event) -> &'static str {
     match event {
-        _ => MODEL_DEPLOYMENT_ROUTING_KEY,
+        _ => MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
     }
 }

@@ -4,3 +4,5 @@ pub mod exchanges;
 pub mod routing;
 pub mod connection;
 pub mod queues;
+pub mod settlement;
+pub mod errors;

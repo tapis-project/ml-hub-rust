@@ -1,3 +1,4 @@
+use amqprs::connection::OpenConnectionArguments;
 use thiserror::Error;
 use crate::application::ports::events::{
     EventPublisherError,
@@ -7,7 +8,8 @@ use crate::application::ports::events::{
 use crate::infra::messaging::codec::serialize_event;
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_event;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_event;
-use crate::infra::messaging::rabbitmq::connection::amqp_connection_builder;
+use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
+use crate::infra::messaging::rabbitmq::connection::open_channel;
 
 use amqprs::{
     channel::BasicPublishArguments,
@@ -46,7 +48,8 @@ impl RabbitMQModelDeploymentMessagePublisher {
 #[async_trait]
 impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
     async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
-        let payload = serialize_event(&event)?;
+        let payload = serialize_event(&event)
+            .map_err(|err| EventPublisherError::Serialization(err.to_string()))?;
 
         // Publish to exchange
         let args = BasicPublishArguments::new(
@@ -55,19 +58,24 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
         ).mandatory(true)
             .finish();
 
-        let connection = amqp_connection_builder(
-            &self.host,
-            &self.port,
-            &self.username,
-            &self.password,
-        ).await.unwrap();
+        let connection_args = OpenConnectionArguments::new(
+            self.host.as_str(),
+            self.port.parse::<u16>().unwrap_or(5672),
+            self.username.as_str(),
+            self.password.as_str()
+        );
 
-        connection.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
+        let channel = open_channel(connection_args)
             .await
-            .map_err(|err| {
-                error!("Failed basic publish: {:#?}", err);
-                EventPublisherError::AmqpError(err.to_string())
-            })?;
+            .map_err(|err| EventPublisherError::Connection(err.to_string()))?;
+
+        delcare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, "topic")])
+            .await
+            .map_err(|err| EventPublisherError::Routing(err.to_string()))?;
+
+        channel.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
+            .await
+            .map_err(|err| EventPublisherError::Publishing(err.to_string()))?;
        
         Ok(())
     }

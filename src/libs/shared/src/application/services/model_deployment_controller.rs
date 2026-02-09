@@ -1,9 +1,6 @@
 use std::sync::Arc;
 use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput};
-use crate::application::ports::events::{
-    Payload,
-    EventPublisher,
-};
+use crate::application::ports::events::Payload;
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
@@ -13,9 +10,7 @@ use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ModelDe
 use thiserror::Error;
 use crate::application::retries::{
     retry_async,
-    ExponentialBackoff,
     FixedBackoff,
-    Jitter,
     Retry,
     RetryPolicy,
 };
@@ -34,8 +29,8 @@ pub enum ModelDeploymentControllerError {
     #[error("Failed to find model metadata associated with deployment: {0}")]
     ModelMetadataRetrievalFailed(String),
 
-    #[error("Model deployment error: {0}")]
-    ModelDeploymentError(#[from] ModelDeploymentError),
+    #[error("Model deployment domain invariant violation: {0}")]
+    ModelDeploymentDomainInvariantViolation(#[from] ModelDeploymentError),
 
     #[error("Failed to initalize reconciliation client")]
     ReconciliationClientInitilizationFailed(#[from] ModelDeploymentPlatformReconcilerProviderError),
@@ -45,14 +40,13 @@ pub enum ModelDeploymentControllerError {
 }
 
 pub struct DispatchReconcilerResult {
-    events: Vec<Payload>
+    pub events: Vec<Payload>
 }
 
 pub struct ModelDeploymentController {
     model_deployment_service: ModelDeploymentService,
-    model_metadata_repo: Box<dyn ModelMetadataRepository>,
-    client_provider: Box<dyn ModelDeploymentPlatformReconcilerProvider>,
-    event_publisher: Arc<dyn EventPublisher>,
+    model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+    client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
 }
 
 impl ModelDeploymentController {
@@ -63,17 +57,19 @@ impl ModelDeploymentController {
         })
     });
 
-    const EVENT_PUBLISHER_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| {
-        RetryPolicy::ExponentialBackoff(ExponentialBackoff {
-            retries: Retry::NTimes(3),
-            delay: 50,
-            base: Some(2),
-            max_delay: 500,
-            jitter: Some(Jitter::Full),
-        })
-    });
+    pub fn new(
+        model_deployment_service: ModelDeploymentService,
+        model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+        client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
+    ) -> Self {
+        Self {
+            model_deployment_service,
+            model_metadata_repo,
+            client_provider,
+        }
+    }
 
-    async fn dispatch_reconciler(&self, payload: ModelDeploymentStateDriftDetectedPayload) -> Result<DispatchReconcilerResult, ModelDeploymentControllerError> {
+    pub async fn dispatch_reconciler(&self, payload: &ModelDeploymentStateDriftDetectedPayload) -> Result<DispatchReconcilerResult, ModelDeploymentControllerError> {
         let input = FindForReconciliationInput {
             deployment_id: payload.deployment_id.clone(),
             revision: payload.deployment_revision.clone(),

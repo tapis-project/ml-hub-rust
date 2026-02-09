@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum JsonError {
+pub enum SerializationError {
     #[error("Serialization Error: {0}")]
     SerializationFailed(String),
 

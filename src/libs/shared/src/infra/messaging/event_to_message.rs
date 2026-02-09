@@ -8,13 +8,13 @@ use crate::application::ports::events::{
     EventMetadata,
     Payload,
     Event,
-    EventPublisherError,
 };
 use crate::infra::messaging::messages;
+use crate::infra::messaging::errors::SerializationError;
 use serde_json::{to_value, Value};
 
 impl TryFrom<&Event> for messages::EventEnvelope {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: &Event) -> Result<Self, Self::Error> {
         let kind = match value {
@@ -35,18 +35,18 @@ impl TryFrom<&Event> for messages::EventEnvelope {
 }
 
 impl TryFrom<&Payload> for Value {
-    type Error = EventPublisherError;
+    type Error = SerializationError;
 
     fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         let payload = match value {
             Payload::ModelDeploymentDeletedPayload(p) => to_value(messages::ModelDeploymentDeletedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
+                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
             Payload::ModelDeploymentStartedPayload(p) => to_value(messages::ModelDeploymentStartedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
+                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
             Payload::ModelDeploymentStateDriftDetectedPayload(p) => to_value(messages::ModelDeploymentStateDriftDetectedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
+                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
             Payload::ModelDeploymentStoppedPayload(p) => to_value(messages::ModelDeploymentStoppedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationError(err.to_string()))?,
+                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
         };
 
         Ok(payload)

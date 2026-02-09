@@ -31,6 +31,6 @@ pub enum ModelDeploymentPlatformReconcilerProviderError {
     PlatformClientNotFound(String),
 }
 
-pub trait ModelDeploymentPlatformReconcilerProvider {
-    fn provide(&self, platform: &Platform) -> Result<Box<dyn ModelDeploymentPlatformReconciliationClient>, ModelDeploymentPlatformReconcilerProviderError>;
+pub trait ModelDeploymentPlatformReconcilerProvider: Send + Sync {
+    fn provide(&self, platform: &Platform) -> Result<Arc<dyn ModelDeploymentPlatformReconciliationClient>, ModelDeploymentPlatformReconcilerProviderError>;
 }

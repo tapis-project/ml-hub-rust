@@ -6,17 +6,17 @@ use crate::application::inputs::artifacts::ArtifactType;
 // TODO Message borker related errors should be factored out of these ports
 #[derive(Debug, Error)]
 pub enum CommandPublisherError {
-    #[error("Event broker error: {0}")]
-    AmqpError(String),
-
     #[error("Serialization error: {0}")]
-    SerializationError(String),
+    Serialization(String),
 
-    #[error("Internal error: {0}")]
-    InternalError(String),
+    #[error("Routing error: {0}")]
+    Routing(String),
+
+    #[error("Publishing failed: {0}")]
+    Publishing(String),
 
     #[error("Connection: {0}")]
-    ConnectionError(String),
+    Connection(String),
 }
 
 #[derive(Clone)]
