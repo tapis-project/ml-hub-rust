@@ -9,7 +9,7 @@ use crate::application::ports::events::{
 use crate::infra::messaging::codec::serialize_event;
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_event;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_event;
-use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, DEAD_LETTER_EXCHANGE};
+use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
 use crate::infra::messaging::rabbitmq::connection::open_channel;
 
 use amqprs::{
@@ -18,6 +18,7 @@ use amqprs::{
 };
 use async_trait::async_trait;
 use log::error;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum ArtifactOpMessagePublisherError {
@@ -74,8 +75,11 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
         )
             .mandatory(true)
             .finish();
+        let props = BasicProperties::default()
+            .with_message_id(Uuid::now_v7().to_string().as_str())
+            .finish();
 
-        channel.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
+        channel.basic_publish(props, payload.as_bytes().to_vec(), args)
             .await
             .map_err(|err| EventPublisherError::Publishing(err.to_string()))?;
        

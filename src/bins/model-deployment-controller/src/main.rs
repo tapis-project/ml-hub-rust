@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use amqprs::{
     channel::{
-        BasicConsumeArguments, Channel, ExchangeDeclareArguments, ExchangeType, QueueBindArguments, QueueDeclareArguments
-    }, connection::OpenConnectionArguments, consumer::AsyncConsumer, BasicProperties, Deliver, FieldName, FieldTable, FieldValue,
+        BasicConsumeArguments, Channel, ExchangeType, QueueBindArguments, QueueDeclareArguments
+    }, connection::OpenConnectionArguments, consumer::AsyncConsumer, BasicProperties, Deliver, FieldTable, FieldValue,
 };
 use tokio;
 use uuid::Uuid;
@@ -18,7 +18,7 @@ use async_trait::async_trait;
 use std::env;
 use model_deployment_controller::bootstrap::{model_deployment_conroller_builder, event_publisher_factory};
 use model_deployment_controller::database::{get_db, ClientParams};
-use log::{error, info};
+use log::{error, info, warn};
 
 
 struct ModelDeploymentControllerConsumer {
@@ -28,24 +28,37 @@ struct ModelDeploymentControllerConsumer {
 
 #[async_trait]
 impl AsyncConsumer for ModelDeploymentControllerConsumer {
-    async fn consume(&mut self, channel: &Channel, deliver: Deliver, _basic_properties: BasicProperties, content: Vec<u8>) {
+    async fn consume(&mut self, channel: &Channel, deliver: Deliver, properties: BasicProperties, content: Vec<u8>) {
+        let default_message_id = String::from("unknown");
+        let message_id = properties.message_id().unwrap_or(&default_message_id);
+
         let event = match deserialize_event_message(content) {
             Ok(e) => e,
             Err(err) => {
-                // TODO publish to dlq/dlx
-                // TODO nack requeue false
+                error!("Failed to desireialize message: Message id={}; Error: {}", message_id, err.to_string());
+                let _ = nack(&channel, &deliver, Some(false), None)
+                    .await
+                    .map_err(|err| {
+                        panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                    });
+
                 return
             }
         };
 
         let maybe_dispatch_reconciliation_outcome = match &event {
-            Event::ModelDeploymentStateDriftDetected { metadata, payload } => {
+            Event::ModelDeploymentStateDriftDetected { payload, .. } => {
                 self.controller.dispatch_reconciler(payload).await
             }
             _ => {
-                // TODO publish to dlq/dlx
-                // TODO nack requeu false
-                return 
+                error!("Invalid event type for this consumer: {}", String::from(event.metadata().kind()));
+                let _ = nack(&channel, &deliver, Some(false), None)
+                    .await
+                    .map_err(|err| {
+                        panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                    });
+
+                return
             }
         };
 
@@ -54,37 +67,85 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
             Err(err) => {
                 match err {
                     ModelDeploymentControllerError::ModelDeploymentDomainInvariantViolation(e) => {
-                        // TODO nack + dlq/dlx
+                        error!("{}", e.to_string());
+                        let _ = nack(&channel, &deliver, Some(false), None).await
+                            .map_err(|err| {
+                                panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
                     },
                     ModelDeploymentControllerError::ModelDeploymentRetrievalFailed(e) => {
-                        // TODO nack + requeue
+                        error!("{}", e.to_string());
+                        let _ = nack(&channel, &deliver, Some(true), None).await
+                            .map_err(|err| {
+                                panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
                     },
                     ModelDeploymentControllerError::ModelMetadataRetrievalFailed(e) => {
-                        // TODO nack + requeue
+                        error!("{}", e.to_string());
+                        let _ = nack(&channel, &deliver, Some(true), None)
+                            .await
+                            .map_err(|err| {
+                                panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
                     },
                     ModelDeploymentControllerError::StaleEvent(e) => {
-                        // TODO ack + dont requeue
+                        warn!("{}", e.to_string());
+                        let _ = ack(&channel, &deliver, None)
+                            .await
+                            .map_err(|err| {
+                                panic!("Failed to ack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
                     },
                     ModelDeploymentControllerError::ReconciliationClientInitilizationFailed(e) => {
-                        // TODO nack + requeue
-                        // Event was processible but clinet was incorrectly configured. Once the client
+                        // Event was processible but client was incorrectly configured. Once the client
                         // is reconfigured, this event can be processed again
+                        error!("{}", e.to_string());
+                        let _ = nack(&channel, &deliver, Some(true), None)
+                            .await
+                            .map_err(|err| {
+                                panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
                     },
                     ModelDeploymentControllerError::ReconciliationFailed(e) => {
-                        // TODO nack + requeue
+                        error!("{}", e.to_string());
+                        let _ = nack(&channel, &deliver, Some(true), None)
+                            .await
+                            .map_err(|err| {
+                                panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
                     },
                 };
-
-                panic!("Remove")
             }
         };
 
-        // TODO Ack
 
+        // Successfully processed. Acknowledge
+        let _ = ack(&channel, &deliver, None)
+            .await
+            .map_err(|err| {
+                panic!("Failed to ack message_id={}: Error: {}", message_id, err.to_string())
+            });
+
+        // Publish any events returned by the controller
         for payload in event_payloads {
-            self.event_publisher.publish(&Event::from_payload(&payload, Some(&event)))
+            let new_event = &Event::from_payload(&payload, Some(&event));
+            let _ = self.event_publisher.publish(new_event)
                 .await
-                .expect("Handle result");
+                .map_err(|err| {
+                    error!("Failed to publish event produced by reconciliation. Event id: {}, Event kind: {}. Error: {}", new_event.metadata().id().to_string(), String::from(new_event.metadata().kind()), err.to_string())
+                });
         }
     }
 }
