@@ -1,26 +1,18 @@
 use std::sync::Arc;
 use amqprs::{
     channel::{
-        BasicConsumeArguments,
-        Channel, 
-        QueueDeclareArguments,
-        ExchangeDeclareArguments,
-        QueueBindArguments,
-        ExchangeType
-    },
-    connection::OpenConnectionArguments,
-    consumer::AsyncConsumer,
-    BasicProperties,
-    Deliver
+        BasicConsumeArguments, Channel, ExchangeDeclareArguments, ExchangeType, QueueBindArguments, QueueDeclareArguments
+    }, connection::OpenConnectionArguments, consumer::AsyncConsumer, BasicProperties, Deliver, FieldName, FieldTable, FieldValue,
 };
 use tokio;
 use uuid::Uuid;
 use shared::{
     application::{ports::events::{Event, EventPublisher}, services::model_deployment_controller::{ModelDeploymentController, ModelDeploymentControllerError}},
-    infra::messaging::rabbitmq::{connection::open_channel, exchanges::MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE}};
+    infra::messaging::rabbitmq::{connection::open_channel, exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE}, queues::DEAD_LETTER_QUEUE}};
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
-use shared::infra::messaging::rabbitmq::routing::MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY;
+use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
 use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
+use shared::infra::messaging::rabbitmq::exchanges::delcare_exchanges;
 use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
@@ -122,32 +114,64 @@ async fn main() -> () {
         Err(err) => panic!("Failed to open channel: {}", err.to_string())
     };
 
-    // Declare queue
-    let _ = match channel.queue_declare(QueueDeclareArguments::new(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into())).await {
+    // Declare dlx
+    delcare_exchanges(&channel, vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct.to_string().as_str())])
+        .await
+        .expect("Exchanges to be declared");
+
+    // Declare dlq
+    let _ = match channel.queue_declare(QueueDeclareArguments::new(DEAD_LETTER_QUEUE.into())).await {
         Ok(q) => q,
-        Err(err) => panic!("Failed to create channel: {}", err.to_string())
+        Err(err) => panic!("Failed to declare dead letter queue: {}", err.to_string())
     };
 
-    match channel.exchange_declare(
-        ExchangeDeclareArguments::new(
-            MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
-            ExchangeType::Topic.to_string().as_str()
-        )
-    ).await {
-        Ok(_) => {},
-        Err(err) => panic!("Failed to delare exchange: {}", err.to_string())
-    };
+    // Bind dlq to dlx
+    channel.queue_bind(QueueBindArguments::new(DEAD_LETTER_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_LETTER_ROUTING_KEY))
+        .await
+        .expect(format!("DLQ bound to DLX with routing key {}", DEAD_LETTER_ROUTING_KEY).as_str());
+
+    // Declare main queue
+    let mut dl_args = FieldTable::new();
+
+    // When message is rejected, send to DLX
+    dl_args.insert(
+        String::from("x-dead-letter-exchange").try_into().expect("Should be ShortStr"),
+        FieldValue::from(DEAD_LETTER_EXCHANGE)
+    );
+
+    // Routing key used when dead-lettering
+    dl_args.insert(
+        String::from("x-dead-letter-routing-key").try_into().expect("Should be ShortStr"),
+        FieldValue::from(DEAD_LETTER_ROUTING_KEY)
+    );
     
-     match channel.queue_bind(
+    let mut queue_declare_args = QueueDeclareArguments::new(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into());
+    
+    queue_declare_args.arguments(dl_args);
+
+    let _ = channel.queue_declare(queue_declare_args.clone())
+        .await
+        .expect("Model deployment reconciliation queue to be declared");
+
+    delcare_exchanges(
+        &channel,
+        vec![
+            (MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic.to_string().as_str()),
+            (DEAD_LETTER_EXCHANGE, ExchangeType::Direct.to_string().as_str()),
+        ]
+    )
+        .await
+        .expect("Model deployment reconciliation and dead leater exchanges to be declared");
+    
+    channel.queue_bind(
         QueueBindArguments::new(
             MODEL_DEPLOYMENT_RECONCILIATION_QUEUE,
             MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, 
-            MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY
+            MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
         )
-    ).await {
-        Ok(_) => {},
-        Err(err) => panic!("Failed to bind queue: {}", err.to_string())
-    };
+    )
+        .await
+        .expect("Model deployment reconciliation queue bound to exchange with routing key");
 
     // Unique consumer tag. Make this unique per worker. 
     let consumer_tag = Uuid::now_v7();

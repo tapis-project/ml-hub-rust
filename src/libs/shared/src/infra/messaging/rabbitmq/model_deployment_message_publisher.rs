@@ -1,3 +1,4 @@
+use amqprs::channel::ExchangeType;
 use amqprs::connection::OpenConnectionArguments;
 use thiserror::Error;
 use crate::application::ports::events::{
@@ -8,7 +9,7 @@ use crate::application::ports::events::{
 use crate::infra::messaging::codec::serialize_event;
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_event;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_event;
-use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
+use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, DEAD_LETTER_EXCHANGE};
 use crate::infra::messaging::rabbitmq::connection::open_channel;
 
 use amqprs::{
@@ -51,13 +52,6 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
         let payload = serialize_event(&event)
             .map_err(|err| EventPublisherError::Serialization(err.to_string()))?;
 
-        // Publish to exchange
-        let args = BasicPublishArguments::new(
-            get_exchange_for_event(event),
-            get_routing_key_for_event(event),
-        ).mandatory(true)
-            .finish();
-
         let connection_args = OpenConnectionArguments::new(
             self.host.as_str(),
             self.port.parse::<u16>().unwrap_or(5672),
@@ -69,9 +63,17 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
             .await
             .map_err(|err| EventPublisherError::Connection(err.to_string()))?;
 
-        delcare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, "topic")])
+        delcare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic.to_string().as_str())])
             .await
             .map_err(|err| EventPublisherError::Routing(err.to_string()))?;
+
+        // Publish to exchange
+        let args = BasicPublishArguments::new(
+            get_exchange_for_event(event),
+            get_routing_key_for_event(event),
+        )
+            .mandatory(true)
+            .finish();
 
         channel.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
             .await

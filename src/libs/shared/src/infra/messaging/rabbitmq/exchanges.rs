@@ -1,8 +1,5 @@
 use crate::application::ports::events::Event;
-use crate::application::ports::commands::{
-    CommandPublisherError,
-    Command,
-};
+use crate::application::ports::commands::Command;
 use amqprs::channel::{
     Channel,
     ExchangeDeclareArguments,
@@ -13,6 +10,7 @@ use crate::infra::messaging::rabbitmq::errors::BrokerError;
 pub const ARTIFACT_INGESTION_EXCHANGE: &'static str = "exchange.artifact.ingest";
 pub const ARTIFACT_PUBLICATION_EXCHANGE: &'static str = "exchange.artifact.publish";
 pub const MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE: &'static str = "exchange.model_deployment.reconcile";
+pub const DEAD_LETTER_EXCHANGE: &'static str = "exchange.dead_letter";
 
 pub async fn delcare_exchanges(channel: &Channel, exchanges: Vec<(&'static str, &str)>) -> Result<(), BrokerError> {
     for (exchange, exchange_type) in exchanges {
