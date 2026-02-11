@@ -13,7 +13,7 @@ pub struct DeployModelWithStrategyPathParams {
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct DeployModelWithStrategyBody {
-    pub model_id: String,
+    pub model_name: String,
     pub model_author: String,
     pub strategy_name: String,
     pub params: Value,

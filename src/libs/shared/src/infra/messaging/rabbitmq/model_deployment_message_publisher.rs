@@ -31,13 +31,13 @@ pub enum ArtifactOpMessagePublisherError {
 
 pub struct RabbitMQModelDeploymentMessagePublisher {
     host: String,
-    port: String,
+    port: u16,
     username: String,
     password: String,
 }
 
 impl RabbitMQModelDeploymentMessagePublisher {
-    pub fn new(host: String, port: String, username: String, password: String) -> Self {
+    pub fn new(host: String, port: u16, username: String, password: String) -> Self {
         Self {
             host,
             port,
@@ -55,7 +55,7 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
 
         let connection_args = OpenConnectionArguments::new(
             self.host.as_str(),
-            self.port.parse::<u16>().unwrap_or(5672),
+            self.port,
             self.username.as_str(),
             self.password.as_str()
         );

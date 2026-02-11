@@ -1,5 +1,6 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
 use crate::bootstrap::state::AppState;
+use crate::bootstrap::factories::model_deployment_service_builder;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
@@ -12,6 +13,7 @@ use actix_web::{
     Responder
 };
 use serde_json::{Value, to_value};
+use shared::application::inputs::deployment::DeployWithStrategyInput;
 
 #[utoipa::path(
     post,
@@ -23,7 +25,7 @@ use serde_json::{Value, to_value};
         ("platform" = Platform, Path, description = "The target platform for the Model Deployment")
     ),
     responses(
-        (status=200, description="Model deployment", body=contracts::responses::ListDeploymentStrategiesResponse),
+        (status=200, description="Model deployment", body=contracts::responses::ModelDeploymentResponse),
         (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
         (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
         (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
@@ -35,5 +37,29 @@ async fn deploy_model_with_strategy(
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
 ) -> impl Responder {
-    build_success_response(None, Some("Success".into()), None)
+    let service = model_deployment_service_builder(
+        &data.db,
+        &data.message_publisher_connection_args.host,
+        data.message_publisher_connection_args.port.clone(),
+        &data.message_publisher_connection_args.username,
+        &data.message_publisher_connection_args.password,
+    );
+
+    let input = DeployWithStrategyInput {
+        owner: "mlhub".into(),
+        model_author: body.model_author.clone(),
+        model_name: body.model_name.clone(),
+        platform: path.platform.clone(),
+        strategy_name: body.strategy_name.clone(),
+        params: body.params.clone(),
+    };
+
+    match service.deploy_model_with_strategy(input).await {
+        Ok(_) => {
+            build_success_response(None, None, None)
+        },
+        Err(err) => {
+            build_error_response(500, err.to_string())
+        }
+    }
 }

@@ -23,7 +23,7 @@ pub fn model_deployment_repo_factory(db: &Database) -> Arc<dyn ModelDeploymentRe
     Arc::new(MongoModelDeploymentRepository::new(db))
 }
 
-pub fn event_publisher_factory(host: &String, port: &String, username: &String, password: &String) -> Arc<dyn EventPublisher> {
+pub fn event_publisher_factory(host: &String, port: u16, username: &String, password: &String) -> Arc<dyn EventPublisher> {
     Arc::new(RabbitMQModelDeploymentMessagePublisher::new(host.clone(), port.clone(), username.clone(), password.clone()))
 }
 
@@ -31,7 +31,7 @@ pub fn model_deployment_platform_reconciler_provider_factory() -> Arc<dyn ModelD
     Arc::new(ReconciliationClientProvider::new())
 }
 
-pub fn model_deployment_service_builder(db: &Database, host: &String, port: &String, username: &String, password: &String) -> ModelDeploymentService {
+pub fn model_deployment_service_builder(db: &Database, host: &String, port: u16, username: &String, password: &String) -> ModelDeploymentService {
     ModelDeploymentService::new(
         model_deployment_repo_factory(db),
         model_metadata_repo_factory(db),
@@ -39,7 +39,7 @@ pub fn model_deployment_service_builder(db: &Database, host: &String, port: &Str
     )
 }
 
-pub fn model_deployment_conroller_builder(db: &Database, host: &String, port: &String, username: &String, password: &String) -> Arc<ModelDeploymentController> {
+pub fn model_deployment_conroller_builder(db: &Database, host: &String, port: u16, username: &String, password: &String) -> Arc<ModelDeploymentController> {
     Arc::new(ModelDeploymentController::new(
         model_deployment_service_builder(db, host, port, username, password),
         model_metadata_repo_factory(db),

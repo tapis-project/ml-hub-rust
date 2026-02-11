@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use crate::presentation;
-use crate::bootstrap::state::AppState;
+use crate::bootstrap::state::{AppState, MessagePublisherConnectionArgs};
 use crate::bootstrap::factories::build_deployment_strategy_provider;
 use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
@@ -41,9 +41,25 @@ pub async fn run_server() -> std::io::Result<()> {
         }
     };
 
+    let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_HOST missing from environment variables");
+    let port = std::env::var("ARTIFACT_OP_MQ_PORT")
+        .expect("ARTIFACT_OP_MQ_PORT missing from environment variables")
+        .parse::<u16>()
+        .unwrap_or(5672);
+    let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+    let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
+
+    let connection_args = MessagePublisherConnectionArgs {
+        host,
+        port,
+        username,
+        password,
+    };
+
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
+        message_publisher_connection_args: connection_args,
         db: get_db(ClientParams{
             username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
             password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),

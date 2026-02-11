@@ -212,6 +212,16 @@ pub struct ListDeploymentStrategiesResponse {
 }
 
 #[derive(ToSchema)]
+pub struct ModelDeploymentResponse {
+    pub result: Value,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
 pub struct BadRequestResponse {
     #[schema(default=null)]
     pub result: Value,

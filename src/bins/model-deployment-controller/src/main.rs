@@ -155,13 +155,16 @@ async fn main() -> () {
     env_logger::init();
 
     let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_HOST missing from environment variables");
-    let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+    let port = std::env::var("ARTIFACT_OP_MQ_PORT")
+        .expect("ARTIFACT_OP_MQ_PORT missing from environment variables")
+        .parse::<u16>()
+        .unwrap_or(5672);
     let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
     let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
 
     let connection_args = OpenConnectionArguments::new(
         host.as_str(),
-        port.parse::<u16>().unwrap_or(5672),
+        port,
         username.as_str(),
         password.as_str()
     );
@@ -252,8 +255,8 @@ async fn main() -> () {
         .expect("Datbase initialization error");
 
     let consumer = ModelDeploymentControllerConsumer {
-        event_publisher: event_publisher_factory(&host, &port, &username, &password),
-        controller: model_deployment_conroller_builder(&db, &host, &port, &username, &password)
+        event_publisher: event_publisher_factory(&host, port.clone(), &username, &password),
+        controller: model_deployment_conroller_builder(&db, &host, port.clone(), &username, &password)
     };
      
     let args = BasicConsumeArguments::default()
