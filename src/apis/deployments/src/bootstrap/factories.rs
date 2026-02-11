@@ -3,6 +3,7 @@
 // use mongodb::Database;
 use std::sync::Arc;
 use shared::application::errors::ApplicationError;
+use shared::application::ports::artifacts::ArtifactRepository;
 use shared::application::ports::deployment::DeploymentStrategyProvider;
 use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
 use mongodb::Database;
@@ -13,6 +14,7 @@ use shared::application::services::model_deployment_service::ModelDeploymentServ
 use shared::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
+    ArtifactRepository as MongoArtifactRepository,
 };
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;
 
@@ -24,6 +26,10 @@ pub fn model_deployment_repo_factory(db: &Database) -> Arc<dyn ModelDeploymentRe
     Arc::new(MongoModelDeploymentRepository::new(db))
 }
 
+pub fn artifact_repo_factory(db: &Database) -> Arc<dyn ArtifactRepository> {
+    Arc::new(MongoArtifactRepository::new(db))
+}
+
 pub fn event_publisher_factory(host: &String, port: u16, username: &String, password: &String) -> Arc<dyn EventPublisher> {
     Arc::new(RabbitMQModelDeploymentMessagePublisher::new(host.clone(), port.clone(), username.clone(), password.clone()))
 }
@@ -32,6 +38,7 @@ pub fn model_deployment_service_builder(db: &Database, host: &String, port: u16,
     ModelDeploymentService::new(
         model_deployment_repo_factory(db),
         model_metadata_repo_factory(db),
+        artifact_repo_factory(db),
         event_publisher_factory(host, port, username, password),
     )
 }

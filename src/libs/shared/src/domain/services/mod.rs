@@ -4,8 +4,9 @@ use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
 
-use super::entities::artifact::ArtifactType;
-use super::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::artifact::ArtifactType;
+use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentProps};
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
@@ -58,5 +59,41 @@ impl ModelMetadataService {
         }
 
         return Ok(());
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ModelDeploymentServiceError {
+    #[error("Cannot create model deployment for model {0}/{1}. Artifact for the selected model must be fully ingested")]
+    ArtifactIngestionRequired(String, String),
+
+    #[error("Provided ModelMetadata and Artifact have different ids: Model metadata artifact id: {0}. Artifact id {1}")]
+    MismatchedArtifactIds(String, String),
+
+    #[error("The artifact associated with this deployment's model metadata is not a Model artifact")]
+    InvalidArtifactType,
+}
+
+pub struct ModelDeploymentService {}
+
+impl ModelDeploymentService {
+    pub fn create_model_deployment(model_metadata: &ModelMetadata, artifact: &Artifact, props: ModelDeploymentProps) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+        if model_metadata.artifact_id.is_none() {
+            return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
+        };
+
+        if model_metadata.artifact_id != Some(artifact.id) {
+            return Err(ModelDeploymentServiceError::MismatchedArtifactIds(model_metadata.artifact_id.and_then(|id| Some(id.to_string())).unwrap_or(String::from("NULL")), artifact.id.to_string()))
+        };
+
+        if artifact.artifact_type != ArtifactType::Model {
+            return Err(ModelDeploymentServiceError::InvalidArtifactType)
+        };
+        
+        if !artifact.is_fully_ingested() {
+            return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
+        };
+
+        Ok(ModelDeployment::new(props))
     }
 }

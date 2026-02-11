@@ -1,6 +1,7 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application-level concerns
 use mongodb::Database;
+use shared::application::ports::artifacts::ArtifactRepository;
 use shared::application::ports::deployment::ModelDeploymentRepository;
 use shared::application::ports::events::EventPublisher;
 use shared::application::ports::model_metadata::ModelMetadataRepository;
@@ -9,6 +10,7 @@ use shared::application::ports::deployment::ModelDeploymentPlatformReconcilerPro
 use shared::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
+    ArtifactRepository as MongoArtifactRepository,
 };
 use shared::infra::reconciliation::client_provider::ReconciliationClientProvider;
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;
@@ -31,10 +33,15 @@ pub fn model_deployment_platform_reconciler_provider_factory() -> Arc<dyn ModelD
     Arc::new(ReconciliationClientProvider::new())
 }
 
+pub fn artifact_repo_factory(db: &Database) -> Arc<dyn ArtifactRepository> {
+    Arc::new(MongoArtifactRepository::new(db))
+}
+
 pub fn model_deployment_service_builder(db: &Database, host: &String, port: u16, username: &String, password: &String) -> ModelDeploymentService {
     ModelDeploymentService::new(
         model_deployment_repo_factory(db),
         model_metadata_repo_factory(db),
+        artifact_repo_factory(db),
         event_publisher_factory(host, port, username, password),
     )
 }

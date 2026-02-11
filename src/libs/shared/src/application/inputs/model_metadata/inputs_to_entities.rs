@@ -94,6 +94,7 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
         Ok(Self {
             name: value.name,
             author: value.author,
+            artifact_id: None,
             libraries: value.libraries,
             model_type: value.model_type,
             image: value.image,

@@ -2,6 +2,7 @@ use crate::infra::persistence::mongo::documents::model_metadata;
 use crate::domain::entities::model_metadata as domain;
 use crate::domain::entities::task as domain_task;
 use crate::errors::Error;
+use uuid::Uuid;
 
 impl TryFrom<model_metadata::SystemRequirement> for domain::SystemRequirement {
     type Error = Error;
@@ -91,6 +92,7 @@ impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
 
         Ok(Self {
             name: value.name,
+            artifact_id: value.artifact_id.and_then(|id| Some(Uuid::from_bytes(id.bytes()))),
             author: value.author,
             libraries: value.libraries,
             model_type: value.model_type,

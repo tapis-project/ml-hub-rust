@@ -1,6 +1,7 @@
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput};
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
+use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
 use crate::application::ports::deployment::ModelDeploymentRepository;
@@ -12,6 +13,9 @@ use crate::domain::entities::deployment::{
     DeploymentStrategyReference, DesiredState, ModelDeployment, ModelDeploymentProps, ModelReference, State
 };
 use crate::domain::entities::visibility::Visibility;
+use crate::domain::services::{
+    ModelDeploymentService as ModelDeploymentDomainService
+};
 use log::error;
 use once_cell::sync::Lazy;
 use std::sync::Arc;
@@ -39,6 +43,7 @@ pub enum ModelDeploymentServiceError {
 pub struct ModelDeploymentService {
     model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+    artifact_repo: Arc<dyn ArtifactRepository>,
     event_publisher: Arc<dyn EventPublisher>,
 }
 
@@ -63,11 +68,13 @@ impl ModelDeploymentService {
     pub fn new(
         model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+        artifact_repo: Arc<dyn ArtifactRepository>,
         event_publisher: Arc<dyn EventPublisher>,
     ) -> Self {
         Self {
             model_deployment_repo,
             model_metadata_repo,
+            artifact_repo,
             event_publisher,
         }
     }
@@ -118,7 +125,7 @@ impl ModelDeploymentService {
         // Fetch the metadata for the model of this deployment
         let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY).await?;
 
-        let _ = match maybe_model_metadata {
+        let model_metadata = match maybe_model_metadata {
             Some(mm) => mm,
             None => {
                 return Err(ApplicationError::DomainError(
@@ -127,27 +134,39 @@ impl ModelDeploymentService {
             }
         };
 
-        let deployment = ModelDeployment::new(
-            ModelDeploymentProps {
-                id: Uuid::now_v7(),
-                platform: input.platform.clone(),
-                owner: input.owner.clone(),
-                model: ModelReference {
-                    name: input.model_name.clone(),
-                    author: input.model_author.clone(),
-                },
-                state: State::NotDeployed,
-                desired_state: DesiredState::Running,
-                last_message: Some("Deployment submitted".into()),
-                deployment_strategy: Some(DeploymentStrategyReference {
-                    name: input.strategy_name.clone(),
-                    client: input.platform.to_string(),
-                }),
-                visibility: Visibility::Private,
-                deployment_interface: None,
-                parallelism: None,
-            }
-        );
+        let artifact_id = model_metadata.artifact_id
+            .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
+        
+        let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY)
+            .await?
+            .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
+        
+        let model_deployment_props = ModelDeploymentProps {
+            id: Uuid::now_v7(),
+            platform: input.platform.clone(),
+            owner: input.owner.clone(),
+            model: ModelReference {
+                name: input.model_name.clone(),
+                author: input.model_author.clone(),
+            },
+            state: State::NotDeployed,
+            desired_state: DesiredState::Running,
+            last_message: Some("Deployment submitted".into()),
+            deployment_strategy: Some(DeploymentStrategyReference {
+                name: input.strategy_name.clone(),
+                client: input.platform.to_string(),
+            }),
+            visibility: Visibility::Private,
+            deployment_interface: None,
+            parallelism: None,
+        };
+        
+        let deployment = ModelDeploymentDomainService::create_model_deployment(
+            &model_metadata,
+            &artifact,
+            model_deployment_props,
+        )
+            .map_err(|err| ApplicationError::ModelDeploymentFailed(err.to_string()))?;
 
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;

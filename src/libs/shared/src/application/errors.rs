@@ -17,4 +17,7 @@ pub enum ApplicationError {
 
     #[error("Deployment strategy provider initialization error: {0}")]
     DeploymentStrategyProviderInitialization(String),
+
+    #[error("Model deployment failed: {0}")]
+    ModelDeploymentFailed(String),
 }

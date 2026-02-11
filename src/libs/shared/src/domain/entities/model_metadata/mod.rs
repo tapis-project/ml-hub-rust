@@ -4,6 +4,7 @@ pub mod fixtures;
 use crate::domain::entities::task::Task;
 use serde_json::Value;
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum ModelMetadataError {
@@ -49,7 +50,7 @@ pub struct ModelMetadata {
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,
-    // TODO pub artifact_uri: Option<String>
+    pub artifact_id: Option<Uuid>,
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,
     pub annotations: Option<Value>,
