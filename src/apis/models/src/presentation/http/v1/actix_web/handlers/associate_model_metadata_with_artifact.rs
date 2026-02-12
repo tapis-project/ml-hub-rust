@@ -14,7 +14,6 @@ use actix_web::{
     web, 
     Responder
 };
-use shared::logging::SharedLogger;
 use shared::presentation::http::v1::contracts::responses;
 
 #[utoipa::path(
@@ -41,10 +40,6 @@ async fn associate_model_metadata_with_artifact(
     body: web::Json<AssociateModelMetadataDto>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let logger = SharedLogger::new();
-
-    logger.debug("Start create model metadata operation");
-
     let artifact_id = path.into_inner().artifact_id;
 
     let input = match AssociateModelMetadataInput::try_from((&artifact_id, body.into_inner())) {

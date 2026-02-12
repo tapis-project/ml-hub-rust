@@ -47,7 +47,6 @@ use shared::presentation::http::v1::requests::models::{
 use std::path::PathBuf;
 use std::process::Command;
 use platforms::Platform;
-use serde_json::Map;
 
 struct HuggingFaceHeaders(Headers);
 
@@ -557,22 +556,6 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             .map_err(|err| ClientError::Internal { msg: format!("Failed to convert serializable client metadata into Value: {}", err.to_string()), scope: ClientErrorScope::Server })?;
 
         if let Ok(hf_model) = serde_json::from_value::<HFModelMetadata>(value) {
-            // Annotations are used here for model provenance
-            let mut annotations = Map::new();
-            let mut canonical = Map::new();
-            let mut locator = Map::new();
-            locator.insert("url".into(), Value::String(format!("https://huggingface.co/{}", &hf_model.id)));
-            canonical.insert("platform".into(), Value::String("huggingface".into()));
-            canonical.insert("locator".into(), Value::Object(locator));
-            canonical.insert("model_id".into(), Value::String(hf_model.id.clone()));
-            canonical.insert("author".into(), Value::String(hf_model.author.clone()));
-            canonical.insert("likes".into(), Value::Number(serde_json::Number::from(hf_model.likes.clone() as u64)));
-            canonical.insert("downloads".into(), Value::Number(serde_json::Number::from(hf_model.downloads.clone() as u64)));
-            canonical.insert("gated".into(), Value::Bool(hf_model.gated.clone()));
-            canonical.insert("private".into(), Value::Bool(hf_model.private.clone()));
-            canonical.insert("sha".into(), Value::String(hf_model.sha.clone()));
-            annotations.insert("canonical".into(), Value::Object(canonical));
-    
             let keywords: Vec<String> = hf_model.tags.clone();
     
             // Task types derived from the keywords. The "pipeline_tag"
@@ -636,7 +619,20 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             
             return Ok(inputs::model_metadata::ModelMetadata {
                 name: Some(name),
-                annotations: Some(Value::Object(annotations)),
+                annotations: None,
+                canonical: Some(inputs::model_metadata::Canonical {
+                    platform: Platform::HuggingFace,
+                    author: Some(hf_model.author.clone()),
+                    model_id: hf_model.id.clone(),
+                    downloads: Some(hf_model.downloads as u16),
+                    locator: inputs::model_metadata::Locator {
+                        url: format!("https://huggingface.co/{}", &hf_model.id.clone())
+                    },
+                    likes: Some(hf_model.likes as u16),
+                    gated: Some(hf_model.gated),
+                    private: Some(hf_model.private),
+                    sha: Some(hf_model.sha),
+                }),
                 author: Some(format!("_{}", hf_model.author)),
                 model_inputs: None,
                 model_outputs: None,

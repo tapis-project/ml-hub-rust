@@ -62,6 +62,36 @@ impl TryFrom<inputs::ModelIO> for model_metadata::ModelIO {
     }
 }
 
+impl TryFrom<inputs::Locator> for model_metadata::Locator {
+    type Error = Error;
+    
+    fn try_from(value: inputs::Locator) -> Result<Self, Self::Error> {
+        Ok(Self {
+            url: value.url  
+        })
+    }
+}
+
+
+impl TryFrom<inputs::Canonical> for model_metadata::Canonical {
+    type Error = Error;
+    
+    fn try_from(value: inputs::Canonical) -> Result<Self, Self::Error> {
+        Ok(Self {
+            platform: value.platform.to_string(),
+            model_id: value.model_id,
+            locator: model_metadata::Locator::try_from(value.locator)?,
+            author: value.author,
+            likes: value.likes,
+            downloads: value.downloads,
+            gated: value.gated,
+            private: value.private,
+            sha: value.sha,
+        })
+    }
+}
+
+
 impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
     type Error = Error;
     
@@ -89,9 +119,15 @@ impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
             .map(|hardware| model_metadata::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
+        let canonical = value.canonical
+            .clone()
+            .map(|v| model_metadata::Canonical::try_from(v))
+            .transpose()?;
+
         Ok(Self {
             _id: None,
             artifact_id: None,
+            canonical,
             name: value.name.clone(),
             author: value.author.clone(),
             libraries: value.libraries.clone(),
@@ -128,7 +164,6 @@ impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
             regulatory: value.regulatory.clone(),
             license: value.license.clone(),
             bias_evaluation_score: value.bias_evaluation_score,
-
         })
     }
 }

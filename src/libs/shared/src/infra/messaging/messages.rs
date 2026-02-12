@@ -71,23 +71,17 @@ pub struct EventEnvelope {
 }
 
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum State {
-    /// The deployment infrastructure does not exist
     NotDeployed,
-    /// The deployment infrastructure exists and is running
     Running,
-    /// The client has successfully stopped the deployment
     Stopped,
-    /// The deployment has failed (never started or crashed)
     Failed,
-    /// The deployment cannot be acted up or controlled
     Blocked,
-    /// Observability gap. The state of the deployment cannot be known
     Unknown,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum DesiredState {
     Running,
     Stopped,

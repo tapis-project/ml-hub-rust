@@ -39,6 +39,12 @@ pub struct IngestModelPath {
     pub model_id: String
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct IngestCanonicalModelPath {
+    pub author: String,
+    pub name: String,
+}
+
 pub struct ListModelsByPlatformRequest {
     pub headers: Headers,
     pub path: ListModelsByPlatformPath,
@@ -57,6 +63,14 @@ pub struct GetModelByPlatformRequest {
 pub struct IngestModelRequest {
     pub headers: Headers,
     pub path: IngestModelPath,
+    pub query: HashMap<String, String>,
+    pub body: artifacts::IngestArtifactRequest,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct IngestCanonicalModelRequest {
+    pub headers: Headers,
+    pub path: IngestCanonicalModelPath,
     pub query: HashMap<String, String>,
     pub body: artifacts::IngestArtifactRequest,
 }

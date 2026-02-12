@@ -37,6 +37,24 @@ pub struct ModelIO {
     pub shape: Option<Vec<i32>>
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Canonical {
+    pub platform: String,
+    pub model_id: String,
+    pub locator: Locator,
+    pub author: Option<String>,
+    pub likes: Option<u16>,
+    pub downloads: Option<u16>,
+    pub gated: Option<bool>,
+    pub private: Option<bool>,
+    pub sha: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Locator {
+    pub url: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -51,6 +69,7 @@ pub struct ModelMetadata {
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,
+    pub canonical: Option<Canonical>,
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,

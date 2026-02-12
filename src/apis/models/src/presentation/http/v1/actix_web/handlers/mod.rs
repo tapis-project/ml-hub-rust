@@ -4,6 +4,7 @@ pub mod discover_models;
 pub mod discover_models_by_platform;
 pub mod download_artifact;
 pub mod ingest_external_model;
+pub mod ingest_canonical_model;
 pub mod get_model;
 pub mod get_model_artifact;
 pub mod get_model_by_platform;

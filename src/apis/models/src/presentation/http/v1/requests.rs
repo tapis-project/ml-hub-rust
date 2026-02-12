@@ -13,6 +13,8 @@ pub use shared::presentation::http::v1::requests::models::{
     AssociateModelMetadata,
     CreateModelMetadata,
     GetModelPath,
+    IngestCanonicalModelPath,
+    IngestCanonicalModelRequest,
 };
 pub use shared::presentation::http::v1::requests::discover_models::{
     DiscoverModelsByPlatformPath,

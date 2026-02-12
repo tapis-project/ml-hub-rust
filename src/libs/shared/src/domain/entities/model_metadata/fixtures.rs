@@ -11,6 +11,7 @@ pub fn full_model_metadata() -> ModelMetadata {
                 "private": true
             }
         })),
+        canonical: None,
         author: Some("bar".into()),
         model_inputs: Some(
             vec![ModelIO {

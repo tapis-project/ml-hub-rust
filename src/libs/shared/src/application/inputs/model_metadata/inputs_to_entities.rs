@@ -64,6 +64,35 @@ impl TryFrom<inputs::ModelIO> for domain::ModelIO {
     }
 }
 
+impl TryFrom<inputs::Locator> for domain::Locator {
+    type Error = ApplicationError;
+    
+    fn try_from(value: inputs::Locator) -> Result<Self, Self::Error> {
+        Ok(Self {
+            url: value.url  
+        })
+    }
+}
+
+
+impl TryFrom<inputs::Canonical> for domain::Canonical {
+    type Error = ApplicationError;
+    
+    fn try_from(value: inputs::Canonical) -> Result<Self, Self::Error> {
+        Ok(Self {
+            platform: value.platform,
+            model_id: value.model_id,
+            locator: domain::Locator::try_from(value.locator)?,
+            author: value.author,
+            likes: value.likes,
+            downloads: value.downloads,
+            gated: value.gated,
+            private: value.private,
+            sha: value.sha,
+        })
+    }
+}
+
 impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
     type Error = ApplicationError;
     
@@ -91,10 +120,15 @@ impl TryFrom<inputs::ModelMetadata> for domain::ModelMetadata {
             .map(|hardware| domain::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
+        let canonical = value.canonical
+            .map(|v| domain::Canonical::try_from(v))
+            .transpose()?;
+        
         Ok(Self {
             name: value.name,
             author: value.author,
             artifact_id: None,
+            canonical,
             libraries: value.libraries,
             model_type: value.model_type,
             image: value.image,

@@ -3,6 +3,7 @@ pub mod input_to_input;
 
 use crate::application::inputs::task::Task;
 
+use platforms::Platform;
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -37,6 +38,24 @@ pub struct ModelIO {
 }
 
 #[derive(Debug, Clone)]
+pub struct Canonical {
+    pub platform: Platform,
+    pub model_id: String,
+    pub locator: Locator,
+    pub author: Option<String>,
+    pub likes: Option<u16>,
+    pub downloads: Option<u16>,
+    pub gated: Option<bool>,
+    pub private: Option<bool>,
+    pub sha: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Locator {
+    pub url: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct ModelMetadata {
     // General fields
     pub name: Option<String>,
@@ -44,6 +63,7 @@ pub struct ModelMetadata {
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,
+    pub canonical: Option<Canonical>,
 
     /// Arbitrary labels
     pub keywords: Option<Vec<String>>,

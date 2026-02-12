@@ -2,6 +2,7 @@ use crate::infra::persistence::mongo::documents::model_metadata;
 use crate::domain::entities::model_metadata as domain;
 use crate::domain::entities::task as domain_task;
 use crate::errors::Error;
+use platforms::Platform;
 use uuid::Uuid;
 
 impl TryFrom<model_metadata::SystemRequirement> for domain::SystemRequirement {
@@ -63,6 +64,35 @@ impl TryFrom<model_metadata::ModelIO> for domain::ModelIO {
     }
 }
 
+impl TryFrom<model_metadata::Locator> for domain::Locator {
+    type Error = Error;
+    
+    fn try_from(value: model_metadata::Locator) -> Result<Self, Self::Error> {
+        Ok(Self {
+            url: value.url  
+        })
+    }
+}
+
+impl TryFrom<model_metadata::Canonical> for domain::Canonical {
+    type Error = Error;
+    
+    fn try_from(value: model_metadata::Canonical) -> Result<Self, Self::Error> {
+        Ok(Self {
+            platform: Platform::try_from(value.platform.to_string().as_str())
+                .map_err(|err| Error::new(err.to_string()))?,
+            model_id: value.model_id,
+            locator: domain::Locator::try_from(value.locator)?,
+            author: value.author,
+            likes: value.likes,
+            downloads: value.downloads,
+            gated: value.gated,
+            private: value.private,
+            sha: value.sha,
+        })
+    }
+}
+
 impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
     type Error = Error;
     
@@ -90,8 +120,13 @@ impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
             .map(|hardware| domain::HardwareRequirements::try_from(hardware))
             .transpose()?;
 
+        let canonical = value.canonical
+            .map(|v| domain::Canonical::try_from(v))
+            .transpose()?;
+
         Ok(Self {
             name: value.name,
+            canonical,
             artifact_id: value.artifact_id.and_then(|id| Some(Uuid::from_bytes(id.bytes()))),
             author: value.author,
             libraries: value.libraries,
