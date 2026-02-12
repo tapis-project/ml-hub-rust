@@ -55,11 +55,7 @@ async fn deploy_model_with_strategy(
     };
 
     match service.deploy_model_with_strategy(input).await {
-        Ok(_) => {
-            build_success_response(None, None, None)
-        },
-        Err(err) => {
-            build_error_response(500, err.to_string())
-        }
+        Ok(_) => build_success_response(None, None, None),
+        Err(err) => build_error_response(500, err.to_string()),
     }
 }
