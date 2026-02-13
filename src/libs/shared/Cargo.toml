@@ -40,3 +40,4 @@ utoipa-swagger-ui = "9.0.2"
 validator = { version = "0.20.0", features = ["derive"] }
 partially = { version = "0.2.1", features = ["derive"] }
 heck = "0.5.0"
+flexserv-deployer = { path = "../../../FlexServ-Deployer" }
