@@ -18,6 +18,7 @@ use crate::domain::services::{
 };
 use log::error;
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
@@ -141,6 +142,11 @@ impl ModelDeploymentService {
             .await?
             .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
+        // Params from the UI/API (e.g. tapis_tenant_url, tapis_user, tapis_token for TapisPods) are stored as deployment metadata for the reconciler.
+        let metadata = serde_json::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
+            .ok()
+            .filter(|m| !m.is_empty());
+
         let model_deployment_props = ModelDeploymentProps {
             id: Uuid::now_v7(),
             platform: input.platform.clone(),
@@ -159,6 +165,7 @@ impl ModelDeploymentService {
             visibility: Visibility::Private,
             deployment_interface: None,
             parallelism: None,
+            metadata,
         };
         
         let deployment = ModelDeploymentDomainService::create_model_deployment(

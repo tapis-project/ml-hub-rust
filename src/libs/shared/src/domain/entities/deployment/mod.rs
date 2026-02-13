@@ -108,6 +108,7 @@ pub struct ModelDeploymentProps {
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub parallelism: Option<ReplicaGroup>,
+    pub metadata: Option<HashMap<String, Value>>,
 }
 
 #[derive(Clone, Debug)]
@@ -167,7 +168,7 @@ impl ModelDeployment {
             last_desired_state_change: now.clone(),
             deployment_interface: props.deployment_interface,
             parallelism: props.parallelism,
-            metadata: None,
+            metadata: props.metadata,
             revision: 0,
         }
     }
