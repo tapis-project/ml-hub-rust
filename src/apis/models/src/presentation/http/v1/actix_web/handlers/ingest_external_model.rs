@@ -72,10 +72,7 @@ async fn ingest_external_model(
     }
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db) {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string()),
-    };
+    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
 
     // Convert the request requests into an input
     let input = match IngestArtifactInput::try_from(request) {

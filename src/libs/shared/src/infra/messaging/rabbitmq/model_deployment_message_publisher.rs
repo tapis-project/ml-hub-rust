@@ -1,5 +1,4 @@
 use amqprs::channel::ExchangeType;
-use amqprs::connection::OpenConnectionArguments;
 use thiserror::Error;
 use crate::application::ports::events::{
     EventPublisherError,
@@ -9,7 +8,7 @@ use crate::application::ports::events::{
 use crate::infra::messaging::codec::serialize_event;
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_event;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_event;
-use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
+use crate::infra::messaging::rabbitmq::exchanges::{declare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
 use crate::infra::messaging::rabbitmq::connection::open_channel;
 
 use amqprs::{
@@ -53,18 +52,16 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
         let payload = serialize_event(&event)
             .map_err(|err| EventPublisherError::Serialization(err.to_string()))?;
 
-        let connection_args = OpenConnectionArguments::new(
-            self.host.as_str(),
+        let (_, channel) = open_channel(
+            self.host.clone(),
             self.port,
-            self.username.as_str(),
-            self.password.as_str()
-        );
-
-        let channel = open_channel(connection_args)
+            self.username.clone(),
+            self.password.clone(),
+        )
             .await
             .map_err(|err| EventPublisherError::Connection(err.to_string()))?;
 
-        delcare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic.to_string().as_str())])
+        declare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic)])
             .await
             .map_err(|err| EventPublisherError::Routing(err.to_string()))?;
 
@@ -75,6 +72,7 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
         )
             .mandatory(true)
             .finish();
+
         let props = BasicProperties::default()
             .with_message_id(Uuid::now_v7().to_string().as_str())
             .finish();

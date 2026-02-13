@@ -12,7 +12,7 @@ use shared::{
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
 use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
-use shared::infra::messaging::rabbitmq::exchanges::delcare_exchanges;
+use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
 use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
@@ -162,24 +162,23 @@ async fn main() -> () {
     let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
     let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
 
-    let connection_args = OpenConnectionArguments::new(
-        host.as_str(),
-        port,
-        username.as_str(),
-        password.as_str()
-    );
-
-    // Connect to the broker
-    let maybe_channel = open_channel(connection_args).await;
-
-    // Create a channel
-    let channel = match maybe_channel {
-        Ok(c) => c,
-        Err(err) => panic!("Failed to open channel: {}", err.to_string())
-    };
-
+    let broker_host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
+    let broker_port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+    let broker_username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+    let broker_password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
+    
+    let (_, channel) = open_channel(
+        broker_host,
+        broker_port.parse::<u16>().expect("u16 parsed from 'port' String"),
+        broker_username,
+        broker_password,
+    )
+        .await
+        .map_err(|err| { error!("{}", err.to_string()) })
+        .expect("Connection to message broker established and channel created");
+    
     // Declare dlx
-    delcare_exchanges(&channel, vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct.to_string().as_str())])
+    declare_exchanges(&channel, vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct)])
         .await
         .expect("Exchanges to be declared");
 
@@ -217,11 +216,11 @@ async fn main() -> () {
         .await
         .expect("Model deployment reconciliation queue to be declared");
 
-    delcare_exchanges(
+    declare_exchanges(
         &channel,
         vec![
-            (MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic.to_string().as_str()),
-            (DEAD_LETTER_EXCHANGE, ExchangeType::Direct.to_string().as_str()),
+            (MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic),
+            (DEAD_LETTER_EXCHANGE, ExchangeType::Direct),
         ]
     )
         .await

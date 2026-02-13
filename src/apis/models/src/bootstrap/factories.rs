@@ -1,5 +1,6 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application-level concerns
+use amqprs::channel::Channel;
 use mongodb::Database;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::deployment::DeploymentStrategyProvider;
@@ -42,19 +43,14 @@ pub fn artifact_publication_repo_factory(db: &Database) -> Arc<dyn ArtifactPubli
     Arc::new(MongoArtifactPublicationRepository::new(db))
 }
 
-pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {    
-    Ok(ArtifactService::new(
+pub fn artifact_service_factory(db: &Database, channel: Arc<Channel>) -> ArtifactService {    
+    ArtifactService::new(
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
         model_metadata_repo_factory(db),
-        Arc::new(RabbitMQArtifactOpMessagePublisher {
-            host: std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables"),
-            port: std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables"),
-            username: std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables"),
-            password: std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables"),
-        })
-    ))
+        Arc::new(RabbitMQArtifactOpMessagePublisher::new(channel.clone()))
+    )
 }
 
 pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategyProvider>, ApplicationError> {

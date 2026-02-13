@@ -4,6 +4,7 @@ use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::{application, domain};
 use crate::domain::entities;
 use bson::oid::ObjectId;
+use log::debug;
 use mongodb::{
     bson::{
         doc,
@@ -55,7 +56,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
 
     async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
         let result = self.read_collection
-            .find_one(doc!{ name: name, author: author }, None)
+            .find_one(doc!{ "name": name, "author": author }, None)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?
             .map(entities::model_metadata::ModelMetadata::try_from)

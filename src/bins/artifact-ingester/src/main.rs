@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::path::PathBuf;
 use amqprs::{
     channel::{
@@ -6,23 +7,17 @@ use amqprs::{
         BasicNackArguments, 
         Channel, 
         QueueDeclareArguments,
-        ExchangeDeclareArguments,
         QueueBindArguments,
         ExchangeType
     },
-    connection::{
-        Connection, 
-        OpenConnectionArguments
-    },
     consumer::AsyncConsumer,
-    error::Error,
     BasicProperties,
     Deliver
 };
 use tokio;
 use uuid::Uuid;
 use client_provider::ClientProvider;
-use shared::constants::ARTIFACT_INGEST_DIR_NAME;
+use shared::{constants::ARTIFACT_INGEST_DIR_NAME, infra::messaging::rabbitmq::{connection::open_channel, exchanges::declare_exchanges}};
 use shared::domain::entities::artifact_ingestion::ArtifactIngestionStatus;
 use shared::domain::entities::artifact::ArtifactType;
 use shared::infra::messaging::rabbitmq::exchanges::ARTIFACT_INGESTION_EXCHANGE;
@@ -38,6 +33,7 @@ use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
 use artifact_ingester::database::{get_db, ClientParams};
 use shared::infra::fs::archiver::Archiver;
+use log::{error, info};
 
 struct ArtifactIngesterConsumer {
     artifact_service: ArtifactService,
@@ -223,37 +219,6 @@ impl AsyncConsumer for ArtifactIngesterConsumer {
     }
 }
 
-async fn connect_to_broker(args: &OpenConnectionArguments, max_connection_attempts: i8) -> Connection {
-    println!("Attempting to connect to broker");
-    
-    let mut connection_attempts: i8 = 0;
-    while connection_attempts <= max_connection_attempts {
-        // Attempt to connect. Out of all the possible errors, we only want to retry
-        // the connection on the two IO errors below
-        
-        // Open connection
-        let maybe_connection = Connection::open(args)
-            .await;
-
-        match maybe_connection {
-            Ok(conn) => return conn, // Return the successful connection
-            Err(err) => {
-                connection_attempts += 1;
-                match err {
-                    Error::NetworkError(_) => {
-                        println!("Failed to connect to message broker: Attempt {} of {}", connection_attempts, max_connection_attempts);
-                        connection_attempts += 1;
-                        continue;
-                    },
-                    other => panic!("Failed to connect to message broker: {}", other.to_string())
-                };
-            }
-        }
-    }
-
-    panic!("Failed to connect to message broker. Max attempts reached: {}", max_connection_attempts);
-}
-
 async fn ack(channel: &Channel, deliver: &Deliver, multiple: Option<bool>) {
     let args = BasicAckArguments {
         delivery_tag: deliver.delivery_tag(),
@@ -283,59 +248,8 @@ async fn nack(channel: &Channel, deliver: &Deliver, requeue: Option<bool>, multi
 async fn main() -> () {
     env_logger::init();
 
-    let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_HOST missing from environment variables");
-    let port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
-    let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
-    let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
-
-    let connection_args = OpenConnectionArguments::new(
-        host.as_str(),
-        port.parse::<u16>().unwrap_or(5672),
-        username.as_str(),
-        password.as_str()
-    );
-
-    // Connect to the broker
-    let conn = connect_to_broker(&connection_args, 25).await;
-
-    // Create a channel
-    let channel = match conn.open_channel(None).await {
-        Ok(c) => c,
-        Err(err) => panic!("Failed to open channel: {}", err.to_string())
-    };
-
-    // Declare queue
-    let _ = match channel.queue_declare(QueueDeclareArguments::new(ARTIFACT_INGESTION_QUEUE.into())).await {
-        Ok(q) => q,
-        Err(err) => panic!("Failed to create channel: {}", err.to_string())
-    };
-
-    match channel.exchange_declare(
-        ExchangeDeclareArguments::new(
-            ARTIFACT_INGESTION_EXCHANGE,
-            ExchangeType::Topic.to_string().as_str()
-        )
-    ).await {
-        Ok(_) => {},
-        Err(err) => panic!("Failed to delare exchange: {}", err.to_string())
-    };
-    
-    match channel.queue_bind(
-    QueueBindArguments::new(
-            ARTIFACT_INGESTION_QUEUE,
-            ARTIFACT_INGESTION_EXCHANGE, 
-            ARTIFACT_INGESTION_ROUTING_KEY
-        )
-    ).await {
-        Ok(_) => {},
-        Err(err) => panic!("Failed to bind queue: {}", err.to_string())
-    };
-
-    // Unique consumer tag. Make this unique per worker. 
-    let consumer_tag = Uuid::now_v7();
-
     // Database connection
-    let db = get_db(ClientParams{
+    let db = get_db(ClientParams {
         username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
         password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
         host: env::var("ARTIFACTS_DB_HOST").expect("ARTIFACTS_DB_HOST env var not set"),
@@ -347,11 +261,58 @@ async fn main() -> () {
             panic!("Database initialization error: {}", err.to_string().as_str()); 
         })
         .expect("Datbase initialization error");
-    
+
     let environment = Env::new().expect("Env could not be initialized");
 
+    let broker_host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
+    let broker_port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+    let broker_username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+    let broker_password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
+    
+    // Create channel
+    let (_connection, channel) = open_channel(
+        broker_host,
+        broker_port.parse::<u16>().expect("u16 parsed from 'port' String"),
+        broker_username,
+        broker_password,
+    )
+        .await
+        .map_err(|err| { error!("{}", err.to_string()) })
+        .expect("Connection to message broker established and channel created");
+
+    // Declare exchanges
+    declare_exchanges(
+        &channel, 
+        vec![
+            (ARTIFACT_INGESTION_EXCHANGE, ExchangeType::Topic),
+        ]
+    ).await
+        .map_err(|err| { error!("{}", err.to_string())})
+        .expect(format!("Exchanges {} to be declared", ARTIFACT_INGESTION_EXCHANGE).as_str());
+    
+    // Declare queue
+    let _ = match channel.queue_declare(QueueDeclareArguments::new(ARTIFACT_INGESTION_QUEUE.into())).await {
+        Ok(q) => q,
+        Err(err) => panic!("Failed to delcare queue: {}", err.to_string())
+    };
+    
+    // Bind queue to exchange
+    match channel.queue_bind(
+    QueueBindArguments::new(
+            ARTIFACT_INGESTION_QUEUE,
+            ARTIFACT_INGESTION_EXCHANGE, 
+            ARTIFACT_INGESTION_ROUTING_KEY
+        )
+    ).await {
+        Ok(_) => {},
+        Err(err) => panic!("Failed to bind queue: {}", err.to_string())
+    };
+
+    // Unique consumer tag
+    let consumer_tag = Uuid::now_v7();
+
     let consumer = ArtifactIngesterConsumer {
-        artifact_service: artifact_service_factory(&db).expect("failed to initialize artifact service"),
+        artifact_service: artifact_service_factory(&db, Arc::new(channel.clone())),
         artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };
@@ -362,7 +323,7 @@ async fn main() -> () {
         .finish();
 
     match channel.basic_consume(consumer, args).await {
-        Ok(_) => { println!("Ready to recieve messages...") },
+        Ok(_) => { info!("Consumer {} ready to recieve messages...", &consumer_tag) },
         Err(err) => panic!("Failed to consume: {}", err.to_string())
     };
 

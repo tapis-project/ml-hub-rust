@@ -25,6 +25,7 @@ use super::handlers::list_models::__path_list_models;
 use super::handlers::list_models_by_author::__path_list_models_by_author;
 use super::handlers::get_model::__path_get_model;
 use super::handlers::create_model_metadata::__path_create_model_metadata;
+use super::handlers::ingest_canonical_model::__path_ingest_canonical_model;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -49,6 +50,7 @@ use super::handlers::create_model_metadata::__path_create_model_metadata;
         list_models_by_author,
         get_model,
         create_model_metadata,
+        ingest_canonical_model,
     ),
     components(
         schemas(

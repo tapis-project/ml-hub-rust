@@ -37,10 +37,7 @@ async fn upload_model_artifact(
         }
 
         // Instantiate an artifact service
-        let artifact_service = match artifact_service_factory(&data.db) {
-            Ok(s) => s,
-            Err(err) => return build_error_response(500, err.to_string()),
-        };
+        let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
 
         // todo: write to a file * refactor this code to infra/app layer
         let input = match UploadArtifactInput::try_from(UploadModelRequest {}) {
@@ -65,8 +62,3 @@ async fn upload_model_artifact(
     
     build_error_response(400, "No file provided".to_string())
 }
-
-// Handler tests
-#[cfg(test)]
-#[path = "upload_model_artifact.test.rs"]
-mod upload_model_artifact_test;

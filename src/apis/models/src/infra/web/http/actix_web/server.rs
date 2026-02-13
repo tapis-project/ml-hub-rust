@@ -5,11 +5,15 @@ use crate::bootstrap::factories::build_deployment_strategy_provider;
 use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
+use amqprs::channel::{Channel, ExchangeType};
+use shared::infra::messaging::rabbitmq::connection::open_channel;
+use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
 use std::env;
 use actix_web::middleware::Logger;
 use shared::logging::SharedLogger;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
+use log::error;
 
 
 pub async fn run_server() -> std::io::Result<()> {
@@ -41,9 +45,35 @@ pub async fn run_server() -> std::io::Result<()> {
         }
     };
 
+    let broker_host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
+    let broker_port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
+    let broker_username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
+    let broker_password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
+    
+    let (_connection, channel) = open_channel(
+        broker_host,
+        broker_port.parse::<u16>().expect("u16 parsed from 'port' String"),
+        broker_username,
+        broker_password,
+    )
+        .await
+        .map_err(|err| { error!("{}", err.to_string()) })
+        .expect("Connection to message broker established and channel created");
+
+    declare_exchanges(
+        &channel, 
+        vec![
+            (ARTIFACT_INGESTION_EXCHANGE, ExchangeType::Topic),
+            (ARTIFACT_PUBLICATION_EXCHANGE, ExchangeType::Topic),
+        ]
+    ).await
+        .map_err(|err| { error!("{}", err.to_string())})
+        .expect(format!("Exchanges {} and {} to be declared", ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE).as_str());
+
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
+        channel: Arc::new(channel),
         db: get_db(ClientParams{
             username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
             password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
@@ -84,6 +114,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::get_model_publication::get_model_publication)
             .service(presentation::http::v1::actix_web::handlers::get_model_artifact::get_model_artifact)
             .service(presentation::http::v1::actix_web::handlers::list_tasks::list_tasks)
+            .service(presentation::http::v1::actix_web::handlers::ingest_canonical_model::ingest_canonical_model)
             .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
             .service(
                 SwaggerUi::new("models-api/swagger-ui/{_:.*}")

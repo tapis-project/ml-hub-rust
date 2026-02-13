@@ -63,10 +63,7 @@ async fn publish_model_artifact(
         return build_error_response(400, err.to_string());
     }
 
-    let artifact_service = match artifact_service_factory(&data.db) {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
-    };
+    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
 
     let input = match PublishArtifactInput::try_from(request) {
         Ok(i) => i,

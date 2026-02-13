@@ -14,6 +14,7 @@ use serde_json::to_value;
 use shared::application::inputs::model_metadata::UpdateModelMetadataArtifactId;
 use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
+use log::debug;
 
 #[utoipa::path(
     post,
@@ -33,7 +34,7 @@ use std::collections::HashMap;
     )
 )]
 #[post("models-api/models/{author}/{name}")]
-async fn ingest_external_model(
+async fn ingest_canonical_model(
     req: HttpRequest,
     path: web::Path<IngestCanonicalModelPath>,
     query: web::Query<HashMap<String, String>>,
@@ -66,10 +67,7 @@ async fn ingest_external_model(
     };
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db) {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string()),
-    };
+    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {

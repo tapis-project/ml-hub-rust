@@ -35,10 +35,7 @@ async fn list_publications_for_artifact(
     let logger = SharedLogger::new();
     logger.debug("Get publications for artifact");
     
-    let artifact_service = match artifact_service_factory(&data.db) {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
-    };
+    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
 
     let artifact_id = match Uuid::parse_str(path.artifact_id.clone().as_str()) {
         Ok(id) => id,

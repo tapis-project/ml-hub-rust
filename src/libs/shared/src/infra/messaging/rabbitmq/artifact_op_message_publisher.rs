@@ -1,4 +1,5 @@
-use amqprs::connection::OpenConnectionArguments;
+use std::sync::Arc;
+use amqprs::channel::Channel;
 use thiserror::Error;
 use crate::application::ports::commands::{
     CommandPublisherError,
@@ -7,15 +8,13 @@ use crate::application::ports::commands::{
 };
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_command;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_command;
-use crate::infra::messaging::rabbitmq::connection::open_channel;
-use crate::infra::messaging::rabbitmq::exchanges::{delcare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
 use crate::infra::messaging::codec::serialize_command_payload;
 use amqprs::{
     channel::BasicPublishArguments,
     BasicProperties
 };
 use async_trait::async_trait;
-use log::error;
+use log::{error, debug};
 
 #[derive(Debug, Error)]
 pub enum ArtifactOpMessagePublisherError {
@@ -27,20 +26,12 @@ pub enum ArtifactOpMessagePublisherError {
 }
 
 pub struct RabbitMQArtifactOpMessagePublisher {
-    pub host: String,
-    pub port: String,
-    pub username: String,
-    pub password: String,
+    channel: Arc<Channel>
 }
 
 impl RabbitMQArtifactOpMessagePublisher {
-    pub fn new(host: String, port: String, username: String, password: String) -> Self {
-        Self {
-            host,
-            port,
-            username,
-            password
-        }
+    pub fn new(channel: Arc<Channel>) -> Self {
+       Self { channel }
     }
 }
 
@@ -50,34 +41,16 @@ impl CommandPublisher for RabbitMQArtifactOpMessagePublisher {
         let payload = serialize_command_payload(&command)
             .map_err(|err| CommandPublisherError::Serialization(err.to_string()))?;
 
-        // Publish to exchange
         let args = BasicPublishArguments::new(
             get_exchange_for_command(command),
             get_routing_key_for_command(command),
         ).mandatory(true)
             .finish();
 
-        let connection_args = OpenConnectionArguments::new(
-            self.host.as_str(),
-            self.port.parse::<u16>().unwrap_or(5672),
-            self.username.as_str(),
-            self.password.as_str()
-        );
+        debug!("Exchange to publish to: {}", get_exchange_for_command(command));
+        debug!("Routing key to use:  {}", get_routing_key_for_command(command));
 
-        let channel = open_channel(connection_args)
-            .await
-            .map_err(|err| CommandPublisherError::Connection(err.to_string()))?;
-
-        delcare_exchanges(
-            &channel, 
-            vec![
-                (ARTIFACT_INGESTION_EXCHANGE, "topic"),
-                (ARTIFACT_PUBLICATION_EXCHANGE, "topic"),
-            ]
-        ).await
-            .map_err(|err| CommandPublisherError::Routing(err.to_string()))?;
-
-        channel.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
+        self.channel.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
             .await
             .map_err(|err| CommandPublisherError::Publishing(err.to_string()))?;
        

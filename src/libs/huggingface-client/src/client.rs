@@ -624,11 +624,11 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                     platform: Platform::HuggingFace,
                     author: Some(hf_model.author.clone()),
                     model_id: hf_model.id.clone(),
-                    downloads: Some(hf_model.downloads as u16),
+                    downloads: Some(hf_model.downloads),
                     locator: inputs::model_metadata::Locator {
                         url: format!("https://huggingface.co/{}", &hf_model.id.clone())
                     },
-                    likes: Some(hf_model.likes as u16),
+                    likes: Some(hf_model.likes),
                     gated: Some(hf_model.gated),
                     private: Some(hf_model.private),
                     sha: Some(hf_model.sha),

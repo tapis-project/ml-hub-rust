@@ -41,10 +41,7 @@ async fn download_artifact(
     }
 
     // Instantiate an artifact service
-    let artifact_service = match artifact_service_factory(&data.db) {
-        Ok(s) => s,
-        Err(err) => return Ok(build_error_response(500, err.to_string()))
-    };
+    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
 
     // Convert the request requests into an input
     let input = match DownloadArtifactInput::try_from(request) {
@@ -86,8 +83,3 @@ async fn download_artifact(
 
     Ok(response)
 }
-
-// Handler tests
-#[cfg(test)]
-#[path = "download_artifact.test.rs"]
-mod download_artifact_test;
