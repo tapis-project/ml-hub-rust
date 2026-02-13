@@ -3,15 +3,15 @@ use crate::application::inputs::deployment::ReconcileModelDeploymentInput;
 use crate::application::workflows::reconciliation::{
     ReconciliationError, ReconciliationOutcome, ReconciliationAction,
     StartedOutcomePayload, StoppedOutcomePayload, UndeployedOutcomePayload, ObeservedOutcomePayload,
-    PodResultInfo,
 };
-use crate::domain::entities::deployment::State;
+use crate::domain::entities::deployment::{ModelDeploymentMetadata, State};
 use flexserv_deployer::{FlexServDeployment, FlexServPodDeployment, PodDeploymentOptions, FlexServInstance, Backend, normalize_tenant_url};
 use flexserv_deployer::deployment::{DeploymentError as FlexServDeploymentError, DeploymentResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use log::info;
+use serde_json::json;
 
 pub struct TapisPodsModelDeploymentReconciliationClient {
     /// Cache of active deployments by deployment ID (stored as serializable data)
@@ -27,7 +27,6 @@ struct DeploymentInfo {
     tapis_user: String,
     tapis_token: String,
     model_id: String,
-    backend: Backend,
 }
 
 impl TapisPodsModelDeploymentReconciliationClient {
@@ -71,10 +70,8 @@ impl TapisPodsModelDeploymentReconciliationClient {
         })
     }
 
-    /// Determine backend from model metadata or use default
-    fn determine_backend(_model_metadata: &crate::domain::entities::model_metadata::ModelMetadata) -> Backend {
-        // Default to Transformers backend
-        // TODO: Extract backend from model metadata if available
+    /// Default FlexServ backend. TODO: Extract from model metadata when supported.
+    fn default_backend() -> Backend {
         Backend::Transformers {
             command: vec!["python".to_string()],
         }
@@ -94,7 +91,6 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
         let (tenant_url, tapis_user, tapis_token) = Self::extract_tapis_credentials(&input.deployment)?;
         let model_id = format!("{}/{}", input.deployment.model.author, input.deployment.model.name);
-        let backend = Self::determine_backend(&input.model_metadata);
 
         // Check if pod_id and volume_id exist in metadata (for existing deployments)
         let (pod_id, volume_id) = if let Some((pid, vid)) = Self::extract_pod_info(&input.deployment) {
@@ -111,7 +107,6 @@ impl TapisPodsModelDeploymentReconciliationClient {
             tapis_user: tapis_user.clone(),
             tapis_token: tapis_token.clone(),
             model_id,
-            backend,
         };
 
         deployments.insert(input.deployment.id, info.clone());
@@ -124,7 +119,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
             .tenant_url(normalize_tenant_url(&info.tenant_url))
             .tapis_user(info.tapis_user.clone())
             .model(info.model_id.clone())
-            .backend(info.backend.clone())
+            .backend(Self::default_backend())
             .build()
             .map_err(|e| ReconciliationError::Unimplemented(format!("Failed to create FlexServInstance: {}", e)))?;
 
@@ -147,8 +142,8 @@ impl TapisPodsModelDeploymentReconciliationClient {
         }
     }
 
-    /// Build PodResultInfo from FlexServ DeploymentResult::PodResult for outcome payloads.
-    fn pod_result_info(result: &DeploymentResult) -> Option<PodResultInfo> {
+    /// Build metadata from FlexServ DeploymentResult::PodResult (pod_id, volume_id, pod_url, etc.).
+    fn result_to_metadata(result: &DeploymentResult) -> Option<ModelDeploymentMetadata> {
         match result {
             DeploymentResult::PodResult {
                 pod_id,
@@ -157,13 +152,17 @@ impl TapisPodsModelDeploymentReconciliationClient {
                 pod_info,
                 volume_info,
                 ..
-            } => Some(PodResultInfo {
-                pod_id: Some(pod_id.clone()),
-                volume_id: Some(volume_id.clone()),
-                pod_url: pod_url.clone(),
-                pod_info: Some(pod_info.clone()),
-                volume_info: Some(volume_info.clone()),
-            }),
+            } => {
+                let mut map = HashMap::new();
+                map.insert("pod_id".to_string(), json!(pod_id));
+                map.insert("volume_id".to_string(), json!(volume_id));
+                if let Some(url) = pod_url {
+                    map.insert("pod_url".to_string(), json!(url));
+                }
+                map.insert("pod_info".to_string(), json!(pod_info));
+                map.insert("volume_info".to_string(), json!(volume_info));
+                Some(ModelDeploymentMetadata(map))
+            }
             _ => None,
         }
     }
@@ -230,7 +229,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Started(StartedOutcomePayload {
             message: Some(format!("Deployment started successfully")),
-            result: Self::pod_result_info(&result),
+            state: State::Unknown,
+            metadata: Self::result_to_metadata(&result),
+            replicas: None,
+            interface: None,
         }))
     }
 
@@ -249,7 +251,9 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Stopped(StoppedOutcomePayload {
             message: Some(format!("Deployment stopped successfully")),
-            result: Self::pod_result_info(&result),
+            metadata: Self::result_to_metadata(&result),
+            replicas: None,
+            interface: None,
         }))
     }
 
@@ -259,7 +263,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
         let info = self.get_or_create_deployment_info(input).await?;
         let deployment = self.create_deployment_from_info(&info, input.deployment.id)?;
 
-        let result = tokio::task::spawn_blocking(move || {
+        let _result = tokio::task::spawn_blocking(move || {
             deployment.terminate()
         })
         .await
@@ -272,7 +276,6 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Undeployed(UndeployedOutcomePayload {
             message: Some(format!("Deployment terminated successfully")),
-            result: Self::pod_result_info(&result),
         }))
     }
 
@@ -296,7 +299,9 @@ impl TapisPodsModelDeploymentReconciliationClient {
         Ok(ReconciliationOutcome::Observed(ObeservedOutcomePayload {
             message: Some(format!("Deployment observed: {:?}", result)),
             state: observed_state,
-            result: Self::pod_result_info(&result),
+            metadata: Self::result_to_metadata(&result),
+            replicas: None,
+            interface: None,
         }))
     }
 }
@@ -324,9 +329,8 @@ impl ModelDeploymentPlatformReconciliationClient for TapisPodsModelDeploymentRec
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::workflows::reconciliation::PodResultInfo;
     use crate::domain::entities::deployment::{
-        ModelDeployment, ModelReference, State, DesiredState, RehydrateModelDeploymentProps,
+        ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, RehydrateModelDeploymentProps,
         DeploymentStrategyReference,
     };
     use crate::domain::entities::visibility::Visibility;
@@ -358,13 +362,13 @@ mod tests {
             }),
             visibility: Visibility::Private,
             deployment_interface: None,
-            parallelism: None,
+            replicas: None,
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
             last_desired_state_change: ts(),
             created_at: ts(),
-            metadata: Some(metadata),
+            metadata: Some(ModelDeploymentMetadata(metadata)),
         })
     }
 
@@ -383,7 +387,7 @@ mod tests {
             deployment_strategy: None,
             visibility: Visibility::Private,
             deployment_interface: None,
-            parallelism: None,
+            replicas: None,
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -610,21 +614,24 @@ mod tests {
             }),
             visibility: Visibility::Private,
             deployment_interface: None,
-            parallelism: None,
+            replicas: None,
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
             last_desired_state_change: ts(),
             created_at: ts(),
-            metadata: Some(meta),
+            metadata: Some(ModelDeploymentMetadata(meta)),
         })
     }
 
-    fn assert_and_print_result(label: &str, result: &Option<PodResultInfo>) {
-        let r = result.as_ref().expect("outcome should have result from library");
-        eprintln!("{} response: pod_id={:?} volume_id={:?} pod_url={:?}", label, r.pod_id, r.volume_id, r.pod_url);
-        assert!(r.pod_id.is_some(), "result should have pod_id");
-        assert!(r.volume_id.is_some(), "result should have volume_id");
+    fn assert_and_print_metadata(label: &str, metadata: &Option<ModelDeploymentMetadata>) {
+        let m = metadata.as_ref().expect("outcome should have metadata from library");
+        let pod_id = m.get("pod_id").and_then(|v| v.as_str());
+        let volume_id = m.get("volume_id").and_then(|v| v.as_str());
+        let pod_url = m.get("pod_url").and_then(|v| v.as_str());
+        eprintln!("{} response: pod_id={:?} volume_id={:?} pod_url={:?}", label, pod_id, volume_id, pod_url);
+        assert!(m.get("pod_id").is_some(), "metadata should have pod_id");
+        assert!(m.get("volume_id").is_some(), "metadata should have volume_id");
     }
 
     /// Create pod only. No pod_id/volume_id needed. Response includes pod_id, volume_id, pod_url.
@@ -659,7 +666,8 @@ mod tests {
         match &outcome {
             ReconciliationOutcome::Started(p) => {
                 assert!(p.message.is_some());
-                assert_and_print_result("create", &p.result);
+                assert_eq!(p.state, State::Unknown);
+                assert_and_print_metadata("create", &p.metadata);
             }
             other => panic!("expected Started, got {:?}", other),
         }
@@ -699,7 +707,7 @@ mod tests {
         match &outcome {
             ReconciliationOutcome::Started(p) => {
                 assert!(p.message.is_some());
-                assert_and_print_result("start", &p.result);
+                assert_and_print_metadata("start", &p.metadata);
             }
             other => panic!("expected Started, got {:?}", other),
         }
@@ -739,7 +747,7 @@ mod tests {
         match &outcome {
             ReconciliationOutcome::Stopped(p) => {
                 assert!(p.message.is_some());
-                assert_and_print_result("stop", &p.result);
+                assert_and_print_metadata("stop", &p.metadata);
             }
             other => panic!("expected Stopped, got {:?}", other),
         }
@@ -779,7 +787,6 @@ mod tests {
         match &outcome {
             ReconciliationOutcome::Undeployed(p) => {
                 assert!(p.message.is_some());
-                assert_and_print_result("terminate", &p.result);
             }
             other => panic!("expected Undeployed, got {:?}", other),
         }
@@ -819,7 +826,7 @@ mod tests {
         match &outcome {
             ReconciliationOutcome::Observed(p) => {
                 assert!(p.message.is_some());
-                assert_and_print_result("monitor", &p.result);
+                assert_and_print_metadata("monitor", &p.metadata);
             }
             other => panic!("expected Observed, got {:?}", other),
         }

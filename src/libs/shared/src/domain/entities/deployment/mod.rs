@@ -124,6 +124,10 @@ impl ModelDeploymentMetadata {
     pub fn into_inner(&self) -> &HashMap<String, Value> {
         &self.0
     }
+
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        self.0.get(key)
+    }
 }
 
 #[derive(Clone, Debug)]
