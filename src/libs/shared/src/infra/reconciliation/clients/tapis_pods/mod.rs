@@ -27,8 +27,7 @@ struct DeploymentInfo {
     tapis_user: String,
     tapis_token: String,
     model_id: String,
-    /// Backend name for FlexServ (e.g. "transformers"); we build Backend when creating FlexServPodDeployment
-    backend_name: String,
+    backend: Backend,
 }
 
 impl TapisPodsModelDeploymentReconciliationClient {
@@ -81,24 +80,6 @@ impl TapisPodsModelDeploymentReconciliationClient {
         }
     }
 
-    fn backend_to_name(backend: &Backend) -> String {
-        match backend {
-            Backend::Transformers { .. } => "transformers".into(),
-            Backend::VLlm { .. } => "vllm".into(),
-            Backend::SGLang { .. } => "sglang".into(),
-            Backend::TrtLlm { .. } => "trtllm".into(),
-        }
-    }
-
-    fn name_to_backend(name: &str) -> Backend {
-        match name {
-            "vllm" => Backend::VLlm { command: vec!["python".to_string(), "-m".to_string(), "vllm".to_string()] },
-            "sglang" => Backend::SGLang { command: vec!["python".to_string()] },
-            "trtllm" => Backend::TrtLlm { command: vec!["python".to_string()] },
-            _ => Backend::Transformers { command: vec!["python".to_string()] },
-        }
-    }
-
     /// Get or create deployment info
     async fn get_or_create_deployment_info(
         &self,
@@ -114,7 +95,6 @@ impl TapisPodsModelDeploymentReconciliationClient {
         let (tenant_url, tapis_user, tapis_token) = Self::extract_tapis_credentials(&input.deployment)?;
         let model_id = format!("{}/{}", input.deployment.model.author, input.deployment.model.name);
         let backend = Self::determine_backend(&input.model_metadata);
-        let backend_name = Self::backend_to_name(&backend);
 
         // Check if pod_id and volume_id exist in metadata (for existing deployments)
         let (pod_id, volume_id) = if let Some((pid, vid)) = Self::extract_pod_info(&input.deployment) {
@@ -131,7 +111,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
             tapis_user: tapis_user.clone(),
             tapis_token: tapis_token.clone(),
             model_id,
-            backend_name,
+            backend,
         };
 
         deployments.insert(input.deployment.id, info.clone());
@@ -140,12 +120,11 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
     /// Create a FlexServPodDeployment from DeploymentInfo
     fn create_deployment_from_info(&self, info: &DeploymentInfo, deployment_id: uuid::Uuid) -> Result<FlexServPodDeployment, ReconciliationError> {
-        let backend = Self::name_to_backend(&info.backend_name);
         let server = FlexServInstance::builder()
             .tenant_url(normalize_tenant_url(&info.tenant_url))
             .tapis_user(info.tapis_user.clone())
             .model(info.model_id.clone())
-            .backend(backend)
+            .backend(info.backend.clone())
             .build()
             .map_err(|e| ReconciliationError::Unimplemented(format!("Failed to create FlexServInstance: {}", e)))?;
 
