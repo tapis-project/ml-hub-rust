@@ -24,3 +24,4 @@ openapiv3 = "2.0.0"
 async-trait = "0.1.88"
 utoipa = { version = "5.4.0" }
 utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web"] }
+amqprs = "2.1.1"

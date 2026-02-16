@@ -2,7 +2,7 @@ use std::sync::Arc;
 use amqprs::{
     channel::{
         BasicConsumeArguments, Channel, ExchangeType, QueueBindArguments, QueueDeclareArguments
-    }, connection::OpenConnectionArguments, consumer::AsyncConsumer, BasicProperties, Deliver, FieldTable, FieldValue,
+    }, connection::Connection, consumer::AsyncConsumer, BasicProperties, Deliver, FieldTable, FieldValue
 };
 use tokio;
 use uuid::Uuid;
@@ -20,6 +20,11 @@ use model_deployment_controller::bootstrap::{model_deployment_conroller_builder,
 use model_deployment_controller::database::{get_db, ClientParams};
 use log::{error, info, warn};
 
+
+struct MessagingContext {
+    _connection: Connection,
+    channel: Arc<Channel>,
+}
 
 struct ModelDeploymentControllerConsumer {
     event_publisher: Arc<dyn EventPublisher>,
@@ -126,10 +131,21 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
         
                         return
                     },
+                    // Reconciliation succeed but the model deployment update failed.
+                    // TODO ????
+                    ModelDeploymentControllerError::ModelDeploymentUpdateFailed(e) => {
+                        error!("{}", e.to_string());
+                        let _ = nack(&channel, &deliver, Some(true), None)
+                            .await
+                            .map_err(|err| {
+                                panic!("Failed to nack message_id={}: Error: {}", message_id, err.to_string())
+                            });
+        
+                        return
+                    },
                 };
             }
         };
-
 
         // Successfully processed. Acknowledge
         let _ = ack(&channel, &deliver, None)
@@ -154,20 +170,12 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
 async fn main() -> () {
     env_logger::init();
 
-    let host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_HOST missing from environment variables");
-    let port = std::env::var("ARTIFACT_OP_MQ_PORT")
-        .expect("ARTIFACT_OP_MQ_PORT missing from environment variables")
-        .parse::<u16>()
-        .unwrap_or(5672);
-    let username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
-    let password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
-
     let broker_host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
     let broker_port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
     let broker_username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
     let broker_password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
     
-    let (_, channel) = open_channel(
+    let (_connection, channel) = open_channel(
         broker_host,
         broker_port.parse::<u16>().expect("u16 parsed from 'port' String"),
         broker_username,
@@ -177,19 +185,24 @@ async fn main() -> () {
         .map_err(|err| { error!("{}", err.to_string()) })
         .expect("Connection to message broker established and channel created");
     
+    let context = MessagingContext {
+        _connection,
+        channel: Arc::new(channel)
+    };
+
     // Declare dlx
-    declare_exchanges(&channel, vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct)])
+    declare_exchanges(&context.channel, vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct)])
         .await
         .expect("Exchanges to be declared");
 
     // Declare dlq
-    let _ = match channel.queue_declare(QueueDeclareArguments::new(DEAD_LETTER_QUEUE.into())).await {
+    let _ = match context.channel.queue_declare(QueueDeclareArguments::new(DEAD_LETTER_QUEUE.into())).await {
         Ok(q) => q,
         Err(err) => panic!("Failed to declare dead letter queue: {}", err.to_string())
     };
 
     // Bind dlq to dlx
-    channel.queue_bind(QueueBindArguments::new(DEAD_LETTER_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_LETTER_ROUTING_KEY))
+    context.channel.queue_bind(QueueBindArguments::new(DEAD_LETTER_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_LETTER_ROUTING_KEY))
         .await
         .expect(format!("DLQ bound to DLX with routing key {}", DEAD_LETTER_ROUTING_KEY).as_str());
 
@@ -212,12 +225,12 @@ async fn main() -> () {
     
     queue_declare_args.arguments(dl_args);
 
-    let _ = channel.queue_declare(queue_declare_args.clone())
+    let _ = context.channel.queue_declare(queue_declare_args.clone())
         .await
         .expect("Model deployment reconciliation queue to be declared");
 
     declare_exchanges(
-        &channel,
+        &context.channel,
         vec![
             (MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic),
             (DEAD_LETTER_EXCHANGE, ExchangeType::Direct),
@@ -226,10 +239,10 @@ async fn main() -> () {
         .await
         .expect("Model deployment reconciliation and dead leater exchanges to be declared");
     
-    channel.queue_bind(
+    context.channel.queue_bind(
         QueueBindArguments::new(
             MODEL_DEPLOYMENT_RECONCILIATION_QUEUE,
-            MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, 
+            MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
             MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
         )
     )
@@ -254,8 +267,8 @@ async fn main() -> () {
         .expect("Datbase initialization error");
 
     let consumer = ModelDeploymentControllerConsumer {
-        event_publisher: event_publisher_factory(&host, port.clone(), &username, &password),
-        controller: model_deployment_conroller_builder(&db, &host, port.clone(), &username, &password)
+        event_publisher: event_publisher_factory(context.channel.clone()),
+        controller: model_deployment_conroller_builder(&db, context.channel.clone())
     };
      
     let args = BasicConsumeArguments::default()
@@ -263,7 +276,7 @@ async fn main() -> () {
         .consumer_tag(consumer_tag.to_string())
         .finish();
 
-    match channel.basic_consume(consumer, args).await {
+    match context.channel.basic_consume(consumer, args).await {
         Ok(_) => { info!("Ready to recieve messages...") },
         Err(err) => panic!("Failed to consume: {}", err.to_string())
     };

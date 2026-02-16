@@ -14,9 +14,8 @@ pub trait DeploymentStrategyProvider {
 
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
-    async fn save(&self, model_deployment: &ModelDeployment) -> Result<(), ApplicationError>;
-    // async fn update_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
-    // async fn update_desired_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
+    async fn save(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
+    async fn update(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
     async fn find(&self, input: &FilterInput) -> Result<Option<ModelDeployment>, ApplicationError>;
 }
 

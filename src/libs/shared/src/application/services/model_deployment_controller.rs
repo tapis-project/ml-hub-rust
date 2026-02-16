@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput};
+use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput};
 use crate::application::ports::events::Payload;
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
@@ -25,6 +25,9 @@ pub enum ModelDeploymentControllerError {
 
     #[error("Failed to retrieve deployment: {0}")]
     ModelDeploymentRetrievalFailed(#[from] ModelDeploymentServiceError),
+
+    #[error("Failed update deployment: {0}")]
+    ModelDeploymentUpdateFailed(String),
 
     #[error("Failed to find model metadata associated with deployment: {0}")]
     ModelMetadataRetrievalFailed(String),
@@ -181,7 +184,11 @@ impl ModelDeploymentController {
             ReconciliationOutcome::NoOp => {},
         };
 
-        // TODO Save the deployment
+        let _ = self.model_deployment_service.update(UpdateModelDeploymentInput {
+            deployment
+        })
+            .await
+            .map_err(|err| ModelDeploymentControllerError::ModelDeploymentUpdateFailed(err.to_string()));
 
         Ok(DispatchReconcilerResult { events })
     }

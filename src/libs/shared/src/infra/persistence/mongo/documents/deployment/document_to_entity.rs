@@ -1,4 +1,4 @@
-use crate::domain::entities::deployment as entities;
+use crate::domain::entities::deployment::{self as entities, ModelDeploymentMetadata};
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
 use crate::infra::persistence::mongo::documents::deployment as documents;
@@ -22,14 +22,16 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
             deployment_strategy: value.deployment_strategy
                 .clone()
                 .and_then(|dsr| Some(entities::DeploymentStrategyReference::from(dsr))),
-            parallelism: value.parallelism
+            replicas: value.replicas
                 .clone()
                 .and_then(|rg| Some(entities::ReplicaGroup::from(rg))),
             last_modified: TimeStamp::from(value.last_modified.to_chrono()),
             last_desired_state_change: TimeStamp::from(value.last_desired_state_change.to_chrono()),
             last_state_change: TimeStamp::from(value.last_state_change.to_chrono()),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
-            metadata: value.metadata.clone(),
+            metadata: value.metadata
+                .clone()
+                .and_then(|m| Some(ModelDeploymentMetadata(m))),
         };
         
         entities::ModelDeployment::rehydrate(props)

@@ -38,3 +38,7 @@ pub struct ReconcileModelDeploymentInput {
     pub deployment: ModelDeployment,
     pub model_metadata: ModelMetadata,
 }
+
+pub struct UpdateModelDeploymentInput {
+    pub deployment: ModelDeployment,
+}

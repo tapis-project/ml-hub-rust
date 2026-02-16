@@ -22,14 +22,16 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             deployment_strategy: value.deployment_strategy
                 .clone()
                 .and_then(|dsr| Some(documents::DeploymentStrategyReference::from(dsr))),
-            parallelism: value.parallelism
+            replicas: value.replicas
                 .clone()
                 .and_then(|rg| Some(documents::ReplicaGroup::from(rg))),
             last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
             last_desired_state_change: DateTime::from_chrono(value.last_desired_state_change.into_inner()),
             last_state_change: DateTime::from_chrono(value.last_state_change.into_inner()),
             created_at: DateTime::from_chrono(value.created_at.into_inner()),
-            metadata: value.metadata.clone(),
+            metadata: value.metadata
+                .clone()
+                .and_then(|m| Some(m.into_inner().clone())),
         }
     }
 }
