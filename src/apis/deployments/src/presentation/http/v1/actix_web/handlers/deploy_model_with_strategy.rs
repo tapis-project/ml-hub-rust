@@ -12,7 +12,6 @@ use actix_web::{
     web,
     Responder
 };
-use serde_json::{Value, to_value};
 use shared::application::inputs::deployment::DeployWithStrategyInput;
 
 #[utoipa::path(
@@ -39,10 +38,7 @@ async fn deploy_model_with_strategy(
 ) -> impl Responder {
     let service = model_deployment_service_builder(
         &data.db,
-        &data.message_publisher_connection_args.host,
-        data.message_publisher_connection_args.port.clone(),
-        &data.message_publisher_connection_args.username,
-        &data.message_publisher_connection_args.password,
+        data.channel.clone(),
     );
 
     let input = DeployWithStrategyInput {

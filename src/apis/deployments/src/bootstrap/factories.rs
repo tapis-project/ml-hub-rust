@@ -2,6 +2,7 @@
 //! with application level concerns
 // use mongodb::Database;
 use std::sync::Arc;
+use amqprs::channel::Channel;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::artifacts::ArtifactRepository;
 use shared::application::ports::deployment::DeploymentStrategyProvider;
@@ -30,16 +31,16 @@ pub fn artifact_repo_factory(db: &Database) -> Arc<dyn ArtifactRepository> {
     Arc::new(MongoArtifactRepository::new(db))
 }
 
-pub fn event_publisher_factory(host: &String, port: u16, username: &String, password: &String) -> Arc<dyn EventPublisher> {
-    Arc::new(RabbitMQModelDeploymentMessagePublisher::new(host.clone(), port.clone(), username.clone(), password.clone()))
+pub fn event_publisher_factory(channel: Arc<Channel>) -> Arc<dyn EventPublisher> {
+    Arc::new(RabbitMQModelDeploymentMessagePublisher::new(channel))
 }
 
-pub fn model_deployment_service_builder(db: &Database, host: &String, port: u16, username: &String, password: &String) -> ModelDeploymentService {
+pub fn model_deployment_service_builder(db: &Database, channel: Arc<Channel>) -> ModelDeploymentService {
     ModelDeploymentService::new(
         model_deployment_repo_factory(db),
         model_metadata_repo_factory(db),
         artifact_repo_factory(db),
-        event_publisher_factory(host, port, username, password),
+        event_publisher_factory(channel.clone()),
     )
 }
 

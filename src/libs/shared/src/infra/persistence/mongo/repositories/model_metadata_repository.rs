@@ -4,7 +4,6 @@ use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::{application, domain};
 use crate::domain::entities;
 use bson::oid::ObjectId;
-use log::debug;
 use mongodb::{
     bson::{
         doc,

@@ -86,13 +86,13 @@ pub struct RehydrateModelDeploymentProps {
     pub deployment_strategy: Option<DeploymentStrategyReference>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub parallelism: Option<ReplicaGroup>,
+    pub replicas: Option<ReplicaGroup>,
     pub revision: u32,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
     pub last_desired_state_change: TimeStamp,
     pub created_at: TimeStamp,
-    pub metadata: Option<HashMap<String, Value>>,
+    pub metadata: Option<ModelDeploymentMetadata>,
 }
 
 #[derive(Clone, Debug)]
@@ -107,13 +107,22 @@ pub struct ModelDeploymentProps {
     pub deployment_strategy: Option<DeploymentStrategyReference>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub parallelism: Option<ReplicaGroup>,
+    pub replicas: Option<ReplicaGroup>,
 }
 
 #[derive(Clone, Debug)]
 pub enum RevisionType {
     StateChange,
     DesiredStateChange,
+}
+
+#[derive(Clone, Debug)]
+pub struct ModelDeploymentMetadata(pub HashMap<String, Value>);
+
+impl ModelDeploymentMetadata {
+    pub fn into_inner(&self) -> &HashMap<String, Value> {
+        &self.0
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -138,9 +147,9 @@ pub struct ModelDeployment {
     pub last_state_change: TimeStamp,
     pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub parallelism: Option<ReplicaGroup>,
+    pub replicas: Option<ReplicaGroup>,
     /// Metadata provided by and for deployment clients
-    pub metadata: Option<HashMap<String, Value>>,
+    pub metadata: Option<ModelDeploymentMetadata>,
     /// Indicates changes to desired state over time. This field is incremented
     /// every time desired state changes.
     revision: u32, 
@@ -166,7 +175,7 @@ impl ModelDeployment {
             last_state_change: now.clone(),
             last_desired_state_change: now.clone(),
             deployment_interface: props.deployment_interface,
-            parallelism: props.parallelism,
+            replicas: props.replicas,
             metadata: None,
             revision: 0,
         }
@@ -188,7 +197,7 @@ impl ModelDeployment {
             last_state_change: props.last_state_change,
             last_desired_state_change: props.last_desired_state_change,
             deployment_interface: props.deployment_interface,
-            parallelism: props.parallelism,
+            replicas: props.replicas,
             metadata: props.metadata,
             revision: props.revision,
         }

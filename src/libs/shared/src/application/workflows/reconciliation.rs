@@ -1,4 +1,4 @@
-use crate::domain::entities::deployment::State;
+use crate::domain::entities::deployment::{ModelDeploymentInterface, ReplicaGroup, ModelDeploymentMetadata, State};
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
@@ -22,11 +22,17 @@ pub enum ReconciliationAction {
 #[derive(Clone, Debug)]
 pub struct StartedOutcomePayload {
     pub message: Option<String>,
+    pub metadata: Option<ModelDeploymentMetadata>,
+    pub replicas: Option<ReplicaGroup>,
+    pub interface: Option<ModelDeploymentInterface>,
 }
 
 #[derive(Clone, Debug)]
 pub struct StoppedOutcomePayload {
     pub message: Option<String>,
+    pub metadata: Option<ModelDeploymentMetadata>,
+    pub replicas: Option<ReplicaGroup>,
+    pub interface: Option<ModelDeploymentInterface>,
 }
 
 #[derive(Clone, Debug)]
@@ -38,6 +44,9 @@ pub struct UndeployedOutcomePayload {
 pub struct ObeservedOutcomePayload {
     pub message: Option<String>,
     pub state: State,
+    pub metadata: Option<ModelDeploymentMetadata>,
+    pub replicas: Option<ReplicaGroup>,
+    pub interface: Option<ModelDeploymentInterface>,
 }
 
 #[derive(Clone, Debug)]

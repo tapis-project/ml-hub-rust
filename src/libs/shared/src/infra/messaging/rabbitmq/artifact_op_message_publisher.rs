@@ -14,7 +14,7 @@ use amqprs::{
     BasicProperties
 };
 use async_trait::async_trait;
-use log::{error, debug};
+use log::error;
 
 #[derive(Debug, Error)]
 pub enum ArtifactOpMessagePublisherError {
@@ -46,9 +46,6 @@ impl CommandPublisher for RabbitMQArtifactOpMessagePublisher {
             get_routing_key_for_command(command),
         ).mandatory(true)
             .finish();
-
-        debug!("Exchange to publish to: {}", get_exchange_for_command(command));
-        debug!("Routing key to use:  {}", get_routing_key_for_command(command));
 
         self.channel.basic_publish(BasicProperties::default(), payload.as_bytes().to_vec(), args)
             .await

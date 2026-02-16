@@ -5,7 +5,7 @@ use crate::bootstrap::factories::build_deployment_strategy_provider;
 use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
-use amqprs::channel::{Channel, ExchangeType};
+use amqprs::channel::ExchangeType;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
 use std::env;

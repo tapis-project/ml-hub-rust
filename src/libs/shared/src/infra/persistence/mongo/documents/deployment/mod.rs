@@ -36,11 +36,34 @@ pub enum State {
     Unknown,
 }
 
+impl From<State> for String {
+    fn from(value: State) -> Self {
+        match value {
+            State::NotDeployed => "NotDeployed".into(),
+            State::Running => "Running".into(),
+            State::Stopped => "Stopped".into(),
+            State::Failed => "Failed".into(),
+            State::Blocked => "Blocked".into(),
+            State::Unknown => "Unknown".into(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum DesiredState {
     Running,
     Stopped,
     NotDeployed,
+}
+
+impl From<DesiredState> for String {
+    fn from(value: DesiredState) -> Self {
+        match value {
+            DesiredState::Running => "Running".into(),
+            DesiredState::Stopped => "Stopped".into(),
+            DesiredState::NotDeployed => "NotDeployed".into(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -61,7 +84,7 @@ pub struct ModelDeployment {
     pub last_state_change: DateTime,
     pub last_desired_state_change: DateTime,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub parallelism: Option<ReplicaGroup>,
+    pub replicas: Option<ReplicaGroup>,
     pub metadata: Option<HashMap<String, Value>>,
     pub revision: u32, 
 }
@@ -97,6 +120,7 @@ pub enum ParallelismStrategy {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum ModelDeploymentInterface {
     RestApi(RestApi)
 }

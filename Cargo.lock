@@ -1026,6 +1026,7 @@ name = "deployments"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "amqprs",
  "async-trait",
  "clients",
  "env_logger",

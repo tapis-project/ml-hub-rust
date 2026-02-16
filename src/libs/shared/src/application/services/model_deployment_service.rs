@@ -1,5 +1,5 @@
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput};
+use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, UpdateModelDeploymentInput};
 use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
@@ -158,7 +158,7 @@ impl ModelDeploymentService {
             }),
             visibility: Visibility::Private,
             deployment_interface: None,
-            parallelism: None,
+            replicas: None,
         };
         
         let deployment = ModelDeploymentDomainService::create_model_deployment(
@@ -193,5 +193,12 @@ impl ModelDeploymentService {
         };
 
         Ok(DeployModelWithStrategyOutput { deployment })
+    }
+
+    pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ApplicationError> {
+        // Update the deployment
+        retry_async(|| self.model_deployment_repo.update(&input.deployment), &Self::REPO_RETRY_POLICY).await?;
+
+        Ok(())
     }
 }

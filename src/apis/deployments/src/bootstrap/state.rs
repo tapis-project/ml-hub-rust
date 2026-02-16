@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use amqprs::channel::Channel;
 use mongodb::Database;
 use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 
@@ -14,5 +15,5 @@ pub struct MessagePublisherConnectionArgs {
 pub struct AppState {
     pub client_strategy_sets: Arc<Vec<ClientStrategySet>>,
     pub db: Database,
-    pub message_publisher_connection_args: MessagePublisherConnectionArgs,
+    pub channel: Arc<Channel>,
 }

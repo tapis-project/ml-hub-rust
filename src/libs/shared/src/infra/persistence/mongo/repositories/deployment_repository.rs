@@ -4,7 +4,7 @@ use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, S
 use crate::application;
 use crate::domain::entities;
 use mongodb::{
-    bson::{doc, Uuid},
+    bson::{doc, Uuid, to_bson},
     Database,
     Collection,
 };
@@ -38,39 +38,41 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         Ok(())
     }
 
-    // async fn update_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError> {
-    //     let filter = doc! {
-    //         "id": Uuid::from_bytes(*deployment.id.as_bytes())
-    //     };
+    async fn update(&self, deployment: &entities::deployment::ModelDeployment) -> Result<(), ApplicationError>  {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*deployment.id.as_bytes())
+        };
         
-    //     let document = doc! {
-    //         "$set": {
-    //             "state": deployment.state
-    //         }
-    //     };
+        let update = ModelDeployment::from(&deployment.clone());
 
-    //     self.write_collection
-    //         .update_one(filter, document, None)
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
-    // }
+        let document = doc! {
+            "$set": {
+                "platform": update.platform.to_string(),
+                "state": String::from(update.state),
+                "desired_state": String::from(update.desired_state),
+                "last_message": update.last_message,
+                "visibility": to_bson(&update.visibility)
+                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                "last_modified": update.last_modified,
+                "last_state_change": update.last_state_change,
+                "last_desired_state_chanage": update.last_desired_state_change,
+                "deployment_interface": to_bson(&update.deployment_interface)
+                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                "replicas": to_bson(&update.replicas)
+                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                "metadata": to_bson(&update.metadata)
+                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                "revision": update.revision,
+            }
+        };
 
-    // async fn update_desired_state(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError> {
-    //     let filter = doc! {
-    //         "id": Uuid::from_bytes(*deployment.id.as_bytes())
-    //     };
-        
-    //     let document = doc! {
-    //         "$set": {
-    //             "state": deployment.state
-    //         }
-    //     };
+        self.write_collection
+            .update_one(filter, document, None)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
-    //     self.write_collection
-    //         .update_one(filter, document, None)
-    //         .await
-    //         .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
-    // }
+        Ok(())
+    }
 
     async fn find(&self, input: &FilterInput) -> Result<Option<entities::deployment::ModelDeployment>, ApplicationError> {
         let mut filter = doc! {};
@@ -84,7 +86,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 Ok(state) => {
                     filter.insert("state", state);
                 },
-                Err(err) => return Err(ApplicationError::RepoError(err.to_string()))
+                Err(err) => return Err(ApplicationError::RepoError(err.to_string())),
             }
         }
         
