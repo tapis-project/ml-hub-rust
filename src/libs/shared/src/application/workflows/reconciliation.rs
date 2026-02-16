@@ -22,6 +22,7 @@ pub enum ReconciliationAction {
 #[derive(Clone, Debug)]
 pub struct StartedOutcomePayload {
     pub message: Option<String>,
+    pub state: State,
     pub metadata: Option<ModelDeploymentMetadata>,
     pub replicas: Option<ReplicaGroup>,
     pub interface: Option<ModelDeploymentInterface>,
