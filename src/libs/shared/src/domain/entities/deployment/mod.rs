@@ -392,11 +392,10 @@ impl <'a>ModelDeploymentDraft<'a> {
         self
     }
 
-    pub fn finish(&mut self) -> &mut ModelDeployment {
+    pub fn finish(&mut self) -> ModelDeployment {
         self.touch();
         self.deployment.revision = self.revision;
-
-        self.deployment
+        self.deployment.clone()
     }
 }
 

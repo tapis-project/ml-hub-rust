@@ -137,9 +137,9 @@ impl ModelDeploymentController {
 
         // Determine which event to publish based on the reconciliation outcome
         let mut events: Vec<Payload> = Vec::with_capacity(1);
-        match outcome {
+        let maybe_modified_deployment = match outcome {
             ReconciliationOutcome::Observed(payload) => {
-                deployment
+                let revised = deployment
                     .revise()
                     .transition_to_state(payload.state.clone(), payload.message.clone())?
                     .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
@@ -157,10 +157,12 @@ impl ModelDeploymentController {
                             message: payload.message,
                         }
                     )
-                )
+                );
+
+                Some(revised)
             },
             ReconciliationOutcome::Started(payload) => {
-                deployment
+                let revised = deployment
                     .revise()
                     .transition_to_state(State::Running, payload.message.clone())?
                     .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
@@ -177,9 +179,11 @@ impl ModelDeploymentController {
                         }
                     )
                 );
+
+                Some(revised)
             },
             ReconciliationOutcome::Stopped(payload) => {
-                deployment
+                let revised = deployment
                     .revise()
                     .transition_to_state(State::Stopped, payload.message.clone())?
                     .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
@@ -195,10 +199,12 @@ impl ModelDeploymentController {
                             message: payload.message,
                         }
                     )
-                )
+                );
+
+                Some(revised)
             },
             ReconciliationOutcome::Undeployed(payload) => {
-                deployment
+                let revised = deployment
                     .revise()
                     .transition_to_state(State::NotDeployed, payload.message.clone())?
                     .finish();
@@ -211,16 +217,21 @@ impl ModelDeploymentController {
                             message: payload.message,
                         }
                     )
-                )
+                );
+
+                Some(revised)
             },
-            ReconciliationOutcome::NoOp => {},
+            ReconciliationOutcome::NoOp => { None },
         };
 
-        let update = UpdateModelDeploymentInput { deployment };
+        if let Some(d) = maybe_modified_deployment {
+            let update = UpdateModelDeploymentInput { deployment: d };
+    
+            let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY) 
+                .await
+                .map_err(|err| ModelDeploymentControllerError::ModelDeploymentUpdateFailed(err.to_string()))?;
+        }
 
-        let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY) 
-            .await
-            .map_err(|err| ModelDeploymentControllerError::ModelDeploymentUpdateFailed(err.to_string()))?;
 
         Ok(DispatchReconcilerResult { events })
     }
