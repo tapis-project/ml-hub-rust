@@ -236,27 +236,36 @@ impl TapisPodsModelDeploymentReconciliationClient {
     async fn handle_start(&self, input: &ReconcileModelDeploymentInput) -> Result<ReconciliationOutcome, ReconciliationError> {
         info!("Starting deployment {}", input.deployment.id);
         let info = self.get_or_create_deployment_info(input).await?;
+        let has_existing_pod = !info.pod_id.is_empty();
         let mut deployment = self.create_deployment_from_info(&info, input.deployment.id)?;
 
-        // Create the deployment (this also starts it)
+        // If pod already exists (has pod_id), use start(). Otherwise, create new pod.
         // Run in a blocking task since FlexServ methods are synchronous
         let result = tokio::task::spawn_blocking(move || {
-            deployment.create()
+            if has_existing_pod {
+                deployment.start()
+            } else {
+                deployment.create()
+            }
         })
         .await
         .map_err(|e| ReconciliationError::Unimplemented(format!("Task join error: {}", e)))?
         .map_err(Self::map_deployment_error)?;
 
-        // Store pod_id and volume_id in metadata for future operations
-        if let DeploymentResult::PodResult { pod_id, volume_id, pod_url, .. } = &result {
-            info!("Deployment created successfully: pod_id={}, volume_id={}, pod_url={:?}", pod_id, volume_id, pod_url);
-            
-            // Update cached deployment info
-            let mut deployments = self.deployments.lock().await;
-            if let Some(existing_info) = deployments.get_mut(&input.deployment.id) {
-                existing_info.pod_id = pod_id.clone();
-                existing_info.volume_id = volume_id.clone();
+        // Store pod_id and volume_id in metadata for future operations (only needed for new deployments)
+        if !has_existing_pod {
+            if let DeploymentResult::PodResult { pod_id, volume_id, pod_url, .. } = &result {
+                info!("Deployment created successfully: pod_id={}, volume_id={}, pod_url={:?}", pod_id, volume_id, pod_url);
+                
+                // Update cached deployment info
+                let mut deployments = self.deployments.lock().await;
+                if let Some(existing_info) = deployments.get_mut(&input.deployment.id) {
+                    existing_info.pod_id = pod_id.clone();
+                    existing_info.volume_id = volume_id.clone();
+                }
             }
+        } else {
+            info!("Deployment started: pod_id={}", info.pod_id);
         }
 
         Ok(ReconciliationOutcome::Started(StartedOutcomePayload {

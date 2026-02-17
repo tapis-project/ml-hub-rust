@@ -133,6 +133,14 @@ impl ModelDeploymentController {
         match outcome {
             ReconciliationOutcome::Observed(payload) => {
                 deployment.change_state(payload.state.clone(), payload.message.clone())?;
+                // Merge updated metadata from reconciliation
+                if let Some(new_metadata) = payload.metadata {
+                    if let Some(ref mut existing_metadata) = deployment.metadata {
+                        existing_metadata.merge(new_metadata);
+                    } else {
+                        deployment.metadata = Some(new_metadata);
+                    }
+                }
                 events.push(
                     Payload::ModelDeploymentStateDriftDetectedPayload(
                         ModelDeploymentStateDriftDetectedPayload {
@@ -147,6 +155,13 @@ impl ModelDeploymentController {
             },
             ReconciliationOutcome::Started(payload) => {
                 deployment.change_state(State::Running, payload.message.clone())?;
+                if let Some(new_metadata) = payload.metadata {
+                    if let Some(ref mut existing_metadata) = deployment.metadata {
+                        existing_metadata.merge(new_metadata);
+                    } else {
+                        deployment.metadata = Some(new_metadata);
+                    }
+                }
                 events.push(
                     Payload::ModelDeploymentStartedPayload(
                         ModelDeploymentStartedPayload {
@@ -159,6 +174,13 @@ impl ModelDeploymentController {
             },
             ReconciliationOutcome::Stopped(payload) => {
                 deployment.change_state(State::Stopped, payload.message.clone())?;
+                if let Some(new_metadata) = payload.metadata {
+                    if let Some(ref mut existing_metadata) = deployment.metadata {
+                        existing_metadata.merge(new_metadata);
+                    } else {
+                        deployment.metadata = Some(new_metadata);
+                    }
+                }
                 events.push(
                     Payload::ModelDeploymentStoppedPayload(
                         ModelDeploymentStoppedPayload {
@@ -171,6 +193,7 @@ impl ModelDeploymentController {
             },
             ReconciliationOutcome::Undeployed(payload) => {
                 deployment.change_state(State::NotDeployed, payload.message.clone())?;
+                deployment.metadata = None;
                 events.push(
                     Payload::ModelDeploymentDeletedPayload(
                         ModelDeploymentDeletedPayload {

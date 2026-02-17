@@ -128,6 +128,13 @@ impl ModelDeploymentMetadata {
     pub fn get(&self, key: &str) -> Option<&Value> {
         self.0.get(key)
     }
+
+    /// Merge new metadata into existing metadata, preserving existing keys
+    pub fn merge(&mut self, other: ModelDeploymentMetadata) {
+        for (key, value) in other.0 {
+            self.0.insert(key, value);
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
