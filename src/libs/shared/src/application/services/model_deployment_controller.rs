@@ -6,7 +6,14 @@ use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationError, ReconciliationOutcome};
 use crate::application::ports::deployment::{ModelDeploymentPlatformReconcilerProvider, ModelDeploymentPlatformReconcilerProviderError};
-use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ModelDeploymentError, State};
+use crate::domain::entities::deployment::{DesiredState,
+    ModelDeployment,
+    ModelDeploymentError,
+    State,
+    ModelDeploymentInterfaceDelta,
+    ModelDeploymentMetadataDelta,
+    ReplicaGroupDelta,
+};
 use thiserror::Error;
 use crate::application::retries::{
     retry_async,
@@ -128,11 +135,18 @@ impl ModelDeploymentController {
             }
         ).await?;
 
-        // Determene which event to publish based on the reconciliation outcome
+        // Determine which event to publish based on the reconciliation outcome
         let mut events: Vec<Payload> = Vec::with_capacity(1);
         match outcome {
             ReconciliationOutcome::Observed(payload) => {
-                deployment.change_state(payload.state.clone(), payload.message.clone())?;
+                deployment
+                    .revise()
+                    .transition_to_state(payload.state.clone(), payload.message.clone())?
+                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
+                    .apply_interface_delta(payload.interface.unwrap_or(ModelDeploymentInterfaceDelta::NoChange))
+                    .apply_replica_group_delta(payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange))
+                    .finish();
+
                 events.push(
                     Payload::ModelDeploymentStateDriftDetectedPayload(
                         ModelDeploymentStateDriftDetectedPayload {
@@ -146,7 +160,14 @@ impl ModelDeploymentController {
                 )
             },
             ReconciliationOutcome::Started(payload) => {
-                deployment.change_state(State::Running, payload.message.clone())?;
+                deployment
+                    .revise()
+                    .transition_to_state(State::Running, payload.message.clone())?
+                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
+                    .apply_interface_delta(payload.interface.unwrap_or(ModelDeploymentInterfaceDelta::NoChange))
+                    .apply_replica_group_delta(payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange))
+                    .finish();
+
                 events.push(
                     Payload::ModelDeploymentStartedPayload(
                         ModelDeploymentStartedPayload {
@@ -158,7 +179,14 @@ impl ModelDeploymentController {
                 );
             },
             ReconciliationOutcome::Stopped(payload) => {
-                deployment.change_state(State::Stopped, payload.message.clone())?;
+                deployment
+                    .revise()
+                    .transition_to_state(State::Stopped, payload.message.clone())?
+                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
+                    .apply_interface_delta(payload.interface.unwrap_or(ModelDeploymentInterfaceDelta::NoChange))
+                    .apply_replica_group_delta(payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange))
+                    .finish();
+
                 events.push(
                     Payload::ModelDeploymentStoppedPayload(
                         ModelDeploymentStoppedPayload {
@@ -170,7 +198,11 @@ impl ModelDeploymentController {
                 )
             },
             ReconciliationOutcome::Undeployed(payload) => {
-                deployment.change_state(State::NotDeployed, payload.message.clone())?;
+                deployment
+                    .revise()
+                    .transition_to_state(State::NotDeployed, payload.message.clone())?
+                    .finish();
+                
                 events.push(
                     Payload::ModelDeploymentDeletedPayload(
                         ModelDeploymentDeletedPayload {
@@ -184,11 +216,11 @@ impl ModelDeploymentController {
             ReconciliationOutcome::NoOp => {},
         };
 
-        let _ = self.model_deployment_service.update(UpdateModelDeploymentInput {
-            deployment
-        })
+        let update = UpdateModelDeploymentInput { deployment };
+
+        let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY) 
             .await
-            .map_err(|err| ModelDeploymentControllerError::ModelDeploymentUpdateFailed(err.to_string()));
+            .map_err(|err| ModelDeploymentControllerError::ModelDeploymentUpdateFailed(err.to_string()))?;
 
         Ok(DispatchReconcilerResult { events })
     }

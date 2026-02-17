@@ -17,115 +17,6 @@ pub enum ModelDeploymentError {
 }
 
 #[derive(Clone, Debug)]
-pub struct ModelReference {
-    pub name: String,
-    pub author: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct DeploymentStrategyReference {
-    pub client: String,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum State {
-    /// The deployment infrastructure does not exist
-    NotDeployed,
-    /// The deployment infrastructure exists and is running
-    Running,
-    /// The client has successfully stopped the deployment
-    Stopped,
-    /// The deployment has failed (never started or crashed)
-    Failed,
-    /// The deployment cannot be acted up or controlled
-    Blocked,
-    /// Observability gap. The state of the deployment cannot be known
-    Unknown,
-}
-
-impl From<State> for String {
-    fn from(value: State) -> Self {
-        match value {
-            State::NotDeployed => "NotDeployed".into(),
-            State::Running => "Running".into(),
-            State::Stopped => "Stopped".into(),
-            State::Failed => "Failed".into(),
-            State::Blocked => "Blocked".into(),
-            State::Unknown => "Unknown".into(),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum DesiredState {
-    Running,
-    Stopped,
-    NotDeployed,
-}
-
-impl From<DesiredState> for String {
-    fn from(value: DesiredState) -> Self {
-        match value {
-            DesiredState::Running => "Running".into(),
-            DesiredState::Stopped => "Stopped".into(),
-            DesiredState::NotDeployed => "NotDeployed".into(),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct RehydrateModelDeploymentProps {
-    pub id: Uuid,
-    pub platform: Platform,
-    pub owner: String,
-    pub model: ModelReference,
-    pub state: State,
-    pub desired_state: DesiredState,
-    pub last_message: Option<String>,
-    pub deployment_strategy: Option<DeploymentStrategyReference>,
-    pub visibility: Visibility,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
-    pub revision: u32,
-    pub last_modified: TimeStamp,
-    pub last_state_change: TimeStamp,
-    pub last_desired_state_change: TimeStamp,
-    pub created_at: TimeStamp,
-    pub metadata: Option<ModelDeploymentMetadata>,
-}
-
-#[derive(Clone, Debug)]
-pub struct ModelDeploymentProps {
-    pub id: Uuid,
-    pub platform: Platform,
-    pub owner: String,
-    pub model: ModelReference,
-    pub state: State,
-    pub desired_state: DesiredState,
-    pub last_message: Option<String>,
-    pub deployment_strategy: Option<DeploymentStrategyReference>,
-    pub visibility: Visibility,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
-}
-
-#[derive(Clone, Debug)]
-pub enum RevisionType {
-    StateChange,
-    DesiredStateChange,
-}
-
-#[derive(Clone, Debug)]
-pub struct ModelDeploymentMetadata(pub HashMap<String, Value>);
-
-impl ModelDeploymentMetadata {
-    pub fn into_inner(&self) -> &HashMap<String, Value> {
-        &self.0
-    }
-}
-
-#[derive(Clone, Debug)]
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
     pub id: Uuid,
@@ -203,43 +94,6 @@ impl ModelDeployment {
         }
     }
 
-    pub fn revision(&self) -> &u32 {
-        &self.revision
-    }
-
-    /// Updates last modified to the UTC timestamp
-    fn touch(&mut self, at: Option<TimeStamp>) {
-        let now = at.unwrap_or(TimeStamp::now());
-        self.last_modified = now.clone();
-    }
-
-    fn revise(&mut self, revision_type: RevisionType) {
-        self.revision = self.revision + 1;
-
-        let now = TimeStamp::now();
-
-        match revision_type {
-            RevisionType::StateChange => {
-                self.last_state_change = now.clone();
-            },
-            RevisionType::DesiredStateChange => {
-                self.last_desired_state_change = now.clone();
-            },
-        }
-
-        self.touch(Some(now));
-    }
-
-    fn valid_state_transitions() -> HashMap<State, Vec<State>> {
-        let mut transitions = HashMap::new();
-        transitions.insert(State::NotDeployed, vec![State::Blocked, State::Running, State::Failed]);
-        transitions.insert(State::Running, vec![State::Blocked, State::Stopped, State::Failed]);
-        transitions.insert(State::Stopped, vec![State::Blocked, State::Running, State::Failed]);
-        transitions.insert(State::Failed, vec![State::Blocked, State::Running]);
-        transitions.insert(State::Blocked, vec![State::Running, State::Stopped, State::Failed]);
-        transitions
-    }
-
     pub fn is_state_syncronized(&self) -> bool {
         match (&self.state, &self.desired_state) {
             (State::Running, DesiredState::Running) => true,
@@ -248,76 +102,90 @@ impl ModelDeployment {
         }
     }
 
-    /// Returns whether a transition from one state to another is valid
-    fn is_valid_state_transition(from: &State, to: &State) -> bool {
-        // Unknown can transition to any state 
-        if from == &State::Unknown {
-            return true
-        }
-
-        Self::valid_state_transitions()
-            .get(from)
-            .map_or(false, |allowed| allowed.contains(to))
+    pub fn revision(&self) -> &u32 {
+        &self.revision
     }
 
-    /// Changes the state. Returns an error if invalid state transition is detected
-    pub fn change_state(&mut self, new_state: State, message: Option<String>) -> Result<(), ModelDeploymentError> {
-        if !Self::is_valid_state_transition(&self.state, &new_state) {
-            return Err(ModelDeploymentError::InvalidStateTransition(self.state.clone().into(), new_state.into()))
-        }
-
-        // Changes the state
-        self.state = new_state;
-
-        // Update the last message if provided
-        if let Some(m) = message {
-            self.last_message = Some(m);
-        }
-
-        self.revision = self.revision + 1;
-
-        self.last_state_change = TimeStamp::now();
-
-        self.revise(RevisionType::StateChange);
-
-        Ok(())
+    pub fn revise(&mut self) -> ModelDeploymentDraft<'_> {
+        let revision = self.revision + 1;
+        let draft = ModelDeploymentDraft { deployment: self, revision };
+        
+        draft
     }
+}
 
-    fn valid_desired_state_transitions() -> HashMap<DesiredState, Vec<DesiredState>> {
-        let mut transitions = HashMap::new();
-        transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
-        transitions.insert(DesiredState::Stopped, vec![DesiredState::Running]);
-        transitions
-    }
+#[derive(Clone, Debug)]
+pub struct ModelReference {
+    pub name: String,
+    pub author: String,
+}
 
-    /// Returns whether a transition from one state to another is valid
-    fn is_valid_desired_state_transition(from: &DesiredState, to: &DesiredState) -> bool {
-        Self::valid_desired_state_transitions()
-            .get(from)
-            .map_or(false, |allowed| allowed.contains(to))
-    }
+#[derive(Clone, Debug)]
+pub struct DeploymentStrategyReference {
+    pub client: String,
+    pub name: String,
+}
 
-    /// Changes the state. Returns an error if invalid state transition is detected
-    pub fn change_desired_state(&mut self, new_state: DesiredState, message: Option<String>) -> Result<(), ModelDeploymentError> {
-        if !Self::is_valid_desired_state_transition(&self.desired_state, &new_state) {
-            return Err(ModelDeploymentError::InvalidDesiredStateTransition(self.state.clone().into(), new_state.into()))
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum State {
+    /// The deployment infrastructure does not exist
+    NotDeployed,
+    /// The deployment infrastructure exists and is running
+    Running,
+    /// The client has successfully stopped the deployment
+    Stopped,
+    /// The deployment has failed (never started or crashed)
+    Failed,
+    /// The deployment cannot be acted up or controlled
+    Blocked,
+    /// Observability gap. The state of the deployment cannot be known
+    Unknown,
+}
+
+impl From<State> for String {
+    fn from(value: State) -> Self {
+        match value {
+            State::NotDeployed => "NotDeployed".into(),
+            State::Running => "Running".into(),
+            State::Stopped => "Stopped".into(),
+            State::Failed => "Failed".into(),
+            State::Blocked => "Blocked".into(),
+            State::Unknown => "Unknown".into(),
         }
-
-        self.desired_state = new_state;
-
-        // Update the last message if provided
-        if let Some(m) = message {
-            self.last_message = Some(m);
-        }
-
-        self.revision = self.revision + 1;
-
-        self.last_desired_state_change = TimeStamp::now();
-
-        self.revise(RevisionType::DesiredStateChange);
-
-        Ok(())
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum DesiredState {
+    Running,
+    Stopped,
+    NotDeployed,
+}
+
+impl From<DesiredState> for String {
+    fn from(value: DesiredState) -> Self {
+        match value {
+            DesiredState::Running => "Running".into(),
+            DesiredState::Stopped => "Stopped".into(),
+            DesiredState::NotDeployed => "NotDeployed".into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ModelDeploymentMetadata(pub HashMap<String, Value>);
+
+impl ModelDeploymentMetadata {
+    pub fn into_inner(&self) -> &HashMap<String, Value> {
+        &self.0
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ModelDeploymentMetadataDelta {
+    NoChange,
+    Delete,
+    Merge(ModelDeploymentMetadata)
 }
 
 #[derive(Clone, Debug)]
@@ -360,6 +228,13 @@ pub enum ParallelismStrategy {
 }
 
 #[derive(Clone, Debug)]
+pub enum ReplicaGroupDelta {
+    NoChange,
+    Delete,
+    Replace(ReplicaGroup)
+}
+
+#[derive(Clone, Debug)]
 pub enum ModelDeploymentInterface {
     RestApi(RestApi)
 }
@@ -367,4 +242,196 @@ pub enum ModelDeploymentInterface {
 #[derive(Clone, Debug)]
 pub struct RestApi {
     pub spec: OpenAPI,
+}
+
+#[derive(Clone, Debug)]
+pub enum ModelDeploymentInterfaceDelta {
+    NoChange,
+    Delete,
+    Replace(ModelDeploymentInterface)
+}
+
+#[derive(Debug)]
+pub struct ModelDeploymentDraft<'a> {
+    deployment: &'a mut ModelDeployment,
+    revision: u32
+}
+
+impl <'a>ModelDeploymentDraft<'a> {
+    /// Updates last modified to the UTC timestamp
+    fn touch(&mut self) -> &mut Self {
+        let now = TimeStamp::now();
+        self.deployment.last_modified = now.clone();
+
+        self
+    }
+
+    fn valid_state_transitions() -> HashMap<State, Vec<State>> {
+        let mut transitions = HashMap::new();
+        transitions.insert(State::NotDeployed, vec![State::Blocked, State::Running, State::Failed]);
+        transitions.insert(State::Running, vec![State::Blocked, State::Stopped, State::Failed]);
+        transitions.insert(State::Stopped, vec![State::Blocked, State::Running, State::Failed]);
+        transitions.insert(State::Failed, vec![State::Blocked, State::Running]);
+        transitions.insert(State::Blocked, vec![State::Running, State::Stopped, State::Failed]);
+        transitions
+    }
+
+    /// Returns whether a transition from one state to another is valid
+    fn is_valid_state_transition(from: &State, to: &State) -> bool {
+        // Unknown can transition to any state 
+        if from == &State::Unknown {
+            return true
+        }
+
+        Self::valid_state_transitions()
+            .get(from)
+            .map_or(false, |allowed| allowed.contains(to))
+    }
+
+    /// Changes the state. Returns an error if invalid state transition is detected
+    pub fn transition_to_state(&mut self, new_state: State, message: Option<String>) -> Result<&mut Self, ModelDeploymentError> {
+        if !Self::is_valid_state_transition(&self.deployment.state, &new_state) {
+            return Err(ModelDeploymentError::InvalidStateTransition(self.deployment.state.clone().into(), new_state.into()))
+        }
+
+        // Changes the state
+        self.deployment.state = new_state;
+
+        // Update the last message if provided
+        if let Some(m) = message {
+            self.deployment.last_message = Some(m);
+        }
+
+        self.deployment.last_state_change = TimeStamp::now();
+
+        Ok(self)
+    }
+
+    fn valid_desired_state_transitions() -> HashMap<DesiredState, Vec<DesiredState>> {
+        let mut transitions = HashMap::new();
+        transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
+        transitions.insert(DesiredState::Stopped, vec![DesiredState::Running]);
+        transitions
+    }
+
+    /// Returns whether a transition from one state to another is valid
+    fn is_valid_desired_state_transition(from: &DesiredState, to: &DesiredState) -> bool {
+        Self::valid_desired_state_transitions()
+            .get(from)
+            .map_or(false, |allowed| allowed.contains(to))
+    }
+
+    /// Changes the state. Returns an error if invalid state transition is detected
+    pub fn transition_to_desired(&mut self, new_state: DesiredState, message: Option<String>) -> Result<&mut Self, ModelDeploymentError> {
+        if !Self::is_valid_desired_state_transition(&self.deployment.desired_state, &new_state) {
+            return Err(ModelDeploymentError::InvalidDesiredStateTransition(self.deployment.state.clone().into(), new_state.into()))
+        }
+
+        self.deployment.desired_state = new_state;
+
+        // Update the last message if provided
+        if let Some(m) = message {
+            self.deployment.last_message = Some(m);
+        }
+
+        self.deployment.last_desired_state_change = TimeStamp::now();
+
+        Ok(self)
+    }
+
+    pub fn apply_interface_delta(&mut self, delta: ModelDeploymentInterfaceDelta) -> &mut Self {
+        match delta {
+            ModelDeploymentInterfaceDelta::Delete => { self.deployment.metadata = None },
+            ModelDeploymentInterfaceDelta::Replace(i) => { self.deployment.deployment_interface = Some(i); },
+            ModelDeploymentInterfaceDelta::NoChange => {},
+        };
+
+        self
+    }
+
+    pub fn apply_replica_group_delta(&mut self, delta: ReplicaGroupDelta) -> &mut Self {
+        match delta {
+            ReplicaGroupDelta::Delete => { self.deployment.metadata = None },
+            ReplicaGroupDelta::Replace(r) => { self.deployment.replicas = Some(r); },
+            ReplicaGroupDelta::NoChange => {},
+        };
+
+        self
+    }
+
+    pub fn apply_metadata_delta(&mut self, delta: ModelDeploymentMetadataDelta) -> &mut Self {
+        match delta {
+            ModelDeploymentMetadataDelta::Delete => { self.deployment.metadata = None },
+            ModelDeploymentMetadataDelta::Merge(m) => { self.merge_metadata(m); },
+            ModelDeploymentMetadataDelta::NoChange => {},
+        };
+
+        self
+    }
+
+    fn merge_metadata(&mut self, metadata: ModelDeploymentMetadata) -> &mut Self {
+        for (k, v) in metadata.into_inner() {
+            self.add_metadata(k.clone(), v.clone());
+        }
+        
+        self
+    }
+
+    fn add_metadata(&mut self, k: String, v: Value) -> &mut Self {
+        if let Some(ref mut m) = self.deployment.metadata.as_mut().and_then(|m| Some(m.into_inner().clone())) {
+            m.insert(k, v);
+            return self
+        }
+
+        let mut metadata = HashMap::with_capacity(1);
+
+        metadata.insert(k, v);
+
+        self.deployment.metadata = Some(ModelDeploymentMetadata(metadata));
+
+        self
+    }
+
+    pub fn finish(&mut self) -> &mut ModelDeployment {
+        self.touch();
+        self.deployment.revision = self.revision;
+
+        self.deployment
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RehydrateModelDeploymentProps {
+    pub id: Uuid,
+    pub platform: Platform,
+    pub owner: String,
+    pub model: ModelReference,
+    pub state: State,
+    pub desired_state: DesiredState,
+    pub last_message: Option<String>,
+    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub visibility: Visibility,
+    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub replicas: Option<ReplicaGroup>,
+    pub revision: u32,
+    pub last_modified: TimeStamp,
+    pub last_state_change: TimeStamp,
+    pub last_desired_state_change: TimeStamp,
+    pub created_at: TimeStamp,
+    pub metadata: Option<ModelDeploymentMetadata>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ModelDeploymentProps {
+    pub id: Uuid,
+    pub platform: Platform,
+    pub owner: String,
+    pub model: ModelReference,
+    pub state: State,
+    pub desired_state: DesiredState,
+    pub last_message: Option<String>,
+    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub visibility: Visibility,
+    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub replicas: Option<ReplicaGroup>,
 }
