@@ -61,11 +61,11 @@ impl TapisPodsModelDeploymentReconciliationClient {
         Ok((tenant_url, tapis_user, tapis_token))
     }
 
-    /// Extract pod_id and volume_id from deployment metadata
+    /// Extract pod_id and volume_id from deployment metadata. volume_id is optional (some pods have no volume).
     fn extract_pod_info(deployment: &crate::domain::entities::deployment::ModelDeployment) -> Option<(String, String)> {
         deployment.metadata.as_ref().and_then(|m| {
             let pod_id = m.get("pod_id")?.as_str()?.to_string();
-            let volume_id = m.get("volume_id")?.as_str()?.to_string();
+            let volume_id = m.get("volume_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
             Some((pod_id, volume_id))
         })
     }
@@ -123,7 +123,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
             .build()
             .map_err(|e| ReconciliationError::Unimplemented(format!("Failed to create FlexServInstance: {}", e)))?;
 
-        if !info.pod_id.is_empty() && !info.volume_id.is_empty() {
+        if !info.pod_id.is_empty() {
             Ok(FlexServPodDeployment::from_existing(
                 server,
                 info.tapis_token.clone(),
@@ -165,6 +165,38 @@ impl TapisPodsModelDeploymentReconciliationClient {
             }
             _ => None,
         }
+    }
+
+    /// Infer our State from FlexServ monitor result's pod_info string.
+    /// pod_info is the Debug-formatted Tapis PodResponseModel (possibly pretty-printed with newlines).
+    /// Tapis uses status: AVAILABLE (running), STOPPED, PENDING, CREATING, FAILED.
+    fn state_from_pod_info(pod_info: &str) -> State {
+        let norm: String = pod_info
+            .chars()
+            .map(|c| if c.is_whitespace() { ' ' } else { c })
+            .collect();
+        let compact: String = norm.chars().filter(|c| *c != ' ').collect();
+        let s = compact.as_str();
+        if s.contains("Some(\"AVAILABLE\"") || s.contains("Some(\"Available\"") {
+            return State::Running;
+        }
+        if s.contains("Some(\"RUNNING\"") || s.contains("Some(\"Running\"") {
+            return State::Running;
+        }
+        if s.contains("Some(\"STOPPED\"") || s.contains("Some(\"Stopped\"") {
+            return State::Stopped;
+        }
+        if s.contains("Some(\"FAILED\"") || s.contains("Some(\"Failed\"")
+            || s.contains("Error(") || s.contains("error:")
+        {
+            return State::Failed;
+        }
+        if s.contains("Some(\"PENDING\"") || s.contains("Some(\"Pending\"")
+            || s.contains("Some(\"CREATING\"")
+        {
+            return State::Unknown;
+        }
+        State::Unknown
     }
 
     /// Map FlexServ DeploymentError to ReconciliationError
@@ -292,9 +324,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
         .map_err(|e| ReconciliationError::Unimplemented(format!("Task join error: {}", e)))?
         .map_err(Self::map_deployment_error)?;
 
-        // Determine state from monitoring result
-        // TODO: Parse pod status from result to determine actual state
-        let observed_state = State::Running; // Default assumption
+        let observed_state = Self::state_from_pod_info(match &result {
+            DeploymentResult::PodResult { pod_info, .. } => pod_info.as_str(),
+            _ => "",
+        });
 
         Ok(ReconciliationOutcome::Observed(ObeservedOutcomePayload {
             message: Some(format!("Deployment observed: {:?}", result)),
@@ -490,6 +523,17 @@ mod tests {
         assert!(TapisPodsModelDeploymentReconciliationClient::extract_pod_info(&deployment).is_none());
     }
 
+    #[test]
+    fn extract_pod_info_pod_only_no_volume() {
+        let mut meta = HashMap::new();
+        meta.insert("pod_id".into(), json!("pmingyutest"));
+        let deployment = deployment_with_metadata(meta);
+        let (pod_id, volume_id) =
+            TapisPodsModelDeploymentReconciliationClient::extract_pod_info(&deployment).unwrap();
+        assert_eq!(pod_id, "pmingyutest");
+        assert_eq!(volume_id, "");
+    }
+
     // ---- Unit tests: error mapping ----
 
     #[test]
@@ -512,6 +556,58 @@ mod tests {
         let e = FlexServDeploymentError::UnknownError("something broke".into());
         let r = TapisPodsModelDeploymentReconciliationClient::map_deployment_error(e);
         assert!(r.to_string().contains("Unknown error"));
+    }
+
+    // ---- Unit tests: state_from_pod_info (parse Tapis pod status from Debug-formatted pod_info) ----
+
+    #[test]
+    fn state_from_pod_info_available() {
+        let pod_info = r#"status: Some("AVAILABLE")"#;
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+        assert_eq!(s, State::Running);
+    }
+
+    #[test]
+    fn state_from_pod_info_available_pretty_printed() {
+        let pod_info = r#"status: Some(
+            "AVAILABLE",
+        ),"#;
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+        assert_eq!(s, State::Running);
+    }
+
+    #[test]
+    fn state_from_pod_info_running() {
+        let pod_info = r#"PodResponseModel { pod_id: "p123", status: Some("RUNNING"), .. }"#;
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+        assert_eq!(s, State::Running);
+    }
+
+    #[test]
+    fn state_from_pod_info_stopped() {
+        let pod_info = r#"status: Some("STOPPED")"#;
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+        assert_eq!(s, State::Stopped);
+    }
+
+    #[test]
+    fn state_from_pod_info_failed() {
+        let pod_info = r#"status: Some("FAILED")"#;
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+        assert_eq!(s, State::Failed);
+    }
+
+    #[test]
+    fn state_from_pod_info_pending_unknown() {
+        let pod_info = r#"status: Some("PENDING")"#;
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+        assert_eq!(s, State::Unknown);
+    }
+
+    #[test]
+    fn state_from_pod_info_empty_unknown() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info("");
+        assert_eq!(s, State::Unknown);
     }
 
     // ---- Async unit tests: reconcile returns error when metadata missing ----
@@ -632,6 +728,13 @@ mod tests {
         eprintln!("{} response: pod_id={:?} volume_id={:?} pod_url={:?}", label, pod_id, volume_id, pod_url);
         assert!(m.get("pod_id").is_some(), "metadata should have pod_id");
         assert!(m.get("volume_id").is_some(), "metadata should have volume_id");
+    }
+
+    fn extract_pod_volume_from_metadata(metadata: &Option<ModelDeploymentMetadata>) -> Option<(String, String)> {
+        let m = metadata.as_ref()?;
+        let pod_id = m.get("pod_id").and_then(|v| v.as_str()).map(String::from)?;
+        let volume_id = m.get("volume_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        Some((pod_id, volume_id))
     }
 
     /// Create pod only. No pod_id/volume_id needed. Response includes pod_id, volume_id, pod_url.
@@ -792,16 +895,15 @@ mod tests {
         }
     }
 
-    /// Monitor (observe) an existing pod. Requires pod_id and volume_id in deployment.metadata.
     #[tokio::test]
-    #[ignore = "requires TAPIS_* env and deployment.metadata with pod_id, volume_id"]
+    #[ignore = "requires TAPIS_* env and TEST_POD_ID"]
     async fn integration_reconcile_monitor_only() {
         if !has_tapis_credentials() {
             eprintln!("Skipping: set TAPIS_TENANT_URL, TAPIS_USER, TAPIS_TOKEN to run");
             return;
         }
         let pod_id = std::env::var("TEST_POD_ID").expect("TEST_POD_ID required for monitor test");
-        let volume_id = std::env::var("TEST_VOLUME_ID").expect("TEST_VOLUME_ID required for monitor test");
+        let volume_id = std::env::var("TEST_VOLUME_ID").ok();
         let tenant_url = std::env::var("TAPIS_TENANT_URL").unwrap();
         let tapis_user = std::env::var("TAPIS_USER").unwrap();
         let tapis_token = std::env::var("TAPIS_TOKEN").unwrap();
@@ -813,7 +915,7 @@ mod tests {
             &tapis_user,
             &tapis_token,
             Some(&pod_id),
-            Some(&volume_id),
+            volume_id.as_deref(),
         );
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
@@ -826,6 +928,7 @@ mod tests {
         match &outcome {
             ReconciliationOutcome::Observed(p) => {
                 assert!(p.message.is_some());
+                eprintln!("observed state: {:?}", p.state);
                 assert_and_print_metadata("monitor", &p.metadata);
             }
             other => panic!("expected Observed, got {:?}", other),
