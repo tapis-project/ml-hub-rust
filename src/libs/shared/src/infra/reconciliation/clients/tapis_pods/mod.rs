@@ -730,13 +730,6 @@ mod tests {
         assert!(m.get("volume_id").is_some(), "metadata should have volume_id");
     }
 
-    fn extract_pod_volume_from_metadata(metadata: &Option<ModelDeploymentMetadata>) -> Option<(String, String)> {
-        let m = metadata.as_ref()?;
-        let pod_id = m.get("pod_id").and_then(|v| v.as_str()).map(String::from)?;
-        let volume_id = m.get("volume_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-        Some((pod_id, volume_id))
-    }
-
     /// Create pod only. No pod_id/volume_id needed. Response includes pod_id, volume_id, pod_url.
     #[tokio::test]
     #[ignore = "requires TAPIS_TENANT_URL, TAPIS_USER, TAPIS_TOKEN and real Tapis Pods API"]
