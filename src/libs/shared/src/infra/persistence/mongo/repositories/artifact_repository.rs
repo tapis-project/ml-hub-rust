@@ -34,7 +34,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
     async fn save(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError> {
         let mut document = Artifact::from(artifact.clone());
         
-        let result = self.write_collection.insert_one(&document, None)
+        let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -48,7 +48,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
             "artifact_type": String::from(ArtifactType::from(artifact_type))
         };
         
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -68,7 +68,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -97,7 +97,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         };
 
         self.write_collection
-            .update_one(filter, document, None)
+            .update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -118,7 +118,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
             }
         };
 
-        self.write_collection.update_one(filter, document, None)
+        self.write_collection.update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
         

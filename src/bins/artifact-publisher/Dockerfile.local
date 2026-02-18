@@ -1,5 +1,6 @@
 # Stage 1: Compile the code
-FROM rust:1.88.0 AS builder
+# Digest refers to rust:1.93.1-trixie
+FROM rust@sha256:80302520b7199f0504975bca59a914015e9fee088f759875dbbc238ca9509ee1 AS builder
 
 ARG SERVICE_NAME
 ARG SERVICE_DIR

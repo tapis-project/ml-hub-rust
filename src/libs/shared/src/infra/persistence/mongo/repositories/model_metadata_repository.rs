@@ -13,7 +13,6 @@ use mongodb::{
         Bson,
         Document,
     },
-    options::{AggregateOptions, EstimatedDocumentCountOptions},
     Database,
     Collection,
 };
@@ -44,7 +43,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         let mut document = ModelMetadata::try_from(&input.metadata)
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
         
-        let result = self.write_collection.insert_one(&document, None)
+        let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -55,7 +54,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
 
     async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
         let result = self.read_collection
-            .find_one(doc!{ "name": name, "author": author }, None)
+            .find_one(doc!{ "name": name, "author": author })
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?
             .map(entities::model_metadata::ModelMetadata::try_from)
@@ -78,7 +77,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         };
 
         self.write_collection
-            .update_one(filter, document, None)
+            .update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -90,7 +89,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -153,15 +152,12 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             }
         );
 
-        // Limits batch size and max query time to ensure we don't DOS the db
-        let options = AggregateOptions::builder()
+        let mut cursor = self.read_collection
+            .aggregate(aggregate)
             .allow_disk_use(true)
             .batch_size(100)
-            .comment(Some("Model Discovery Search".into()))
-            .max_time(Some(Duration::from_secs(2)))
-            .build();
-
-        let mut cursor = self.read_collection.aggregate(aggregate, Some(options))
+            .comment(String::from("Model Discovery Search"))
+            .max_time(Duration::from_secs(2))
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -190,11 +186,10 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         // Return the count if requested
         let mut count: Option<i64> = None;
         if input.options.include_count().unwrap_or_else(|| false) {
-            let estimate_count_options = EstimatedDocumentCountOptions::builder()
+            let returned_count = self.read_collection
+                .estimated_document_count()
                 .max_time(Duration::from_millis(100))
-                .build();
-
-            let returned_count = self.read_collection.estimated_document_count(estimate_count_options).await
+                .await
                 .map_err(|err| ApplicationError::RepoError(format!("Error fetching count: {}", err.to_string())))?;
             
             count = Some(returned_count as i64)

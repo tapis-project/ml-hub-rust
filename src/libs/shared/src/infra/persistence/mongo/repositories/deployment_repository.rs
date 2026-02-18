@@ -29,7 +29,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
     async fn save(&self, input: &entities::deployment::ModelDeployment) -> Result<(), ApplicationError> {
         let mut document = ModelDeployment::from(input);
 
-        let result = self.write_collection.insert_one(&document, None)
+        let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -67,7 +67,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         };
 
         self.write_collection
-            .update_one(filter, document, None)
+            .update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -90,7 +90,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             }
         }
         
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 

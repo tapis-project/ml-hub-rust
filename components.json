@@ -27,8 +27,8 @@
     "artifact-publisher-image": "tapis/mlhub-artifact-publisher",
     "hf-model-etl-transform-load-image": "mlhub/hf-model-etl-transform-load",
     "hf-model-etl-extract-image": "mlhub/hf-model-etl-extract",
-    "deployment-controller-deployment": "mlhub-model-deployment-controller",
-    "deployment-controller-image": "mlhub/model-deployment-controller"
+    "model-deployment-controller-deployment": "mlhub-model-deployment-controller-deployment",
+    "model-deployment-controller-image": "mlhub/model-deployment-controller"
   },
   "components": [
     {
@@ -578,7 +578,7 @@
       }
     },
     {
-      "name": "deployment-controller",
+      "name": "model-deployment-controller",
       "rootDir": "src/bins/model-deployment-controller",
       "labels": ["bin", "worker"],
       "lifecycle": "experimental",

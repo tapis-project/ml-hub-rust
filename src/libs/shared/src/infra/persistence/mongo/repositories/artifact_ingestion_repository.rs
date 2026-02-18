@@ -34,7 +34,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
     async fn save(&self, ingestion: &entities::artifact_ingestion::ArtifactIngestion) -> Result<(), ApplicationError> {
         let mut document = ArtifactIngestion::from(ingestion.clone());
         
-        let result = self.write_collection.insert_one(&document, None)
+        let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -61,7 +61,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         };
 
         self.write_collection
-            .update_one(filter, document, None)
+            .update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -83,7 +83,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
             }
         };
 
-        self.write_collection.update_one(filter, document, None)
+        self.write_collection.update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
         
@@ -95,7 +95,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(format!("Error fetching artifact ingestion: {}", err)))?;
 
@@ -118,7 +118,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
             "artifact_type": String::from(ArtifactTypeDoc::from(artifact_type))
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(format!("Error fetching artifact ingestions: {}", err)))?;
         
@@ -140,7 +140,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 

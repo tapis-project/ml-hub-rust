@@ -39,6 +39,7 @@ pub struct ReconcileModelDeploymentInput {
     pub model_metadata: ModelMetadata,
 }
 
+#[derive(Clone)]
 pub struct UpdateModelDeploymentInput {
     pub deployment: ModelDeployment,
 }
