@@ -68,67 +68,10 @@ impl TryFrom<inputs::DatasetMetadata> for domain::DatasetMetadata {
     type Error = ApplicationError;
     
     fn try_from(value: inputs::DatasetMetadata) -> Result<Self, Self::Error> {
-        let mut task_types: Vec<domain_task::Task> = Vec::new();
-        for task_type in value.task_types.unwrap_or(Vec::with_capacity(0)) {
-            task_types.push(domain_task::Task::from(task_type))
-        }
-        
-        let mut dataset_inputs = Vec::with_capacity(1);
-        for input in value.dataset_inputs.unwrap_or(Vec::with_capacity(0)) {
-            dataset_inputs.push(domain::DatasetIO::try_from(input)?)
-        }
-        
-        let mut dataset_outputs = Vec::with_capacity(1);
-        for output in value.dataset_outputs.unwrap_or(Vec::with_capacity(0)) {
-            dataset_outputs.push(domain::DatasetIO::try_from(output)?)
-        }
-
-        let inference_hardware = value.inference_hardware
-            .map(|hardware| domain::HardwareRequirements::try_from(hardware))
-            .transpose()?;
-
-        let training_hardware = value.training_hardware
-            .map(|hardware| domain::HardwareRequirements::try_from(hardware))
-            .transpose()?;
 
         Ok(Self {
             name: value.name,
             author: value.author,
-            libraries: value.libraries,
-            dataset_type: value.dataset_type,
-            image: value.image,
-            keywords: value.keywords,
-            annotations: value.annotations,
-            multi_modal: value.multi_modal,
-            dataset_inputs: Some(dataset_inputs),
-            dataset_outputs: Some(dataset_outputs),
-            task_types: Some(task_types),
-            inference_precision: value.inference_precision,
-            inference_hardware,
-            inference_software_dependencies: value.inference_software_dependencies,
-            inference_max_energy_consumption_watts: value.inference_max_energy_consumption_watts,
-            inference_max_latency_ms: value.inference_max_latency_ms,
-            inference_min_throughput: value.inference_min_throughput,
-            inference_max_compute_utilization_percentage: value.inference_max_compute_utilization_percentage,
-            inference_max_memory_usage_mb: value.inference_max_memory_usage_mb,
-            inference_distributed: value.inference_distributed,
-            training_time: value.training_time,
-            training_precision: value.training_precision,
-            training_hardware,
-            pretraining_datasets: value.pretraining_datasets,
-            finetuning_datasets: value.finetuning_datasets,
-            edge_optimized: value.edge_optimized,
-            quantization_aware: value.quantization_aware,
-            supports_quantization: value.supports_quantization,
-            pretrained: value.pretrained,
-            pruned: value.pruned,
-            slimmed: value.slimmed,
-            training_distributed: value.training_distributed,
-            training_max_energy_consumption_watts: value.training_max_energy_consumption_watts,
-            regulatory: value.regulatory,
-            license: value.license,
-            bias_evaluation_score: value.bias_evaluation_score,
-
         })
     }
 }
