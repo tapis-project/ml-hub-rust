@@ -35,7 +35,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
     async fn save(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ApplicationError> {
         let mut document = ArtifactPublication::from(publication);
         
-        let result = self.write_collection.insert_one(&document, None)
+        let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -62,7 +62,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
     //     };
 
     //     self.write_collection
-    //         .update_one(filter, document, None)
+    //         .update_one(filter, document)
     //         .await
     //         .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -84,7 +84,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
             }
         };
 
-        self.write_collection.update_one(filter, document, None)
+        self.write_collection.update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
         
@@ -96,7 +96,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -118,7 +118,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -140,7 +140,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
             "artifact_type": String::from(ArtifactTypeDoc::from(artifact_type))
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
         

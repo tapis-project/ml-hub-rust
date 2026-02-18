@@ -392,6 +392,8 @@ impl <'a>ModelDeploymentDraft<'a> {
         self
     }
 
+    // TODO This method needs to consume self so that finish cannot be called more
+    // than once on this draft
     pub fn finish(&mut self) -> ModelDeployment {
         self.touch();
         self.deployment.revision = self.revision;

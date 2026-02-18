@@ -40,7 +40,7 @@ spec:
               value: "5672"
             - name: ARTIFACT_OP_MQ_USER
               value: dev
-          image: tapis/mlhub-model-deployment-controller:local
+          image: mlhub/model-deployment-controller:local
           imagePullPolicy: Never
           name: model-deployment-controller
           resources: {}
