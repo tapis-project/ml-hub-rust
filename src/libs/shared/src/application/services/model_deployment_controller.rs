@@ -208,7 +208,7 @@ impl ModelDeploymentController {
                     .revise()
                     .transition_to_state(State::NotDeployed, payload.message.clone())?
                     .finish();
-
+                
                 events.push(
                     Payload::ModelDeploymentDeletedPayload(
                         ModelDeploymentDeletedPayload {
