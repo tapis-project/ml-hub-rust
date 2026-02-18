@@ -4,7 +4,7 @@ use crate::application::workflows::reconciliation::{
     ReconciliationError, ReconciliationOutcome, ReconciliationAction,
     StartedOutcomePayload, StoppedOutcomePayload, UndeployedOutcomePayload, ObeservedOutcomePayload,
 };
-use crate::domain::entities::deployment::{ModelDeploymentMetadata, State};
+use crate::domain::entities::deployment::{ModelDeploymentMetadata, ModelDeploymentMetadataDelta, State};
 use flexserv_deployer::{FlexServDeployment, FlexServPodDeployment, PodDeploymentOptions, FlexServInstance, Backend, normalize_tenant_url};
 use flexserv_deployer::deployment::{DeploymentError as FlexServDeploymentError, DeploymentResult};
 use std::collections::HashMap;
@@ -142,8 +142,8 @@ impl TapisPodsModelDeploymentReconciliationClient {
         }
     }
 
-    /// Build metadata from FlexServ DeploymentResult::PodResult (pod_id, volume_id, pod_url, etc.).
-    fn result_to_metadata(result: &DeploymentResult) -> Option<ModelDeploymentMetadata> {
+    /// Build metadata delta from FlexServ DeploymentResult::PodResult (pod_id, volume_id, pod_url, etc.).
+    fn result_to_metadata_delta(result: &DeploymentResult) -> ModelDeploymentMetadataDelta {
         match result {
             DeploymentResult::PodResult {
                 pod_id,
@@ -161,9 +161,9 @@ impl TapisPodsModelDeploymentReconciliationClient {
                 }
                 map.insert("pod_info".to_string(), json!(pod_info));
                 map.insert("volume_info".to_string(), json!(volume_info));
-                Some(ModelDeploymentMetadata(map))
+                ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))
             }
-            _ => None,
+            _ => ModelDeploymentMetadataDelta::NoChange,
         }
     }
 
@@ -271,7 +271,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
         Ok(ReconciliationOutcome::Started(StartedOutcomePayload {
             message: Some(format!("Deployment started successfully")),
             state: State::Unknown,
-            metadata: Self::result_to_metadata(&result),
+            metadata: Some(Self::result_to_metadata_delta(&result)),
             replicas: None,
             interface: None,
         }))
@@ -292,7 +292,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Stopped(StoppedOutcomePayload {
             message: Some(format!("Deployment stopped successfully")),
-            metadata: Self::result_to_metadata(&result),
+            metadata: Some(Self::result_to_metadata_delta(&result)),
             replicas: None,
             interface: None,
         }))
@@ -317,6 +317,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Undeployed(UndeployedOutcomePayload {
             message: Some(format!("Deployment terminated successfully")),
+            metadata: Some(ModelDeploymentMetadataDelta::Delete),
         }))
     }
 
@@ -341,7 +342,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
         Ok(ReconciliationOutcome::Observed(ObeservedOutcomePayload {
             message: Some(format!("Deployment observed: {:?}", result)),
             state: observed_state,
-            metadata: Self::result_to_metadata(&result),
+            metadata: Some(Self::result_to_metadata_delta(&result)),
             replicas: None,
             interface: None,
         }))

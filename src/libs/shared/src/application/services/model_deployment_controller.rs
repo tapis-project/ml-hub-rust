@@ -207,6 +207,7 @@ impl ModelDeploymentController {
                 let revised = deployment
                     .revise()
                     .transition_to_state(State::NotDeployed, payload.message.clone())?
+                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::Delete))
                     .finish();
                 
                 events.push(
