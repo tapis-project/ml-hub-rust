@@ -7,8 +7,9 @@ use shared::application::ports::repositories::{
     ArtifactIngestionRepository,
     ArtifactPublicationRepository,
     ModelMetadataRepository,
+    MetadataRepository,
 };
-use shared::application::services::artifact_service::{ArtifactService, MetadataRepoVariant};
+use shared::application::services::artifact_service::{ArtifactService};
 use shared::infra::persistence::mongo::repositories::{
     ArtifactRepository as MongoArtifactRepository,
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
@@ -39,7 +40,7 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
-        MetadataRepoVariant::Single(model_metadata_repo_factory(db)),
+        MetadataRepository::Single(model_metadata_repo_factory(db)),
         Arc::new(RabbitMQArtifactOpMessagePublisher {})
     ))
 }
