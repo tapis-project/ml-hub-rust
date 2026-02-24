@@ -76,23 +76,32 @@ pub enum ModelDeploymentServiceError {
 
 pub struct ModelDeploymentService {}
 
+// TODO Uncomment the code below once furnishing the model artifact for 
+// model deployments becomes MLHub's responsibility
+//
+// nathandf
+// 2026-02-18 
 impl ModelDeploymentService {
-    pub fn create_model_deployment(model_metadata: &ModelMetadata, artifact: &Artifact, props: ModelDeploymentProps) -> Result<ModelDeployment, ModelDeploymentServiceError> {
-        if model_metadata.artifact_id.is_none() {
-            return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
-        };
+    pub fn create_model_deployment(
+        model_metadata: &ModelMetadata,
+        // artifact: &Artifact,
+        props: ModelDeploymentProps
+    ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+        // if model_metadata.artifact_id.is_none() {
+        //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
+        // };
 
-        if model_metadata.artifact_id != Some(artifact.id) {
-            return Err(ModelDeploymentServiceError::MismatchedArtifactIds(model_metadata.artifact_id.and_then(|id| Some(id.to_string())).unwrap_or(String::from("NULL")), artifact.id.to_string()))
-        };
+        // if model_metadata.artifact_id != Some(artifact.id) {
+        //     return Err(ModelDeploymentServiceError::MismatchedArtifactIds(model_metadata.artifact_id.and_then(|id| Some(id.to_string())).unwrap_or(String::from("NULL")), artifact.id.to_string()))
+        // };
 
-        if artifact.artifact_type != ArtifactType::Model {
-            return Err(ModelDeploymentServiceError::InvalidArtifactType)
-        };
+        // if artifact.artifact_type != ArtifactType::Model {
+        //     return Err(ModelDeploymentServiceError::InvalidArtifactType)
+        // };
         
-        if !artifact.is_fully_ingested() {
-            return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
-        };
+        // if !artifact.is_fully_ingested() {
+        //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
+        // };
 
         Ok(ModelDeployment::new(props))
     }

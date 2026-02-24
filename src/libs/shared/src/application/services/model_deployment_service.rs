@@ -10,11 +10,15 @@ use crate::application::retries::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{
-    DeploymentStrategyReference, DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelDeploymentProps, ModelReference, State
+    DesiredState,
+    ModelDeployment,
+    ModelDeploymentProps,
+    ModelReference,
+    State,
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
-    ModelDeploymentService as ModelDeploymentDomainService
+    ModelDeploymentService as ModelDeploymentDomainService,
 };
 use log::error;
 use once_cell::sync::Lazy;
@@ -22,6 +26,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
+use log::debug;
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentServiceError {
@@ -122,10 +127,10 @@ impl ModelDeploymentService {
         input: DeployWithStrategyInput,
     ) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
         let find_model_metadata = || self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author);
-        
+
         // Fetch the metadata for the model of this deployment
         let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY).await?;
-
+        
         let model_metadata = match maybe_model_metadata {
             Some(mm) => mm,
             None => {
@@ -135,12 +140,18 @@ impl ModelDeploymentService {
             }
         };
 
-        let artifact_id = model_metadata.artifact_id
-            .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
+        // TODO Uncomment the code below once furnishing the model artifact for 
+        // model deployments becomes MLHub's responsibility
+        //
+        // nathandf
+        // 2026-02-18 
+
+        // let artifact_id = model_metadata.artifact_id
+        //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
         
-        let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY)
-            .await?
-            .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
+        // let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY)
+        //     .await?
+        //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
         // Params from the UI/API (e.g. tapis_tenant_url, tapis_user, tapis_token for TapisPods) are stored as deployment metadata for the reconciler.
         let metadata = serde_json::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
@@ -157,26 +168,29 @@ impl ModelDeploymentService {
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
-            last_message: Some("Deployment submitted".into()),
-            deployment_strategy: Some(DeploymentStrategyReference {
-                name: input.strategy_name.clone(),
-                client: input.platform.to_string(),
-            }),
+            last_message: Some("Model deployment request recieved".into()),
+            deployment_strategy: Some(input.strategy_name),
             visibility: Visibility::Private,
             deployment_interface: None,
             replicas: None,
             metadata: metadata.map(ModelDeploymentMetadata),
         };
+
+        debug!("{:#?}", &model_deployment_props);
         
         let deployment = ModelDeploymentDomainService::create_model_deployment(
             &model_metadata,
-            &artifact,
+            // &artifact,
             model_deployment_props,
         )
             .map_err(|err| ApplicationError::ModelDeploymentFailed(err.to_string()))?;
 
+        debug!("deployment: {:#?}", &deployment);
+
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
+
+        debug!("Deployment saved");
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: deployment.id,

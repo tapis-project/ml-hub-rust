@@ -19,9 +19,7 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             deployment_interface: value.deployment_interface
                 .clone()
                 .and_then(|di| Some(documents::ModelDeploymentInterface::from(di))),
-            deployment_strategy: value.deployment_strategy
-                .clone()
-                .and_then(|dsr| Some(documents::DeploymentStrategyReference::from(dsr))),
+            deployment_strategy: value.deployment_strategy.clone(),
             replicas: value.replicas
                 .clone()
                 .and_then(|rg| Some(documents::ReplicaGroup::from(rg))),
@@ -110,15 +108,6 @@ impl From<entities::ModelReference> for documents::ModelReference {
         Self {
             name: value.name,
             author: value.author
-        }
-    }
-}
-
-impl From<entities::DeploymentStrategyReference> for documents::DeploymentStrategyReference {
-    fn from(value: entities::DeploymentStrategyReference) -> Self {
-        Self {
-            client: value.client,
-            name: value.name
         }
     }
 }

@@ -6,13 +6,16 @@ use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
     DeployModelWithStrategyPathParams
 };
+use crate::presentation::http::v1::responses::ModelDeployment;
 use platforms::Platform;
 use actix_web::{
     post,
     web,
     Responder
 };
+use serde_json::to_value;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
+use log::debug;
 
 #[utoipa::path(
     post,
@@ -36,6 +39,7 @@ async fn deploy_model_with_strategy(
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
 ) -> impl Responder {
+    debug!("{:#?}", path);
     let service = model_deployment_service_builder(
         &data.db,
         data.channel.clone(),
@@ -46,12 +50,19 @@ async fn deploy_model_with_strategy(
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         platform: path.platform.clone(),
-        strategy_name: body.strategy_name.clone(),
+        strategy_name: path.strategy_name.clone(),
         params: body.params.clone(),
     };
 
-    match service.deploy_model_with_strategy(input).await {
-        Ok(_) => build_success_response(None, None, None),
-        Err(err) => build_error_response(500, err.to_string()),
-    }
+    let output = match service.deploy_model_with_strategy(input).await {
+        Ok(output) => output,
+        Err(err) => return build_error_response(500, err.to_string()),
+    };
+
+    let resp = match to_value(ModelDeployment::from(output.deployment)) {
+        Ok(r) => r,
+        Err(err) => return build_error_response(500, err.to_string()),
+    };
+    
+    build_success_response(Some(resp), None, None)
 }

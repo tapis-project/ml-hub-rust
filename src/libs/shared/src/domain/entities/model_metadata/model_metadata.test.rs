@@ -7,12 +7,12 @@ mod model_metadata_test {
     fn test_get_field_value_at_field_path() {
         let model_metadata = full_model_metadata();
         let gated: Value = model_metadata
-            .get_field_value_at_field_path(&vec!["annotations".into(), "canonical".into(), "gated".into()])
+            .get_field_value_at_field_path(&vec!["canonical".into(), "gated".into()])
             .unwrap()
             .into();
 
         let private: Value = model_metadata
-            .get_field_value_at_field_path(&vec!["annotations".into(), "canonical".into(), "private".into()])
+            .get_field_value_at_field_path(&vec!["canonical".into(), "private".into()])
             .unwrap()
             .into();
 

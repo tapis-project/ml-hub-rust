@@ -7,7 +7,7 @@ mod client_strategy_set_test {
     #[test]
     fn test_init() {
         let client_strategy_set = ClientStrategySet::new(
-            "test-client".into(),
+            platforms::Platform::TapisPods,
             Some("Test client description".into()),
             vec![
                 ClientStrategy::new(

@@ -42,7 +42,7 @@ impl TryFrom<dtos::client_strategy_set::ClientStrategySet> for entities::client_
         };
         
         let client_strategy_set = entities::client_strategy_set::ClientStrategySet::new(
-            value.client,
+            value.platform,
             value.description,
             client_strategies,
             maybe_rule_sets,

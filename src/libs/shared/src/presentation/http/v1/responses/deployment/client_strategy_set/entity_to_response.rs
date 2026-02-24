@@ -9,7 +9,7 @@ use crate::presentation::http::v1::responses::deployment::client_strategy_set as
 impl From<entities::ClientStrategySet> for dtos::ClientStrategySet {
     fn from(value: entities::ClientStrategySet) -> Self {
         Self {
-            client: value.client.clone(),
+            platform: value.platform.clone(),
             description: value.description.clone(),
             rule_sets: value.rule_sets()
                 .clone()

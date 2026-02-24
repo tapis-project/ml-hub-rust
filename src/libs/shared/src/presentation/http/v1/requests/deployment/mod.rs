@@ -8,13 +8,13 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct DeployModelWithStrategyPathParams {
-    pub platform: Platform
+    pub platform: Platform,
+    pub strategy_name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct DeployModelWithStrategyBody {
     pub model_name: String,
     pub model_author: String,
-    pub strategy_name: String,
     pub params: Value,
 }

@@ -3,6 +3,7 @@ use utoipa::ToSchema;
 use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{models::ModelArtifact, Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
 use crate::presentation::http::v1::requests::task::Task;
 use crate::presentation::http::v1::responses::deployment::client_strategy_set::ClientStrategySet;
+use crate::presentation::http::v1::responses::deployment::ModelDeployment;
 
 #[derive(ToSchema)]
 pub struct ListTasksResponse {
@@ -213,7 +214,7 @@ pub struct ListDeploymentStrategiesResponse {
 
 #[derive(ToSchema)]
 pub struct ModelDeploymentResponse {
-    pub result: Value,
+    pub result: ModelDeployment,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
