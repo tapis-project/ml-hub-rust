@@ -150,7 +150,7 @@ impl ModelMetadataService {
                     
                     deployment_strategies.push(
                         json!({
-                            "client": set.client,
+                            "platform": set.platform,
                             "strategies": Value::Array(strategies)
                         })
                     );

@@ -31,7 +31,7 @@ pub struct ModelDeployment {
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
@@ -118,12 +118,6 @@ impl ModelDeployment {
 pub struct ModelReference {
     pub name: String,
     pub author: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct DeploymentStrategyReference {
-    pub client: String,
-    pub name: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -410,7 +404,7 @@ pub struct RehydrateModelDeploymentProps {
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: Option<ReplicaGroup>,
@@ -431,7 +425,7 @@ pub struct ModelDeploymentProps {
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: Option<ReplicaGroup>,

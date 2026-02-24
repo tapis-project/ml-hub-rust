@@ -1,3 +1,4 @@
+use platforms::Platform;
 use thiserror::Error;
 use super::rule_set::RuleSet;
 use super::strategy::{Strategy, StrategyError};
@@ -24,7 +25,7 @@ pub enum ClientStrategySetError {
 
 #[derive(Debug, Clone)]
 pub struct ClientStrategySet {
-    pub client: String,
+    pub platform: Platform,
     pub description: Option<String>,
     rule_sets: Option<Vec<RuleSet>>,
     parameter_sets: Option<Vec<ParameterSet>>,
@@ -33,7 +34,7 @@ pub struct ClientStrategySet {
 
 impl ClientStrategySet {
     pub fn new(
-        client: String,
+        platform: Platform,
         description: Option<String>,
         client_strategies: Vec<ClientStrategy>,
         rule_sets: Option<Vec<RuleSet>>,
@@ -105,7 +106,7 @@ impl ClientStrategySet {
         }
 
         Ok(Self {
-            client,
+            platform,
             description,
             rule_sets,
             parameter_sets,

@@ -8,6 +8,7 @@ use actix_web::{
     Responder
 };
 use serde_json::{Value, to_value};
+use log::debug;
 
 #[utoipa::path(
     get,
@@ -31,5 +32,6 @@ async fn list_strategies(data: web::Data<AppState>,) -> impl Responder {
             Err(err) => return build_error_response(500, format!("Error serializing client strategies: {}", err.to_string()))
         };
     }
+
     build_success_response(Some(Value::Array(strats)), Some("Success".into()), None)
 }

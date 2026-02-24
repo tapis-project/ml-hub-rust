@@ -1,17 +1,24 @@
-use crate::domain::entities::{model_metadata::{HardwareRequirements, ModelIO, ModelMetadata, Accelerator, SystemRequirement}, task::Task};
+use crate::domain::entities::{model_metadata::{Accelerator, Canonical, HardwareRequirements, Locator, ModelIO, ModelMetadata, SystemRequirement}, task::Task};
 use serde_json::json;
 
 pub fn full_model_metadata() -> ModelMetadata {
     ModelMetadata {
         name: Some("foo".into()),
         artifact_id: Some(uuid::Uuid::now_v7()),
-        annotations: Some(json!({
-            "canonical": {
-                "gated": false,
-                "private": true
-            }
-        })),
-        canonical: None,
+        annotations: Some(json!({ })),
+        canonical: Some(Canonical {
+            model_id: String::from("test/model"),
+            platform: platforms::Platform::HuggingFace,
+            locator: Locator {
+                url: String::from("someurl"),
+            },
+            author: Some(String::from("test")),
+            likes: None,
+            downloads: None,
+            gated: Some(false),
+            private: Some(true),
+            sha: None,
+        }),
         author: Some("bar".into()),
         model_inputs: Some(
             vec![ModelIO {

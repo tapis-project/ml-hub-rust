@@ -127,8 +127,8 @@ pub enum FieldValue {
     Keywords(Option<Vec<String>>),
     TaskTypes(Option<Vec<Task>>),
     InferenceHardwareMemory(Option<i32>),
-    AnnotationsCanonicalPrivate(Option<bool>),
-    AnnotationsCanonicalGated(Option<bool>),
+    CanonicalPrivate(Option<bool>),
+    CanonicalGated(Option<bool>),
 }
 
 impl Into<Value> for FieldValue {
@@ -176,13 +176,13 @@ impl Into<Value> for FieldValue {
                     None => Value::Null
                 }
             },
-            FieldValue::AnnotationsCanonicalGated(gated) => {
+            FieldValue::CanonicalGated(gated) => {
                 match gated {
                     Some(g) => Value::Bool(g),
                     None => Value::Null
                 }
             },
-            FieldValue::AnnotationsCanonicalPrivate(private) => {
+            FieldValue::CanonicalPrivate(private) => {
                 match private {
                     Some(p) => Value::Bool(p),
                     None => Value::Null
@@ -208,17 +208,15 @@ impl ModelMetadata {
             ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
                 self.inference_hardware.clone().and_then(|hr| hr.memory_gb),
             )),
-            ["annotations", "canonical", "gated"] => Ok(FieldValue::AnnotationsCanonicalGated(
-                self.annotations
+            ["canonical", "gated"] => Ok(FieldValue::CanonicalGated(
+                self.canonical
                     .as_ref()
-                    .and_then(|a| a.pointer("/canonical/gated"))
-                    .and_then(|g| g.clone().as_bool())
+                    .and_then(|c| c.gated)
             )),
-            ["annotations", "canonical", "private"] => Ok(FieldValue::AnnotationsCanonicalPrivate(
-                self.annotations
+            ["canonical", "private"] => Ok(FieldValue::CanonicalPrivate(
+                self.canonical
                     .as_ref()
-                    .and_then(|a| a.pointer("/canonical/private"))
-                    .and_then(|g| g.clone().as_bool())
+                    .and_then(|c| c.private)
             )),
             other => {
                 return Err(ModelMetadataError::InvalidFieldPath(

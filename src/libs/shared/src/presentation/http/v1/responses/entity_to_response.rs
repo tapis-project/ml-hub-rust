@@ -83,3 +83,12 @@ impl From<entities::artifact::Artifact> for responses::Artifact {
         }
     }
 }
+
+impl From<entities::visibility::Visibility> for responses::visibility::Visibility {
+    fn from(value: entities::visibility::Visibility) -> Self {
+        match value {
+            entities::visibility::Visibility::Private => responses::visibility::Visibility::Private,
+            entities::visibility::Visibility::Public => responses::visibility::Visibility::Public,
+        }
+    }
+}

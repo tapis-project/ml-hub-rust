@@ -88,6 +88,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(actix_web::web::Data::new(state.clone()))
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::list_strategies::list_strategies)
+            .service(presentation::http::v1::actix_web::handlers::deploy_model_with_strategy::deploy_model_with_strategy)
             .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
             .service(
                 SwaggerUi::new("deployments-api/swagger-ui/{_:.*}")

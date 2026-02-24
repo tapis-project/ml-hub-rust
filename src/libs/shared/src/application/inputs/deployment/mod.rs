@@ -24,6 +24,7 @@ pub struct FilterInput {
     pub state: Option<State>,
 }
 
+#[derive(Debug)]
 pub struct DeployWithStrategyInput {
     pub owner: String,
     pub platform: Platform,

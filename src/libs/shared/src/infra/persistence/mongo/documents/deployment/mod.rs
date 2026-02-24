@@ -3,6 +3,7 @@ pub mod document_to_entity;
 
 use std::collections::HashMap;
 use openapiv3::OpenAPI;
+use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
@@ -16,7 +17,7 @@ pub struct ModelReference {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DeploymentStrategyReference {
-    pub client: String,
+    pub platform: Platform,
     pub name: String,
 }
 
@@ -77,7 +78,7 @@ pub struct ModelDeployment {
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<DeploymentStrategyReference>,
+    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub created_at: DateTime,
     pub last_modified: DateTime,
