@@ -25,7 +25,6 @@ use once_cell::sync::Lazy;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
-use log::debug;
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentServiceError {
@@ -48,7 +47,9 @@ pub enum ModelDeploymentServiceError {
 pub struct ModelDeploymentService {
     model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
-    artifact_repo: Arc<dyn ArtifactRepository>,
+    // TODO Leave _artifact_repo unused for now. See the link below 
+    // https://github.com/tapis-project/ml-hub-rust/issues/73
+    _artifact_repo: Arc<dyn ArtifactRepository>,
     event_publisher: Arc<dyn EventPublisher>,
 }
 
@@ -79,7 +80,7 @@ impl ModelDeploymentService {
         Self {
             model_deployment_repo,
             model_metadata_repo,
-            artifact_repo,
+            _artifact_repo: artifact_repo,
             event_publisher,
         }
     }
@@ -139,12 +140,8 @@ impl ModelDeploymentService {
             }
         };
 
-        // TODO Uncomment the code below once furnishing the model artifact for 
-        // model deployments becomes MLHub's responsibility
-        //
-        // nathandf
-        // 2026-02-18 
-
+        // TODO Uncomment when ready. Details found in the issue below 
+        // https://github.com/tapis-project/ml-hub-rust/issues/73
         // let artifact_id = model_metadata.artifact_id
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
         
@@ -168,8 +165,6 @@ impl ModelDeploymentService {
             deployment_interface: None,
             replicas: None,
         };
-
-        debug!("{:#?}", &model_deployment_props);
         
         let deployment = ModelDeploymentDomainService::create_model_deployment(
             &model_metadata,
@@ -178,12 +173,8 @@ impl ModelDeploymentService {
         )
             .map_err(|err| ApplicationError::ModelDeploymentFailed(err.to_string()))?;
 
-        debug!("deployment: {:#?}", &deployment);
-
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
-
-        debug!("Deployment saved");
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: deployment.id,

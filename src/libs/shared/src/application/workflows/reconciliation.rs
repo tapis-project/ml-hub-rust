@@ -3,7 +3,7 @@ use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
 pub enum ReconciliationError {
-    #[error("{0}")]
+    #[error("Unimplemented: {0}")]
     Unimplemented(String)
 }
 

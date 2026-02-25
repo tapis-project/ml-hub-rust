@@ -76,17 +76,16 @@ pub enum ModelDeploymentServiceError {
 
 pub struct ModelDeploymentService {}
 
-// TODO Uncomment the code below once furnishing the model artifact for 
-// model deployments becomes MLHub's responsibility
-//
-// nathandf
-// 2026-02-18 
 impl ModelDeploymentService {
     pub fn create_model_deployment(
         model_metadata: &ModelMetadata,
+        // TODO Uncomment the line below when ready. Details found in the issue below 
+        // https://github.com/tapis-project/ml-hub-rust/issues/73
         // artifact: &Artifact,
         props: ModelDeploymentProps
     ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+        // TODO Uncomment all lines below when ready. Details found in the issue below 
+        // https://github.com/tapis-project/ml-hub-rust/issues/73
         // if model_metadata.artifact_id.is_none() {
         //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
         // };

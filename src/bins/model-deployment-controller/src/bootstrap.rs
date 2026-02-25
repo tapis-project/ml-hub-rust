@@ -49,8 +49,9 @@ pub fn model_deployment_service_builder(db: &Database, channel: Arc<Channel>) ->
 
 pub fn model_deployment_conroller_builder(db: &Database, channel: Arc<Channel>) -> Arc<ModelDeploymentController> {
     Arc::new(ModelDeploymentController::new(
-        model_deployment_service_builder(db, channel),
+        model_deployment_service_builder(db, channel.clone()),
         model_metadata_repo_factory(db),
+        event_publisher_factory(channel.clone()),
         model_deployment_platform_reconciler_provider_factory(),
     ))
 }
