@@ -207,17 +207,11 @@ impl TapisPodsModelDeploymentReconciliationClient {
         let mut deployment = Self::create_deployment_from_entity(&input.deployment)?;
 
         // If pod already exists (has pod_id), use start(). Otherwise, create new pod.
-        // Run in a blocking task since FlexServ methods are synchronous
-        // TODO: Add timeout for this operation (currently unbounded)
-        let result = tokio::task::spawn_blocking(move || {
-            if has_existing_pod {
-                deployment.start()
-            } else {
-                deployment.create()
-            }
-        })
-        .await
-        .map_err(|e| ReconciliationError::Unimplemented(format!("Task join error: {}", e)))?
+        let result = if has_existing_pod {
+            deployment.start().await
+        } else {
+            deployment.create().await
+        }
         .map_err(Self::map_deployment_error)?;
 
         // Log success
@@ -243,12 +237,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
         info!("Stopping deployment {}", input.deployment.id);
         let deployment = Self::create_deployment_from_entity(&input.deployment)?;
 
-        let result = tokio::task::spawn_blocking(move || {
-            deployment.stop()
-        })
-        .await
-        .map_err(|e| ReconciliationError::Unimplemented(format!("Task join error: {}", e)))?
-        .map_err(Self::map_deployment_error)?;
+        let result = deployment
+            .stop()
+            .await
+            .map_err(Self::map_deployment_error)?;
 
         Ok(ReconciliationOutcome::Stopped(StoppedOutcomePayload {
             message: Some(format!("Deployment stopped successfully")),
@@ -263,12 +255,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
         info!("Undeploying deployment {}", input.deployment.id);
         let deployment = Self::create_deployment_from_entity(&input.deployment)?;
 
-        let _result = tokio::task::spawn_blocking(move || {
-            deployment.terminate()
-        })
-        .await
-        .map_err(|e| ReconciliationError::Unimplemented(format!("Task join error: {}", e)))?
-        .map_err(Self::map_deployment_error)?;
+        deployment
+            .terminate()
+            .await
+            .map_err(Self::map_deployment_error)?;
 
         Ok(ReconciliationOutcome::Undeployed(UndeployedOutcomePayload {
             message: Some(format!("Deployment terminated successfully")),
@@ -288,12 +278,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
         info!("Observing deployment {}", input.deployment.id);
         let deployment = Self::create_deployment_from_entity(&input.deployment)?;
 
-        let result = tokio::task::spawn_blocking(move || {
-            deployment.monitor()
-        })
-        .await
-        .map_err(|e| ReconciliationError::Unimplemented(format!("Task join error: {}", e)))?
-        .map_err(Self::map_deployment_error)?;
+        let result = deployment
+            .monitor()
+            .await
+            .map_err(Self::map_deployment_error)?;
 
         let observed_state = Self::state_from_pod_info(match &result {
             DeploymentResult::PodResult { pod_info, .. } => pod_info.as_str(),
