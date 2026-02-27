@@ -1,4 +1,4 @@
-use crate::domain::entities::deployment::{ModelDeploymentInterfaceDelta, ReplicaGroupDelta, ModelDeploymentMetadataDelta, State};
+use crate::domain::entities::{deployment::{ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta, ReplicaGroupDelta, State}, deployment_strategy::strategy::Strategy};
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
@@ -10,7 +10,9 @@ pub enum ReconciliationError {
 #[derive(Clone, Debug)]
 pub enum ReconciliationAction {
     /// Create the deployment if it doesn't exist and start it
-    Start,
+    Start {
+        strategy: Option<Strategy>
+    },
     /// Stop the deployment
     Stop,
     /// Observe the reason for the Blocked or Unknown state

@@ -34,6 +34,24 @@ pub struct DeployWithStrategyInput {
     pub params: Value,
 }
 
+#[derive(Debug)]
+pub struct StartModelDeploymentInput {
+    pub owner: String,
+    pub deployment_id: Uuid,
+}
+
+#[derive(Debug)]
+pub struct StopModelDeploymentInput {
+    pub owner: String,
+    pub deployment_id: Uuid,
+}
+
+#[derive(Debug)]
+pub struct UndeployModelDeploymentInput {
+    pub owner: String,
+    pub deployment_id: Uuid,
+}
+
 pub struct ReconcileModelDeploymentInput {
     pub action: ReconciliationAction,
     pub deployment: ModelDeployment,

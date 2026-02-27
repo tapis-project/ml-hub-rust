@@ -14,6 +14,7 @@ use crate::domain::entities::deployment::{DesiredState,
     ModelDeploymentMetadataDelta,
     ReplicaGroupDelta,
 };
+use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use thiserror::Error;
 use crate::application::retries::{
     retry_async,
@@ -44,6 +45,9 @@ pub enum ReconciliationDispatchError {
 
     #[error("Reconciliation Failed: {0}")]
     ReconciliationFailed(#[from] ReconciliationError),
+
+    #[error("Missing deployment strategy: {0}")]
+    MissingDeploymentStrategy(String),
 }
 
 #[derive(Debug, Error)]
@@ -76,6 +80,7 @@ impl DispatchReconcilerResult {
 }
 
 pub struct ModelDeploymentController {
+    client_strategy_sets: Arc<Vec<ClientStrategySet>>,
     model_deployment_service: ModelDeploymentService,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
     event_publisher: Arc<dyn EventPublisher>,
@@ -91,12 +96,14 @@ impl ModelDeploymentController {
     });
 
     pub fn new(
+        client_strategy_sets: Arc<Vec<ClientStrategySet>>,
         model_deployment_service: ModelDeploymentService,
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
     ) -> Self {
         Self {
+            client_strategy_sets,
             model_deployment_service,
             model_metadata_repo,
             event_publisher,
@@ -129,7 +136,7 @@ impl ModelDeploymentController {
             }
         }?;
         
-        let maybe_action = Self::resolve_reconciliation_action(&deployment);
+        let maybe_action = self.resolve_reconciliation_action(&deployment)?;
 
         let action = match maybe_action {
             Some(a) => a,
@@ -249,9 +256,6 @@ impl ModelDeploymentController {
             ReconciliationOutcome::NoOp => { None },
         };
 
-        
-
-
         Ok(DispatchReconcilerResult::new(maybe_modified_deployment, events))
     }
 
@@ -285,20 +289,32 @@ impl ModelDeploymentController {
     }
 
     /// Dermine what reconciliation action must be take to synchronize the actual state with the desired state
-    fn resolve_reconciliation_action(deployment: &ModelDeployment) -> Option<ReconciliationAction> {
+    fn resolve_reconciliation_action(&self, deployment: &ModelDeployment) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
         if deployment.is_state_syncronized() {
-            return None
+            return Ok(None)
         }
 
-        match (&deployment.state, &deployment.desired_state) {
+        let maybe_strategy = self.client_strategy_sets
+            .iter()
+            .find(|css| css.platform == deployment.platform.clone())
+            .map(|cs| cs.strategies())
+            .map(|strats| strats.iter().find(|strat| Some(strat.name.clone()) == deployment.deployment_strategy.clone()))
+            .map(|maybe_strat| maybe_strat.cloned())
+            .flatten();
+
+        if deployment.deployment_strategy.is_some() && maybe_strategy.is_none() {
+            return Err(ReconciliationDispatchError::MissingDeploymentStrategy(format!("During reconciliation action resolution, the referenced deployment strategy '{}' was not found", deployment.deployment_strategy.clone().unwrap_or(String::from("No name found: Impossible")))))
+        }
+
+        Ok(match (&deployment.state, &deployment.desired_state) {
             (State::Unknown, _) => Some(ReconciliationAction::Observe),
-            (State::NotDeployed, DesiredState::Running) => Some(ReconciliationAction::Start),
+            (State::NotDeployed, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
             (_, DesiredState::NotDeployed) => Some(ReconciliationAction::Undeploy),
-            (State::Stopped, DesiredState::Running) => Some(ReconciliationAction::Start),
-            (State::Failed, DesiredState::Running) => Some(ReconciliationAction::Start),
-            (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start),
+            (State::Stopped, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
+            (State::Failed, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
+            (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
             (State::Running, DesiredState::Stopped) => Some(ReconciliationAction::Stop),
             _ => None,
-        }
+        })
     }
 }

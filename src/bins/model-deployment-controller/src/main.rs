@@ -1,14 +1,36 @@
 use std::sync::Arc;
 use amqprs::{
     channel::{
-        BasicConsumeArguments, Channel, ExchangeType, QueueBindArguments, QueueDeclareArguments
-    }, connection::Connection, consumer::AsyncConsumer, BasicProperties, Deliver, FieldTable, FieldValue
+        BasicConsumeArguments,
+        Channel,
+        ExchangeType,
+        QueueBindArguments,
+        QueueDeclareArguments
+    },
+    connection::Connection,
+    consumer::AsyncConsumer,
+    BasicProperties,
+    Deliver,
+    FieldTable,
+    FieldValue
 };
 use tokio;
 use uuid::Uuid;
 use shared::{
-    application::{ports::events::Event, services::model_deployment_controller::{ModelDeploymentController, ReconciliationDispatchError, FinishReconciliationError}, workflows::reconciliation::ReconciliationError},
-    infra::messaging::rabbitmq::{connection::open_channel, exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE}, queues::DEAD_LETTER_QUEUE}};
+    application::{
+        ports::events::Event,
+        services::model_deployment_controller::{
+            FinishReconciliationError,
+            ModelDeploymentController,
+            ReconciliationDispatchError
+        },
+        workflows::reconciliation::ReconciliationError
+    },
+    infra::messaging::rabbitmq::{connection::open_channel,
+        exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
+        queues::DEAD_LETTER_QUEUE
+    }
+};
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
 use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
@@ -16,7 +38,7 @@ use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
 use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
-use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
+use model_deployment_controller::bootstrap::{build_deployment_strategy_provider, model_deployment_conroller_builder};
 use model_deployment_controller::database::{get_db, ClientParams};
 use log::{error, info, warn};
 
@@ -82,6 +104,12 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                 match err {
                     ReconciliationDispatchError::ModelDeploymentDomainInvariantViolation(e) => {
                         error!("ModelDeploymentDomainInvariantViolation: {}", e.to_string());
+                        self.nack(&channel, &deliver, false, message_id).await;
+                        
+                        return
+                    },
+                    ReconciliationDispatchError::MissingDeploymentStrategy(e) => {
+                        error!("MissingDeploymentStrategy: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
         
                         return
@@ -259,8 +287,18 @@ async fn main() -> () {
         })
         .expect("Datbase initialization error");
 
+    let deployment_strategy_provider = build_deployment_strategy_provider();
+
+    let client_strategy_sets = match deployment_strategy_provider {
+        Ok(p) => Arc::new(p.provide().clone()),
+        Err(err) => {
+            warn!("Error initializing deployment strategy provider: {}", err.to_string());
+            Arc::new(vec![])
+        }
+    };
+    
     let consumer = ModelDeploymentControllerConsumer {
-        controller: model_deployment_conroller_builder(&db, context.channel.clone())
+        controller: model_deployment_conroller_builder(&db, context.channel.clone(), client_strategy_sets),
     };
      
     let args = BasicConsumeArguments::default()

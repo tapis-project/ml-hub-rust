@@ -1,6 +1,8 @@
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, UpdateModelDeploymentInput};
-use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
+use crate::application::workflows::Workflow;
+use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
+use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput, StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput};
+use crate::application::outputs::deployment::{DeployModelWithStrategyOutput, StartModelDeploymentOutput, StopModelDeploymentOutput, UndeployModelDeploymentOutput };
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
@@ -10,11 +12,7 @@ use crate::application::retries::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{
-    DesiredState,
-    ModelDeployment,
-    ModelDeploymentProps,
-    ModelReference,
-    State,
+    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentProps, ModelReference, State
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
@@ -42,6 +40,9 @@ pub enum ModelDeploymentServiceError {
 
     #[error("Model Deployment not found: {0}")]
     DeploymentNotFound(String),
+
+    #[error("Model deployment error: {0}")]
+    ModelDeploymentError(#[from] ModelDeploymentError),
 }
 
 pub struct ModelDeploymentService {
@@ -198,6 +199,48 @@ impl ModelDeploymentService {
         };
 
         Ok(DeployModelWithStrategyOutput { deployment })
+    }
+
+    pub async fn start_model_deployment(
+        &self,
+        input: StartModelDeploymentInput,
+    ) -> Result<StartModelDeploymentOutput, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
+        let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
+            deployment_id: input.deployment_id.clone(),
+            desired_state: DesiredState::Running,
+            last_message: Some("Requested model deployment start".into())
+        }).await?;
+
+        Ok(StartModelDeploymentOutput { deployment: modified_deployment })
+    }
+
+    pub async fn stop_model_deployment(
+        &self,
+        input: StopModelDeploymentInput,
+    ) -> Result<StopModelDeploymentOutput, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
+        let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
+            deployment_id: input.deployment_id.clone(),
+            desired_state: DesiredState::Running,
+            last_message: Some("Requested model deployment start".into())
+        }).await?;
+
+        Ok(StopModelDeploymentOutput { deployment: modified_deployment })
+    }
+
+    pub async fn undeploy_model_deployment(
+        &self,
+        input: UndeployModelDeploymentInput,
+    ) -> Result<UndeployModelDeploymentOutput, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
+        let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
+            deployment_id: input.deployment_id.clone(),
+            desired_state: DesiredState::Running,
+            last_message: Some("Requested model deployment start".into())
+        }).await?;
+
+        Ok(UndeployModelDeploymentOutput { deployment: modified_deployment })
     }
 
     pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ApplicationError> {

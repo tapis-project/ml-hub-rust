@@ -11,7 +11,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
 #[async_trait::async_trait]
 impl ModelDeploymentPlatformReconciliationClient for TapisPodsModelDeploymentReconciliationClient {
-    async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> Result<ReconciliationOutcome, ReconciliationError> {
+    async fn reconcile(&self, _input: ReconcileModelDeploymentInput) -> Result<ReconciliationOutcome, ReconciliationError> {
         Err(ReconciliationError::Unimplemented("No reconcilier for tapis pods".into()))
     }
 }

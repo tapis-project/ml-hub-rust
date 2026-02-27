@@ -5,7 +5,7 @@ metadata:
 data:
   tapis.json: |
     {
-      "client": "tapis-pods",
+      "platform": "tapis-pods",
       "description": "A set of strategies for deploying models to HPC systems and Tapis Pods",
       "strategies": [
         {
