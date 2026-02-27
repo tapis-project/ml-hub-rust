@@ -204,12 +204,17 @@ impl ModelDeploymentController {
                 Some(revised)
             },
             ReconciliationOutcome::Undeployed(payload) => {
-                let revised = deployment
-                    .revise()
-                    .transition_to_state(State::NotDeployed, payload.message.clone())?
-                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::Delete))
-                    .finish();
-                
+                let mut revised = deployment.revise();
+
+                revised
+                    .transition_to_state(State::NotDeployed, payload.message.clone())?;
+
+                if let Some(metadata_delta) = payload.metadata {
+                    revised.apply_metadata_delta(metadata_delta);
+                }
+
+                let revised = revised.finish();
+
                 events.push(
                     Payload::ModelDeploymentDeletedPayload(
                         ModelDeploymentDeletedPayload {
