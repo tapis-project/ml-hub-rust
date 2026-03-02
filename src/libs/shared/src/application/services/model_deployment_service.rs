@@ -222,7 +222,7 @@ impl ModelDeploymentService {
         let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
         let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
             deployment_id: input.deployment_id.clone(),
-            desired_state: DesiredState::Running,
+            desired_state: DesiredState::Stopped,
             last_message: Some("Requested model deployment start".into())
         }).await?;
 
@@ -236,7 +236,7 @@ impl ModelDeploymentService {
         let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
         let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
             deployment_id: input.deployment_id.clone(),
-            desired_state: DesiredState::Running,
+            desired_state: DesiredState::NotDeployed,
             last_message: Some("Requested model deployment start".into())
         }).await?;
 

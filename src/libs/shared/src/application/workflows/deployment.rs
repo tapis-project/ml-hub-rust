@@ -68,20 +68,26 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             Some(d) => d,
             None => return Err(ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string()))
         };
+
+        // If the user is request that the deployment move to a state that it is already in
+        // we essentially noop and return the same deployment without revision
+        if deployment.desired_state == input.desired_state {
+            return Ok(deployment)
+        }
         
         let modified_deployment = deployment.revise()
             .transition_to_desired(input.desired_state, input.last_message)?
             .finish();
             
-        // Save the deployment
-        retry_async(|| self.model_deployment_repo.save(&modified_deployment), &Self::REPO_RETRY_POLICY).await?;
+        // Update the deployment
+        retry_async(|| self.model_deployment_repo.update(&modified_deployment), &Self::REPO_RETRY_POLICY).await?;
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
-            deployment_id: deployment.id,
+            deployment_id: modified_deployment.id,
             message: Some("Requested desired state change of Model Deployment. Initiating reconciliation via with StateDriftDetected event".into()),
-            deployment_revision: deployment.revision().clone(),
-            desired_state: deployment.desired_state.clone(),
-            actual_state: deployment.state.clone(),
+            deployment_revision: modified_deployment.revision().clone(),
+            desired_state: modified_deployment.desired_state.clone(),
+            actual_state: modified_deployment.state.clone(),
         };
 
         let event = Event::from_payload(&Payload::ModelDeploymentStateDriftDetectedPayload(payload), None);
