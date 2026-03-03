@@ -194,12 +194,6 @@ pub struct ReplicaGroup {
 
 #[derive(Clone, Debug)]
 pub struct ResourceRequirements {
-    // TODO: Document resource requirement semantics
-    // - These fields represent OBSERVED/ACTUAL resources allocated by the platform
-    // - NOT input requirements for deployment (those are determined by reconciler)
-    // - Populated by reconciliation outcome and persisted to database
-    // - Used for cost tracking, quota management, and capacity planning
-    
     /// Number of cpu cores (float for platforms that support fractional cores)
     pub cores: Option<f32>,
     /// Required disk space in GB
@@ -211,11 +205,6 @@ pub struct ResourceRequirements {
 
 #[derive(Clone, Debug)]
 pub struct GpuResource {
-    // TODO: Add GPU count field
-    // Currently no way to specify number of GPUs needed (e.g., 1, 2, 4, 8)
-    // This is critical for multi-GPU deployments and model sharding
-    // Suggested: pub count: Option<u8>,
-    
     /// Number vram in GB
     pub memory: Option<f32>,
     /// Ex Nvida
