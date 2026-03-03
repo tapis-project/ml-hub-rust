@@ -15,12 +15,11 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
-use log::debug;
 
 #[utoipa::path(
     post,
     path="/deployments-api/platforms/{platform}/strategies/{strategy_name}",
-    tag="Strategies",
+    tag="Deployments",
     description="Deploy a model to a target platform",
     request_body=DeployModelWithStrategyBody,
     params(
@@ -39,7 +38,19 @@ async fn deploy_model_with_strategy(
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
 ) -> impl Responder {
-    debug!("{:#?}", path);
+    let maybe_strategy = data.client_strategy_sets
+        .iter()
+        .find(|set| set.platform == path.platform.clone())
+        .map(|css| css.strategies())
+        .map(|strats| strats.iter().find(|strat| &strat.name == &path.strategy_name))
+        .map(|x| x.cloned())
+        .flatten();
+
+    let strategy = match maybe_strategy {
+        Some(s) => s,
+        None => return build_error_response(404, format!("No strategy found with name {} for platform {}", &path.platform, &path.strategy_name))
+    };
+
     let service = model_deployment_service_builder(
         &data.db,
         data.channel.clone(),
@@ -50,7 +61,7 @@ async fn deploy_model_with_strategy(
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         platform: path.platform.clone(),
-        strategy_name: path.strategy_name.clone(),
+        strategy_name: strategy.name,
         params: body.params.clone(),
     };
 

@@ -78,7 +78,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let mut filter = doc! {};
 
         if let Some(id) = input.deployment_id {
-            filter.insert("deployment_id", Uuid::from_bytes(*id.clone().as_bytes()));
+            filter.insert("id", Uuid::from_bytes(*id.clone().as_bytes()));
         }
 
         if let Some(state) = input.state.clone() {

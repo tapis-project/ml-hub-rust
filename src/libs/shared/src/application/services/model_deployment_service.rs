@@ -1,6 +1,8 @@
 use crate::application::errors::ApplicationError;
-use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, UpdateModelDeploymentInput};
-use crate::application::outputs::deployment::DeployModelWithStrategyOutput;
+use crate::application::workflows::Workflow;
+use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
+use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput, StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput};
+use crate::application::outputs::deployment::{DeployModelWithStrategyOutput, StartModelDeploymentOutput, StopModelDeploymentOutput, UndeployModelDeploymentOutput };
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
@@ -10,11 +12,7 @@ use crate::application::retries::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{
-    DesiredState,
-    ModelDeployment,
-    ModelDeploymentProps,
-    ModelReference,
-    State,
+    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentProps, ModelReference, State
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
@@ -26,7 +24,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
-use log::debug;
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentServiceError {
@@ -44,12 +41,17 @@ pub enum ModelDeploymentServiceError {
 
     #[error("Model Deployment not found: {0}")]
     DeploymentNotFound(String),
+
+    #[error("Model deployment error: {0}")]
+    ModelDeploymentError(#[from] ModelDeploymentError),
 }
 
 pub struct ModelDeploymentService {
     model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
-    artifact_repo: Arc<dyn ArtifactRepository>,
+    // TODO Leave _artifact_repo unused for now. See the link below 
+    // https://github.com/tapis-project/ml-hub-rust/issues/73
+    _artifact_repo: Arc<dyn ArtifactRepository>,
     event_publisher: Arc<dyn EventPublisher>,
 }
 
@@ -80,7 +82,7 @@ impl ModelDeploymentService {
         Self {
             model_deployment_repo,
             model_metadata_repo,
-            artifact_repo,
+            _artifact_repo: artifact_repo,
             event_publisher,
         }
     }
@@ -140,12 +142,8 @@ impl ModelDeploymentService {
             }
         };
 
-        // TODO Uncomment the code below once furnishing the model artifact for 
-        // model deployments becomes MLHub's responsibility
-        //
-        // nathandf
-        // 2026-02-18 
-
+        // TODO Uncomment when ready. Details found in the issue below 
+        // https://github.com/tapis-project/ml-hub-rust/issues/73
         // let artifact_id = model_metadata.artifact_id
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
         
@@ -175,8 +173,6 @@ impl ModelDeploymentService {
             replicas: None,
             metadata: metadata.map(ModelDeploymentMetadata),
         };
-
-        debug!("{:#?}", &model_deployment_props);
         
         let deployment = ModelDeploymentDomainService::create_model_deployment(
             &model_metadata,
@@ -185,12 +181,8 @@ impl ModelDeploymentService {
         )
             .map_err(|err| ApplicationError::ModelDeploymentFailed(err.to_string()))?;
 
-        debug!("deployment: {:#?}", &deployment);
-
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
-
-        debug!("Deployment saved");
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: deployment.id,
@@ -214,6 +206,48 @@ impl ModelDeploymentService {
         };
 
         Ok(DeployModelWithStrategyOutput { deployment })
+    }
+
+    pub async fn start_model_deployment(
+        &self,
+        input: StartModelDeploymentInput,
+    ) -> Result<StartModelDeploymentOutput, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
+        let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
+            deployment_id: input.deployment_id.clone(),
+            desired_state: DesiredState::Running,
+            last_message: Some("Requested model deployment start".into())
+        }).await?;
+
+        Ok(StartModelDeploymentOutput { deployment: modified_deployment })
+    }
+
+    pub async fn stop_model_deployment(
+        &self,
+        input: StopModelDeploymentInput,
+    ) -> Result<StopModelDeploymentOutput, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
+        let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
+            deployment_id: input.deployment_id.clone(),
+            desired_state: DesiredState::Stopped,
+            last_message: Some("Requested model deployment start".into())
+        }).await?;
+
+        Ok(StopModelDeploymentOutput { deployment: modified_deployment })
+    }
+
+    pub async fn undeploy_model_deployment(
+        &self,
+        input: UndeployModelDeploymentInput,
+    ) -> Result<UndeployModelDeploymentOutput, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(self.model_deployment_repo.clone(), self.event_publisher.clone());
+        let modified_deployment = workflow.run(UpdateDesiredStateWorkflowInput {
+            deployment_id: input.deployment_id.clone(),
+            desired_state: DesiredState::NotDeployed,
+            last_message: Some("Requested model deployment start".into())
+        }).await?;
+
+        Ok(UndeployModelDeploymentOutput { deployment: modified_deployment })
     }
 
     pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ApplicationError> {

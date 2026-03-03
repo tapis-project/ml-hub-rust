@@ -314,7 +314,9 @@ impl <'a>ModelDeploymentDraft<'a> {
 
     fn valid_desired_state_transitions() -> HashMap<DesiredState, Vec<DesiredState>> {
         let mut transitions = HashMap::new();
+        transitions.insert(DesiredState::NotDeployed, vec![DesiredState::Running]);
         transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
+        transitions.insert(DesiredState::Running, vec![DesiredState::NotDeployed]);
         transitions.insert(DesiredState::Stopped, vec![DesiredState::Running]);
         transitions
     }

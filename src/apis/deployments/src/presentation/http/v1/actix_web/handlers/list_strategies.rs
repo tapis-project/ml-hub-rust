@@ -8,7 +8,6 @@ use actix_web::{
     Responder
 };
 use serde_json::{Value, to_value};
-use log::debug;
 
 #[utoipa::path(
     get,

@@ -9,7 +9,6 @@ use shared::application::inputs::model_metadata::CreateModelMetadata;
 use client_provider::ClientProvider;
 use clients::ClientError;
 use std::sync::Arc;
-use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 
 #[tokio::main]
 async fn main() {

@@ -2,12 +2,15 @@
 //! with application-level concerns
 use amqprs::channel::Channel;
 use mongodb::Database;
+use shared::application::errors::ApplicationError;
 use shared::application::ports::artifacts::ArtifactRepository;
-use shared::application::ports::deployment::ModelDeploymentRepository;
+use shared::application::ports::deployment::{DeploymentStrategyProvider, ModelDeploymentRepository};
 use shared::application::ports::events::EventPublisher;
 use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::application::ports::deployment::ModelDeploymentPlatformReconcilerProvider;
+use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
+use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
 use shared::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
@@ -47,10 +50,20 @@ pub fn model_deployment_service_builder(db: &Database, channel: Arc<Channel>) ->
     )
 }
 
-pub fn model_deployment_conroller_builder(db: &Database, channel: Arc<Channel>) -> Arc<ModelDeploymentController> {
+pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategyProvider>, ApplicationError> {
+    let provider = DeploymentStrategyProviderFs::new();
+    match provider {
+        Ok(p) => Ok(Arc::new(p)),
+        Err(err) => Err(err)
+    }
+}
+
+pub fn model_deployment_conroller_builder(db: &Database, channel: Arc<Channel>, client_strategy_sets: Arc<Vec<ClientStrategySet>>) -> Arc<ModelDeploymentController> {
     Arc::new(ModelDeploymentController::new(
-        model_deployment_service_builder(db, channel),
+        client_strategy_sets,
+        model_deployment_service_builder(db, channel.clone()),
         model_metadata_repo_factory(db),
+        event_publisher_factory(channel.clone()),
         model_deployment_platform_reconciler_provider_factory(),
     ))
 }
