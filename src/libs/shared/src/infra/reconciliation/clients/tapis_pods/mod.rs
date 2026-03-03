@@ -4,7 +4,12 @@ use crate::application::workflows::reconciliation::{
     ReconciliationError, ReconciliationOutcome, ReconciliationAction,
     StartedOutcomePayload, StoppedOutcomePayload, UndeployedOutcomePayload, ObeservedOutcomePayload,
 };
-use crate::domain::entities::deployment::{ModelDeploymentMetadata, ModelDeploymentMetadataDelta, State};
+use crate::domain::entities::deployment::{
+    ModelDeployment,
+    ModelDeploymentMetadata,
+    ModelDeploymentMetadataDelta,
+    State,
+};
 use flexserv_deployer::{FlexServDeployment, FlexServPodDeployment, PodDeploymentOptions, FlexServInstance, Backend, normalize_tenant_url};
 use flexserv_deployer::deployment::{DeploymentError as FlexServDeploymentError, DeploymentResult};
 use std::collections::HashMap;
@@ -23,7 +28,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
     /// Credentials must be provided by the UI/API when creating or updating the deployment
     /// and stored in `deployment.metadata`. Required keys: `tapis_tenant_url`, `tapis_user`, `tapis_token`.
     /// No env var fallback—parameters flow from the request through to the reconciler.
-    fn extract_tapis_credentials(deployment: &crate::domain::entities::deployment::ModelDeployment) -> Result<(String, String, String), ReconciliationError> {
+    fn extract_tapis_credentials(deployment: &ModelDeployment) -> Result<(String, String, String), ReconciliationError> {
         let metadata = deployment.metadata.as_ref().ok_or_else(|| {
             ReconciliationError::Unimplemented(
                 "Deployment metadata is required for TapisPods. Include tapis_tenant_url, tapis_user, tapis_token (e.g. from the deploy request).".into()
@@ -44,7 +49,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
     }
 
     /// Extract pod_id and volume_id from deployment metadata. volume_id is optional (some pods have no volume).
-    fn extract_pod_info(deployment: &crate::domain::entities::deployment::ModelDeployment) -> Option<(String, String)> {
+    fn extract_pod_info(deployment: &ModelDeployment) -> Option<(String, String)> {
         deployment.metadata.as_ref().and_then(|m| {
             let pod_id = m.get("pod_id")?.as_str()?.to_string();
             let volume_id = m.get("volume_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -54,14 +59,18 @@ impl TapisPodsModelDeploymentReconciliationClient {
 
     /// Default FlexServ backend.
     fn default_backend() -> Backend {
-        Backend::Transformers {
-            command: vec!["python".to_string()],
-        }
+        // TODO: Support additional FlexServ backends (VLlm, SGLang, TrtLlm) once
+        //       their deployment options and tuning parameters are exposed through ML Hub.
+        //
+        // For now we rely on the FlexServ-Deployer defaults for the Transformers backend
+        // (it wires the correct Python entrypoint inside the pod), so we leave the
+        // command list empty here.
+        Backend::Transformers { command: vec![] }
     }
 
     /// Create a FlexServPodDeployment from deployment entity
     fn create_deployment_from_entity(
-        deployment: &crate::domain::entities::deployment::ModelDeployment,
+        deployment: &ModelDeployment,
     ) -> Result<FlexServPodDeployment, ReconciliationError> {
         let (tenant_url, tapis_user, tapis_token) = Self::extract_tapis_credentials(deployment)?;
         let model_id = format!("{}/{}", deployment.model.author, deployment.model.name);
@@ -69,6 +78,11 @@ impl TapisPodsModelDeploymentReconciliationClient {
         // Check if pod_id and volume_id exist in metadata (for existing deployments)
         let (pod_id, volume_id) = Self::extract_pod_info(deployment).unwrap_or_default();
         
+        // TODO: Wire through model_revision, hf_token, and default_embedding_model from ML Hub
+        //       once the API plumbs these fields. For now we rely on FlexServ-Deployer defaults:
+        //       - model_revision: None  -> Hugging Face repo default revision is used.
+        //       - hf_token: None       -> pod falls back to HF_TOKEN env inside the container.
+        //       - default_embedding_model: None -> backend uses its own internal default.
         let server = FlexServInstance::builder()
             .tenant_url(normalize_tenant_url(&tenant_url))
             .tapis_user(tapis_user.clone())
@@ -86,7 +100,16 @@ impl TapisPodsModelDeploymentReconciliationClient {
             ))
         } else {
             let mut options = PodDeploymentOptions::default();
-            // Use the deployment UUID as deployment_id so FlexServ can derive pod_id and volume_id from it
+            // TODO: Expose PodDeploymentOptions on the ML Hub side instead of relying purely on defaults.
+            //       Current defaults in flexserv-deployer:
+            //       - volume_size_mb: 10 GiB
+            //       - image: "tapis/flexserv:1.0"
+            //       - cpu_request / cpu_limit: 1000 / 2000 millicores
+            //       - mem_request_mb / mem_limit_mb: 4096 / 8192 MB
+            //       - gpus: 0
+            //       - flexserv_secret: from FLEXSERV_SECRET env (may be empty)
+            //
+            // Use the deployment UUID as deployment_id so FlexServ can derive pod_id and volume_id from it.
             options.deployment_id = Some(deployment.id.to_string());
             
             Ok(FlexServPodDeployment::with_options(
@@ -97,7 +120,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
         }
     }
 
-    /// Build metadata delta from FlexServ DeploymentResult::PodResult (pod_id, volume_id, pod_url, etc.).
+    /// Build metadata delta from FlexServ DeploymentResult::PodResult (pod_id, volume_id, pod_url, tapis_user, tapis_tenant, model_id, etc.).
     fn result_to_metadata_delta(result: &DeploymentResult) -> ModelDeploymentMetadataDelta {
         match result {
             DeploymentResult::PodResult {
@@ -106,6 +129,9 @@ impl TapisPodsModelDeploymentReconciliationClient {
                 pod_url,
                 pod_info,
                 volume_info,
+                tapis_user,
+                tapis_tenant,
+                model_id,
                 ..
             } => {
                 // Validate critical fields - pod_id must not be empty
@@ -117,6 +143,9 @@ impl TapisPodsModelDeploymentReconciliationClient {
                 let mut map = HashMap::new();
                 map.insert("pod_id".to_string(), json!(pod_id));
                 map.insert("volume_id".to_string(), json!(volume_id));
+                map.insert("tapis_user".to_string(), json!(tapis_user));
+                map.insert("tapis_tenant".to_string(), json!(tapis_tenant));
+                map.insert("model_id".to_string(), json!(model_id));
                 if let Some(url) = pod_url {
                     if !url.is_empty() {
                         map.insert("pod_url".to_string(), json!(url));
@@ -686,10 +715,16 @@ mod tests {
             Some(ModelDeploymentMetadataDelta::Merge(m)) => {
                 let pod_id = m.get("pod_id").and_then(|v| v.as_str());
                 let volume_id = m.get("volume_id").and_then(|v| v.as_str());
+                let tapis_user = m.get("tapis_user").and_then(|v| v.as_str());
+                let tapis_tenant = m.get("tapis_tenant").and_then(|v| v.as_str());
+                let model_id = m.get("model_id").and_then(|v| v.as_str());
                 let pod_url = m.get("pod_url").and_then(|v| v.as_str());
                 eprintln!("{} response: pod_id={:?} volume_id={:?} pod_url={:?}", label, pod_id, volume_id, pod_url);
                 assert!(m.get("pod_id").is_some(), "metadata should have pod_id");
                 assert!(m.get("volume_id").is_some(), "metadata should have volume_id");
+                assert!(m.get("tapis_user").is_some(), "metadata should have tapis_user");
+                assert!(m.get("tapis_tenant").is_some(), "metadata should have tapis_tenant");
+                assert!(m.get("model_id").is_some(), "metadata should have model_id");
             },
             Some(ModelDeploymentMetadataDelta::Delete) => {
                 eprintln!("{} response: metadata marked for deletion", label);
