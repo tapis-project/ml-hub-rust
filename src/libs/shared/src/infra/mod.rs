@@ -10,3 +10,4 @@ pub mod operators;
 pub mod deployment;
 pub mod reconciliation;
 pub mod contracts;
+pub mod identity;

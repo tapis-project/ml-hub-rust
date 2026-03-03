@@ -1,9 +1,24 @@
 use serde_json::Value;
 use crate::domain::entities::timestamp::TimeStamp;
+use serde::{Deserialize, Serialize};
+use strum_macros::{EnumString, Display};
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Display, EnumString)]
+#[serde(rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
+pub enum Authority {
+    Tapis
+}
+
+pub struct Realm {
+    pub authority: Authority,
+    pub issuer: String
+}
 
 #[derive(Clone, Debug)]
 pub struct FederatedIdentity {
-    pub idp: IdentityProviderIdentifier,
+    pub authority: Authority,
+    pub issuer: String, 
     pub subject: String,
     pub metadata: Value,
     pub created_at: TimeStamp,
@@ -11,24 +26,10 @@ pub struct FederatedIdentity {
 }
 
 impl FederatedIdentity {
-    pub fn idp(&self) -> &String {
-        self.idp.into_inner()
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct IdentityProviderIdentifier(String);
-
-impl IdentityProviderIdentifier {
-    fn new(platform_name: String, issuer: String) -> Self {
-        Self(format!("{}:{}", platform_name, issuer))
-    }
-
-    fn into_inner(&self) -> &String {
-        &self.0
-    }
-
-    fn rehydrate(inner: String) -> Self {
-        Self(inner)
+    pub fn realm(&self) -> Realm {
+        Realm {
+            authority: self.authority.clone(),
+            issuer: self.issuer.clone(),
+        }
     }
 }

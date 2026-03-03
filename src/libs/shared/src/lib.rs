@@ -5,3 +5,4 @@ pub mod domain;
 pub mod errors;
 pub mod constants;
 pub mod logging;
+pub mod bootstrap;
