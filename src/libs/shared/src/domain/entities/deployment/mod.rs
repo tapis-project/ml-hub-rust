@@ -173,6 +173,16 @@ impl ModelDeploymentMetadata {
     pub fn into_inner(&self) -> &HashMap<String, Value> {
         &self.0
     }
+
+    /// Get a metadata value by key.
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        self.0.get(key)
+    }
+
+    /// Iterate over all metadata key/value pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &Value)> {
+        self.0.iter()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -431,4 +441,5 @@ pub struct ModelDeploymentProps {
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: Option<ReplicaGroup>,
+    pub metadata: Option<ModelDeploymentMetadata>,
 }

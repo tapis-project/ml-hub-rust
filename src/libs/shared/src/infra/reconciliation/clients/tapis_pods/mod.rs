@@ -333,7 +333,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
 impl ModelDeploymentPlatformReconciliationClient for TapisPodsModelDeploymentReconciliationClient {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> Result<ReconciliationOutcome, ReconciliationError> {
         match input.action {
-            ReconciliationAction::Start => {
+            ReconciliationAction::Start { .. } => {
                 self.handle_start(&input).await
             }
             ReconciliationAction::Stop => {
@@ -354,7 +354,6 @@ mod tests {
     use super::*;
     use crate::domain::entities::deployment::{
         ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, RehydrateModelDeploymentProps,
-        DeploymentStrategyReference,
     };
     use crate::domain::entities::visibility::Visibility;
     use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
@@ -379,10 +378,7 @@ mod tests {
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: None,
-            deployment_strategy: Some(DeploymentStrategyReference {
-                client: "tapis-pods".into(),
-                name: "default".into(),
-            }),
+            deployment_strategy: Some("tapis-pods:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
             replicas: None,
@@ -607,7 +603,7 @@ mod tests {
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let deployment = deployment_without_metadata();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start,
+            action: ReconciliationAction::Start { strategy: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };
@@ -694,10 +690,7 @@ mod tests {
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: None,
-            deployment_strategy: Some(DeploymentStrategyReference {
-                client: "tapis-pods".into(),
-                name: "default".into(),
-            }),
+            deployment_strategy: Some("tapis-pods:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
             replicas: None,
@@ -762,7 +755,7 @@ mod tests {
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start,
+            action: ReconciliationAction::Start { strategy: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };
@@ -803,7 +796,7 @@ mod tests {
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start,
+            action: ReconciliationAction::Start { strategy: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };

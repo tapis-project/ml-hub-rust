@@ -12,7 +12,13 @@ use crate::application::retries::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{
-    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentProps, ModelReference, State
+    DesiredState,
+    ModelDeployment,
+    ModelDeploymentError,
+    ModelDeploymentMetadata,
+    ModelDeploymentProps,
+    ModelReference,
+    State,
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
