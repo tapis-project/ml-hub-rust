@@ -296,13 +296,6 @@ impl TapisPodsModelDeploymentReconciliationClient {
     }
 
     /// Handle Observe action
-    ///
-    /// TODO: Enhanced observability
-    /// - Add application-level health checks (not just pod status)
-    /// - Collect resource utilization metrics (CPU, memory, GPU usage)
-    /// - Detect drift between desired and actual state
-    /// - Monitor pod events (restarts, OOM kills, crashes)
-    /// - Track deployment performance (latency, throughput, error rate)
     async fn handle_observe(&self, input: &ReconcileModelDeploymentInput) -> Result<ReconciliationOutcome, ReconciliationError> {
         info!("Observing deployment {}", input.deployment.id);
         let deployment = Self::create_deployment_from_entity(&input.deployment)?;
