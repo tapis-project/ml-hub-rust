@@ -1,9 +1,11 @@
 use crate::domain::entities::identity::Authority;
+use log::debug;
 
 pub struct FederatedIdentityService;
 
 impl FederatedIdentityService {
-    pub fn resolve_authority_from_token(&self, token: &String) -> Option<Authority> {
+    pub fn resolve_authority_from_token(&self, _token: &String) -> Option<Authority> {
+        debug!("Automatically resolving to Tapis Auuthority");
         Some(Authority::Tapis)
     }
 }

@@ -4,11 +4,11 @@ use crate::presentation::http::v1::actix_web::helpers::{
 };
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DisocverModelsQueryParams};
 use crate::bootstrap::factories::model_metadata_service_factory;
-use actix_web::{post, web, Responder};
-use shared::logging::SharedLogger;
+use actix_web::{post, web, HttpRequest, Responder};
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
+use crate::presentation::http::v1::actix_web::helpers::authenticate;
 use crate::bootstrap::state::AppState;
 use serde_json::{to_value, Value, Map};
 
@@ -34,11 +34,13 @@ use serde_json::{to_value, Value, Map};
 async fn discover_models(
     data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
-    query: web::Query<DisocverModelsQueryParams>
+    query: web::Query<DisocverModelsQueryParams>,
+    req: HttpRequest,
 ) -> impl Responder {
-    let logger = SharedLogger::new();
-
-    logger.debug("discover_models operation");
+    let _identity = match authenticate(req).await {
+        Ok(i) => i,
+        Err(err) => return err
+    };
 
     let model_metadata_service = match model_metadata_service_factory(&data.db, data.client_strategy_sets.clone()).await {
         Ok(s) => s,

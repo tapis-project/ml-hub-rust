@@ -86,22 +86,20 @@ pub async fn run_server() -> std::io::Result<()> {
             .map_err(|err| {
                 panic!("Database initialization error: {}", err.to_string().as_str()); 
             })
-            .expect("Datbase initialization error")
+            .expect("Datbase initialization error"),
+        shared: build_shared_state()
+            .await
+            .map_err(|err| {
+                error!("Failed to initialize SharedState: {}", err.to_string());
+                err
+            })
+            .expect("SharedState to be initialzed")
     };
-
-    let shared_state = build_shared_state()
-        .await
-        .map_err(|err| {
-            error!("Failed to initialize SharedState: {}", err.to_string());
-            err
-        })
-        .expect("SharedState to be initialzed");
 
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
             .app_data(actix_web::web::Data::new(state.clone()))
-            .app_data(actix_web::web::Data::new(shared_state.clone()))
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
             .service(presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform)

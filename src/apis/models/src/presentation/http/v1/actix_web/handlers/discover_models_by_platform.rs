@@ -7,7 +7,6 @@ use crate::presentation::http::v1::requests::{
 use actix_web::{post, web, HttpRequest, Responder};
 use clients::DiscoverModelsClient;
 use client_provider::ClientProvider;
-use shared::logging::SharedLogger;
 use shared::presentation::http::v1::contracts::responses;
 use std::collections::HashMap;
 use platforms::Platform;
@@ -35,10 +34,6 @@ async fn discover_models_by_platform(
     query: web::Query<HashMap<String, String>>,
     body: web::Json<DiscoveryCriteria>,
 ) -> impl Responder {
-    let logger = SharedLogger::new();
-
-    logger.debug("Start operation discover_models");
-
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
