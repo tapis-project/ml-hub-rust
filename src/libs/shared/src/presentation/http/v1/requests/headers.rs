@@ -1,6 +1,15 @@
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+#[derive(Clone, Debug)]
+pub struct AuthToken(String);
+
+impl AuthToken {
+    pub fn into_inner(&self) -> String {
+        self.0.clone()
+    }
+}
+
 pub type Header = (String, String);
 
 pub type Boundry = String;

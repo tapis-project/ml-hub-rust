@@ -10,6 +10,14 @@ pub enum Authority {
     Tapis
 }
 
+impl Authority {
+    pub fn all() -> Vec<Authority> {
+        vec![
+            Self::Tapis
+        ]
+    }
+}
+
 pub struct Realm {
     pub authority: Authority,
     pub issuer: String

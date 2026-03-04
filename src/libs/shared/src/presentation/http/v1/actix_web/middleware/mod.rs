@@ -1,1 +1,1 @@
-pub mod federated_auth;
+pub mod idp_resolver;

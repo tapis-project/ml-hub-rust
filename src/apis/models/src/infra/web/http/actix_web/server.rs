@@ -6,6 +6,7 @@ use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
 use amqprs::channel::ExchangeType;
+use shared::bootstrap::build_shared_state;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
 use std::env;
@@ -88,10 +89,19 @@ pub async fn run_server() -> std::io::Result<()> {
             .expect("Datbase initialization error")
     };
 
+    let shared_state = build_shared_state()
+        .await
+        .map_err(|err| {
+            error!("Failed to initialize SharedState: {}", err.to_string());
+            err
+        })
+        .expect("SharedState to be initialzed");
+
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
             .app_data(actix_web::web::Data::new(state.clone()))
+            .app_data(actix_web::web::Data::new(shared_state.clone()))
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
             .service(presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform)
