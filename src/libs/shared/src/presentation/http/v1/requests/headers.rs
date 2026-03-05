@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Clone, Debug)]
-pub struct AuthToken(String);
+pub struct AuthToken(pub String);
 
 impl AuthToken {
     pub fn into_inner(&self) -> String {

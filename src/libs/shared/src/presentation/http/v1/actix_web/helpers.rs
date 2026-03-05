@@ -51,8 +51,6 @@ pub fn build_error_response(status: u16, message: String, version: Option<String
                 })
         }
     }
-    
-    
 }
 
 pub fn build_success_response(result: Option<Value>, message: Option<String>, version: Option<String>, metadata: Option<Value>) -> HttpResponse {

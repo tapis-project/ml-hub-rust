@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use std::future::{ready, Ready};
+use actix_web::HttpMessage;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     Error,
@@ -72,10 +73,11 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        let maybe_token: Option<AuthToken> = None;
-
+        let mut maybe_token: Option<AuthToken> = None;
         for header_key in derive_header_keys_from_authorites() {
-            let maybe_token = get_header_value(&header_key, req.request());
+            maybe_token = get_header_value(&header_key, req.request())
+                .map(|t| AuthToken(t));
+            
             if maybe_token.is_some() {
                 break
             }
@@ -97,7 +99,7 @@ where
             }
         };
 
-        match self.idp_registrar.get_by_authority(authority) {
+        let token_idp_pair = match self.idp_registrar.get_by_authority(authority) {
             Some(i) => {
                 (token, i)
             },
@@ -106,6 +108,8 @@ where
                 return Box::pin(async move { Ok(fut.await?) })
             }
         };
+
+        req.extensions_mut().insert(token_idp_pair);
         
         let fut = self.service.call(req);
 

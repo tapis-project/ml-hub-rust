@@ -6,15 +6,14 @@ use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer};
 use amqprs::channel::ExchangeType;
-use shared::bootstrap::build_shared_state;
+use shared::bootstrap::build_shared_app_context;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
+use shared::presentation::http::v1::actix_web::middleware::idp_resolver::IdpResolver;
 use std::env;
-use actix_web::middleware::Logger;
-use shared::logging::SharedLogger;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
-use log::error;
+use log::{warn, error};
 
 
 pub async fn run_server() -> std::io::Result<()> {
@@ -23,8 +22,6 @@ pub async fn run_server() -> std::io::Result<()> {
     
     // Initialize the logger
     env_logger::init();
-
-    let logger = SharedLogger::new();
 
     // Set the address from env vars HOST and PORT, fallback to default values
     // if values for these env vars are not defined
@@ -41,7 +38,7 @@ pub async fn run_server() -> std::io::Result<()> {
     let client_strategy_sets = match deployment_strategy_provider {
         Ok(p) => Arc::new(p.provide().clone()),
         Err(err) => {
-            logger.warn(format!("Error initializing deployment strategy provider: {}", err.to_string()).as_str());
+            warn!("Error initializing deployment strategy provider: {}", err.to_string());
             Arc::new(vec![])
         }
     };
@@ -71,6 +68,17 @@ pub async fn run_server() -> std::io::Result<()> {
         .map_err(|err| { error!("{}", err.to_string())})
         .expect(format!("Exchanges {} and {} to be declared", ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE).as_str());
 
+    let shared_app_context = build_shared_app_context()
+        .await
+        .map_err(|err| {
+            error!("Failed to initialize SharedState: {}", err.to_string());
+            err
+        })
+        .expect("SharedState to be initialzed");
+
+    let idp_registrar = shared_app_context.idp_registrar;
+    let federated_identity_service = shared_app_context.federated_identity_service;
+
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
@@ -84,22 +92,21 @@ pub async fn run_server() -> std::io::Result<()> {
         })
             .await
             .map_err(|err| {
-                panic!("Database initialization error: {}", err.to_string().as_str()); 
+                panic!("Database initialization error: {}", err.to_string().as_str());
             })
             .expect("Datbase initialization error"),
-        shared: build_shared_state()
-            .await
-            .map_err(|err| {
-                error!("Failed to initialize SharedState: {}", err.to_string());
-                err
-            })
-            .expect("SharedState to be initialzed")
+        idp_registrar: idp_registrar.clone(), 
     };
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
-            .app_data(actix_web::web::Data::new(state.clone()))
+        .app_data(actix_web::web::Data::new(state.clone()))
+            .wrap(
+                IdpResolver::new(
+                    idp_registrar.clone(),
+                    federated_identity_service.clone(),
+                )
+            )
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
             .service(presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform)
