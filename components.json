@@ -3,8 +3,8 @@
     "env": "local",
     "tag": "dev",
     "local": "local",
-    "libs-dir": "src/libs",
-    "sdks-dir": "src/sdks",
+    "libs-dir": "libs",
+    "sdks-dir": "sdks",
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/models-api",
@@ -31,10 +31,10 @@
   "components": [
     {
       "name": "models",
-      "rootDir": "src/models",
+      "rootDir": "services/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "src/models/spec/openapi/v1.yml",
+      "specPath": "services/models/spec/openapi/v1.yml",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -67,7 +67,7 @@
     {
       "name": "models-migrator",
       "description": "This is a standalone binary for managing the migrations of the models api. This has no seperate deployment. It must be deployed as an init container on the models api deployment",
-      "rootDir": "src/models-migrator",
+      "rootDir": "services/models-migrator",
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
@@ -86,7 +86,7 @@
     },
     {
       "name": "datasets",
-      "rootDir": "src/apis/datasets",
+      "rootDir": "services/apis/datasets",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -119,7 +119,7 @@
     },
     {
       "name": "deployments",
-      "rootDir": "src/deployments",
+      "rootDir": "services/deployments",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -152,7 +152,7 @@
     },
     {
       "name": "nfs",
-      "rootDir": "src/nfs",
+      "rootDir": "services/nfs",
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
@@ -163,13 +163,13 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} --container=\"nfs-server\" -- sh",
-        "code": "code src/{{ self.name }}",
+        "code": "code services/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "traefik",
-      "rootDir": "src/traefik",
+      "rootDir": "services/traefik",
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
@@ -181,13 +181,13 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "expose": "minikube service expose mlhub-traefik-web-service --url",
-        "code": "code src/{{ self.name }}",
+        "code": "code services/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-ingester",
-      "rootDir": "src/artifact-ingester",
+      "rootDir": "services/artifact-ingester",
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
@@ -216,7 +216,7 @@
     },
     {
       "name": "artifact-publisher",
-      "rootDir": "src/artifact-publisher",
+      "rootDir": "services/artifact-publisher",
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
@@ -245,7 +245,7 @@
     },
     {
       "name": "artifact-mq",
-      "rootDir": "src/artifact-mq",
+      "rootDir": "services/artifact-mq",
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
@@ -257,13 +257,13 @@
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/{{ self.name }}",
+        "code": "code services/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-db",
-      "rootDir": "src/artifact-db",
+      "rootDir": "services/artifact-db",
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
@@ -275,175 +275,175 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-service 27017:27017", 
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code src/{{ self.name }}",
+        "code": "code services/{{ self.name }}",
         "gui": "open -a \"MongoDB Compass\"",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "huggingface-client",
-      "rootDir": "src/libs/huggingface-client",
+      "rootDir": "libs/huggingface-client",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "shared",
-      "rootDir": "src/libs/shared",
+      "rootDir": "libs/shared",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "RUST_LOG=DEBUG cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "platforms",
-      "rootDir": "src/libs/platforms",
+      "rootDir": "libs/platforms",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "clients",
-      "rootDir": "src/libs/clients",
+      "rootDir": "libs/clients",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "client-provider",
-      "rootDir": "src/libs/client-provider",
+      "rootDir": "libs/client-provider",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "github-lfs-client",
-      "rootDir": "src/libs/github-lfs-client",
+      "rootDir": "libs/github-lfs-client",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "git-lfs-client",
-      "rootDir": "src/libs/git-lfs-client",
+      "rootDir": "libs/git-lfs-client",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "tacc-tapis-client",
-      "rootDir": "src/libs/tacc-tapis-client",
+      "rootDir": "libs/tacc-tapis-client",
       "labels": ["lib"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "s3-client",
-      "rootDir": "src/libs/s3-client",
+      "rootDir": "libs/s3-client",
       "labels": ["lib"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "patra-client",
-      "rootDir": "src/libs/patra-client",
+      "rootDir": "libs/patra-client",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
+        "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/libs/{{ self.name }}",
+        "code": "code libs/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "agntcy-sdk",
-      "rootDir": "src/sdks/agntcy-sdk",
+      "rootDir": "services/sdks/agntcy-sdk",
       "labels": ["sdk"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "compile": "cargo +nightly build --manifest-path src/sdks/{{ self.name }}/Cargo.toml",
+        "compile": "cargo +nightly build --manifest-path services/sdks/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code src/sdks/{{ self.name }}",
+        "code": "code services/sdks/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
-        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
-        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "gen": "./{{ self.rootDir }}/run `pwd`/services/assets",
+        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/services/assets",
+        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/services/assets",
         "init": "./{{ self.rootDir }}/initialize"
       }
     },
     {
       "name": "rust-sdk",
-      "rootDir": "src/sdks/rust-sdk",
+      "rootDir": "services/sdks/rust-sdk",
       "labels": ["sdk"],
       "lifecycle": "experimental",
       "commands": {
@@ -459,12 +459,12 @@
       "name": "typescript-sdk",
       "url": "https://www.npmjs.com/package/@mlhub/ts-sdk",
       "lifecycle": "development",
-      "rootDir": "src/sdks/typescript-sdk",
+      "rootDir": "services/sdks/typescript-sdk",
       "labels": ["sdk"],
       "commands": {
         "code": "code {{ sdks-dir }}/{{ self.name }}",
         "build": "./{{ self.rootDir }}/build",
-        "exec": "./{{ self.rootDir }}/exec `pwd`/src/assets",
+        "exec": "./{{ self.rootDir }}/exec `pwd`/services/assets",
         "publish-models": "npm publish {{ self.rootDir }}/gen/models --access public",
         "publish-sdk": "npm publish {{ self.rootDir }}/ts-sdk --access public"
       }
@@ -472,31 +472,31 @@
     {
       "name": "oas-downgrader",
       "lifecycle": "experimental",
-      "rootDir": "src/oas-downgrader",
+      "rootDir": "services/oas-downgrader",
       "labels": ["devtool"],
       "commands": {
         "code": "code {{ self.name }}",
-        "downgrade-models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) src/assets/apis/models/spec.yml"
+        "downgrade-models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) services/assets/apis/models/spec.yml"
       }
     },
     {
       "name": "huggingface-tasks",
-      "rootDir": "src/libs/huggingface-tasks",
+      "rootDir": "libs/huggingface-tasks",
       "labels": ["lib"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "code": "code src/libs/{{ self.name }}",
-        "gen": "./{{ self.rootDir }}/run `pwd`/src/assets",
-        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/src/assets",
-        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/src/assets",
+        "code": "code libs/{{ self.name }}",
+        "gen": "./{{ self.rootDir }}/run `pwd`/services/assets",
+        "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/services/assets",
+        "exec-build": "./{{ self.rootDir }}/exec-build `pwd`/services/assets",
         "init": "./{{ self.rootDir }}/initialize"
       }
     },
     {
       "name": "hf-model-etl",
       "description": "Runs and ETL pipeline that pulls in model metadata from Huggingface Hub and converts it to MLHub Model Metadata",
-      "rootDir": "src/hf-model-etl",
+      "rootDir": "services/hf-model-etl",
       "labels": ["bin"],
       "lifecycle": "experimental",
       "commands": {
@@ -514,7 +514,7 @@
     },
     {
       "name": "model-deployment-controller",
-      "rootDir": "src/model-deployment-controller",
+      "rootDir": "services/model-deployment-controller",
       "labels": ["bin", "worker"],
       "lifecycle": "experimental",
       "commands": {

@@ -7,7 +7,7 @@ ARG LIBS_DIR
 ARG SDKS_DIR
 
 # Create 
-RUN mkdir -p /usr/local/mlhub/${SERVICE_NAME} /usr/local/mlhub/libs /usr/local/mlhub/sdks
+RUN mkdir -p /usr/local/mlhub/services/${SERVICE_NAME} /usr/local/mlhub/libs /usr/local/mlhub/sdks
 
 # Copy shared libraries code
 WORKDIR /usr/local/mlhub/libs
@@ -17,7 +17,7 @@ WORKDIR /usr/local/mlhub/sdks
 COPY ${SDKS_DIR} .
 
 # Copy service code
-WORKDIR /usr/local/mlhub/${SERVICE_NAME}
+WORKDIR /usr/local/mlhub/services/${SERVICE_NAME}
 COPY ${SERVICE_DIR} .
 
 # Install
@@ -28,7 +28,7 @@ FROM debian:bookworm-slim
 
 ARG SERVICE_NAME
 
-COPY --from=builder /usr/local/mlhub/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+COPY --from=builder /usr/local/mlhub/services/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
 ENV RUST_LOG=debug,shared=debug
 
