@@ -8,7 +8,7 @@ ARG LIBS_DIR
 ARG SDKS_DIR
 
 # Create 
-RUN mkdir -p /usr/local/mlhub/service/${SERVICE_NAME} /usr/local/mlhub/libs /usr/local/mlhub/sdks
+RUN mkdir -p /usr/local/mlhub/${SERVICE_NAME} /usr/local/mlhub/libs /usr/local/mlhub/sdks
 
 # Copy shared libraries code
 WORKDIR /usr/local/mlhub/libs
@@ -18,14 +18,14 @@ WORKDIR /usr/local/mlhub/sdks
 COPY ${SDKS_DIR} .
 
 # Copy service code
-WORKDIR /usr/local/mlhub/service/${SERVICE_NAME}
+WORKDIR /usr/local/mlhub/${SERVICE_NAME}
 COPY ${SERVICE_DIR} .
 
 # Install
 RUN cargo install --path .
 
 # Stage 2: Copy the binary to a slim Linux image
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 ARG SERVICE_NAME
 
@@ -34,7 +34,7 @@ RUN apt update
 RUN apt install libssl3
 RUN apt-get install -y --no-install-recommends ca-certificates git git-lfs
 RUN update-ca-certificates
-COPY --from=builder /usr/local/mlhub/service/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+COPY --from=builder /usr/local/mlhub/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
 ENV RUST_LOG=debug,shared=debug
 

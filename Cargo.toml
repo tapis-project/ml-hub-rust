@@ -1,12 +1,12 @@
 [workspace]
 members = [
-    # "src/apis/agents",
+    # "src/agents",
     # "src/apis/datasets",
-    "src/apis/deployments",
-    "src/apis/models",
-    "src/bins/models-migrator",
-    "src/bins/artifact-ingester",
-    "src/bins/artifact-publisher",
+    "src/deployments",
+    "src/models",
+    "src/models-migrator",
+    "src/artifact-ingester",
+    "src/artifact-publisher",
     "src/libs/client-provider",
     "src/libs/clients",
     "src/libs/git-lfs-client",
@@ -18,6 +18,6 @@ members = [
     "src/libs/huggingface-tasks",
     "src/libs/tapis-client",
     "src/sdks/agntcy-sdk",
-    "src/bins/hf-model-etl",
-    "src/bins/model-deployment-controller",
+    "src/hf-model-etl",
+    "src/model-deployment-controller",
 ]

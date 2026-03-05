@@ -9,4 +9,4 @@ tfiala-mongodb-migrator = "0.2.6"
 tokio = { version = "1", features = ["full"] }
 mongodb = { version = "3.4.1" }
 anyhow = "1.0.100"
-shared = { version = "0.1.0", path = "../../libs/shared" }
+shared = { version = "0.1.0", path = "../libs/shared" }

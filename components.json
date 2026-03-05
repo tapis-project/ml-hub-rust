@@ -5,8 +5,6 @@
     "local": "local",
     "libs-dir": "src/libs",
     "sdks-dir": "src/sdks",
-    "devtools-dir": "src/devtools",
-    "bins-dir": "src/bins",
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/models-api",
@@ -33,10 +31,10 @@
   "components": [
     {
       "name": "models",
-      "rootDir": "src/apis/models",
+      "rootDir": "src/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "src/apis/models/spec/openapi/v1.yml",
+      "specPath": "src/models/spec/openapi/v1.yml",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -69,7 +67,7 @@
     {
       "name": "models-migrator",
       "description": "This is a standalone binary for managing the migrations of the models api. This has no seperate deployment. It must be deployed as an init container on the models api deployment",
-      "rootDir": "src/bins/models-migrator",
+      "rootDir": "src/models-migrator",
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
@@ -121,7 +119,7 @@
     },
     {
       "name": "deployments",
-      "rootDir": "src/apis/deployments",
+      "rootDir": "src/deployments",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -153,40 +151,8 @@
       ]
     },
     {
-      "name": "training",
-      "rootDir": "src/apis/training",
-      "labels": ["api"],
-      "lifecycle": "experimental",
-      "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
-        "install": "cargo install --path {{ self.rootDir }}",
-        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
-        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
-        "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
-        "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
-        "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
-        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
-      },
-      "dependencies": [
-        "traefik",
-        "nfs"
-      ]
-    },
-    {
       "name": "nfs",
-      "rootDir": "src/infra/nfs",
+      "rootDir": "src/nfs",
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
@@ -197,13 +163,13 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} --container=\"nfs-server\" -- sh",
-        "code": "code src/infra/{{ self.name }}",
+        "code": "code src/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "traefik",
-      "rootDir": "src/infra/traefik",
+      "rootDir": "src/traefik",
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
@@ -215,13 +181,13 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "expose": "minikube service expose mlhub-traefik-web-service --url",
-        "code": "code src/infra/{{ self.name }}",
+        "code": "code src/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-ingester",
-      "rootDir": "src/bins/artifact-ingester",
+      "rootDir": "src/artifact-ingester",
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
@@ -250,7 +216,7 @@
     },
     {
       "name": "artifact-publisher",
-      "rootDir": "src/bins/artifact-publisher",
+      "rootDir": "src/artifact-publisher",
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
@@ -279,7 +245,7 @@
     },
     {
       "name": "artifact-mq",
-      "rootDir": "src/infra/artifact-mq",
+      "rootDir": "src/artifact-mq",
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
@@ -291,13 +257,13 @@
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/infra/{{ self.name }}",
+        "code": "code src/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
     {
       "name": "artifact-db",
-      "rootDir": "src/infra/artifact-db",
+      "rootDir": "src/artifact-db",
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
@@ -309,25 +275,8 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-service 27017:27017", 
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code src/infra/{{ self.name }}",
+        "code": "code src/{{ self.name }}",
         "gui": "open -a \"MongoDB Compass\"",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
-      }
-    },
-    {
-      "name": "deployments-db",
-      "rootDir": "src/infra/deployments-db",
-      "labels": ["component"],
-      "lifecycle": "experimental",
-      "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}",
-        "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }}; {{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }}",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
-        "code": "code src/infra/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       }
     },
@@ -474,20 +423,6 @@
       }
     },
     {
-      "name": "cli",
-      "rootDir": "src/bins/cli",
-      "labels": ["bin", "cli"],
-      "lifecycle": "experimental",
-      "commands": {
-        "initialize": "",
-        "compile": "cargo build --manifest-path src/libs/{{ self.name }}/Cargo.toml",
-        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "code": "code {{ bins-dir }}/{{ self.name }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
-      }
-    },
-    {
       "name": "agntcy-sdk",
       "rootDir": "src/sdks/agntcy-sdk",
       "labels": ["sdk"],
@@ -537,10 +472,10 @@
     {
       "name": "oas-downgrader",
       "lifecycle": "experimental",
-      "rootDir": "src/devtools/oas-downgrader",
+      "rootDir": "src/oas-downgrader",
       "labels": ["devtool"],
       "commands": {
-        "code": "code {{ devtools-dir }}/{{ self.name }}",
+        "code": "code {{ self.name }}",
         "downgrade-models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) src/assets/apis/models/spec.yml"
       }
     },
@@ -561,7 +496,7 @@
     {
       "name": "hf-model-etl",
       "description": "Runs and ETL pipeline that pulls in model metadata from Huggingface Hub and converts it to MLHub Model Metadata",
-      "rootDir": "src/bins/hf-model-etl",
+      "rootDir": "src/hf-model-etl",
       "labels": ["bin"],
       "lifecycle": "experimental",
       "commands": {
@@ -579,7 +514,7 @@
     },
     {
       "name": "model-deployment-controller",
-      "rootDir": "src/bins/model-deployment-controller",
+      "rootDir": "src/model-deployment-controller",
       "labels": ["bin", "worker"],
       "lifecycle": "experimental",
       "commands": {

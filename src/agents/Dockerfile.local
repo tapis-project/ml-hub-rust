@@ -6,14 +6,14 @@ ARG SERVICE_DIR
 ARG LIBS_DIR
 
 # Create 
-RUN mkdir -p /usr/local/mlhub/service/${SERVICE_NAME} /usr/local/mlhub/libs
+RUN mkdir -p /usr/local/mlhub/${SERVICE_NAME} /usr/local/mlhub/libs
 
 # Copy shared libraries code
 WORKDIR /usr/local/mlhub/libs
 COPY ${LIBS_DIR} .
 
 # Copy service code
-WORKDIR /usr/local/mlhub/service/${SERVICE_NAME}
+WORKDIR /usr/local/mlhub/${SERVICE_NAME}
 COPY ${SERVICE_DIR} .
 
 # Install
@@ -28,7 +28,7 @@ ARG SERVICE_NAME
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
 RUN apt update
 RUN apt install libssl3
-COPY --from=builder /usr/local/mlhub/service/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+COPY --from=builder /usr/local/mlhub/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
 ENV RUST_LOG=debug
 
