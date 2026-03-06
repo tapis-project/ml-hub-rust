@@ -41,6 +41,7 @@ pub struct StoppedOutcomePayload {
 #[derive(Clone, Debug)]
 pub struct UndeployedOutcomePayload {
     pub message: Option<String>,
+    pub metadata: Option<ModelDeploymentMetadataDelta>,
 }
 
 #[derive(Clone, Debug)]
