@@ -157,7 +157,7 @@ impl ModelDeploymentService {
         //     .await?
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
-        // Params from the UI/API (e.g. tapis_tenant_url, tapis_user, tapis_token for TapisPods) are stored as deployment metadata for the reconciler.
+        // Params provided by user are stored as metadata on the deployment. Downstream deployment clients use this data to make decisions about how to deploy a model.
         let metadata = serde_json::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
             .ok()
             .filter(|m| !m.is_empty());
