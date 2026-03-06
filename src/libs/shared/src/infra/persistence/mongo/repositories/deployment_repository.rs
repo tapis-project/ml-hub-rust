@@ -55,7 +55,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                     .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
                 "last_modified": update.last_modified,
                 "last_state_change": update.last_state_change,
-                "last_desired_state_chanage": update.last_desired_state_change,
+                "last_desired_state_change": update.last_desired_state_change,
                 "deployment_interface": to_bson(&update.deployment_interface)
                     .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
                 "replicas": to_bson(&update.replicas)

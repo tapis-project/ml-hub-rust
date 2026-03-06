@@ -12,7 +12,13 @@ use crate::application::retries::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{
-    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentProps, ModelReference, State
+    DesiredState,
+    ModelDeployment,
+    ModelDeploymentError,
+    ModelDeploymentMetadata,
+    ModelDeploymentProps,
+    ModelReference,
+    State,
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
@@ -20,6 +26,7 @@ use crate::domain::services::{
 };
 use log::error;
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
@@ -150,6 +157,11 @@ impl ModelDeploymentService {
         //     .await?
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
+        // Params provided by user are stored as metadata on the deployment. Downstream deployment clients use this data to make decisions about how to deploy a model.
+        let metadata = serde_json::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
+            .ok()
+            .filter(|m| !m.is_empty());
+
         let model_deployment_props = ModelDeploymentProps {
             id: Uuid::now_v7(),
             platform: input.platform.clone(),
@@ -165,6 +177,7 @@ impl ModelDeploymentService {
             visibility: Visibility::Private,
             deployment_interface: None,
             replicas: None,
+            metadata: metadata.map(ModelDeploymentMetadata),
         };
         
         let deployment = ModelDeploymentDomainService::create_model_deployment(
