@@ -3467,6 +3467,7 @@ dependencies = [
  "agntcy-sdk",
  "amqprs",
  "async-trait",
+ "base64",
  "bson",
  "bytes",
  "chrono",
@@ -3487,6 +3488,7 @@ dependencies = [
  "strum 0.27.2",
  "strum_macros 0.27.2",
  "tapis-authenticator",
+ "tapis-tenants",
  "thiserror 2.0.17",
  "tokio",
  "tokio-retry",
@@ -3748,6 +3750,23 @@ dependencies = [
  "shared",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "tapis-tenants"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dcb7ffa8eda95d2046f23073509b4533a4d7a5448d9d81f5823183e80794b90"
+dependencies = [
+ "async-trait",
+ "http 1.4.0",
+ "reqwest",
+ "reqwest-middleware",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "url",
 ]
 
 [[package]]

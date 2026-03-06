@@ -11,14 +11,14 @@ pub struct SharedAppContext {
     pub state: Arc<SharedState>,
 }
 
-pub async fn initialize_idps() -> Vec<Arc<dyn FederatedIdentityProvider>> {
-    vec![
-        Arc::new(TapisFederatedIdentityProvider {}),
-    ]
+pub async fn initialize_idps() -> Result<Vec<Arc<dyn FederatedIdentityProvider>>, FederatedIdpRegistrarError> {
+    Ok(vec![
+        Arc::new(TapisFederatedIdentityProvider::new().await?),
+    ])
 }
 
 pub async fn build_ipd_registrar() -> Result<FederatedIdpRegistrar, FederatedIdpRegistrarError> {
-    let idps = initialize_idps().await;
+    let idps = initialize_idps().await?;
     let mut registrar = FederatedIdpRegistrar::new();
     for idp in idps {
         registrar.register(idp)?;

@@ -28,9 +28,32 @@ pub struct FederatedIdentity {
     pub authority: Authority,
     pub issuer: String, 
     pub subject: String,
-    pub metadata: Value,
+    pub metadata: Option<Value>,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
+}
+
+#[derive(Clone, Debug)]
+pub struct NewFederatedIdentityProps {
+    pub authority: Authority,
+    pub issuer: String, 
+    pub subject: String,
+    pub metadata: Option<Value>,
+}
+
+impl FederatedIdentity {
+    pub fn new(props: NewFederatedIdentityProps) -> Self {
+        let now = TimeStamp::now();
+        
+        Self {
+            authority: props.authority,
+            issuer: props.issuer,
+            subject: props.subject,
+            metadata: props.metadata,
+            created_at: now.clone(),
+            last_modified: now.clone()
+        }
+    }
 }
 
 impl FederatedIdentity {

@@ -1,8 +1,23 @@
-use crate::application::errors::ApplicationError;
 use crate::domain::entities::identity::{FederatedIdentity, Authority};
+use thiserror::Error;
+
+#[derive(Debug, Error, Clone)]
+pub enum FederatedIdentityProviderError {
+    #[error("Federated identity provider intialization error: Authority '{0}'. Error: {1}")]
+    InitializationError(Authority, String),
+
+    #[error("Malformed credentials: {0}")]
+    MalformedCredentials(String),
+
+    #[error("Internal  Idp error: {0}")]
+    InternalIdpError(String),
+
+    #[error("Invalid Credentials: {0}")]
+    InvalidCredentials(String),
+}
 
 #[async_trait::async_trait]
 pub trait FederatedIdentityProvider: Send + Sync {
-    async fn authenticate(&self, token: String) -> Result<Option<FederatedIdentity>, ApplicationError>;
+    async fn authenticate(&self, token: String) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError>;
     fn authority(&self) -> Authority;
 }

@@ -1,13 +1,16 @@
 use std::collections::HashSet;
 use std::sync::Arc;
-use crate::application::ports::identity::FederatedIdentityProvider;
+use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
 use crate::domain::entities::identity::Authority;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error)]
 pub enum FederatedIdpRegistrarError {
     #[error("IDP already registered with Authority {0}")]
-    DuplicateAuthorityRegistration(String)
+    DuplicateAuthorityRegistration(String),
+
+    #[error("IDP error: {0}")]
+    FederatedIdentityError(#[from] FederatedIdentityProviderError)
 }
 
 pub struct FederatedIdpRegistrar {
