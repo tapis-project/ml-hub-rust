@@ -25,7 +25,7 @@ pub struct Payload {
     pub tapis_token_type: String,
 
     #[serde(rename = "tapis/delegation")]
-    pub tapis_delegation: bool,
+    pub tapis_delegation: Option<bool>,
 
     #[serde(rename = "tapis/delegation_sub")]
     pub tapis_delegation_sub: Option<String>,
@@ -39,12 +39,13 @@ pub struct Payload {
     pub exp: u64,
 
     #[serde(rename = "tapis/client_id")]
-    pub tapis_client_id: String,
+    pub tapis_client_id: Option<String>,
 
     #[serde(rename = "tapis/grant_type")]
     pub tapis_grant_type: String,
 }
 
+#[derive(Debug)]
 pub struct Token {
     pub raw_token: String,
     pub header: Header,

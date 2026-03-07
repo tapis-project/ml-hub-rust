@@ -56,8 +56,8 @@ data:
         {
           "name": "VisiblePublic",
           "rules": [
-              {"field_path": ["annotations", "canonical", "gated"], "operator": "Eq", "value": false},
-              {"field_path": ["annotations", "canonical", "private"], "operator": "Eq", "value": false}
+              {"field_path": ["canonical", "gated"], "operator": "Eq", "value": false},
+              {"field_path": ["canonical", "private"], "operator": "Eq", "value": false}
           ]
         }
       ],
