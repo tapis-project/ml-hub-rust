@@ -28,6 +28,11 @@ FROM debian:bookworm-slim
 
 ARG SERVICE_NAME
 
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
+RUN apt update
+RUN apt install libssl3
+RUN apt-get install -y --no-install-recommends ca-certificates git git-lfs
+RUN update-ca-certificates
 COPY --from=builder /usr/local/mlhub/services/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
 ENV RUST_LOG=debug,shared=debug
