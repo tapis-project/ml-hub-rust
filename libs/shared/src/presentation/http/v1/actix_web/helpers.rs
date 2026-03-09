@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::application::ports::identity::FederatedIdentityProvider;
+use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
 use crate::presentation::http::v1::requests::headers::AuthToken;
 use crate::{domain::entities::identity::FederatedIdentity, presentation::http::v1::responses::JsonResponse};
 use crate::presentation::http::v1::requests::Parameters;
@@ -75,7 +75,12 @@ pub async fn authenticate(req: HttpRequest, version: String) -> Result<Federated
 
     let maybe_identity = match idp.authenticate(token.into_inner()).await {
         Ok(i) => i,
-        Err(err) => return Err(build_error_response(500, format!("Error during authentication: {}", err.to_string()), Some(version), None))
+        Err(err) => {
+            match err {
+                FederatedIdentityProviderError::InvalidCredentials(..) => return Err(build_error_response(401, format!("Authentication failed: {}", err.to_string()), Some(version), None)),
+                _ => return Err(build_error_response(500, format!("Error during authentication: {}", err.to_string()), Some(version), None)),
+            }
+        }
     };
 
     match maybe_identity {
