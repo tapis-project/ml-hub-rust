@@ -1,4 +1,4 @@
-use crate::domain::entities::identity::{FederatedIdentity, Authority};
+use crate::{application::errors::ApplicationError, domain::entities::identity::{Authority, FederatedIdentity}};
 use thiserror::Error;
 
 #[derive(Debug, Error, Clone)]
@@ -20,4 +20,9 @@ pub enum FederatedIdentityProviderError {
 pub trait FederatedIdentityProvider: Send + Sync {
     async fn authenticate(&self, token: String) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError>;
     fn authority(&self) -> Authority;
+}
+
+#[async_trait::async_trait]
+pub trait FederatedIdentityRepository: Send + Sync {
+    async fn save(&self, identity: &FederatedIdentity) -> Result<(), ApplicationError>;
 }
