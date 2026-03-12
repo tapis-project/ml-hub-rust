@@ -29,6 +29,7 @@ pub struct FederatedIdentity {
     pub issuer: String, 
     pub subject: String,
     pub metadata: Option<Value>,
+    pub tenants: Vec<String>,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
 }
@@ -38,6 +39,7 @@ pub struct NewFederatedIdentityProps {
     pub authority: Authority,
     pub issuer: String, 
     pub subject: String,
+    pub tenants: Vec<String>,
     pub metadata: Option<Value>,
 }
 
@@ -49,6 +51,7 @@ impl FederatedIdentity {
             authority: props.authority,
             issuer: props.issuer,
             subject: props.subject,
+            tenants: props.tenants,
             metadata: props.metadata,
             created_at: now.clone(),
             last_modified: now.clone()

@@ -12,3 +12,4 @@ pub mod operator;
 pub mod visibility;
 pub mod user;
 pub mod identity;
+pub mod tenant;

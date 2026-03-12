@@ -113,6 +113,7 @@ impl FederatedIdentityProvider for TapisFederatedIdentityProvider {
                     authority: Authority::Tapis,
                     issuer: validated_claims.iss,
                     subject: validated_claims.sub,
+                    tenants: vec![ validated_claims.tapis_tenant_id ],
                     metadata: None,
                 }
             )
