@@ -13,11 +13,14 @@ use crate::application::services::federated_ipd_registrar::FederatedIdpRegistrar
 use crate::presentation::http::v1::actix_web::helpers::get_header_value;
 use crate::presentation::http::v1::adapters::derive_header_keys_from_authorites;
 use serde_json::json;
+use log::debug;
 
 pub async fn authenticate(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<EitherBody<impl MessageBody>>, actix_web::Error> {
+    debug!("Authenticating");
+
     let federated_identity_service = match req.app_data::<web::Data<FederatedIdentityService>>().cloned() {
         Some(s) => s.into_inner(),
         None => return Ok(

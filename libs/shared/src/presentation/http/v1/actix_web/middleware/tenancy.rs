@@ -7,21 +7,25 @@ use actix_web::{
     Error,
     HttpMessage
 };
+use log::debug;
 
 pub async fn resolve_tenancy(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<EitherBody<impl MessageBody>>, Error> {
-    let federated_identity: Option<FederatedIdentity> = req.extensions()
-        .get::<FederatedIdentity>()
-        .map(|fid| fid.clone());
+    let federated_identity  = req.extensions()
+        .get::<Option<FederatedIdentity>>()
+        .map(|fid| fid.clone())
+        .flatten();
 
-    // TODO Dispatch the tenant resolver for the provided federated identity
+    // TODO #74 Dispatch the tenant resolver for the provided federated identity
     // here and ensure that the tenant's id exists on enumerated list of tenants
     // on the federated identity
     let maybe_tenant_id = federated_identity
         .as_ref()
         .and_then(|i| i.tenants.first().cloned());
+
+    debug!("tenant id: {:#?}", maybe_tenant_id);
     
     let mut maybe_tenant: Option<Tenant> = None;
     if let Some(id) = maybe_tenant_id{
