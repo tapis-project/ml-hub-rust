@@ -1,10 +1,6 @@
-use std::sync::Arc;
-use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
-use crate::presentation::http::v1::requests::headers::AuthToken;
-use crate::{domain::entities::identity::FederatedIdentity, presentation::http::v1::responses::JsonResponse};
+use crate::presentation::http::v1::responses::JsonResponse;
 use crate::presentation::http::v1::requests::Parameters;
 use crate::errors::Error;
-use actix_web::HttpMessage;
 use serde_json::Value;
 use actix_web::{HttpRequest, HttpResponse, http::StatusCode};
 
@@ -63,28 +59,4 @@ pub fn build_success_response(result: Option<Value>, message: Option<String>, ve
             metadata,
             version,
         })
-}
-
-pub async fn authenticate(req: HttpRequest, version: String) -> Result<FederatedIdentity, HttpResponse> {
-    let ext = req.extensions();
-    
-    let (token, idp) = match ext.get::<(AuthToken, Arc<dyn FederatedIdentityProvider>)>() {
-        Some((t, i)) => (t, i),
-        None => return Err(build_error_response(401, "Missing valid credentials for this request".into(), Some(version), None))
-    };
-
-    let maybe_identity = match idp.authenticate(token.into_inner()).await {
-        Ok(i) => i,
-        Err(err) => {
-            match err {
-                FederatedIdentityProviderError::InvalidCredentials(..) => return Err(build_error_response(401, format!("Authentication failed: {}", err.to_string()), Some(version), None)),
-                _ => return Err(build_error_response(500, format!("Error during authentication: {}", err.to_string()), Some(version), None)),
-            }
-        }
-    };
-
-    match maybe_identity {
-        Some(i) => Ok(i),
-        None => return Err(build_error_response(401, "Unauthenticated".into(), Some(version), None))
-    }
 }

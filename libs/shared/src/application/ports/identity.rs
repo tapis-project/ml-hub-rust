@@ -9,7 +9,7 @@ pub enum FederatedIdentityProviderError {
     #[error("Malformed credentials: {0}")]
     MalformedCredentials(String),
 
-    #[error("Internal  Idp error: {0}")]
+    #[error("Internal Idp error: {0}")]
     InternalIdpError(String),
 
     #[error("Invalid Credentials: {0}")]

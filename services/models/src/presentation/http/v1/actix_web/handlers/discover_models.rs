@@ -4,13 +4,15 @@ use crate::presentation::http::v1::actix_web::helpers::{
 };
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DisocverModelsQueryParams};
 use crate::bootstrap::factories::model_metadata_service_factory;
-use actix_web::{post, web, HttpRequest, Responder};
+use actix_web::{post, web, HttpMessage, HttpRequest, Responder};
+use shared::domain::entities::identity::FederatedIdentity;
+use shared::domain::entities::tenant::Tenant;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
-use crate::presentation::http::v1::actix_web::helpers::authenticate;
 use crate::bootstrap::state::AppState;
 use serde_json::{to_value, Value, Map};
+use log::debug;
 
 #[utoipa::path(
     post,
@@ -37,10 +39,18 @@ async fn discover_models(
     query: web::Query<DisocverModelsQueryParams>,
     req: HttpRequest,
 ) -> impl Responder {
-    let _identity = match authenticate(req).await {
-        Ok(i) => i,
-        Err(err) => return err
-    };
+    let _identity = req.extensions()
+        .get::<Option<FederatedIdentity>>()
+        .and_then(|inner| Some(inner.clone()))
+        .flatten();
+
+    let _tenant = req.extensions()
+        .get::<Option<Tenant>>()
+        .and_then(|inner| Some(inner.clone()))
+        .flatten();
+
+    debug!("{:#?}", _identity);
+    debug!("{:#?}", _tenant);
 
     let model_metadata_service = match model_metadata_service_factory(&data.db, data.client_strategy_sets.clone()).await {
         Ok(s) => s,

@@ -1,15 +1,16 @@
 use std::sync::Arc;
-use crate::presentation;
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::build_deployment_strategy_provider;
 use crate::infra::persistence::mongo::database::{ClientParams, get_db};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
-use actix_web::{App, HttpServer};
+use crate::presentation::http::v1::actix_web::handlers;
+use actix_web::{App, HttpServer, middleware::from_fn, web};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
-use shared::presentation::http::v1::actix_web::middleware::idp_resolver::IdpResolver;
+use shared::presentation::http::v1::actix_web::middleware::authentication::authenticate;
+use shared::presentation::http::v1::actix_web::middleware::tenancy::resolve_tenancy;
 use std::env;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
@@ -76,8 +77,8 @@ pub async fn run_server() -> std::io::Result<()> {
         })
         .expect("SharedState to be initialzed");
 
-    let idp_registrar = shared_app_context.idp_registrar;
-    let federated_identity_service = shared_app_context.federated_identity_service;
+    let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
+    let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
 
     // Initialize AppState
     let state = AppState {
@@ -95,42 +96,39 @@ pub async fn run_server() -> std::io::Result<()> {
                 panic!("Database initialization error: {}", err.to_string().as_str());
             })
             .expect("Datbase initialization error"),
-        idp_registrar: idp_registrar.clone(), 
     };
 
     HttpServer::new(move || {
         App::new()
-        .app_data(actix_web::web::Data::new(state.clone()))
-            .wrap(
-                IdpResolver::new(
-                    idp_registrar.clone(),
-                    federated_identity_service.clone(),
-                )
-            )
-            .service(presentation::http::v1::actix_web::handlers::index::index)
-            .service(presentation::http::v1::actix_web::handlers::health_check::health_check)
-            .service(presentation::http::v1::actix_web::handlers::get_model_by_platform::get_model_by_platform)
-            .service(presentation::http::v1::actix_web::handlers::list_models_by_platform::list_models_by_platform)
-            .service(presentation::http::v1::actix_web::handlers::ingest_external_model::ingest_external_model)
-            .service(presentation::http::v1::actix_web::handlers::discover_models_by_platform::discover_models_by_platform)
-            .service(presentation::http::v1::actix_web::handlers::discover_models::discover_models)
-            .service(presentation::http::v1::actix_web::handlers::publish_model_artifact::publish_model_artifact)
-            .service(presentation::http::v1::actix_web::handlers::list_platforms::list_platforms)
-            .service(presentation::http::v1::actix_web::handlers::download_artifact::download_artifact)
-            .service(presentation::http::v1::actix_web::handlers::upload_model_artifact::upload_model_artifact)
-            .service(presentation::http::v1::actix_web::handlers::associate_model_metadata_with_artifact::associate_model_metadata_with_artifact)
-            .service(presentation::http::v1::actix_web::handlers::create_model_metadata::create_model_metadata)
-            .service(presentation::http::v1::actix_web::handlers::publish_model_artifact::publish_model_artifact)
-            .service(presentation::http::v1::actix_web::handlers::list_model_artifacts::list_model_artifacts)
-            .service(presentation::http::v1::actix_web::handlers::list_model_publications::list_model_publications)
-            .service(presentation::http::v1::actix_web::handlers::list_model_ingestions::list_model_ingestions)
-            .service(presentation::http::v1::actix_web::handlers::list_publications_for_artifact::list_publications_for_artifact)
-            .service(presentation::http::v1::actix_web::handlers::get_model_ingestion::get_model_ingestion)
-            .service(presentation::http::v1::actix_web::handlers::get_model_publication::get_model_publication)
-            .service(presentation::http::v1::actix_web::handlers::get_model_artifact::get_model_artifact)
-            .service(presentation::http::v1::actix_web::handlers::list_tasks::list_tasks)
-            .service(presentation::http::v1::actix_web::handlers::ingest_canonical_model::ingest_canonical_model)
-            .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
+            .app_data(idp_registrar.clone())
+            .app_data(federated_identity_service.clone())
+            .app_data(web::Data::new(state.clone()))
+            .wrap(from_fn(resolve_tenancy))
+            .wrap(from_fn(authenticate))
+            .service(handlers::index::index)
+            .service(handlers::health_check::health_check)
+            .service(handlers::get_model_by_platform::get_model_by_platform)
+            .service(handlers::list_models_by_platform::list_models_by_platform)
+            .service(handlers::ingest_external_model::ingest_external_model)
+            .service(handlers::discover_models_by_platform::discover_models_by_platform)
+            .service(handlers::discover_models::discover_models)
+            .service(handlers::publish_model_artifact::publish_model_artifact)
+            .service(handlers::list_platforms::list_platforms)
+            .service(handlers::download_artifact::download_artifact)
+            .service(handlers::upload_model_artifact::upload_model_artifact)
+            .service(handlers::associate_model_metadata_with_artifact::associate_model_metadata_with_artifact)
+            .service(handlers::create_model_metadata::create_model_metadata)
+            .service(handlers::publish_model_artifact::publish_model_artifact)
+            .service(handlers::list_model_artifacts::list_model_artifacts)
+            .service(handlers::list_model_publications::list_model_publications)
+            .service(handlers::list_model_ingestions::list_model_ingestions)
+            .service(handlers::list_publications_for_artifact::list_publications_for_artifact)
+            .service(handlers::get_model_ingestion::get_model_ingestion)
+            .service(handlers::get_model_publication::get_model_publication)
+            .service(handlers::get_model_artifact::get_model_artifact)
+            .service(handlers::list_tasks::list_tasks)
+            .service(handlers::ingest_canonical_model::ingest_canonical_model)
+            .service(handlers::openapi::openapi)
             .service(
                 SwaggerUi::new("models-api/swagger-ui/{_:.*}")
                     .url("/models-api/specs/openapi.json", ApiDoc::openapi()),

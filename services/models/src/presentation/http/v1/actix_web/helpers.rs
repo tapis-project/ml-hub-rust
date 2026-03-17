@@ -1,8 +1,8 @@
-use actix_web::{HttpRequest, HttpResponse};
+use actix_web::HttpResponse;
 use clients::ClientError;
-use shared::{domain::entities::identity::FederatedIdentity, presentation::http::v1::actix_web::helpers::{
-    authenticate as auth, build_error_response as error, build_success_response as success
-}};
+use shared::presentation::http::v1::actix_web::helpers::{
+    build_error_response as error, build_success_response as success
+};
 use crate::config::VERSION;
 use serde_json::Value;
 
@@ -32,8 +32,4 @@ pub fn build_success_response(result: Option<Value>, message: Option<String>, me
     };
 
     success(result,  message, Some(String::from(VERSION)), meta)
-}
-
-pub async fn authenticate(req: HttpRequest) -> Result<FederatedIdentity, HttpResponse> {
-    Ok(auth(req, String::from(VERSION)).await?)
 }
