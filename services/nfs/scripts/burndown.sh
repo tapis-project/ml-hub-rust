@@ -2,6 +2,6 @@
 
 set -e
 
-rootDir=$1
+projectDir=$1
 
-kubectl delete -f "$rootDir/deploy/local/minikube/deployment.yaml"
+kubectl delete -f "$projectDir/deploy/k8s/minikube/nfs/deployment.yaml"

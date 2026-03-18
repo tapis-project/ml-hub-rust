@@ -2,9 +2,9 @@
 
 set -e
 
-rootDir=$1
+projectDir=$1
 
-kubectl apply -f "$rootDir/deploy/local/minikube/service.yaml" \
-    -f "$rootDir/deploy/local/minikube/pvc.yaml" \
-    -f "$rootDir/deploy/local/minikube/deployment.yaml" \
+kubectl apply -f "$projectDir/deploy/k8s/minikube/nfs/service.yaml" \
+    -f "$projectDir/deploy/k8s/minikube/nfs/pvc.yaml" \
+    -f "$projectDir/deploy/k8s/minikube/nfs/deployment.yaml" \
     

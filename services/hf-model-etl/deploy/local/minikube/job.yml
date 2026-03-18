@@ -30,15 +30,15 @@ spec:
           env:
             - name: RUST_LOG
               value: debug
-            - name: ARTIFACTS_DB_HOST
-              value: mlhub-artifact-db-service
-            - name: ARTIFACTS_DB_PORT
+            - name: MONGO_HOST
+              value: mlhub-mongo-service
+            - name: MONGO_PORT
               value: "27017"
-            - name: ARTIFACTS_DB_NAME
+            - name: MONGO_NAME
               value: mlhub
-            - name: ARTIFACTS_DB_PASSWORD
+            - name: MONGO_PASSWORD
               value: password
-            - name: ARTIFACTS_DB_USERNAME
+            - name: MONGO_USERNAME
               value: mlhub
             - name: MAX_PROCESSABLE_ENTRIES
               value: "10000"

@@ -44,9 +44,9 @@ From the project's root directory, run the following commands to initalize the p
 
 1. `./manage start nfs` - Starts the shared file system
 
-1. `./manage start artifact-mq` - Starts the artifact message broker
+1. `./manage start rabbit` - Starts the artifact message broker
 
-1. `./manage start artifact-db` - Starts the artifact database
+1. `./manage start mongo` - Starts the artifact database
 
 1. `./manage start artifact-ingester` - Start up the artifact ingestion workers
 
@@ -93,5 +93,5 @@ The `components.json` file contains and exhaustive list of every component in th
 
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI
-2. Run `kubectl port-forward svc/mlhub-artifact-db-service 27017:27017`
+2. Run `kubectl port-forward svc/mlhub-mongo-service 27017:27017`
 3. Create a connection to the ip:port combination output by that command 

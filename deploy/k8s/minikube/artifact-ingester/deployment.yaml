@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mlhub-artifact-ingester-deployment
+  name: mlhub-artifact-ingester-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-artifact-ingester-deployment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlhub-artifact-ingester-deployment
+    spec:
+      containers:
+        - env:
+            - name: RUST_LOG
+              value: debug
+            - name: MONGO_HOST
+              value: mlhub-mongo-service
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_NAME
+              value: mlhub
+            - name: MONGO_PASSWORD
+              value: password
+            - name: MONGO_USERNAME
+              value: mlhub
+            - name: SHARED_DATA
+              value: /srv/mlhub
+            - name: RABBIT_HOST
+              value: mlhub-rabbit-service
+            - name: RABBIT_PASSWORD
+              value: dev
+            - name: RABBIT_PORT
+              value: "5672"
+            - name: RABBIT_USER
+              value: dev
+          image: tapis/mlhub-artifact-ingester:local
+          imagePullPolicy: Never
+          name: artifact-ingester
+          resources: {}
+          tty: true
+          volumeMounts:
+              - name: nfs-server-mount
+                mountPath: /srv/mlhub/
+      volumes:
+        - name: nfs-server-mount
+          nfs:
+            server: '{{ NFS_SERVER_COMPONENT_IP }}'
+            path: /
+      restartPolicy: Always

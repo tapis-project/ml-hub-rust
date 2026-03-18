@@ -42,10 +42,10 @@ pub async fn run_server() -> std::io::Result<()> {
         }
     };
 
-    let broker_host = std::env::var("ARTIFACT_OP_MQ_HOST").expect("ARTIFACT_OP_MQ_URL missing from environment variables");
-    let broker_port = std::env::var("ARTIFACT_OP_MQ_PORT").expect("ARTIFACT_OP_MQ_PORT missing from environment variables");
-    let broker_username = std::env::var("ARTIFACT_OP_MQ_USER").expect("ARTIFACT_OP_MQ_USER missing from environment variables");
-    let broker_password = std::env::var("ARTIFACT_OP_MQ_PASSWORD").expect("ARTIFACT_OP_MQ_PASSWORD missing from environment variables");
+    let broker_host = std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
+    let broker_port = std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
+    let broker_username = std::env::var("RABBIT_USER").expect("RABBIT_USER missing from environment variables");
+    let broker_password = std::env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD missing from environment variables");
     
     let (_connection, channel) = open_channel(
         broker_host,
@@ -78,11 +78,11 @@ pub async fn run_server() -> std::io::Result<()> {
         client_strategy_sets,
         channel: Arc::new(channel),
         db: get_db(ClientParams{
-            username: env::var("ARTIFACTS_DB_USERNAME").expect("ARTIFACTS_DB_USERNAME env var not set"),
-            password: env::var("ARTIFACTS_DB_PASSWORD").expect("ARTIFACTS_DB_PASSWORD env var not set"),
-            host: env::var("ARTIFACTS_DB_HOST").expect("ARTIFACTS_DB_HOST env var not set"),
-            port: env::var("ARTIFACTS_DB_PORT").expect("ARTIFACTS_DB_PORT env var not set"),
-            db: env::var("ARTIFACTS_DB_NAME").expect("ARTIFACTS_DB_NAME env var not set"),
+            username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
+            password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
+            host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
+            port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
+            db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
         })
             .await
             .map_err(|err| {

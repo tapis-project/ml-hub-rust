@@ -20,7 +20,7 @@ APIs live in the `services` directory. Here you will find the core APIs that pro
 You can find the source code of an API in `services/<service>` where `<service>` is the name of the API. For example, The Models API source code is located at `services/models`.
 
 Each API follows a similar pattern. In the root directory of each API you will find the following directories:
-- **deploy**: This contains the files that are used to deploy the API in some environment. Each available deployment method and environment in which the API can be deployed will have their own subdirectory. For example, the files for deploying the Models API to a local Minkube cluster are located in `services/models/deploy/local/minkube`.
+- **deploy**: This contains the files that are used to deploy the API in some environment. Each available deployment method and environment in which the API can be deployed will have their own subdirectory. For example, the files for deploying the Models API to a Minkube cluster are located in `services/models/deploy/local/minkube`.
 - **docs**: 
 - **scripts**:
 - **spec**: Contains the API's specification. Each type of spec will be stored in a subdirectory by the name of the spec. For example, the OpenAPI spec for the Models API will be in the `services/models/spec/openapi` directory.
@@ -81,7 +81,7 @@ This directory (`services`) contains the deployment files for the infrastructura
 
 **Infrastructure catalog**
 
-- [Artifact DB](./services/artifact-db/README.md) - 
+- [Artifact DB](./services/mongo/README.md) - 
 
 - [Artifact MQ](./services/artifact-mq/README.md) - 
 
