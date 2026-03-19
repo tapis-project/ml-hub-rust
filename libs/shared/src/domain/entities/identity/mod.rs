@@ -18,15 +18,10 @@ impl Authority {
     }
 }
 
-pub struct Realm {
-    pub authority: Authority,
-    pub issuer: String
-}
-
 #[derive(Clone, Debug)]
 pub struct FederatedIdentity {
     pub authority: Authority,
-    pub issuer: String, 
+    pub issuer: String,
     pub subject: String,
     pub metadata: Option<Value>,
     pub tenants: Vec<String>,
@@ -55,15 +50,6 @@ impl FederatedIdentity {
             metadata: props.metadata,
             created_at: now.clone(),
             last_modified: now.clone()
-        }
-    }
-}
-
-impl FederatedIdentity {
-    pub fn realm(&self) -> Realm {
-        Realm {
-            authority: self.authority.clone(),
-            issuer: self.issuer.clone(),
         }
     }
 }
