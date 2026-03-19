@@ -1,10 +1,10 @@
 # Contributing to MLHub 🤠
 
-Thank you for considering contributing to **MLHub!** We welcome all kinds of contributions that help us build a robust and maintainable codebase.
+Thank you for considering contributing to **MLHub!**. We welcome all kinds of contributions that help us build a robust and maintainable codebase.
 
-Please take a few minutes to review this document so you can understand the standards we follow and help us keep the project consistent and high-quality.
+Please take a few minutes to review this document so you can understand the standards we follow and help us keep the project patterns and styles consistent and high-quality.
 
-Before contributing to this project, please read this document as well as the [DEVELOPERS GUIDE](./DEVELOPERS_GUIDE.md) for a more in-depth explanation of this project's components, structure, and architecture.
+Before contributing to this project, please read this document as well as the [DEVELOPERS GUIDE](./DEVELOPERS_GUIDE.md) for a more in-depth explanation of this project's components, directory structure, and architecture.
 
 ---
 
@@ -30,13 +30,20 @@ When submitting a PR, ensure the following:
    - [ ] I have added tests for my changes
    - [ ] I have updated the documentation as necessary
    - [ ] I have run the tests and they are passing
-   - [ ] I have validated that the new feature(s) I added works as expected
+   - [ ] I have validated that the new feature(s) I added work as expected
+   - [ ] I did not break any existing functionality
 
 ## Testing
 
-1. **Unit Tests**: Add or update unit tests for any new features or bug fixes.
-2. **Test Coverage**: Our goal is to maintain at least 80% test coverage across modules. If you can, please add coverage for any critical code paths.
-3. **Run Tests**: Before submitting your PR, ensure all tests pass by running the following from the root of the project:
+Before submitting a PR, you should run all relevant unit and functional tests.
+
+Unit tests should be colocated with the functionality they are testing. Ex. If youre working in module `foo/bar.rs`, you should be writing tests in `foo/bar.test.rs`.
+
+This project uses `cargo`s built-in testing framework. PRs that add 3rd-party testing libraries will be rejected.
+
+0. **Unit Tests**: Add or update unit tests for any new features or bug fixes.
+0. **Test Coverage**: Our goal is to maintain at least 80% test coverage across all modules. If you can, please add coverage for any critical code paths.
+0. **Run Tests**: Before submitting your PR, ensure all tests pass by running the following from the root of the project:
 
    ```bash
    ./manage test <component>
@@ -73,7 +80,7 @@ We use specific design patterns to ensure consistency across the project. Here a
 
 > **Note** See Service Pattern below
 
-- **Service Pattern** Use this pattern to encapsulate complex business logic including DTO validation, interactions with the Data Layer via repositories (mentioned above), etc.
+- **Service Pattern** Use this pattern to encapsulate complex business logic including DTO validation, interactions with the Data Layer via repositories (mentioned above), orchestrating application and domain logic with cross-cutting concerns, etc.
 
 > **Note**: When adding new code, refer to existing patterns and follow them whenever applicable. If your contribution requires a new pattern, please mention it in the PR description so we can review its suitability for this project and add it to this documentation.
 

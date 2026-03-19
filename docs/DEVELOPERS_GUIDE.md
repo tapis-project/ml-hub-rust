@@ -14,82 +14,82 @@ First, ensure that the version of `rustc` on your machine is **1.91.1** or highe
 This project is structured as a monorepo. Each component of this project is grouped into one of the following categories.
 APIs, libraries, binaries, infrastructure, dev tools, and sdks.
 
-### APIs (src/apis)
+### APIs
 
-APIs live in the src/apis directory. Here you will find the core APIs that provide MLHub functionality; The Models API, The Datasets API, The Deployments API, and the Agents API. These API's follow the standard cargo binary structure.
-You can find the source code of an API in `src/apis/<service>` where `<service>` is the name of the API. For example, The Models API source code is located at `src/apis/models`.
+APIs live in the `services` directory. Here you will find the core APIs that provide MLHub functionality; The Models API, The Datasets API, The Deployments API, and the Agents API. These API's follow the standard cargo binary structure.
+You can find the source code of an API in `services/<service>` where `<service>` is the name of the API. For example, The Models API source code is located at `services/models`.
 
 Each API follows a similar pattern. In the root directory of each API you will find the following directories:
-- **deploy**: This contains the files that are used to deploy the API in some environment. Each available deployment method and environment in which the API can be deployed will have their own subdirectory. For example, the files for deploying the Models API to a local Minkube cluster are located in `src/apis/models/deploy/local/minkube`.
+- **deploy**: This contains the files that are used to deploy the API in some environment. Each available deployment method and environment in which the API can be deployed will have their own subdirectory. For example, the files for deploying the Models API to a Minkube cluster are located in `services/models/deploy/local/minkube`.
 - **docs**: 
 - **scripts**:
-- **spec**: Contains the API's specification. Each type of spec will be stored in a subdirectory by the name of the spec. For example, the OpenAPI spec for the Models API will be in the `src/apis/models/spec/openapi` directory.
+- **spec**: Contains the API's specification. Each type of spec will be stored in a subdirectory by the name of the spec. For example, the OpenAPI spec for the Models API will be in the `services/models/spec/openapi` directory.
 - **src**
 
 
 **API catalog**
 
-- [Models](./src/apis/models/README.md)
+- [Models](./services/models/README.md)
 
-- [Datasets](./src/apis/datasets/README.md) - [Under Construction]
+- [Datasets](./services/datasets/README.md) - [Under Construction]
 
-- [Deployments](./src/apis/deployments/README.md) - [Under Construction]
+- [Deployments](./services/deployments/README.md)
 
-- [Agents](./src/apis/agents/README.md) - [Under Construction]
+- [Agents](./services/agents/README.md) - [Under Construction]
 
-### Binaries (src/bins)
+### Binaries
 
-Binaries are standalone executables that live in the `src/bins` directory. This is where all non-API binaries are stored. For example, the MLHub CLI, agent spec generation code, and the artifact ingestion and publishing workers all live in this directory.
+Binaries are standalone executables that live in the `services` directory. This is where all non-API binaries are stored. For example, the MLHub CLI, agent spec generation code, and the artifact ingestion and publishing workers all live in this directory.
 
 **Binaries catalog**
 
-- [Artifact Ingester](./src/bins/artifact-ingester/README.md)
+- [Artifact Ingester](./services/artifact-ingester/README.md)
 
-- [Artifact Publisher](./src/bins/artifact-publisher/README.md)
+- [Artifact Publisher](./services/artifact-publisher/README.md)
 
-- [MLHub CLI](./src/bins/cli/README.md)
+- [Model Deployment Controller](./services/artifact-publisher/README.md)
 
-### Libraries (src/libs)
+### Libraries (libs)
 
-Libraries are reusable codes that are shared between apis, binaries, and other libraries. Libraries can also be used to support development through codegen and sdks. These libraries are located in the `src/libs` directory. A comprehensive list of libraries developed for this project can be found below in the **Library Catalog** along with a short description.
+Libraries are reusable codes that are shared between apis, binaries, and other libraries. Libraries can also be used to support development through codegen and sdks. These libraries are located in the `libs` directory. A comprehensive list of libraries developed for this project can be found below in the **Library Catalog** along with a short description.
 
 **Library Catalog**
 
-- [shared](./src/libs/shared/README.md) - Contains the shared layers, project level constants, and various utilities. 
+- [shared](./libs/shared/README.md) - Contains the shared layers, project level constants, and various utilities. 
 
-- [clients](./src/libs/clients/README.md) - Contains the interfaces (traits) implemented by the various clients that provide the core features of MLHub (Ex. Model and dataset discovery, ingestion, and publishing, model deployment, etc)
+- [clients](./libs/clients/README.md) - Contains the interfaces (traits) implemented by the various clients that provide the core features of MLHub (Ex. Model and dataset discovery, ingestion, and publishing, model deployment, etc)
 
-- [client-provider](./src/libs/client-provider/README.md) - Provides concrete client interfaces.
+- [client-provider](./libs/client-provider/README.md) - Provides concrete client interfaces.
 
-- [huggingface-client](./src/libs/huggingface-client/README.md) - Client for fetching, discovering, publishing, and ingesting HuggingFace models and datasets and their metadata
+- [huggingface-client](./libs/huggingface-client/README.md) - Client for fetching, discovering, publishing, and ingesting HuggingFace models and datasets and their metadata
 
-- [git-lfs-client](./src/libs/git-lfs-client/README.md) - Client for private/public Git registries with LFS. This library can publish ingest model and dataset artifacts from git-backed sources. This can be used for artifacts on Github as well. 
+- [git-lfs-client](./libs/git-lfs-client/README.md) - Client for private/public Git registries with LFS. This library can publish ingest model and dataset artifacts from git-backed sources. This can be used for artifacts on Github as well. 
 
-- [github-lfs-client](./src/libs/github-lfs-client/README.md) - Client from ingesting and publishing model and dataset artifacts to Github and LFS. Essentially a specialized version of the **git-lfs-client**
+- [github-lfs-client](./libs/github-lfs-client/README.md) - Client from ingesting and publishing model and dataset artifacts to Github and LFS. Essentially a specialized version of the **git-lfs-client**
 
-- [patra-client](./src/libs/patra-client/README.md) - Handles model metadata listing, discovery, and publishing to the Patra platform
+- [patra-client](./libs/patra-client/README.md) - Handles model metadata listing, discovery, and publishing to the Patra platform
 
-- [s3-client](./src/libs/s3-client/README.md) - Client for publishing and ingesting artifacts from s3-compatible storage
+- [s3-client](./libs/s3-client/README.md) - Client for publishing and ingesting artifacts from s3-compatible storage
 
-- [tacc-tapis-client](./src/libs/tacc-tapis-client/README.md) - Client for publishing and ingesting artifacts from Tapis Systems defined in the TACC Tapis deployment
+- [tacc-tapis-client](./libs/tapis-client/README.md) - Client for publishing and ingesting artifacts from Tapis Systems defined in the TACC Tapis deployment
 
-- [mlhub-rust-sdk](./src/libs/mlhub-tust-sdk/README.md) - MLHub's software development kit (SDK) generated from the API's OpenAPI specifications
+- [mlhub-rust-sdk](./libs/mlhub-tust-sdk/README.md) - MLHub's software development kit (SDK) generated from the API's OpenAPI specifications
 
-### Infra (src/infra)
+### Infra (services)
 
-This directory (`src/infra`) contains the deployment files for the infrastructural components that support MLHub operations such as databases, message brokers, remote file systems, and reverse proxies.
+This directory (`services`) contains the deployment files for the infrastructural components that support MLHub operations such as databases, message brokers, remote file systems, and reverse proxies.
 
 **Infrastructure catalog**
 
-- [Artifact DB](./src/infra/artifact-db/README.md) - 
+- [Artifact DB](./services/mongo/README.md) - 
 
-- [Artifact MQ](./src/infra/artifact-mq/README.md) - 
+- [Artifact MQ](./services/artifact-mq/README.md) - 
 
-- [Inference DB](./src/infra/inference-db/README.md) - 
+- [Inference DB](./services/inference-db/README.md) - 
 
-- [NFS Server](./src/infra/nfs/README.md) - 
+- [NFS Server](./services/nfs/README.md) - 
 
-- [Traefik Reverse Proxy](./src/infra/traefik/README.md) - 
+- [Traefik Reverse Proxy](./services/traefik/README.md) - 
 
 
 ## Software Architecture 📐
@@ -118,7 +118,11 @@ The application layer is responsible for orchestrating business logic. Service's
 
 #### 2.4 Services
 
-**Services** and their methods encapsulate the logic for every use case/operation.
+**Services** and their methods encapsulate the logic for every use case/operation and are the entrypoints to the presentation layer for calling into the application layer.
+
+#### 2.5 Workflows
+
+**Workflows** are encapsulations of commonly repeated logic througout the application layer. They should be invoked inside of application services.
 
 ### 3. The Domain Layer
 
@@ -130,10 +134,4 @@ This layer encapsulates the implementation details of the technologies used in t
 
 ### 5. The Bootstrap Layer
 
-## Adding New Components
-
-### Adding a new API
-
-### Adding a new Library
-
-### Adding a new Infrastructure component
+The bootstrap layer is the composition root for a service. This is where the concrete infrastructure-layer implementations are instantiated and injected into application layer services. These implementations conform to some **port** in the application layer.

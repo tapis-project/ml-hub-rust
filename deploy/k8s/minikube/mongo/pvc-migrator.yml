@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-migrator
+spec:
+  restartPolicy: Never
+  containers:
+    - name: migrator
+      image: busybox
+      command: ["sh", "-c", "cp -a /old/. /new/ && echo 'done' && sleep 3600"]
+      volumeMounts:
+        - name: old-volume
+          mountPath: /old
+        - name: new-volume
+          mountPath: /new
+  volumes:
+    - name: old-volume
+      persistentVolumeClaim:
+        claimName: mlhub-artifact-db-pvc
+    - name: new-volume
+      persistentVolumeClaim:
+        claimName: mlhub-mongo-pvc

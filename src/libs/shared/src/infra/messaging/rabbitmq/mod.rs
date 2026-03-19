@@ -1,1 +1,0 @@
-pub mod artifact_op_message_publisher;

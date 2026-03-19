@@ -42,7 +42,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/models/**/*
+            services/models/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -70,7 +70,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/models/.dockerignore
+        run: rm .dockerignore services/models/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -218,7 +218,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/datasets/**/*
+            services/datasets/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -246,7 +246,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/datasets/.dockerignore
+        run: rm .dockerignore services/datasets/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -275,7 +275,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/inference/**/*
+            services/inference/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -303,7 +303,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/inference/.dockerignore
+        run: rm .dockerignore services/inference/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -332,7 +332,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/training/**/*
+            services/training/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -360,7 +360,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/training/.dockerignore
+        run: rm .dockerignore services/training/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
