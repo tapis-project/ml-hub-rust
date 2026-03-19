@@ -2,3 +2,4 @@ components-lock.json
 target
 .idea
 .vscode
+.!*

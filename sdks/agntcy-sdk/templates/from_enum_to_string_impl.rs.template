@@ -1,0 +1,8 @@
+{{ feature_attr }}
+impl From<{{ Category }}> for String {
+    fn from(value: {{ Category }}) -> String {
+        match value {
+{{ match_items }}
+        }.to_string()
+    }
+}

@@ -1,0 +1,48 @@
+use crate::domain::entities::artifact_publication as entities;
+use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
+use crate::domain::entities::timestamp::TimeStamp;
+use crate::infra::persistence::mongo::documents::artifact_publication as documents;
+use crate::infra::persistence::mongo::documents::artifact_publication::ArtifactType as ArtifactTypeDoc;
+use uuid::Uuid;
+
+impl From<ArtifactTypeDoc> for ArtifactTypeEntity {
+    fn from(value: ArtifactTypeDoc) -> Self {
+        match value {
+            ArtifactTypeDoc::Dataset => ArtifactTypeEntity::Dataset,
+            ArtifactTypeDoc::Model => ArtifactTypeEntity::Model
+        }
+    }
+}
+
+impl From<&documents::ArtifactPublication> for entities::ArtifactPublication {
+    fn from(value: &documents::ArtifactPublication) -> Self {
+        Self {
+            id: Uuid::from_bytes(value.id.bytes()),
+            artifact_id: Uuid::from_bytes(value.artifact_id.bytes()),
+            artifact_type: ArtifactTypeEntity::from(value.artifact_type.clone()),
+            attempts: value.attempts,
+            last_message: value.last_message.clone(),
+            target_platform: value.target_platform.clone(),
+            created_at: TimeStamp::from(value.created_at.to_chrono()),
+            last_modified: TimeStamp::from(value.last_modified.to_chrono()),
+            status: entities::ArtifactPublicationStatus::from(value.status.clone())
+        }
+    }
+}
+
+impl From<documents::ArtifactPublicationStatus> for entities::ArtifactPublicationStatus {
+    fn from(value: documents::ArtifactPublicationStatus) -> Self {
+        match value {
+            documents::ArtifactPublicationStatus::Submitted => entities::ArtifactPublicationStatus::Submitted,
+            documents::ArtifactPublicationStatus::Pending => entities::ArtifactPublicationStatus::Pending,
+            documents::ArtifactPublicationStatus::Extracted => entities::ArtifactPublicationStatus::Extracted,
+            documents::ArtifactPublicationStatus::Extracting => entities::ArtifactPublicationStatus::Extracting,
+            documents::ArtifactPublicationStatus::PublishingMetadata => entities::ArtifactPublicationStatus::PublishingMetadata,
+            documents::ArtifactPublicationStatus::PublishedMetadata => entities::ArtifactPublicationStatus::PublishedMetadata,
+            documents::ArtifactPublicationStatus::PublishingArtifact => entities::ArtifactPublicationStatus::PublishingArtifact,
+            documents::ArtifactPublicationStatus::PublishedArtifact => entities::ArtifactPublicationStatus::PublishedArtifact,
+            documents::ArtifactPublicationStatus::Finished => entities::ArtifactPublicationStatus::Finished,
+            documents::ArtifactPublicationStatus::Failed => entities::ArtifactPublicationStatus::Failed,
+        }
+    }
+}

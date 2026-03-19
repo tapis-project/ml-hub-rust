@@ -1,0 +1,95 @@
+{
+    "name": "hf.author.original-model-name", // "<model.modelId>"
+    "author": "hf.author", // "hf.<model.author>"
+    "model_type": "", // no mapping // change to array
+    "libraries": "", // transformers | litserve | ollama | llamacpp // change to array
+    "image": "", // not used
+    "keywords": null, // model.tags
+    "annotations": {
+        "_canonical": {
+            "platform": "huggingface",
+            "author": "", // model.author
+            "name": "", // model.modelId.split("/")[1]
+            "model_id": "", // model.modelId
+            "url": "https://huggingface.co/models/author/name", // https://huggingface.co/models/<model.modelId>
+            "likes": "", // model.likes
+            "downloads": "", // models.downloads
+            "trendingScore": "", // models.trendingScore
+            "visibility": "" // models.private ? "private" : "public"
+        },
+        "_internal": {
+            "metadata_created_at": "",
+            "ingested": false,
+            "deployment_strat": [
+
+            ]
+        }
+    },
+    "multi_modal": true, // can infer from task type // may not be necessary
+    "model_inputs": [ // ignore
+        {
+            "data_type": "uint8",
+            "shape": [
+                1,
+                224,
+                224,
+                3
+            ]
+        }
+    ],
+    "model_outputs": [ // ignore
+        {
+            "data_type": "float32",
+            "shape": [
+                1,
+                3
+            ]
+        }
+    ],
+    "task_types": [ // "".join([part.capitalize() for parts in model.pipeline_tag.split("-")])
+        "ImageClassification"
+    ],
+    "inference_precision": "int8", // ignore
+    "inference_hardware": { // ignore for now - Speak with Andrii from Gateways about deducing these values from hf metadata ~ Nathan Freeman
+        "cpus": 2,
+        "memory_gb": 8,
+        "disk_gb": null,
+        "accelerators": [],
+        "architectures": null
+    },
+    "inference_software_dependencies": [], // ignore
+    "inference_max_energy_consumption_watts": 45, // ignore
+    "inference_max_latency_ms": 30, // ignore
+    "inference_min_throughput": 300, // ignore
+    "inference_max_compute_utilization_percentage": 70, // ignore
+    "inference_max_memory_usage_mb": 1024, // ignore
+    "inference_distributed": false, // ignore
+    "training_time": 18000, // ignore
+    "training_precision": "int8", // ignore
+    "training_hardware": { // ignore
+        "cpus": 8,
+        "memory_gb": 32,
+        "disk_gb": null,
+        "accelerators": [],
+        "architectures": null
+    },
+    "pretraining_datasets": [ // ignore // { name: String, url: String, official: bool }
+        "ImageNet"
+    ],
+    "finetuning_datasets": [ // ignore
+        "CatsVsDogs"
+    ],
+    "edge_optimized": true, // ignore
+    "quantization_aware": true, // ignore
+    "supports_quantization": true, // ignore
+    "pretrained": true, // ignore
+    "pruned": true, // ignore
+    "slimmed": true, // ignore
+    "training_distributed": false, // ignore
+    "training_max_energy_consumption_watts": 400, // ignore
+    "regulatory": [ // ignore
+        "ISO/IEC 27001"
+    ],
+    "license": "MIT", // model.tags[$].split("license:")[1]
+    "bias_evaluation_score": -1 // ignore
+}

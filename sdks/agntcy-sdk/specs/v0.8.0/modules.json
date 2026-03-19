@@ -1,0 +1,100 @@
+[
+  {
+    "name": "prompt",
+    "family": "module",
+    "description": "Describes common LLM interaction prompts to use the agent.",
+    "uid": 10202,
+    "extends": "llm",
+    "category": "core",
+    "caption": "LLM Prompt",
+    "category_name": "Core"
+  },
+  {
+    "name": "base_module",
+    "family": "module",
+    "description": "The base module is a generic module defining a set of attributes for module classes.",
+    "uid": 0,
+    "category": "other",
+    "caption": "Module"
+  },
+  {
+    "name": "model",
+    "family": "module",
+    "description": "Describes LLM support and its configuration for a given agent.",
+    "uid": 10201,
+    "extends": "llm",
+    "category": "core",
+    "caption": "LLM Model",
+    "category_name": "Core"
+  },
+  {
+    "name": "llm",
+    "family": "module",
+    "description": "Modules for basic LLM functionality.",
+    "uid": 102,
+    "extends": "core",
+    "category": "core",
+    "caption": "LLM",
+    "category_name": "Core"
+  },
+  {
+    "name": "observability",
+    "family": "module",
+    "description": "A module describing how the agent can be observed.",
+    "uid": 101,
+    "extends": "core",
+    "category": "core",
+    "caption": "Observability",
+    "category_name": "Core"
+  },
+  {
+    "name": "a2a",
+    "family": "module",
+    "description": "Describes A2A card details for communication and usage with A2A protocol.",
+    "uid": 203,
+    "extends": "integration",
+    "category": "integration",
+    "caption": "A2A",
+    "category_name": "Integration"
+  },
+  {
+    "name": "acp",
+    "family": "module",
+    "description": "Agent Connect Protocol manifest",
+    "uid": 201,
+    "extends": "integration",
+    "category": "integration",
+    "caption": "ACP Manifest",
+    "@deprecated": {
+      "message": "ACP is deprecated, please use A2A instead.",
+      "since": "0.8.0"
+    },
+    "category_name": "Integration"
+  },
+  {
+    "name": "agentspec",
+    "family": "module",
+    "description": "Open Agent Spec is a specification language to define the structure of agentic systems, from simple tool-use agents to structured workflows and multi-agent systems. This module describes Open Agent Spec details to inform about the agent structure.",
+    "uid": 204,
+    "extends": "integration",
+    "category": "integration",
+    "references": [
+      {
+        "description": "Open Agent Spec Documentation",
+        "url": "https://oracle.github.io/agent-spec/index.html"
+      }
+    ],
+    "caption": "Agent Spec",
+    "category_name": "Integration"
+  },
+  {
+    "name": "mcp",
+    "family": "module",
+    "description": "Describes MCP servers required to run and interact with the agent.",
+    "uid": 202,
+    "extends": "integration",
+    "category": "integration",
+    "caption": "MCP",
+    "category_name": "Integration"
+  }
+]

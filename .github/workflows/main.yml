@@ -2,11 +2,11 @@ name: Tapis MLHub CI
 
 on:
   push:
-    branches: [ dev, staging, main ]
+    branches: [ dev, staging, test, main ]
     tags:
       - 'v*.*.*'
   pull_request:
-    branches: [ dev, staging, main ]
+    branches: [ dev, staging, test, main ]
 
 jobs:
   Set_Image_Tag:
@@ -42,7 +42,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/models/**/*
+            services/models/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -70,7 +70,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/models/.dockerignore
+        run: rm .dockerignore services/models/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -81,6 +81,125 @@ jobs:
       # Push the all tags for the image
       - name: Push All Tags
         run: ./manage pusht models -sv
+        if: steps.git-diff.outputs.diff
+
+  HF_Model_ETL:
+    needs:
+      - Set_Image_Tag
+    name: HF_Model_ETL_Extract_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/bins/hf-model-etl/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # # Compile and run tests
+      # - name: Test
+      #   run: "./manage test models -sv"
+      #   if: steps.git-diff.outputs.diff
+
+      # Compile the release binary of the api
+      - name: Compile
+        run: "./manage install hf-model-etl -sv"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/bins/hf-model-etl/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the extract step
+      - name: Build_Extract_Image
+        run: "./manage build-extract hf-model-etl -sv -t extract-img tapis/mlhub-hf-model-etl-extract -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the transform-load step
+      - name: Build_Transform_Load_Image
+        run: "./manage build-transform-load hf-model-etl -sv -t transform-load-img tapis/mlhub-hf-model-etl-transform-load -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: ./manage pusht hf-model-etl -sv -t transform-load-img tapis/mlhub-hf-model-etl-transform-load -t extract-img tapis/mlhub-hf-model-etl-extract
+        if: steps.git-diff.outputs.diff
+
+  Models_Migrator:
+    needs:
+      - Set_Image_Tag
+    name: Models_Migrator_Compile_Test_Build_Push
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Resolve all diffs if any for this api
+      - id: git-diff
+        name: Check Git Diff
+        uses: technote-space/get-diff-action@v6
+        with:
+          PATTERNS: |
+            src/bins/models-migrator/**/*
+
+      # Setup rust
+      - name: Setup Rust
+        run: rustup toolchain install stable
+        if: steps.git-diff.outputs.diff
+
+      # # Compile and run tests
+      # - name: Test
+      #   run: "./manage test models -sv"
+      #   if: steps.git-diff.outputs.diff
+
+      # Compile the release binary of the api
+      - name: Compile
+        run: "./manage install models-migrator -sv"
+        if: steps.git-diff.outputs.diff
+
+      # Log into dockerhub with CIC credentials
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+        if: steps.git-diff.outputs.diff
+
+      # Remove the docker ignore file so that the gh actions Dockerfile will 
+      # permit the target/release/<service> binary to be copied into the image
+      - name: Delete docker ignore files 
+        run: rm .dockerignore src/bins/models-migrator/.dockerignore
+        if: steps.git-diff.outputs.diff
+
+      # Build the image for the given branch or git tag
+      - name: Build_Image
+        run: "./manage build models-migrator -sv -t env gh-actions -t tag ${{ needs.Set_Image_Tag.outputs.image_tag }}"
+        if: steps.git-diff.outputs.diff
+
+      # Push the all tags for the image
+      - name: Push All Tags
+        run: ./manage pusht models-migrator -sv
         if: steps.git-diff.outputs.diff
 
   Datasets_API:
@@ -99,7 +218,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/datasets/**/*
+            services/datasets/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -127,7 +246,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/datasets/.dockerignore
+        run: rm .dockerignore services/datasets/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -156,7 +275,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/inference/**/*
+            services/inference/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -184,7 +303,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/inference/.dockerignore
+        run: rm .dockerignore services/inference/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
@@ -213,7 +332,7 @@ jobs:
         uses: technote-space/get-diff-action@v6
         with:
           PATTERNS: |
-            src/apis/training/**/*
+            services/training/**/*
 
       # Setup rust
       - name: Setup Rust
@@ -241,7 +360,7 @@ jobs:
       # Remove the docker ignore file so that the gh actions Dockerfile will 
       # permit the target/release/<service> binary to be copied into the image
       - name: Delete docker ignore files 
-        run: rm .dockerignore src/apis/training/.dockerignore
+        run: rm .dockerignore services/training/.dockerignore
         if: steps.git-diff.outputs.diff
 
       # Build the image for the given branch or git tag
