@@ -9,12 +9,11 @@ use crate::presentation::http::v1::requests::{
 use crate::presentation::http::v1::responses::ModelDeployment;
 use platforms::Platform;
 use actix_web::{
-    post,
-    web,
-    Responder
+    post, web, HttpMessage, HttpRequest, Responder
 };
 use serde_json::to_value;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
+use shared::domain::entities::identity::FederatedIdentity;
 
 #[utoipa::path(
     post,
@@ -37,6 +36,7 @@ async fn deploy_model_with_strategy(
     data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
+    identity: FederatedIdentity,
 ) -> impl Responder {
     let maybe_strategy = data.client_strategy_sets
         .iter()
