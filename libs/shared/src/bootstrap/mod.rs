@@ -1,10 +1,17 @@
 use std::sync::Arc;
+
+use strum_macros::{EnumString, Display};
 use serde::Deserialize;
+
+// Ports
 use crate::application::ports::identity::FederatedIdentityProvider;
+
+// Services
 use crate::application::services::federated_identity_service::FederatedIdentityService;
 use crate::application::services::federated_idp_registrar::{FederatedIdpRegistrar, FederatedIdpRegistrarError};
-use crate::infra::identity::tapis_federated_identity_provider::TapisFederatedIdentityProvider;
-use strum_macros::{EnumString, Display};
+
+// Adapters
+use crate::infra::identity::tapis;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct SiteConfiguration {
@@ -46,7 +53,7 @@ pub async fn initialize_idps(idps: &Vec<Idp>) -> Result<Vec<Arc<dyn FederatedIde
     let mut initialized_idps: Vec<Arc<dyn FederatedIdentityProvider>> = Vec::with_capacity(idps.len());
     for idp in idps {
         match idp {
-            Idp::Tapis => initialized_idps.push(Arc::new(TapisFederatedIdentityProvider::new().await?))
+            Idp::Tapis => initialized_idps.push(Arc::new(tapis::idp::FederatedIdentityProvider::new().await?))
         }
     }
     

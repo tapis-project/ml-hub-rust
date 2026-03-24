@@ -1,4 +1,4 @@
-use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
+use crate::application::ports::identity::{FederatedIdentityProvider as Port, FederatedIdentityProviderError};
 use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps};
 use crate::bootstrap::Idp;
 use jsonwebtoken::Algorithm;
@@ -70,11 +70,11 @@ impl Jwt for Token {
     }
 }
 
-pub struct TapisFederatedIdentityProvider {
+pub struct FederatedIdentityProvider {
     tenants: Vec<Tenant>,
 }
 
-impl TapisFederatedIdentityProvider {
+impl FederatedIdentityProvider {
     pub async fn new() -> Result<Self, FederatedIdentityProviderError> {
         let base_url = std::env::var(&"TAPIS_IDP_BASE_URL".to_string())
             .unwrap_or(String::from("https://admin.tapis.io"));
@@ -93,7 +93,7 @@ impl TapisFederatedIdentityProvider {
 }
 
 #[async_trait::async_trait]
-impl FederatedIdentityProvider for TapisFederatedIdentityProvider {    
+impl Port for FederatedIdentityProvider {    
     async fn authenticate(&self, token_string: String) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError> {
         let token: Token = token_from_string(&token_string)?;
         
