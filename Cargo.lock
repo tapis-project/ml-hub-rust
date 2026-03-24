@@ -3942,6 +3942,7 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tokio-retry",
+ "url-parse",
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
@@ -4971,6 +4972,15 @@ dependencies = [
  "idna",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "url-parse"
+version = "1.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8f18735cfbba59a63b3da83b440e0f2973455fefb39afc90487747a3cebd1b3"
+dependencies = [
+ "regex",
 ]
 
 [[package]]

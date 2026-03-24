@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
-use crate::domain::entities::identity::Authority;
+use crate::bootstrap::Idp;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error)]
@@ -14,7 +14,7 @@ pub enum FederatedIdpRegistrarError {
 }
 
 pub struct FederatedIdpRegistrar {
-    authorities: HashSet<Authority>,
+    authorities: HashSet<Idp>,
     providers: Vec<Arc<dyn FederatedIdentityProvider>>
 }
 
@@ -37,7 +37,7 @@ impl FederatedIdpRegistrar {
         Ok(())
     }
 
-    pub fn get_by_authority(&self, authority: Authority) -> Option<Arc<dyn FederatedIdentityProvider>> {
+    pub fn get_by_authority(&self, authority: Idp) -> Option<Arc<dyn FederatedIdentityProvider>> {
         self.providers
             .iter()
             .find(|p| p.authority() == authority)

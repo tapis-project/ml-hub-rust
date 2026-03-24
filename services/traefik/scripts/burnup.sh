@@ -2,12 +2,12 @@
 
 set -e
 
-rootDir=$1
+projectRoot=$1
 
-kubectl apply -f "$rootDir/deploy/local/minikube/cr.yaml" \
-              -f "$rootDir/deploy/local/minikube/service-account.yaml" \
-              -f "$rootDir/deploy/local/minikube/crb.yaml" \
-              -f "$rootDir/deploy/local/minikube/traefik-dynamic-config.yaml" \
-              -f "$rootDir/deploy/local/minikube/deployment.yaml" \
-              -f "$rootDir/deploy/local/minikube/web-service.yaml" \
-              -f "$rootDir/deploy/local/minikube/dashboard-service.yaml"
+kubectl apply -f "$projectRoot/deploy/k8s/minikube/traefik/cr.yaml" \
+              -f "$projectRoot/deploy/k8s/minikube/traefik/service-account.yaml" \
+              -f "$projectRoot/deploy/k8s/minikube/traefik/crb.yaml" \
+              -f "$projectRoot/deploy/k8s/minikube/traefik/traefik-dynamic-config.yaml" \
+              -f "$projectRoot/deploy/k8s/minikube/traefik/deployment.yaml" \
+              -f "$projectRoot/deploy/k8s/minikube/traefik/web-service.yaml" \
+              -f "$projectRoot/deploy/k8s/minikube/traefik/dashboard-service.yaml"

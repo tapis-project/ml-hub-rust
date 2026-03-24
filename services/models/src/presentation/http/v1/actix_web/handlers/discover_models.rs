@@ -6,7 +6,7 @@ use crate::presentation::http::v1::requests::{DiscoveryCriteria, DisocverModelsQ
 use crate::bootstrap::factories::model_metadata_service_factory;
 use actix_web::{post, web, HttpMessage, HttpRequest, Responder};
 use shared::domain::entities::identity::FederatedIdentity;
-use shared::domain::entities::tenant::Tenant;
+use shared::domain::entities::tenancy::Tenant;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
@@ -37,19 +37,15 @@ async fn discover_models(
     data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
     query: web::Query<DisocverModelsQueryParams>,
+    identity: FederatedIdentity,
     req: HttpRequest,
 ) -> impl Responder {
-    let _identity = req.extensions()
-        .get::<Option<FederatedIdentity>>()
-        .and_then(|inner| Some(inner.clone()))
-        .flatten();
-
     let _tenant = req.extensions()
         .get::<Option<Tenant>>()
         .and_then(|inner| Some(inner.clone()))
         .flatten();
 
-    debug!("{:#?}", _identity);
+    debug!("{:#?}", identity);
     debug!("{:#?}", _tenant);
 
     let model_metadata_service = match model_metadata_service_factory(&data.db, data.client_strategy_sets.clone()).await {

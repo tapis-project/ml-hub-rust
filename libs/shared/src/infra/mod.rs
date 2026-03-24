@@ -11,3 +11,4 @@ pub mod deployment;
 pub mod reconciliation;
 pub mod contracts;
 pub mod identity;
+pub mod configuration;

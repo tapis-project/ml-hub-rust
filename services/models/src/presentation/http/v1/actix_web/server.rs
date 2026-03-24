@@ -7,6 +7,7 @@ use crate::presentation::http::v1::actix_web::handlers;
 use actix_web::{App, HttpServer, middleware::from_fn, web};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
+use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
 use shared::presentation::http::v1::actix_web::middleware::authentication::authenticate;
@@ -69,14 +70,20 @@ pub async fn run_server() -> std::io::Result<()> {
         .map_err(|err| { error!("{}", err.to_string())})
         .expect(format!("Exchanges {} and {} to be declared", ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE).as_str());
 
-    let shared_app_context = build_shared_app_context()
+    let config_repository = SiteConfigurationRepository::new()
+        .map_err(|err| { error!("{}", err.to_string()) })
+        .expect("Site configuration repository to be intialized");
+
+    // Build services, repositories, and configurations shared between services
+    let shared_app_context = build_shared_app_context(config_repository.get_config())
         .await
         .map_err(|err| {
             error!("Failed to initialize SharedState: {}", err.to_string());
             err
         })
         .expect("SharedState to be initialzed");
-
+    
+    let site_config = web::Data::from(Arc::new(shared_app_context.config));
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
     let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
 
@@ -100,11 +107,12 @@ pub async fn run_server() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
             .app_data(web::Data::new(state.clone()))
-            .wrap(from_fn(resolve_tenancy))
             .wrap(from_fn(authenticate))
+            .wrap(from_fn(resolve_tenancy))
             .service(handlers::index::index)
             .service(handlers::health_check::health_check)
             .service(handlers::get_model_by_platform::get_model_by_platform)
