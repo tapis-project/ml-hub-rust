@@ -1,7 +1,8 @@
 use crate::domain::entities::artifact_publication as entities;
 use crate::domain::entities::artifact::ArtifactType;
 use crate::infra::persistence::mongo::documents::artifact_publication as documents;
-use mongodb::bson::{Uuid, DateTime};
+use crate::infra::common::mongo::ToBsonDateTime;
+use mongodb::bson::Uuid;
 
 impl From<ArtifactType> for documents::ArtifactType {
     fn from(value: ArtifactType) -> Self {
@@ -22,8 +23,8 @@ impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
             attempts: value.attempts,
             last_message: value.last_message.clone(),
             target_platform: value.target_platform.clone(),
-            created_at: DateTime::from_chrono(value.created_at.into_inner()),
-            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            created_at: value.created_at.to_bson(),
+            last_modified: value.last_modified.to_bson(),
             status: documents::ArtifactPublicationStatus::from(value.status.clone())
         }
     }
@@ -49,7 +50,7 @@ impl From<entities::ArtifactPublicationStatus> for documents::ArtifactPublicatio
 impl From<&entities::ArtifactPublication> for documents::UpdateArtifactPublicationStatusRequest {
     fn from(value: &entities::ArtifactPublication) -> Self {
         Self {
-            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_modified: value.last_modified.to_bson(),
             last_message: value.last_message.clone(),
             status: documents::ArtifactPublicationStatus::from(value.status.clone()),
         }

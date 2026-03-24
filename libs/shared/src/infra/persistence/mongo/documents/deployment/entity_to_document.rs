@@ -1,7 +1,8 @@
 use crate::domain::entities::deployment as entities;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
-use mongodb::bson::{Uuid, DateTime};
+use crate::infra::common::mongo::ToBsonDateTime;
+use mongodb::bson::Uuid;
 
 impl From<&entities::ModelDeployment> for documents::ModelDeployment {
     fn from(value: &entities::ModelDeployment) -> Self {
@@ -23,10 +24,10 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             replicas: value.replicas
                 .clone()
                 .and_then(|rg| Some(documents::ReplicaGroup::from(rg))),
-            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
-            last_desired_state_change: DateTime::from_chrono(value.last_desired_state_change.into_inner()),
-            last_state_change: DateTime::from_chrono(value.last_state_change.into_inner()),
-            created_at: DateTime::from_chrono(value.created_at.into_inner()),
+            last_modified: value.last_modified.to_bson(),
+            last_desired_state_change: value.last_desired_state_change.to_bson(),
+            last_state_change: value.last_state_change.to_bson(),
+            created_at: value.created_at.to_bson(),
             metadata: value.metadata
                 .clone()
                 .and_then(|m| Some(m.into_inner().clone())),
