@@ -11,6 +11,7 @@ sed -i.bak "s|${nfsServerIpTemplate}|${nfsServerIp}|g" "$projectDir/deploy/k8s/m
 rm "$projectDir/deploy/k8s/minikube/deployments/deployment.yaml.bak"
 
 kubectl apply -f "$projectDir/deploy/k8s/minikube/tapis-deployment-strategies-cm.yaml"
+kubectl apply -f "$projectDir/deploy/k8s/minikube/site-config-cm.yaml"
 
 kubectl apply -f "$projectDir/deploy/k8s/minikube/deployments/service.yaml" \
     -f "$projectDir/deploy/k8s/minikube/deployments/deployment.yaml"

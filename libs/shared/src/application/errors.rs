@@ -15,6 +15,9 @@ pub enum ApplicationError {
     #[error("{0}")]
     ConversionError(String),
 
+    #[error("Site config loader initialization error: {0}")]
+    SiteConfigLoaderInitialization(String),
+
     #[error("Deployment strategy provider initialization error: {0}")]
     DeploymentStrategyProviderInitialization(String),
 

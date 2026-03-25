@@ -1,11 +1,11 @@
-use crate::domain::entities::identity::Authority;
+use crate::bootstrap::Idp;
 
-pub fn derive_header_keys_from_authorites() -> Vec<String> {
+pub fn derive_header_keys_from_authorities() -> Vec<String> {
     let mut header_names: Vec<String> = vec![ String::from("Authorization") ];
     
-    for authority in Authority::all() {
+    for authority in Idp::all() {
         match authority {
-            Authority::Tapis => {
+            Idp::Tapis => {
                 header_names.push(String::from("X-Tapis-Token"))
             }
         }

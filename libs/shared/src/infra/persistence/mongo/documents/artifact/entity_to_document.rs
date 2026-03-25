@@ -1,6 +1,7 @@
 use crate::{application::errors::ApplicationError, domain::entities};
 use crate::infra::persistence::mongo::documents;
-use mongodb::bson::{Uuid, DateTime};
+use crate::infra::common::mongo::ToBsonDateTime;
+use mongodb::bson::Uuid;
 
 
 impl From<entities::artifact::ArtifactType> for documents::artifact::ArtifactType {
@@ -23,8 +24,8 @@ impl From<entities::artifact::Artifact> for documents::artifact::Artifact {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
             artifact_type: documents::artifact::ArtifactType::from(value.artifact_type),
-            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
-            created_at: DateTime::from_chrono(value.created_at.into_inner()),
+            last_modified: value.last_modified.to_bson(),
+            created_at: value.created_at.to_bson(),
             path
         }
     }
@@ -40,7 +41,7 @@ impl TryFrom<entities::artifact::Artifact> for documents::artifact::UpdateArtifa
         };
 
         Ok(Self {
-            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_modified: value.last_modified.to_bson(),
             path: path.to_string_lossy().into_owned()
         })
     }
@@ -56,7 +57,7 @@ impl TryFrom<entities::artifact::Artifact> for documents::artifact::UpdateArtifa
         };
 
         Ok(Self {
-            last_modified: DateTime::from_chrono(value.last_modified.into_inner()),
+            last_modified: value.last_modified.to_bson(),
             path: path.to_string_lossy().into_owned()
         })
     }

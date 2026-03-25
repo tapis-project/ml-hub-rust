@@ -1,5 +1,6 @@
-use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
-use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps, Authority};
+use crate::application::ports::identity::{FederatedIdentityProvider as Port, FederatedIdentityProviderError};
+use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps};
+use crate::bootstrap::Idp;
 use jsonwebtoken::Algorithm;
 use serde::Deserialize;
 use tapis_tenants::{TapisTenants, models::Tenant};
@@ -69,30 +70,30 @@ impl Jwt for Token {
     }
 }
 
-pub struct TapisFederatedIdentityProvider {
+pub struct FederatedIdentityProvider {
     tenants: Vec<Tenant>,
 }
 
-impl TapisFederatedIdentityProvider {
+impl FederatedIdentityProvider {
     pub async fn new() -> Result<Self, FederatedIdentityProviderError> {
-        let base_url = std::env::var(&"TAPIS_IPD_BASE_URL".to_string())
+        let base_url = std::env::var(&"TAPIS_IDP_BASE_URL".to_string())
             .unwrap_or(String::from("https://admin.tapis.io"));
         
         Ok(Self {
             tenants: TapisTenants::new(base_url.as_str(), None)
-                .map_err(|err| FederatedIdentityProviderError::InitializationError(Authority::Tapis, err.to_string()))?
+                .map_err(|err| FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string()))?
                 .tenants
                 .list_tenants(None, None)
                 .await
-                .map_err(|err| FederatedIdentityProviderError::InitializationError(Authority::Tapis, err.to_string()))?
+                .map_err(|err| FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string()))?
                 .result
-                .unwrap_or_else(|| vec![])
+                .ok_or_else(|| FederatedIdentityProviderError::InitializationError(Idp::Tapis, "Tenants data missing".into()))?
         })
     }
 }
 
 #[async_trait::async_trait]
-impl FederatedIdentityProvider for TapisFederatedIdentityProvider {    
+impl Port for FederatedIdentityProvider {    
     async fn authenticate(&self, token_string: String) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError> {
         let token: Token = token_from_string(&token_string)?;
         
@@ -110,17 +111,16 @@ impl FederatedIdentityProvider for TapisFederatedIdentityProvider {
         return Ok(Some(
             FederatedIdentity::new(
                 NewFederatedIdentityProps {
-                    authority: Authority::Tapis,
                     issuer: validated_claims.iss,
                     subject: validated_claims.sub,
-                    tenants: vec![ validated_claims.tapis_tenant_id ],
+                    tenant_id: validated_claims.tapis_tenant_id,
                     metadata: None,
                 }
             )
         ))
     }
 
-    fn authority(&self) -> Authority {
-        Authority::Tapis
+    fn authority(&self) -> Idp {
+        Idp::Tapis
     }
 }

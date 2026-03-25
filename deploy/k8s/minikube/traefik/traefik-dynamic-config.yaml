@@ -6,6 +6,10 @@ data:
   dynamic-config.yaml: |-
     http:
       middlewares:
+        tapis-rewrite-host:
+          headers:
+            customRequestHeaders:
+              Host: "{subdomain}.tapis.io"
         cors:
           headers:
             accessControlAllowOriginList:
@@ -30,24 +34,28 @@ data:
           rule: "PathPrefix(`/models-api`)"
           service: models-api
           middlewares:
+            - tapis-rewrite-host
             - cors
         
         datasets-api:
-          rule: "PathPrefix(`/datasets-api`)"
+          rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/datasets-api`)"
           service: datasets-api
           middlewares:
+            - tapis-rewrite-host:
             - cors
 
         deployments-api:
-          rule: "PathPrefix(`/deployments-api`)"
+          rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/deployments-api`)"
           service: deployments-api
           middlewares:
+            - tapis-rewrite-host
             - cors
 
-        training-api:
-          rule: "PathPrefix(`/training-api`)"
-          service: training-api
+        agents-api:
+          rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/agents-api`)"
+          service: agents-api
           middlewares:
+            - tapis-rewrite-host
             - cors
 
       services:
@@ -63,7 +71,7 @@ data:
           loadBalancer:
             servers:
             - url: http://mlhub-datasets-api-service:8000
-        training-api:
+        agents-api:
           loadBalancer:
             servers:
-            - url: http://mlhub-training-api-service:8000
+            - url: http://mlhub-agents-api-service:8000

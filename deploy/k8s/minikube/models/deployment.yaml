@@ -41,7 +41,17 @@ spec:
           imagePullPolicy: Never
           name: models-migrator
       containers:
-        - env:
+        # - name: debugger
+        #   image: busybox
+        #   command: ["/bin/sh", "-c", "sleep infinity"]
+        #   volumeMounts:
+        #     - name: site-config
+        #       mountPath: /etc/mlhub/site.json
+        #       subPath: site.json 
+        - name: models-api
+          image: tapis/models-api:local
+          imagePullPolicy: Never
+          env:
             - name: MONGO_HOST
               value: mlhub-mongo-service
             - name: MONGO_PORT
@@ -66,9 +76,8 @@ spec:
               value: /srv/mlhub
             - name: CLIENT_DEPLOYMENT_STRATEGIES_DIR
               value: /etc/mlhub/deployment-strategies.d
-          image: tapis/models-api:local
-          imagePullPolicy: Never
-          name: models-api
+            - name: SITE_CONFIG_PATH
+              value: /etc/mlhub/site.json
           ports:
             - containerPort: 8000
               name: webserver
@@ -88,6 +97,9 @@ spec:
             - name: tapis-deployment-strategies
               mountPath: /etc/mlhub/deployment-strategies.d/tapis.json
               subPath: tapis.json
+            - name: site-config
+              mountPath: /etc/mlhub/site.json
+              subPath: site.json
       volumes:
         - name: nfs-server-mount
           nfs:
@@ -96,3 +108,6 @@ spec:
         - name: tapis-deployment-strategies
           configMap:
             name: tapis-deployment-strategies
+        - name: site-config
+          configMap:
+            name: mlhub-site-config

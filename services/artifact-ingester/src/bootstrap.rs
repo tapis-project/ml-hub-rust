@@ -2,7 +2,6 @@
 //! with application-level concerns
 use amqprs::channel::Channel;
 use mongodb::Database;
-use shared::application::errors::ApplicationError;
 use shared::application::ports::artifacts::{
     ArtifactRepository,
     ArtifactIngestionRepository,

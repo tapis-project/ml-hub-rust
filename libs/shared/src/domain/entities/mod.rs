@@ -10,6 +10,6 @@ pub mod task;
 pub mod deployment_strategy;
 pub mod operator;
 pub mod visibility;
-pub mod user;
+pub mod principal;
 pub mod identity;
-pub mod tenant;
+pub mod tenancy;
