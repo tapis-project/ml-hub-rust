@@ -1,5 +1,3 @@
-use crate::application::errors::ApplicationError;
-use crate::application::inputs::identity::FilterInput;
 use crate::domain::entities::identity::FederatedIdentity;
 use crate::bootstrap::Idp;
 use thiserror::Error;
@@ -23,10 +21,4 @@ pub enum FederatedIdentityProviderError {
 pub trait FederatedIdentityProvider: Send + Sync {
     async fn authenticate(&self, token: String) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError>;
     fn authority(&self) -> Idp;
-}
-
-#[async_trait::async_trait]
-pub trait FederatedIdentityRepository: Send + Sync {
-    async fn save(&self, identity: &FederatedIdentity) -> Result<(), ApplicationError>;
-    async fn find(&self, input: &FilterInput) -> Result<Option<FederatedIdentity>, ApplicationError>;
 }

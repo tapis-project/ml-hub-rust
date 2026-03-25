@@ -40,7 +40,7 @@ async fn ingest_canonical_model(
     body: web::Json<IngestArtifactRequest>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let metadata_repo = model_metadata_repo_factory(&data.db);
+    let metadata_repo = model_metadata_repo_factory(&data.client, data.db_name.clone());
 
     let maybe_metadata = match metadata_repo.get_by_name_and_author(&path.name, &path.author).await {
         Ok(m) => m,
@@ -66,7 +66,7 @@ async fn ingest_canonical_model(
     };
 
     // Instantiate an artifact service
-    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {

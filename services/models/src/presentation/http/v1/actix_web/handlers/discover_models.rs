@@ -48,7 +48,7 @@ async fn discover_models(
     debug!("{:#?}", identity);
     debug!("{:#?}", _tenant);
 
-    let model_metadata_service = match model_metadata_service_factory(&data.db, data.client_strategy_sets.clone()).await {
+    let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
         Ok(s) => s,
         Err(err) => return build_error_response(500, err.to_string())
     };

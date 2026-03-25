@@ -33,7 +33,8 @@ async fn undeploy_model_deployment(
     path: web::Path<UndeployModelDeploymentPathParams>,
 ) -> impl Responder {
     let service = model_deployment_service_builder(
-        &data.db,
+        &data.client,
+        data.db_name.clone(),
         data.channel.clone(),
     );
 

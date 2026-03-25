@@ -31,7 +31,7 @@ use async_trait::async_trait;
 use shared::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
-use artifact_ingester::database::{get_db, ClientParams};
+use artifact_ingester::database::{inialize_client, ClientParams};
 use shared::infra::fs::archiver::Archiver;
 use log::{error, info};
 
@@ -249,7 +249,9 @@ async fn main() -> () {
     env_logger::init();
 
     // Database connection
-    let db = get_db(ClientParams {
+    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+
+    let client = inialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
@@ -312,7 +314,7 @@ async fn main() -> () {
     let consumer_tag = Uuid::now_v7();
 
     let consumer = ArtifactIngesterConsumer {
-        artifact_service: artifact_service_factory(&db, Arc::new(channel.clone())),
+        artifact_service: artifact_service_factory(&client, db_name, Arc::new(channel.clone())),
         artifacts_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_INGEST_DIR_NAME),
         artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };

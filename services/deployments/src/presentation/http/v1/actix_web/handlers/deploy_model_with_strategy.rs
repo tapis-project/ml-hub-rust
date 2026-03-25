@@ -52,7 +52,8 @@ async fn deploy_model_with_strategy(
     };
 
     let service = model_deployment_service_builder(
-        &data.db,
+        &data.client,
+        data.db_name.clone(),
         data.channel.clone(),
     );
 

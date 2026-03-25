@@ -13,3 +13,4 @@ pub mod contracts;
 pub mod identity;
 pub mod configuration;
 pub mod common;
+pub mod principal;

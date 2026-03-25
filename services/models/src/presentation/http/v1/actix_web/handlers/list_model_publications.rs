@@ -29,7 +29,7 @@ async fn list_model_publications(
     let logger = SharedLogger::new();
     logger.debug("List publications operation");
     
-    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     let publications = match artifact_service.list_model_publications(ListModelPublicationsInput {}).await {
         Ok(p) => p,

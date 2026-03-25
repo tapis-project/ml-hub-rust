@@ -33,7 +33,8 @@ async fn stop_model_deployment(
     path: web::Path<StopModelDeploymentPathParams>,
 ) -> impl Responder {
     let service = model_deployment_service_builder(
-        &data.db,
+        &data.client,
+        data.db_name.clone(),
         data.channel.clone(),
     );
 

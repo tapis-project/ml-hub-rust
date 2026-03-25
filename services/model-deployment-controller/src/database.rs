@@ -1,6 +1,5 @@
 use shared::errors::Error;
 use mongodb::{Client, options::ClientOptions};
-use mongodb::Database;
 
 pub struct ClientParams {
     pub username: String,
@@ -10,7 +9,7 @@ pub struct ClientParams {
     pub db: String,
 }
 
-pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
+pub async fn initialize_client(params: ClientParams) -> Result<Client, Error> {
     let uri = format!(
         "mongodb://{}:{}@{}:{}/{}?authSource=admin",
         params.username,
@@ -27,7 +26,7 @@ pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
     let client = Client::with_options(options)
         .map_err(|err| Error::new(err.to_string()))?;
     
-    Ok(client.database(&params.db))
+    Ok(client)
 }
 
 pub const ARTIFACT_COLLECTION: &str = "ARTIFACTS";

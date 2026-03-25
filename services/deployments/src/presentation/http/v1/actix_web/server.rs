@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::presentation;
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::build_deployment_strategy_provider;
-use crate::infra::persistence::mongo::database::{ClientParams, get_db};
+use crate::infra::persistence::mongo::database::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer, web, middleware::from_fn};
 use amqprs::channel::ExchangeType;
@@ -78,12 +78,13 @@ pub async fn run_server() -> std::io::Result<()> {
     let site_config = web::Data::from(Arc::new(shared_app_context.config));
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
     let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
-
+    
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
+        db_name: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
         channel: Arc::new(channel),
-        db: get_db(ClientParams{
+        client: initialize_client(ClientParams{
             username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
             password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
             host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),

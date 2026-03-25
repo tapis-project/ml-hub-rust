@@ -37,7 +37,7 @@ async fn get_model_publication(
     let logger = SharedLogger::new();
     logger.debug("List aritfacts operation");
     
-    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     let publication_id = match Uuid::parse_str(&path.publication_id) {
         Ok(id) => id,

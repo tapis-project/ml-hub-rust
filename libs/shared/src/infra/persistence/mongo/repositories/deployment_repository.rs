@@ -5,7 +5,7 @@ use crate::application;
 use crate::domain::entities;
 use mongodb::{
     bson::{doc, Uuid, to_bson},
-    Database,
+    Client,
     Collection,
 };
 use futures::stream::TryStreamExt;
@@ -16,7 +16,9 @@ pub struct ModelDeploymentRepository {
 }
 
 impl ModelDeploymentRepository {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(client: &Client, db_name: String) -> Self {
+        let db = client.database(&db_name);
+        
         Self {
             write_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION),
             read_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION)

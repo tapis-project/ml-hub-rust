@@ -26,10 +26,10 @@ use shared::{
         },
         workflows::reconciliation::ReconciliationError
     },
-    infra::messaging::rabbitmq::{connection::open_channel,
+    infra::{messaging::rabbitmq::{connection::open_channel,
         exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
         queues::DEAD_LETTER_QUEUE
-    }
+    }}
 };
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
@@ -39,7 +39,7 @@ use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
 use model_deployment_controller::bootstrap::{build_deployment_strategy_provider, model_deployment_conroller_builder};
-use model_deployment_controller::database::{get_db, ClientParams};
+use model_deployment_controller::database::{initialize_client, ClientParams};
 use log::{error, info, warn};
 
 
@@ -273,8 +273,10 @@ async fn main() -> () {
     // Unique consumer tag. Make this unique per worker. 
     let consumer_tag = Uuid::now_v7();
 
+    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+
     // Database connection
-    let db = get_db(ClientParams{
+    let client = initialize_client(ClientParams{
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
@@ -298,7 +300,7 @@ async fn main() -> () {
     };
     
     let consumer = ModelDeploymentControllerConsumer {
-        controller: model_deployment_conroller_builder(&db, context.channel.clone(), client_strategy_sets),
+        controller: model_deployment_conroller_builder(&client, db_name, context.channel.clone(), client_strategy_sets),
     };
      
     let args = BasicConsumeArguments::default()
