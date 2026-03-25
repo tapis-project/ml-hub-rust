@@ -12,6 +12,16 @@ impl ToBsonDateTime for TimeStamp {
     }
 }
 
+pub trait ToTimeStamp {
+    fn to_timestamp(&self) -> TimeStamp;
+}
+
+impl ToTimeStamp for DateTime {
+    fn to_timestamp(&self) -> TimeStamp {
+        TimeStamp::from(self.to_chrono())
+    }
+}
+
 impl From<TimeStamp> for DateTime {
     fn from(value: TimeStamp) -> Self {
         DateTime::from_chrono(value.into_inner())

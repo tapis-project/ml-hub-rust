@@ -8,3 +8,4 @@ pub mod inference;
 pub mod discover_models;
 pub mod task;
 pub mod deployment;
+pub mod identity;
