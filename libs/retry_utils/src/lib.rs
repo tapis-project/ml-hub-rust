@@ -1,5 +1,5 @@
 use std::future::Future;
-use rand::Rng;
+use rand::RngExt;
 use tokio::time::{sleep, Duration};
 
 pub enum Retry {
@@ -87,7 +87,7 @@ where
     let mut attempt: i16 = 0;
 
     match policy {
-        RetryPolicy::ExponentialBackoff(ref backoff) => {
+        RetryPolicy::ExponentialBackoff(backoff) => {
             match backoff.retries {
                 Retry::NTimes(n) => {
                     retries = n as i16;
@@ -98,7 +98,7 @@ where
                 },
             };
         },
-        RetryPolicy::FixedBackoff(ref backoff) => {
+        RetryPolicy::FixedBackoff(backoff) => {
             delay = backoff.delay;
             match backoff.retries {
                 Retry::NTimes(n) => {
@@ -109,7 +109,7 @@ where
                 },
             }
         },
-        RetryPolicy::NoBackoff(ref backoff) => {
+        RetryPolicy::NoBackoff(backoff) => {
             match backoff.retries {
                 Retry::NTimes(n) => {
                     retries = n as i16;
@@ -119,7 +119,7 @@ where
                 },
             }
         },
-        RetryPolicy::LinearBackoff(ref backoff) => {
+        RetryPolicy::LinearBackoff(backoff) => {
             delay = backoff.delay;
             match backoff.retries {
                 Retry::NTimes(n) => {
@@ -164,5 +164,5 @@ where
 
 // Unit tests
 #[cfg(test)]
-#[path = "retry.test.rs"]
-mod retry_test;
+#[path = "test.rs"]
+mod test;

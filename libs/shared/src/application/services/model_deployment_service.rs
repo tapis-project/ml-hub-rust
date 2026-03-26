@@ -8,7 +8,7 @@ use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
 use crate::application::ports::deployment::ModelDeploymentRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
-use crate::application::retries::{
+use retry_utils::{
     retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy,
 };
 use crate::domain::entities::deployment::{

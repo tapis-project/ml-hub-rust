@@ -16,7 +16,7 @@ use crate::domain::entities::deployment::{DesiredState,
 };
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use thiserror::Error;
-use crate::application::retries::{
+use retry_utils::{
     retry_async,
     FixedBackoff,
     Retry,

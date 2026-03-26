@@ -4,50 +4,89 @@ use crate::infra::principal::mongo::documents::Principal;
 use crate::application::ports;
 use crate::domain::entities;
 use mongodb::{
-    bson::doc,
-    Client,
-    Collection,
+    bson::doc, error::{Error, TRANSIENT_TRANSACTION_ERROR, UNKNOWN_TRANSACTION_COMMIT_RESULT}, options::{ReadConcern, WriteConcern}, Client, ClientSession, Collection
 };
 use futures::stream::TryStreamExt;
 
 pub const FEDERATED_IDENTITY_COLLECTION: &str = "FEDERATED_IDENTITIES";
 pub const PRINCIPAL_COLLECTION: &str = "FEDERATED_IDENTITIES";
 
+type FederatedIdentityReadCollection = Collection<FederatedIdentity>;
+type FederatedIdentityWriteCollection = Collection<FederatedIdentity>;
+type PrincipalReadCollection = Collection<Principal>;
+type PrincipalWriteCollection = Collection<Principal>;
+
 pub struct PrincipalRepository {
-    federated_identity_read_collection: Collection<FederatedIdentity>,
-    federated_identity_write_collection: Collection<FederatedIdentity>,
-    principal_read_collection: Collection<Principal>,
-    principal_write_collection: Collection<Principal>,
+    client: Client,
+    federated_identity_read_collection: FederatedIdentityReadCollection,
+    federated_identity_write_collection: FederatedIdentityWriteCollection,
+    principal_read_collection: PrincipalReadCollection,
+    principal_write_collection: PrincipalWriteCollection,
 }
 
 impl PrincipalRepository {
-    pub fn new(client: &Client, db_name: String) -> Self {
+    pub fn new(client: &Client, db_name: String) -> Self { 
         let db = client.database(&db_name);
 
         Self {
+            client: client.clone(),
             federated_identity_write_collection: db.collection(FEDERATED_IDENTITY_COLLECTION),
             federated_identity_read_collection: db.collection(FEDERATED_IDENTITY_COLLECTION),
             principal_write_collection: db.collection(PRINCIPAL_COLLECTION),
             principal_read_collection: db.collection(PRINCIPAL_COLLECTION),
         }
     }
+
+    async fn save_principal_transaction(
+        principal: &Principal,
+        identities: &Vec<FederatedIdentity>,
+        principal_write_coll: &PrincipalWriteCollection,
+        fed_ident_write_coll: &FederatedIdentityWriteCollection,
+        session: &mut ClientSession,
+    ) -> Result<(), Error> {
+        fed_ident_write_coll.insert_many(identities).session(&mut *session).await?;
+        principal_write_coll.insert_one(principal).session(&mut *session).await?;
+        
+        session.commit_transaction().await
+    }
 }
 
 #[async_trait::async_trait]
 impl ports::principal::PrincipalRepository for PrincipalRepository {
     async fn save(&self, principal: &entities::principal::Principal) -> Result<(), ports::principal::PrincipalRepositoryError> {
-        // let mut identity_docs = Vec::with_capacity(principal.identites().len());
-        // for identity in principal.identites() {
-        //     identity_docs.push(FederatedIdentity::from(identity.clone()))
-        // }
+        // Convert the Principal's identities into MongoDB documents
+        let mut identity_docs = Vec::with_capacity(principal.identites().len());
+        for identity in principal.identites() {
+            identity_docs.push(FederatedIdentity::from((identity.clone(), principal.id.clone())))
+        }
 
-        // let mut principal_doc = Principal::from(principal.clone());
+        // Convert the Principal into MongoDB documents
+        let principal_doc = Principal::from(principal.clone());
 
-        // let result = self.write_collection.insert_one(&document)
-        //     .await
-        //     .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        // Start a session
+        let mut session = match self.client.start_session().await {
+            Ok(s) => Ok(s),
+            Err(err) => Err(ports::principal::PrincipalRepositoryError::FailedToStartSession(err.to_string()))
+        }?;
 
-        // document._id = result.inserted_id.as_object_id();
+        // Start a transaction
+        session.start_transaction()
+            .read_concern(ReadConcern::majority())
+            .write_concern(WriteConcern::majority())
+            .await
+            .map_err(|err| ports::principal::PrincipalRepositoryError::FailedToStartTransaction(err.to_string()))?;
+
+
+        // Run and retry the transaction on transient errors
+        Self::save_principal_transaction(
+            &principal_doc,
+            &identity_docs,
+            &self.principal_write_collection,
+            &self.federated_identity_read_collection,
+            &mut session,
+        )
+            .await
+            .map_err(|err| ports::principal::PrincipalRepositoryError::FailedToSavePrincipal(err.to_string()))?;
 
         Ok(())
     }
