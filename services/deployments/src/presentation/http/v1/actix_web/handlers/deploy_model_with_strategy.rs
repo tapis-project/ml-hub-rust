@@ -9,11 +9,11 @@ use crate::presentation::http::v1::requests::{
 use crate::presentation::http::v1::responses::ModelDeployment;
 use platforms::Platform;
 use actix_web::{
-    post, web, HttpMessage, HttpRequest, Responder
+    post, web, Responder
 };
 use serde_json::to_value;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
-use shared::domain::entities::identity::FederatedIdentity;
+use shared::domain::entities::principal::Principal;
 
 #[utoipa::path(
     post,
@@ -36,7 +36,7 @@ async fn deploy_model_with_strategy(
     data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    identity: FederatedIdentity,
+    principal: Principal,
 ) -> impl Responder {
     let maybe_strategy = data.client_strategy_sets
         .iter()
@@ -58,7 +58,8 @@ async fn deploy_model_with_strategy(
     );
 
     let input = DeployWithStrategyInput {
-        owner: "mlhub".into(),
+        owner: principal.id.clone(),
+        tenant_id: principal.tenant_id.unwrap_or_default(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         platform: path.platform.clone(),

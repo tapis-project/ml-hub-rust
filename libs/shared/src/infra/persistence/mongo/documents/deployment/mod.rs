@@ -74,6 +74,7 @@ pub struct ModelDeployment {
     pub id: Uuid,
     pub platform: platforms::Platform,
     pub owner: String,
+    pub tenant_id: String,
     pub model: ModelReference,
     pub state: State,
     pub desired_state: DesiredState,

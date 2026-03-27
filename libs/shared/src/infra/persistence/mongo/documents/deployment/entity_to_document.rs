@@ -12,6 +12,7 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             platform: value.platform.clone(),
             revision: value.revision().clone(),
             owner: value.owner.clone(),
+            tenant_id: value.tenant_id.clone(),
             model: documents::ModelReference::from(value.model.clone()),
             state: documents::State::from(value.state.clone()),
             desired_state: documents::DesiredState::from(value.desired_state.clone()),

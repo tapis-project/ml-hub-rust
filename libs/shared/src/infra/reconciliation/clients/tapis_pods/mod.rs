@@ -364,6 +364,7 @@ mod tests {
             id: Uuid::now_v7(),
             platform: Platform::TapisPods,
             owner: "test-owner".into(),
+            tenant_id: "test-tenant".into(),
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
@@ -389,6 +390,7 @@ mod tests {
             id: Uuid::now_v7(),
             platform: Platform::TapisPods,
             owner: "test-owner".into(),
+            tenant_id: "test-tenant".into(),
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
@@ -676,6 +678,7 @@ mod tests {
             id: deployment_id,
             platform: Platform::TapisPods,
             owner: tapis_user.to_string(),
+            tenant_id: "test-tenant".into(),
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),

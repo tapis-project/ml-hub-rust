@@ -23,6 +23,8 @@ pub struct ModelDeployment {
     pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
+    /// The tenant that owns this deployment
+    pub tenant_id: String,
     /// A reference to the model metadata
     pub model: ModelReference,
     /// The curent state of the delpoyment
@@ -55,6 +57,7 @@ impl ModelDeployment {
             id: props.id,
             platform: props.platform,
             owner: props.owner,
+            tenant_id: props.tenant_id,
             model: props.model,
             state: props.state,
             desired_state: props.desired_state,
@@ -77,6 +80,7 @@ impl ModelDeployment {
             id: props.id,
             platform: props.platform,
             owner: props.owner,
+            tenant_id: props.tenant_id,
             model: props.model,
             state: props.state,
             desired_state: props.desired_state,
@@ -412,6 +416,7 @@ pub struct RehydrateModelDeploymentProps {
     pub id: Uuid,
     pub platform: Platform,
     pub owner: String,
+    pub tenant_id: String,
     pub model: ModelReference,
     pub state: State,
     pub desired_state: DesiredState,
@@ -433,6 +438,7 @@ pub struct ModelDeploymentProps {
     pub id: Uuid,
     pub platform: Platform,
     pub owner: String,
+    pub tenant_id: String,
     pub model: ModelReference,
     pub state: State,
     pub desired_state: DesiredState,

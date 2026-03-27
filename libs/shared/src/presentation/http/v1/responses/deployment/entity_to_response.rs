@@ -101,6 +101,7 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             id: value.id.clone(),
             platform: value.platform.clone(),
             owner: value.owner.clone(),
+            tenant_id: value.tenant_id.clone(),
             model: responses::ModelReference::from(value.model.clone()),
             state: responses::State::from(value.state.clone()),
             desired_state: responses::DesiredState::from(value.desired_state.clone()),

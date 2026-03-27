@@ -166,6 +166,7 @@ impl ModelDeploymentService {
             id: Uuid::now_v7(),
             platform: input.platform.clone(),
             owner: input.owner.clone(),
+            tenant_id: input.tenant_id.clone(),
             model: ModelReference {
                 name: input.model_name.clone(),
                 author: input.model_author.clone(),

@@ -50,6 +50,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let document = doc! {
             "$set": {
                 "platform": update.platform.to_string(),
+                "tenant_id": update.tenant_id,
                 "state": String::from(update.state),
                 "desired_state": String::from(update.desired_state),
                 "last_message": update.last_message,
