@@ -1,5 +1,5 @@
-use models_migrator::migrations::get_migrations;
-use models_migrator::database::{ClientParams, initialize_client};
+use principals_migrator::migrations::get_migrations;
+use principals_migrator::database::{ClientParams, initialize_client};
 use std::env;
 
 #[tokio::main]

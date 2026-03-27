@@ -20,6 +20,7 @@ pub struct FederatedIdentity {
     pub tenant_id: String,
     pub created_at: DateTime,
     pub last_modified: DateTime,
+    pub last_seen: DateTime,
 }
 
 // Mapping (Entity -> Document)
@@ -36,6 +37,7 @@ impl From<(entities::FederatedIdentity, String)> for FederatedIdentity {
             tenant_id: identity.tenant_id,
             created_at: identity.created_at.to_bson(),
             last_modified: identity.last_modified.to_bson(),
+            last_seen: identity.last_seen.to_bson(),
         }
     }
 }
@@ -50,6 +52,7 @@ impl From<FederatedIdentity> for entities::FederatedIdentity {
             tenant_id: value.tenant_id,
             created_at: value.created_at.to_timestamp(),
             last_modified: value.last_modified.to_timestamp(),
+            last_seen: value.last_seen.to_timestamp(),
         }
     }
 }

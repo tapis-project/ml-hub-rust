@@ -8,7 +8,9 @@
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/models-api",
-    "models-migrator-image": "tapis/models-migrator",
+    "models-migrator-image": "mlhub/models-migrator",
+    "principals-migrator-image": "mlhub/principals-migrator",
+    "federated-identities-migrator-image": "mlhub/federated-identities-migrator",
     "datasets-deployment": "mlhub-datasets-api-deployment",
     "datasets-image": "tapis/datasets-api",
     "deployments-deployment": "mlhub-deployments-api-deployment",
@@ -45,7 +47,7 @@
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
-        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t tapis/models-api:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t mlhub/models-api:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }} && ./manage buildl models-migrator",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
         "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
@@ -74,7 +76,7 @@
         "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "install": "cargo install --path {{ self.rootDir }}",
-        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t tapis/models-migrator:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image rm {{ {{ self.name }}-image }}:{{ local }} && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
@@ -82,7 +84,47 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "deployl": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
+        "run": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
+      }
+    },
+    {
+      "name": "principals-migrator",
+      "description": "This is a standalone binary for managing the migrations of the Princials collection. This has no seperate deployment. It must be deployed as a job",
+      "rootDir": "services/principals-migrator",
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image rm {{ {{ self.name }}-image }}:{{ local }} && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "run": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
+      }
+    },
+    {
+      "name": "federated-identities-migrator",
+      "description": "This is a standalone binary for managing the migrations of the FederatedIdentities collection. This has no seperate deployment. It must be deployed as a job",
+      "rootDir": "services/federated-identities-migrator",
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image rm {{ {{ self.name }}-image }}:{{ local }} && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
+        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "run": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
       }
     },
     {
@@ -554,6 +596,17 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+      }
+    },
+    {
+      "name": "migrations",
+      "rootDir": "deploy/migrations",
+      "labels": ["workflow"],
+      "lifecycle": "experimental",
+      "commands": {
+        "models": "kubectl apply -f models-migrations-job.yml",
+        "federated-identities": "kubectl apply -f federated-identities-migrations-job.yml",
+        "principals": "kubectl apply -f principals-migrations-job.yml"
       }
     }
   ]

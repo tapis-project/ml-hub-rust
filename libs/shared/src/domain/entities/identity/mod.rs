@@ -9,6 +9,7 @@ pub struct FederatedIdentity {
     pub tenant_id: String,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
+    pub last_seen: TimeStamp
 }
 
 #[derive(Clone, Debug)]
@@ -29,7 +30,8 @@ impl FederatedIdentity {
             tenant_id: props.tenant_id,
             metadata: props.metadata,
             created_at: now.clone(),
-            last_modified: now.clone()
+            last_modified: now.clone(),
+            last_seen: now.clone(),
         }
     }
 }

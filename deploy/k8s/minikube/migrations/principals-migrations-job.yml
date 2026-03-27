@@ -1,12 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: mlhub-models-migrator
+  name: mlhub-principals-migrator
 spec:
   backoffLimit: 0
   template:
     metadata:
-      name: mlhub-models-migrator
+      name: mlhub-principals-migrator
     spec:
       restartPolicy: Never
       containers:
@@ -33,7 +33,7 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
-          image: tapis/models-migrator:local
+          image: mlhub/principals-migrator:local
           imagePullPolicy: Never
-          name: models-migrator
+          name: principals-migrator
           resources: {}

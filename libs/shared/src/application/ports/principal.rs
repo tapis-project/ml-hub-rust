@@ -5,14 +5,14 @@ use thiserror::Error;
 
 #[derive(Clone, Debug, Error)]
 pub enum PrincipalRepositoryError {
-    #[error("Failed to save Principal: {0}")]
-    FailedToSavePrincipal(String),
-
-    #[error("Failed to start transaction: {0}")]
-    FailedToStartTransaction(String),
-
-    #[error("Failed to start session: {0}")]
-    FailedToStartSession(String),
+    #[error("Failed to persist: {message}")]
+    PersistenceError {
+        retriable: bool,
+        message: String,
+    },
+    
+    #[error("Programming error: {0}")]
+    ProgrammingError(String),
 
     #[error("Duplicate Principal")]
     PrincipalAlreadyExists,

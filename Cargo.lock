@@ -1461,6 +1461,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
+name = "federated-identities-migrator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "mongodb",
+ "shared",
+ "tfiala-mongodb-migrator",
+ "tokio",
+]
+
+[[package]]
 name = "ff"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3191,6 +3203,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
 dependencies = [
  "elliptic-curve",
+]
+
+[[package]]
+name = "principals-migrator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "mongodb",
+ "shared",
+ "tfiala-mongodb-migrator",
+ "tokio",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
-use models_migrator::migrations::get_migrations;
-use models_migrator::database::{ClientParams, initialize_client};
+use federated_identities_migrator::migrations::get_migrations;
+use federated_identities_migrator::database::{ClientParams, initialize_client};
 use std::env;
 
 #[tokio::main]
@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     tfiala_mongodb_migrator::migrator::default::DefaultMigrator::new()
-        .with_conn(client.database(&env::var("MONGO_NAME").expect("MONGO_NAME env var not set")))
+        .with_conn(client.database(&env::var("MONGO_NAME").expect("MONGO_NAME env var not set")).clone())
         .with_migrations_vec(get_migrations())
         .up()
         .await?;

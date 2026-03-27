@@ -1,6 +1,7 @@
 pub use crate::domain::entities::timestamp::TimeStamp;
 
 pub use mongodb::bson::DateTime;
+use mongodb::error::{ErrorKind, WriteError, WriteFailure};
 
 pub trait ToBsonDateTime {
     fn to_bson(&self) -> DateTime;
@@ -26,4 +27,11 @@ impl From<TimeStamp> for DateTime {
     fn from(value: TimeStamp) -> Self {
         DateTime::from_chrono(value.into_inner())
     }
+}
+
+pub fn is_duplicate_key_error(error: &mongodb::error::Error) -> bool {
+    matches!(
+        *error.kind,
+        ErrorKind::Write(WriteFailure::WriteError(WriteError { code: 11000, .. }))
+    )
 }
