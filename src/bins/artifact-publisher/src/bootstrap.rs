@@ -7,7 +7,7 @@ use shared::application::ports::repositories::{
     ArtifactIngestionRepository,
     ArtifactPublicationRepository,
     ModelMetadataRepository,
-    MetadataRepository,
+    DatasetMetadataRepository,
 };
 use shared::application::services::artifact_service::{ArtifactService};
 use shared::infra::persistence::mongo::repositories::{
@@ -15,6 +15,7 @@ use shared::infra::persistence::mongo::repositories::{
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
     ModelMetadataRepository as MongoModelMetadataRepository,
+    DatasetMetadataRepository as MongoDatasetMetadataRepository,
 };
 use shared::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
 use std::sync::Arc;
@@ -35,12 +36,17 @@ pub fn model_metadata_repo_factory(db: &Database) -> Arc<dyn ModelMetadataReposi
     Arc::new(MongoModelMetadataRepository::new(db))
 }
 
+pub fn dataset_metadata_repo_factory(db: &Database) -> Arc<dyn DatasetMetadataRepository> {
+    Arc::new(MongoDatasetMetadataRepository::new(db))
+}
+
 pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, ApplicationError> {    
     Ok(ArtifactService::new(
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
-        MetadataRepository::Single(model_metadata_repo_factory(db)),
+        model_metadata_repo_factory(db),
+        dataset_metadata_repo_factory(db),
         Arc::new(RabbitMQArtifactOpMessagePublisher {})
     ))
 }

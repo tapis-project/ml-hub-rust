@@ -91,7 +91,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
         match artifact.artifact_type {
             ArtifactType::Model => {
                 // Fetch metadata associated with the model
-                let maybe_metadata = self.artifact_service.find_metadata_by_artifact_id(
+                let maybe_metadata = self.artifact_service.find_model_metadata_by_artifact_id(
                     &publication.artifact_id
                 ).await
                     .expect(format!("Failed to fetch metadata for artifact '{}'", &artifact.id.to_string()).as_str());
@@ -279,6 +279,11 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
             },
             // Publish the dataset
             ArtifactType::Dataset => {
+                let maybe_metadata = self.artifact_service.find_dataset_metadata_by_artifact_id(
+                    &publication.artifact_id
+                ).await
+                    .expect(format!("Failed to fetch metadata for artifact '{}'", &artifact.id.to_string()).as_str());
+
                 // let client = ClientProvider::provide_publish_dataset_client(&request.platform)
                 //     .map_err(|err| {
                 //         eprintln!("{}", err);

@@ -57,8 +57,3 @@ pub trait ArtifactPublicationRepository: Send + Sync {
     async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Vec<ArtifactPublication>, ApplicationError>;
     async fn find_by_artifact_type(&self, artifact_type: ArtifactType) -> Result<Vec<ArtifactPublication>, ApplicationError>;
 }
-
-pub enum MetadataRepository {
-    Single(Arc<dyn ModelMetadataRepository>),
-    Other(Arc<dyn DatasetMetadataRepository>),
-}

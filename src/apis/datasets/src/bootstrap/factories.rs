@@ -5,17 +5,16 @@ use shared::application::errors::ApplicationError;
 use crate::application::ports::repositories::{
     ArtifactRepository,
     ArtifactIngestionRepository,
+    ModelMetadataRepository,
     DatasetMetadataRepository,
     ArtifactPublicationRepository,
-};
-use crate::application::ports::repositories::{
-    MetadataRepository
 };
 use crate::application::services::artifact_service::{ArtifactService};
 use crate::application::services::dataset_metadata_service::DatasetMetadataService;
 use crate::infra::persistence::mongo::repositories::{
     ArtifactRepository as MongoArtifactRepository,
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
+    ModelMetadataRepository as MongoModelMetadataRepository,
     DatasetMetadataRepository as MongoDatasetMetadataRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
 };
@@ -33,6 +32,11 @@ pub fn artifact_ingestion_repo_factory(db: &Database) -> Arc<dyn ArtifactIngesti
 }
 
 #[cfg(feature = "mongo")]
+pub fn model_metadata_repo_factory(db: &Database) -> Arc<dyn ModelMetadataRepository> {
+    Arc::new(MongoModelMetadataRepository::new(db))
+}
+
+#[cfg(feature = "mongo")]
 pub fn dataset_metadata_repo_factory(db: &Database) -> Arc<dyn DatasetMetadataRepository> {
     Arc::new(MongoDatasetMetadataRepository::new(db))
 }
@@ -47,7 +51,8 @@ pub fn artifact_service_factory(db: &Database) -> Result<ArtifactService, Applic
         artifact_repo_factory(db),
         artifact_ingestion_repo_factory(db),
         artifact_publication_repo_factory(db),
-        MetadataRepository::Other(dataset_metadata_repo_factory(db)),
+        model_metadata_repo_factory(db),
+        dataset_metadata_repo_factory(db),
         Arc::new(RabbitMQArtifactOpMessagePublisher {})
     ))
 }
