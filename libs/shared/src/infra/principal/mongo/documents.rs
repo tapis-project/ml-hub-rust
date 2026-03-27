@@ -6,6 +6,8 @@ use mongodb::bson::{oid::ObjectId, DateTime};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
+pub const PRINCIPAL_COLLECTION: &str = "PRINCIPALS";
+
 // Documents
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Display, EnumString)]
 #[serde(rename_all = "kebab-case")]

@@ -1,7 +1,7 @@
 use crate::application::inputs::principal::FindByFederatedIdentity;
-use crate::infra::identity::mongo::documents::FederatedIdentity;
+use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
 use crate::infra::common::mongo::is_duplicate_key_error;
-use crate::infra::principal::mongo::documents::Principal;
+use crate::infra::principal::mongo::documents::{Principal, PRINCIPAL_COLLECTION};
 use crate::application::ports;
 use crate::application::ports::principal::PrincipalRepositoryError;
 use crate::domain::entities;
@@ -13,9 +13,6 @@ use mongodb::{
     Collection
 };
 use futures::stream::TryStreamExt;
-
-pub const FEDERATED_IDENTITY_COLLECTION: &str = "FEDERATED_IDENTITIES";
-pub const PRINCIPAL_COLLECTION: &str = "FEDERATED_IDENTITIES";
 
 type FederatedIdentityReadCollection = Collection<FederatedIdentity>;
 type FederatedIdentityWriteCollection = Collection<FederatedIdentity>;

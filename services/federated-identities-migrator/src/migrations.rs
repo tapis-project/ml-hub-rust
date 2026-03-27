@@ -1,98 +1,50 @@
-use mongodb::{Database, bson::doc};
+use mongodb::Database;
 use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 use async_trait::async_trait;
-use shared::infra::persistence::mongo::database::MODEL_METADATA_COLLECTION;
-use shared::infra::persistence::mongo::documents::model_metadata::ModelMetadata;
+use shared::infra::common::mongo::Index;
+use shared::infra::identity::mongo::indexes::{IssuerSubjectIndexUnique, IssuerSubjectPrincipalIdIndexUnique};
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
     vec![
-        Box::new(CreateModelAuthorNameIndex),
-        Box::new(CreateTaskTypesIndex),
-        Box::new(CreateArtifactIdIndex),
+        Box::new(CreateIssuerSubjectIndexUniqueMigration),
+        Box::new(CreateIssuerSubjectPrincipalIdIndexUniqueMigration),
     ]
 }
 
-pub struct CreateModelAuthorNameIndex;
+pub struct CreateIssuerSubjectIndexUniqueMigration;
 
 #[async_trait]
-impl Migration for CreateModelAuthorNameIndex {  
+impl Migration for CreateIssuerSubjectIndexUniqueMigration {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
-            .create_index(
-                mongodb::IndexModel::builder()
-                    .keys(doc! { "author": 1, "name": 1 })
-                    .options(
-                        Some(mongodb::options::IndexOptions::builder()
-                            .name("create_model_author_name_index_unique".to_string())
-                            .unique(true)
-                            .build())
-                    )
-                    .build()
-            )
+        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection())
+            .create_index(IssuerSubjectIndexUnique::index())
             .await?;
         Ok(())
     }
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION).drop_index("create_model_author_name_index_unique").await?;
+        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection()).drop_index(IssuerSubjectIndexUnique::INDEX_NAME).await?;
         Ok(())
     }
 }
 
-pub struct CreateTaskTypesIndex;
+pub struct CreateIssuerSubjectPrincipalIdIndexUniqueMigration;
 
 #[async_trait]
-impl Migration for CreateTaskTypesIndex {
+impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
-            .create_index(
-                mongodb::IndexModel::builder()
-                    .keys(doc! { "task_types": 1 })
-                    .options(
-                        Some(mongodb::options::IndexOptions::builder()
-                            .name("create_task_types_index".to_string())
-                            .build())
-                    )
-                    .build()
-            )
+        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection())
+            .create_index(IssuerSubjectPrincipalIdIndexUnique::index())
             .await?;
         Ok(())
     }
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION).drop_index("create_task_types_index").await?;
-        Ok(())
-    }
-}
-
-pub struct CreateArtifactIdIndex;
-
-#[async_trait]
-impl Migration for CreateArtifactIdIndex {
-    async fn up(&self, env: Env) -> anyhow::Result<()> {
-        let db: &Database = &env.db.unwrap();
-        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
-            .create_index(
-                mongodb::IndexModel::builder()
-                    .keys(doc! { "artifact_id": 1 })
-                    .options(
-                        Some(mongodb::options::IndexOptions::builder()
-                            .name("create_artifact_id_index".to_string())
-                            .build())
-                    )
-                    .build()
-            )
-            .await?;
-        Ok(())
-    }
-
-    async fn down(&self, env: Env) -> anyhow::Result<()> {
-        let db: &Database = &env.db.unwrap();
-        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION).drop_index("create_artifact_id_index").await?;
+        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection()).drop_index(IssuerSubjectPrincipalIdIndexUnique::INDEX_NAME).await?;
         Ok(())
     }
 }

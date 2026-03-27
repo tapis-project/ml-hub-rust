@@ -1,1 +1,1 @@
-pub(crate) mod mongo;
+pub mod mongo;

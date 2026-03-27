@@ -6,6 +6,8 @@ use serde_json::Value;
 use crate::domain::entities::identity as entities;
 use crate::infra::common::mongo::{ToBsonDateTime, ToTimeStamp};
 
+pub const FEDERATED_IDENTITY_COLLECTION: &str = "FEDERATED_IDENTITIES";
+
 // Document
 type PrincipalId = String;
 
@@ -23,7 +25,7 @@ pub struct FederatedIdentity {
     pub last_seen: DateTime,
 }
 
-// Mapping (Entity -> Document)
+// Mapping (Entity -> Mongo Document)
 impl From<(entities::FederatedIdentity, String)> for FederatedIdentity {
     fn from(value: (entities::FederatedIdentity, String)) -> Self {
         let identity = value.0;
@@ -42,7 +44,7 @@ impl From<(entities::FederatedIdentity, String)> for FederatedIdentity {
     }
 }
 
-// Mapping (Document -> Entity)
+// Mapping (Mongo Document -> Entity)
 impl From<FederatedIdentity> for entities::FederatedIdentity {
     fn from(value: FederatedIdentity) -> Self {
         Self {

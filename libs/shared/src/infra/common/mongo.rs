@@ -1,7 +1,15 @@
 pub use crate::domain::entities::timestamp::TimeStamp;
 
 pub use mongodb::bson::DateTime;
-use mongodb::error::{ErrorKind, WriteError, WriteFailure};
+use mongodb::{error::{ErrorKind, WriteError, WriteFailure}, IndexModel};
+use serde::Serialize;
+
+pub trait Index {
+    const INDEX_NAME: &'static str;
+    type Collection: Serialize;
+    fn index() -> IndexModel;
+    fn collection() -> &'static str;
+}
 
 pub trait ToBsonDateTime {
     fn to_bson(&self) -> DateTime;
