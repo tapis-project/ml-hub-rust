@@ -8,7 +8,7 @@ pub trait Index {
     const INDEX_NAME: &'static str;
     type Collection: Serialize;
     fn index() -> IndexModel;
-    fn collection() -> &'static str;
+    fn collection_name() -> &'static str;
 }
 
 pub trait ToBsonDateTime {

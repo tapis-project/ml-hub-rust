@@ -16,7 +16,7 @@ pub struct CreatePrincipalIdTenantIdIndexUniqueMigration;
 impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(PrincipalIdTenantIdIndexUnique::collection())
+        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(PrincipalIdTenantIdIndexUnique::collection_name())
             .create_index(PrincipalIdTenantIdIndexUnique::index())
             .await?;
         Ok(())
@@ -24,7 +24,7 @@ impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(PrincipalIdTenantIdIndexUnique::collection()).drop_index(PrincipalIdTenantIdIndexUnique::INDEX_NAME).await?;
+        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(PrincipalIdTenantIdIndexUnique::collection_name()).drop_index(PrincipalIdTenantIdIndexUnique::INDEX_NAME).await?;
         Ok(())
     }
 }

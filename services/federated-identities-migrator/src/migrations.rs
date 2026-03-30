@@ -17,7 +17,7 @@ pub struct CreateIssuerSubjectIndexUniqueMigration;
 impl Migration for CreateIssuerSubjectIndexUniqueMigration {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection())
+        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection_name())
             .create_index(IssuerSubjectIndexUnique::index())
             .await?;
         Ok(())
@@ -25,7 +25,8 @@ impl Migration for CreateIssuerSubjectIndexUniqueMigration {
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection()).drop_index(IssuerSubjectIndexUnique::INDEX_NAME).await?;
+        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection_name())
+            .drop_index(IssuerSubjectIndexUnique::INDEX_NAME).await?;
         Ok(())
     }
 }
@@ -36,7 +37,7 @@ pub struct CreateIssuerSubjectPrincipalIdIndexUniqueMigration;
 impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection())
+        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection_name())
             .create_index(IssuerSubjectPrincipalIdIndexUnique::index())
             .await?;
         Ok(())
@@ -44,7 +45,8 @@ impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
-        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection()).drop_index(IssuerSubjectPrincipalIdIndexUnique::INDEX_NAME).await?;
+        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection_name())
+            .drop_index(IssuerSubjectPrincipalIdIndexUnique::INDEX_NAME).await?;
         Ok(())
     }
 }

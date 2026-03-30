@@ -19,7 +19,7 @@ impl Index for PrincipalIdTenantIdIndexUnique {
             .build()
     }
 
-    fn collection() -> &'static str {
+    fn collection_name() -> &'static str {
         PRINCIPAL_COLLECTION
     }
 }

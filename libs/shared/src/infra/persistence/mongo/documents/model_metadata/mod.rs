@@ -1,5 +1,6 @@
 mod document_to_domain;
 mod input_to_document;
+pub mod indexes;
 // mod domain_to_document;
 
 use serde::{Serialize, Deserialize};

@@ -19,7 +19,7 @@ impl Index for IssuerSubjectIndexUnique {
                     .build()
     }
 
-    fn collection() -> &'static str {
+    fn collection_name() -> &'static str {
         FEDERATED_IDENTITY_COLLECTION
     }
 }
@@ -41,7 +41,7 @@ impl Index for IssuerSubjectPrincipalIdIndexUnique {
                     .build()
     }
 
-    fn collection() -> &'static str {
+    fn collection_name() -> &'static str {
         FEDERATED_IDENTITY_COLLECTION
     }
 }
