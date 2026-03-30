@@ -48,7 +48,7 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t mlhub/models-api:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
-        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }} && ./manage buildl models-migrator",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
         "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
@@ -600,13 +600,16 @@
     },
     {
       "name": "migrations",
-      "rootDir": "deploy/migrations",
+      "rootDir": "deploy/k8s/minikube/migrations",
       "labels": ["workflow"],
       "lifecycle": "experimental",
       "commands": {
-        "models": "kubectl apply -f models-migrations-job.yml",
-        "federated-identities": "kubectl apply -f federated-identities-migrations-job.yml",
-        "principals": "kubectl apply -f principals-migrations-job.yml"
+        "initialize": "",
+        "run-all": "./manage run-models migrations; ./manage run-federated-identities migrations; ./manage run-principals migrations",
+        "run": "kubectl apply -f {{ self.rootDir }}/{{ migration }}-migrations-job.yml",
+        "run-models": "kubectl apply -f {{ self.rootDir }}/models-migrations-job.yml",
+        "run-federated-identities": "kubectl apply -f {{ self.rootDir }}/federated-identities-migrations-job.yml",
+        "run-principals": "kubectl apply -f {{ self.rootDir }}/principals-migrations-job.yml"
       }
     }
   ]

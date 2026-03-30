@@ -18,14 +18,24 @@ pub struct CreateModelAuthorNameIndexMigration;
 impl Migration for CreateModelAuthorNameIndexMigration {  
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
+        
+        ModelAuthorNameIndexUnique::ensure_collection(db)
+            .await?;
+
         db.collection::<<ModelAuthorNameIndexUnique as Index>::Collection>(ModelAuthorNameIndexUnique::collection_name())
             .create_index(ModelAuthorNameIndexUnique::index())
             .await?;
+
         Ok(())
     }
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
+
+        ModelAuthorNameIndexUnique::ensure_collection(db)
+            .await
+            .expect("Collection to be created");
+
         db.collection::<<ModelAuthorNameIndexUnique as Index>::Collection>(ModelAuthorNameIndexUnique::collection_name())
             .drop_index(ModelAuthorNameIndexUnique::INDEX_NAME).await?;
         Ok(())
@@ -38,6 +48,11 @@ pub struct CreateTaskTypesIndexMigration;
 impl Migration for CreateTaskTypesIndexMigration {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
+
+        TaskTypesIndex::ensure_collection(db)
+            .await
+            .expect("Collection to be created");
+
         db.collection::<<TaskTypesIndex as Index>::Collection>(TaskTypesIndex::collection_name())
             .create_index(TaskTypesIndex::index())
             .await?;
@@ -46,6 +61,11 @@ impl Migration for CreateTaskTypesIndexMigration {
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
+
+        TaskTypesIndex::ensure_collection(db)
+            .await
+            .expect("Collection to be created");
+
         db.collection::<<TaskTypesIndex as Index>::Collection>(TaskTypesIndex::collection_name())
             .drop_index(TaskTypesIndex::INDEX_NAME).await?;
         Ok(())
@@ -58,6 +78,11 @@ pub struct CreateArtifactIdIndexMigration;
 impl Migration for CreateArtifactIdIndexMigration {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
+
+        ArtifactIdIndex::ensure_collection(db)
+            .await
+            .expect("Collection to be created");
+
         db.collection::<<ArtifactIdIndex as Index>::Collection>(ArtifactIdIndex::collection_name())
             .create_index(ArtifactIdIndex::index())
             .await?;
@@ -66,6 +91,11 @@ impl Migration for CreateArtifactIdIndexMigration {
 
     async fn down(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
+
+        ArtifactIdIndex::ensure_collection(db)
+            .await
+            .expect("Collection to be created");
+
         db.collection::<<ArtifactIdIndex as Index>::Collection>(ArtifactIdIndex::collection_name()).drop_index(ArtifactIdIndex::INDEX_NAME).await?;
         Ok(())
     }
