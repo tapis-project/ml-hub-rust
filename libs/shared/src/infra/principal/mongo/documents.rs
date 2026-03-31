@@ -1,4 +1,5 @@
 use crate::domain::entities;
+use crate::domain::entities::principal::PrincipalError;
 use crate::infra::common::mongo::{ToBsonDateTime, ToTimeStamp};
 use crate::infra::identity::mongo::documents::FederatedIdentity;
 
@@ -24,7 +25,7 @@ pub struct Principal {
     pub _id: Option<ObjectId>,
     pub id: String,
     pub kind: Kind,
-    pub tenant_id: Option<String>,
+    pub tenant_id: String,
     pub created_at: DateTime,
     pub last_seen: DateTime,
     pub last_modified: DateTime,
@@ -64,19 +65,17 @@ impl From<Kind> for entities::principal::Kind {
     }
 }
 
-impl From<(Principal, Vec<FederatedIdentity>)> for entities::principal::Principal {
-    fn from(value: (Principal, Vec<FederatedIdentity>)) -> Self {
+impl TryFrom<(Principal, FederatedIdentity)> for entities::principal::Principal {
+    type Error = PrincipalError;
+    
+    fn try_from(value: (Principal, FederatedIdentity)) -> Result<Self, Self::Error> {
         let principal = value.0;
-        let identities: Vec<entities::identity::FederatedIdentity> = value.1
-            .iter()
-            .map(|identity_doc| entities::identity::FederatedIdentity::from(identity_doc.clone()))
-            .collect();
 
         let props = entities::principal::RehydrateProps {
             id: principal.id,
             kind: entities::principal::Kind::from(principal.kind),
             tenant_id: principal.tenant_id,
-            identities,
+            identity: entities::identity::FederatedIdentity::from(value.1.clone()),
             created_at: principal.created_at.to_timestamp(),
             last_seen: principal.last_seen.to_timestamp(),
             last_modified: principal.last_modified.to_timestamp(),

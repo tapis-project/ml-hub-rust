@@ -8,7 +8,7 @@ use crate::domain::entities;
 use mongodb::{
     bson::{doc, to_bson},
     error::{TRANSIENT_TRANSACTION_ERROR, Error},
-    options::{UpdateModifications, InsertOneModel, ReadConcern, UpdateOneModel, WriteConcern, WriteModel},
+    options::{UpdateModifications, ReadConcern, UpdateOneModel, WriteConcern, WriteModel},
     Client,
     Collection
 };
@@ -63,58 +63,53 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
                 message: err.to_string(),
             })?;
 
+        // Convert the Principal into MongoDB documents
+        let principal_doc = Principal::from(principal.clone());
         
-        // Convert the Principal's identities into MongoDB documents and create
-        // insert models for the bulk write operation
-        let mut identity_write_models = Vec::with_capacity(principal.identites().len());
-        for identity in principal.identites() {
-            let identity_doc = FederatedIdentity::from((identity.clone(), principal.id.clone()));
-            
-            let filter = doc! {
-                "issuer": &identity_doc.issuer,
-                "subject": &identity_doc.subject,
-                "principal_id": &identity_doc.principal_id,
-            };
-
-            let update = UpdateModifications::Document(doc! {
-                // Updates the document with the fields below if found...
-                "$set": {
-                    "last_seen": &identity_doc.last_seen,
-                    "metadata": to_bson(&identity_doc.metadata)
-                        .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?, // Should never happen
-                },
-                // Creates a new FederatedIdentity if not
-                "$setOnInsert": to_bson(&identity_doc)
-                    .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?,
-            });
-
-            // Build the write model
-            let identity_write_model = WriteModel::UpdateOne(
-                UpdateOneModel::builder()
-                    .namespace(self.federated_identity_write_collection.namespace())
-                    .filter(filter)
-                    .update(update)
-                    .array_filters(None)
-                    .collation(None)
-                    .hint(None)
-                    .sort(None)
-                    .upsert(true)
-                    .build()
-            );
-
-            identity_write_models.push(identity_write_model);
-        }
-
-        // Run the bulk write with the session
-        let _ = match self.client.bulk_write(identity_write_models).session(&mut session).await {
+        // Save the Principal
+        let _ = match self.principal_write_collection.insert_one(principal_doc).session(&mut session).await {
             Ok(x) => x,
             Err(err) => return Err(PrincipalRepositoryError::from(err))
         };
+        
+        // Convert the Principal's federated identity into a MongoDB document
+        let identity_doc = FederatedIdentity::from((principal.active_identity().clone(), principal.id.clone()));
+        
+        let filter = doc! {
+            "issuer": &identity_doc.issuer,
+            "subject": &identity_doc.subject,
+            "principal_id": &identity_doc.principal_id.clone(),
+        };
 
-        // Convert the Principal into MongoDB documents
-        let principal_doc = Principal::from(principal.clone());
+        // Create an update or insert model for the identity
+        let update = UpdateModifications::Document(doc! {
+            // Updates the document with the fields below if found...
+            "$set": {
+                "last_seen": &identity_doc.last_seen,
+                "metadata": to_bson(&identity_doc.metadata)
+                    .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?, // Should never happen
+            },
+            // Creates a new FederatedIdentity if not
+            "$setOnInsert": to_bson(&identity_doc)
+                .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?,
+        });
 
-        let _ = match self.principal_write_collection.insert_one(principal_doc).session(&mut session).await {
+        // Build the write model
+        let identity_write_model = WriteModel::UpdateOne(
+            UpdateOneModel::builder()
+                .namespace(self.federated_identity_write_collection.namespace())
+                .filter(filter)
+                .update(update)
+                .array_filters(None)
+                .collation(None)
+                .hint(None)
+                .sort(None)
+                .upsert(true)
+                .build()
+        );
+
+        // Run the bulk write with the session
+        let _ = match self.client.bulk_write(vec![identity_write_model]).session(&mut session).await {
             Ok(x) => x,
             Err(err) => return Err(PrincipalRepositoryError::from(err))
         };
@@ -125,31 +120,57 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
     }
 
     async fn find_by_identity(&self, input: &FindByFederatedIdentity) -> Result<Option<entities::principal::Principal>, PrincipalRepositoryError> {
-        let mut filter = doc! {};
-
-        // if let Some(iss) = input.issuer.clone() {
-        //     filter.insert("issuer", iss);
-        // }
-
-        // if let Some(sub) = input.subject.clone() {
-        //     filter.insert("sub", sub);
-        // }
-
-        // if let Some(tenant_id) = input.tenant_id.clone() {
-        //     filter.insert("tenant_id", tenant_id);
-        // }
+        let ident_filter = doc! {
+            "issuer": input.identity.issuer.clone(),
+            "subject": input.identity.subject.clone(),
+            "tenant_id": input.identity.tenant_id.clone(),
+        };
         
-        // let mut cursor = self.read_collection.find(filter)
-        //     .await
-        //     .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        let mut identity_cursor = match self.federated_identity_read_collection.find(ident_filter).await{
+            Ok(c) => Ok(c),
+            Err(err) => Err(PrincipalRepositoryError::PersistenceError {
+                retriable: false,
+                message: err.to_string(),
+            })
+        }?;
 
-        // let maybe_federated_identity = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        let maybe_federated_identity_doc = match identity_cursor.try_next().await {
+            Ok(f) => Ok(f),
+            Err(err) => Err(PrincipalRepositoryError::PersistenceError {
+                retriable: false,
+                message: err.to_string(),
+            })
+        }?;
+
+        let federated_identity_doc = match maybe_federated_identity_doc {
+            Some(f) => f,
+            None => return Ok(None)
+        };
+
+        let principal_filter = doc! {
+            "id": &federated_identity_doc.principal_id
+        };
         
-        // match maybe_federated_identity {
-        //     Some(m) => Ok(Some(entities::identity::FederatedIdentity::from(m))),
-        //     None => Ok(None)
-        // }
-        Ok(None)
+        let mut principal_cursor = match self.principal_read_collection.find(principal_filter).await{
+            Ok(c) => Ok(c),
+            Err(err) => Err(PrincipalRepositoryError::PersistenceError {
+                retriable: false,
+                message: err.to_string(),
+            })
+        }?;
+
+        let maybe_principal_doc = match principal_cursor.try_next().await {
+            Ok(f) => Ok(f),
+            Err(err) => Err(PrincipalRepositoryError::PersistenceError {
+                retriable: false,
+                message: err.to_string(),
+            })
+        }?;
+
+        Ok(match maybe_principal_doc {
+            Some(p) => Some(entities::principal::Principal::try_from((p, federated_identity_doc))?),
+            None => None
+        })
     }
 }
 

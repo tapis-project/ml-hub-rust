@@ -1,6 +1,10 @@
 use crate::domain::entities::identity::FederatedIdentity;
 
 pub struct FindByFederatedIdentity {
-    identity: FederatedIdentity,
-    tenant: String,
+    pub identity: FederatedIdentity,
+}
+
+pub struct GetOrCreateFromFederatedIdentity {
+    pub principal_id: String,
+    pub identity: FederatedIdentity,
 }

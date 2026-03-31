@@ -1,4 +1,4 @@
-use crate::domain::entities::principal::Principal;
+use crate::domain::entities::principal::{Principal, PrincipalError};
 use crate::application::inputs::principal::FindByFederatedIdentity;
 
 use thiserror::Error;
@@ -19,6 +19,9 @@ pub enum PrincipalRepositoryError {
 
     #[error("The FederatedIdentity with subject {0} and issued by {1} that is attached to the Principal is already owned by another Principal")]
     FederatedIdentityAlreadyOwned(String, String),
+
+    #[error("{0}")]
+    DomainError(#[from] PrincipalError)
 }
 
 #[async_trait::async_trait]
