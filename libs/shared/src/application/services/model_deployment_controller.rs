@@ -150,7 +150,7 @@ impl ModelDeploymentController {
             &deployment.model.author
         );
 
-        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY)
+        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None)
             .await
             .map_err(|err| ReconciliationDispatchError::ModelMetadataRetrievalFailed(err.to_string()))?;
 
@@ -269,7 +269,7 @@ impl ModelDeploymentController {
         if let Some(deployment) = result.deployment {
             let update = UpdateModelDeploymentInput { deployment };
     
-            let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY) 
+            let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY, None) 
                 .await
                 .map_err(|err| FinishReconciliationError::ModelDeploymentUpdateFailed(err.to_string()))?;
         }

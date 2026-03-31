@@ -108,7 +108,7 @@ impl ModelDeploymentService {
         let find_model_deployment = || self.model_deployment_repo.find(&filter);
 
         // Fetch the deployment
-        let maybe_model_deployment = retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY).await?;
+        let maybe_model_deployment = retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY, None).await?;
 
         let deployment = match maybe_model_deployment {
             Some(d) => d,
@@ -137,7 +137,7 @@ impl ModelDeploymentService {
         let find_model_metadata = || self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author);
 
         // Fetch the metadata for the model of this deployment
-        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY).await?;
+        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None).await?;
         
         let model_metadata = match maybe_model_metadata {
             Some(mm) => mm,
@@ -153,7 +153,7 @@ impl ModelDeploymentService {
         // let artifact_id = model_metadata.artifact_id
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
         
-        // let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY)
+        // let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY, None)
         //     .await?
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
@@ -188,7 +188,7 @@ impl ModelDeploymentService {
             .map_err(|err| ApplicationError::ModelDeploymentFailed(err.to_string()))?;
 
         // Save the deployment
-        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY).await?;
+        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY, None).await?;
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: deployment.id,
@@ -204,7 +204,7 @@ impl ModelDeploymentService {
         let publish_state_drift_event = || self.event_publisher.publish(&event);
 
         // Publish the state drift event event
-        match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY,).await {
+        match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY, None).await {
             Ok(_) => (),
             Err(err) => {
                 error!("Failed to publish state drift event for deployment {}: {}", &deployment.id, err.to_string());
@@ -258,7 +258,7 @@ impl ModelDeploymentService {
 
     pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ApplicationError> {
         // Update the deployment
-        retry_async(|| self.model_deployment_repo.update(&input.deployment), &Self::REPO_RETRY_POLICY).await?;
+        retry_async(|| self.model_deployment_repo.update(&input.deployment), &Self::REPO_RETRY_POLICY, None).await?;
 
         Ok(())
     }

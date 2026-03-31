@@ -64,7 +64,7 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             revision: None,
         };
 
-        let mut deployment = match retry_async(|| self.model_deployment_repo.find(&filter), &Self::REPO_RETRY_POLICY).await? {
+        let mut deployment = match retry_async(|| self.model_deployment_repo.find(&filter), &Self::REPO_RETRY_POLICY, None).await? {
             Some(d) => d,
             None => return Err(ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string()))
         };
@@ -80,7 +80,7 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             .finish();
             
         // Update the deployment
-        retry_async(|| self.model_deployment_repo.update(&modified_deployment), &Self::REPO_RETRY_POLICY).await?;
+        retry_async(|| self.model_deployment_repo.update(&modified_deployment), &Self::REPO_RETRY_POLICY, None).await?;
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: modified_deployment.id,
@@ -96,7 +96,7 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
         let publish_state_drift_event = || self.event_publisher.publish(&event);
 
         // Publish the state drift event event
-        match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY,).await {
+        match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY, None).await {
             Ok(_) => (),
             Err(err) => {
                 error!("Failed to publish state drift event for deployment {}: {}", &deployment.id, err.to_string());

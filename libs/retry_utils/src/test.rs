@@ -129,6 +129,7 @@ mod retries_test {
                     }
                 },
                 &policy,
+                None,
             ).await;
 
             assert_eq!(result, Ok("Success"));
@@ -165,6 +166,7 @@ mod retries_test {
                     }
                 },
                 &policy,
+                None,
             )
                 .await;
 
@@ -202,6 +204,7 @@ mod retries_test {
                     }
                 },
                 &policy,
+                None
             ).await;
 
             assert_eq!(result, Ok("Success"));
@@ -237,6 +240,7 @@ mod retries_test {
                     }
                 },
                 &policy,
+                None
             ).await;
 
             assert_eq!(result, Ok("Success"));
@@ -262,11 +266,63 @@ mod retries_test {
                     }
                 },
                 &policy,
+                None
             ).await;
 
             // The result should be an error since retries are less than the number of attempts
             assert_eq!(result, Err("Error"));
             assert_eq!(attempts.get(), number_of_retries - 2);
+        }
+
+        #[tokio::test]
+        async fn test_terminate_early_with_error_filter() {
+            use super::*;
+
+            #[derive(Debug, Eq, PartialEq)]
+            enum TestError {
+                E1,
+                E2,
+                E3,
+            }
+
+            let retries = 4;
+
+            // Backoff not important here, just required
+            let policy = RetryPolicy::LinearBackoff(LinearBackoff {
+                retries: Retry::NTimes(retries),
+                delay: 0,
+            });
+
+            // Does not match TestError::E3
+            let on_error = |e: &TestError| {
+                if matches!(e, TestError::E1) || matches!(e, TestError::E2) {
+                    return OnErrorAction::ContinueRetries
+                }
+
+                OnErrorAction::ReturnResult
+            };
+
+            let attempts = Cell::new(0);
+            
+            let result = retry_async(
+                || async {
+                    attempts.set(attempts.get() + 1);
+
+                    let err = match attempts.get() {
+                        1 => Err(TestError::E1),
+                        2 => Err(TestError::E2),
+                        3 => Err(TestError::E3),
+                        _ => Ok(()),
+                    };
+
+                    return err
+                },
+                &policy,
+                on_error,
+            ).await;
+
+            assert_eq!(attempts.get(), 3);
+            assert_eq!(result, Err(TestError::E3));
         }
     }
 }

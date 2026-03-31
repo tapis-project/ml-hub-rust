@@ -73,12 +73,48 @@ fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64
     
 }
 
+pub enum OnErrorAction {
+    ContinueRetries,
+    ReturnResult
+}
+
+/// Trait to handle error filtering for retries
+pub trait OnErrorStrategy<E>: Send + Sync {
+    fn handle_error(&self, error: &E) -> OnErrorAction;
+}
+
+impl<E, F> OnErrorStrategy<E> for F 
+    where F: Fn(&E) -> OnErrorAction + Send + Sync 
+{
+    fn handle_error(&self, error: &E) -> OnErrorAction {
+        self(error)
+    }
+}
+
+// Gives the compiler a default type for the option when None is passed for the 
+// optional error strategy. Without this, the compile is unable to infer the option
+// type.
+impl<E> OnErrorStrategy<E> for Option<fn(&E) -> OnErrorAction> {
+    fn handle_error(&self, error: &E) -> OnErrorAction {
+        if let Some(f) = self {
+            return f(error)
+        }
+        
+        OnErrorAction::ContinueRetries // Default to continuing retries
+    }
+}
+
 /// Retries an asynchronous function call based on the provided number of retries
 /// and retry policy.
-pub async fn retry_async<F, Fut, O, E>(op: F, policy: &RetryPolicy) -> Result<O, E>
-where
-    F: Fn() -> Fut,
-    Fut: Future<Output = Result<O, E>>
+pub async fn retry_async<F, Fut, O, E, S>(
+    op: F,
+    policy: &RetryPolicy,
+    error_strategy: S
+) -> Result<O, E>
+    where
+        F: Fn() -> Fut,
+        Fut: Future<Output = Result<O, E>>,
+        S: OnErrorStrategy<E>
 {
     // We use i16 because we want to allow -1 for retrying an indefinite number
     // of times. The Retry::NTimes(n) will be cast from u16 to i16 for all policies
@@ -132,8 +168,17 @@ where
         }
     };
 
+    // // Set a defualt error filter if the caller does not provide one. This default
+    // // error filter will always return true, meaning that this utitly will run
+    // // according to the retry policy regardless of the error.
+    // let error_filter: Box<dyn Fn(&E) -> bool> = match filter {
+    //     Some(f) => Box::new(f),
+    //     None => Box::new(|_| true)
+    // };
+
     // Calculate the initial decay
     let mut calculated_delay = calculate_delay(&delay, &(attempt.clone() as u16).clone(), &policy);
+
     loop {
         // Call the operation
         let result = op().await;
@@ -142,6 +187,10 @@ where
         match result {
             Ok(v) => return Ok(v),
             Err(err) => {
+                // If the error filter returns false, return the error early
+                if matches!(error_strategy.handle_error(&err), OnErrorAction::ReturnResult) {
+                    return Err(err)
+                }
                 // Handle delay
                 if calculated_delay > 0 && attempt != retries {
                     sleep(Duration::from_millis(calculated_delay)).await;

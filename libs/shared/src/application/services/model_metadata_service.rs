@@ -70,14 +70,14 @@ impl ModelMetadataService {
         let find_artifact = || self.artifact_repo.get_by_id(&artifact_id);
 
         // Find the artifact by id
-        let artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY)
+        let artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None)
             .await?
             .ok_or_else(|| ModelMetadataServiceError::ArtifactNotFound(format!("Artifact with id {} does not exist", &artifact_id)))?;
 
         // Ensure no metadata already exists for this artifact
         let find_metadata = || self.model_metadata_repo.find_by_artifact_id(&artifact_id);
 
-        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY)
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;
 
         let metadata = match maybe_metadata {
@@ -92,7 +92,7 @@ impl ModelMetadataService {
         
         let update_metadata = || self.model_metadata_repo.update_artifact_id(&update_input);
 
-        retry_async(update_metadata, &Self::REPO_RETRY_POLICY)
+        retry_async(update_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;
 
         return Ok(())
@@ -101,7 +101,7 @@ impl ModelMetadataService {
     pub async fn create_model_metadata(&self, input: CreateModelMetadata) -> Result<(), ModelMetadataServiceError> {
         let create_metadata = || self.model_metadata_repo.save(&input);
 
-        retry_async(create_metadata, &Self::REPO_RETRY_POLICY)
+        retry_async(create_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;
 
         return Ok(())
@@ -111,7 +111,7 @@ impl ModelMetadataService {
         let discover_models = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
         
         // Find model metadata by discovery criteria
-        let output = retry_async(discover_models, &Self::REPO_RETRY_POLICY).await
+        let output = retry_async(discover_models, &Self::REPO_RETRY_POLICY, None).await
             .map_err(|err| ModelMetadataServiceError::RepoError(err))?;
 
         let modified_models: Vec<_> = output.models
