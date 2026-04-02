@@ -1,11 +1,11 @@
 use crate::application::inputs::principal::{FindByFederatedIdentity, GetOrCreateFromFederatedIdentity};
-use crate::domain::entities::principal::Principal;
+use crate::domain::entities::principal::{NewUserPrincipalProps, Principal, PrincipalError};
 use crate::application::ports::principal::{PrincipalRepository, PrincipalRepositoryError};
 
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;
-use retry_utils::{retry_async, FixedBackoff, OnErrorAction, Retry, RetryPolicy};
+use retry_utils::{retry_async, FixedBackoff, RetryStrategyAction, Retry, RetryPolicy};
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
@@ -32,19 +32,9 @@ impl PrincipalService {
         })
     });
 
-    pub async fn save(&self, principal: Principal) -> Result<(), PrincipalServiceError> {
-        match self.principal_repository.save(&principal).await {
-            Ok(_) => Ok(()),
-            Err(err) => {
-                match err {
-                    PrincipalRepositoryError::PrincipalAlreadyExists => Err(PrincipalServiceError::PrincipalConflict),
-                    PrincipalRepositoryError::FederatedIdentityAlreadyOwned(iss, sub) => Err(PrincipalServiceError::FederatedIdentityConflict(iss, sub)),
-                    PrincipalRepositoryError::PersistenceError { message, .. } |
-                    PrincipalRepositoryError::ProgrammingError(message) => Err(PrincipalServiceError::InternalError(message)),
-                    PrincipalRepositoryError::DomainError(err) => Err(PrincipalServiceError::InternalError(err.to_string())),
-                }
-            }
-        }
+    async fn save(&self, principal: Principal) -> Result<(), PrincipalServiceError> {
+        self.principal_repository.save(&principal).await
+            .map_err(|err| PrincipalServiceError::from(err))
     }
 
     pub async fn get_or_create_from_identity(&self, input: GetOrCreateFromFederatedIdentity) -> Result<Principal, PrincipalServiceError> {
@@ -54,36 +44,61 @@ impl PrincipalService {
         // The repo call to be passed into the retrier
         let find_by_identity_op = || self.principal_repository.find_by_identity(&find_by_identity_input);
         
-        // A callback that determines which errors to retry on
-        let on_error = |err: &PrincipalRepositoryError| -> OnErrorAction {
+        // A closure that determines how to handle errors for each retry attempt
+        let retry_strategy = |err: &PrincipalRepositoryError, _attempt| -> RetryStrategyAction {
             match err {
                 PrincipalRepositoryError::DomainError(_) |
                 PrincipalRepositoryError::FederatedIdentityAlreadyOwned(..) |
                 PrincipalRepositoryError::PrincipalAlreadyExists |
-                PrincipalRepositoryError::ProgrammingError(_) => OnErrorAction::ReturnResult,
+                PrincipalRepositoryError::ProgrammingError(_) => RetryStrategyAction::ReturnResult,
                 PrincipalRepositoryError::PersistenceError { retriable, .. } => {
                     if *retriable {
-                        return OnErrorAction::ContinueRetries
+                        return RetryStrategyAction::ContinueRetries
                     }
 
-                    OnErrorAction::ReturnResult
+                    RetryStrategyAction::ReturnResult
                 }
             }
         };
 
-        let result_maybe_principal = retry_async(find_by_identity_op, &Self::REPO_RETRY_POLICY, on_error).await;
-        // let maybe_principal = match result_maybe_principal {
-        //     Ok(p) => p,
-        //     Err(err) => {
-        //         match err {
-        //             PrincipalRepositoryError::DomainError(..) |
-        //             PrincipalRepositoryError::FederatedIdentityAlreadyOwned(iss, sub) |
-        //             PrincipalRepositoryError::PersistenceError { retriable, message } |
-        //             PrincipalRepositoryError::PrincipalAlreadyExists |
-        //         }
-        //     }
-        // };
+        let maybe_principal = retry_async(find_by_identity_op, &Self::REPO_RETRY_POLICY, retry_strategy).await?;
+
+        if let Some(p) = maybe_principal {
+            return Ok(p)
+        };
+
+        let props = NewUserPrincipalProps {
+            id: input.principal_id,
+            tenant_id: input.identity.tenant_id.clone(),
+            identity: input.identity
+        };
+
+        let new_principal = Principal::new_user(props)?;
         
-        Err(PrincipalServiceError::InternalError("Not implemented".into()))
+        self.save(new_principal.clone()).await?;
+
+        return Ok(new_principal)
+    }
+}
+
+impl From<PrincipalError> for PrincipalServiceError {
+    fn from(value: PrincipalError) -> Self {
+        match value {
+            PrincipalError::TenantMismatch => PrincipalServiceError::InternalError(value.to_string())
+        }
+    }
+}
+
+impl From<PrincipalRepositoryError> for PrincipalServiceError {
+    fn from(value: PrincipalRepositoryError) -> Self {
+        match value {
+            PrincipalRepositoryError::DomainError(err) => {
+                PrincipalServiceError::InternalError(err.to_string())
+            },
+            PrincipalRepositoryError::ProgrammingError(msg) |
+            PrincipalRepositoryError::PersistenceError { message: msg, .. } => PrincipalServiceError::InternalError(msg),
+            PrincipalRepositoryError::FederatedIdentityAlreadyOwned(sub, iss) => PrincipalServiceError::FederatedIdentityConflict(iss, sub),
+            PrincipalRepositoryError::PrincipalAlreadyExists => PrincipalServiceError::PrincipalConflict,
+        }
     }
 }

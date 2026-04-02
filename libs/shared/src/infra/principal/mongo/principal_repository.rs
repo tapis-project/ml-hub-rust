@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::application::inputs::principal::FindByFederatedIdentity;
 use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
 use crate::infra::common::mongo::is_duplicate_key_error;
@@ -55,6 +57,7 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
 
         // Start a transaction
         session.start_transaction()
+            .max_commit_time(Duration::from_millis(2000))
             .read_concern(ReadConcern::majority())
             .write_concern(WriteConcern::majority())
             .await
@@ -114,9 +117,16 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
             Err(err) => return Err(PrincipalRepositoryError::from(err))
         };
         
-        session.commit_transaction()
-            .await
-            .map_err(|err| PrincipalRepositoryError::from(err))
+        match session.commit_transaction().await {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                if let Err(e) = session.abort_transaction().await {
+                    return Err(PrincipalRepositoryError::from(e))
+                }
+
+                return Err(PrincipalRepositoryError::from(err))
+            }
+        }
     }
 
     async fn find_by_identity(&self, input: &FindByFederatedIdentity) -> Result<Option<entities::principal::Principal>, PrincipalRepositoryError> {

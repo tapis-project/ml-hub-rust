@@ -73,34 +73,34 @@ fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64
     
 }
 
-pub enum OnErrorAction {
+pub enum RetryStrategyAction {
     ContinueRetries,
     ReturnResult
 }
 
 /// Trait to handle error filtering for retries
-pub trait OnErrorStrategy<E>: Send + Sync {
-    fn handle_error(&self, error: &E) -> OnErrorAction;
+pub trait RetryStrategy<E>: Send + Sync {
+    fn handle_error(&self, error: &E, attempt: i16) -> RetryStrategyAction;
 }
 
-impl<E, F> OnErrorStrategy<E> for F 
-    where F: Fn(&E) -> OnErrorAction + Send + Sync 
+impl<E, F> RetryStrategy<E> for F 
+    where F: Fn(&E, i16) -> RetryStrategyAction + Send + Sync 
 {
-    fn handle_error(&self, error: &E) -> OnErrorAction {
-        self(error)
+    fn handle_error(&self, error: &E, attempt: i16) -> RetryStrategyAction {
+        self(error, attempt)
     }
 }
 
 // Gives the compiler a default type for the option when None is passed for the 
-// optional error strategy. Without this, the compile is unable to infer the option
+// optional retry strategy. Without this, the compile is unable to infer the option
 // type.
-impl<E> OnErrorStrategy<E> for Option<fn(&E) -> OnErrorAction> {
-    fn handle_error(&self, error: &E) -> OnErrorAction {
+impl<E> RetryStrategy<E> for Option<fn(&E, i16) -> RetryStrategyAction> {
+    fn handle_error(&self, error: &E, attempt: i16) -> RetryStrategyAction {
         if let Some(f) = self {
-            return f(error)
+            return f(error, attempt)
         }
         
-        OnErrorAction::ContinueRetries // Default to continuing retries
+        RetryStrategyAction::ContinueRetries // Default to continuing retries
     }
 }
 
@@ -109,18 +109,17 @@ impl<E> OnErrorStrategy<E> for Option<fn(&E) -> OnErrorAction> {
 pub async fn retry_async<F, Fut, O, E, S>(
     op: F,
     policy: &RetryPolicy,
-    error_strategy: S
+    retry_strategy: S
 ) -> Result<O, E>
     where
         F: Fn() -> Fut,
         Fut: Future<Output = Result<O, E>>,
-        S: OnErrorStrategy<E>
+        S: RetryStrategy<E>
 {
     // We use i16 because we want to allow -1 for retrying an indefinite number
     // of times. The Retry::NTimes(n) will be cast from u16 to i16 for all policies
     let retries: i16;
     let mut delay: u64 = 0;
-    let mut attempt: i16 = 0;
 
     match policy {
         RetryPolicy::ExponentialBackoff(backoff) => {
@@ -168,13 +167,7 @@ pub async fn retry_async<F, Fut, O, E, S>(
         }
     };
 
-    // // Set a defualt error filter if the caller does not provide one. This default
-    // // error filter will always return true, meaning that this utitly will run
-    // // according to the retry policy regardless of the error.
-    // let error_filter: Box<dyn Fn(&E) -> bool> = match filter {
-    //     Some(f) => Box::new(f),
-    //     None => Box::new(|_| true)
-    // };
+    let mut attempt: i16 = 0;
 
     // Calculate the initial decay
     let mut calculated_delay = calculate_delay(&delay, &(attempt.clone() as u16).clone(), &policy);
@@ -188,7 +181,7 @@ pub async fn retry_async<F, Fut, O, E, S>(
             Ok(v) => return Ok(v),
             Err(err) => {
                 // If the error filter returns false, return the error early
-                if matches!(error_strategy.handle_error(&err), OnErrorAction::ReturnResult) {
+                if matches!(retry_strategy.handle_error(&err, attempt + 1), RetryStrategyAction::ReturnResult) {
                     return Err(err)
                 }
                 // Handle delay

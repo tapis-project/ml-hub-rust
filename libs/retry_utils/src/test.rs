@@ -293,16 +293,28 @@ mod retries_test {
                 delay: 0,
             });
 
+            let attempts = Cell::new(0);
+
             // Does not match TestError::E3
-            let on_error = |e: &TestError| {
-                if matches!(e, TestError::E1) || matches!(e, TestError::E2) {
-                    return OnErrorAction::ContinueRetries
+            let retry_strategy = |e: &TestError, attempt: i16| {
+                // Should be first attempt
+                if matches!(e, TestError::E1) {
+                    assert_eq!(attempt, 1);
                 }
 
-                OnErrorAction::ReturnResult
-            };
+                // Should be second attempt
+                if matches!(e, TestError::E2) {
+                    assert_eq!(attempt, 2);
+                }
 
-            let attempts = Cell::new(0);
+                // Continue retries on the first 2 errors, then return result on
+                // the third error
+                if matches!(e, TestError::E1) || matches!(e, TestError::E2) {
+                    return RetryStrategyAction::ContinueRetries
+                }
+
+                RetryStrategyAction::ReturnResult
+            };
             
             let result = retry_async(
                 || async {
@@ -318,7 +330,7 @@ mod retries_test {
                     return err
                 },
                 &policy,
-                on_error,
+                retry_strategy,
             ).await;
 
             assert_eq!(attempts.get(), 3);

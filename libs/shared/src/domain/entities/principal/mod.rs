@@ -5,9 +5,6 @@ use thiserror::Error;
 
 #[derive(Clone, Debug, Error)]
 pub enum PrincipalError {
-    #[error("Cannot create a Principal without a FederatedIdentity")]
-    MissingFederatedIdentity,
-
     #[error("The Principal's tenant id and the federated identities tenant id do not match")]
     TenantMismatch,
 }
@@ -31,12 +28,7 @@ pub struct Principal {
 
 impl Principal {
     pub fn new_user(props: NewUserPrincipalProps) -> Result<Self, PrincipalError> {
-        let identity = match props.identity {
-            Some(i) => i,
-            None => return Err(PrincipalError::MissingFederatedIdentity),
-        };
-
-        if props.tenant_id != identity.tenant_id {
+        if props.tenant_id != props.identity.tenant_id.clone() {
             return Err(PrincipalError::TenantMismatch)
         }
 
@@ -46,7 +38,7 @@ impl Principal {
             id: props.id,
             kind: Kind::User,
             tenant_id: props.tenant_id,
-            active_identity: identity,
+            active_identity: props.identity,
             created_at: now.clone(),
             last_modified: now.clone(),
             last_seen: now.clone(),
@@ -78,7 +70,7 @@ impl Principal {
 pub struct NewUserPrincipalProps {
     pub id: String,
     pub tenant_id: String,
-    pub identity: Option<FederatedIdentity>,
+    pub identity: FederatedIdentity,
 }
 
 #[derive(Clone, Debug)]
