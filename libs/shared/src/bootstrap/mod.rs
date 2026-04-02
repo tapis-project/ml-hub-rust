@@ -74,7 +74,7 @@ pub struct SharedAppContext {
     pub config: SiteConfiguration,
     pub idp_registrar: FederatedIdpRegistrar,
     pub federated_identity_service: FederatedIdentityService,
-    pub principal_service: Arc<PrincipalService>
+    pub principal_service: PrincipalService
 }
 
 pub async fn initialize_idps(idps: &Vec<Idp>) -> Result<Vec<Arc<dyn FederatedIdentityProvider>>, FederatedIdpRegistrarError> {
@@ -106,9 +106,9 @@ pub fn build_principal_repository(client: Client, db_name: String) -> Arc<dyn Pr
     Arc::new(MongoPrincipalRepository::new(client, db_name))
 }
 
-pub fn build_principal_service(client: Client, db_name: String) -> Arc<PrincipalService> {
+pub fn build_principal_service(client: Client, db_name: String) -> PrincipalService {
     let repo = build_principal_repository(client, db_name);
-    Arc::new(PrincipalService::new(repo))
+    PrincipalService::new(repo)
 }
 
 pub async fn build_shared_app_context(config: SiteConfiguration, client: Client, db_name: String) -> Result<SharedAppContext, FederatedIdpRegistrarError> {

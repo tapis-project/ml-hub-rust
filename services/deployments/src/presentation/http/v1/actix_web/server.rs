@@ -97,6 +97,7 @@ pub async fn run_server() -> std::io::Result<()> {
     let site_config = web::Data::from(Arc::new(shared_app_context.config));
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
     let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
+    let principal_service = web::Data::new(shared_app_context.principal_service);
     
     // Initialize AppState
     let state = AppState {
@@ -111,6 +112,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
+            .app_data(principal_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(authenticate))
             .wrap(from_fn(resolve_tenancy))
