@@ -67,7 +67,26 @@ pub async fn run_server() -> std::io::Result<()> {
         .map_err(|err| { error!("{}", err.to_string()) })
         .expect("Site configuration repository to be intialized");
 
-    let shared_app_context = build_shared_app_context(config_repository.get_config())
+    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+
+    let mongo_client = initialize_client(ClientParams{
+        username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
+        password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
+        host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
+        port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
+        db: db_name.clone()
+    })
+        .await
+        .map_err(|err| {
+            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        })
+        .expect("Datbase initialization error");
+
+    let shared_app_context = build_shared_app_context(
+        config_repository.get_config(),
+        mongo_client.clone(),
+        db_name.clone()
+    )
         .await
         .map_err(|err| {
             error!("Failed to initialize SharedState: {}", err.to_string());
@@ -84,18 +103,7 @@ pub async fn run_server() -> std::io::Result<()> {
         client_strategy_sets,
         db_name: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
         channel: Arc::new(channel),
-        client: initialize_client(ClientParams{
-            username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
-            password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
-            host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
-            port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
-            db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
-        })
-            .await
-            .map_err(|err| {
-                panic!("Database initialization error: {}", err.to_string().as_str()); 
-            })
-            .expect("Datbase initialization error")
+        client: mongo_client.clone()
     };
 
     HttpServer::new(move || {

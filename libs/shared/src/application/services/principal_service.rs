@@ -32,6 +32,12 @@ impl PrincipalService {
         })
     });
 
+    pub fn new(principal_repository: Arc<dyn PrincipalRepository>) -> Self {
+        Self {
+            principal_repository
+        }
+    }
+
     async fn save(&self, principal: Principal) -> Result<(), PrincipalServiceError> {
         self.principal_repository.save(&principal).await
             .map_err(|err| PrincipalServiceError::from(err))

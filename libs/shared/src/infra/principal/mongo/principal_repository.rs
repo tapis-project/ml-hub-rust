@@ -30,7 +30,7 @@ pub struct PrincipalRepository {
 }
 
 impl PrincipalRepository {
-    pub fn new(client: &Client, db_name: String) -> Self { 
+    pub fn new(client: Client, db_name: String) -> Self { 
         let db = client.database(&db_name);
 
         Self {
