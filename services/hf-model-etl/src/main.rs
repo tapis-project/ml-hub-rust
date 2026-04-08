@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::env;
 use serde_json::Value;
-use hf_model_etl::database::{get_db, ClientParams};
+use hf_model_etl::database::{initialize_client, ClientParams};
 use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
 use shared::application::inputs::model_metadata::CreateModelMetadata;
 use client_provider::ClientProvider;
@@ -13,12 +13,14 @@ use std::sync::Arc;
 #[tokio::main]
 async fn main() {
     // Database connection
-    let db = get_db(ClientParams{
+    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+    let client = initialize_client(ClientParams{
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
         db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
         .map_err(|err| {
@@ -39,7 +41,7 @@ async fn main() {
         }
     };
 
-    let artifact_service = model_metadata_service_factory(&db, client_strategy_sets)
+    let artifact_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
         .await
         .expect("failed to initialize artifact service");
 

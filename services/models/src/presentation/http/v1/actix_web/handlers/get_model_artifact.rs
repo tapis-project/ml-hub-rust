@@ -37,7 +37,7 @@ async fn get_model_artifact(
     let logger = SharedLogger::new();
     logger.debug("get_model_artifact operation");
     
-    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     let artifact_id = match Uuid::parse_str(&path.artifact_id) {
         Ok(id) => id,

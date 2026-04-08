@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlhub-cm-mongo-init-script
+data:
+  init-db.sh: |
+    #!/bin/bash
+    set -e
+
+    CONNECTION_STRING="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin"
+
+    # Wait for MongoDB to respond
+    attempt=0
+    until mongosh $CONNECTION_STRING --eval "db.adminCommand({ ping: 1 })" >/dev/null 2>&1; do
+      echo "Waiting for MongoDB to start... Attempt $attempt"
+      sleep 1
+      attempt=$((attempt + 1))
+      if [ "$attempt" -eq 30 ]; then
+        echo "Mongo failed to start"
+        exit 1
+      fi
+    done
+
+    # Initialize replica set if not already initialized
+    RS_STATUS=$(mongosh $CONNECTION_STRING --quiet --eval "try { rs.status().ok } catch(e) { 0 }")
+    if [ "$RS_STATUS" != "1" ]; then
+      echo "Initializing replica set..."
+      mongosh $CONNECTION_STRING --eval "rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]})"
+      # Wait for PRIMARY
+      until mongosh $CONNECTION_STRING --eval "rs.status().members.some(m => m.stateStr === \"PRIMARY\")" | grep true >/dev/null 2>&1; do
+        sleep 1
+      done
+      echo "Replica set initialized."
+      attempt=0
+      until mongosh $CONNECTION_STRING \
+        --quiet \
+        --eval "db.hello().isWritablePrimary" | grep true >/dev/null 2>&1; do
+        echo "Waiting for PRIMARY to become writable..."
+        sleep 1
+        attempt=$((attempt + 1))
+        if [ "$attempt" -eq 30 ]; then
+          echo "Timeout while waiting for PRIMARY to become writable"
+          exit 1
+        fi
+      done
+    else
+      echo "Replica set already initialized."
+    fi
+
+    # Initialize the MLHub user
+    mongosh "$CONNECTION_STRING" --eval "
+      if (!db.getUser('${MLHUB_USERNAME}')) {
+        db.createUser({
+          user: '${MLHUB_USERNAME}',
+          pwd: '${MLHUB_PASSWORD}',
+          roles: [{ role: 'readWrite', db: 'mlhub' }]
+        });
+        print('User created.');
+      } else {
+        print('User already exists, skipping.');
+      }
+    "
+
+    echo "Initialization complete. Entering sleep to keep sidecar alive."
+    # This prevents the container from exiting and K8s from restarting it in a loop
+    exec tail -f /dev/null

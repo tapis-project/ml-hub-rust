@@ -7,6 +7,11 @@ data:
     #!/bin/bash
     set -e
 
+    # Wait until MongoDB is up and responding
+    until mongosh --host localhost --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+      sleep 1
+    done
+
     attempt=0
     until mongosh "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin" --eval "db.runCommand({ ping: 1 })"; do
       echo "Attempting to connect to the db. Attempt: $attempt"

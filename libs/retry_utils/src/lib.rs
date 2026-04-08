@@ -1,5 +1,5 @@
 use std::future::Future;
-use rand::Rng;
+use rand::RngExt;
 use tokio::time::{sleep, Duration};
 
 pub enum Retry {
@@ -73,21 +73,56 @@ fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64
     
 }
 
+pub enum RetryStrategyAction {
+    ContinueRetries,
+    ReturnResult
+}
+
+/// Trait to handle error filtering for retries
+pub trait RetryStrategy<E>: Send + Sync {
+    fn handle_error(&self, error: &E, attempt: i16) -> RetryStrategyAction;
+}
+
+impl<E, F> RetryStrategy<E> for F 
+    where F: Fn(&E, i16) -> RetryStrategyAction + Send + Sync 
+{
+    fn handle_error(&self, error: &E, attempt: i16) -> RetryStrategyAction {
+        self(error, attempt)
+    }
+}
+
+// Gives the compiler a default type for the option when None is passed for the 
+// optional retry strategy. Without this, the compile is unable to infer the option
+// type.
+impl<E> RetryStrategy<E> for Option<fn(&E, i16) -> RetryStrategyAction> {
+    fn handle_error(&self, error: &E, attempt: i16) -> RetryStrategyAction {
+        if let Some(f) = self {
+            return f(error, attempt)
+        }
+        
+        RetryStrategyAction::ContinueRetries // Default to continuing retries
+    }
+}
+
 /// Retries an asynchronous function call based on the provided number of retries
 /// and retry policy.
-pub async fn retry_async<F, Fut, O, E>(op: F, policy: &RetryPolicy) -> Result<O, E>
-where
-    F: Fn() -> Fut,
-    Fut: Future<Output = Result<O, E>>
+pub async fn retry_async<F, Fut, O, E, S>(
+    op: F,
+    policy: &RetryPolicy,
+    retry_strategy: S
+) -> Result<O, E>
+    where
+        F: Fn() -> Fut,
+        Fut: Future<Output = Result<O, E>>,
+        S: RetryStrategy<E>
 {
     // We use i16 because we want to allow -1 for retrying an indefinite number
     // of times. The Retry::NTimes(n) will be cast from u16 to i16 for all policies
     let retries: i16;
     let mut delay: u64 = 0;
-    let mut attempt: i16 = 0;
 
     match policy {
-        RetryPolicy::ExponentialBackoff(ref backoff) => {
+        RetryPolicy::ExponentialBackoff(backoff) => {
             match backoff.retries {
                 Retry::NTimes(n) => {
                     retries = n as i16;
@@ -98,7 +133,7 @@ where
                 },
             };
         },
-        RetryPolicy::FixedBackoff(ref backoff) => {
+        RetryPolicy::FixedBackoff(backoff) => {
             delay = backoff.delay;
             match backoff.retries {
                 Retry::NTimes(n) => {
@@ -109,7 +144,7 @@ where
                 },
             }
         },
-        RetryPolicy::NoBackoff(ref backoff) => {
+        RetryPolicy::NoBackoff(backoff) => {
             match backoff.retries {
                 Retry::NTimes(n) => {
                     retries = n as i16;
@@ -119,7 +154,7 @@ where
                 },
             }
         },
-        RetryPolicy::LinearBackoff(ref backoff) => {
+        RetryPolicy::LinearBackoff(backoff) => {
             delay = backoff.delay;
             match backoff.retries {
                 Retry::NTimes(n) => {
@@ -132,8 +167,11 @@ where
         }
     };
 
+    let mut attempt: i16 = 0;
+
     // Calculate the initial decay
     let mut calculated_delay = calculate_delay(&delay, &(attempt.clone() as u16).clone(), &policy);
+
     loop {
         // Call the operation
         let result = op().await;
@@ -142,6 +180,10 @@ where
         match result {
             Ok(v) => return Ok(v),
             Err(err) => {
+                // If the error filter returns false, return the error early
+                if matches!(retry_strategy.handle_error(&err, attempt + 1), RetryStrategyAction::ReturnResult) {
+                    return Err(err)
+                }
                 // Handle delay
                 if calculated_delay > 0 && attempt != retries {
                     sleep(Duration::from_millis(calculated_delay)).await;
@@ -164,5 +206,5 @@ where
 
 // Unit tests
 #[cfg(test)]
-#[path = "retry.test.rs"]
-mod retry_test;
+#[path = "test.rs"]
+mod test;

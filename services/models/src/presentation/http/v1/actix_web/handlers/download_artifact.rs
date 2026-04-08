@@ -41,7 +41,7 @@ async fn download_artifact(
     }
 
     // Instantiate an artifact service
-    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     // Convert the request requests into an input
     let input = match DownloadArtifactInput::try_from(request) {

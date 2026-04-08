@@ -13,7 +13,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
-use shared::domain::entities::identity::FederatedIdentity;
+use shared::domain::entities::principal::Principal;
 
 #[utoipa::path(
     post,
@@ -36,7 +36,7 @@ async fn deploy_model_with_strategy(
     data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    identity: FederatedIdentity,
+    principal: Principal,
 ) -> impl Responder {
     let maybe_strategy = data.client_strategy_sets
         .iter()
@@ -52,7 +52,8 @@ async fn deploy_model_with_strategy(
     };
 
     let service = model_deployment_service_builder(
-        &data.db,
+        &data.client,
+        data.db_name.clone(),
         data.channel.clone(),
     );
 

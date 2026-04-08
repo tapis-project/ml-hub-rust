@@ -6,14 +6,17 @@ use actix_web::{
     dev::ServiceRequest,
     body::{EitherBody, MessageBody},
 };
+use serde_json::json;
+
+use crate::application::inputs::principal::GetOrCreateFromFederatedIdentity;
 use crate::application::ports::identity::FederatedIdentityProviderError;
 use crate::application::services::federated_identity_service::FederatedIdentityService;
+use crate::application::services::principal_service::PrincipalService;
 use crate::domain::entities::tenancy::Tenant;
 use crate::presentation::http::v1::requests::headers::AuthToken;
 use crate::application::services::federated_idp_registrar::FederatedIdpRegistrar;
 use crate::presentation::http::v1::actix_web::helpers::get_header_value;
 use crate::presentation::http::v1::adapters::derive_header_keys_from_authorities;
-use serde_json::json;
 
 pub async fn authenticate(
     req: ServiceRequest,
@@ -23,7 +26,7 @@ pub async fn authenticate(
         Some(s) => s.into_inner(),
         None => return Ok(
             req
-                .into_response(HttpResponse::InternalServerError().json(json!({"error": "FederatedIdentityService not found"})))
+                .into_response(HttpResponse::InternalServerError().json(json!({"error": "Federated identity service not found"})))
                 .map_into_right_body()
         )
     };
@@ -32,7 +35,7 @@ pub async fn authenticate(
         Some(r) => r.into_inner(),
         None => return Ok(
                 req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "FederatedIdpRegistrar not found"})))
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Federated idp registrar not found"})))
                     .map_into_right_body()
             )
     };
@@ -67,7 +70,7 @@ pub async fn authenticate(
             )
     };
 
-    let idp = match idp_registrar.get_by_authority(authority) {
+    let idp = match idp_registrar.get_by_authority(authority.clone()) {
         Some(i) => i,
         None => return Ok(
                 req
@@ -115,7 +118,7 @@ pub async fn authenticate(
             if i.clone().tenant_id != tenant.id {
                 return Ok(
                     req
-                        .into_response(HttpResponse::Forbidden().json(json!({"error": "Federated user's tenant_id does not match the resolve"})))
+                        .into_response(HttpResponse::Forbidden().json(json!({"error": "Federated user's tenant_id does not match the resolved tenanat_id"})))
                         .map_into_right_body()
                 )
             }
@@ -125,7 +128,41 @@ pub async fn authenticate(
         None => None,
     };
 
-    req.extensions_mut().insert(maybe_federated_identity);
+    if let Some(identity) = maybe_federated_identity {
+        let principal_id = match authority.resolve_principal_id(&identity) {
+            Ok(id) => id,
+            Err(err) => return Ok(
+                req
+                    .into_response(HttpResponse::Unauthorized().json(json!({"error": err.to_string()})))
+                    .map_into_right_body()
+            )
+        };
+
+        let principal_service = match req.app_data::<web::Data<PrincipalService>>().cloned() {
+            Some(s) => s.into_inner(),
+            None => return Ok(
+                req
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Principal service not found"})))
+                    .map_into_right_body()
+            )
+        };
+
+        let input = GetOrCreateFromFederatedIdentity {
+            principal_id,
+            identity,
+        };
+
+        let principal = match principal_service.get_or_create_from_identity(input).await {
+            Ok(p) => p,
+            Err(err) => return Ok(
+                req
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())})))
+                    .map_into_right_body()
+            )
+        };
+
+        req.extensions_mut().insert(principal);
+    }
     
     Ok(next.call(req).await?.map_into_left_body())
 }

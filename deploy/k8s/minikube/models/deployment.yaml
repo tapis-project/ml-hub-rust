@@ -11,35 +11,6 @@ spec:
       labels:
         app: mlhub-models-api-deployment
     spec:
-      initContainers:
-        - env:
-            - name: MONGO_HOST
-              value: mlhub-mongo-service
-            - name: MONGO_PORT
-              value: "27017"
-            - name: MONGO_NAME
-              value: mlhub
-            - name: MONGO_PASSWORD
-              value: password
-            - name: MONGO_USERNAME
-              value: mlhub
-            - name: RABBIT_HOST
-              value: mlhub-rabbit-service
-            - name: RABBIT_PASSWORD
-              value: dev
-            - name: RABBIT_PORT
-              value: "5672"
-            - name: RABBIT_USER
-              value: dev
-            - name: RUST_LOG
-              value: debug
-            - name: SHARED_DATA
-              value: /srv/mlhub
-            - name: CLIENT_DEPLOYMENT_STRATEGIES_DIR
-              value: /etc/mlhub/deployment-strategies.d
-          image: tapis/models-migrator:local
-          imagePullPolicy: Never
-          name: models-migrator
       containers:
         # - name: debugger
         #   image: busybox
@@ -53,7 +24,7 @@ spec:
           imagePullPolicy: Never
           env:
             - name: MONGO_HOST
-              value: mlhub-mongo-service
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.default.svc.cluster.local
             - name: MONGO_PORT
               value: "27017"
             - name: MONGO_NAME
@@ -62,6 +33,8 @@ spec:
               value: password
             - name: MONGO_USERNAME
               value: mlhub
+            - name: MONGO_REPLICA_SET
+              value: rs0
             - name: RABBIT_HOST
               value: mlhub-rabbit-service
             - name: RABBIT_PASSWORD

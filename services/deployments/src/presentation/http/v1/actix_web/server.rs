@@ -2,7 +2,7 @@ use std::sync::Arc;
 use crate::presentation;
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::build_deployment_strategy_provider;
-use crate::infra::persistence::mongo::database::{ClientParams, get_db};
+use crate::infra::persistence::mongo::database::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer, web, middleware::from_fn};
 use amqprs::channel::ExchangeType;
@@ -67,7 +67,27 @@ pub async fn run_server() -> std::io::Result<()> {
         .map_err(|err| { error!("{}", err.to_string()) })
         .expect("Site configuration repository to be intialized");
 
-    let shared_app_context = build_shared_app_context(config_repository.get_config())
+    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+
+    let mongo_client = initialize_client(ClientParams{
+        username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
+        password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
+        host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
+        port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
+        db: db_name.clone(),
+        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
+    })
+        .await
+        .map_err(|err| {
+            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        })
+        .expect("Datbase initialization error");
+
+    let shared_app_context = build_shared_app_context(
+        config_repository.get_config(),
+        mongo_client.clone(),
+        db_name.clone()
+    )
         .await
         .map_err(|err| {
             error!("Failed to initialize SharedState: {}", err.to_string());
@@ -78,23 +98,14 @@ pub async fn run_server() -> std::io::Result<()> {
     let site_config = web::Data::from(Arc::new(shared_app_context.config));
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
     let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
-
+    let principal_service = web::Data::new(shared_app_context.principal_service);
+    
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
+        db_name: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
         channel: Arc::new(channel),
-        db: get_db(ClientParams{
-            username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
-            password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
-            host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
-            port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
-            db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
-        })
-            .await
-            .map_err(|err| {
-                panic!("Database initialization error: {}", err.to_string().as_str()); 
-            })
-            .expect("Datbase initialization error")
+        client: mongo_client.clone()
     };
 
     HttpServer::new(move || {
@@ -102,6 +113,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
+            .app_data(principal_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(authenticate))
             .wrap(from_fn(resolve_tenancy))

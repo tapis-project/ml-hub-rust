@@ -13,7 +13,7 @@ use mongodb::{
         Bson,
         Document,
     },
-    Database,
+    Client,
     Collection,
 };
 use async_trait::async_trait;
@@ -29,7 +29,9 @@ pub struct ModelMetadataRepository {
 }
 
 impl ModelMetadataRepository {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(client: &Client, db_name: String) -> Self {
+        let db = client.database(&db_name);
+        
         Self {
             write_collection: db.collection(MODEL_METADATA_COLLECTION),
             read_collection: db.collection(MODEL_METADATA_COLLECTION)

@@ -31,7 +31,7 @@ use async_trait::async_trait;
 use shared::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_publisher::bootstrap::artifact_service_factory;
-use artifact_publisher::database::{get_db, ClientParams};
+use artifact_publisher::database::{initialize_client, ClientParams};
 use shared::infra::fs::archiver::Archiver;
 use clients::{ClientError, PublishModelClient, PublishModelMetadataClient};
 use log::{error, info};
@@ -331,14 +331,16 @@ async fn nack(channel: &Channel, deliver: &Deliver, requeue: Option<bool>, multi
 #[tokio::main]
 async fn main() -> () {
     env_logger::init();
-
+    
     // Database connection
-    let db = get_db(ClientParams{
+    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+    let client = initialize_client(ClientParams{
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
         db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
         .map_err(|err| {
@@ -395,7 +397,7 @@ async fn main() -> () {
     let consumer_tag = Uuid::now_v7();
 
     let consumer = ArtifactPublisherConsumer {
-        artifact_service: artifact_service_factory(&db, Arc::new(channel.clone())),
+        artifact_service: artifact_service_factory(&client, db_name.clone(), Arc::new(channel.clone())),
         publications_work_dir: PathBuf::from(&environment.shared_data_dir).join(ARTIFACT_PUBLICATION_DIR_NAME),
         // artifacts_cache_dir: PathBuf::from(&environment.artifacts_cache_dir)
     };

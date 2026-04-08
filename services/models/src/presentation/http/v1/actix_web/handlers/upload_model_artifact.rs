@@ -37,7 +37,7 @@ async fn upload_model_artifact(
         }
 
         // Instantiate an artifact service
-        let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+        let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
         // todo: write to a file * refactor this code to infra/app layer
         let input = match UploadArtifactInput::try_from(UploadModelRequest {}) {

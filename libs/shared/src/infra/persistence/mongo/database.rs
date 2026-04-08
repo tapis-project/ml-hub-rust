@@ -1,6 +1,5 @@
 use crate::errors::Error;
 use mongodb::{Client, options::ClientOptions};
-use mongodb::Database;
 
 pub struct ClientParams {
     pub username: String,
@@ -8,16 +7,22 @@ pub struct ClientParams {
     pub host: String,
     pub port: String,
     pub db: String,
+    pub replica_set: Option<String>
 }
 
-pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
+pub async fn initialize_client(params: ClientParams) -> Result<Client, Error> {
+    let replica_set = params.replica_set
+        .map(|rs| format!("&replicaSet={}", rs))
+        .unwrap_or("".into());
+
     let uri = format!(
-        "mongodb://{}:{}@{}:{}/{}?authSource=admin",
+        "mongodb://{}:{}@{}:{}/{}?authSource=admin{}",
         params.username,
         params.password,
         params.host,
         params.port,
         params.db,
+        replica_set,
     );
 
     let options = ClientOptions::parse(uri)
@@ -27,7 +32,7 @@ pub async fn get_db(params: ClientParams) -> Result<Database, Error> {
     let client = Client::with_options(options)
         .map_err(|err| Error::new(err.to_string()))?;
     
-    Ok(client.database(&params.db))
+    Ok(client)
 }
 
 pub const ARTIFACT_COLLECTION: &str = "ARTIFACTS";

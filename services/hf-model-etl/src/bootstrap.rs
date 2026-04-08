@@ -1,6 +1,6 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application-level concerns
-use mongodb::Database;
+use mongodb::Client;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::deployment::DeploymentStrategyProvider;
 use shared::application::ports::artifacts::ArtifactRepository;
@@ -14,12 +14,12 @@ use shared::infra::persistence::mongo::repositories::{
 };
 use std::sync::Arc;
 
-pub fn artifact_repo_factory(db: &Database) -> Arc<dyn ArtifactRepository> {
-    Arc::new(MongoArtifactRepository::new(db))
+pub fn artifact_repo_factory(client: &Client, db_name: String) -> Arc<dyn ArtifactRepository> {
+    Arc::new(MongoArtifactRepository::new(client, db_name.clone()))
 }
 
-pub fn model_metadata_repo_factory(db: &Database) -> Arc<dyn ModelMetadataRepository> {
-    Arc::new(MongoModelMetadataRepository::new(db))
+pub fn model_metadata_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelMetadataRepository> {
+    Arc::new(MongoModelMetadataRepository::new(client, db_name.clone()))
 }
 
 pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategyProvider>, ()> {
@@ -31,12 +31,13 @@ pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategy
 }
 
 pub async fn model_metadata_service_factory(
-    db: &Database,
+    client: &Client,
+    db_name: String,
     client_strategy_sets: Arc<Vec<ClientStrategySet>>
 ) -> Result<ModelMetadataService, ApplicationError> {    
     Ok(ModelMetadataService::new(
-        model_metadata_repo_factory(db),
-        artifact_repo_factory(db),
+        model_metadata_repo_factory(client, db_name.clone()),
+        artifact_repo_factory(client, db_name.clone()),
         client_strategy_sets,
     ))
 }

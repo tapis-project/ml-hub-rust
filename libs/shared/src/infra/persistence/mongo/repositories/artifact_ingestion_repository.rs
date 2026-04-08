@@ -9,7 +9,7 @@ use mongodb::{
         doc,
         Uuid
     },
-    Database,
+    Client,
     Collection,
 };
 use async_trait::async_trait;
@@ -21,7 +21,9 @@ pub struct ArtifactIngestionRepository {
 }
 
 impl ArtifactIngestionRepository {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(client: &Client, db_name: String) -> Self {
+        let db = client.database(&db_name);
+        
         Self {
             write_collection: db.collection(ARTIFACT_INGESTION_COLLECTION),
             read_collection: db.collection(ARTIFACT_INGESTION_COLLECTION)

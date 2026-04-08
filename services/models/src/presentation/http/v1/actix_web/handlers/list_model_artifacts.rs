@@ -29,7 +29,7 @@ async fn list_model_artifacts(
     let logger = SharedLogger::new();
     logger.debug("List aritfacts operation");
     
-    let artifact_service = artifact_service_factory(&data.db, data.channel.clone());
+    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     let artifacts = match artifact_service.list_model_artifacts().await {
         Ok(a) => a,

@@ -12,7 +12,6 @@ use actix_web::{
 };
 use serde_json::json;
 use url_parse::core::Parser;
-use log::debug;
 
 pub async fn resolve_tenancy(
     req: ServiceRequest,
@@ -29,8 +28,6 @@ pub async fn resolve_tenancy(
 
     let conn = req.connection_info().clone();
     let url_string = format!("{}://{}{}", conn.scheme(), conn.host(), req.uri());
-
-    debug!("urlstring: {}", &url_string);
     
     let url = match Parser::new(None).parse(&url_string) {
         Ok(u) => u,
