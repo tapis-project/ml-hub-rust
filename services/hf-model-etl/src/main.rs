@@ -20,6 +20,7 @@ async fn main() {
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
         db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
         .map_err(|err| {

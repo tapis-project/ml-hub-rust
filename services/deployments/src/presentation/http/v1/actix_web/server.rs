@@ -74,7 +74,8 @@ pub async fn run_server() -> std::io::Result<()> {
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
-        db: db_name.clone()
+        db: db_name.clone(),
+        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
         .map_err(|err| {

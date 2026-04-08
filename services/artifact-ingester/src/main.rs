@@ -31,7 +31,7 @@ use async_trait::async_trait;
 use shared::application::services::artifact_service::ArtifactService;
 use std::env;
 use artifact_ingester::bootstrap::artifact_service_factory;
-use artifact_ingester::database::{inialize_client, ClientParams};
+use artifact_ingester::database::{initialize_client, ClientParams};
 use shared::infra::fs::archiver::Archiver;
 use log::{error, info};
 
@@ -251,12 +251,13 @@ async fn main() -> () {
     // Database connection
     let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
 
-    let client = inialize_client(ClientParams {
+    let client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
         db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
         .map_err(|err| {

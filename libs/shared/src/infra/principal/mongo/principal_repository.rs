@@ -8,7 +8,7 @@ use crate::application::ports;
 use crate::application::ports::principal::PrincipalRepositoryError;
 use crate::domain::entities;
 use mongodb::{
-    bson::{doc, to_bson},
+    bson::{doc, to_bson, to_document},
     error::{TRANSIENT_TRANSACTION_ERROR, Error},
     options::{UpdateModifications, ReadConcern, UpdateOneModel, WriteConcern, WriteModel},
     Client,
@@ -85,16 +85,19 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
         };
 
         // Create an update or insert model for the identity
+        let mut insert_doc = to_document(&identity_doc)
+            .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?;
+        
+        insert_doc.remove("metadata");
+        insert_doc.remove("last_seen");
+
         let update = UpdateModifications::Document(doc! {
-            // Updates the document with the fields below if found...
             "$set": {
                 "last_seen": &identity_doc.last_seen,
                 "metadata": to_bson(&identity_doc.metadata)
-                    .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?, // Should never happen
+                    .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?,
             },
-            // Creates a new FederatedIdentity if not
-            "$setOnInsert": to_bson(&identity_doc)
-                .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?,
+            "$setOnInsert": insert_doc,
         });
 
         // Build the write model

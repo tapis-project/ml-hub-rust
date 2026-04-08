@@ -1,6 +1,6 @@
 //! This module contains factories that wire together infrastructure-level concerns
 //! with application-level concerns
-use mongodb::{Client, Database};
+use mongodb::Client;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::deployment::DeploymentStrategyProvider;
 use shared::application::ports::artifacts::ArtifactRepository;
