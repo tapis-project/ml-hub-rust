@@ -12,7 +12,6 @@ use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
 use crate::bootstrap::state::AppState;
 use serde_json::{to_value, Value, Map};
-use log::debug;
 
 #[utoipa::path(
     post,
@@ -40,14 +39,6 @@ async fn discover_models(
     principal: Principal,
     req: HttpRequest,
 ) -> impl Responder {
-    let _tenant = req.extensions()
-        .get::<Option<Tenant>>()
-        .and_then(|inner| Some(inner.clone()))
-        .flatten();
-
-    debug!("{:#?}", principal);
-    debug!("{:#?}", _tenant);
-
     let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
         Ok(s) => s,
         Err(err) => return build_error_response(500, err.to_string())

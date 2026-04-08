@@ -1,6 +1,5 @@
 use crate::errors::Error;
 use mongodb::{Client, options::ClientOptions};
-use log::debug;
 
 pub struct ClientParams {
     pub username: String,
@@ -26,13 +25,9 @@ pub async fn initialize_client(params: ClientParams) -> Result<Client, Error> {
         replica_set,
     );
 
-    debug!("{}", uri.clone());
-
     let options = ClientOptions::parse(uri)
         .await
         .map_err(|err| Error::new(err.to_string()))?;
-
-    debug!("{:#?}", options);
 
     let client = Client::with_options(options)
         .map_err(|err| Error::new(err.to_string()))?;
