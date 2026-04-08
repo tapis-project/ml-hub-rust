@@ -22,8 +22,7 @@ pub struct Principal {
     pub tenant_id: String,
     active_identity: FederatedIdentity,
     pub created_at: TimeStamp,
-    pub last_seen: TimeStamp,
-    pub last_modified: TimeStamp,
+    pub last_seen_at: TimeStamp,
 }
 
 impl Principal {
@@ -40,8 +39,7 @@ impl Principal {
             tenant_id: props.tenant_id,
             active_identity: props.identity,
             created_at: now.clone(),
-            last_modified: now.clone(),
-            last_seen: now.clone(),
+            last_seen_at: now.clone(),
         })
     }
 
@@ -60,8 +58,7 @@ impl Principal {
             tenant_id: props.tenant_id,
             active_identity: props.identity,
             created_at: props.created_at,
-            last_modified: props.last_modified,
-            last_seen: props.last_seen,
+            last_seen_at: props.last_seen_at,
         })
     }
 }
@@ -80,6 +77,5 @@ pub struct RehydrateProps {
     pub tenant_id: String,
     pub identity: FederatedIdentity,
     pub created_at: TimeStamp,
-    pub last_seen: TimeStamp,
-    pub last_modified: TimeStamp,
+    pub last_seen_at: TimeStamp,
 }

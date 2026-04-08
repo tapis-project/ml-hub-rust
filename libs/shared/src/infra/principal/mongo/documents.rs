@@ -27,8 +27,7 @@ pub struct Principal {
     pub kind: Kind,
     pub tenant_id: String,
     pub created_at: DateTime,
-    pub last_seen: DateTime,
-    pub last_modified: DateTime,
+    pub last_seen_at: DateTime,
 }
 
 // Mappings (Entity -> Document)
@@ -49,8 +48,7 @@ impl From<entities::principal::Principal> for Principal {
             kind: Kind::from(value.kind),
             tenant_id: value.tenant_id,
             created_at: value.created_at.to_bson(),
-            last_seen: value.last_seen.to_bson(),
-            last_modified: value.last_modified.to_bson(),
+            last_seen_at: value.last_seen_at.to_bson(),
         }
     }
 }
@@ -77,8 +75,7 @@ impl TryFrom<(Principal, FederatedIdentity)> for entities::principal::Principal 
             tenant_id: principal.tenant_id,
             identity: entities::identity::FederatedIdentity::from(value.1.clone()),
             created_at: principal.created_at.to_timestamp(),
-            last_seen: principal.last_seen.to_timestamp(),
-            last_modified: principal.last_modified.to_timestamp(),
+            last_seen_at: principal.last_seen_at.to_timestamp(),
         };
 
         entities::principal::Principal::rehydrate(props)
