@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use crate::application::identity_context::IdentityContext;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::services::deployment_strategy::resolve_viable_strategies;
@@ -107,7 +108,7 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn discover_models(&self, input: DiscoverModelsInput) -> Result<DiscoverModelsOutput, ModelMetadataServiceError> {
+    pub async fn discover_models(&self, input: DiscoverModelsInput, _identity_context: &IdentityContext) -> Result<DiscoverModelsOutput, ModelMetadataServiceError> {
         let discover_models = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input);
         
         // Find model metadata by discovery criteria

@@ -1,6 +1,37 @@
 use crate::domain::entities::principal::{Principal, Kind};
 
 #[derive(Debug, Clone)]
+pub struct IdentityContext {
+    actor: Actor,
+    token: String
+}
+
+impl IdentityContext {
+    pub fn new(actor: Actor, token: String) -> Self {
+        Self {
+            actor,
+            token
+        }
+    }
+
+    pub fn actor_principal_id(&self) -> &String {
+        &self.actor.principal_id()
+    }
+
+    pub fn actor_tenant_id(&self) -> &String {
+        &self.actor.tenant_id()
+    }
+
+    pub fn actor_kind(&self) -> &Kind {
+        &self.actor.kind()
+    }
+
+    pub fn token(&self) -> &String {
+        &self.token
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Actor {
     principal_id: String,
     tenant_id: String,

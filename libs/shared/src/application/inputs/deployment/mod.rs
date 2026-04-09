@@ -26,8 +26,6 @@ pub struct FilterInput {
 
 #[derive(Debug)]
 pub struct DeployWithStrategyInput {
-    pub owner: String,
-    pub tenant_id: String,
     pub platform: Platform,
     pub model_name: String,
     pub model_author: String,

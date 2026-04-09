@@ -4,10 +4,8 @@ use crate::presentation::http::v1::actix_web::helpers::{
 };
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DisocverModelsQueryParams};
 use crate::bootstrap::factories::model_metadata_service_factory;
-use actix_web::{post, web, HttpMessage, HttpRequest, Responder};
-use shared::application::actor::Actor;
-use shared::domain::entities::principal::Principal;
-use shared::domain::entities::tenancy::Tenant;
+use actix_web::{post, web, Responder};
+use shared::application::identity_context::IdentityContext;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::ModelMetadata;
@@ -37,6 +35,7 @@ async fn discover_models(
     data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
     query: web::Query<DisocverModelsQueryParams>,
+    identity_context: IdentityContext,
 ) -> impl Responder {
     let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
         Ok(s) => s,
@@ -70,7 +69,7 @@ async fn discover_models(
         options
     };
 
-    let output = match model_metadata_service.discover_models(input).await {
+    let output = match model_metadata_service.discover_models(input, &identity_context).await {
         Ok(e) => e,
         Err(err) => return build_error_response(500, err.to_string())
     };

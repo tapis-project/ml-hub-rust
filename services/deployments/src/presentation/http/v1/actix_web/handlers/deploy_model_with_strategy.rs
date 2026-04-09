@@ -14,7 +14,7 @@ use actix_web::{
     Responder,
 };
 use serde_json::to_value;
-use shared::application::actor::Actor;
+use shared::application::identity_context::IdentityContext;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
 
 #[utoipa::path(
@@ -38,7 +38,7 @@ async fn deploy_model_with_strategy(
     data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    actor: Actor,
+    identity_context: IdentityContext,
 ) -> impl Responder {
     let maybe_strategy = data.client_strategy_sets
         .iter()
@@ -60,8 +60,6 @@ async fn deploy_model_with_strategy(
     );
 
     let input = DeployWithStrategyInput {
-        owner: actor.principal_id().clone(),
-        tenant_id: actor.tenant_id().clone(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         platform: path.platform.clone(),
@@ -69,7 +67,7 @@ async fn deploy_model_with_strategy(
         params: body.params.clone(),
     };
 
-    let output = match service.deploy_model_with_strategy(input).await {
+    let output = match service.deploy_model_with_strategy(input, &identity_context).await {
         Ok(output) => output,
         Err(err) => return build_error_response(500, err.to_string()),
     };
