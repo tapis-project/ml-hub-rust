@@ -20,6 +20,8 @@ pub enum ModelDeploymentError {
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
     pub id: Uuid,
+    /// The id of the tenant to which this model deployment belongs
+    pub tenant_id: String,
     pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
@@ -53,6 +55,7 @@ impl ModelDeployment {
 
         Self {
             id: props.id,
+            tenant_id: props.tenant_id,
             platform: props.platform,
             owner: props.owner,
             model: props.model,
@@ -75,6 +78,7 @@ impl ModelDeployment {
     pub fn rehydrate(props: RehydrateModelDeploymentProps) -> Self {
         Self {
             id: props.id,
+            tenant_id: props.tenant_id,
             platform: props.platform,
             owner: props.owner,
             model: props.model,
@@ -410,6 +414,7 @@ impl <'a>ModelDeploymentDraft<'a> {
 #[derive(Clone, Debug)]
 pub struct RehydrateModelDeploymentProps {
     pub id: Uuid,
+    pub tenant_id: String,
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,
@@ -431,6 +436,7 @@ pub struct RehydrateModelDeploymentProps {
 #[derive(Clone, Debug)]
 pub struct ModelDeploymentProps {
     pub id: Uuid,
+    pub tenant_id: String,
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,

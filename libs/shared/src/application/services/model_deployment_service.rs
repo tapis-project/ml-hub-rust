@@ -164,6 +164,7 @@ impl ModelDeploymentService {
 
         let model_deployment_props = ModelDeploymentProps {
             id: Uuid::now_v7(),
+            tenant_id: input.tenant_id.clone(),
             platform: input.platform.clone(),
             owner: input.owner.clone(),
             model: ModelReference {

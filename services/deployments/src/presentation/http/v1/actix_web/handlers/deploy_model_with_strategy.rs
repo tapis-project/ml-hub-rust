@@ -61,6 +61,7 @@ async fn deploy_model_with_strategy(
 
     let input = DeployWithStrategyInput {
         owner: actor.principal_id().clone(),
+        tenant_id: actor.tenant_id().clone(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         platform: path.platform.clone(),
