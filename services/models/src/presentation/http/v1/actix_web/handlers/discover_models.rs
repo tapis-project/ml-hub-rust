@@ -5,6 +5,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DisocverModelsQueryParams};
 use crate::bootstrap::factories::model_metadata_service_factory;
 use actix_web::{post, web, HttpMessage, HttpRequest, Responder};
+use shared::application::actor::Actor;
 use shared::domain::entities::principal::Principal;
 use shared::domain::entities::tenancy::Tenant;
 use crate::application::discover_model_inputs as inputs;
@@ -36,8 +37,6 @@ async fn discover_models(
     data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
     query: web::Query<DisocverModelsQueryParams>,
-    principal: Principal,
-    req: HttpRequest,
 ) -> impl Responder {
     let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
         Ok(s) => s,

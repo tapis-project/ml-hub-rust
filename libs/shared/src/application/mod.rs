@@ -4,3 +4,4 @@ pub mod services;
 pub mod ports;
 pub mod errors;
 pub mod workflows;
+pub mod actor;
