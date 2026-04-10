@@ -192,7 +192,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
     /// Infer [State] from raw TAPIS job status.
     fn state_from_job_status(status: Option<&str>) -> State {
-        match status.unwrap_or_default().trim().to_ascii_uppercase().as_str() {
+        match status
+            .unwrap_or_default()
+            .trim()
+            .to_ascii_uppercase()
+            .as_str()
+        {
             "RUNNING" => State::Running,
             "QUEUED" | "PENDING" | "SUBMITTING" | "STAGING" => State::Unknown,
             "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" => State::Stopped,
