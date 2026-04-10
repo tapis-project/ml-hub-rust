@@ -165,8 +165,8 @@ impl TapisPodsModelDeploymentReconciliationClient {
         }
     }
 
-    /// Infer our [State] from raw TAPIS pod status.
-    fn state_from_pod_status(status: Option<&str>) -> State {
+    /// Map canonical TAPIS pod status strings to our [State].
+    fn state_from_status(status: Option<&str>) -> State {
         match status.unwrap_or_default().trim().to_ascii_uppercase().as_str() {
             "AVAILABLE" | "RUNNING" => State::Running,
             "STOPPED" => State::Stopped,
@@ -290,10 +290,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
             .await
             .map_err(Self::map_deployment_error)?;
 
-        let observed_state = Self::state_from_pod_status(match &result {
-            DeploymentResult::PodResult { status, .. } => status.as_deref(),
-            _ => None,
-        });
+        let observed_state = match &result {
+            DeploymentResult::PodResult { status, .. } => Self::state_from_status(status.as_deref()),
+            _ => State::Unknown,
+        };
         
         info!("Observed state for deployment {}: {:?}", input.deployment.id, observed_state);
 
