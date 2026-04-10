@@ -162,6 +162,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         match result {
             DeploymentResult::HPCResult {
                 job_uuid,
+                status,
                 job_info,
                 tapis_user,
                 tapis_tenant,
@@ -177,6 +178,11 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 map.insert("tapis_user".to_string(), json!(tapis_user));
                 map.insert("tapis_tenant".to_string(), json!(tapis_tenant));
                 map.insert("model_id".to_string(), json!(model_id));
+                if let Some(status) = status {
+                    if !status.is_empty() {
+                        map.insert("job_status".to_string(), json!(status));
+                    }
+                }
                 map.insert("job_info".to_string(), json!(job_info));
                 ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))
             }
@@ -184,39 +190,14 @@ impl TapisJobsModelDeploymentReconciliationClient {
         }
     }
 
-    /// Infer [State] from FlexServ monitor `job_info` (Debug-formatted Tapis job / status payloads).
-    /// Prefer exact parsing of `status` fields (e.g. `status: Some("QUEUED")`) so unrelated text
-    /// like `last_error` or other nested fields cannot misclassify the deployment state.
-    fn state_from_job_info(job_info: &str) -> State {
-        // Normalize whitespace and remove spaces so the Debug output's formatting doesn't matter.
-        let norm: String = job_info
-            .chars()
-            .map(|c| if c.is_whitespace() { ' ' } else { c })
-            .collect();
-        let compact: String = norm.chars().filter(|c| *c != ' ').collect();
-        let s = compact.to_lowercase();
-
-        let status = s
-            .split("status:some(\"")
-            .nth(1)
-            .or_else(|| s.split("some(\"").nth(1))
-            .and_then(|rest| rest.split('"').next());
-
-        match status.unwrap_or_default() {
-            "running" => State::Running,
-            "queued" | "pending" | "submitting" | "staging" => State::Unknown,
-            "finished" | "completed" | "cancelled" | "canceled" | "stopped" => State::Stopped,
-            "failed" => State::Failed,
-            _ => {
-                // Minimal fallback when status isn't present.
-                if s.contains("queued") || s.contains("pending") || s.contains("submitting") {
-                    State::Unknown
-                } else if s.contains("failed") || s.contains("error(") {
-                    State::Failed
-                } else {
-                    State::Unknown
-                }
-            }
+    /// Infer [State] from raw TAPIS job status.
+    fn state_from_job_status(status: Option<&str>) -> State {
+        match status.unwrap_or_default().trim().to_ascii_uppercase().as_str() {
+            "RUNNING" => State::Running,
+            "QUEUED" | "PENDING" | "SUBMITTING" | "STAGING" => State::Unknown,
+            "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" => State::Stopped,
+            "FAILED" => State::Failed,
+            _ => State::Unknown,
         }
     }
 
@@ -335,9 +316,9 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .await
             .map_err(Self::map_deployment_error)?;
 
-        let observed_state = Self::state_from_job_info(match &result {
-            DeploymentResult::HPCResult { job_info, .. } => job_info.as_str(),
-            _ => "",
+        let observed_state = Self::state_from_job_status(match &result {
+            DeploymentResult::HPCResult { status, .. } => status.as_deref(),
+            _ => None,
         });
 
         info!(
@@ -604,6 +585,7 @@ mod tests {
     fn result_to_metadata_delta_no_change_when_job_uuid_empty() {
         let r = DeploymentResult::HPCResult {
             job_uuid: String::new(),
+            status: None,
             job_info: "x".into(),
             tapis_user: "u".into(),
             tapis_tenant: "t".into(),
@@ -619,6 +601,7 @@ mod tests {
     fn result_to_metadata_delta_merge_when_job_uuid_set() {
         let r = DeploymentResult::HPCResult {
             job_uuid: "550e8400-e29b-41d4-a716-446655440000".into(),
+            status: Some("RUNNING".into()),
             job_info: "status=RUNNING".into(),
             tapis_user: "u".into(),
             tapis_tenant: "t".into(),
@@ -639,67 +622,53 @@ mod tests {
         }
     }
 
-    // ---- Unit tests: state_from_job_info ----
+    // ---- Unit tests: state_from_job_status ----
 
     #[test]
-    fn state_from_job_info_running() {
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info(
-            r#"status: Some("RUNNING")"#,
-        );
+    fn state_from_job_status_running() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("RUNNING"));
         assert_eq!(s, State::Running);
     }
 
     #[test]
-    fn state_from_job_info_finished_stopped() {
-        let s =
-            TapisJobsModelDeploymentReconciliationClient::state_from_job_info(r#"Some("FINISHED")"#);
+    fn state_from_job_status_finished_stopped() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("FINISHED"));
         assert_eq!(s, State::Stopped);
     }
 
     #[test]
-    fn state_from_job_info_failed() {
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info(
-            r#"Some("FAILED")"#,
-        );
+    fn state_from_job_status_failed() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("FAILED"));
         assert_eq!(s, State::Failed);
     }
 
     #[test]
-    fn state_from_job_info_pending_unknown() {
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info(
-            r#"Some("PENDING")"#,
-        );
+    fn state_from_job_status_pending_unknown() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("PENDING"));
         assert_eq!(s, State::Unknown);
     }
 
     #[test]
-    fn state_from_job_info_empty_unknown() {
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info("");
+    fn state_from_job_status_empty_unknown() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some(""));
         assert_eq!(s, State::Unknown);
     }
 
     #[test]
-    fn state_from_job_info_running_is_case_insensitive() {
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info(
-            r#"status: SoMe("rUnNiNg")"#,
-        );
+    fn state_from_job_status_running_is_case_insensitive() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("rUnNiNg"));
         assert_eq!(s, State::Running);
     }
 
     #[test]
-    fn state_from_job_info_queued_not_failed_when_last_error_field_present() {
-        // `last_error:` contains `error:` as a substring; must not classify as Failed.
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info(
-            r#"Job { last_error: None, status: Some("QUEUED"), failed_count: 0 }"#,
-        );
+    fn state_from_job_status_queued_not_failed() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("QUEUED"));
         assert_eq!(s, State::Unknown);
     }
 
     #[test]
-    fn state_from_job_info_queued_case_insensitive() {
-        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_info(
-            r#"status: Some("Queued")"#,
-        );
+    fn state_from_job_status_queued_case_insensitive() {
+        let s = TapisJobsModelDeploymentReconciliationClient::state_from_job_status(Some("Queued"));
         assert_eq!(s, State::Unknown);
     }
 
