@@ -21,6 +21,13 @@ pub enum Platform {
 
 impl Platform {
     pub fn list_all() -> Vec<Self> {
-        return vec![Self::HuggingFace, Self::Git, Self::Github, Self::Patra, Self::TapisPods]
+        return vec![
+            Self::HuggingFace,
+            Self::Git,
+            Self::Github,
+            Self::Patra,
+            Self::TapisPods,
+            Self::TapisJobs,
+        ]
     }
 }
