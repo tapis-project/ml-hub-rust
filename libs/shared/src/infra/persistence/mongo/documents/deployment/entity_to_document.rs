@@ -9,6 +9,7 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
+            tenant_id: value.tenant_id.clone(),
             platform: value.platform.clone(),
             revision: value.revision().clone(),
             owner: value.owner.clone(),

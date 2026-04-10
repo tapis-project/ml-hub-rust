@@ -1,4 +1,5 @@
 use crate::application::errors::ApplicationError;
+use crate::application::identity_context::IdentityContext;
 use crate::application::workflows::Workflow;
 use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
 use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput, StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput};
@@ -133,6 +134,7 @@ impl ModelDeploymentService {
     pub async fn deploy_model_with_strategy(
         &self,
         input: DeployWithStrategyInput,
+        identity_context: &IdentityContext,
     ) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
         let find_model_metadata = || self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author);
 
@@ -164,8 +166,9 @@ impl ModelDeploymentService {
 
         let model_deployment_props = ModelDeploymentProps {
             id: Uuid::now_v7(),
+            tenant_id: identity_context.actor_tenant_id().clone(),
             platform: input.platform.clone(),
-            owner: input.owner.clone(),
+            owner: identity_context.actor_principal_id().clone(),
             model: ModelReference {
                 name: input.model_name.clone(),
                 author: input.model_author.clone(),

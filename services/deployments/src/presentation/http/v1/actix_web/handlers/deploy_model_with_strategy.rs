@@ -4,16 +4,18 @@ use crate::bootstrap::factories::model_deployment_service_builder;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
-    DeployModelWithStrategyPathParams
+    DeployModelWithStrategyPathParams,
 };
 use crate::presentation::http::v1::responses::ModelDeployment;
 use platforms::Platform;
 use actix_web::{
-    post, web, HttpMessage, HttpRequest, Responder
+    post,
+    web,
+    Responder,
 };
 use serde_json::to_value;
+use shared::application::identity_context::IdentityContext;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
-use shared::domain::entities::principal::Principal;
 
 #[utoipa::path(
     post,
@@ -36,7 +38,7 @@ async fn deploy_model_with_strategy(
     data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    principal: Principal,
+    identity_context: IdentityContext,
 ) -> impl Responder {
     let maybe_strategy = data.client_strategy_sets
         .iter()
@@ -58,7 +60,6 @@ async fn deploy_model_with_strategy(
     );
 
     let input = DeployWithStrategyInput {
-        owner: "mlhub".into(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         platform: path.platform.clone(),
@@ -66,7 +67,7 @@ async fn deploy_model_with_strategy(
         params: body.params.clone(),
     };
 
-    let output = match service.deploy_model_with_strategy(input).await {
+    let output = match service.deploy_model_with_strategy(input, &identity_context).await {
         Ok(output) => output,
         Err(err) => return build_error_response(500, err.to_string()),
     };
