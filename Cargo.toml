@@ -1,5 +1,4 @@
 [workspace]
-resolver = "3"
 members = [
     "services/agents",
     # "services/apis/datasets",
