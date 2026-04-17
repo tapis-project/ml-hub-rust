@@ -288,16 +288,14 @@ impl ModelDeploymentService {
 
     pub async fn list_model_deployments(
         &self,
-        input: ListModelDeploymentsInput,
         identity_context: &IdentityContext,
-    ) -> Result<ListModelDeploymentsOutput, ApplicationError> {
-        let scoped_input = ListModelDeploymentsInput {
-            tenant_id: Some(identity_context.actor_tenant_id().clone()),
-            owner: input.owner,
+    ) -> Result<ListModelDeploymentsOutput, ModelDeploymentServiceError> {
+        let input = ListModelDeploymentsInput {
+            tenant_id: identity_context.actor_tenant_id().clone(),
         };
 
         let deployments = retry_async(
-            || self.model_deployment_repo.list(&scoped_input),
+            || self.model_deployment_repo.list(&input),
             &Self::REPO_RETRY_POLICY,
             None,
         )

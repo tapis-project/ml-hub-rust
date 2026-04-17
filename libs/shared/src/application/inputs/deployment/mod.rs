@@ -68,6 +68,5 @@ pub struct GetModelDeploymentInput {
 }
 
 pub struct ListModelDeploymentsInput {
-    pub tenant_id: Option<String>,
-    pub owner: Option<String>,
+    pub tenant_id: String,
 }

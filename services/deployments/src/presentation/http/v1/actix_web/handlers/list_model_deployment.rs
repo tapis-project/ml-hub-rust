@@ -10,7 +10,6 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::identity_context::IdentityContext;
-use shared::application::inputs::deployment::ListModelDeploymentsInput;
 
 #[utoipa::path(
     get,
@@ -34,12 +33,7 @@ async fn list_model_deployments(
         data.channel.clone(),
     );
 
-    let input = ListModelDeploymentsInput {
-        tenant_id: None,
-        owner: None,
-    };
-
-    let output = match service.list_model_deployments(input, &identity_context).await {
+    let output = match service.list_model_deployments(&identity_context).await {
         Ok(output) => output,
         Err(err) => return build_error_response(500, err.to_string()),
     };

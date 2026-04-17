@@ -109,15 +109,9 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
     }
 
     async fn list(&self, input: &ListModelDeploymentsInput) -> Result<Vec<entities::deployment::ModelDeployment>, ApplicationError> {
-        let mut filter = doc! {};
-
-        if let Some(ref tenant_id) = input.tenant_id {
-            filter.insert("tenant_id", tenant_id.clone());
-        }
-
-        if let Some(ref owner) = input.owner {
-            filter.insert("owner", owner.clone());
-        }
+        let filter = doc! {
+            "tenant_id": &input.tenant_id,
+        };
 
         let cursor = self.read_collection.find(filter)
             .await
