@@ -6,7 +6,7 @@ use crate::config::VERSION;
 use super::handlers::list_strategies::__path_list_strategies;
 use super::handlers::deploy_model_with_strategy::__path_deploy_model_with_strategy;
 use super::handlers::get_model_deployment::__path_get_model_deployment;
-use super::handlers::list_model_deployment::__path_list_model_deployments;
+use super::handlers::list_model_deployments::__path_list_model_deployments;
 use super::handlers::start_model_deployment::__path_start_model_deployment;
 use super::handlers::stop_model_deployment::__path_stop_model_deployment;
 use super::handlers::undeploy_model_deployment::__path_undeploy_model_deployment;
