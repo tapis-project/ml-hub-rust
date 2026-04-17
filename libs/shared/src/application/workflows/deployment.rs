@@ -62,6 +62,7 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             deployment_id: Some(input.deployment_id),
             state: None,
             revision: None,
+            tenant_id: None,
         };
 
         let mut deployment = match retry_async(|| self.model_deployment_repo.find(&filter), &Self::REPO_RETRY_POLICY, None).await? {

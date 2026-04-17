@@ -22,6 +22,7 @@ pub struct FilterInput {
     pub deployment_id: Option<Uuid>,
     pub revision: Option<u32>,
     pub state: Option<State>,
+    pub tenant_id: Option<String>,
 }
 
 #[derive(Debug)]
@@ -60,4 +61,13 @@ pub struct ReconcileModelDeploymentInput {
 #[derive(Clone)]
 pub struct UpdateModelDeploymentInput {
     pub deployment: ModelDeployment,
+}
+
+pub struct GetModelDeploymentInput {
+    pub deployment_id: Uuid,
+}
+
+pub struct ListModelDeploymentsInput {
+    pub tenant_id: Option<String>,
+    pub owner: Option<String>,
 }

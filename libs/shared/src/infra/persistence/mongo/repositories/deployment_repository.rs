@@ -1,4 +1,4 @@
-use crate::application::{errors::ApplicationError, inputs::deployment::FilterInput};
+use crate::application::{errors::ApplicationError, inputs::deployment::{FilterInput, ListModelDeploymentsInput}};
 use crate::infra::persistence::mongo::database::MODEL_DEPLOYMENT_COLLECTION;
 use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, State};
 use crate::application;
@@ -91,6 +91,10 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 Err(err) => return Err(ApplicationError::RepoError(err.to_string())),
             }
         }
+
+        if let Some(ref tenant_id) = input.tenant_id {
+            filter.insert("tenant_id", tenant_id.clone());
+        }
         
         let mut cursor = self.read_collection.find(filter)
             .await
@@ -102,5 +106,28 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             Some(m) => Ok(Some(entities::deployment::ModelDeployment::from(&m))),
             None => Ok(None)
         }
+    }
+
+    async fn list(&self, input: &ListModelDeploymentsInput) -> Result<Vec<entities::deployment::ModelDeployment>, ApplicationError> {
+        let mut filter = doc! {};
+
+        if let Some(ref tenant_id) = input.tenant_id {
+            filter.insert("tenant_id", tenant_id.clone());
+        }
+
+        if let Some(ref owner) = input.owner {
+            filter.insert("owner", owner.clone());
+        }
+
+        let cursor = self.read_collection.find(filter)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        let documents: Vec<ModelDeployment> = cursor
+            .try_collect()
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        Ok(documents.iter().map(|d| entities::deployment::ModelDeployment::from(d)).collect())
     }
 }

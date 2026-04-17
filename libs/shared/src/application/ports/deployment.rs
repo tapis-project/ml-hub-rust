@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::application::inputs::deployment::{FilterInput, ReconcileModelDeploymentInput};
+use crate::application::inputs::deployment::{FilterInput, ListModelDeploymentsInput, ReconcileModelDeploymentInput};
 use crate::application::workflows::reconciliation::{ReconciliationError, ReconciliationOutcome};
 use crate::domain::entities::deployment::ModelDeployment;
 use crate::application::errors::ApplicationError;
@@ -17,6 +17,7 @@ pub trait ModelDeploymentRepository: Send + Sync {
     async fn save(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
     async fn update(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
     async fn find(&self, input: &FilterInput) -> Result<Option<ModelDeployment>, ApplicationError>;
+    async fn list(&self, input: &ListModelDeploymentsInput) -> Result<Vec<ModelDeployment>, ApplicationError>;
 }
 
 #[async_trait]

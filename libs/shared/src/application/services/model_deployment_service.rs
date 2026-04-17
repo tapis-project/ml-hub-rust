@@ -104,6 +104,7 @@ impl ModelDeploymentService {
             deployment_id: Some(input.deployment_id),
             state: None,
             revision: None,
+            tenant_id: None,
         };
 
         let find_model_deployment = || self.model_deployment_repo.find(&filter);
