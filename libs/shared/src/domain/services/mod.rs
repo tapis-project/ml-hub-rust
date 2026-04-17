@@ -78,7 +78,7 @@ pub struct ModelDeploymentService {}
 
 impl ModelDeploymentService {
     pub fn create_model_deployment(
-        _model_metadata: &ModelMetadata,
+        model_metadata: &ModelMetadata,
         // TODO Uncomment the line below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // artifact: &Artifact,
