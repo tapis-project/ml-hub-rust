@@ -147,26 +147,26 @@ impl TapisJobsModelDeploymentReconciliationClient {
             })?;
 
         if let Some(job_uuid) = Self::extract_job_uuid(deployment) {
-            Ok(FlexServHPCDeployment::from_existing(
-                server,
-                tapis_token,
-                job_uuid,
-            ))
+            let mut existing = FlexServHPCDeployment::from_existing(tapis_token, job_uuid);
+            existing.tenant_url = Some(normalize_tenant_url(&tenant_url));
+            Ok(existing)
         } else {
             let options = Self::extract_hpc_options(deployment)?;
             Ok(FlexServHPCDeployment::new(server, tapis_token, options))
         }
     }
 
-    fn result_to_metadata_delta(result: &DeploymentResult) -> ModelDeploymentMetadataDelta {
+    fn result_to_metadata_delta(
+        result: &DeploymentResult,
+        deployment: &ModelDeployment,
+    ) -> ModelDeploymentMetadataDelta {
         match result {
             DeploymentResult::HPCResult {
                 job_uuid,
                 status,
-                job_info,
-                tapis_user,
-                tapis_tenant,
-                model_id,
+                job,
+                hpc_url,
+                flexserv_token,
                 ..
             } => {
                 if job_uuid.is_empty() {
@@ -175,15 +175,41 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 }
                 let mut map = HashMap::new();
                 map.insert("job_uuid".to_string(), json!(job_uuid));
-                map.insert("tapis_user".to_string(), json!(tapis_user));
-                map.insert("tapis_tenant".to_string(), json!(tapis_tenant));
-                map.insert("model_id".to_string(), json!(model_id));
+                map.insert(
+                    "model_id".to_string(),
+                    json!(format!(
+                        "{}/{}",
+                        deployment.model.author, deployment.model.name
+                    )),
+                );
                 if let Some(status) = status {
                     if !status.is_empty() {
                         map.insert("job_status".to_string(), json!(status));
                     }
                 }
-                map.insert("job_info".to_string(), json!(job_info));
+                if let Some(job) = job {
+                    map.insert("job_info".to_string(), json!(job));
+                }
+                if let Some(url) = hpc_url {
+                    if !url.is_empty() {
+                        map.insert("hpc_url".to_string(), json!(url));
+                    }
+                }
+                if let Some(token) = flexserv_token {
+                    if !token.is_empty() {
+                        map.insert("flexserv_token".to_string(), json!(token));
+                    }
+                }
+                if let Some(metadata) = deployment.metadata.as_ref() {
+                    if let Some(tapis_user) = metadata.get("tapis_user") {
+                        map.insert("tapis_user".to_string(), tapis_user.clone());
+                    }
+                    if let Some(tapis_tenant) = metadata.get("tapis_tenant") {
+                        map.insert("tapis_tenant".to_string(), tapis_tenant.clone());
+                    } else if let Some(tapis_tenant_url) = metadata.get("tapis_tenant_url") {
+                        map.insert("tapis_tenant_url".to_string(), tapis_tenant_url.clone());
+                    }
+                }
                 ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))
             }
             _ => ModelDeploymentMetadataDelta::NoChange,
@@ -199,15 +225,25 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .as_str()
         {
             "RUNNING" => State::Running,
-            "QUEUED" | "PENDING" | "SUBMITTING" | "STAGING" => State::Unknown,
+            "QUEUED"
+            | "PENDING"
+            | "PROCESSING_INPUTS"
+            | "STAGING_INPUTS"
+            | "STAGING_JOB"
+            | "SUBMITTING_JOB"
+            | "ARCHIVING" => State::Unknown,
             "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" => State::Stopped,
             "FAILED" => State::Failed,
+            "BLOCKED" | "PAUSED" => State::Blocked,
             _ => State::Unknown,
         }
     }
 
     fn map_deployment_error(err: FlexServDeploymentError) -> ReconciliationError {
         match err {
+            FlexServDeploymentError::InvalidConfiguration(msg) => {
+                ReconciliationError::Unimplemented(format!("Invalid deployment configuration: {}", msg))
+            }
             FlexServDeploymentError::TapisAuthFailed(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS authentication failed: {}", msg))
             }
@@ -265,7 +301,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Ok(ReconciliationOutcome::Started(StartedOutcomePayload {
             message: Some("Deployment started successfully".to_string()),
             state: State::Unknown,
-            metadata: Some(Self::result_to_metadata_delta(&result)),
+            metadata: Some(Self::result_to_metadata_delta(&result, &input.deployment)),
             replicas: None,
             interface: None,
         }))
@@ -285,7 +321,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Stopped(StoppedOutcomePayload {
             message: Some("Deployment stopped successfully".to_string()),
-            metadata: Some(Self::result_to_metadata_delta(&result)),
+            metadata: Some(Self::result_to_metadata_delta(&result, &input.deployment)),
             replicas: None,
             interface: None,
         }))
@@ -334,7 +370,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Ok(ReconciliationOutcome::Observed(ObeservedOutcomePayload {
             message: Some(format!("Deployment observed: {:?}", result)),
             state: observed_state,
-            metadata: Some(Self::result_to_metadata_delta(&result)),
+            metadata: Some(Self::result_to_metadata_delta(&result, &input.deployment)),
             replicas: None,
             interface: None,
         }))
@@ -591,13 +627,13 @@ mod tests {
         let r = DeploymentResult::HPCResult {
             job_uuid: String::new(),
             status: None,
-            job_info: "x".into(),
-            tapis_user: "u".into(),
-            tapis_tenant: "t".into(),
-            model_id: "m".into(),
+            job: None,
+            hpc_url: None,
+            flexserv_token: None,
         };
+        let d = deployment_with_metadata(base_tapis_meta());
         assert!(matches!(
-            TapisJobsModelDeploymentReconciliationClient::result_to_metadata_delta(&r),
+            TapisJobsModelDeploymentReconciliationClient::result_to_metadata_delta(&r, &d),
             ModelDeploymentMetadataDelta::NoChange
         ));
     }
@@ -607,12 +643,14 @@ mod tests {
         let r = DeploymentResult::HPCResult {
             job_uuid: "550e8400-e29b-41d4-a716-446655440000".into(),
             status: Some("RUNNING".into()),
-            job_info: "status=RUNNING".into(),
-            tapis_user: "u".into(),
-            tapis_tenant: "t".into(),
-            model_id: "Qwen/Qwen3.5-0.8B".into(),
+            job: None,
+            hpc_url: Some("https://example.hpc".into()),
+            flexserv_token: Some("secret-token".into()),
         };
-        match TapisJobsModelDeploymentReconciliationClient::result_to_metadata_delta(&r) {
+        let mut meta = base_tapis_meta();
+        meta.insert("tapis_tenant".into(), json!("tacc"));
+        let d = deployment_with_metadata(meta);
+        match TapisJobsModelDeploymentReconciliationClient::result_to_metadata_delta(&r, &d) {
             ModelDeploymentMetadataDelta::Merge(m) => {
                 assert_eq!(
                     m.get("job_uuid").and_then(|v| v.as_str()),
@@ -621,6 +659,14 @@ mod tests {
                 assert_eq!(
                     m.get("model_id").and_then(|v| v.as_str()),
                     Some("Qwen/Qwen3.5-0.8B")
+                );
+                assert_eq!(
+                    m.get("hpc_url").and_then(|v| v.as_str()),
+                    Some("https://example.hpc")
+                );
+                assert_eq!(
+                    m.get("flexserv_token").and_then(|v| v.as_str()),
+                    Some("secret-token")
                 );
             }
             other => panic!("expected Merge, got {:?}", other),
@@ -839,17 +885,15 @@ mod tests {
             Some(ModelDeploymentMetadataDelta::Merge(m)) => {
                 let job_uuid = m.get("job_uuid").and_then(|v| v.as_str());
                 let model_id = m.get("model_id").and_then(|v| v.as_str());
-                let job_info = m
-                    .get("job_info")
-                    .and_then(|v| v.as_str())
-                    .map(|s| {
-                        const PREVIEW: usize = 400;
-                        let mut out: String = s.chars().take(PREVIEW).collect();
-                        if s.chars().count() > PREVIEW {
-                            out.push_str(" ...<truncated>");
-                        }
-                        out
-                    });
+                let job_info = m.get("job_info").map(|v| {
+                    const PREVIEW: usize = 400;
+                    let s = v.to_string();
+                    let mut out: String = s.chars().take(PREVIEW).collect();
+                    if s.chars().count() > PREVIEW {
+                        out.push_str(" ...<truncated>");
+                    }
+                    out
+                });
                 eprintln!(
                     "{} response: job_uuid={:?} model_id={:?} job_info_preview={:?}",
                     label, job_uuid, model_id, job_info
@@ -857,7 +901,10 @@ mod tests {
                 assert!(m.get("job_uuid").is_some(), "metadata should have job_uuid");
                 assert!(m.get("model_id").is_some(), "metadata should have model_id");
                 assert!(m.get("tapis_user").is_some(), "metadata should have tapis_user");
-                assert!(m.get("tapis_tenant").is_some(), "metadata should have tapis_tenant");
+                assert!(
+                    m.get("tapis_tenant").is_some() || m.get("tapis_tenant_url").is_some(),
+                    "metadata should have tapis_tenant or tapis_tenant_url"
+                );
             }
             Some(ModelDeploymentMetadataDelta::Delete) => {
                 eprintln!("{} response: metadata marked for deletion", label);
