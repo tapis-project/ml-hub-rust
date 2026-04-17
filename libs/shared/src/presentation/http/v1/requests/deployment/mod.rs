@@ -34,3 +34,8 @@ pub struct StopModelDeploymentPathParams {
 pub struct UndeployModelDeploymentPathParams {
     pub deployment_id: Uuid
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+pub struct GetModelDeploymentPathParams {
+    pub deployment_id: Uuid
+}

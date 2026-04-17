@@ -15,3 +15,11 @@ pub struct StopModelDeploymentOutput {
 pub struct UndeployModelDeploymentOutput {
     pub deployment: ModelDeployment
 }
+
+pub struct GetModelDeploymentOutput {
+    pub deployment: ModelDeployment
+}
+
+pub struct ListModelDeploymentsOutput {
+    pub deployments: Vec<ModelDeployment>
+}

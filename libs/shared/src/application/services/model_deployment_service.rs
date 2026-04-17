@@ -2,8 +2,8 @@ use crate::application::errors::ApplicationError;
 use crate::application::identity_context::IdentityContext;
 use crate::application::workflows::Workflow;
 use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
-use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput, StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput};
-use crate::application::outputs::deployment::{DeployModelWithStrategyOutput, StartModelDeploymentOutput, StopModelDeploymentOutput, UndeployModelDeploymentOutput };
+use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, GetModelDeploymentInput, ListModelDeploymentsInput, StartModelDeploymentInput, StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput};
+use crate::application::outputs::deployment::{DeployModelWithStrategyOutput, GetModelDeploymentOutput, ListModelDeploymentsOutput, StartModelDeploymentOutput, StopModelDeploymentOutput, UndeployModelDeploymentOutput};
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
@@ -258,6 +258,52 @@ impl ModelDeploymentService {
         }).await?;
 
         Ok(UndeployModelDeploymentOutput { deployment: modified_deployment })
+    }
+
+    pub async fn get_model_deployment(
+        &self,
+        input: GetModelDeploymentInput,
+        identity_context: &IdentityContext,
+    ) -> Result<GetModelDeploymentOutput, ModelDeploymentServiceError> {
+        let filter = FilterInput {
+            deployment_id: Some(input.deployment_id),
+            state: None,
+            revision: None,
+            tenant_id: Some(identity_context.actor_tenant_id().clone()),
+        };
+
+        let maybe_deployment = retry_async(
+            || self.model_deployment_repo.find(&filter),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        let deployment = maybe_deployment.ok_or_else(|| {
+            ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string())
+        })?;
+
+        Ok(GetModelDeploymentOutput { deployment })
+    }
+
+    pub async fn list_model_deployments(
+        &self,
+        input: ListModelDeploymentsInput,
+        identity_context: &IdentityContext,
+    ) -> Result<ListModelDeploymentsOutput, ApplicationError> {
+        let scoped_input = ListModelDeploymentsInput {
+            tenant_id: Some(identity_context.actor_tenant_id().clone()),
+            owner: input.owner,
+        };
+
+        let deployments = retry_async(
+            || self.model_deployment_repo.list(&scoped_input),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(ListModelDeploymentsOutput { deployments })
     }
 
     pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ApplicationError> {
