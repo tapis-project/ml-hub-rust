@@ -120,6 +120,8 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::list_strategies::list_strategies)
             .service(presentation::http::v1::actix_web::handlers::deploy_model_with_strategy::deploy_model_with_strategy)
+            .service(presentation::http::v1::actix_web::handlers::get_model_deployment::get_model_deployment)
+            .service(presentation::http::v1::actix_web::handlers::list_model_deployment::list_model_deployments)
             .service(presentation::http::v1::actix_web::handlers::start_model_deployment::start_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::stop_model_deployment::stop_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::undeploy_model_deployment::undeploy_model_deployment)

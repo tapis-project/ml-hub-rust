@@ -2,6 +2,7 @@ pub use shared::presentation::http::v1::requests::headers::Headers;
 pub use shared::presentation::http::v1::requests::deployment::{
     DeployModelWithStrategyBody,
     DeployModelWithStrategyPathParams,
+    GetModelDeploymentPathParams,
     StartModelDeploymentPathParams,
     StopModelDeploymentPathParams,
     UndeployModelDeploymentPathParams,
