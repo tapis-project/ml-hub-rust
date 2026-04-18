@@ -127,6 +127,7 @@ impl TapisPodsModelDeploymentReconciliationClient {
                 pod_id,
                 volume_id,
                 pod_url,
+                status,
                 pod_info,
                 volume_info,
                 tapis_user,
@@ -151,6 +152,11 @@ impl TapisPodsModelDeploymentReconciliationClient {
                         map.insert("pod_url".to_string(), json!(url));
                     }
                 }
+                if let Some(status) = status {
+                    if !status.is_empty() {
+                        map.insert("pod_status".to_string(), json!(status));
+                    }
+                }
                 map.insert("pod_info".to_string(), json!(pod_info));
                 map.insert("volume_info".to_string(), json!(volume_info));
                 ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))
@@ -159,36 +165,15 @@ impl TapisPodsModelDeploymentReconciliationClient {
         }
     }
 
-    /// Infer our State from FlexServ monitor result's pod_info string.
-    /// pod_info is the Debug-formatted Tapis PodResponseModel (possibly pretty-printed with newlines).
-    /// Tapis uses status: AVAILABLE (running), STOPPED, PENDING, CREATING, FAILED.
-    fn state_from_pod_info(pod_info: &str) -> State {
-        let norm: String = pod_info
-            .chars()
-            .map(|c| if c.is_whitespace() { ' ' } else { c })
-            .collect();
-        let compact: String = norm.chars().filter(|c| *c != ' ').collect();
-        let s = compact.as_str();
-        if s.contains("Some(\"AVAILABLE\"") || s.contains("Some(\"Available\"") {
-            return State::Running;
+    /// Map canonical TAPIS pod status strings to our [State].
+    fn state_from_status(status: Option<&str>) -> State {
+        match status.unwrap_or_default().trim().to_ascii_uppercase().as_str() {
+            "AVAILABLE" | "RUNNING" => State::Running,
+            "STOPPED" => State::Stopped,
+            "FAILED" => State::Failed,
+            "PENDING" | "CREATING" => State::Unknown,
+            _ => State::Unknown,
         }
-        if s.contains("Some(\"RUNNING\"") || s.contains("Some(\"Running\"") {
-            return State::Running;
-        }
-        if s.contains("Some(\"STOPPED\"") || s.contains("Some(\"Stopped\"") {
-            return State::Stopped;
-        }
-        if s.contains("Some(\"FAILED\"") || s.contains("Some(\"Failed\"")
-            || s.contains("Error(") || s.contains("error:")
-        {
-            return State::Failed;
-        }
-        if s.contains("Some(\"PENDING\"") || s.contains("Some(\"Pending\"")
-            || s.contains("Some(\"CREATING\"")
-        {
-            return State::Unknown;
-        }
-        State::Unknown
     }
 
     /// Map FlexServ DeploymentError to ReconciliationError
@@ -305,10 +290,10 @@ impl TapisPodsModelDeploymentReconciliationClient {
             .await
             .map_err(Self::map_deployment_error)?;
 
-        let observed_state = Self::state_from_pod_info(match &result {
-            DeploymentResult::PodResult { pod_info, .. } => pod_info.as_str(),
-            _ => "",
-        });
+        let observed_state = match &result {
+            DeploymentResult::PodResult { status, .. } => Self::state_from_status(status.as_deref()),
+            _ => State::Unknown,
+        };
         
         info!("Observed state for deployment {}: {:?}", input.deployment.id, observed_state);
 
