@@ -1508,7 +1508,7 @@ dependencies = [
 [[package]]
 name = "flexserv-deployer"
 version = "0.1.0"
-source = "git+https://github.com/tapis-project/FlexServ-Deployer.git?branch=Add-Model-Deployment#805d1e1c87db1810c015069d5e8373b2e7e2419c"
+source = "git+https://github.com/tapis-project/FlexServ-Deployer.git?rev=8da1963#8da1963bc0afe9a9ada9e4da366d27be120597d9"
 dependencies = [
  "actix-web",
  "anyhow",

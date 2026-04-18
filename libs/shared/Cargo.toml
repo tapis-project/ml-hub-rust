@@ -45,5 +45,5 @@ jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
 tapis-authenticator = "0.2.0"
 tapis-tenants = "0.2.0"
 base64 = "0.22.1"
-flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", branch = "Add-Model-Deployment"}
+flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", rev = "8da1963" }
 url-parse = "1.0.10"

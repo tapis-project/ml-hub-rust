@@ -206,6 +206,9 @@ impl TapisPodsModelDeploymentReconciliationClient {
             FlexServDeploymentError::UnknownError(msg) => {
                 ReconciliationError::Unimplemented(format!("Unknown error: {}", msg))
             },
+            FlexServDeploymentError::InvalidConfiguration(msg) => {
+                ReconciliationError::Unimplemented(msg)
+            }
         }
     }
 
