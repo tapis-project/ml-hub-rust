@@ -196,55 +196,53 @@ mod tapis_pods_test {
         assert!(r.to_string().contains("Unknown error"));
     }
 
-    // ---- Unit tests: state_from_pod_info (parse Tapis pod status from Debug-formatted pod_info) ----
+    // ---- Unit tests: state_from_status (canonical TAPIS pod status strings) ----
 
     #[test]
-    fn state_from_pod_info_available() {
-        let pod_info = r#"status: Some("AVAILABLE")"#;
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+    fn state_from_status_available() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some("AVAILABLE"));
         assert_eq!(s, State::Running);
     }
 
     #[test]
-    fn state_from_pod_info_available_pretty_printed() {
-        let pod_info = r#"status: Some(
-            "AVAILABLE",
-        ),"#;
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+    fn state_from_status_running_case_insensitive() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some("running"));
         assert_eq!(s, State::Running);
     }
 
     #[test]
-    fn state_from_pod_info_running() {
-        let pod_info = r#"PodResponseModel { pod_id: "p123", status: Some("RUNNING"), .. }"#;
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
-        assert_eq!(s, State::Running);
-    }
-
-    #[test]
-    fn state_from_pod_info_stopped() {
-        let pod_info = r#"status: Some("STOPPED")"#;
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+    fn state_from_status_stopped() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some("STOPPED"));
         assert_eq!(s, State::Stopped);
     }
 
     #[test]
-    fn state_from_pod_info_failed() {
-        let pod_info = r#"status: Some("FAILED")"#;
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+    fn state_from_status_failed() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some("FAILED"));
         assert_eq!(s, State::Failed);
     }
 
     #[test]
-    fn state_from_pod_info_pending_unknown() {
-        let pod_info = r#"status: Some("PENDING")"#;
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info(pod_info);
+    fn state_from_status_pending_unknown() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some("PENDING"));
         assert_eq!(s, State::Unknown);
     }
 
     #[test]
-    fn state_from_pod_info_empty_unknown() {
-        let s = TapisPodsModelDeploymentReconciliationClient::state_from_pod_info("");
+    fn state_from_status_creating_unknown() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some("CREATING"));
+        assert_eq!(s, State::Unknown);
+    }
+
+    #[test]
+    fn state_from_status_empty_unknown() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(Some(""));
+        assert_eq!(s, State::Unknown);
+    }
+
+    #[test]
+    fn state_from_status_none_unknown() {
+        let s = TapisPodsModelDeploymentReconciliationClient::state_from_status(None);
         assert_eq!(s, State::Unknown);
     }
 
