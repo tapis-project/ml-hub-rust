@@ -14,7 +14,7 @@ spec:
       containers:
         - env:
             - name: MONGO_HOST
-              value: mlhub-mongo-service
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.default.svc.cluster.local
             - name: MONGO_PORT
               value: "27017"
             - name: MONGO_NAME
@@ -23,6 +23,8 @@ spec:
               value: password
             - name: MONGO_USERNAME
               value: mlhub
+            - name: MONGO_REPLICA_SET
+              value: rs0
             - name: RABBIT_HOST
               value: mlhub-rabbit-service
             - name: RABBIT_PASSWORD
@@ -56,9 +58,12 @@ spec:
           volumeMounts:
             - name: nfs-server-mount
               mountPath: /srv/mlhub/
-            - name: tapis-deployment-strategies
-              mountPath: /etc/mlhub/deployment-strategies.d/tapis.json
-              subPath: tapis.json
+            - name: site-config
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
+              subPath: tapis-pods-deployment-strategies.json
+            - name: site-config
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
+              subPath: tapis-jobs-deployment-strategies.json
             - name: site-config
               mountPath: /etc/mlhub/site.json
               subPath: site.json
@@ -67,9 +72,6 @@ spec:
           nfs:
             server: '{{ NFS_SERVER_COMPONENT_IP }}'
             path: /
-        - name: tapis-deployment-strategies
-          configMap:
-            name: tapis-deployment-strategies
         - name: site-config
           configMap:
-            name: mlhub-site-config
+            name: mlhub-site-configs

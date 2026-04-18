@@ -1,0 +1,6 @@
+configMapGenerator:
+- name: mlhub-site-configs
+  files:
+  - site.json
+  - tapis-pods-deployment-strategies.json
+  - tapis-jobs-deployment-strategies.json

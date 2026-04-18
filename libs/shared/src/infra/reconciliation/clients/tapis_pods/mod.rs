@@ -196,28 +196,28 @@ impl TapisPodsModelDeploymentReconciliationClient {
         match err {
             FlexServDeploymentError::TapisAuthFailed(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS authentication failed: {}", msg))
-            }
+            },
             FlexServDeploymentError::TapisAPIUnreachable(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS API unreachable: {}", msg))
-            }
+            },
             FlexServDeploymentError::TapisBadRequest(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS bad request: {}", msg))
-            }
+            },
             FlexServDeploymentError::TapisTimeout(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS timeout: {}", msg))
-            }
+            },
             FlexServDeploymentError::TapisInternalServerError(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS internal server error: {}", msg))
-            }
+            },
             FlexServDeploymentError::ModelUploadingFailed(msg) => {
                 ReconciliationError::Unimplemented(format!("Model upload failed: {}", msg))
-            }
+            },
             FlexServDeploymentError::PodCreationFailed(msg) => {
                 ReconciliationError::Unimplemented(format!("Pod creation failed: {}", msg))
-            }
+            },
             FlexServDeploymentError::JobCreationFailed(msg) => {
                 ReconciliationError::Unimplemented(format!("Job creation failed: {}", msg))
-            }
+            },
             FlexServDeploymentError::UnknownError(msg) => {
                 ReconciliationError::Unimplemented(format!("Unknown error: {}", msg))
             }

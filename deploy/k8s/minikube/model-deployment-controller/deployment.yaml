@@ -21,7 +21,7 @@ spec:
             - name: RUST_LOG
               value: debug
             - name: MONGO_HOST
-              value: mlhub-mongo-service
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.default.svc.cluster.local
             - name: MONGO_PORT
               value: "27017"
             - name: MONGO_NAME
@@ -30,6 +30,8 @@ spec:
               value: password
             - name: MONGO_USERNAME
               value: mlhub
+            - name: MONGO_REPLICA_SET
+              value: rs0
             - name: SHARED_DATA
               value: /srv/mlhub
             - name: RABBIT_HOST

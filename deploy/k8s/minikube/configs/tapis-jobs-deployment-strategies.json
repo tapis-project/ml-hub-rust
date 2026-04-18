@@ -1,0 +1,158 @@
+{
+    "platform": "tapis-jobs",
+    "description": "A set of strategies for deploying models to Tapis Pods",
+    "strategies": [
+        {
+            "name": "Stampede3",
+            "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
+            "use_rule_sets": [
+                "FlexServerDeployerCompatible",
+                "VisiblePublic"
+            ],
+            "use_parameter_set": "TapisJobs"
+        },
+        {
+            "name": "Frontera",
+            "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
+            "use_rule_sets": [
+                "FlexServerDeployerCompatible",
+                "VisiblePublic"
+            ],
+            "use_parameter_set": "TapisJobs"
+        },
+        {
+            "name": "LoneStar6",
+            "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
+            "use_rule_sets": [
+                "FlexServerDeployerCompatible",
+                "VisiblePublic"
+            ],
+            "use_parameter_set": "TapisJobs"
+        },
+        {
+            "name": "Vista",
+            "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
+            "use_rule_sets": [
+                "FlexServerDeployerCompatible",
+                "VisiblePublic"
+            ],
+            "use_parameter_set": "TapisJobs"
+        },
+        {
+            "name": "HPC w/ GPUs",
+            "description": "Deploys a model to a user defined system",
+            "use_rule_sets": [
+                "FlexServerDeployerCompatible",
+                "VisiblePublic"
+            ],
+            "use_parameter_set": "TapisJobs"
+        }
+    ],
+    "rule_sets": [
+        {
+            "name": "FlexServerDeployerCompatible",
+            "rules": [
+                {
+                    "field_path": [
+                        "libraries"
+                    ],
+                    "operator": "Contains",
+                    "value": "transformers"
+                },
+                {
+                    "field_path": [
+                        "task_types"
+                    ],
+                    "operator": "AnyIn",
+                    "value": [
+                        "TextGeneration"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "VisiblePublic",
+            "rules": [
+                {
+                    "field_path": [
+                        "canonical",
+                        "gated"
+                    ],
+                    "operator": "Eq",
+                    "value": false
+                },
+                {
+                    "field_path": [
+                        "canonical",
+                        "private"
+                    ],
+                    "operator": "Eq",
+                    "value": false
+                }
+            ]
+        }
+    ],
+    "parameter_sets": [
+        {
+            "name": "TapisJobs",
+            "parameters": [
+                {
+                    "name": "X-Tapis-Token",
+                    "in": "headers"
+                },
+                {
+                    "name": "allocation",
+                    "in": "request_body",
+                    "required": false
+                },
+                {
+                    "name": "system_id",
+                    "in": "request_body"
+                },
+                {
+                    "name": "jobParameterSet",
+                    "in": "request_body",
+                    "type": "object",
+                    "required": false
+                },
+                {
+                    "name": "backend",
+                    "in": "request_body",
+                    "choices": [
+                        "transformers"
+                    ]
+                },
+                {
+                    "name": "inference_server_config",
+                    "in": "request_body",
+                    "type": "object"
+                }
+            ]
+        },
+        {
+            "name": "Pods",
+            "parameters": [
+                {
+                    "name": "X-Tapis-Token",
+                    "in": "headers"
+                },
+                {
+                    "name": "backend",
+                    "in": "request_body",
+                    "choices": [
+                        "transformers"
+                    ],
+                    "required": false
+                },
+                {
+                    "name": "uid",
+                    "in": "request_body"
+                },
+                {
+                    "name": "modelId",
+                    "in": "request_body"
+                }
+            ]
+        }
+    ]
+}

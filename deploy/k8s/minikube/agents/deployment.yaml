@@ -14,11 +14,14 @@ spec:
       containers:
       - env:
           - name: DB_HOST
-            value: mlhub-postgres-service
+            value: mlhub-mongo-service
           - name: DB_NAME
             value: mlhub
           - name: DB_PASSWORD
-            value: dev
+            valueFrom:
+              secretKeyRef:
+                name: mlhub-mongo-secrets
+                key: mongo-user-password
           - name: DB_USER
             value: mlhub
           - name: RUST_LOG
