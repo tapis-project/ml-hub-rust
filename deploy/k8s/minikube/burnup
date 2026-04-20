@@ -14,9 +14,8 @@ mkdir -p {{ tapisdatadir }}/mlhub/artifact-ingester
 mkdir -p {{ tapisdatadir }}/mlhub/artifact-publisher
 mkdir -p {{ tapisdatadir }}/mlhub/mongo
 mkdir -p {{ tapisdatadir }}/mlhub/rabbit
+# mkdir -p {{ tapisdatadir }}/mlhub/deployments
 # mkdir -p {{ tapisdatadir }}/mlhub/datasets
-# mkdir -p {{ tapisdatadir }}/mlhub/inference
-# mkdir -p {{ tapisdatadir }}/mlhub/training
 
 cd "$here/traefik"
 ./burnup.sh
