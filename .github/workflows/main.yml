@@ -36,7 +36,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -93,7 +93,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -155,7 +155,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -212,7 +212,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -269,7 +269,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -326,7 +326,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -383,7 +383,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6
@@ -440,7 +440,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Resolve all diffs if any for this api
+      # Resolve all diffs if any for this service
       - id: git-diff
         name: Check Git Diff
         uses: technote-space/get-diff-action@v6

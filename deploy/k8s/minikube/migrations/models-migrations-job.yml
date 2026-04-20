@@ -35,7 +35,7 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
-          image: mlhub/models-migrator:local
+          image: tapis/mlhub-models-migrator:local
           imagePullPolicy: Never
           name: models-migrator
           resources: {}

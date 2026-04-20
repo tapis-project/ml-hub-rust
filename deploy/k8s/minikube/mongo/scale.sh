@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -10,6 +10,4 @@ if ! [[ "$replicas" =~ ^[0-9]+$ ]]; then
    exit 1
 fi
 
-kubectl scale -f "$projectRoot/deploy/k8s/minikube/mongo/stateful-set.yaml" --replicas=0
-kubectl delete -f "$projectRoot/deploy/k8s/minikube/mongo/cm-mongo-init-sidecar-script.yaml"
 kubectl scale -f "$projectRoot/deploy/k8s/minikube/mongo/stateful-set.yaml" --replicas=$replicas

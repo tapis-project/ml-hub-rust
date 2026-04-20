@@ -42,7 +42,7 @@ spec:
               value: "5672"
             - name: RABBIT_USER
               value: dev
-          image: mlhub/model-deployment-controller:local
+          image: tapis/mlhub-model-deployment-controller:local
           imagePullPolicy: Never
           name: model-deployment-controller
           resources: {}

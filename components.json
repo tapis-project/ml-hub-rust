@@ -1,4 +1,5 @@
 {
+  "default-env": "minikube",
   "defaultTemplateVars": {
     "env": "local",
     "tag": "dev",
@@ -8,16 +9,14 @@
     "minik8s-dir": "deploy/k8s/minikube",
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
-    "models-image": "tapis/models-api",
-    "models-migrator-image": "mlhub/models-migrator",
-    "principals-migrator-image": "mlhub/principals-migrator",
-    "federated-identities-migrator-image": "mlhub/federated-identities-migrator",
+    "models-image": "tapis/mlhub-models-api",
+    "models-migrator-image": "tapis/mlhub-models-migrator",
+    "principals-migrator-image": "tapis/mlhub-principals-migrator",
+    "federated-identities-migrator-image": "tapis/mlhub-federated-identities-migrator",
     "datasets-deployment": "mlhub-datasets-api-deployment",
-    "datasets-image": "tapis/datasets-api",
+    "datasets-image": "tapis/mlhub-datasets-api",
     "deployments-deployment": "mlhub-deployments-api-deployment",
-    "deployments-image": "tapis/deployments-api",
-    "training-deployment": "mlhub-training-api-deployment",
-    "training-image": "tapis/training-api",
+    "deployments-image": "tapis/mlhub-deployments-api",
     "mongo-deployment": "mlhub-mongo-deployment",
     "nfs-deployment": "mlhub-nfs-server-deployment",
     "nfs-server-service": "mlhub-nfs-server-service",
@@ -26,10 +25,10 @@
     "artifact-ingester-image": "tapis/mlhub-artifact-ingester",
     "artifact-publisher-deployment": "mlhub-artifact-publisher-deployment",
     "artifact-publisher-image": "tapis/mlhub-artifact-publisher",
-    "hf-model-etl-transform-load-image": "mlhub/hf-model-etl-transform-load",
-    "hf-model-etl-extract-image": "mlhub/hf-model-etl-extract",
+    "hf-model-etl-transform-load-image": "tapis/mlhub-hf-model-etl-transform-load",
+    "hf-model-etl-extract-image": "tapis/mlhub-hf-model-etl-extract",
     "model-deployment-controller-deployment": "mlhub-model-deployment-controller-deployment",
-    "model-deployment-controller-image": "mlhub/model-deployment-controller",
+    "model-deployment-controller-image": "tapis/mlhub-model-deployment-controller",
     "project-root": "$(pwd)"
   },
   "components": [
@@ -48,7 +47,7 @@
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "restart": "./manage stop models; ./manage start models",
-        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t mlhub/models-api:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t tapis/mlhub-models-api:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
         "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
@@ -200,7 +199,7 @@
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "initialize": "",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
@@ -236,8 +235,8 @@
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
+        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -265,8 +264,8 @@
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
+        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -293,8 +292,8 @@
       "lifecycle": "production",
       "commands": {
         "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh $(pwd)",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh $(pwd)",
+        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
+        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh $(pwd); {{ self.rootDir }}/scripts/burnup.sh $(pwd)",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
@@ -310,10 +309,10 @@
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
+        "initialize": "",
         "debug": "{{ self.rootDir }}/scripts/debug.sh {{ project-root }}",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}",
+        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
+        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
@@ -577,10 +576,10 @@
       "labels": ["bin", "worker"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
+        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -608,10 +607,10 @@
       "commands": {
         "initialize": "",
         "run-all": "./manage run-models migrations; ./manage run-federated-identities migrations; ./manage run-principals migrations",
-        "run": "kubectl apply -f {{ self.rootDir }}/{{ migration }}-migrations-job.yml",
-        "run-models": "kubectl apply -f {{ self.rootDir }}/models-migrations-job.yml",
-        "run-federated-identities": "kubectl apply -f {{ self.rootDir }}/federated-identities-migrations-job.yml",
-        "run-principals": "kubectl apply -f {{ self.rootDir }}/principals-migrations-job.yml"
+        "run": "kubectl apply -f {{ minik8s-dir }}/migrations/{{ migration }}-migrations-job.yml",
+        "run-models": "kubectl apply -f {{ minik8s-dir }}/migrations/models-migrations-job.yml",
+        "run-federated-identities": "kubectl apply -f {{ minik8s-dir }}/migrations/federated-identities-migrations-job.yml",
+        "run-principals": "kubectl apply -f {{ minik8s-dir }}/migrations/principals-migrations-job.yml"
       }
     }
   ]

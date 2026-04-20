@@ -418,6 +418,7 @@ mod tests {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: Uuid::now_v7(),
             platform: Platform::TapisJobs,
+            tenant_id: "test".into(),
             owner: "test-owner".into(),
             model: ModelReference {
                 name: "Qwen3.5-0.8B".into(),
@@ -443,6 +444,7 @@ mod tests {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: Uuid::now_v7(),
             platform: Platform::TapisJobs,
+            tenant_id: "test".into(),
             owner: "test-owner".into(),
             model: ModelReference {
                 name: "Qwen3.5-0.8B".into(),
@@ -841,9 +843,11 @@ mod tests {
         meta.insert("tapis_tenant_url".into(), json!(tenant_url));
         meta.insert("tapis_user".into(), json!(tapis_user));
         meta.insert("tapis_token".into(), json!(tapis_token));
+        
         if let Some(j) = job_uuid {
             meta.insert("job_uuid".into(), json!(j));
         }
+
         if let Some((app_id, app_ver, exec_id, queue, max_min, alloc)) = hpc_submit {
             meta.insert("tapis_hpc_app_id".into(), json!(app_id));
             meta.insert("tapis_hpc_app_version".into(), json!(app_ver));
@@ -855,6 +859,7 @@ mod tests {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: deployment_id,
             platform: Platform::TapisJobs,
+            tenant_id,
             owner: tapis_user.to_string(),
             model: ModelReference {
                 name: std::env::var("FLEXSERV_MODEL_NAME")

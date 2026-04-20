@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
-
-projectRoot=$1
 
 mongoSecretsDir=~/mlhub
 mongoKeyfileFilename=mongo-keyfile
@@ -18,7 +16,7 @@ if [[ ! -f "$mongoKeyfilePath" ]]; then
     openssl rand -base64 756 | tr -d '\n' > "$mongoKeyfilePath"
 
     # Create a timestamped copy of the keyfile
-    cp $mongoKeyfilePath $mongoKeyfileBackupPath
+    cp "$mongoKeyfilePath" "$mongoKeyfileBackupPath"
 fi
 
 kubectl create secret generic mlhub-mongo-keyfile-secret \
@@ -26,7 +24,7 @@ kubectl create secret generic mlhub-mongo-keyfile-secret \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # Install the mongodb CR
-kubectl apply -f "$projectRoot/deploy/k8s/minikube/mongo/headless-service.yaml" \
-    -f "$projectRoot/deploy/k8s/minikube/mongo/cm-mongo-init-sidecar-script.yaml" \
-    -f "$projectRoot/deploy/k8s/minikube/mongo/stateful-set.yaml" \
+kubectl apply -f "./headless-service.yaml" \
+    -f "./cm-mongo-init-sidecar-script.yaml" \
+    -f "./stateful-set.yaml" \
     

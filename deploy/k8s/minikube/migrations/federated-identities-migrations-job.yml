@@ -35,7 +35,7 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
-          image: mlhub/federated-identities-migrator:local
+          image: tapis/mlhub-federated-identities-migrator:local
           imagePullPolicy: Never
           name: federated-identities-migrator
           resources: {}

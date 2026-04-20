@@ -26,7 +26,7 @@ spec:
             value: mlhub
           - name: RUST_LOG
             value: debug
-        image: tapis/agents-api:local
+        image: tapis/mlhub-agents-api:local
         imagePullPolicy: Never
         name: agents-api
         ports:
