@@ -51,13 +51,25 @@ spec:
               memory: "500Mi"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: username
             - name: MONGO_INITDB_ROOT_PASSWORD
-              value: "password"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: password
             - name: MLHUB_USERNAME
-              value: "mlhub"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: username
             - name: MLHUB_PASSWORD
-              value: "password"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: password
           volumeMounts:
             - name: init-script
               mountPath: /scripts
@@ -74,13 +86,25 @@ spec:
             - "/writable-keyfile/mongo-keyfile"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: username
             - name: MONGO_INITDB_ROOT_PASSWORD
-              value: "password"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: password
             - name: MLHUB_USERNAME
-              value: "mlhub"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: username
             - name: MLHUB_PASSWORD
-              value: "password"
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: password
           ports:
             - containerPort: 27017
           resources:

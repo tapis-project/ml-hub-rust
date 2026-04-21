@@ -2,6 +2,7 @@
 
 set -e
 
-kubectl apply -f "./service.yml"
-kubectl apply -f "./pvc.yml"
-kubectl apply -f "./deployment.yml"
+kubectl apply -f "./rabbit-secrets.yaml" \
+    -f "./service.yml" \
+    -f "./pvc.yml" \
+    -f "./deployment.yml"

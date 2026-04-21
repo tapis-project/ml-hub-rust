@@ -23,9 +23,15 @@ spec:
           containerPort: 15672
         env:
         - name: RABBITMQ_DEFAULT_USER
-          value: "dev"
+          valueFrom:
+            secretKeyRef:
+              name: mlhub-rabbit-secrets 
+              key: username
         - name: RABBITMQ_DEFAULT_PASS
-          value: "dev"
+          valueFrom:
+            secretKeyRef:
+              name: mlhub-rabbit-secrets 
+              key: password
         volumeMounts:
         - name: mlhub-rabbit-storage
           mountPath: "/var/lib/rabbitmq/mnesia"

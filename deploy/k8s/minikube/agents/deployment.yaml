@@ -17,13 +17,16 @@ spec:
             value: mlhub-mongo-service
           - name: DB_NAME
             value: mlhub
-          - name: DB_PASSWORD
+          - name: MONGO_USERNAME
             valueFrom:
               secretKeyRef:
-                name: mlhub-mongo-secrets
-                key: mongo-user-password
-          - name: DB_USER
-            value: mlhub
+                name: mlhub-mongo-secrets 
+                key: username
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mlhub-mongo-secrets 
+                key: password
           - name: RUST_LOG
             value: debug
         image: tapis/mlhub-agents-api:local
