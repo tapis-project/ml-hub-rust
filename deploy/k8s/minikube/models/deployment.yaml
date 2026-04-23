@@ -20,11 +20,11 @@ spec:
         #       mountPath: /etc/mlhub/site.json
         #       subPath: site.json 
         - name: models-api
-          image: tapis/models-api:local
+          image: tapis/mlhub-models-api:local
           imagePullPolicy: Never
           env:
             - name: MONGO_HOST
-              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.default.svc.cluster.local
+              value: "mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local"
             - name: MONGO_PORT
               value: "27017"
             - name: MONGO_NAME
@@ -91,7 +91,7 @@ spec:
       volumes:
         - name: nfs-server-mount
           nfs:
-            server: "{{ NFS_SERVER_COMPONENT_IP }}"
+            server: "** NFS_SERVER_COMPONENT_IP **"
             path: /
         - name: site-config
           configMap:
