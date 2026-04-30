@@ -1,0 +1,3 @@
+resources:
+  - ../../../rabbit
+  - secrets.yml

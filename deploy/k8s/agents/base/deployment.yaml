@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-agents-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mlhub-agents-api-deployment
+  template:
+    metadata:
+      labels:
+        app: mlhub-agents-api-deployment
+    spec:
+      containers:
+      - env:
+          - name: DB_HOST
+            value: mlhub-mongo-service
+          - name: DB_NAME
+            value: mlhub
+          - name: MONGO_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mlhub-mongo-secrets 
+                key: username
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mlhub-mongo-secrets 
+                key: password
+          - name: RUST_LOG
+            value: debug
+        image: tapis/mlhub-agents-api:local
+        imagePullPolicy: Never
+        name: agents-api
+        ports:
+          - containerPort: 8000
+            name: webserver
+        resources: {}
+        tty: true

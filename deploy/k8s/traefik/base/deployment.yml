@@ -1,0 +1,32 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mlhub-traefik-deployment
+  labels:
+    app: mlhub-traefik
+spec:
+  selector:
+    matchLabels:
+      app: mlhub-traefik
+  template:
+    metadata:
+      labels:
+        app: mlhub-traefik
+    spec:
+      containers:
+        - name: mlhub-traefik
+          image: traefik:v3.2
+          ports:
+            - name: web
+              containerPort: 80
+            - name: dashboard
+              containerPort: 8080
+          resources: {}
+          volumeMounts:
+          - name: dynamic-config
+            mountPath: /etc/traefik/dynamic-config.yaml
+            subPath: dynamic-config.yaml
+      volumes:
+      - name: dynamic-config
+        configMap:
+          name: mlhub-traefik-dynamic-config

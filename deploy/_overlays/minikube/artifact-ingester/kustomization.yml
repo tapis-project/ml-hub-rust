@@ -1,0 +1,21 @@
+resources:
+  - ../../../artifact-ingester
+  - ../site-configs/
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-artifact-ingester-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-artifact-ingester-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: artifact-ingester
+                image: tapis/mlhub-artifact-ingester:local
+                imagePullPolicy: Never
+                resources: {}

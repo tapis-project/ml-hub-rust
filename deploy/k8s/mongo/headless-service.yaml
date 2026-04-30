@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlhub-mongo-headless-service
+spec:
+  clusterIP: None
+  selector:
+    app: mlhub-mongo-stateful-set
+  ports:
+    - port: 27017
+      targetPort: 27017

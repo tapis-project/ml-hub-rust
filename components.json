@@ -3,10 +3,12 @@
   "defaultTemplateVars": {
     "env": "local",
     "tag": "dev",
+    "overlay": "minikube",
     "local": "local",
     "libs-dir": "libs",
     "sdks-dir": "sdks",
     "minik8s-dir": "deploy/k8s/minikube",
+    "k8s-dir": "deploy/k8s",
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/mlhub-models-api",
@@ -41,8 +43,8 @@
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
-        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -84,7 +86,7 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
+        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
       }
     },
     {
@@ -104,7 +106,7 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
+        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
       }
     },
     {
@@ -124,7 +126,7 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "kubectl apply -f {{ self.rootDir }}/deploy/local/minikube/job.yml"
+        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
       }
     },
     {
@@ -133,7 +135,7 @@
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
         "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
@@ -168,8 +170,8 @@
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
-        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -200,8 +202,8 @@
       "lifecycle": "production",
       "commands": {
         "initialize": "",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
@@ -215,9 +217,9 @@
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}",
+        "initialize": "",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
@@ -233,10 +235,10 @@
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "initialize": " && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
-        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -262,10 +264,10 @@
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
-        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -291,13 +293,13 @@
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "chmod -R +x {{ self.rootDir }}/scripts",
-        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
-        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
+        "initialize": "",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh $(pwd); {{ self.rootDir }}/scripts/burnup.sh $(pwd)",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "expose": "kubectl port-forward svc/mlhub-{{ self.name }}-mgmt-service 15672:15672",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
+        "watch": "kubectl logs -f deployment/{{ {{ self.name }}-deployment }}",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- sh",
         "code": "code services/{{ self.name }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
@@ -578,8 +580,8 @@
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "cd {{ minik8s-dir }}/{{ self.name }} && ./burnup.sh",
-        "stop": "cd {{ minik8s-dir }}/{{ self.name }} && ./burndown.sh",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",

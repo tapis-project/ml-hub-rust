@@ -1,0 +1,6 @@
+{
+    "site_id": "local-minikube",
+    "base_url": "https://tapis.io",
+    "idps": ["tapis"],
+    "tenancy_resolution_mode": "subdomain"
+}
