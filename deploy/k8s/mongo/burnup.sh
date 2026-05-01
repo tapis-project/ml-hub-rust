@@ -2,32 +2,21 @@
 
 set -e
 
-mongoSecretsDir=~/mlhub
-mongoKeyfileFilename=mongo-keyfile
-mongoKeyfilePath="$mongoSecretsDir/$mongoKeyfileFilename"
+source ../utils.sh;
 
-mkdir -p "$mongoSecretsDir"
+chmod +x ./generate-keyfile.sh
 
-timestamp=$(date +"%Y%m%d%H%M%S")
-mongoKeyfileBackupPath="$mongoKeyfilePath.bak.$timestamp"
+./generate-keyfile.sh
 
-if [[ ! -f "$mongoKeyfilePath" ]]; then
-  # Generate a random key via openssl
-  openssl rand -base64 756 | tr -d '\n' > "$mongoKeyfilePath"
+overlay=$1
 
-  # Create a timestamped copy of the keyfile
-  cp "$mongoKeyfilePath" "$mongoKeyfileBackupPath"
-fi
+kubectl kustomize "./overlays/$overlay" | replace_template_vars | kubectl apply -f -
 
-kubectl create secret generic mlhub-mongo-keyfile-secret \
-  --from-file=mongo-keyfile="$mongoKeyfilePath" \
-  --dry-run=client -o yaml | kubectl apply -f -
+# kubectl apply -f ./mongo-initdb-secrets.yaml \
+#               -f ./mongo-secrets.yaml
 
-kubectl apply -f ./mongo-initdb-secrets.yaml \
-              -f ./mongo-secrets.yaml
-
-# Install the mongodb CR
-kubectl apply -f "./headless-service.yaml" \
-              -f "./cm-mongo-init-sidecar-script.yaml" \
-              -f "./stateful-set.yaml" \
+# # Install the mongodb CR
+# kubectl apply -f "./headless-service.yaml" \
+#               -f "./cm-mongo-init-sidecar-script.yaml" \
+#               -f "./stateful-set.yaml" \
     
