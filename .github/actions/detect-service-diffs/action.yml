@@ -1,0 +1,60 @@
+name: Detect Service Diffs
+description: Detect which services changed between commits
+
+inputs:
+  base_ref:
+    description: "Base commit/branch for diff"
+    required: true
+
+  head_ref:
+    description: "Head commit/branch for diff"
+    required: true
+
+outputs:
+  services:
+    description: "List of services for which diff was detected"
+    value: ${{ steps.compute.outputs.services }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - id: compute
+      shell: bash
+      run: |
+        set -e
+
+        BASE="${{ inputs.base_ref }}"
+        HEAD="${{ inputs.head_ref }}"
+
+        DIFF=$(git diff --name-only "$BASE" "$HEAD" || true)
+
+        SERVICES=(
+          models
+          deployments
+          model-deployment-controller
+          artifact-ingester
+          artifact-publisher
+          models-migrator
+          principals-migrator
+          federated-identities-migrator
+          # datasets
+        )
+
+        JSON=$(jq -n '{services: []}')
+
+        for service in "${SERVICES[@]}"; do
+          if grep -Fq "services/${service}/" <<< "$DIFF"; then
+            JSON=$(jq --arg s "$service" '.services += [$s]' <<< "$JSON")
+          fi
+        done
+
+        # Dedupe services in array
+        JSON=$(jq '.services |= unique' <<< "$JSON")
+
+        echo "services=$(jq -c '.services' <<< "$JSON")" >> "$GITHUB_OUTPUT"

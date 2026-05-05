@@ -1,0 +1,21 @@
+name: Deployments API
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+      has_diff:
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    if: ${{ inputs.has_diff }}
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: deployments
+      compile_cmd: ./manage install deployments -sv
+      build_cmd: ./manage build deployments -sv -t env gh-actions -t tag ${{ inputs.image_tag }}
+      push_cmd: ./manage pusht deployments -sv

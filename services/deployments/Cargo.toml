@@ -3,6 +3,10 @@ name = "deployments"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "deployments-openapi"
+path = "src/bin/openapi.rs"
+
 [features]
 default = ["actix", "mongo"]
 actix = ["actix-web"]
