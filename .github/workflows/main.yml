@@ -35,6 +35,7 @@ jobs:
   diffs:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/detect-service-diffs
 
   models:
