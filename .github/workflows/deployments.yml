@@ -54,7 +54,7 @@ jobs:
         working-directory: ./sdks/typescript-sdk
         run: npm install
     
-  build-push-api:
+  build-push-api-image:
     runs-on: ubuntu-latest
     steps:
     - name: Docker Login
@@ -66,8 +66,8 @@ jobs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
     - name: Compile
-      run: ${{ inputs.compile_cmd }}
+      run: cargo install --path services/deployments
     - name: Build Image
       run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" .
     - name: Push Image
-      run: ${{ inputs.push_cmd }}
+      run: docker push --all-tags ${{ inputs.image_name }}
