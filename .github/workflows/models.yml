@@ -38,10 +38,23 @@ jobs:
           name: models-openapi
       - name: Echo openapi spec test
         run: cat models-openapi.json
+
+  generate-mlhub-models-sdk:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Java Runtime Environment
+        run: apt-get install default-jre
+      - name: Install OpenAPI Generator CLI
+        run: npm install -g @openapitools/openapi-generator-cli
+      - name: NPM install 
+        working-directory: ./sdks/typescript-sdk
+        run: npm install
     
   build-push-api:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Docker Login
       uses: docker/login-action@v2
