@@ -66,7 +66,7 @@ jobs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
     - name: Compile
-      run: cargo install --path services/deployments
+      run: cargo build --release -p deployments
     - name: Build Image
       run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" .
     - name: Push Image
