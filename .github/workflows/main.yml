@@ -39,7 +39,7 @@ jobs:
       - uses: ./.github/actions/detect-service-diffs
 
   models:
-    if: contains(fromJson(needs.diffs.outputs.services), 'contains') || github.event.inputs.force_rebuild_all == 'true'
+    # if: contains(fromJson(needs.diffs.outputs.services), 'models') || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
