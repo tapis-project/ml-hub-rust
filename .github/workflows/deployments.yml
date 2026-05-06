@@ -3,19 +3,71 @@ name: Deployments API
 on:
   workflow_call:
     inputs:
+      image_name:
+        required: true
+        type: string
       image_tag:
         required: true
         type: string
-      has_diff:
-        type: boolean
-        default: false
 
 jobs:
-  build:
-    if: ${{ inputs.has_diff }}
-    uses: ./.github/workflows/build-service.yml
-    with:
-      service: deployments
-      compile_cmd: ./manage install deployments -sv
-      build_cmd: ./manage build deployments -sv -t env gh-actions -t tag ${{ inputs.image_tag }}
-      push_cmd: ./manage pusht deployments -sv
+  compile-run-openapi-binary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Compile/Run binary
+        run: cargo run --bin deployments-openapi > deployments-openapi.json
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployments-openapi
+          path: deployments-openapi.json
+          retention-days: 1
+
+  run-openapi-downgrader:
+    runs-on: ubuntu-latest
+    needs: compile-run-openapi-binary  # IMPORTANT: Job 2 must wait for Job 1 to finish
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deployments-openapi
+      - name: Echo openapi spec test
+        run: cat deployments-openapi.json
+
+  generate-mlhub-deployments-sdk:
+    needs:
+      - run-openapi-downgrader
+    runs-on: ubuntu-latest
+    container:
+      image: node:20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update and Install Java Runtime Environment
+        run: apt-get update && apt-get install -y default-jre
+      - name: Install OpenAPI Generator CLI
+        run: npm install -g @openapitools/openapi-generator-cli
+      - name: NPM install 
+        working-directory: ./sdks/typescript-sdk
+        run: npm install
+    
+  build-push-api:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Docker Login
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+    - uses: actions/checkout@v4
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Compile
+      run: ${{ inputs.compile_cmd }}
+    - name: Build Image
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" .
+    - name: Push Image
+      run: ${{ inputs.push_cmd }}

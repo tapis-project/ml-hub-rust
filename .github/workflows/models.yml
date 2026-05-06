@@ -9,7 +9,6 @@ on:
       image_tag:
         required: true
         type: string
-    
 
 jobs:
   compile-run-openapi-binary:

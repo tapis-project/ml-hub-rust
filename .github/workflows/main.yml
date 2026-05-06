@@ -47,6 +47,16 @@ jobs:
     with:
       image_name: tapis/mlhub-models-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
+  
+  deployments:
+    # if: contains(fromJson(needs.diffs.outputs.services), 'deployments') || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+    uses: ./.github/workflows/deployments.yml
+    with:
+      image_name: tapis/mlhub-deployments-api
+      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
 
   # Models_API:
