@@ -40,13 +40,15 @@ jobs:
         run: cat models-openapi.json
 
   generate-mlhub-models-sdk:
+    needs:
+      - run-openapi-downgrader
     runs-on: ubuntu-latest
     container:
       image: node:20
     steps:
       - uses: actions/checkout@v4
-      - name: Install Java Runtime Environment
-        run: apt-get install default-jre
+      - name: Update and Install Java Runtime Environment
+        run: apt-get update && apt-get install -y default-jre
       - name: Install OpenAPI Generator CLI
         run: npm install -g @openapitools/openapi-generator-cli
       - name: NPM install 
