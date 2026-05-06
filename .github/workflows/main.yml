@@ -43,6 +43,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+    secrets: inherit
     uses: ./.github/workflows/models.yml
     with:
       image_name: tapis/mlhub-models-api
@@ -53,6 +54,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+    secrets: inherit
     uses: ./.github/workflows/deployments.yml
     with:
       image_name: tapis/mlhub-deployments-api
