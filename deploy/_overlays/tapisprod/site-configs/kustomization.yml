@@ -1,8 +1,0 @@
-resources:
-  - ../../../site-configs
-
-configMapGenerator:
-- name: mlhub-site-configs
-  behavior: merge
-  files:
-    - site.json

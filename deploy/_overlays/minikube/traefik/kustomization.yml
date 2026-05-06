@@ -1,8 +1,0 @@
-resources:
-  - cr.yaml
-  - crb.yaml
-  - deployment.yaml
-  - service-account.yaml
-  - web-service.yaml
-  - traefik-dynmaic-config.yaml
-  - dashboard-service.yaml

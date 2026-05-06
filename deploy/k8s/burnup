@@ -6,19 +6,7 @@ echo "mlhub:"
 
 here=$(pwd)
 
-# Make data dirs
-mkdir -p "{{ tapisdatadir }}/mlhub"
-mkdir -p "{{ tapisdatadir }}/mlhub/nfs"
-mkdir -p "{{ tapisdatadir }}/mlhub/models"
-mkdir -p "{{ tapisdatadir }}/mlhub/artifact-ingester"
-mkdir -p "{{ tapisdatadir }}/mlhub/artifact-publisher"
-mkdir -p "{{ tapisdatadir }}/mlhub/model-deployment-controller"
-mkdir -p "{{ tapisdatadir }}/mlhub/mongo"
-mkdir -p "{{ tapisdatadir }}/mlhub/rabbit"
-mkdir -p "{{ tapisdatadir }}/mlhub/deployments"
-# mkdir -p "{{ tapisdatadir }}/mlhub/datasets"
-
-overlay="{{ env }}"
+overlay=$1
 
 cd "$here/traefik"
 ./burnup.sh "$overlay"
