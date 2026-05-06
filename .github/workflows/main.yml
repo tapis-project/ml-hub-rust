@@ -5,7 +5,7 @@ on:
     inputs:
       force_rebuild_all:
         type: boolean
-        default: false
+        default: true
   push:
     branches: [ dev, staging, test, main ]
     tags:
@@ -39,11 +39,13 @@ jobs:
       - uses: ./.github/actions/detect-service-diffs
 
   models:
+    if: contains(fromJson(needs.diffs.outputs.services), 'contains') || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
     uses: ./.github/workflows/models.yml
     with:
+      image_name: tapis/mlhub-models-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
 
