@@ -14,6 +14,9 @@ outputs:
   services:
     description: "List of services for which diff was detected"
     value: ${{ steps.compute.outputs.services || '[]' }}
+  has_lib_diff:
+    description: "Whether or not a diff was detected in the libs"
+    value: ${{ steps.compute.outputs.has_lib_diff }}
 
 runs:
   using: "composite"
@@ -57,4 +60,10 @@ runs:
         # Dedupe services in array
         JSON=$(jq '.services |= unique' <<< "$JSON")
 
+        HAS_LIB_DIFF="false"
+        if grep -Fq "libs/" <<< "$DIFF"; then
+          HAS_LIB_DIFF="true"
+        fi
+
         echo "services=$(jq -c '.services' <<< "$JSON")" >> "$GITHUB_OUTPUT"
+        echo "has_lib_diff=$HAS_LIB_DIFF" >> "$GITHUB_OUTPUT"
