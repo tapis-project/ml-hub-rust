@@ -29,7 +29,7 @@ use clients::{Client, Capability};
 ///
 /// ```rust
 /// use client_provider::ClientProvider;
-/// use client_provider::Platform;
+/// use platforms::Platform;
 ///
 /// let client = ClientProvider::provide_list_models_client("huggingface");
 /// ```
