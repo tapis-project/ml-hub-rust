@@ -60,6 +60,39 @@ jobs:
       image_name: tapis/mlhub-deployments-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
+  models-deployment-controller:
+    # if: contains(fromJson(needs.diffs.outputs.services), 'model-deployment-controller') || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+    secrets: inherit
+    uses: ./.github/workflows/model-deployment-controller.yml
+    with:
+      image_name: tapis/mlhub-model-deployment-controller
+      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}\
+
+  artifact-ingester:
+    # if: contains(fromJson(needs.diffs.outputs.services), 'artifact-ingester') || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+    secrets: inherit
+    uses: ./.github/workflows/artifact-ingester.yml
+    with:
+      image_name: tapis/mlhub-artifact-publisher
+      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
+
+  artifact-publisher:
+    # if: contains(fromJson(needs.diffs.outputs.services), 'artifact-publisher') || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+    secrets: inherit
+    uses: ./.github/workflows/artifact-publisher.yml
+    with:
+      image_name: tapis/mlhub-artifact-ingester
+      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
+
 
   # Models_API:
   #   needs:
