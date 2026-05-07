@@ -38,22 +38,35 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/detect-service-diffs
 
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run Tests
+        run: cargo test --workspace
+        
+
   models:
     # if: contains(fromJson(needs.diffs.outputs.services), 'models') || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/models.yml
     with:
       image_name: tapis/mlhub-models-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
   
+  
   deployments:
     # if: contains(fromJson(needs.diffs.outputs.services), 'deployments') || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/deployments.yml
     with:
@@ -65,6 +78,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/model-deployment-controller.yml
     with:
@@ -76,6 +90,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/artifact-ingester.yml
     with:
@@ -87,6 +102,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/artifact-publisher.yml
     with:
@@ -98,6 +114,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/models-migrator.yml
     with:
@@ -109,6 +126,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/federated-identities-migrator.yml
     with:
@@ -120,6 +138,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/principals-migrator.yml
     with:
@@ -131,6 +150,7 @@ jobs:
     needs:
       - resolve_image_tag
       - diffs
+      - tests
     secrets: inherit
     uses: ./.github/workflows/huggingface-model-metadata-etl.yml
     with:
