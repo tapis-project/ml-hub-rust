@@ -1,15 +1,6 @@
 name: Detect Service Diffs
 description: Detect which services changed between commits
 
-inputs:
-  base_ref:
-    description: "Base commit/branch for diff"
-    required: true
-
-  head_ref:
-    description: "Head commit/branch for diff"
-    required: true
-
 outputs:
   services:
     description: "List of services for which diff was detected"
@@ -32,8 +23,23 @@ runs:
       run: |
         set -e
 
+        # Use input if provided, otherwise fallback to GitHub's event data
+        # For PRs: use base and head. For Pushes: use before and after SHAs.
         BASE="${{ inputs.base_ref }}"
+        if [ -z "$BASE" ]; then
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+        fi
+
         HEAD="${{ inputs.head_ref }}"
+        if [ -z "$HEAD" ]; then
+          HEAD="${{ github.event.pull_request.head.sha || github.sha }}"
+        fi
+
+        # Final safety check: if we still don't have a BASE (like on a new branch),
+        # diff against the parent of the current commit.
+        if [ -z "$BASE" ] || [ "$BASE" == "0000000000000000000000000000000000000000" ]; then
+          BASE="HEAD~1"
+        fi
 
         DIFF=$(git diff --name-only "$BASE" "$HEAD" || true)
 
