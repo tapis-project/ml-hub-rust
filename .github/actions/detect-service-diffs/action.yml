@@ -13,7 +13,7 @@ inputs:
 outputs:
   services:
     description: "List of services for which diff was detected"
-    value: ${{ steps.compute.outputs.services }}
+    value: ${{ steps.compute.outputs.services || '[]' }}
 
 runs:
   using: "composite"
