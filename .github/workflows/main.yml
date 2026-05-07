@@ -60,7 +60,7 @@ jobs:
       image_name: tapis/mlhub-deployments-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
-  models-deployment-controller:
+  model-deployment-controller:
     # if: contains(fromJson(needs.diffs.outputs.services), 'model-deployment-controller') || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
@@ -69,7 +69,7 @@ jobs:
     uses: ./.github/workflows/model-deployment-controller.yml
     with:
       image_name: tapis/mlhub-model-deployment-controller
-      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}\
+      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
   artifact-ingester:
     # if: contains(fromJson(needs.diffs.outputs.services), 'artifact-ingester') || github.event.inputs.force_rebuild_all == 'true'
