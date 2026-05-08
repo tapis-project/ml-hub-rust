@@ -73,5 +73,3 @@ runs:
 
         echo "services=$(jq -c '.services' <<< "$JSON")" >> "$GITHUB_OUTPUT"
         echo "has_lib_diff=$HAS_LIB_DIFF" >> "$GITHUB_OUTPUT"
-
-        echo "$GITHUB_OUTPUT"
