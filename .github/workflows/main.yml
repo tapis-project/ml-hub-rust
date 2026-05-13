@@ -34,6 +34,9 @@ jobs:
 
   diffs:
     runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect_changes.outputs.services }}
+      has_lib_diff: ${{ steps.detect_changes.outputs.has_lib_diff }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/detect-service-diffs
@@ -49,7 +52,10 @@ jobs:
         
 
   models:
-    if: contains(fromJson(needs.diffs.outputs.services), 'models') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+    if: |
+      contains(fromJson(needs.diffs.outputs.services), 'models') ||
+      needs.diffs.outputs.has_lib_diff == 'true' ||
+      github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
