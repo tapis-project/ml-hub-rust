@@ -9,22 +9,22 @@ spec:
       name: mlhub-hf-model-etl
     spec:
       restartPolicy: Never
-      # initContainers:
-      #   - name: extract
-      #     env:
-      #       - name: RUST_LOG
-      #         value: debug
-      #       - name: INBOX
-      #         value: /srv/mlhub/hf-model-etl/inbox
-      #       - name: HF_TOKEN
-      #         value: '{{ HF_TOKEN }}'
-      #       - name: MAX_RECORDS
-      #         value: '10000'
-      #     image: mlhub/hf-model-etl-extract:local
-      #     command: ["sh", "-c", "python3 src/extract.py"]
-      #     volumeMounts:
-      #       - name: nfs-server-mount
-      #         mountPath: /srv/mlhub/
+      initContainers:
+        - name: extract
+          env:
+            - name: RUST_LOG
+              value: debug
+            - name: INBOX
+              value: /srv/mlhub/hf-model-etl/inbox
+            - name: HF_TOKEN
+              value: '{{ HF_TOKEN }}'
+            - name: MAX_RECORDS
+              value: '10000'
+          image: mlhub/hf-model-etl-extract:local
+          command: ["sh", "-c", "python3 src/extract.py"]
+          volumeMounts:
+            - name: nfs-server-mount
+              mountPath: /srv/mlhub/
       containers:
         - name: hf-model-etl
           env:
@@ -53,8 +53,20 @@ spec:
           volumeMounts:
             - name: nfs-server-mount
               mountPath: /srv/mlhub/
+            - name: site-config
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
+              subPath: tapis-pods-deployment-strategies.json
+            - name: site-config
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
+              subPath: tapis-jobs-deployment-strategies.json
+            - name: site-config
+              mountPath: /etc/mlhub/site.json
+              subPath: site.json
       volumes:
-      - name: nfs-server-mount
-        nfs:
-          server: '{{ NFS_SERVER_COMPONENT_IP }}'
-          path: /
+        - name: nfs-server-mount
+          nfs:
+            server: "**-NFS_SERVER_COMPONENT_IP-**"
+            path: /
+        - name: site-config
+          configMap:
+            name: mlhub-site-configs

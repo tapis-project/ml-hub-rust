@@ -57,9 +57,12 @@ runs:
 
         JSON=$(jq -n '{services: []}')
 
+        echo "$JSON"
+
         for service in "${SERVICES[@]}"; do
           if grep -Fq "services/${service}/" <<< "$DIFF"; then
             JSON=$(jq --arg s "$service" '.services += [$s]' <<< "$JSON")
+            echo "$JSON"
           fi
         done
 
