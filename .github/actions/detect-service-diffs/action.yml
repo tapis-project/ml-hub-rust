@@ -57,10 +57,13 @@ runs:
 
         JSON=$(jq -n '{services: []}')
 
-        echo "$JSON"
+        echo "INITIAL JSON: $JSON"
 
         for service in "${SERVICES[@]}"; do
+          echo "$service"
+          echo "$(grep -Fq "services/${service}/" <<< "$DIFF")"
           if grep -Fq "services/${service}/" <<< "$DIFF"; then
+            echo "SERVICE DETECTED: $service"
             JSON=$(jq --arg s "$service" '.services += [$s]' <<< "$JSON")
             echo "$JSON"
           fi
@@ -69,8 +72,11 @@ runs:
         # Dedupe services in array
         JSON=$(jq '.services |= unique' <<< "$JSON")
 
+        echo "DEDUPED: $JSON"
+
         HAS_LIB_DIFF="false"
         if grep -Fq "libs/" <<< "$DIFF"; then
+          echo "HAS LIB DIFF"
           HAS_LIB_DIFF="true"
         fi
 
