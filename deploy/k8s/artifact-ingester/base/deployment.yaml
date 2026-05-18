@@ -26,7 +26,7 @@ spec:
               value: rs0
             - name: MONGO_PORT
               value: "27017"
-            - name: MONGO_NAME
+            - name: MONGO_DBNAME
               value: mlhub
             - name: MONGO_USERNAME
               valueFrom:

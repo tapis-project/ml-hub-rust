@@ -67,7 +67,7 @@ pub async fn run_server() -> std::io::Result<()> {
         .map_err(|err| { error!("{}", err.to_string()) })
         .expect("Site configuration repository to be intialized");
 
-    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+    let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
 
     let mongo_client = initialize_client(ClientParams{
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
@@ -103,7 +103,7 @@ pub async fn run_server() -> std::io::Result<()> {
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
-        db_name: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        db_name: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
         channel: Arc::new(channel),
         client: mongo_client.clone()
     };

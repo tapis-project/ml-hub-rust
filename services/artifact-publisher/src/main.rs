@@ -333,13 +333,13 @@ async fn main() -> () {
     env_logger::init();
     
     // Database connection
-    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+    let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
     let client = initialize_client(ClientParams{
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
-        db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        db: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
         replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await

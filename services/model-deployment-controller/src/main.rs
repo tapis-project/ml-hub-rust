@@ -273,7 +273,7 @@ async fn main() -> () {
     // Unique consumer tag. Make this unique per worker. 
     let consumer_tag = Uuid::now_v7();
 
-    let db_name = env::var("MONGO_NAME").expect("MONGO_NAME env var not set");
+    let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
 
     // Database connection
     let client = initialize_client(ClientParams{
@@ -281,7 +281,7 @@ async fn main() -> () {
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
-        db: env::var("MONGO_NAME").expect("MONGO_NAME env var not set"),
+        db: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
         replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
