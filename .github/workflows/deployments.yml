@@ -11,6 +11,28 @@ on:
         type: string
 
 jobs:
+  build-push-api-image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Docker Login
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+    - uses: actions/checkout@v4
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    # # Remove the docker ignore file so that the gh actions Dockerfile will 
+    # # permit the target/release/<service> binary to be copied into the image
+    # - name: Delete docker ignore files 
+    #   run: rm .dockerignore services/deployments/.dockerignore
+    # - name: Build Image
+    #   run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" .
+    - name: Build Image
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
+    - name: Push Image
+      run: docker push --all-tags ${{ inputs.image_name }}
+      
   compile-run-openapi-binary:
     runs-on: ubuntu-latest
     steps:
@@ -53,25 +75,3 @@ jobs:
       - name: NPM install 
         working-directory: ./sdks/typescript-sdk
         run: npm install
-    
-  build-push-api-image:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Docker Login
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
-        password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
-    - uses: actions/checkout@v4
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-    # # Remove the docker ignore file so that the gh actions Dockerfile will 
-    # # permit the target/release/<service> binary to be copied into the image
-    # - name: Delete docker ignore files 
-    #   run: rm .dockerignore services/deployments/.dockerignore
-    # - name: Build Image
-    #   run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" .
-    - name: Build Image
-      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/deployments/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=deployments --build-arg SERVICE_DIR="services/deployments" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
-    - name: Push Image
-      run: docker push --all-tags ${{ inputs.image_name }}
