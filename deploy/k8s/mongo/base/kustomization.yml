@@ -1,0 +1,9 @@
+resources:
+  - headless-service.yml
+  - stateful-set.yml
+
+configMapGenerator:
+- name: mlhub-cm-mongo-init-script
+  files:
+  - init-db.sh
+

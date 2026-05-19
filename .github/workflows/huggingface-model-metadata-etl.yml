@@ -1,0 +1,50 @@
+name: HugginFace Model Metadata ETL
+
+on:
+  workflow_call:
+    inputs:
+      extract_stage_image_name:
+        required: true
+        type: string
+      extract_stage_image_tag:
+        required: true
+        type: string
+      transform_load_stage_image_name:
+        required: true
+        type: string
+      transform_load_stage_image_tag:
+        required: true
+        type: string
+
+jobs:    
+  build-push-extract-image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Docker Login
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+    - uses: actions/checkout@v4
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Build Image
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/hf-model-etl/Dockerfile.python -t ${{ inputs.extract_stage_image_name }}:${{ inputs.extract_stage_image_tag }} --build-arg SERVICE_DIR="services/hf-model-etl" .
+    - name: Push Image
+      run: docker push --all-tags ${{ inputs.extract_stage_image_name }}
+
+  build-push-transform-load-image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Docker Login
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+    - uses: actions/checkout@v4
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Build Image
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/hf-model-etl/Dockerfile.rust.gh-actions -t ${{ inputs.transform_load_stage_image_name }}:${{ inputs.transform_load_stage_image_tag }} --build-arg SERVICE_NAME=hf-model-etl --build-arg SERVICE_DIR="services/hf-model-etl" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
+    - name: Push Image
+      run: docker push --all-tags ${{ inputs.transform_load_stage_image_name }}

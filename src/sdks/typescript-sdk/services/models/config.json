@@ -1,7 +1,0 @@
-{
-	"npmName": "@mlhub/models-ts-sdk",
-	"npmVersion": "0.0.2",
-	"snapshot" : false,
-	"supportsES6": false,
-	"modelPropertyNaming": "original"
-}

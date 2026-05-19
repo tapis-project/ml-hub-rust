@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mlhub-artifact-ingester-deployment
+  name: mlhub-artifact-ingester-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-artifact-ingester-deployment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlhub-artifact-ingester-deployment
+    spec:
+      containers:
+        - env:
+            - name: RUST_LOG
+              value: debug
+            - name: MONGO_HOST
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local
+            - name: MONGO_REPLICA_SET
+              value: rs0
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_DBNAME
+              value: mlhub
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: password
+            - name: SHARED_DATA
+              value: /srv/mlhub
+            - name: RABBIT_HOST
+              value: mlhub-rabbit-service
+            - name: RABBIT_PORT
+              value: "5672"
+            - name: RABBIT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-rabbit-secrets 
+                  key: username
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-rabbit-secrets 
+                  key: password
+          image: tapis/mlhub-artifact-ingester:local
+          imagePullPolicy: Never
+          name: artifact-ingester
+          resources: {}
+          tty: true
+          volumeMounts:
+              - name: nfs-server-mount
+                mountPath: /srv/mlhub/
+      volumes:
+        - name: nfs-server-mount
+          nfs:
+            server: '**-NFS_SERVER_COMPONENT_IP-**'
+            path: /
+      restartPolicy: Always

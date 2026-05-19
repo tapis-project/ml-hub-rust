@@ -1,0 +1,21 @@
+resources:
+  - ../../base
+  - ../../../site-configs/overlays/tapisprod
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-deployments-api-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-deployments-api-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: deployments-api
+                image: tapis/mlhub-deployments-api:26Q1
+                imagePullPolicy: Always
+                resources: {}

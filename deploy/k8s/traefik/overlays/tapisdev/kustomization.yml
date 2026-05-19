@@ -1,0 +1,61 @@
+resources:
+  - ../../base
+  - service.yml
+
+configMapGenerator:
+- name: mlhub-traefik-dynamic-config
+  behavior: replace
+  files:
+  - dynamic-config.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-traefik-deployment
+    patch: |-
+      kind: Deployment
+      apiVersion: apps/v1
+      metadata:
+        name: mlhub-traefik-deployment
+        labels:
+          app: mlhub-traefik-deployment
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: mlhub-traefik-deployment
+        template:
+          metadata:
+            labels:
+              app: mlhub-traefik-deployment
+          spec:
+            containers:
+              - name: mlhub-traefik
+                image: traefik:v3.2
+                args:
+                  # dashboard can have a different route, api is always on /api. dashboard references /api always.
+                  # because of nginx we can't use dashboard due to this. You can always activate, route, and ssh
+                  # tunnel if you want access.
+                  - --api=false
+                  - --api.insecure=false
+                  - --api.dashboard=false
+                  - --accesslog=true
+                  - --tracing=false
+                  - --log.level=TRACE # TRACE|DEBUG|INFO
+                  #- --providers.kubernetesingress
+                  - --providers.file=true
+                  - --providers.file.filename=/etc/traefik/dynamic-config.yaml
+                  # Default Static bits
+                  - --entrypoints.web.address=:80
+                  - --entrypoints.web.asdefault=true
+                ports:
+                  - name: web
+                    containerPort: 80
+                volumeMounts:
+                - name: dynamic-config
+                  mountPath: /etc/traefik/dynamic-config.yml
+                  subPath: dynamic-config.yml
+            volumes:
+            - name: dynamic-config
+              configMap:
+                name: mlhub-traefik-dynamic-config

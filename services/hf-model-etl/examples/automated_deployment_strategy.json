@@ -1,0 +1,86 @@
+{
+    "client": "TapisClient",
+    "description": "A set of strategies for deploying models to HPC systems and Tapis Pods",
+    "strategies": [
+        {
+            "name": "Stampede3",
+            "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
+            "rule_sets": [
+                {
+                    "name": "IsNotDeepseek",
+                    "rules": [
+                        {"field_path": "author", "operator": "Neq", "value": "_deepseek"}
+                    ]
+                }
+            ],
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "Frontera",
+            "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "LoneStar6",
+            "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "Vista",
+            "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "use_parameter_set": "Jobs"
+        },
+        {
+            "name": "BYOSystem",
+            "description": "Deploys a model to a user defined system",
+            "use_rule_sets": ["TransformerCompatibleOnHPC"],
+            "parameters": [
+                {"name": "allocation", "in": "request_body"},
+                {"name": "system_id", "in": "request_body"},
+                {"name": "X-Tapis-Token", "in": "headers"}
+            ]
+        },
+        {
+            "name": "Pods",
+            "description": "Deploys a model as an HTTP server in Pods",
+            "use_rule_sets": ["TransformerCompatibleOnPods"],
+            "use_parameter_set": "Pods"
+        }
+    ],
+    "rule_sets": [
+        {
+            "name": "FlexServerDeployerCompatibleOnHPC",
+            "rules": [
+                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration", "TextClassification", "ImageToText"]}
+            ]
+        },
+        {
+            "name": "FlexServerDeployerCompatibleOnPods",
+            "rules": [
+                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextClassification", "ImageToText"]},
+                {"field_path": ["inference_hardware", "memory_gb"], "operator": "lte", "value": "32"}
+            ]
+        }
+    ],
+    "parameter_sets": [
+        {
+            "name": "Jobs",
+            "parameters": [
+                {"name": "allocation", "in": "request_body"},
+                {"name": "X-Tapis-Token", "in": "headers"}
+            ]
+        },
+        {
+            "name": "Pods",
+            "parameters": [
+                {"name": "X-Tapis-Token", "in": "headers"}
+            ]
+        }
+    ]
+}

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "mlhub:"
+
+here=$(pwd)
+
+overlay=$1
+
+cd "$here/traefik"
+./burnup.sh "$overlay"
+
+cd "$here/nfs"
+./burnup.sh "$overlay"
+
+echo "Waiting 5 seconds for nfs server to start"
+sleep 5
+
+cd "$here/mongo"
+./burnup.sh "$overlay"
+
+cd "$here/rabbit"
+./burnup.sh "$overlay"
+
+echo "Waiting 5 seconds to let rabbit warm up"
+
+cd "$here/artifact-ingester"
+./burnup.sh "$overlay"
+
+cd "$here/artifact-publisher"
+./burnup.sh "$overlay"
+
+cd "$here/model-deployment-controller"
+./burnup.sh "$overlay"
+
+echo "Waiting 5 seconds for async workers to start and connect to rabbit"
+sleep 5
+
+echo "Starting Migrations"
+
+cd "$here/migrations/models-migrator"
+./burnup.sh "$overlay"
+
+cd "$here/migrations/principals-migrator"
+./burnup.sh "$overlay"
+
+cd "$here/migrations/federated-identities-migrator"
+./burnup.sh "$overlay"
+
+echo "All migrations started"
+
+echo "Starting APIs"
+
+cd "$here/models"
+./burnup.sh "$overlay"
+
+cd "$here/deployments"
+./burnup.sh "$overlay"
+
+# cd $here/datasets
+# ./burnup.sh
