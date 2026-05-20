@@ -221,7 +221,7 @@ impl ArtifactService {
         let find_metadata = || self.dataset_metadata_repo.find_by_artifact_id(&artifact_id);
 
         // Find the metadata with retries
-        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY).await
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None).await
             .map_err(|err| ArtifactServiceError::RepoError(err))?;
 
         // Check that the artifact exists

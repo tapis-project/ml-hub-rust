@@ -42,7 +42,7 @@ pub struct DatasetIO {
 pub struct DatasetMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>,
-    
+
     // Unique ID of the artifact that this metadata is related to
     pub artifact_id: Option<Uuid>,
 
