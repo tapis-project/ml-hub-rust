@@ -81,7 +81,7 @@ export interface DiscoveryCriterion {
      * @type {HardwareRequirements}
      * @memberof DiscoveryCriterion
      */
-    inference_hardware?: HardwareRequirements | null;
+    inference_hardware?: HardwareRequirements;
     /**
      * 
      * @type {number}
@@ -232,7 +232,7 @@ export interface DiscoveryCriterion {
      * @type {HardwareRequirements}
      * @memberof DiscoveryCriterion
      */
-    training_hardware?: HardwareRequirements | null;
+    training_hardware?: HardwareRequirements;
     /**
      * Training performance fields
      * @type {number}

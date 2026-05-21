@@ -2,4 +2,4 @@
 
 here=$(dirname "${BASH_SOURCE[0]}")
 
-docker build -f $here/Dockerfile -t tapis/mlhub-typescript-sdk:latest $here
+docker build -f $here/Dockerfile -t tapis/mlhub-typescript-sdk:local $here

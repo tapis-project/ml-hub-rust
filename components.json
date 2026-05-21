@@ -38,7 +38,7 @@
       "rootDir": "services/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "services/models/spec/openapi/v1.yml",
+      "specPath": "services/models/spec/v1",
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -61,7 +61,7 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -c models-api -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "get-spec-path": "echo {{ self.specPath }}"
+        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin models-openapi | jq > {{ self.specPath }}/openapi.json"
       },
       "dependencies": [
         "traefik",
@@ -164,6 +164,7 @@
     {
       "name": "deployments",
       "rootDir": "services/deployments",
+      "specPath": "services/deployments/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -187,7 +188,8 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin deployments-openapi | jq > {{ self.specPath }}/openapi.json"
       },
       "dependencies": [
         "traefik",
@@ -518,24 +520,15 @@
       "name": "typescript-sdk",
       "url": "https://www.npmjs.com/package/@mlhub/ts-sdk",
       "lifecycle": "development",
-      "rootDir": "services/sdks/typescript-sdk",
+      "rootDir": "sdks/typescript-sdk",
       "labels": ["sdk"],
       "commands": {
         "code": "code {{ sdks-dir }}/{{ self.name }}",
         "build": "./{{ self.rootDir }}/build",
-        "exec": "./{{ self.rootDir }}/exec `pwd`/services/assets",
+        "generate-all": "./{{ self.rootDir }}/exec-generate-all {{ project-root }}",
+        "exec": "./{{ self.rootDir }}/exec {{ project-root }}",
         "publish-models": "npm publish {{ self.rootDir }}/gen/models --access public",
         "publish-sdk": "npm publish {{ self.rootDir }}/ts-sdk --access public"
-      }
-    },
-    {
-      "name": "oas-downgrader",
-      "lifecycle": "experimental",
-      "rootDir": "services/oas-downgrader",
-      "labels": ["devtool"],
-      "commands": {
-        "code": "code {{ self.name }}",
-        "downgrade-models": "./{{ self.rootDir }}/src/downgrade $(./manage get-spec-path models) services/assets/apis/models/spec.yml"
       }
     },
     {

@@ -21,11 +21,12 @@
  * @enum {string}
  */
 export enum Platform {
-    Huggingface = 'huggingface',
+    HuggingFace = 'hugging-face',
     Github = 'github',
     Git = 'git',
     Patra = 'patra',
-    TaccTapis = 'tacc-tapis',
+    TapisPods = 'tapis-pods',
+    TapisJobs = 'tapis-jobs',
     S3 = 's3'
 }
 

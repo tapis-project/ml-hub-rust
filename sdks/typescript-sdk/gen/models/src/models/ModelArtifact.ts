@@ -59,7 +59,7 @@ export interface ModelArtifact {
      * @type {ModelMetadata}
      * @memberof ModelArtifact
      */
-    metadata?: ModelMetadata | null;
+    metadata?: ModelMetadata;
 }
 
 export function ModelArtifactFromJSON(json: any): ModelArtifact {

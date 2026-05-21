@@ -30,6 +30,12 @@ import {
     GetModelResponse,
     GetModelResponseFromJSON,
     GetModelResponseToJSON,
+    IngestArtifactRequest,
+    IngestArtifactRequestFromJSON,
+    IngestArtifactRequestToJSON,
+    IngestModelArtifactResponse,
+    IngestModelArtifactResponseFromJSON,
+    IngestModelArtifactResponseToJSON,
     ListModelsResponse,
     ListModelsResponseFromJSON,
     ListModelsResponseToJSON,
@@ -58,6 +64,12 @@ export interface DiscoverModelsRequest {
 export interface GetModelRequest {
     author: string;
     name: string;
+}
+
+export interface IngestCanonicalModelRequest {
+    author: string;
+    name: string;
+    ingestArtifactRequest: IngestArtifactRequest;
 }
 
 export interface ListModelsRequest {
@@ -182,6 +194,47 @@ export class ModelsApi extends runtime.BaseAPI {
      */
     async getModel(requestParameters: GetModelRequest, initOverrides?: RequestInit): Promise<GetModelResponse> {
         const response = await this.getModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Ingest canonical model artifact
+     */
+    async ingestCanonicalModelRaw(requestParameters: IngestCanonicalModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<IngestModelArtifactResponse>> {
+        if (requestParameters.author === null || requestParameters.author === undefined) {
+            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling ingestCanonicalModel.');
+        }
+
+        if (requestParameters.name === null || requestParameters.name === undefined) {
+            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling ingestCanonicalModel.');
+        }
+
+        if (requestParameters.ingestArtifactRequest === null || requestParameters.ingestArtifactRequest === undefined) {
+            throw new runtime.RequiredError('ingestArtifactRequest','Required parameter requestParameters.ingestArtifactRequest was null or undefined when calling ingestCanonicalModel.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/models-api/models/{author}/{name}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))).replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: IngestArtifactRequestToJSON(requestParameters.ingestArtifactRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => IngestModelArtifactResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Ingest canonical model artifact
+     */
+    async ingestCanonicalModel(requestParameters: IngestCanonicalModelRequest, initOverrides?: RequestInit): Promise<IngestModelArtifactResponse> {
+        const response = await this.ingestCanonicalModelRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -24,7 +24,8 @@ use shared::application::inputs::deployment::DeployWithStrategyInput;
     description="Deploy a model to a target platform",
     request_body=DeployModelWithStrategyBody,
     params(
-        ("platform" = Platform, Path, description = "The target platform for the Model Deployment")
+        ("platform" = Platform, Path, description = "The target platform for the Model Deployment"),
+        ("strategy_name" = String, Path, description = "The name of the deployment strategy")
     ),
     responses(
         (status=200, description="Model deployment", body=contracts::responses::ModelDeploymentResponse),

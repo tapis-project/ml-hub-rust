@@ -60,10 +60,14 @@ jobs:
       - name: Echo openapi spec test
         run: cat deployments-openapi.json
 
-  generate-mlhub-deployments-sdk:
+  generate-publish-sdk:
     needs:
       - run-openapi-downgrader
     runs-on: ubuntu-latest
+    # This permission block is mandatory for Trusted Publishing
+    permissions:
+      contents: read
+      id-token: write
     container:
       image: node:20
     steps:

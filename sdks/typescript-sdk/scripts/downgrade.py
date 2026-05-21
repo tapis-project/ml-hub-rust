@@ -39,8 +39,12 @@ if __name__ == "__main__":
     spec = ""
     with open(source, mode="r") as file:
         spec = file.read()
+
+        print("Spec len", len(spec))
     
     modified_spec = downgrade(spec)
+
+    print("modified Spec len", len(modified_spec))
 
     destination_dir = "/".join(destination.split("/")[:-1])
 

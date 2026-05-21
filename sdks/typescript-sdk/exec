@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
-assetsPath=$1
-if [[ -z $assetsPath ]]; then
-    echo ❌ Must provide the path to the assets directory
+projectRoot=$1
+if [[ -z $projectRoot ]]; then
+    echo ❌ Must provide the path to the project root
     exit 1
 fi
 
-here=$(dirname "${BASH_SOURCE[0]}")
-
-docker run -it --mount type=bind,source="$here",target=/src --mount type=bind,source="$assetsPath",target=/src/assets mlhub/typescript-sdk:latest
+docker run \
+    -it \
+    --rm \
+    --mount type=bind,source="$projectRoot/sdks/typescript-sdk/gen,target=/src/sdks/typescript-sdk/gen" \
+    --mount type=bind,source="$projectRoot/services/models/spec/v1/openapi.json",target=/src/services/models/spec/v1/openapi.json \
+    --mount type=bind,source="$projectRoot/services/deployments/spec/v1/openapi.json",target=/src/services/deployments/spec/v1/openapi.json \
+    tapis/mlhub-typescript-sdk:local

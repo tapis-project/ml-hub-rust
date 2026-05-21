@@ -131,7 +131,7 @@ export class PlatformsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/models-api/platforms/{platform}/models/{model_id}`.replace(`{${"platform"}}`, encodeURIComponent(String(requestParameters.platform))).replace(`{${"model_id"}}`, String(requestParameters.modelId)),
+            path: `/models-api/platforms/{platform}/models/{model_id}`.replace(`{${"platform"}}`, encodeURIComponent(String(requestParameters.platform))).replace(`{${"model_id"}}`, encodeURIComponent(String(requestParameters.modelId))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

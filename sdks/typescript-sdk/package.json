@@ -7,7 +7,7 @@
     "example": "example"
   },
   "dependencies": {
-    "@openapitools/openapi-generator-cli": "^2.5.2",
+    "@apiture/openapi-down-convert": "0.14.2",
     "argparse": "^2.0.1",
     "js-yaml": "^4.1.0"
   },
