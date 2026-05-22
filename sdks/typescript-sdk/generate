@@ -33,7 +33,8 @@ npx openapi-generator-cli generate \
   --input-spec "/src/sdks/typescript-sdk/services/$1/transformed_spec.yml" \
   --generator-name typescript-fetch \
   --output "/src/sdks/typescript-sdk/gen/$1" \
-  --config "/src/sdks/typescript-sdk/services/$1/config.json"
+  --config "/src/sdks/typescript-sdk/services/$1/config.json" \
+  -t ./_templates
 
 cd "/src/sdks/typescript-sdk/gen/$1"
 

@@ -13,7 +13,6 @@
   },
   "scripts": {
     "generate": "./generate_all.sh",
-    "generateone": "./generate.sh",
     "build-services": "./build-services.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -55,25 +55,25 @@ export interface ModelDeployment {
      * @type {string}
      * @memberof ModelDeployment
      */
-    createdAt: string;
+    created_at: string;
     /**
      * 
      * @type {ModelDeploymentInterface}
      * @memberof ModelDeployment
      */
-    deploymentInterface?: ModelDeploymentInterface;
+    deployment_interface?: ModelDeploymentInterface;
     /**
      * 
      * @type {string}
      * @memberof ModelDeployment
      */
-    deploymentStrategy?: string | null;
+    deployment_strategy?: string | null;
     /**
      * 
      * @type {DesiredState}
      * @memberof ModelDeployment
      */
-    desiredState: DesiredState;
+    desired_state: DesiredState;
     /**
      * 
      * @type {string}
@@ -85,25 +85,25 @@ export interface ModelDeployment {
      * @type {string}
      * @memberof ModelDeployment
      */
-    lastDesiredStateChange: string;
+    last_desired_state_change: string;
     /**
      * 
      * @type {string}
      * @memberof ModelDeployment
      */
-    lastMessage?: string | null;
+    last_message?: string | null;
     /**
      * 
      * @type {string}
      * @memberof ModelDeployment
      */
-    lastModified: string;
+    last_modified: string;
     /**
      * 
      * @type {string}
      * @memberof ModelDeployment
      */
-    lastStateChange: string;
+    last_state_change: string;
     /**
      * 
      * @type {{ [key: string]: any; }}
@@ -164,15 +164,15 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'createdAt': json['created_at'],
-        'deploymentInterface': !exists(json, 'deployment_interface') ? undefined : ModelDeploymentInterfaceFromJSON(json['deployment_interface']),
-        'deploymentStrategy': !exists(json, 'deployment_strategy') ? undefined : json['deployment_strategy'],
-        'desiredState': DesiredStateFromJSON(json['desired_state']),
+        'created_at': json['created_at'],
+        'deployment_interface': !exists(json, 'deployment_interface') ? undefined : ModelDeploymentInterfaceFromJSON(json['deployment_interface']),
+        'deployment_strategy': !exists(json, 'deployment_strategy') ? undefined : json['deployment_strategy'],
+        'desired_state': DesiredStateFromJSON(json['desired_state']),
         'id': json['id'],
-        'lastDesiredStateChange': json['last_desired_state_change'],
-        'lastMessage': !exists(json, 'last_message') ? undefined : json['last_message'],
-        'lastModified': json['last_modified'],
-        'lastStateChange': json['last_state_change'],
+        'last_desired_state_change': json['last_desired_state_change'],
+        'last_message': !exists(json, 'last_message') ? undefined : json['last_message'],
+        'last_modified': json['last_modified'],
+        'last_state_change': json['last_state_change'],
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
         'model': ModelReferenceFromJSON(json['model']),
         'owner': json['owner'],
@@ -193,15 +193,15 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
     }
     return {
         
-        'created_at': value.createdAt,
-        'deployment_interface': ModelDeploymentInterfaceToJSON(value.deploymentInterface),
-        'deployment_strategy': value.deploymentStrategy,
-        'desired_state': DesiredStateToJSON(value.desiredState),
+        'created_at': value.created_at,
+        'deployment_interface': ModelDeploymentInterfaceToJSON(value.deployment_interface),
+        'deployment_strategy': value.deployment_strategy,
+        'desired_state': DesiredStateToJSON(value.desired_state),
         'id': value.id,
-        'last_desired_state_change': value.lastDesiredStateChange,
-        'last_message': value.lastMessage,
-        'last_modified': value.lastModified,
-        'last_state_change': value.lastStateChange,
+        'last_desired_state_change': value.last_desired_state_change,
+        'last_message': value.last_message,
+        'last_modified': value.last_modified,
+        'last_state_change': value.last_state_change,
         'metadata': value.metadata,
         'model': ModelReferenceToJSON(value.model),
         'owner': value.owner,

@@ -24,7 +24,7 @@ export interface GpuResource {
      * @type {string}
      * @memberof GpuResource
      */
-    gpuType?: string | null;
+    gpu_type?: string | null;
     /**
      * 
      * @type {number}
@@ -49,7 +49,7 @@ export function GpuResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'gpuType': !exists(json, 'gpu_type') ? undefined : json['gpu_type'],
+        'gpu_type': !exists(json, 'gpu_type') ? undefined : json['gpu_type'],
         'memory': !exists(json, 'memory') ? undefined : json['memory'],
         'vendor': !exists(json, 'vendor') ? undefined : json['vendor'],
     };
@@ -64,7 +64,7 @@ export function GpuResourceToJSON(value?: GpuResource | null): any {
     }
     return {
         
-        'gpu_type': value.gpuType,
+        'gpu_type': value.gpu_type,
         'memory': value.memory,
         'vendor': value.vendor,
     };

@@ -31,7 +31,7 @@ export interface Rule {
      * @type {Array<string>}
      * @memberof Rule
      */
-    fieldPath: Array<string>;
+    field_path: Array<string>;
     /**
      * 
      * @type {Operator}
@@ -56,7 +56,7 @@ export function RuleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Rule
     }
     return {
         
-        'fieldPath': json['field_path'],
+        'field_path': json['field_path'],
         'operator': OperatorFromJSON(json['operator']),
         'value': json['value'],
     };
@@ -71,7 +71,7 @@ export function RuleToJSON(value?: Rule | null): any {
     }
     return {
         
-        'field_path': value.fieldPath,
+        'field_path': value.field_path,
         'operator': OperatorToJSON(value.operator),
         'value': value.value,
     };

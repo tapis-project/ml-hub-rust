@@ -1,7 +1,8 @@
 {
 	"npmName": "@mlhub/models-ts-sdk",
-	"npmVersion": "0.0.8",
+	"npmVersion": "0.1.0",
 	"snapshot" : false,
 	"supportsES6": false,
-	"modelPropertyNaming": "original"
+	"modelPropertyNaming": "original",
+	"typescriptThreePlus": true
 }

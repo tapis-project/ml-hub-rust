@@ -1,7 +1,8 @@
 {
 	"npmName": "@mlhub/deployments-ts-sdk",
-	"npmVersion": "0.0.1",
+	"npmVersion": "0.1.0",
 	"snapshot" : false,
 	"supportsES6": false,
-	"deploymentPropertyNaming": "original"
+	"modelPropertyNaming": "original",
+	"typescriptThreePlus": true
 }

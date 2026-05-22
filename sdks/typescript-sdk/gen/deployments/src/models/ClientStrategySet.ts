@@ -49,7 +49,7 @@ export interface ClientStrategySet {
      * @type {Array<ParameterSet>}
      * @memberof ClientStrategySet
      */
-    parameterSets?: Array<ParameterSet> | null;
+    parameter_sets?: Array<ParameterSet> | null;
     /**
      * 
      * @type {Platform}
@@ -61,7 +61,7 @@ export interface ClientStrategySet {
      * @type {Array<RuleSet>}
      * @memberof ClientStrategySet
      */
-    ruleSets?: Array<RuleSet> | null;
+    rule_sets?: Array<RuleSet> | null;
     /**
      * 
      * @type {Array<Strategy>}
@@ -81,9 +81,9 @@ export function ClientStrategySetFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'parameterSets': !exists(json, 'parameter_sets') ? undefined : (json['parameter_sets'] === null ? null : (json['parameter_sets'] as Array<any>).map(ParameterSetFromJSON)),
+        'parameter_sets': !exists(json, 'parameter_sets') ? undefined : (json['parameter_sets'] === null ? null : (json['parameter_sets'] as Array<any>).map(ParameterSetFromJSON)),
         'platform': PlatformFromJSON(json['platform']),
-        'ruleSets': !exists(json, 'rule_sets') ? undefined : (json['rule_sets'] === null ? null : (json['rule_sets'] as Array<any>).map(RuleSetFromJSON)),
+        'rule_sets': !exists(json, 'rule_sets') ? undefined : (json['rule_sets'] === null ? null : (json['rule_sets'] as Array<any>).map(RuleSetFromJSON)),
         'strategies': ((json['strategies'] as Array<any>).map(StrategyFromJSON)),
     };
 }
@@ -98,9 +98,9 @@ export function ClientStrategySetToJSON(value?: ClientStrategySet | null): any {
     return {
         
         'description': value.description,
-        'parameter_sets': value.parameterSets === undefined ? undefined : (value.parameterSets === null ? null : (value.parameterSets as Array<any>).map(ParameterSetToJSON)),
+        'parameter_sets': value.parameter_sets === undefined ? undefined : (value.parameter_sets === null ? null : (value.parameter_sets as Array<any>).map(ParameterSetToJSON)),
         'platform': PlatformToJSON(value.platform),
-        'rule_sets': value.ruleSets === undefined ? undefined : (value.ruleSets === null ? null : (value.ruleSets as Array<any>).map(RuleSetToJSON)),
+        'rule_sets': value.rule_sets === undefined ? undefined : (value.rule_sets === null ? null : (value.rule_sets as Array<any>).map(RuleSetToJSON)),
         'strategies': ((value.strategies as Array<any>).map(StrategyToJSON)),
     };
 }

@@ -41,7 +41,7 @@ export interface ReplicaGroup {
      * @type {Array<ParallelismStrategy>}
      * @memberof ReplicaGroup
      */
-    parallelismStrategies: Array<ParallelismStrategy>;
+    parallelism_strategies: Array<ParallelismStrategy>;
     /**
      * 
      * @type {ResourceRequirements}
@@ -61,7 +61,7 @@ export function ReplicaGroupFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'count': json['count'],
-        'parallelismStrategies': ((json['parallelism_strategies'] as Array<any>).map(ParallelismStrategyFromJSON)),
+        'parallelism_strategies': ((json['parallelism_strategies'] as Array<any>).map(ParallelismStrategyFromJSON)),
         'resources': ResourceRequirementsFromJSON(json['resources']),
     };
 }
@@ -76,7 +76,7 @@ export function ReplicaGroupToJSON(value?: ReplicaGroup | null): any {
     return {
         
         'count': value.count,
-        'parallelism_strategies': ((value.parallelismStrategies as Array<any>).map(ParallelismStrategyToJSON)),
+        'parallelism_strategies': ((value.parallelism_strategies as Array<any>).map(ParallelismStrategyToJSON)),
         'resources': ResourceRequirementsToJSON(value.resources),
     };
 }

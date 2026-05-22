@@ -47,13 +47,13 @@ export interface Strategy {
      * @type {ParameterSet}
      * @memberof Strategy
      */
-    parameterSet?: ParameterSet;
+    parameter_set?: ParameterSet;
     /**
      * 
      * @type {Array<RuleSet>}
      * @memberof Strategy
      */
-    ruleSets: Array<RuleSet>;
+    rule_sets: Array<RuleSet>;
 }
 
 export function StrategyFromJSON(json: any): Strategy {
@@ -68,8 +68,8 @@ export function StrategyFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         
         'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
-        'parameterSet': !exists(json, 'parameter_set') ? undefined : ParameterSetFromJSON(json['parameter_set']),
-        'ruleSets': ((json['rule_sets'] as Array<any>).map(RuleSetFromJSON)),
+        'parameter_set': !exists(json, 'parameter_set') ? undefined : ParameterSetFromJSON(json['parameter_set']),
+        'rule_sets': ((json['rule_sets'] as Array<any>).map(RuleSetFromJSON)),
     };
 }
 
@@ -84,8 +84,8 @@ export function StrategyToJSON(value?: Strategy | null): any {
         
         'description': value.description,
         'name': value.name,
-        'parameter_set': ParameterSetToJSON(value.parameterSet),
-        'rule_sets': ((value.ruleSets as Array<any>).map(RuleSetToJSON)),
+        'parameter_set': ParameterSetToJSON(value.parameter_set),
+        'rule_sets': ((value.rule_sets as Array<any>).map(RuleSetToJSON)),
     };
 }
 

@@ -24,13 +24,13 @@ export interface DeployModelWithStrategyBody {
      * @type {string}
      * @memberof DeployModelWithStrategyBody
      */
-    modelAuthor: string;
+    model_author: string;
     /**
      * 
      * @type {string}
      * @memberof DeployModelWithStrategyBody
      */
-    modelName: string;
+    model_name: string;
     /**
      * 
      * @type {any}
@@ -49,8 +49,8 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'modelAuthor': json['model_author'],
-        'modelName': json['model_name'],
+        'model_author': json['model_author'],
+        'model_name': json['model_name'],
         'params': json['params'],
     };
 }
@@ -64,8 +64,8 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
     }
     return {
         
-        'model_author': value.modelAuthor,
-        'model_name': value.modelName,
+        'model_author': value.model_author,
+        'model_name': value.model_name,
         'params': value.params,
     };
 }

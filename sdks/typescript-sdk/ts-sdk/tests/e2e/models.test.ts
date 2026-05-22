@@ -37,7 +37,7 @@ describe('Models e2e tests', async () => {
 
   it("should fetch a list of models from huggingface", async () => {
     let request: ListModelsByPlatformRequest = {
-      platform: Models.Platform.Huggingface
+      platform: Models.Platform.HuggingFace
     };
 
     try {
@@ -54,7 +54,7 @@ describe('Models e2e tests', async () => {
     expect(externalModel).to.be.not.undefined;
 
     let request: GetModelByPlatformRequest = {
-      platform: Models.Platform.Huggingface,
+      platform: Models.Platform.HuggingFace,
       modelId: (externalModel! as unknown as any)["id"]
     };
 

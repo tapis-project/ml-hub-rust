@@ -31,7 +31,7 @@ export interface ModelDeploymentInterfaceOneOf {
      * @type {RestApi}
      * @memberof ModelDeploymentInterfaceOneOf
      */
-    restApi: RestApi;
+    RestApi: RestApi;
 }
 
 export function ModelDeploymentInterfaceOneOfFromJSON(json: any): ModelDeploymentInterfaceOneOf {
@@ -44,7 +44,7 @@ export function ModelDeploymentInterfaceOneOfFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'restApi': RestApiFromJSON(json['RestApi']),
+        'RestApi': RestApiFromJSON(json['RestApi']),
     };
 }
 
@@ -57,7 +57,7 @@ export function ModelDeploymentInterfaceOneOfToJSON(value?: ModelDeploymentInter
     }
     return {
         
-        'RestApi': RestApiToJSON(value.restApi),
+        'RestApi': RestApiToJSON(value.RestApi),
     };
 }
 
