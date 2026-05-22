@@ -1,0 +1,134 @@
+use crate::infra::persistence::mongo::documents::dataset_metadata;
+use crate::infra::persistence::mongo::documents::task as document_task;
+use crate::application::inputs::dataset_metadata as inputs;
+use crate::errors::Error;
+
+impl TryFrom<inputs::SystemRequirement> for dataset_metadata::SystemRequirement {
+    type Error = Error;
+    
+    fn try_from(value: inputs::SystemRequirement) -> Result<Self, Self::Error> {
+        Ok(Self {
+            name: value.name,
+            version: value.version
+        })
+    }
+}
+
+impl TryFrom<inputs::Accelerator> for dataset_metadata::Accelerator {
+    type Error = Error;
+    
+    fn try_from(value: inputs::Accelerator) -> Result<Self, Self::Error> {
+        let mut system_requirements: Vec<dataset_metadata::SystemRequirement> = Vec::with_capacity(1);
+        for requirement in value.system_requirements {
+            system_requirements.push(dataset_metadata::SystemRequirement::try_from(requirement)?);
+        }
+
+        Ok(Self {
+            accelerator_type: value.accelerator_type,
+            memory_gb: value.memory_gb,
+            cores: value.cores,
+            system_requirements
+        })
+    }
+}
+
+impl TryFrom<inputs::HardwareRequirements> for dataset_metadata::HardwareRequirements {
+    type Error = Error;
+    
+    fn try_from(value: inputs::HardwareRequirements) -> Result<Self, Self::Error> {
+        let mut accelerators: Vec<dataset_metadata::Accelerator> = Vec::with_capacity(1);
+        for accelerator in value.accelerators.unwrap_or(Vec::with_capacity(0)) {
+            accelerators.push(dataset_metadata::Accelerator::try_from(accelerator)?);
+        }
+
+        Ok(Self {
+            cpus: value.cpus,
+            memory_gb: value.memory_gb,
+            disk_gb: value.disk_gb,
+            accelerators: Some(accelerators),
+            architectures: value.architectures
+        })
+    }
+}
+
+impl TryFrom<inputs::DatasetIO> for dataset_metadata::DatasetIO {
+    type Error = Error;
+    
+    fn try_from(value: inputs::DatasetIO) -> Result<Self, Self::Error> {
+        Ok(Self {
+            data_type: value.data_type,
+            shape: value.shape
+        })
+    }
+}
+
+impl TryFrom<&inputs::DatasetMetadata> for dataset_metadata::DatasetMetadata {
+    type Error = Error;
+    
+    fn try_from(value: &inputs::DatasetMetadata) -> Result<Self, Self::Error> {
+        let mut task_types: Vec<document_task::Task> = Vec::new();
+        for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
+            task_types.push(document_task::Task::from(task_type))
+        }
+
+        let mut dataset_inputs = Vec::with_capacity(1);
+        for input in value.dataset_inputs.clone().unwrap_or(Vec::with_capacity(0)) {
+            dataset_inputs.push(dataset_metadata::DatasetIO::try_from(input)?)
+        }
+        
+        let mut dataset_outputs = Vec::with_capacity(1);
+        for output in value.dataset_outputs.clone().unwrap_or(Vec::with_capacity(0)) {
+            dataset_outputs.push(dataset_metadata::DatasetIO::try_from(output)?)
+        }
+
+        let inference_hardware = value.inference_hardware.clone()
+            .map(|hardware| dataset_metadata::HardwareRequirements::try_from(hardware))
+            .transpose()?;
+
+        let training_hardware = value.training_hardware.clone()
+            .map(|hardware| dataset_metadata::HardwareRequirements::try_from(hardware))
+            .transpose()?;
+
+        Ok(Self {
+            _id: None,
+            artifact_id: None,
+            name: value.name.clone(),
+            author: value.author.clone(),
+            libraries: value.libraries.clone(),
+            dataset_type: value.dataset_type.clone(),
+            image: value.image.clone(),
+            keywords: value.keywords.clone(),
+            annotations: value.annotations.clone(),
+            multi_modal: value.multi_modal.clone(),
+            dataset_inputs: Some(dataset_inputs),
+            dataset_outputs: Some(dataset_outputs),
+            task_types: Some(task_types),
+            inference_precision: value.inference_precision.clone(),
+            inference_hardware,
+            inference_software_dependencies: value.inference_software_dependencies.clone(),
+            inference_max_energy_consumption_watts: value.inference_max_energy_consumption_watts,
+            inference_max_latency_ms: value.inference_max_latency_ms,
+            inference_min_throughput: value.inference_min_throughput,
+            inference_max_compute_utilization_percentage: value.inference_max_compute_utilization_percentage,
+            inference_max_memory_usage_mb: value.inference_max_memory_usage_mb,
+            inference_distributed: value.inference_distributed,
+            training_time: value.training_time,
+            training_precision: value.training_precision.clone(),
+            training_hardware,
+            pretraining_datasets: value.pretraining_datasets.clone(),
+            finetuning_datasets: value.finetuning_datasets.clone(),
+            edge_optimized: value.edge_optimized,
+            quantization_aware: value.quantization_aware,
+            supports_quantization: value.supports_quantization,
+            pretrained: value.pretrained,
+            pruned: value.pruned,
+            slimmed: value.slimmed,
+            training_distributed: value.training_distributed,
+            training_max_energy_consumption_watts: value.training_max_energy_consumption_watts,
+            regulatory: value.regulatory.clone(),
+            license: value.license.clone(),
+            bias_evaluation_score: value.bias_evaluation_score,
+
+        })
+    }
+}
