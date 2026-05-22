@@ -1,6 +1,7 @@
 mod entity_to_response;
 mod output_to_response;
 pub mod models;
+pub mod datasets;
 pub mod deployment;
 pub mod operators;
 pub mod visibility;

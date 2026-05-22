@@ -1,6 +1,8 @@
 use serde_json::Value;
 use utoipa::ToSchema;
-use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{models::ModelArtifact, Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
+use crate::presentation::http::v1::{
+    requests::{models::ModelMetadata, datasets::DatasetMetadata}, 
+    responses::{models::ModelArtifact, Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
 use crate::presentation::http::v1::requests::task::Task;
 use crate::presentation::http::v1::responses::deployment::client_strategy_set::ClientStrategySet;
 use crate::presentation::http::v1::responses::deployment::ModelDeployment;
@@ -109,6 +111,17 @@ pub struct AssociateModelMetadataResponse {
 }
 
 #[derive(ToSchema)]
+pub struct AssociateDatasetMetadataResponse {
+    #[schema(value_type = Object)]
+    pub result: DatasetMetadata,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
 pub struct CreateModelMetadataResponse {
     #[schema(value_type = Object)]
     pub result: ModelMetadata,
@@ -173,8 +186,29 @@ pub struct GetModelByPlatformResponse {
 }
 
 #[derive(ToSchema)]
+pub struct GetDatasetByPlatformResponse {
+    #[schema(value_type = Object)]
+    pub result: Value,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
 pub struct ListModelsByPlatformResponse {
     pub result: Vec<Value>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}
+
+#[derive(ToSchema)]
+pub struct ListDatasetsByPlatformResponse {
+    pub result: Vec<Map<String, Value>>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
