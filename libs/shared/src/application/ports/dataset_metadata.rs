@@ -9,7 +9,7 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait DatasetMetadataRepository: Send + Sync {
     async fn save(&self, input: &CreateDatasetMetadata) -> Result<(), ApplicationError>;
-    async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<DatasetMetadata>, ApplicationError>;
+    // async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<DatasetMetadata>, ApplicationError>;
     async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<DatasetMetadata>, ApplicationError>;
     async fn filter_dataset_metadata_by_criteria(&self, input: &DiscoverDatasetsInput) -> Result<DiscoverDatasetsOutput, ApplicationError>;
     async fn update_artifact_id(&self, input: &UpdateDatasetMetadataArtifactId) -> Result<(), ApplicationError>;

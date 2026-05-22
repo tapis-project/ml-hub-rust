@@ -208,7 +208,7 @@ pub struct ListModelsByPlatformResponse {
 
 #[derive(ToSchema)]
 pub struct ListDatasetsByPlatformResponse {
-    pub result: Vec<Map<String, Value>>,
+    pub result: Vec<Value>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

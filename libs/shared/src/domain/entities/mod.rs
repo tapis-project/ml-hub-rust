@@ -7,7 +7,6 @@ pub mod artifact_publication;
 pub mod model_metadata;
 pub mod dataset_metadata;
 pub mod deployment;
-pub mod inference;
 pub mod task;
 pub mod deployment_strategy;
 pub mod operator;

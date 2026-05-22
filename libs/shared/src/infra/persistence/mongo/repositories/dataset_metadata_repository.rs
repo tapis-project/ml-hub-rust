@@ -33,12 +33,12 @@ impl DatasetMetadataRepository {
 }
 
 #[async_trait]
-impl application::ports::repositories::DatasetMetadataRepository for DatasetMetadataRepository {
+impl application::ports::dataset_metadata::DatasetMetadataRepository for DatasetMetadataRepository {
     async fn save(&self, input: &application::inputs::dataset_metadata::CreateDatasetMetadata) -> Result<(), ApplicationError> {
         let mut document = DatasetMetadata::try_from(&input.metadata)
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateDatasetInput to document::DatasetMetadata: {}", err.to_string())))?;
         
-        let result = self.write_collection.insert_one(&document, None)
+        let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -60,7 +60,7 @@ impl application::ports::repositories::DatasetMetadataRepository for DatasetMeta
         };
 
         self.write_collection
-            .update_one(filter, document, None)
+            .update_one(filter, document)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -72,7 +72,7 @@ impl application::ports::repositories::DatasetMetadataRepository for DatasetMeta
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
@@ -106,7 +106,7 @@ impl application::ports::repositories::DatasetMetadataRepository for DatasetMeta
 
         println!("{}", filter);
 
-        let mut cursor = self.read_collection.find(filter, None)
+        let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
 
