@@ -58,6 +58,16 @@ From the project's root directory, run the following commands to initalize the p
 
 0. `./manage start models` - Starts the Models API pod
 
+0. Add this entry to your `/etc/hosts` file:
+    
+    `127.0.0.1       dev.local.tapis.io`
+    
+    Then run one of the following OS-specific commands for the changes to take effect.
+
+    A. **MAC:** `sudo killall -HUP mDNSResponder`
+    
+    B. **Linux:** ...
+
 Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
 `./manage expose traefik`
