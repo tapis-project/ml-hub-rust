@@ -58,5 +58,8 @@ cd "$here/models"
 cd "$here/deployments"
 ./burnup.sh "$overlay"
 
+cd "$here/model-metadata-etl-pipelines/hf-model-etl"
+./run.sh "$overlay"
+
 # cd $here/datasets
 # ./burnup.sh

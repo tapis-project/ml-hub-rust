@@ -72,7 +72,7 @@ async fn main() {
 
     // Fetch the huggingface model metadata conversion client from the client provider
     let huggingface_client = ClientProvider
-        ::provide_model_metadata_conversion_client("huggingface")
+        ::provide_model_metadata_conversion_client("hugging-face")
         .expect("HuggingfaceClient provided");
 
     let mut entries_processed = 0;

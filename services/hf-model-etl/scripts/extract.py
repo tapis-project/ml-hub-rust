@@ -47,8 +47,8 @@ def save_jsonl(records, shard_idx, compress=False):
     return path
 
 i = 0
-for info in api.list_models(full=True, cardData=True, fetch_config=True, limit=None, sort='likes', direction=-1):
-    if i >= MAX_RECORDS:
+for info in api.list_models(full=True, cardData=True, fetch_config=True, limit=None, sort='likes'):
+    if MAX_RECORDS != -1 and i >= MAX_RECORDS:
         break
 
     rec = dataclasses.asdict(info)

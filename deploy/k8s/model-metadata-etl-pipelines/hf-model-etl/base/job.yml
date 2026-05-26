@@ -17,9 +17,12 @@ spec:
             - name: INBOX
               value: /srv/mlhub/hf-model-etl/inbox
             - name: HF_TOKEN
-              value: '{{ HF_TOKEN }}'
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-huggingface-secrets 
+                  key: token
             - name: MAX_RECORDS
-              value: '10000'
+              value: '5000'
           image: mlhub/hf-model-etl-extract:local
           command: ["sh", "-c", "python3 src/extract.py"]
           volumeMounts:
@@ -43,7 +46,7 @@ spec:
             - name: MONGO_REPLICA_SET
               value: rs0
             - name: MAX_PROCESSABLE_ENTRIES
-              value: "10000"
+              value: "5000"
             - name: INBOX
               value: /srv/mlhub/hf-model-etl/inbox
           image: mlhub/hf-model-etl-transform-load:local
