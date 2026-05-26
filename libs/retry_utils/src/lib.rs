@@ -49,28 +49,23 @@ fn calculate_delay(base_delay: &u64, attempt: &u16, policy: &RetryPolicy) -> u64
         RetryPolicy::ExponentialBackoff(backoff) => {
             let base = backoff.base.unwrap_or(2) as u64;
             if let Some(jitter) = &backoff.jitter {
-                match jitter {
+                return match jitter {
                     Jitter::Full => {
-                        let max = (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone());
+                        let exp = base.pow(*attempt as u32);
+                        let max = base_delay
+                            .saturating_mul(exp)
+                            .min(backoff.max_delay);
                         rand::rng().random_range(0..max)
                     }
                 }
-            } else {
-                (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone())
             }
+            
+            return (base_delay * base.pow(*attempt as u32)).min(backoff.max_delay.clone())
         },
-        RetryPolicy::FixedBackoff(_) => {
-            base_delay * 1
-        },
-        RetryPolicy::LinearBackoff(_) => {
-            base_delay * (attempt.clone() as u64 + 1)
-        },
-        RetryPolicy::NoBackoff(_) => {
-            0
-        }
+        RetryPolicy::FixedBackoff(_) => base_delay * 1,
+        RetryPolicy::LinearBackoff(_) => base_delay * (attempt.clone() as u64 + 1),
+        RetryPolicy::NoBackoff(_) => 0,
     }
-    
-    
 }
 
 pub enum RetryStrategyAction {

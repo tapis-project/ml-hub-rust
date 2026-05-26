@@ -115,10 +115,10 @@ mod retries_test {
                     let delay = now - timestamp.get();
                     timestamp.set(now);
                     match attempts.get() {
-                        0 => assert_eq!(delay.as_millis(), 0),
-                        1 => assert!(delay.as_millis() > 100),
-                        2 => assert!(delay.as_millis() > 800),
-                        3 => assert!(delay.as_millis() > 1000 && delay.as_millis() < 6400),
+                        0 => assert!(delay.as_millis() == 0),
+                        1 => assert!(delay.as_millis() >= 100),
+                        2 => assert!(delay.as_millis() >= 800),
+                        3 => assert!(delay.as_millis() >= 1000 && delay.as_millis() < 1500),
                         _ => {}
                     }
                     attempts.set(attempts.get() + 1);
