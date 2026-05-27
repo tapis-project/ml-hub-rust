@@ -8,7 +8,7 @@ use crate::presentation::http::v1::requests::{
 };
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::model_metadata_service_factory;
-use crate::application::model_metadata_inputs::CreateModelMetadata as CreateModelMetadataInput;
+use crate::application::model_metadata_inputs::UpsertModelMetadata as UpsertModelMetadataInput;
 use actix_web::{
     post,
     web, 
@@ -44,7 +44,7 @@ async fn create_model_metadata(
         }
     };
 
-    let input = match CreateModelMetadataInput::try_from(dto) {
+    let input = match UpsertModelMetadataInput::try_from(dto) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };
@@ -54,7 +54,7 @@ async fn create_model_metadata(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    match model_metadata_service.create_model_metadata(input).await {
+    match model_metadata_service.register_model_metadata(input).await {
         Ok(_) => (),
         Err(err) => return build_error_response(500, err.to_string())
     };

@@ -5,7 +5,7 @@ use std::env;
 use serde_json::Value;
 use hf_model_etl::database::{initialize_client, ClientParams};
 use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
-use shared::application::inputs::model_metadata::CreateModelMetadata;
+use shared::application::inputs::model_metadata::UpsertModelMetadata;
 use client_provider::ClientProvider;
 use clients::ClientError;
 use std::sync::Arc;
@@ -108,7 +108,7 @@ async fn main() {
                                 }
                             }
                         };
-                        match artifact_service.create_model_metadata(CreateModelMetadata { metadata }).await {
+                        match artifact_service.register_model_metadata(UpsertModelMetadata { metadata }).await {
                             Ok(_) => (),
                             Err(err) => {
                                 eprintln!("Error saving metadata to the database: {}", err.to_string());

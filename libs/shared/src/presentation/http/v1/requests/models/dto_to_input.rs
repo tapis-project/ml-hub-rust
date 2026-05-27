@@ -65,7 +65,7 @@ impl TryFrom<requests::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<requests::CreateModelMetadata> for inputs::CreateModelMetadata {
+impl TryFrom<requests::CreateModelMetadata> for inputs::UpsertModelMetadata {
     type Error = Error;
 
     fn try_from(value: requests::CreateModelMetadata) -> Result<Self, Self::Error> {

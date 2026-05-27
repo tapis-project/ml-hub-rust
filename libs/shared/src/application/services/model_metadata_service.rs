@@ -7,7 +7,7 @@ use retry_utils::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
-use crate::application::inputs::model_metadata::{AssociateModelMetadata, CreateModelMetadata, UpdateModelMetadataArtifactId};
+use crate::application::inputs::model_metadata::{AssociateModelMetadata, UpsertModelMetadata, UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::domain::services::{
@@ -99,10 +99,10 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn create_model_metadata(&self, input: CreateModelMetadata) -> Result<(), ModelMetadataServiceError> {
-        let create_metadata = || self.model_metadata_repo.save(&input);
+    pub async fn register_model_metadata(&self, input: UpsertModelMetadata) -> Result<(), ModelMetadataServiceError> {
+        let upsert_metadata = || self.model_metadata_repo.upsert(&input);
 
-        retry_async(create_metadata, &Self::REPO_RETRY_POLICY, None)
+        retry_async(upsert_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;
 
         return Ok(())

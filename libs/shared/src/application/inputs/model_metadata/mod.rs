@@ -127,6 +127,6 @@ pub struct UpdateModelMetadataArtifactId {
 }
 
 #[derive(Debug, Clone)]
-pub struct CreateModelMetadata {
+pub struct UpsertModelMetadata {
     pub metadata: ModelMetadata,
 }
