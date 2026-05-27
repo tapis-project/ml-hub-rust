@@ -42,14 +42,18 @@ impl ModelMetadataRepository {
 #[async_trait]
 impl application::ports::model_metadata::ModelMetadataRepository for ModelMetadataRepository {
     async fn upsert(&self, input: &application::inputs::model_metadata::UpsertModelMetadata) -> Result<(), ApplicationError> {
-        let mut document = ModelMetadata::try_from(&input.metadata)
+        let document = ModelMetadata::try_from(&input.metadata)
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
         
-        let result = self.write_collection.insert_one(&document)
+        let filter = doc! {  
+            "name": &document.name,
+            "author": &document.author,
+        };
+
+        self.write_collection.replace_one(filter, &document)
+            .upsert(true)
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
-
-        document._id = result.inserted_id.as_object_id();
 
         Ok(())
     }
