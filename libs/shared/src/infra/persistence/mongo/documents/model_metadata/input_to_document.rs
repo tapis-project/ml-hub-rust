@@ -127,6 +127,7 @@ impl TryFrom<&inputs::ModelMetadata> for model_metadata::ModelMetadata {
         Ok(Self {
             _id: None,
             artifact_id: None,
+            tenant_id: value.tenant_id.clone(),
             canonical,
             name: value.name.clone(),
             author: value.author.clone(),

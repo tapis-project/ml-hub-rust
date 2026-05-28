@@ -126,6 +126,7 @@ impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
 
         Ok(Self {
             name: value.name,
+            tenant_id: value.tenant_id,
             canonical,
             artifact_id: value.artifact_id.and_then(|id| Some(Uuid::from_bytes(id.bytes()))),
             author: value.author,

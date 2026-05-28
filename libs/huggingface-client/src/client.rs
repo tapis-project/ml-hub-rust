@@ -618,6 +618,8 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             
             return Ok(inputs::model_metadata::ModelMetadata {
                 name: Some(name),
+                author: Some(format!("_{}", hf_model.author)), // NOTE: Will be overwritten by MLHub
+                tenant_id: Some("global".into()), // NOTE: Will be overwritten by MLHub
                 annotations: None,
                 canonical: Some(inputs::model_metadata::Canonical {
                     platform: Platform::HuggingFace,
@@ -632,7 +634,6 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                     private: Some(hf_model.private),
                     sha: Some(hf_model.sha),
                 }),
-                author: Some(format!("_{}", hf_model.author)),
                 model_inputs: None,
                 model_outputs: None,
                 model_type: None,

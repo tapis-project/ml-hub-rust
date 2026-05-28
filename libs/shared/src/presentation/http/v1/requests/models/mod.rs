@@ -130,6 +130,7 @@ pub struct ModelMetadata {
     pub name: Option<String>,
     #[validate(required, length(min=1))]
     pub author: Option<String>,
+    pub tenant_id: Option<String>,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,

@@ -88,6 +88,7 @@ impl TryFrom<entities::ModelMetadata> for requests::ModelMetadata {
         Ok(Self {
             name: value.name,
             author: value.author,
+            tenant_id: value.tenant_id,
             libraries: value.libraries,
             model_type: value.model_type,
             image: value.image,
