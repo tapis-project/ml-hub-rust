@@ -499,7 +499,6 @@ impl PublishModelClient for HuggingFaceClient {
                                     .unwrap_or(format!("`git push origin {}` operation failed. Additionally, stderr from the git rev-parse process could not be decoded", &branch_name)),
                             scope: ClientErrorScope::Client }
                     )
-                    
                 }
             },
             None => {

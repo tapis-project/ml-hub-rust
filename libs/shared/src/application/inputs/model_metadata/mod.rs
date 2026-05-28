@@ -1,5 +1,6 @@
 pub mod inputs_to_entities;
 pub mod input_to_input;
+pub mod entitie_to_input;
 
 use crate::application::inputs::task::Task;
 

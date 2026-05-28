@@ -1,4 +1,5 @@
 pub mod input_to_entity;
+pub mod entity_to_input;
 
 use thiserror::Error;
 use heck::ToPascalCase;

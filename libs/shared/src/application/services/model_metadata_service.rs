@@ -7,13 +7,19 @@ use retry_utils::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
-use crate::application::inputs::model_metadata::{AssociateModelMetadata, UpsertModelMetadata, UpdateModelMetadataArtifactId};
+use crate::application::inputs::model_metadata::{
+    ModelMetadata as ModelMetadataRegistrationInput,
+    AssociateModelMetadata,
+    UpsertModelMetadata,
+    UpdateModelMetadataArtifactId,
+};
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
     ModelMetadataServiceError as ModelMetadataDomainServiceError
 };
+use crate::domain::entities;
 use thiserror::Error;
 use once_cell::sync::Lazy;
 use serde_json::{Value, to_value, json};
@@ -100,7 +106,15 @@ impl ModelMetadataService {
     }
 
     pub async fn register_model_metadata(&self, input: UpsertModelMetadata) -> Result<(), ModelMetadataServiceError> {
-        let upsert_metadata = || self.model_metadata_repo.upsert(&input);
+        let metadata_entity = entities::model_metadata::ModelMetadata::try_from(input.metadata.clone())?;
+        
+        let modified_metadata = self.annotate_with_deployment_strategies(&metadata_entity);
+
+        let modified_input = UpsertModelMetadata {
+            metadata:  ModelMetadataRegistrationInput::try_from(modified_metadata)?
+        };
+
+        let upsert_metadata = || self.model_metadata_repo.upsert(&modified_input);
 
         retry_async(upsert_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;

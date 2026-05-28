@@ -94,7 +94,11 @@ async fn main() {
                 Ok(line) => {
                     if let Ok(hf_model) = serde_json::from_str::<Value>(line.as_str()) {
                         let metadata = match huggingface_client.from_platform_metadata(hf_model) {
-                            Ok(m) => m,
+                            Ok(mut m) => {
+                                // Override author and tenant_id values set by the client
+                                m.author = Some("mlhub".into());
+                                m
+                            },
                             Err(err) => {
                                 match err {
                                     ClientError::Unimplemented => {
