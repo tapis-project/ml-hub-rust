@@ -18,6 +18,7 @@ use mongodb::{
 };
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
+use log::debug;
 
 use super::super::database::MODEL_METADATA_COLLECTION;
 use super::super::documents::model_metadata_filter::ModelMetadataFilter;
@@ -118,13 +119,13 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
     ) -> Result<DiscoverModelsOutput, ApplicationError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
-            let mut metadata = ModelMetadataFilter::try_from((&criterion, tenant_ids))
+            let filter = ModelMetadataFilter::try_from((&criterion, tenant_ids))
                 .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
 
-            let serialized_metadata = to_bson(&metadata)
-                .map_err(|err| ApplicationError::ConversionError(format!("Failed to serialize ModelMetadata: {}", err.to_string())))?;
-            
-            filters.push(serialized_metadata);
+            let serialized_filter = to_bson(&filter)
+                .map_err(|err| ApplicationError::ConversionError(format!("Failed to serialize ModelMetadata filter: {}", err.to_string())))?;
+
+            filters.push(serialized_filter);
         }
 
         let mut aggregate: Vec<Document> = vec![];

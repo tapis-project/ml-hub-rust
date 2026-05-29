@@ -67,7 +67,8 @@ pub struct ModelMetadataFilter {
     pub image: Option<String>,
 
     // Tenancy
-    pub tenancy_selector: Option<Document>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tenant_id: Option<Document>,
 
     /// Arbitrary labels
     #[serde(skip_serializing_if = "is_vec_empty")]

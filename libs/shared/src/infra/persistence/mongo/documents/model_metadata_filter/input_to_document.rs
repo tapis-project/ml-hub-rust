@@ -101,7 +101,7 @@ impl TryFrom<(&inputs::SearchCriterion, &Vec<String>)> for model_metadata_filter
         let tenant_ids = value.1;
         let mut tenancy_selector = Some(
             doc! {
-                "tenant_id": { "$in": tenant_ids }
+                "$in": tenant_ids
             }
         );
 
@@ -113,7 +113,7 @@ impl TryFrom<(&inputs::SearchCriterion, &Vec<String>)> for model_metadata_filter
         Ok(Self {
             name: search_criteria.name.clone(),
             author: search_criteria.author.clone(),
-            tenancy_selector,
+            tenant_id: tenancy_selector,
             libraries: search_criteria.libraries.clone(),
             model_type: search_criteria.model_type.clone(),
             version: search_criteria.version.clone(),
