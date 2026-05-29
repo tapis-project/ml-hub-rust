@@ -2,6 +2,8 @@ mod input_to_document;
 
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
+use mongodb::bson::Document;
+
 use crate::infra::persistence::mongo::documents::task::Task;
 use crate::infra::persistence::mongo::utils::is_vec_empty;
 
@@ -63,6 +65,9 @@ pub struct ModelMetadataFilter {
     pub libraries: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<String>,
+
+    // Tenancy
+    pub tenancy_selector: Option<Document>,
 
     /// Arbitrary labels
     #[serde(skip_serializing_if = "is_vec_empty")]

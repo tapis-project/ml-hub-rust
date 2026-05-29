@@ -118,10 +118,8 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
     ) -> Result<DiscoverModelsOutput, ApplicationError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
-            let mut metadata = ModelMetadataFilter::try_from(&criterion)
+            let mut metadata = ModelMetadataFilter::try_from((&criterion, tenant_ids))
                 .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
-
-            // metadata
 
             let serialized_metadata = to_bson(&metadata)
                 .map_err(|err| ApplicationError::ConversionError(format!("Failed to serialize ModelMetadata: {}", err.to_string())))?;
