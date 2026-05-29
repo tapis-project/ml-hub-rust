@@ -1,0 +1,19 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: mlhub-rabbit-pvc
+    patch: |-
+      kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: mlhub-rabbit-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: cinder-csi
+        resources:
+          requests:
+            storage: 10Gi

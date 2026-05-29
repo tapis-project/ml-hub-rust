@@ -58,6 +58,9 @@ cd "$here/models"
 cd "$here/deployments"
 ./burnup.sh "$overlay"
 
+
+echo "Starting ETL Pipelines"
+
 cd "$here/model-metadata-etl-pipelines/hf-model-etl"
 ./run.sh "$overlay"
 

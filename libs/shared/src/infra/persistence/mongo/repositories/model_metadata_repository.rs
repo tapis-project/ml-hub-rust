@@ -111,11 +111,17 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(maybe_metadata)
     }
 
-    async fn filter_model_metadata_by_criteria(&self, input: &application::inputs::discover_models::DiscoverModelsInput) -> Result<DiscoverModelsOutput, ApplicationError> {
+    async fn filter_model_metadata_by_criteria(
+        &self,
+        input: &application::inputs::discover_models::DiscoverModelsInput,
+        tenant_ids: &Vec<String>
+    ) -> Result<DiscoverModelsOutput, ApplicationError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
-            let metadata = ModelMetadataFilter::try_from(&criterion)
+            let mut metadata = ModelMetadataFilter::try_from(&criterion)
                 .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+
+            // metadata
 
             let serialized_metadata = to_bson(&metadata)
                 .map_err(|err| ApplicationError::ConversionError(format!("Failed to serialize ModelMetadata: {}", err.to_string())))?;

@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mlhub-rabbit-deployment
+  labels:
+    kustomizeburndown: "true"
 spec:
   selector:
     matchLabels:

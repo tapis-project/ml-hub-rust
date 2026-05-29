@@ -2,7 +2,7 @@ use crate::presentation::http::v1::actix_web::helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::requests::{DiscoveryCriteria, DisocverModelsQueryParams};
+use crate::presentation::http::v1::requests::{DiscoveryCriteria, DiscoverModelsQueryParams};
 use crate::bootstrap::factories::model_metadata_service_factory;
 use actix_web::{post, web, Responder};
 use shared::application::identity_context::IdentityContext;
@@ -34,7 +34,7 @@ use serde_json::{to_value, Value, Map};
 async fn discover_models(
     data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
-    query: web::Query<DisocverModelsQueryParams>,
+    query: web::Query<DiscoverModelsQueryParams>,
     identity_context: IdentityContext,
 ) -> impl Responder {
     let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
@@ -60,11 +60,11 @@ async fn discover_models(
     let options = inputs::SearchOptions::new(
         query.limit,
         query.cursor.clone(),
-        query.include_count
+        query.include_count,
+        query.include_global_models,
     );
 
     let input = inputs::DiscoverModelsInput {
-        confidence: discovery_criteria.confidence_threshold,
         criteria,
         options
     };

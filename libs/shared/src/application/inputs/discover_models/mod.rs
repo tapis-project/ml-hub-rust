@@ -92,7 +92,6 @@ pub struct SearchCriterion {
 /// themselves will be ORed
 #[derive(Debug, Clone)]
 pub struct DiscoverModelsInput {
-    pub confidence: Option<u8>,
     pub criteria: Vec<SearchCriterion>,
     pub options: SearchOptions
 }
@@ -101,15 +100,22 @@ pub struct DiscoverModelsInput {
 pub struct SearchOptions {
     limit: Option<u16>,
     cursor: Option<String>,
-    include_count: Option<bool>
+    include_count: Option<bool>,
+    include_global_models: Option<bool>,
 }
 
 impl SearchOptions {
     pub const MAX_LIMIT: u16 = 1000;
     pub const DEFAULT_LIMIT: u16 = 100;
     pub const DEFAULT_INCLUDE_COUNT: bool = false;
+    pub const DEFAULT_INCLUDE_GLOBAL_MODELS: bool = true;
 
-    pub fn new(limit: Option<u16>, cursor: Option<String>, include_count: Option<bool>) -> Self {
+    pub fn new(
+        limit: Option<u16>, 
+        cursor: Option<String>, 
+        include_count: Option<bool>, 
+        include_global_models: Option<bool>,
+    ) -> Self {
         let limit_final = if let Some(l) = limit {
             l.min(Self::MAX_LIMIT)
         } else {
@@ -122,10 +128,17 @@ impl SearchOptions {
             Self::DEFAULT_INCLUDE_COUNT
         };
 
+        let include_global_models_final = if let Some(igm) = include_global_models {
+            igm
+        } else {
+            Self::DEFAULT_INCLUDE_GLOBAL_MODELS
+        };
+
         Self {
             limit: Some(limit_final),
             cursor,
-            include_count: Some(include_count_final)
+            include_count: Some(include_count_final),
+            include_global_models: Some(include_global_models_final),
         }
     }
 
@@ -139,5 +152,9 @@ impl SearchOptions {
 
     pub fn include_count(&self) -> Option<bool> {
         return self.include_count.clone()
+    }
+
+    pub fn include_global_models(&self) -> Option<bool> {
+        return self.include_global_models.clone()
     }
 }

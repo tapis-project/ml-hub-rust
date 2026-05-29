@@ -6,3 +6,13 @@ configMapGenerator:
   behavior: replace
   files:
   - init-db.sh
+
+patches:
+  - target:
+      version: v1
+      kind: StatefulSet
+      name: mlhub-mongo-stateful-set
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: "cinder-csi"

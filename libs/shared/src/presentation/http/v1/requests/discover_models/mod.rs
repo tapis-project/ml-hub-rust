@@ -18,14 +18,14 @@ pub struct DiscoveryCriteria {
     // language search
     pub prompt: Option<String>,
     pub criteria: Vec<DiscoveryCriterion>,
-    pub confidence_threshold: Option<u8>,
 }
 
 #[derive(Deserialize, Debug, ToSchema)]
-pub struct DisocverModelsQueryParams {
+pub struct DiscoverModelsQueryParams {
     pub limit: Option<u16>,
     pub cursor: Option<String>,
-    pub include_count: Option<bool>
+    pub include_count: Option<bool>,
+    pub include_global_models: Option<bool>,
 }
 
 pub struct DiscoverModelsRequest {

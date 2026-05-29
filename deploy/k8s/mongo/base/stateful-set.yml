@@ -143,6 +143,9 @@ spec:
             defaultMode: 0400
         - name: mongo-keyfile-writable
           emptyDir: {}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain 
   volumeClaimTemplates:
     - metadata:
         name: mongodb-data

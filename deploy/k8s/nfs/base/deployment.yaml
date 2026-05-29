@@ -14,7 +14,7 @@ spec:
       initContainers:
       - name: create-mount-dirs
         image: busybox
-        command: ["sh", "-c", "mkdir -p /nfsshare/mlhub/models /nfsshare/mlhub/datasets /nfsshare/mlhub/inference /nfsshare/mlhub/training"]
+        command: ["sh", "-c", "mkdir -p /nfsshare/mlhub/models /nfsshare/mlhub/datasets /nfsshare/mlhub/deployments /nfsshare/mlhub/agents"]
       containers:
       - name: nfs-server
         image: itsthenetwork/nfs-server-alpine:latest
