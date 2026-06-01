@@ -144,13 +144,11 @@ spec:
         - name: mongo-keyfile-writable
           emptyDir: {}
   persistentVolumeClaimRetentionPolicy:
-    whenDeleted: Retain
-    whenScaled: Retain 
+    whenDeleted: Delete
+    whenScaled: Delete 
   volumeClaimTemplates:
     - metadata:
         name: mongodb-data
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        resources:
-          requests:
-            storage: 20Gi
+        resources: {}

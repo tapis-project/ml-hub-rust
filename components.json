@@ -600,11 +600,10 @@
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "run-all": "./manage run-models migrations; ./manage run-federated-identities migrations; ./manage run-principals migrations",
-        "run": "kubectl apply -f {{ minik8s-dir }}/migrations/{{ migration }}-migrations-job.yml",
-        "run-models": "kubectl apply -f {{ minik8s-dir }}/migrations/models-migrations-job.yml",
-        "run-federated-identities": "kubectl apply -f {{ minik8s-dir }}/migrations/federated-identities-migrations-job.yml",
-        "run-principals": "kubectl apply -f {{ minik8s-dir }}/migrations/principals-migrations-job.yml"
+        "run-all": "./manage run-models migrations -t overlay {{ overlay }}; ./manage run-federated-identities migrations -t overlay {{ overlay }}; ./manage run-principals migrations -t overlay {{ overlay }}",
+        "run-models": "cd {{ k8s-dir }}/{{ self.name }}/models-migrator && ./burnup.sh {{ overlay }}",
+        "run-federated-identities": "cd {{ k8s-dir }}/{{ self.name }}/federated-identities-migrator && ./burnup.sh {{ overlay }}",
+        "run-principals": "cd {{ k8s-dir }}/{{ self.name }}/principals-migrator && ./burnup.sh {{ overlay }}"
       }
     }
   ]

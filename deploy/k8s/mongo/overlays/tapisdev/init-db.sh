@@ -49,12 +49,12 @@ fi
 
 # Initialize the MLHub user
 mongosh "$CONNECTION_STRING" --eval "
-    var targetDb = db.getSiblingDB('mlhub');
+    var targetDb = db.getSiblingDB('admin');
     if (!targetDb.getUser('${MLHUB_USERNAME}')) {
     targetDb.createUser({
         user: '${MLHUB_USERNAME}',
         pwd: '${MLHUB_PASSWORD}',
-        roles: [{ role: 'readWrite', db: 'mlhub' }]
+        roles: [{ role: 'readWriteAnyDatabase', db: 'admin' }]
     });
     print('User created.');
     } else {
