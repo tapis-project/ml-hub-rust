@@ -16,3 +16,6 @@ patches:
       - op: replace
         path: /spec/volumeClaimTemplates/0/spec/storageClassName
         value: "cinder-csi"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 50Gi

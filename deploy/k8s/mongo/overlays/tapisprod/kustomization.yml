@@ -27,3 +27,6 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/resources/limits/cpu
         value: "8"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 100Gi
