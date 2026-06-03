@@ -62,15 +62,21 @@ spec:
           volumeMounts:
               - name: nfs-server-mount
                 mountPath: /srv/mlhub/
-              - name: tapis-deployment-strategies
-                mountPath: /etc/mlhub/deployment-strategies.d/tapis.json
-                subPath: tapis.json
+              - name: site-config
+                mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
+                subPath: tapis-pods-deployment-strategies.json
+              - name: site-config
+                mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
+                subPath: tapis-jobs-deployment-strategies.json
+              - name: site-config
+                mountPath: /etc/mlhub/site.json
+                subPath: site.json
       volumes:
         - name: nfs-server-mount
           nfs:
             server: '**-NFS_SERVER_COMPONENT_IP-**'
             path: /
-        - name: tapis-deployment-strategies
+        - name: site-config
           configMap:
-            name: tapis-deployment-strategies
+            name: mlhub-site-configs
       restartPolicy: Always

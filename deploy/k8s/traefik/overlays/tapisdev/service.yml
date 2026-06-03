@@ -6,7 +6,7 @@ spec:
   selector:
     app: mlhub-traefik-deployment
   ports:
-    - targetPort: mlhub-traefik
+    - targetPort: web
       port: 80
 
 #--- 

@@ -3,18 +3,18 @@ apiVersion: apps/v1
 metadata:
   name: mlhub-traefik-deployment
   labels:
-    app: mlhub-traefik
+    app: mlhub-traefik-deployment
 spec:
   selector:
     matchLabels:
-      app: mlhub-traefik
+      app: mlhub-traefik-deployment
   template:
     metadata:
       labels:
-        app: mlhub-traefik
+        app: mlhub-traefik-deployment
     spec:
       containers:
-        - name: mlhub-traefik
+        - name: traefik
           image: traefik:v3.2
           ports:
             - name: web

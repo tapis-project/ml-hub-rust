@@ -30,7 +30,7 @@ patches:
               app: mlhub-traefik-deployment
           spec:
             containers:
-              - name: mlhub-traefik
+              - name: traefik
                 image: traefik:v3.2
                 args:
                   # dashboard can have a different route, api is always on /api. dashboard references /api always.
