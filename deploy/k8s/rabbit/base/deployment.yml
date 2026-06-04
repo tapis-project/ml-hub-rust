@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-rabbit-deployment
+  labels:
+    kustomizeburndown: "true"
+spec:
+  selector:
+    matchLabels:
+      app: mlhub-rabbit-deployment
+  template:
+    metadata:
+      labels:
+        app: mlhub-rabbit-deployment
+    spec:
+      hostname: mlhub-rabbit-deployment
+      restartPolicy: Always
+      containers:
+      - name: mlhub-rabbit
+        image: rabbitmq:3.9.11-management
+        ports:
+        - name: rabbitmq
+          containerPort: 5672
+        - name: http
+          containerPort: 15672
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: mlhub-rabbit-secrets 
+              key: username
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: mlhub-rabbit-secrets 
+              key: password
+        volumeMounts:
+        - name: mlhub-rabbit-storage
+          mountPath: "/var/lib/rabbitmq/mnesia"
+        resources: {requests: {cpu: "500m", memory: "500Mi"}, limits: {cpu: "500m", memory: "500Mi"}}
+      volumes:
+      - name: mlhub-rabbit-storage
+        persistentVolumeClaim:
+          claimName: mlhub-rabbit-pvc

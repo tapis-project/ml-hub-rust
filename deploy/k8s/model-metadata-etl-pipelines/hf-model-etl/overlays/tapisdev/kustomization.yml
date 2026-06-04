@@ -1,0 +1,36 @@
+resources:
+  - ../../base
+  - ../../../../site-configs/overlays/tapisdev
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-hf-model-etl
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-hf-model-etl
+      spec:
+        template:
+          metadata:
+            name: mlhub-hf-model-etl
+          spec:
+            restartPolicy: Always
+            initContainers:
+              - name: extract
+                env:
+                  - name: RUST_LOG
+                    value: debug
+                  - name: RUST_BACKTRACE
+                    value: '1'
+                  - name: MAX_RECORDS
+                    value: '5000'
+                image: tapis/mlhub-hf-model-etl-extract:dev
+            containers:
+              - name: hf-model-etl
+                env:
+                  - name: MAX_PROCESSABLE_ENTRIES
+                    value: "5000"
+                image: tapis/mlhub-hf-model-etl-transform-load:dev
+                imagePullPolicy: Always

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -e
+
+rootDir=$1
+nfsServerIp=$2
+hfToken=$3
+nfsServerIpTemplate="{{ NFS_SERVER_COMPONENT_IP }}"
+hfTokenTemplate="{{ HF_TOKEN }}"
+
+# Replace the template with the nfs server ip
+sed -i.bak "s|${nfsServerIpTemplate}|${nfsServerIp}|g" "$rootDir/deploy/local/minikube/job.yml"
+rm "$rootDir/deploy/local/minikube/job.yml.bak"
+
+# Replace the template with the hf_token
+sed -i.bak "s|${hfTokenTemplate}|${hfToken}|g" "$rootDir/deploy/local/minikube/job.yml"
+rm "$rootDir/deploy/local/minikube/job.yml.bak"
+
+# Start the Job
+kubectl apply -f "$rootDir/deploy/local/minikube/job.yml"
+
+# Return the manifest back to the template
+sed -i.bak "s|${nfsServerIp}|${nfsServerIpTemplate}|g" "$rootDir/deploy/local/minikube/job.yml"
+rm "$rootDir/deploy/local/minikube/job.yml.bak"
+
+sed -i.bak "s|${hfToken}|${hfTokenTemplate}|g" "$rootDir/deploy/local/minikube/job.yml"
+rm "$rootDir/deploy/local/minikube/job.yml.bak"

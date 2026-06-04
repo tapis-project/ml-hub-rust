@@ -1,0 +1,156 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mlhub-mongo-stateful-set
+spec:
+  serviceName: "mlhub-mongo-headless-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-mongo-stateful-set
+  template:
+    metadata:
+      labels:
+        app: mlhub-mongo-stateful-set
+    spec:
+      # This init container copies the secret keyfile from the mounted location
+      # into a writable location and modifies the necessary perms for mongodb
+      # to be access and accept it in order to enable replicas.
+      initContainers:
+        - name: copy-keyfile
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /writable-keyfile
+              cp /secret/mongo-keyfile /writable-keyfile/mongo-keyfile
+              chmod 400 /writable-keyfile/mongo-keyfile
+              chown 999:999 /writable-keyfile/mongo-keyfile
+          volumeMounts:
+            - name: mongo-keyfile-secret
+              mountPath: /secret
+              readOnly: true
+            - name: mongo-keyfile-writable
+              mountPath: /writable-keyfile
+      containers:
+        # This container execute the database initialization script. This script
+        # will:
+        # - wait for mongodb to be started on localhost, then 
+        # - initialize the replica sets which were enabled by the init container
+        # - the create the mlhub user in the database
+        - name: mongo-init-sidecar
+          image: rtsp/mongosh:latest
+          command: ["/bin/bash", "/scripts/init-db.sh"]
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "500Mi"
+            limits:
+              cpu: "500m"
+              memory: "500Mi"
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: password
+            - name: MLHUB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: username
+            - name: MLHUB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: password
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+        # This is the primary mongodb container. Here we are starting mongo up using
+        # the default entrypoint, but adding some arguments to use the replica sets
+        # enabled in the init container
+        - name: mongodb
+          image: mongo:8
+          args:
+            - "--replSet"
+            - "rs0"
+            - "--bind_ip_all"
+            - "--keyFile"
+            - "/writable-keyfile/mongo-keyfile"
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-initdb-secrets 
+                  key: password
+            - name: MLHUB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: username
+            - name: MLHUB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: password
+          ports:
+            - containerPort: 27017
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: "/data/db"
+            - name: mongo-keyfile-writable
+              mountPath: /writable-keyfile
+              readOnly: true
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  mongosh "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin" \
+                  --eval "db.hello().isWritablePrimary" | grep true
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+      volumes:
+        - name: init-script
+          configMap:
+            name: mlhub-cm-mongo-init-script
+            defaultMode: 0755
+        - name: mongo-keyfile-secret
+          secret:
+            secretName: mlhub-mongo-keyfile-secret
+            defaultMode: 0400
+        - name: mongo-keyfile-writable
+          emptyDir: {}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 20Gi

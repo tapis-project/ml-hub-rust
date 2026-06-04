@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+get_gen_dir() {
+    echo $1/gen/latest
+}

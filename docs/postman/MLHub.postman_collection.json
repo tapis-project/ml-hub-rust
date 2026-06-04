@@ -12,7 +12,7 @@
 			"name": "Models API",
 			"item": [
 				{
-					"name": "downloadModel",
+					"name": "getModelArtifact",
 					"event": [
 						{
 							"listen": "test",
@@ -27,30 +27,17 @@
 							}
 						}
 					],
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"download_filename\": \"test.zip\",\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [\"tokenizer_config.json\"],\n    \"params\":  {\n        \"branch\": \"main\"\n    }\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
-							"raw": "{{mlh_base_url}}/models-api/artifacts/8b93345c-b1bf-4b58-b09c-dc3e50858f66",
+							"raw": "{{mlh_base_url}}/models-api/artifacts",
 							"host": [
 								"{{mlh_base_url}}"
 							],
 							"path": [
 								"models-api",
-								"artifacts",
-								"8b93345c-b1bf-4b58-b09c-dc3e50858f66"
+								"artifacts"
 							]
 						},
 						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
@@ -58,7 +45,7 @@
 					"response": []
 				},
 				{
-					"name": "getModel",
+					"name": "getModelByPlatform",
 					"event": [
 						{
 							"listen": "test",
@@ -145,6 +132,74 @@
 					]
 				},
 				{
+					"name": "getModelIngestion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/ingestions/5c41afbe-99da-48e7-abc2-dfbad2cf93b5",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"ingestions",
+								"5c41afbe-99da-48e7-abc2-dfbad2cf93b5"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "getModelPublication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/publications/9dbb4959-1aa7-4767-bfd6-20c91240e7b4",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"publications",
+								"9dbb4959-1aa7-4767-bfd6-20c91240e7b4"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
 					"name": "healthCheck",
 					"event": [
 						{
@@ -210,7 +265,40 @@
 					"response": []
 				},
 				{
-					"name": "listModels",
+					"name": "listModelArtifacts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/artifacts",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "listModelsByPlatform",
 					"event": [
 						{
 							"listen": "test",
@@ -296,6 +384,105 @@
 							"body": null
 						}
 					]
+				},
+				{
+					"name": "listModelIngestions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/ingestions",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"ingestions"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "listModelPublications",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/publications",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"publications"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "listModelPublicationsForArtifact",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/publications",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"publications"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
 				},
 				{
 					"name": "listPlatforms",
@@ -437,7 +624,7 @@
 					]
 				},
 				{
-					"name": "ingestModel",
+					"name": "downloadModel",
 					"event": [
 						{
 							"listen": "test",
@@ -465,7 +652,50 @@
 							}
 						},
 						"url": {
-							"raw": "{{mlh_base_url}}/models-api/platforms/github/models/nathandf/coe-332-forking-demo/artifacts",
+							"raw": "{{mlh_base_url}}/models-api/artifacts/ec62e137-dde1-43a4-b443-0213f9d6eeef",
+							"host": [
+								"{{mlh_base_url}}"
+							],
+							"path": [
+								"models-api",
+								"artifacts",
+								"ec62e137-dde1-43a4-b443-0213f9d6eeef"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "ingestModel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"archive\": \"zip\",\n    \"compression\": \"deflated\",\n    \"exclude_files\": [],\n    \"include_files\": [],\n    \"params\":  {\n        \"branch\": \"dev\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{mlh_base_url}}/models-api/platforms/github/models/tapis-project/tapis-workflows",
 							"host": [
 								"{{mlh_base_url}}"
 							],
@@ -474,9 +704,8 @@
 								"platforms",
 								"github",
 								"models",
-								"nathandf",
-								"coe-332-forking-demo",
-								"artifacts"
+								"tapis-project",
+								"tapis-workflows"
 							]
 						},
 						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."

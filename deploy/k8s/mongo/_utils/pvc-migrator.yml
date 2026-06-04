@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-migrator
+spec:
+  restartPolicy: Never
+  containers:
+    - name: migrator
+      image: busybox
+      # 1. Clean /new, 2. Copy all from /old, 3. Remove lock, 4. Fix permissions
+      command: ["sh", "-c", "rm -rf /new/* && cp -a /old/. /new/ && rm -f /new/mongod.lock && chown -R 999:999 /new && echo 'Migration Complete' && sleep 3600"]
+      volumeMounts:
+        - name: old-volume
+          mountPath: /old
+        - name: new-volume
+          mountPath: /new
+  volumes:
+    - name: old-volume
+      persistentVolumeClaim:
+        claimName: mlhub-mongo-pvc
+    - name: new-volume
+      persistentVolumeClaim:
+        claimName: mlhub-mongo-pvc-backup

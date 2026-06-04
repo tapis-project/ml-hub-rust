@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "services/agents",
+    # "services/apis/datasets",
+    "services/deployments",
+    "services/models",
+    "services/artifact-ingester",
+    "services/artifact-publisher",
+    "services/hf-model-etl",
+    "services/models-migrator",
+    "services/principals-migrator",
+    "services/federated-identities-migrator",
+    "services/model-deployment-controller",
+    "sdks/agntcy-sdk",
+    "libs/client-provider",
+    "libs/clients",
+    "libs/platforms",
+    "libs/git-lfs-client",
+    "libs/github-lfs-client",
+    "libs/huggingface-client",
+    "libs/patra-client",
+    "libs/s3-client",
+    "libs/shared",
+    "libs/huggingface-tasks",
+    "libs/tapis-client",
+    "libs/retry_utils",
+]

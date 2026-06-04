@@ -1,0 +1,4 @@
+{{ enum_docstring }}
+pub enum {{ EnumName }} {
+{{ enum_items }}
+}

@@ -1,0 +1,21 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-federated-identities-migrator
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-federated-identities-migrator
+      spec:
+        template:
+          spec:
+            containers:
+              - image: tapis/mlhub-federated-identities-migrator:local
+                imagePullPolicy: Never
+                name: federated-identities-migrator
+                resources: {}
+

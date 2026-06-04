@@ -1,0 +1,1 @@
+pub use shared::infra::persistence::mongo::*;

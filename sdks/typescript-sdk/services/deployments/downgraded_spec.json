@@ -1,0 +1,902 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MLHub Deployments API",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/deployments-api/deployments/{deployment_id}/start": {
+      "post": {
+        "tags": [
+          "Deployments"
+        ],
+        "description": "Deploy a model to a target platform",
+        "operationId": "start_model_deployment",
+        "parameters": [
+          {
+            "name": "deployment_id",
+            "in": "path",
+            "description": "The id of the Model Deployment",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDeploymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deployments-api/deployments/{deployment_id}/stop": {
+      "post": {
+        "tags": [
+          "Deployments"
+        ],
+        "description": "Stop a Model Deployment",
+        "operationId": "stop_model_deployment",
+        "parameters": [
+          {
+            "name": "deployment_id",
+            "in": "path",
+            "description": "The the id of the Model Deployment",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDeploymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deployments-api/deployments/{deployment_id}/undeploy": {
+      "post": {
+        "tags": [
+          "Deployments"
+        ],
+        "description": "Undeploy a Model Deployment",
+        "operationId": "undeploy_model_deployment",
+        "parameters": [
+          {
+            "name": "deployment_id",
+            "in": "path",
+            "description": "The the id of the Model Deployment",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDeploymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deployments-api/platforms/{platform}/strategies/{strategy_name}": {
+      "post": {
+        "tags": [
+          "Deployments"
+        ],
+        "description": "Deploy a model to a target platform",
+        "operationId": "deploy_model_with_strategy",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "description": "The target platform for the Model Deployment",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Platform"
+            }
+          },
+          {
+            "name": "strategy_name",
+            "in": "path",
+            "description": "The name of the deployment strategy",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeployModelWithStrategyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Model deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDeploymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deployments-api/strategies": {
+      "get": {
+        "tags": [
+          "Strategies"
+        ],
+        "description": "Lists all available deployment strategies for all platforms",
+        "operationId": "list_strategies",
+        "responses": {
+          "200": {
+            "description": "Listed platforms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDeploymentStrategiesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BadRequestResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {},
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "default": 400,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientStrategySet": {
+        "type": "object",
+        "required": [
+          "platform",
+          "strategies"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameter_sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParameterSet"
+            },
+            "nullable": true
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "rule_sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleSet"
+            },
+            "nullable": true
+          },
+          "strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Strategy"
+            }
+          }
+        }
+      },
+      "DeployModelWithStrategyBody": {
+        "type": "object",
+        "required": [
+          "model_name",
+          "model_author",
+          "params"
+        ],
+        "properties": {
+          "model_author": {
+            "type": "string"
+          },
+          "model_name": {
+            "type": "string"
+          },
+          "params": {}
+        }
+      },
+      "DesiredState": {
+        "type": "string",
+        "enum": [
+          "Running",
+          "Stopped",
+          "NotDeployed"
+        ]
+      },
+      "GpuResource": {
+        "type": "object",
+        "properties": {
+          "gpu_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "memory": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ListDeploymentStrategiesResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientStrategySet"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelDeployment": {
+        "type": "object",
+        "required": [
+          "id",
+          "platform",
+          "owner",
+          "model",
+          "state",
+          "desired_state",
+          "visibility",
+          "created_at",
+          "last_modified",
+          "last_state_change",
+          "last_desired_state_change",
+          "revision"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "deployment_interface": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelDeploymentInterface"
+              }
+            ]
+          },
+          "deployment_strategy": {
+            "type": "string",
+            "nullable": true
+          },
+          "desired_state": {
+            "$ref": "#/components/schemas/DesiredState"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "last_desired_state_change": {
+            "type": "string"
+          },
+          "last_message": {
+            "type": "string",
+            "nullable": true
+          },
+          "last_modified": {
+            "type": "string"
+          },
+          "last_state_change": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelReference"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "replicas": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReplicaGroup"
+              }
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        }
+      },
+      "ModelDeploymentInterface": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "RestApi"
+            ],
+            "properties": {
+              "RestApi": {
+                "$ref": "#/components/schemas/RestApi"
+              }
+            }
+          }
+        ]
+      },
+      "ModelDeploymentResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ModelDeployment"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelReference": {
+        "type": "object",
+        "required": [
+          "name",
+          "author"
+        ],
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "NotFoundResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {},
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "default": 404,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Operator": {
+        "type": "string",
+        "enum": [
+          "Eq",
+          "Neq",
+          "Gte",
+          "Lte",
+          "Gt",
+          "Lt",
+          "In",
+          "Contains",
+          "NotIn",
+          "NoneIn",
+          "AnyIn",
+          "AllIn"
+        ]
+      },
+      "ParallelismStrategy": {
+        "type": "string",
+        "enum": [
+          "DataSharding",
+          "ModelSharding",
+          "PipelineSharding",
+          "TensorSharding"
+        ]
+      },
+      "Parameter": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ParameterSet": {
+        "type": "object",
+        "required": [
+          "name",
+          "parameters"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Parameter"
+            }
+          }
+        }
+      },
+      "Platform": {
+        "type": "string",
+        "description": "Represents a platform for which there are clients registered for one or more of\nthe following APIs: Models, Datasets, Inference, Training. The strum(serialize=\"\")\nattribute corresponds to the desired \"platform\" path parameter passed to the\n`get_client` method of a registrar.",
+        "enum": [
+          "hugging-face",
+          "github",
+          "git",
+          "patra",
+          "tapis-pods",
+          "tapis-jobs",
+          "s3"
+        ]
+      },
+      "ReplicaGroup": {
+        "type": "object",
+        "required": [
+          "count",
+          "resources",
+          "parallelism_strategies"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "parallelism_strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParallelismStrategy"
+            }
+          },
+          "resources": {
+            "$ref": "#/components/schemas/ResourceRequirements"
+          }
+        }
+      },
+      "ResourceRequirements": {
+        "type": "object",
+        "properties": {
+          "cores": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "disk": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "gpu": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GpuResource"
+              }
+            ]
+          },
+          "memory": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          }
+        }
+      },
+      "RestApi": {
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "spec": {}
+        }
+      },
+      "Rule": {
+        "type": "object",
+        "required": [
+          "field_path",
+          "operator",
+          "value"
+        ],
+        "properties": {
+          "field_path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operator"
+          },
+          "value": {}
+        }
+      },
+      "RuleSet": {
+        "type": "object",
+        "required": [
+          "name",
+          "rules"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rule"
+            }
+          }
+        }
+      },
+      "ServerErrorResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {},
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "default": 500,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "State": {
+        "type": "string",
+        "enum": [
+          "NotDeployed",
+          "Running",
+          "Stopped",
+          "Failed",
+          "Blocked",
+          "Unknown"
+        ]
+      },
+      "Strategy": {
+        "type": "object",
+        "required": [
+          "name",
+          "rule_sets"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "parameter_set": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParameterSet"
+              }
+            ]
+          },
+          "rule_sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleSet"
+            }
+          }
+        }
+      },
+      "Visibility": {
+        "type": "string",
+        "enum": [
+          "Public",
+          "Private"
+        ]
+      }
+    }
+  }
+}

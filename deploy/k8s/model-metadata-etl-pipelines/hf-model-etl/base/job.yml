@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mlhub-hf-model-etl
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: mlhub-hf-model-etl
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: extract
+          env:
+            - name: RUST_LOG
+              value: debug
+            - name: INBOX
+              value: /srv/mlhub/hf-model-etl/inbox
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-huggingface-secrets 
+                  key: token
+            - name: MAX_RECORDS
+              value: '5000'
+          image: mlhub/hf-model-etl-extract:local
+          command: ["sh", "-c", "python3 src/extract.py"]
+          volumeMounts:
+            - name: nfs-server-mount
+              mountPath: /srv/mlhub/
+      containers:
+        - name: hf-model-etl
+          env:
+            - name: RUST_LOG
+              value: debug
+            - name: MONGO_HOST
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.default.svc.cluster.local
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_DBNAME
+              value: mlhub
+            - name: MONGO_PASSWORD
+              value: password
+            - name: MONGO_USERNAME
+              value: mlhub
+            - name: MONGO_REPLICA_SET
+              value: rs0
+            - name: MAX_PROCESSABLE_ENTRIES
+              value: "5000"
+            - name: INBOX
+              value: /srv/mlhub/hf-model-etl/inbox
+          image: mlhub/hf-model-etl-transform-load:local
+          imagePullPolicy: Never
+          resources: {}
+          tty: true
+          volumeMounts:
+            - name: nfs-server-mount
+              mountPath: /srv/mlhub/
+            - name: site-config
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
+              subPath: tapis-pods-deployment-strategies.json
+            - name: site-config
+              mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
+              subPath: tapis-jobs-deployment-strategies.json
+            - name: site-config
+              mountPath: /etc/mlhub/site.json
+              subPath: site.json
+      volumes:
+        - name: nfs-server-mount
+          nfs:
+            server: "**-NFS_SERVER_COMPONENT_IP-**"
+            path: /
+        - name: site-config
+          configMap:
+            name: mlhub-site-configs

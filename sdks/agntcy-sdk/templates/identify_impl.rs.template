@@ -1,0 +1,13 @@
+{{ feature_attr }}
+impl Identify for {{ Category }} {
+    fn uid(&self) -> u32 {
+        match self {
+{{ uid_match_arms }}
+        }
+    }
+    fn name(&self) -> String {
+        match self {
+{{ name_match_arms }}
+        }.to_string()
+    }
+}

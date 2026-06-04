@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "ES2022",                  // modern async/await, class fields, etc.
+    "lib": ["ES2022"],                   // standard library for Node 18+ features
+    "module": "NodeNext",                // Node’s ESM/CJS interoperability
+    "moduleResolution": "NodeNext",      // resolves both .ts/.mts/.cts
+    "allowJs": false,                    // disallow plain JS (optional)
+
+    /* Type Checking */
+    "strict": true,                      // full strict mode
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "skipLibCheck": true,                // faster builds, safe for most
+
+    /* Emit */
+    "outDir": "./dist",
+    "declaration": true,                 // generate .d.ts
+    "sourceMap": true,
+
+    /* Interop */
+    "esModuleInterop": true,             // allow default imports from CJS
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    /* Types */
+    "types": ["node", "mocha"],          // include Node + mocha globals
+    "typeRoots": ["./types", "./node_modules/@types"],
+
+    /* Experiments */
+    "allowSyntheticDefaultImports": true // smoother ESM/CJS interop
+  },
+  "include": ["src", "tests", "tests/e2e"],
+  "exclude": ["node_modules", "dist"]
+}

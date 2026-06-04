@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+here=$(dirname "${BASH_SOURCE[0]}")
+
+docker build -f $here/Dockerfile.python -t mlhub/hf-code-generator:latest $here
+
+docker build -f $here/Dockerfile.rust -t mlhub/hf-type-drift-guard-builder:latest $here

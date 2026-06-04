@@ -1,0 +1,56 @@
+http:
+  middlewares:
+    path-strip-v3:
+      stripPrefix:
+        prefixes:
+          - "/v3/mlhub"
+  routers:
+    dashboard:
+      #rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      rule: "PathPrefix(`/v3/mlhub/dashboard`)"
+      middlewares:
+        - "path-strip-v3"
+      service: api@internal
+
+    models-api:
+      rule: "PathPrefix(`/v3/mlhub/models-api`)"
+      middlewares:
+        - "path-strip-v3"
+      service: models-api
+
+    datasets-api:
+      rule: "PathPrefix(`/v3/mlhub/datasets-api`)"
+      middlewares:
+        - "path-strip-v3"
+      service: datasets-api
+
+    deployments-api:
+      rule: "PathPrefix(`/v3/mlhub/deployments-api`)"
+      middlewares:
+        - "path-strip-v3"
+      service: deployments-api
+
+    agents-api:
+      rule: "PathPrefix(`/v3/mlhub/agents-api`)"
+      middlewares:
+        - "path-strip-v3"
+      service: agents-api
+
+  services:
+    models-api:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-models-api-service:8000
+        #- url: http://pods-api:8000
+    datasets-api:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-datasets-api-service:8000
+    deployments-api:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-deployments-api-service:8000
+    agents-api:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-agents-api-service:8000

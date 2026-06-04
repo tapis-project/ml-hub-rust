@@ -1,0 +1,71 @@
+http:
+  middlewares:
+    tapis-rewrite-host:
+      headers:
+        customRequestHeaders:
+          Host: "{subdomain}.tapis.io"
+    cors:
+      headers:
+        accessControlAllowOriginList:
+          - http://localhost:3000
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Tapis-Token
+        accessControlAllowCredentials: true
+  routers:
+    dashboard:
+      rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      service: api@internal
+
+    models-api:
+      rule: "PathPrefix(`/models-api`)"
+      service: models-api
+      middlewares:
+        - tapis-rewrite-host
+        - cors
+    
+    datasets-api:
+      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/datasets-api`)"
+      service: datasets-api
+      middlewares:
+        - tapis-rewrite-host:
+        - cors
+
+    deployments-api:
+      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/deployments-api`)"
+      service: deployments-api
+      middlewares:
+        - tapis-rewrite-host
+        - cors
+
+    agents-api:
+      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/agents-api`)"
+      service: agents-api
+      middlewares:
+        - tapis-rewrite-host
+        - cors
+
+  services:
+    models-api:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-models-api-service:8000
+    deployments-api:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-deployments-api-service:8000
+    datasets-api:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-datasets-api-service:8000
+    agents-api:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-agents-api-service:8000

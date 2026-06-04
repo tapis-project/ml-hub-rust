@@ -1,0 +1,31 @@
+[package]
+name = "deployments"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "deployments-openapi"
+path = "src/bin/openapi.rs"
+
+[features]
+default = ["actix", "mongo"]
+actix = ["actix-web"]
+mongo = ["mongodb"]
+
+[dependencies]
+platforms = { version = "0.1.0", path = "../../libs/platforms" }
+serde = { version = "1.0", features = ["derive"] }
+actix-web = { version = "4", optional = true}
+shared = { version = "0.1.0", path = "../../libs/shared" }
+clients = { version = "0.1.0", path = "../../libs/clients" }
+env_logger = "0.11.5"
+log = "0.4"
+mongodb = {version = "3.5.1", optional = true}
+serde_yaml = "0.9.34"
+futures = "0.3.31"
+serde_json = "1.0.140"
+openapiv3 = "2.0.0"
+async-trait = "0.1.88"
+utoipa = { version = "5.4.0" }
+utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web"] }
+amqprs = "2.1.1"

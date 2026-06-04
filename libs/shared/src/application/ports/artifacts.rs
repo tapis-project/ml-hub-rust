@@ -1,0 +1,34 @@
+use crate::domain::entities::artifact::{Artifact, ArtifactType};
+use crate::domain::entities::artifact_ingestion::ArtifactIngestion;
+use crate::domain::entities::artifact_publication::ArtifactPublication;
+use crate::application::errors::ApplicationError;
+use uuid::Uuid;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait ArtifactRepository: Send + Sync {
+    async fn save(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
+    async fn update(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
+    async fn update_path(&self, artifact: &Artifact) -> Result<(), ApplicationError>;
+    async fn get_by_id(&self, id: &Uuid) -> Result<Option<Artifact>, ApplicationError>;
+    async fn list_by_artifact_type(&self, artifact_type: ArtifactType) -> Result<Vec<Artifact>, ApplicationError>;
+}
+
+#[async_trait]
+pub trait ArtifactIngestionRepository: Send + Sync {
+    async fn save(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
+    async fn update(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
+    async fn update_status(&self, ingestion: &ArtifactIngestion) -> Result<(), ApplicationError>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<ArtifactIngestion>, ApplicationError>;
+    async fn find_by_artifact_id(&self, id: &Uuid) -> Result<Vec<ArtifactIngestion>, ApplicationError>;
+    async fn find_by_artifact_type(&self, artifact_type: ArtifactType) -> Result<Vec<ArtifactIngestion>, ApplicationError>;
+}
+
+#[async_trait]
+pub trait ArtifactPublicationRepository: Send + Sync {
+    async fn save(&self, publication: &ArtifactPublication) -> Result<(), ApplicationError>;
+    async fn update_status(&self, ingestion: &ArtifactPublication) -> Result<(), ApplicationError>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<ArtifactPublication>, ApplicationError>;
+    async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Vec<ArtifactPublication>, ApplicationError>;
+    async fn find_by_artifact_type(&self, artifact_type: ArtifactType) -> Result<Vec<ArtifactPublication>, ApplicationError>;
+}
