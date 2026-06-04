@@ -1,6 +1,6 @@
 {
   "name": "@mlhub/deployments-ts-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenAPI client for @mlhub/deployments-ts-sdk",
   "author": "OpenAPI-Generator",
   "main": "./dist/index.js",

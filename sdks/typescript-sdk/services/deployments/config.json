@@ -1,6 +1,6 @@
 {
 	"npmName": "@mlhub/deployments-ts-sdk",
-	"npmVersion": "0.1.0",
+	"npmVersion": "0.1.1",
 	"snapshot" : false,
 	"supportsES6": false,
 	"modelPropertyNaming": "original",
