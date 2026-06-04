@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -e
+
+here=$(dirname "${BASH_SOURCE[0]}")
+
+source $here/utils
+
+# Get the current version of the OASF API
+version=$(get_oasf_version)
+
+source $here/scripts/v$version/fetch
+
+echo "OASF API v$version"
+
+specsDir=$here/specs/v$version
+latestSpecsDir=$here/specs/latest
+genDir=$(get_gen_dir $here)
+templatesDir=$here/templates
+
+mkdir -p $specsDir
+mkdir -p $latestSpecsDir
+mkdir -p $genDir
+
+# This array determines which APIs get called to fetch the schema
+taxa=("skills" "domains" "modules")
+
+# Fetch OASF Domains, Skills, and Modules and pretty-print them into the specs dir
+for taxon in "${taxa[@]}"; do
+    echo "Fetching $taxon"
+    output=$(fetch $taxon)
+    echo $output | jq . > $specsDir/$taxon.json
+    echo $output | jq . > $latestSpecsDir/$taxon.json
+    python3 $here/scripts/v$version/generate.py $here/specs/v$version/$taxon.json $genDir $templatesDir $taxon
+done

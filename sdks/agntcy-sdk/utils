@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+get_oasf_version() {
+    curl -X 'GET' 'https://schema.oasf.outshift.com/api/version' -H 'accept: application/json' -s | jq -r '.version'
+}
+
+get_gen_dir() {
+    echo $1/gen/v$(get_oasf_version)
+}

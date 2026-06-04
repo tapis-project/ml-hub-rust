@@ -1,0 +1,32 @@
+resources:
+  - ../../base
+
+configMapGenerator:
+- name: mlhub-cm-mongo-init-script
+  files:
+  - init-db.sh
+
+patches:
+  - target:
+      version: v1
+      kind: StatefulSet
+      name: mlhub-mongo-stateful-set
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: "cinder-csi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "8Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "12Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "4"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "8"
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 100Gi

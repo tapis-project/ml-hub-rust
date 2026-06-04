@@ -1,0 +1,86 @@
+name: Detect Service Diffs
+description: Detect which services changed between commits
+
+outputs:
+  services:
+    description: "List of services for which diff was detected"
+    value: ${{ steps.compute.outputs.services || '[]' }}
+  has_lib_diff:
+    description: "Whether or not a diff was detected in the libs"
+    value: ${{ steps.compute.outputs.has_lib_diff }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - id: compute
+      shell: bash
+      run: |
+        set -e
+
+        # Use input if provided, otherwise fallback to GitHub's event data
+        # For PRs: use base and head. For Pushes: use before and after SHAs.
+        BASE="${{ inputs.base_ref }}"
+        if [ -z "$BASE" ]; then
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+        fi
+
+        HEAD="${{ inputs.head_ref }}"
+        if [ -z "$HEAD" ]; then
+          HEAD="${{ github.event.pull_request.head.sha || github.sha }}"
+        fi
+
+        # Final safety check: if we still don't have a BASE (like on a new branch),
+        # diff against the parent of the current commit.
+        if [ -z "$BASE" ] || [ "$BASE" == "0000000000000000000000000000000000000000" ]; then
+          BASE="HEAD~1"
+        fi
+
+        DIFF=$(git diff --name-only "$BASE" "$HEAD" || true)
+
+        SERVICES=(
+          models
+          deployments
+          model-deployment-controller
+          artifact-ingester
+          artifact-publisher
+          models-migrator
+          principals-migrator
+          federated-identities-migrator
+          # datasets
+        )
+
+        JSON=$(jq -n '{services: []}')
+
+        echo "INITIAL JSON: $JSON"
+
+        for service in "${SERVICES[@]}"; do
+          echo "$service"
+          echo "$(grep -Fq "services/${service}/" <<< "$DIFF")"
+          if grep -Fq "services/${service}/" <<< "$DIFF"; then
+            echo "SERVICE DETECTED: $service"
+            JSON=$(jq --arg s "$service" '.services += [$s]' <<< "$JSON")
+            echo "$JSON"
+          fi
+        done
+
+        # Dedupe services in array
+        JSON=$(jq '.services |= unique' <<< "$JSON")
+
+        echo "DEDUPED: $JSON"
+
+        HAS_LIB_DIFF="false"
+        if grep -Fq "libs/" <<< "$DIFF"; then
+          echo "HAS LIB DIFF"
+          HAS_LIB_DIFF="true"
+        fi
+
+        echo "services=$(jq -c '.services' <<< "$JSON")"
+
+        echo "services=$(jq -c '.services' <<< "$JSON")" >> "$GITHUB_OUTPUT"
+        echo "has_lib_diff=$HAS_LIB_DIFF" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,13 @@
+[package]
+name = "agntcy-sdk"
+version = "0.8.0"
+edition = "2021"
+
+[dependencies]
+
+[features]
+default = [ "domain", "module", "skill", ]
+domain = []
+module = []
+skill = []
+identify = []

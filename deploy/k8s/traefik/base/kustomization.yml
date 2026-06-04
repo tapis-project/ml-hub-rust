@@ -1,0 +1,7 @@
+resources:
+- deployment.yml
+
+configMapGenerator:
+- name: mlhub-traefik-dynamic-config
+  files:
+  - dynamic-config.yaml

@@ -1,0 +1,21 @@
+resources:
+  - ../../base
+  - ../../../site-configs/overlays/minikube
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-model-deployment-controller-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-model-deployment-controller-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: model-deployment-controller
+                image: tapis/mlhub-model-deployment-controller:local
+                imagePullPolicy: Never
+                resources: {}

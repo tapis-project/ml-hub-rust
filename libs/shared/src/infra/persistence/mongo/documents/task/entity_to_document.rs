@@ -1,0 +1,55 @@
+
+use crate::domain::entities::task as entities;
+use crate::infra::persistence::mongo::documents::task as documents;
+
+impl From<entities::Task> for documents::Task {
+    fn from(value: entities::Task) -> Self {
+        match value {
+            entities::Task::AnyToAny => documents::Task::AnyToAny,
+            entities::Task::AutomaticSpeechRecognition => documents::Task::AutomaticSpeechRecognition,
+            entities::Task::AudioToAudio => documents::Task::AudioToAudio,
+            entities::Task::AudioClassification => documents::Task::AudioClassification,
+            entities::Task::AudioTextToText => documents::Task::AudioTextToText,
+            entities::Task::DepthEstimation => documents::Task::DepthEstimation,
+            entities::Task::DocumentQuestionAnswering => documents::Task::DocumentQuestionAnswering,
+            entities::Task::FeatureExtraction => documents::Task::FeatureExtraction,
+            entities::Task::FillMask => documents::Task::FillMask,
+            entities::Task::ImageFeatureExtraction => documents::Task::ImageFeatureExtraction,
+            entities::Task::ImageTextToText => documents::Task::ImageTextToText,
+            entities::Task::ImageToVideo => documents::Task::ImageToVideo,
+            entities::Task::ImageSegmentation => documents::Task::ImageSegmentation,
+            entities::Task::ImageClassification => documents::Task::ImageClassification,
+            entities::Task::ImageTo3d => documents::Task::ImageTo3d,
+            entities::Task::ImageToImage => documents::Task::ImageToImage,
+            entities::Task::ImageToText => documents::Task::ImageToText,
+            entities::Task::KeypointDetection => documents::Task::KeypointDetection,
+            entities::Task::MaskGeneration => documents::Task::MaskGeneration,
+            entities::Task::ObjectDetection => documents::Task::ObjectDetection,
+            entities::Task::QuestionAnswering => documents::Task::QuestionAnswering,
+            entities::Task::ReinforcementLearning => documents::Task::ReinforcementLearning,
+            entities::Task::SentenceSimilarity => documents::Task::SentenceSimilarity,
+            entities::Task::Summarization => documents::Task::Summarization,
+            entities::Task::TableQuestionAnswering => documents::Task::TableQuestionAnswering,
+            entities::Task::TextGeneration => documents::Task::TextGeneration,
+            entities::Task::TextRanking => documents::Task::TextRanking,
+            entities::Task::TabularClassification => documents::Task::TabularClassification,
+            entities::Task::TextTo3d => documents::Task::TextTo3d,
+            entities::Task::TextClassification => documents::Task::TextClassification,
+            entities::Task::TextToImage => documents::Task::TextToImage,
+            entities::Task::Translation => documents::Task::Translation,
+            entities::Task::TabularRegression => documents::Task::TabularRegression,
+            entities::Task::TextToSpeech => documents::Task::TextToSpeech,
+            entities::Task::TextToVideo => documents::Task::TextToVideo,
+            entities::Task::TokenClassification => documents::Task::TokenClassification,
+            entities::Task::UnconditionalImageGeneration => documents::Task::UnconditionalImageGeneration,
+            entities::Task::VideoClassification => documents::Task::VideoClassification,
+            entities::Task::VideoTextToText => documents::Task::VideoTextToText,
+            entities::Task::VideoToVideo => documents::Task::VideoToVideo,
+            entities::Task::VisualQuestionAnswering => documents::Task::VisualQuestionAnswering,
+            entities::Task::VisualDocumentRetrieval => documents::Task::VisualDocumentRetrieval,
+            entities::Task::ZeroShotClassification => documents::Task::ZeroShotClassification,
+            entities::Task::ZeroShotImageClassification => documents::Task::ZeroShotClassification,
+            entities::Task::ZeroShotObjectDetection => documents::Task::ZeroShotObjectDetection,
+        }
+    }
+}

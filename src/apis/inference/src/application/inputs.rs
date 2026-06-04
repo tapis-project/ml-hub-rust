@@ -1,1 +1,0 @@
-pub use shared::application::inputs::inference::*;

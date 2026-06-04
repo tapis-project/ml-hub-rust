@@ -1,0 +1,24 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-rabbit-deployment
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-rabbit-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: mlhub-rabbit
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: "1Gi"
+                  limits:
+                    cpu: "1"
+                    memory: "1Gi"

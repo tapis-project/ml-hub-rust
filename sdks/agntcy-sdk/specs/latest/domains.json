@@ -1,0 +1,2896 @@
+[
+  {
+    "name": "learning_management_systems",
+    "family": "domain",
+    "description": "Software platforms for delivering, tracking, and managing educational courses and training programs. Subdomains: User Experience Design, Content Management, Reporting and Analytics, and System Integration.",
+    "uid": 603,
+    "extends": "education",
+    "category": "education",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Learning Management Systems",
+    "category_name": "Education"
+  },
+  {
+    "name": "wireless_communications",
+    "family": "domain",
+    "description": "Mobile networks, 5G/6G technology, wireless protocols, and cellular services",
+    "uid": 1606,
+    "extends": "telecommunications",
+    "category": "telecommunications",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Wireless Communications",
+    "category_name": "Telecommunications"
+  },
+  {
+    "name": "data_privacy",
+    "family": "domain",
+    "description": "Safeguarding personal information from unauthorized access and ensuring compliance with privacy laws and regulations. Subdomains: Privacy Regulations Compliance, Data Encryption, Data Anonymization, and User Consent Management.",
+    "uid": 404,
+    "extends": "trust_and_safety",
+    "category": "trust_and_safety",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Data Privacy",
+    "category_name": "Trust and Safety"
+  },
+  {
+    "name": "hotel_management",
+    "family": "domain",
+    "description": "Hotel operations, reservations, guest services, and property management systems",
+    "uid": 1504,
+    "extends": "hospitality_and_tourism",
+    "category": "hospitality_and_tourism",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Hotel Management",
+    "category_name": "Hospitality and Tourism"
+  },
+  {
+    "name": "content_creation",
+    "family": "domain",
+    "description": "Production of digital and traditional media content including video, audio, and written material.",
+    "uid": 1302,
+    "extends": "media_and_entertainment",
+    "category": "media_and_entertainment",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Content Creation",
+    "category_name": "Media and Entertainment"
+  },
+  {
+    "name": "laboratory_management",
+    "family": "domain",
+    "description": "Lab operations, equipment management, safety protocols, and laboratory information systems",
+    "uid": 1903,
+    "extends": "research_and_development",
+    "category": "research_and_development",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Laboratory Management",
+    "category_name": "Research and Development"
+  },
+  {
+    "name": "livestock_management",
+    "family": "domain",
+    "description": "Care, breeding, and management of farm animals and livestock operations.",
+    "uid": 1103,
+    "extends": "agriculture",
+    "category": "agriculture",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Livestock Management",
+    "category_name": "Agriculture"
+  },
+  {
+    "name": "employee_relations",
+    "family": "domain",
+    "description": "Maintaining positive relationships between the employer and employees to foster a productive work environment. Subdomains: Conflict Resolution, Employee Engagement, Workplace Culture, and Labor Relations.",
+    "uid": 502,
+    "extends": "human_resources",
+    "category": "human_resources",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Employee Relations",
+    "category_name": "Human Resources"
+  },
+  {
+    "name": "wireless_communication",
+    "family": "domain",
+    "description": "Communication technologies that use electromagnetic waves to transmit data without physical connections.",
+    "uid": 10802,
+    "extends": "communication_systems",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Wireless Communication",
+    "category_name": "Technology"
+  },
+  {
+    "name": "recruitment",
+    "family": "domain",
+    "description": "Attracting, screening, and selecting qualified candidates for job openings within an organization. Subdomains: Talent Acquisition, Candidate Sourcing, Interviewing Techniques, and Onboarding Processes.",
+    "uid": 501,
+    "extends": "human_resources",
+    "category": "human_resources",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Recruitment",
+    "category_name": "Human Resources"
+  },
+  {
+    "name": "smart_grids",
+    "family": "domain",
+    "description": "Intelligent power distribution networks with automated monitoring and control.",
+    "uid": 1206,
+    "extends": "energy",
+    "category": "energy",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Smart Grids",
+    "category_name": "Energy"
+  },
+  {
+    "name": "claims_processing",
+    "family": "domain",
+    "description": "Claims management, loss adjustment, claims automation, and settlement processes",
+    "uid": 2302,
+    "extends": "insurance",
+    "category": "insurance",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Claims Processing",
+    "category_name": "Insurance"
+  },
+  {
+    "name": "biotechnology",
+    "family": "domain",
+    "description": "The application of biological systems and organisms to develop or create products and technologies that improve the quality of human life. Subdomains: Medical Biotechnology, Agricultural Biotechnology, Industrial Biotechnology, and Environmental Biotechnology.",
+    "uid": 301,
+    "extends": "life_science",
+    "category": "life_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Biotechnology",
+    "category_name": "Life Science"
+  },
+  {
+    "name": "real_estate_investment",
+    "family": "domain",
+    "description": "Property investment strategies, portfolio management, and real estate finance.",
+    "uid": 1405,
+    "extends": "real_estate",
+    "category": "real_estate",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Real Estate Investment",
+    "category_name": "Real Estate"
+  },
+  {
+    "name": "educational_technology",
+    "family": "domain",
+    "description": "Integrating digital tools and resources to enhance teaching and learning experiences. Subdomains: EdTech Innovations, Classroom Technology, Digital Content, and Gamification in Education.",
+    "uid": 604,
+    "extends": "education",
+    "category": "education",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Educational Technology",
+    "category_name": "Education"
+  },
+  {
+    "name": "cyber_network_security",
+    "family": "domain",
+    "description": "Cybersecurity protection of network infrastructure and data from unauthorized access, misuse, or attacks.",
+    "uid": 10704,
+    "extends": "security",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Cyber Network Security",
+    "category_name": "Technology"
+  },
+  {
+    "name": "smart_contracts",
+    "family": "domain",
+    "description": "Self-executing contracts with terms directly written into code, running on blockchain networks.",
+    "uid": 10903,
+    "extends": "blockchain",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Smart Contracts",
+    "category_name": "Technology"
+  },
+  {
+    "name": "automation",
+    "family": "domain",
+    "description": "Using technology to perform processes with minimal human intervention. Subdomains: Automated Manufacturing, Control Systems, Industrial IoT, and Process Automation.",
+    "uid": 701,
+    "extends": "industrial_manufacturing",
+    "category": "industrial_manufacturing",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Automation",
+    "category_name": "Industrial Manufacturing"
+  },
+  {
+    "name": "regulatory_compliance",
+    "family": "domain",
+    "description": "Ensuring adherence to laws, regulations, and industry standards.",
+    "uid": 1003,
+    "extends": "legal",
+    "category": "legal",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Regulatory Compliance",
+    "category_name": "Legal"
+  },
+  {
+    "name": "networking",
+    "family": "domain",
+    "description": "Design, management, and security of computer networks.",
+    "uid": 103,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Networking",
+    "category_name": "Technology"
+  },
+  {
+    "name": "streaming_services",
+    "family": "domain",
+    "description": "On-demand video and audio streaming platforms and content delivery.",
+    "uid": 1306,
+    "extends": "media_and_entertainment",
+    "category": "media_and_entertainment",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Streaming Services",
+    "category_name": "Media and Entertainment"
+  },
+  {
+    "name": "grant_management",
+    "family": "domain",
+    "description": "Research funding, grant applications, project budgeting, and compliance reporting",
+    "uid": 1901,
+    "extends": "research_and_development",
+    "category": "research_and_development",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Grant Management",
+    "category_name": "Research and Development"
+  },
+  {
+    "name": "process_automation",
+    "family": "domain",
+    "description": "Use of technology to perform processes or procedures with minimal human intervention.",
+    "uid": 110,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Automation",
+    "category_name": "Technology"
+  },
+  {
+    "name": "sustainable_farming",
+    "family": "domain",
+    "description": "Environmentally responsible agricultural practices and organic farming methods.",
+    "uid": 1105,
+    "extends": "agriculture",
+    "category": "agriculture",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Sustainable Farming",
+    "category_name": "Agriculture"
+  },
+  {
+    "name": "bioinformatics",
+    "family": "domain",
+    "description": "the application of computational techniques to analyze and interpret biological data. Subdomains: Sequence Analysis, Systems Biology, Data Mining, and Structural Bioinformatics.",
+    "uid": 304,
+    "extends": "life_science",
+    "category": "life_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Bioinformatics",
+    "category_name": "Life Science"
+  },
+  {
+    "name": "iot_devices",
+    "family": "domain",
+    "description": "Physical devices embedded with sensors, software, and connectivity to collect and exchange data.",
+    "uid": 10101,
+    "extends": "internet_of_things",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "IoT Devices",
+    "category_name": "Technology"
+  },
+  {
+    "name": "internet_of_things",
+    "family": "domain",
+    "description": "Connecting everyday objects to the internet for data exchange and automation.",
+    "uid": 101,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Internet of Things (IoT)",
+    "category_name": "Technology"
+  },
+  {
+    "name": "voip_and_unified_communications",
+    "family": "domain",
+    "description": "Voice over IP, video conferencing, unified communications platforms, and collaboration tools",
+    "uid": 1605,
+    "extends": "telecommunications",
+    "category": "telecommunications",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "VoIP and Unified Communications",
+    "category_name": "Telecommunications"
+  },
+  {
+    "name": "marketing_analytics",
+    "family": "domain",
+    "description": "Marketing metrics, ROI analysis, attribution modeling, and performance tracking",
+    "uid": 2405,
+    "extends": "marketing_and_advertising",
+    "category": "marketing_and_advertising",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Marketing Analytics",
+    "category_name": "Marketing and Advertising"
+  },
+  {
+    "name": "medical_technology",
+    "family": "domain",
+    "description": "Innovations and devices used to improve the diagnosis, treatment, and management of health conditions. Subdomains: Medical Devices, Diagnostic Equipment, Wearable Health Tech, and Biotech Innovations.",
+    "uid": 901,
+    "extends": "healthcare",
+    "category": "healthcare",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Medical Technology",
+    "category_name": "Healthcare"
+  },
+  {
+    "name": "network_protocols",
+    "family": "domain",
+    "description": "Rules and standards that govern communication between devices in a network.",
+    "uid": 10303,
+    "extends": "networking",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Network Protocols",
+    "category_name": "Technology"
+  },
+  {
+    "name": "communication_systems",
+    "family": "domain",
+    "description": "Technologies for transmitting and receiving information over various media.",
+    "uid": 108,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Communication Systems",
+    "category_name": "Technology"
+  },
+  {
+    "name": "telecommunication",
+    "family": "domain",
+    "description": "Transmission of information over long distances using electronic and digital technologies.",
+    "uid": 10801,
+    "extends": "communication_systems",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Telecommunication",
+    "category_name": "Technology"
+  },
+  {
+    "name": "workflow_automation",
+    "family": "domain",
+    "description": "Automation of business processes through the use of software to reduce manual work and improve efficiency.",
+    "uid": 11002,
+    "extends": "process_automation",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Workflow Automation",
+    "category_name": "Technology"
+  },
+  {
+    "name": "internet_services",
+    "family": "domain",
+    "description": "ISP operations, broadband services, internet connectivity, and access technologies",
+    "uid": 1601,
+    "extends": "telecommunications",
+    "category": "telecommunications",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Internet Services",
+    "category_name": "Telecommunications"
+  },
+  {
+    "name": "azure",
+    "family": "domain",
+    "description": "Cloud computing service created by Microsoft for building, testing, deploying, and managing applications.",
+    "uid": 10502,
+    "extends": "cloud_computing",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Microsoft Azure",
+    "category_name": "Technology"
+  },
+  {
+    "name": "devops",
+    "family": "domain",
+    "description": "Practices that combine software development and IT operations to shorten development cycles and improve deployment reliability.",
+    "uid": 10202,
+    "extends": "software_engineering",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "DevOps",
+    "category_name": "Technology"
+  },
+  {
+    "name": "industrial_iot",
+    "family": "domain",
+    "description": "IoT applications in industrial settings for automation, monitoring, and optimization.",
+    "uid": 10105,
+    "extends": "internet_of_things",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Industrial IoT",
+    "category_name": "Technology"
+  },
+  {
+    "name": "software_development",
+    "family": "domain",
+    "description": "Process of designing, creating, testing, and maintaining software applications and systems.",
+    "uid": 10201,
+    "extends": "software_engineering",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Software Development",
+    "category_name": "Technology"
+  },
+  {
+    "name": "sports_analytics",
+    "family": "domain",
+    "description": "Performance metrics, game analysis, player statistics, and sports data science",
+    "uid": 2203,
+    "extends": "sports_and_fitness",
+    "category": "sports_and_fitness",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Sports Analytics",
+    "category_name": "Sports and Fitness"
+  },
+  {
+    "name": "health_information_systems",
+    "family": "domain",
+    "description": "Systems for managing healthcare data to support clinical and administrative decision-making. Subdomains: Hospital Information Systems, Clinical Decision Support, Health Data Security, and Interoperability Solutions.",
+    "uid": 905,
+    "extends": "healthcare",
+    "category": "healthcare",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Health Information Systems",
+    "category_name": "Healthcare"
+  },
+  {
+    "name": "automotive",
+    "family": "domain",
+    "description": "The design, development, manufacturing, and marketing of motor vehicles. Subdomains: Vehicle Design, Automotive Engineering, Electric Vehicles, and Vehicle Manufacturing.",
+    "uid": 802,
+    "extends": "transportation",
+    "category": "transportation",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Automotive",
+    "category_name": "Transportation"
+  },
+  {
+    "name": "publishing",
+    "family": "domain",
+    "description": "Book, magazine, and digital publishing operations and distribution.",
+    "uid": 1305,
+    "extends": "media_and_entertainment",
+    "category": "media_and_entertainment",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Publishing",
+    "category_name": "Media and Entertainment"
+  },
+  {
+    "name": "data_security",
+    "family": "domain",
+    "description": "Protection of digital data from unauthorized access, corruption, or theft throughout its lifecycle.",
+    "uid": 10702,
+    "extends": "security",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Data Security",
+    "category_name": "Technology"
+  },
+  {
+    "name": "iot_security",
+    "family": "domain",
+    "description": "Protection of IoT devices, networks, and data from cyber threats and vulnerabilities.",
+    "uid": 10102,
+    "extends": "internet_of_things",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "IoT Security",
+    "category_name": "Technology"
+  },
+  {
+    "name": "urban_planning",
+    "family": "domain",
+    "description": "City planning, zoning, and urban development strategies.",
+    "uid": 1406,
+    "extends": "real_estate",
+    "category": "real_estate",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Urban Planning",
+    "category_name": "Real Estate"
+  },
+  {
+    "name": "ecology",
+    "family": "domain",
+    "description": "Ecosystem science, ecological modeling, population dynamics, and environmental interactions",
+    "uid": 1703,
+    "extends": "environmental_science",
+    "category": "environmental_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Ecology",
+    "category_name": "Environmental Science"
+  },
+  {
+    "name": "construction",
+    "family": "domain",
+    "description": "Building construction, project management, and construction technology.",
+    "uid": 1401,
+    "extends": "real_estate",
+    "category": "real_estate",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Construction",
+    "category_name": "Real Estate"
+  },
+  {
+    "name": "food_and_beverage",
+    "family": "domain",
+    "description": "Restaurant management, catering services, menu planning, and culinary operations",
+    "uid": 1502,
+    "extends": "hospitality_and_tourism",
+    "category": "hospitality_and_tourism",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Food and Beverage",
+    "category_name": "Hospitality and Tourism"
+  },
+  {
+    "name": "athletic_training",
+    "family": "domain",
+    "description": "Performance training, coaching, workout programs, and athlete development",
+    "uid": 2201,
+    "extends": "sports_and_fitness",
+    "category": "sports_and_fitness",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Athletic Training",
+    "category_name": "Sports and Fitness"
+  },
+  {
+    "name": "autonomous_vehicles",
+    "family": "domain",
+    "description": "Vehicles equipped with technology to navigate and operate without human control. Subdomains: Self-Driving Cars, Autonomous Trucks, Sensor Technology, and Vehicle AI.",
+    "uid": 806,
+    "extends": "transportation",
+    "category": "transportation",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Autonomous Vehicles",
+    "category_name": "Transportation"
+  },
+  {
+    "name": "banking",
+    "family": "domain",
+    "description": "Operations of financial institutions involved in accepting deposits, lending money, and other financial services. Subdomains: Retail Banking, Investment Banking, Corporate Banking, and Digital Banking.",
+    "uid": 201,
+    "extends": "finance_and_business",
+    "category": "finance_and_business",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Banking",
+    "category_name": "Finance and Business"
+  },
+  {
+    "name": "oil_and_gas",
+    "family": "domain",
+    "description": "Exploration, extraction, refining, and distribution of petroleum products.",
+    "uid": 1203,
+    "extends": "energy",
+    "category": "energy",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Oil and Gas",
+    "category_name": "Energy"
+  },
+  {
+    "name": "disability_services",
+    "family": "domain",
+    "description": "Disability support, accessibility services, assistive technology, and disability advocacy",
+    "uid": 2104,
+    "extends": "social_services",
+    "category": "social_services",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Disability Services",
+    "category_name": "Social Services"
+  },
+  {
+    "name": "database_administration",
+    "family": "domain",
+    "description": "Management and maintenance of database systems and data storage.",
+    "uid": 10603,
+    "extends": "information_technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Database Administration",
+    "category_name": "Technology"
+  },
+  {
+    "name": "big_data",
+    "family": "domain",
+    "description": "Large and complex datasets that require advanced tools and techniques for processing and analysis.",
+    "uid": 10401,
+    "extends": "data_science",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Big Data",
+    "category_name": "Technology"
+  },
+  {
+    "name": "security",
+    "family": "domain",
+    "description": "Protecting systems, data, and networks from cyber threats and vulnerabilities.",
+    "uid": 107,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Security",
+    "category_name": "Technology"
+  },
+  {
+    "name": "iot_networks",
+    "family": "domain",
+    "description": "Communication protocols and network infrastructure for connecting IoT devices.",
+    "uid": 10103,
+    "extends": "internet_of_things",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "IoT Networks",
+    "category_name": "Technology"
+  },
+  {
+    "name": "network_management",
+    "family": "domain",
+    "description": "Tasks like monitoring, configuring, and optimizing networks.",
+    "uid": 10302,
+    "extends": "networking",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Network Management",
+    "category_name": "Technology"
+  },
+  {
+    "name": "finance",
+    "family": "domain",
+    "description": "Managing money, investments, and financial risks within businesses or for individuals. Subdomains: Corporate Finance, Personal Finance, Risk Management, Accounting, and Financial Analysis.",
+    "uid": 202,
+    "extends": "finance_and_business",
+    "category": "finance_and_business",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Finance",
+    "category_name": "Finance and Business"
+  },
+  {
+    "name": "environmental_monitoring",
+    "family": "domain",
+    "description": "Air quality monitoring, water quality testing, pollution tracking, and environmental sensors",
+    "uid": 1704,
+    "extends": "environmental_science",
+    "category": "environmental_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Environmental Monitoring",
+    "category_name": "Environmental Science"
+  },
+  {
+    "name": "retail",
+    "family": "domain",
+    "description": "Sale of goods and services directly to consumers through various channels. Subdomains: E-commerce, In-store Retail, Inventory Management, Customer Experience, and Omnichannel Retail.",
+    "uid": 205,
+    "extends": "finance_and_business",
+    "category": "finance_and_business",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Retail",
+    "category_name": "Finance and Business"
+  },
+  {
+    "name": "incident_management",
+    "family": "domain",
+    "description": "Processes and tools for detecting, responding to, and resolving security incidents and IT service disruptions.",
+    "uid": 10706,
+    "extends": "security",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Incident Management",
+    "category_name": "Technology"
+  },
+  {
+    "name": "supply_chain_management",
+    "family": "domain",
+    "description": "Coordinating and managing all activities involved in the production and delivery of goods. Subdomains: Inventory Management, Procurement, Logistics Management, and Demand Forecasting.",
+    "uid": 703,
+    "extends": "industrial_manufacturing",
+    "category": "industrial_manufacturing",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Supply Chain Management",
+    "category_name": "Industrial Manufacturing"
+  },
+  {
+    "name": "process_engineering",
+    "family": "domain",
+    "description": "Designing, implementing, and optimizing industrial processes to improve efficiency and quality. Subdomains: Process Design, Process Optimization, Quality Control, and Safety Engineering.",
+    "uid": 705,
+    "extends": "industrial_manufacturing",
+    "category": "industrial_manufacturing",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Process Engineering",
+    "category_name": "Industrial Manufacturing"
+  },
+  {
+    "name": "identity_management",
+    "family": "domain",
+    "description": "Processes and technologies for managing digital identities and controlling access to resources.",
+    "uid": 10705,
+    "extends": "security",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Identity Management",
+    "category_name": "Technology"
+  },
+  {
+    "name": "supply_chain",
+    "family": "domain",
+    "description": "The system of production, processing, and distribution of goods. Subdomains: Supplier Management, Production Scheduling, Inventory Control, and Global Supply Chain.",
+    "uid": 804,
+    "extends": "transportation",
+    "category": "transportation",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Supply Chain",
+    "category_name": "Transportation"
+  },
+  {
+    "name": "intellectual_property",
+    "family": "domain",
+    "description": "Protection and management of patents, trademarks, copyrights, and trade secrets.",
+    "uid": 1002,
+    "extends": "legal",
+    "category": "legal",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Intellectual Property",
+    "category_name": "Legal"
+  },
+  {
+    "name": "defi",
+    "family": "domain",
+    "description": "Financial services built on blockchain networks that operate without traditional intermediaries.",
+    "uid": 10902,
+    "extends": "blockchain",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Decentralized Finance (DeFi)",
+    "category_name": "Technology"
+  },
+  {
+    "name": "data_engineering",
+    "family": "domain",
+    "description": "Design and construction of systems for collecting, storing, and processing data at scale.",
+    "uid": 10403,
+    "extends": "data_science",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Data Engineering",
+    "category_name": "Technology"
+  },
+  {
+    "name": "apis_integration",
+    "family": "domain",
+    "description": "Application Programming Interfaces and integration technologies that enable different software systems to communicate and work together.",
+    "uid": 10204,
+    "extends": "software_engineering",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "APIs and Integration",
+    "category_name": "Technology"
+  },
+  {
+    "name": "aws",
+    "family": "domain",
+    "description": "Comprehensive cloud computing platform offered by Amazon.",
+    "uid": 10501,
+    "extends": "cloud_computing",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Amazon Web Services (AWS)",
+    "category_name": "Technology"
+  },
+  {
+    "name": "e_learning",
+    "family": "domain",
+    "description": "Delivering educational content and instruction through digital platforms and online courses. Subdomains: Online Course Development, Virtual Classrooms, Interactive Learning Tools, and Mobile Learning.",
+    "uid": 601,
+    "extends": "education",
+    "category": "education",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "E-Learning",
+    "category_name": "Education"
+  },
+  {
+    "name": "robotics",
+    "family": "domain",
+    "description": "Designing and using robots for manufacturing tasks to enhance productivity and precision. Subdomains: Robotic Process Automation, Industrial Robotics, AI and Robotics, and Collaborative Robots.",
+    "uid": 702,
+    "extends": "industrial_manufacturing",
+    "category": "industrial_manufacturing",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Robotics",
+    "category_name": "Industrial Manufacturing"
+  },
+  {
+    "name": "policy_management",
+    "family": "domain",
+    "description": "Policy administration, renewals, endorsements, and policy lifecycle management",
+    "uid": 2305,
+    "extends": "insurance",
+    "category": "insurance",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Policy Management",
+    "category_name": "Insurance"
+  },
+  {
+    "name": "system_administration",
+    "family": "domain",
+    "description": "Management and maintenance of computer systems and servers.",
+    "uid": 10602,
+    "extends": "information_technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "System Administration",
+    "category_name": "Technology"
+  },
+  {
+    "name": "housing_assistance",
+    "family": "domain",
+    "description": "Homeless services, housing support, emergency shelter, and housing programs",
+    "uid": 2105,
+    "extends": "social_services",
+    "category": "social_services",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Housing Assistance",
+    "category_name": "Social Services"
+  },
+  {
+    "name": "online_safety",
+    "family": "domain",
+    "description": "Protecting internet users from various forms of harm to ensure a secure digital environment. Subdomains: Cybersecurity Awareness, Child Online Protection, Identity Protection, and Digital Wellbeing.",
+    "uid": 401,
+    "extends": "trust_and_safety",
+    "category": "trust_and_safety",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Online Safety",
+    "category_name": "Trust and Safety"
+  },
+  {
+    "name": "climate_science",
+    "family": "domain",
+    "description": "Climate modeling, climate change research, atmospheric science, and weather prediction",
+    "uid": 1701,
+    "extends": "environmental_science",
+    "category": "environmental_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Climate Science",
+    "category_name": "Environmental Science"
+  },
+  {
+    "name": "marketing_automation",
+    "family": "domain",
+    "description": "Marketing platforms, campaign automation, lead nurturing, and marketing technology",
+    "uid": 2406,
+    "extends": "marketing_and_advertising",
+    "category": "marketing_and_advertising",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Marketing Automation",
+    "category_name": "Marketing and Advertising"
+  },
+  {
+    "name": "actuarial_science",
+    "family": "domain",
+    "description": "Actuarial analysis, risk modeling, statistical modeling, and pricing strategies",
+    "uid": 2301,
+    "extends": "insurance",
+    "category": "insurance",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Actuarial Science",
+    "category_name": "Insurance"
+  },
+  {
+    "name": "energy_storage",
+    "family": "domain",
+    "description": "Battery systems, pumped hydro, and other energy storage technologies.",
+    "uid": 1202,
+    "extends": "energy",
+    "category": "energy",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Energy Storage",
+    "category_name": "Energy"
+  },
+  {
+    "name": "rpa",
+    "family": "domain",
+    "description": "Technology that uses software robots to automate repetitive, rule-based tasks typically performed by humans.",
+    "uid": 11001,
+    "extends": "process_automation",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Robotic Process Automation (RPA)",
+    "category_name": "Technology"
+  },
+  {
+    "name": "network_operations",
+    "family": "domain",
+    "description": "Ensures the smooth operation and performance of network infrastructure.",
+    "uid": 10301,
+    "extends": "networking",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Network Operations",
+    "category_name": "Technology"
+  },
+  {
+    "name": "training_and_development",
+    "family": "domain",
+    "description": "Providing employees with skills and knowledge to enhance their job performance and career growth. Subdomains: Skills Training, Leadership Development, Career Pathing, and E-Learning Platforms.",
+    "uid": 503,
+    "extends": "human_resources",
+    "category": "human_resources",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Training and Development",
+    "category_name": "Human Resources"
+  },
+  {
+    "name": "product_development",
+    "family": "domain",
+    "description": "New product design, prototyping, testing, and product lifecycle management",
+    "uid": 1904,
+    "extends": "research_and_development",
+    "category": "research_and_development",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Product Development",
+    "category_name": "Research and Development"
+  },
+  {
+    "name": "point_of_sale",
+    "family": "domain",
+    "description": "POS systems, retail checkout, payment processing, and in-store transactions",
+    "uid": 2005,
+    "extends": "retail_and_ecommerce",
+    "category": "retail_and_ecommerce",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Point of Sale",
+    "category_name": "Retail and E-commerce"
+  },
+  {
+    "name": "cryptocurrency",
+    "family": "domain",
+    "description": "Digital or virtual currency secured by cryptography, typically operating on blockchain technology.",
+    "uid": 10901,
+    "extends": "blockchain",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Cryptocurrency",
+    "category_name": "Technology"
+  },
+  {
+    "name": "investment_services",
+    "family": "domain",
+    "description": "Managing financial assets, investment portfolios, and providing advisory services to clients. Subdomains: Asset Management, Hedge Funds, Private Equity, Mutual Funds, and Financial Planning.",
+    "uid": 203,
+    "extends": "finance_and_business",
+    "category": "finance_and_business",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Investment Services",
+    "category_name": "Finance and Business"
+  },
+  {
+    "name": "telecom_operations",
+    "family": "domain",
+    "description": "Service provisioning, billing systems, customer management, and operations support",
+    "uid": 1604,
+    "extends": "telecommunications",
+    "category": "telecommunications",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Telecom Operations",
+    "category_name": "Telecommunications"
+  },
+  {
+    "name": "logistics",
+    "family": "domain",
+    "description": "The coordination of complex operations involving people, facilities, and supplies. Subdomains: Warehousing, Distribution Management, Transportation Planning, and Reverse Logistics.",
+    "uid": 801,
+    "extends": "transportation",
+    "category": "transportation",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Logistics",
+    "category_name": "Transportation"
+  },
+  {
+    "name": "mental_health_services",
+    "family": "domain",
+    "description": "Mental health support, counseling, crisis intervention, and psychological services",
+    "uid": 2106,
+    "extends": "social_services",
+    "category": "social_services",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Mental Health Services",
+    "category_name": "Social Services"
+  },
+  {
+    "name": "digital_marketing",
+    "family": "domain",
+    "description": "SEO, SEM, content marketing, social media marketing, and online campaigns",
+    "uid": 2403,
+    "extends": "marketing_and_advertising",
+    "category": "marketing_and_advertising",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Digital Marketing",
+    "category_name": "Marketing and Advertising"
+  },
+  {
+    "name": "order_fulfillment",
+    "family": "domain",
+    "description": "Order processing, shipping, logistics, returns management, and last-mile delivery",
+    "uid": 2004,
+    "extends": "retail_and_ecommerce",
+    "category": "retail_and_ecommerce",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Order Fulfillment",
+    "category_name": "Retail and E-commerce"
+  },
+  {
+    "name": "broadcasting",
+    "family": "domain",
+    "description": "Radio and television broadcasting systems and operations.",
+    "uid": 1301,
+    "extends": "media_and_entertainment",
+    "category": "media_and_entertainment",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Broadcasting",
+    "category_name": "Media and Entertainment"
+  },
+  {
+    "name": "digital_media",
+    "family": "domain",
+    "description": "Social media, blogs, podcasts, and other digital content platforms.",
+    "uid": 1303,
+    "extends": "media_and_entertainment",
+    "category": "media_and_entertainment",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Digital Media",
+    "category_name": "Media and Entertainment"
+  },
+  {
+    "name": "gcp",
+    "family": "domain",
+    "description": "Suite of cloud computing services offered by Google.",
+    "uid": 10503,
+    "extends": "cloud_computing",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Google Cloud Platform (GCP)",
+    "category_name": "Technology"
+  },
+  {
+    "name": "help_desk_support",
+    "family": "domain",
+    "description": "Technical support and assistance for end users and IT systems.",
+    "uid": 10604,
+    "extends": "information_technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Help Desk Support",
+    "category_name": "Technology"
+  },
+  {
+    "name": "freight",
+    "family": "domain",
+    "description": "The transportation of goods in bulk. Subdomains: Freight Forwarding, Cargo Management, Logistics Operations, and Freight Brokerage.",
+    "uid": 805,
+    "extends": "transportation",
+    "category": "transportation",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Freight",
+    "category_name": "Transportation"
+  },
+  {
+    "name": "network_security",
+    "family": "domain",
+    "description": "Protection of network infrastructure and data from unauthorized access and attacks.",
+    "uid": 10305,
+    "extends": "networking",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Network Security",
+    "category_name": "Technology"
+  },
+  {
+    "name": "environmental_policy",
+    "family": "domain",
+    "description": "Environmental regulations, policy development, compliance, and environmental law",
+    "uid": 1705,
+    "extends": "environmental_science",
+    "category": "environmental_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Environmental Policy",
+    "category_name": "Environmental Science"
+  },
+  {
+    "name": "pedagogy",
+    "family": "domain",
+    "description": "The methods and practices of teaching, focusing on how best to convey knowledge and skills to learners. Subdomains: Teaching Strategies, Student-Centered Learning, Instructional Theory, and Learning Styles.",
+    "uid": 605,
+    "extends": "education",
+    "category": "education",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Pedagogy",
+    "category_name": "Education"
+  },
+  {
+    "name": "sports_technology",
+    "family": "domain",
+    "description": "Wearable devices, performance tracking systems, sports apps, and fitness technology",
+    "uid": 2206,
+    "extends": "sports_and_fitness",
+    "category": "sports_and_fitness",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Sports Technology",
+    "category_name": "Sports and Fitness"
+  },
+  {
+    "name": "hospitality_technology",
+    "family": "domain",
+    "description": "Property management systems, booking engines, guest experience platforms, and hospitality software",
+    "uid": 1503,
+    "extends": "hospitality_and_tourism",
+    "category": "hospitality_and_tourism",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Hospitality Technology",
+    "category_name": "Hospitality and Tourism"
+  },
+  {
+    "name": "contract_law",
+    "family": "domain",
+    "description": "Legal principles governing agreements and contracts between parties.",
+    "uid": 1001,
+    "extends": "legal",
+    "category": "legal",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Contract Law",
+    "category_name": "Legal"
+  },
+  {
+    "name": "research_data_management",
+    "family": "domain",
+    "description": "Data storage, research databases, data sharing, and research informatics",
+    "uid": 1905,
+    "extends": "research_and_development",
+    "category": "research_and_development",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Research Data Management",
+    "category_name": "Research and Development"
+  },
+  {
+    "name": "iot_connectivity",
+    "family": "domain",
+    "description": "IoT networks, M2M communications, NB-IoT, LoRaWAN, and connected device management",
+    "uid": 1602,
+    "extends": "telecommunications",
+    "category": "telecommunications",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "IoT Connectivity",
+    "category_name": "Telecommunications"
+  },
+  {
+    "name": "brand_management",
+    "family": "domain",
+    "description": "Brand strategy, brand identity, brand positioning, and reputation management",
+    "uid": 2402,
+    "extends": "marketing_and_advertising",
+    "category": "marketing_and_advertising",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Brand Management",
+    "category_name": "Marketing and Advertising"
+  },
+  {
+    "name": "fitness_and_wellness",
+    "family": "domain",
+    "description": "Fitness programs, wellness coaching, health tracking, and personal training",
+    "uid": 2202,
+    "extends": "sports_and_fitness",
+    "category": "sports_and_fitness",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Fitness and Wellness",
+    "category_name": "Sports and Fitness"
+  },
+  {
+    "name": "renewable_energy",
+    "family": "domain",
+    "description": "Solar, wind, hydro, and other sustainable energy sources and technologies.",
+    "uid": 1205,
+    "extends": "energy",
+    "category": "energy",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Renewable Energy",
+    "category_name": "Energy"
+  },
+  {
+    "name": "signal_processing",
+    "family": "domain",
+    "description": "Analysis, modification, and synthesis of signals such as sound, images, and sensor data.",
+    "uid": 10803,
+    "extends": "communication_systems",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Signal Processing",
+    "category_name": "Technology"
+  },
+  {
+    "name": "litigation",
+    "family": "domain",
+    "description": "Legal proceedings and dispute resolution through court systems.",
+    "uid": 1004,
+    "extends": "legal",
+    "category": "legal",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Litigation",
+    "category_name": "Legal"
+  },
+  {
+    "name": "public_policy",
+    "family": "domain",
+    "description": "Policy development, legislative processes, policy analysis, and public affairs",
+    "uid": 1806,
+    "extends": "government_and_public_sector",
+    "category": "government_and_public_sector",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Public Policy",
+    "category_name": "Government and Public Sector"
+  },
+  {
+    "name": "lean_manufacturing",
+    "family": "domain",
+    "description": "Methodology focusing on minimizing waste and maximizing efficiency in the production process. Subdomains: Continuous Improvement, Six Sigma, Value Stream Mapping, and Kaizen.",
+    "uid": 704,
+    "extends": "industrial_manufacturing",
+    "category": "industrial_manufacturing",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Lean Manufacturing",
+    "category_name": "Industrial Manufacturing"
+  },
+  {
+    "name": "broadcasting_systems",
+    "family": "domain",
+    "description": "Systems for distributing audio and video content to large audiences via radio, television, or internet.",
+    "uid": 10804,
+    "extends": "communication_systems",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Broadcasting Systems",
+    "category_name": "Technology"
+  },
+  {
+    "name": "telemedicine",
+    "family": "domain",
+    "description": "The delivery of healthcare services through telecommunications technology. Subdomains: Remote Consultation, Telehealth Platforms, Mobile Health, and Virtual Care.",
+    "uid": 902,
+    "extends": "healthcare",
+    "category": "healthcare",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Telemedicine",
+    "category_name": "Healthcare"
+  },
+  {
+    "name": "online_retail",
+    "family": "domain",
+    "description": "E-commerce platforms, online storefronts, digital marketplaces, and web retail",
+    "uid": 2003,
+    "extends": "retail_and_ecommerce",
+    "category": "retail_and_ecommerce",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Online Retail",
+    "category_name": "Retail and E-commerce"
+  },
+  {
+    "name": "hr_analytics",
+    "family": "domain",
+    "description": "Using data analysis to improve HR decision-making, workforce planning, and employee performance metrics. Subdomains: People Analytics, Predictive HR, Workforce Metrics, and Data-Driven HR Strategies.",
+    "uid": 505,
+    "extends": "human_resources",
+    "category": "human_resources",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "HR Analytics",
+    "category_name": "Human Resources"
+  },
+  {
+    "name": "consumer_goods",
+    "family": "domain",
+    "description": "Creation, marketing, and distribution of products intended for personal use. Subdomains: Product Development, Consumer Behavior, Marketing, Retail, and Supply Chain Management.",
+    "uid": 204,
+    "extends": "finance_and_business",
+    "category": "finance_and_business",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Consumer Goods",
+    "category_name": "Finance and Business"
+  },
+  {
+    "name": "facilities_management",
+    "family": "domain",
+    "description": "Building operations, maintenance, and facility services.",
+    "uid": 1402,
+    "extends": "real_estate",
+    "category": "real_estate",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Facilities Management",
+    "category_name": "Real Estate"
+  },
+  {
+    "name": "proptech",
+    "family": "domain",
+    "description": "Property technology innovations including smart buildings and real estate platforms.",
+    "uid": 1404,
+    "extends": "real_estate",
+    "category": "real_estate",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "PropTech",
+    "category_name": "Real Estate"
+  },
+  {
+    "name": "legal_research",
+    "family": "domain",
+    "description": "Investigation of legal precedents, statutes, and case law.",
+    "uid": 1005,
+    "extends": "legal",
+    "category": "legal",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Legal Research",
+    "category_name": "Legal"
+  },
+  {
+    "name": "sports_management",
+    "family": "domain",
+    "description": "Team management, sports facilities, event organization, and sports administration",
+    "uid": 2204,
+    "extends": "sports_and_fitness",
+    "category": "sports_and_fitness",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Sports Management",
+    "category_name": "Sports and Fitness"
+  },
+  {
+    "name": "sports_medicine",
+    "family": "domain",
+    "description": "Injury prevention, sports rehabilitation, athletic healthcare, and performance medicine",
+    "uid": 2205,
+    "extends": "sports_and_fitness",
+    "category": "sports_and_fitness",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Sports Medicine",
+    "category_name": "Sports and Fitness"
+  },
+  {
+    "name": "corporate_governance",
+    "family": "domain",
+    "description": "Systems, principles, and processes for directing and controlling corporations.",
+    "uid": 1006,
+    "extends": "legal",
+    "category": "legal",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Corporate Governance",
+    "category_name": "Legal"
+  },
+  {
+    "name": "retail_analytics",
+    "family": "domain",
+    "description": "Sales analytics, customer insights, merchandising analytics, and retail intelligence",
+    "uid": 2006,
+    "extends": "retail_and_ecommerce",
+    "category": "retail_and_ecommerce",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Retail Analytics",
+    "category_name": "Retail and E-commerce"
+  },
+  {
+    "name": "software_engineering",
+    "family": "domain",
+    "description": "Designing, developing, and maintaining software applications and systems.",
+    "uid": 102,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Software Engineering",
+    "category_name": "Technology"
+  },
+  {
+    "name": "child_and_family_services",
+    "family": "domain",
+    "description": "Child welfare, family support, foster care, adoption services, and family counseling",
+    "uid": 2102,
+    "extends": "social_services",
+    "category": "social_services",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Child and Family Services",
+    "category_name": "Social Services"
+  },
+  {
+    "name": "data_visualization",
+    "family": "domain",
+    "description": "Graphical representation of information and data using visual elements like charts, graphs, and maps.",
+    "uid": 10402,
+    "extends": "data_science",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Data Visualization",
+    "category_name": "Technology"
+  },
+  {
+    "name": "underwriting",
+    "family": "domain",
+    "description": "Risk assessment, policy pricing, underwriting automation, and risk evaluation",
+    "uid": 2306,
+    "extends": "insurance",
+    "category": "insurance",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Underwriting",
+    "category_name": "Insurance"
+  },
+  {
+    "name": "performance_analysis",
+    "family": "domain",
+    "description": "Analysis and optimization of system performance to ensure efficient operation.",
+    "uid": 10601,
+    "extends": "information_technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Performance Analysis",
+    "category_name": "Technology"
+  },
+  {
+    "name": "fraud_prevention",
+    "family": "domain",
+    "description": "Identifying and stopping fraudulent activities to protect individuals and organizations from financial and reputational damage. Subdomains: Transaction Monitoring, Identity Verification, Fraud Analytics, and Fraud Awareness Training.",
+    "uid": 403,
+    "extends": "trust_and_safety",
+    "category": "trust_and_safety",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Fraud Prevention",
+    "category_name": "Trust and Safety"
+  },
+  {
+    "name": "conservation_biology",
+    "family": "domain",
+    "description": "Species conservation, habitat protection, biodiversity, and wildlife management",
+    "uid": 1702,
+    "extends": "environmental_science",
+    "category": "environmental_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Conservation Biology",
+    "category_name": "Environmental Science"
+  },
+  {
+    "name": "insurance_sales",
+    "family": "domain",
+    "description": "Agent management, distribution channels, customer acquisition, and sales platforms",
+    "uid": 2303,
+    "extends": "insurance",
+    "category": "insurance",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Insurance Sales",
+    "category_name": "Insurance"
+  },
+  {
+    "name": "cloud_computing",
+    "family": "domain",
+    "description": "Delivery of computing services including servers, storage, databases, networking, software, and analytics over the internet.",
+    "uid": 105,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Cloud Computing",
+    "category_name": "Technology"
+  },
+  {
+    "name": "emergency_management",
+    "family": "domain",
+    "description": "Disaster response, emergency planning, crisis management, and public safety coordination",
+    "uid": 1803,
+    "extends": "government_and_public_sector",
+    "category": "government_and_public_sector",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Emergency Management",
+    "category_name": "Government and Public Sector"
+  },
+  {
+    "name": "genomics",
+    "family": "domain",
+    "description": "The study of genomes to understand genetic structure, function, and evolution. Subdomains: Comparative Genomics, Functional Genomics, Population Genomics, and Metagenomics.",
+    "uid": 303,
+    "extends": "life_science",
+    "category": "life_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Genomics",
+    "category_name": "Life Science"
+  },
+  {
+    "name": "property_management",
+    "family": "domain",
+    "description": "Management of residential and commercial properties including maintenance and tenant relations.",
+    "uid": 1403,
+    "extends": "real_estate",
+    "category": "real_estate",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Property Management",
+    "category_name": "Real Estate"
+  },
+  {
+    "name": "public_administration",
+    "family": "domain",
+    "description": "Government operations, administrative processes, civil service, and bureaucratic systems",
+    "uid": 1804,
+    "extends": "government_and_public_sector",
+    "category": "government_and_public_sector",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Public Administration",
+    "category_name": "Government and Public Sector"
+  },
+  {
+    "name": "crop_management",
+    "family": "domain",
+    "description": "Planning, monitoring, and optimizing crop production and yield.",
+    "uid": 1102,
+    "extends": "agriculture",
+    "category": "agriculture",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Crop Management",
+    "category_name": "Agriculture"
+  },
+  {
+    "name": "tourism_management",
+    "family": "domain",
+    "description": "Destination management, tourist attractions, tourism marketing, and visitor experiences",
+    "uid": 1505,
+    "extends": "hospitality_and_tourism",
+    "category": "hospitality_and_tourism",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Tourism Management",
+    "category_name": "Hospitality and Tourism"
+  },
+  {
+    "name": "network_architecture",
+    "family": "domain",
+    "description": "Design and structure of computer networks including topology, protocols, and components.",
+    "uid": 10304,
+    "extends": "networking",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Network Architecture",
+    "category_name": "Technology"
+  },
+  {
+    "name": "patient_management_systems",
+    "family": "domain",
+    "description": "Software solutions that help healthcare providers manage patient information and clinical processes. Subdomains: Appointment Scheduling, Patient Portals, Billing and Coding, and Health Record Management.",
+    "uid": 904,
+    "extends": "healthcare",
+    "category": "healthcare",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Patient Management Systems",
+    "category_name": "Healthcare"
+  },
+  {
+    "name": "curriculum_design",
+    "family": "domain",
+    "description": "Creating structured educational content and learning experiences for students. Subdomains: Instructional Design, Learning Objectives, Assessment Strategies, and Content Development.",
+    "uid": 602,
+    "extends": "education",
+    "category": "education",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Curriculum Design",
+    "category_name": "Education"
+  },
+  {
+    "name": "agricultural_technology",
+    "family": "domain",
+    "description": "Innovation and technology applications in farming including drones, IoT, and automation.",
+    "uid": 1101,
+    "extends": "agriculture",
+    "category": "agriculture",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Agricultural Technology",
+    "category_name": "Agriculture"
+  },
+  {
+    "name": "precision_agriculture",
+    "family": "domain",
+    "description": "Data-driven farming using sensors, GPS, and analytics for optimized crop management.",
+    "uid": 1104,
+    "extends": "agriculture",
+    "category": "agriculture",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Precision Agriculture",
+    "category_name": "Agriculture"
+  },
+  {
+    "name": "pharmaceutical_research",
+    "family": "domain",
+    "description": "The discovery, development, and testing of new drugs and therapies to treat diseases and improve health outcomes. Subdomains: Drug Discovery, Clinical Trials, Pharmacology, and Regulatory Affairs.",
+    "uid": 302,
+    "extends": "life_science",
+    "category": "life_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Pharmaceutical Research",
+    "category_name": "Life Science"
+  },
+  {
+    "name": "case_management",
+    "family": "domain",
+    "description": "Client case tracking, service coordination, needs assessment, and case documentation",
+    "uid": 2101,
+    "extends": "social_services",
+    "category": "social_services",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Case Management",
+    "category_name": "Social Services"
+  },
+  {
+    "name": "customer_experience",
+    "family": "domain",
+    "description": "Personalization, customer service, loyalty programs, and shopping experience optimization",
+    "uid": 2001,
+    "extends": "retail_and_ecommerce",
+    "category": "retail_and_ecommerce",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Customer Experience",
+    "category_name": "Retail and E-commerce"
+  },
+  {
+    "name": "content_moderation",
+    "family": "domain",
+    "description": "Reviewing and managing user-generated content to ensure it complies with community guidelines and legal standards. Subdomains: Automated Moderation, Community Guidelines, Human Moderation, and Harmful Content Detection.",
+    "uid": 402,
+    "extends": "trust_and_safety",
+    "category": "trust_and_safety",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Content Moderation",
+    "category_name": "Trust and Safety"
+  },
+  {
+    "name": "healthcare_informatics",
+    "family": "domain",
+    "description": "The management and analysis of healthcare data to improve patient care and operational efficiency. Subdomains: Electronic Health Records, Health Data Analytics, Clinical Informatics, and Health IT Systems.",
+    "uid": 903,
+    "extends": "healthcare",
+    "category": "healthcare",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Healthcare Informatics",
+    "category_name": "Healthcare"
+  },
+  {
+    "name": "scientific_research",
+    "family": "domain",
+    "description": "Research methodology, experimental design, data collection, and scientific investigation",
+    "uid": 1906,
+    "extends": "research_and_development",
+    "category": "research_and_development",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Scientific Research",
+    "category_name": "Research and Development"
+  },
+  {
+    "name": "event_planning",
+    "family": "domain",
+    "description": "Conference management, event coordination, venue management, and event services",
+    "uid": 1501,
+    "extends": "hospitality_and_tourism",
+    "category": "hospitality_and_tourism",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Event Planning",
+    "category_name": "Hospitality and Tourism"
+  },
+  {
+    "name": "sustainability",
+    "family": "domain",
+    "description": "Sustainable practices, carbon footprint reduction, circular economy, and green technology",
+    "uid": 1706,
+    "extends": "environmental_science",
+    "category": "environmental_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Sustainability",
+    "category_name": "Environmental Science"
+  },
+  {
+    "name": "base_domain",
+    "family": "domain",
+    "description": "The base domain is a generic domain defining a set of attributes for domain classes.",
+    "uid": 0,
+    "category": "other",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Domain"
+  },
+  {
+    "name": "innovation_management",
+    "family": "domain",
+    "description": "Innovation processes, idea management, technology transfer, and commercialization",
+    "uid": 1902,
+    "extends": "research_and_development",
+    "category": "research_and_development",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Innovation Management",
+    "category_name": "Research and Development"
+  },
+  {
+    "name": "gaming",
+    "family": "domain",
+    "description": "Video game development, esports, and interactive entertainment.",
+    "uid": 1304,
+    "extends": "media_and_entertainment",
+    "category": "media_and_entertainment",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Gaming",
+    "category_name": "Media and Entertainment"
+  },
+  {
+    "name": "risk_management",
+    "family": "domain",
+    "description": "Identifying, assessing, and prioritizing risks to minimize their impact on an organization's objectives and operations. Subdomains: Risk Assessment, Mitigation Strategies, Crisis Management, and Compliance and Auditing.",
+    "uid": 405,
+    "extends": "trust_and_safety",
+    "category": "trust_and_safety",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Risk Management",
+    "category_name": "Trust and Safety"
+  },
+  {
+    "name": "information_technology",
+    "family": "domain",
+    "description": "All aspects of managing and supporting technology systems and infrastructure.",
+    "uid": 106,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Information Technology",
+    "category_name": "Technology"
+  },
+  {
+    "name": "power_generation",
+    "family": "domain",
+    "description": "Electricity generation from various sources including nuclear, thermal, and renewable.",
+    "uid": 1204,
+    "extends": "energy",
+    "category": "energy",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Power Generation",
+    "category_name": "Energy"
+  },
+  {
+    "name": "mlops",
+    "family": "domain",
+    "description": "Set of practices that combines machine learning and DevOps to standardize and streamline the machine learning lifecycle.",
+    "uid": 10205,
+    "extends": "software_engineering",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "MLOps",
+    "category_name": "Technology"
+  },
+  {
+    "name": "cybersecurity",
+    "family": "domain",
+    "description": "Protection of computer systems, networks, and data from digital attacks and unauthorized access.",
+    "uid": 10701,
+    "extends": "security",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Cybersecurity",
+    "category_name": "Technology"
+  },
+  {
+    "name": "advertising",
+    "family": "domain",
+    "description": "Ad campaigns, media buying, creative development, and advertising platforms",
+    "uid": 2401,
+    "extends": "marketing_and_advertising",
+    "category": "marketing_and_advertising",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Advertising",
+    "category_name": "Marketing and Advertising"
+  },
+  {
+    "name": "travel_services",
+    "family": "domain",
+    "description": "Travel booking, itinerary planning, travel agencies, and booking platforms",
+    "uid": 1506,
+    "extends": "hospitality_and_tourism",
+    "category": "hospitality_and_tourism",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Travel Services",
+    "category_name": "Hospitality and Tourism"
+  },
+  {
+    "name": "application_security",
+    "family": "domain",
+    "description": "Security measures and practices to protect applications from threats and vulnerabilities.",
+    "uid": 10703,
+    "extends": "security",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Application Security",
+    "category_name": "Technology"
+  },
+  {
+    "name": "inventory_management",
+    "family": "domain",
+    "description": "Stock control, warehouse management, inventory tracking, and supply planning",
+    "uid": 2002,
+    "extends": "retail_and_ecommerce",
+    "category": "retail_and_ecommerce",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Inventory Management",
+    "category_name": "Retail and E-commerce"
+  },
+  {
+    "name": "blockchain",
+    "family": "domain",
+    "description": "Distributed ledger technology that maintains a continuously growing list of records secured using cryptography.",
+    "uid": 109,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Blockchain",
+    "category_name": "Technology"
+  },
+  {
+    "name": "compensation_and_benefits",
+    "family": "domain",
+    "description": "Designing and managing salary structures, bonuses, and benefits to attract and retain employees. Subdomains: Salary Benchmarking, Benefits Administration, Incentive Programs, and Retirement Planning.",
+    "uid": 504,
+    "extends": "human_resources",
+    "category": "human_resources",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Compensation and Benefits",
+    "category_name": "Human Resources"
+  },
+  {
+    "name": "smart_homes",
+    "family": "domain",
+    "description": "Residential environments with IoT devices for automation, monitoring, and control.",
+    "uid": 10104,
+    "extends": "internet_of_things",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Smart Homes",
+    "category_name": "Technology"
+  },
+  {
+    "name": "market_research",
+    "family": "domain",
+    "description": "Consumer research, market analysis, competitive intelligence, and research methodologies",
+    "uid": 2404,
+    "extends": "marketing_and_advertising",
+    "category": "marketing_and_advertising",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Market Research",
+    "category_name": "Marketing and Advertising"
+  },
+  {
+    "name": "public_infrastructure",
+    "family": "domain",
+    "description": "Infrastructure planning, public works, utilities management, and infrastructure maintenance",
+    "uid": 1805,
+    "extends": "government_and_public_sector",
+    "category": "government_and_public_sector",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Public Infrastructure",
+    "category_name": "Government and Public Sector"
+  },
+  {
+    "name": "e_government",
+    "family": "domain",
+    "description": "Digital government services, online portals, citizen engagement platforms, and digital identity",
+    "uid": 1802,
+    "extends": "government_and_public_sector",
+    "category": "government_and_public_sector",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "E-Government",
+    "category_name": "Government and Public Sector"
+  },
+  {
+    "name": "quality_assurance",
+    "family": "domain",
+    "description": "Processes and practices to ensure software quality through testing, code review, and quality standards.",
+    "uid": 10203,
+    "extends": "software_engineering",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Quality Assurance",
+    "category_name": "Technology"
+  },
+  {
+    "name": "energy_management",
+    "family": "domain",
+    "description": "Optimization of energy consumption, efficiency programs, and demand response.",
+    "uid": 1201,
+    "extends": "energy",
+    "category": "energy",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Energy Management",
+    "category_name": "Energy"
+  },
+  {
+    "name": "civic_engagement",
+    "family": "domain",
+    "description": "Citizen participation, community outreach, public consultation, and participatory governance",
+    "uid": 1801,
+    "extends": "government_and_public_sector",
+    "category": "government_and_public_sector",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Civic Engagement",
+    "category_name": "Government and Public Sector"
+  },
+  {
+    "name": "network_infrastructure",
+    "family": "domain",
+    "description": "Telecom network design, fiber optics, network equipment, and infrastructure management",
+    "uid": 1603,
+    "extends": "telecommunications",
+    "category": "telecommunications",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Network Infrastructure",
+    "category_name": "Telecommunications"
+  },
+  {
+    "name": "molecular_biology",
+    "family": "domain",
+    "description": "Molecular Biology is the branch of biology that focuses on the structure, function, and interactions of biological macromolecules, such as DNA, RNA, and proteins. Subdomains: Genomics, Gene Expression, and Cell Signaling.",
+    "uid": 305,
+    "extends": "life_science",
+    "category": "life_science",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Molecular Biology",
+    "category_name": "Life Science"
+  },
+  {
+    "name": "data_science",
+    "family": "domain",
+    "description": "Extracting insights and knowledge from structured and unstructured data using scientific methods, processes, and algorithms.",
+    "uid": 104,
+    "extends": "technology",
+    "category": "technology",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Data Science",
+    "category_name": "Technology"
+  },
+  {
+    "name": "insurtech",
+    "family": "domain",
+    "description": "Insurance technology, digital insurance platforms, telematics, and insurance innovation",
+    "uid": 2304,
+    "extends": "insurance",
+    "category": "insurance",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "InsurTech",
+    "category_name": "Insurance"
+  },
+  {
+    "name": "community_outreach",
+    "family": "domain",
+    "description": "Community programs, outreach services, community engagement, and local support initiatives",
+    "uid": 2103,
+    "extends": "social_services",
+    "category": "social_services",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Community Outreach",
+    "category_name": "Social Services"
+  },
+  {
+    "name": "public_transit",
+    "family": "domain",
+    "description": "Shared transportation services available for the public, such as buses and trains. Subdomains: Urban Transit Planning, Rail Systems, Bus Networks, and Transit Operations.",
+    "uid": 803,
+    "extends": "transportation",
+    "category": "transportation",
+    "constraints": {
+      "at_least_one": [
+        "id",
+        "name"
+      ]
+    },
+    "caption": "Public Transit",
+    "category_name": "Transportation"
+  }
+]

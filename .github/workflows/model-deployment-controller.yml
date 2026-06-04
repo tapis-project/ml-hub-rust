@@ -1,0 +1,28 @@
+name: Model Deployment Controller
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:    
+  build-push-image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Docker Login
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+        password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+    - uses: actions/checkout@v4
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Build Image
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/model-deployment-controller/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=model-deployment-controller --build-arg SERVICE_DIR="services/model-deployment-controller" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
+    - name: Push Image
+      run: docker push --all-tags ${{ inputs.image_name }}

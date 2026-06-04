@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mlhub-mongo-debug
+spec:
+  restartPolicy: Never
+  initContainers:
+    - name: fix-keyfile-permissions
+      image: busybox
+      command: ["sh", "-c", "chown 999:999 /etc/mongo-keyfile && chmod 400 /etc/mongo-keyfile"]
+      volumeMounts:
+        - name: mongo-keyfile
+          mountPath: /etc/mongo-keyfile
+          subPath: mongo-keyfile
+  containers:
+    - name: debug
+      image: ubuntu:24.04
+      command: ["/bin/bash", "-c", "sleep 3600"]
+      resources: {}
+      volumeMounts:
+        - name: mongodb-data
+          mountPath: "/data/db"
+        - name: init-script
+          mountPath: /scripts/
+        - name: mongo-keyfile
+          mountPath: /etc/mongo-keyfile
+          subPath: mongo-keyfile
+          readOnly: true
+  volumes:
+    - name: mongodb-data
+      persistentVolumeClaim:
+        claimName: mlhub-mongo-pvc
+    - name: init-script
+      configMap:
+        name: mlhub-cm-mongo-init-script
+        defaultMode: 0755
+    - name: mongo-keyfile
+      secret:
+        secretName: mlhub-mongo-keyfile-secret

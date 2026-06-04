@@ -1,0 +1,765 @@
+{
+  "attributes": {
+    "technology": {
+      "name": "technology",
+      "description": "Development, management, and use of systems, devices, and software to solve problems and enhance human capabilities.",
+      "uid": 1,
+      "caption": "Technology",
+      "classes": {
+        "security": {
+          "name": "security",
+          "family": "domain",
+          "description": "Protecting systems, data, and networks from cyber threats and vulnerabilities. Subdomains: Cybersecurity, Data Security, Application Security, Network Security, and Identity Management.",
+          "uid": 107,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Security"
+        },
+        "communication_systems": {
+          "name": "communication_systems",
+          "family": "domain",
+          "description": "Technologies for transmitting and receiving information over various media. Subdomains: Telecommunication, Wireless Communication, Signal Processing, and Broadcasting Systems.",
+          "uid": 108,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Communication Systems"
+        },
+        "information_technology": {
+          "name": "information_technology",
+          "family": "domain",
+          "description": "All aspects of managing and supporting technology systems and infrastructure. Subdomains: Network Monitoring, Network Monitoring, Incident Management, Network Performance Analysis, Traffic Management, Network Configuration, Network Optimization, and Network Troubleshooting.",
+          "uid": 106,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Information Technology"
+        },
+        "internet_of_things": {
+          "name": "internet_of_things",
+          "family": "domain",
+          "description": "Connecting everyday objects to the internet for data exchange and automation. Subdomains: IoT Devices, IoT Security, IoT Networks, Smart Homes, and Industrial IoT.",
+          "uid": 101,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Internet of Things (IoT)"
+        },
+        "network_management": {
+          "name": "network_management",
+          "family": "domain",
+          "description": "Tasks like monitoring, configuring, and optimizing networks. Subdomains: Network Configuration, Network Optimization, Network Troubleshooting, Wireless Networks, Network Protocols, Network Architecture, and Network Security.",
+          "uid": 105,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Network Management"
+        },
+        "network_operations": {
+          "name": "network_operations",
+          "family": "domain",
+          "description": "Ensures the smooth operation and performance of network infrastructure. Subdomains: Network Monitoring, Incident Management, Network Performance Analysis, and Traffic Management.",
+          "uid": 104,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Network Operations"
+        },
+        "networking": {
+          "name": "networking",
+          "family": "domain",
+          "description": "Design, management, and security of computer networks. Subdomains: Wireless Networks, Network Protocols, Network Architecture, and Network Security.",
+          "uid": 103,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Networking"
+        },
+        "software_engineering": {
+          "name": "software_engineering",
+          "family": "domain",
+          "description": "Designing, developing, and maintaining software applications and systems. Subdomains: Front-end Development, Back-end Development, Full-stack Development, DevOps, and Quality Assurance.",
+          "uid": 102,
+          "extends": "technology",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Software Engineering"
+        }
+      }
+    },
+    "finance_and_business": {
+      "name": "finance_and_business",
+      "description": "Managing money, investments, and financial risks within businesses or for individuals. Subdomains: Corporate Finance, Personal Finance, Risk Management, Accounting, and Financial Analysis.",
+      "uid": 2,
+      "caption": "Finance and Business",
+      "classes": {
+        "banking": {
+          "name": "banking",
+          "family": "domain",
+          "description": "Operations of financial institutions involved in accepting deposits, lending money, and other financial services. Subdomains: Retail Banking, Investment Banking, Corporate Banking, and Digital Banking.",
+          "uid": 201,
+          "extends": "finance_and_business",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Banking"
+        },
+        "consumer_goods": {
+          "name": "consumer_goods",
+          "family": "domain",
+          "description": "Creation, marketing, and distribution of products intended for personal use. Subdomains: Product Development, Consumer Behavior, Marketing, Retail, and Supply Chain Management.",
+          "uid": 204,
+          "extends": "finance_and_business",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Consumer Goods"
+        },
+        "finance": {
+          "name": "finance",
+          "family": "domain",
+          "description": "Managing money, investments, and financial risks within businesses or for individuals. Subdomains: Corporate Finance, Personal Finance, Risk Management, Accounting, and Financial Analysis.",
+          "uid": 202,
+          "extends": "finance_and_business",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Finance"
+        },
+        "investment_services": {
+          "name": "investment_services",
+          "family": "domain",
+          "description": "Managing financial assets, investment portfolios, and providing advisory services to clients. Subdomains: Asset Management, Hedge Funds, Private Equity, Mutual Funds, and Financial Planning.",
+          "uid": 203,
+          "extends": "finance_and_business",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Investment Services"
+        },
+        "retail": {
+          "name": "retail",
+          "family": "domain",
+          "description": "Sale of goods and services directly to consumers through various channels. Subdomains: E-commerce, In-store Retail, Inventory Management, Customer Experience, and Omnichannel Retail.",
+          "uid": 205,
+          "extends": "finance_and_business",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Retail"
+        }
+      }
+    },
+    "life_science": {
+      "name": "life_science",
+      "description": "cientific research and innovations in biology, genetics, biotechnology, and other related fields, with the goal of understanding life processes and advancing medical and environmental solutions. Subdomains: Biotechnology, Pharmaceutical Research, Genomics, Bioinformatics, and Molecular Biology.",
+      "uid": 3,
+      "caption": "Life Science",
+      "classes": {
+        "bioinformatics": {
+          "name": "bioinformatics",
+          "family": "domain",
+          "description": "the application of computational techniques to analyze and interpret biological data. Subdomains: Sequence Analysis, Systems Biology, Data Mining, and Structural Bioinformatics.",
+          "uid": 304,
+          "extends": "life_science",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Bioinformatics"
+        },
+        "biotechnology": {
+          "name": "biotechnology",
+          "family": "domain",
+          "description": "The application of biological systems and organisms to develop or create products and technologies that improve the quality of human life. Subdomains: Medical Biotechnology, Agricultural Biotechnology, Industrial Biotechnology, and Environmental Biotechnology.",
+          "uid": 301,
+          "extends": "life_science",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Biotechnology"
+        },
+        "genomics": {
+          "name": "genomics",
+          "family": "domain",
+          "description": "The study of genomes to understand genetic structure, function, and evolution. Subdomains: Comparative Genomics, Functional Genomics, Population Genomics, and Metagenomics.",
+          "uid": 303,
+          "extends": "life_science",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Genomics"
+        },
+        "molecular_biology": {
+          "name": "molecular_biology",
+          "family": "domain",
+          "description": "Molecular Biology is the branch of biology that focuses on the structure, function, and interactions of biological macromolecules, such as DNA, RNA, and proteins. Subdomains: Genomics, Gene Expression, and Cell Signaling.",
+          "uid": 305,
+          "extends": "life_science",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Molecular Biology"
+        },
+        "pharmaceutical_research": {
+          "name": "pharmaceutical_research",
+          "family": "domain",
+          "description": "The discovery, development, and testing of new drugs and therapies to treat diseases and improve health outcomes. Subdomains: Drug Discovery, Clinical Trials, Pharmacology, and Regulatory Affairs.",
+          "uid": 302,
+          "extends": "life_science",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Pharmaceutical Research"
+        }
+      }
+    },
+    "trust_and_safety": {
+      "name": "trust_and_safety",
+      "description": "Maintaining a secure and reliable environment, primarily online, by managing risks, preventing harm, and ensuring safety and privacy. Subdomains: Online Safety, Content Moderation, Fraud Prevention, Data Privacy, and Risk Management.",
+      "uid": 4,
+      "caption": "Trust and Safety",
+      "classes": {
+        "content_moderation": {
+          "name": "content_moderation",
+          "family": "domain",
+          "description": "Reviewing and managing user-generated content to ensure it complies with community guidelines and legal standards. Subdomains: Automated Moderation, Community Guidelines, Human Moderation, and Harmful Content Detection.",
+          "uid": 402,
+          "extends": "trust_and_safety",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Content Moderation"
+        },
+        "data_privacy": {
+          "name": "data_privacy",
+          "family": "domain",
+          "description": "Safeguarding personal information from unauthorized access and ensuring compliance with privacy laws and regulations. Subdomains: Privacy Regulations Compliance, Data Encryption, Data Anonymization, and User Consent Management.",
+          "uid": 404,
+          "extends": "trust_and_safety",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Data Privacy"
+        },
+        "fraud_prevention": {
+          "name": "fraud_prevention",
+          "family": "domain",
+          "description": "Identifying and stopping fraudulent activities to protect individuals and organizations from financial and reputational damage. Subdomains: Transaction Monitoring, Identity Verification, Fraud Analytics, and Fraud Awareness Training.",
+          "uid": 403,
+          "extends": "trust_and_safety",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Fraud Prevention"
+        },
+        "online_safety": {
+          "name": "online_safety",
+          "family": "domain",
+          "description": "Protecting internet users from various forms of harm to ensure a secure digital environment. Subdomains: Cybersecurity Awareness, Child Online Protection, Identity Protection, and Digital Wellbeing.",
+          "uid": 401,
+          "extends": "trust_and_safety",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Online Safety"
+        },
+        "risk_management": {
+          "name": "risk_management",
+          "family": "domain",
+          "description": "Identifying, assessing, and prioritizing risks to minimize their impact on an organization's objectives and operations. Subdomains: Risk Assessment, Mitigation Strategies, Crisis Management, and Compliance and Auditing.",
+          "uid": 405,
+          "extends": "trust_and_safety",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Risk Management"
+        }
+      }
+    },
+    "human_resources": {
+      "name": "human_resources",
+      "description": "Managing and optimizing the workforce of an organization, focusing on recruitment, employee development, and workplace culture. Subdomains: Recruitment, Employee Relations, Training and Development, Compensation and Benefits, and HR Analytics.",
+      "uid": 5,
+      "caption": "Human Resources",
+      "classes": {
+        "compensation_and_benefits": {
+          "name": "compensation_and_benefits",
+          "family": "domain",
+          "description": "Designing and managing salary structures, bonuses, and benefits to attract and retain employees. Subdomains: Salary Benchmarking, Benefits Administration, Incentive Programs, and Retirement Planning.",
+          "uid": 504,
+          "extends": "human_resources",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Compensation and Benefits"
+        },
+        "employee_relations": {
+          "name": "employee_relations",
+          "family": "domain",
+          "description": "Maintaining positive relationships between the employer and employees to foster a productive work environment. Subdomains: Conflict Resolution, Employee Engagement, Workplace Culture, and Labor Relations.",
+          "uid": 502,
+          "extends": "human_resources",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Employee Relations"
+        },
+        "hr_analytics": {
+          "name": "hr_analytics",
+          "family": "domain",
+          "description": "Using data analysis to improve HR decision-making, workforce planning, and employee performance metrics. Subdomains: People Analytics, Predictive HR, Workforce Metrics, and Data-Driven HR Strategies.",
+          "uid": 505,
+          "extends": "human_resources",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "HR Analytics"
+        },
+        "recruitment": {
+          "name": "recruitment",
+          "family": "domain",
+          "description": "Attracting, screening, and selecting qualified candidates for job openings within an organization. Subdomains: Talent Acquisition, Candidate Sourcing, Interviewing Techniques, and Onboarding Processes.",
+          "uid": 501,
+          "extends": "human_resources",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Recruitment"
+        },
+        "training_and_development": {
+          "name": "training_and_development",
+          "family": "domain",
+          "description": "Providing employees with skills and knowledge to enhance their job performance and career growth. Subdomains: Skills Training, Leadership Development, Career Pathing, and E-Learning Platforms.",
+          "uid": 503,
+          "extends": "human_resources",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Training and Development"
+        }
+      }
+    },
+    "education": {
+      "name": "education",
+      "description": "Systems, methods, and technologies used to teach, learn, and foster knowledge development in individuals and communities. Subdomains: E-Learning, Curriculum Design, Learning Management Systems, Educational Technology, and Pedagogy.",
+      "uid": 6,
+      "caption": "Education",
+      "classes": {
+        "curriculum_design": {
+          "name": "curriculum_design",
+          "family": "domain",
+          "description": "Creating structured educational content and learning experiences for students. Subdomains: Instructional Design, Learning Objectives, Assessment Strategies, and Content Development.",
+          "uid": 602,
+          "extends": "education",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Curriculum Design"
+        },
+        "e_learning": {
+          "name": "e_learning",
+          "family": "domain",
+          "description": "Delivering educational content and instruction through digital platforms and online courses. Subdomains: Online Course Development, Virtual Classrooms, Interactive Learning Tools, and Mobile Learning.",
+          "uid": 601,
+          "extends": "education",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "E-Learning"
+        },
+        "educational_technology": {
+          "name": "educational_technology",
+          "family": "domain",
+          "description": "Integrating digital tools and resources to enhance teaching and learning experiences. Subdomains: EdTech Innovations, Classroom Technology, Digital Content, and Gamification in Education.",
+          "uid": 604,
+          "extends": "education",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Educational Technology"
+        },
+        "learning_management_systems": {
+          "name": "learning_management_systems",
+          "family": "domain",
+          "description": "Software platforms for delivering, tracking, and managing educational courses and training programs. Subdomains: User Experience Design, Content Management, Reporting and Analytics, and System Integration.",
+          "uid": 603,
+          "extends": "education",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Learning Management Systems"
+        },
+        "pedagogy": {
+          "name": "pedagogy",
+          "family": "domain",
+          "description": "The methods and practices of teaching, focusing on how best to convey knowledge and skills to learners. Subdomains: Teaching Strategies, Student-Centered Learning, Instructional Theory, and Learning Styles.",
+          "uid": 605,
+          "extends": "education",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Pedagogy"
+        }
+      }
+    },
+    "industrial_manufacturing": {
+      "name": "industrial_manufacturing",
+      "description": "Production of goods, use of automation and technology in manufacturing, and industrial processes to create products on a large scale. Subdomains: Automation, Robotics, Supply Chain Management, Lean Manufacturing, and Process Engineering.",
+      "uid": 7,
+      "caption": "Industrial Manufacturing",
+      "classes": {
+        "automation": {
+          "name": "automation",
+          "family": "domain",
+          "description": "Using technology to perform processes with minimal human intervention. Subdomains: Automated Manufacturing, Control Systems, Industrial IoT, and Process Automation.",
+          "uid": 701,
+          "extends": "industrial_manufacturing",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Automation"
+        },
+        "lean_manufacturing": {
+          "name": "lean_manufacturing",
+          "family": "domain",
+          "description": "Methodology focusing on minimizing waste and maximizing efficiency in the production process. Subdomains: Continuous Improvement, Six Sigma, Value Stream Mapping, and Kaizen.",
+          "uid": 704,
+          "extends": "industrial_manufacturing",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Lean Manufacturing"
+        },
+        "process_engineering": {
+          "name": "process_engineering",
+          "family": "domain",
+          "description": "Designing, implementing, and optimizing industrial processes to improve efficiency and quality. Subdomains: Process Design, Process Optimization, Quality Control, and Safety Engineering.",
+          "uid": 705,
+          "extends": "industrial_manufacturing",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Process Engineering"
+        },
+        "robotics": {
+          "name": "robotics",
+          "family": "domain",
+          "description": "Designing and using robots for manufacturing tasks to enhance productivity and precision. Subdomains: Robotic Process Automation, Industrial Robotics, AI and Robotics, and Collaborative Robots.",
+          "uid": 702,
+          "extends": "industrial_manufacturing",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Robotics"
+        },
+        "supply_chain_management": {
+          "name": "supply_chain_management",
+          "family": "domain",
+          "description": "Coordinating and managing all activities involved in the production and delivery of goods. Subdomains: Inventory Management, Procurement, Logistics Management, and Demand Forecasting.",
+          "uid": 703,
+          "extends": "industrial_manufacturing",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Supply Chain Management"
+        }
+      }
+    },
+    "transportation": {
+      "name": "transportation",
+      "description": "Systems and processes involved in the movement of goods and people, as well as the physical infrastructure supporting them. Subdomains: Logistics, Automotive, Public Transit, Supply Chain, Freight, and Autonomous Vehicles.",
+      "uid": 8,
+      "caption": "Transportation",
+      "classes": {
+        "automotive": {
+          "name": "automotive",
+          "family": "domain",
+          "description": "The design, development, manufacturing, and marketing of motor vehicles. Subdomains: Vehicle Design, Automotive Engineering, Electric Vehicles, and Vehicle Manufacturing.",
+          "uid": 802,
+          "extends": "transportation",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Automotive"
+        },
+        "autonomous_vehicles": {
+          "name": "autonomous_vehicles",
+          "family": "domain",
+          "description": "Vehicles equipped with technology to navigate and operate without human control. Subdomains: Self-Driving Cars, Autonomous Trucks, Sensor Technology, and Vehicle AI.",
+          "uid": 806,
+          "extends": "transportation",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Autonomous Vehicles"
+        },
+        "freight": {
+          "name": "freight",
+          "family": "domain",
+          "description": "The transportation of goods in bulk. Subdomains: Freight Forwarding, Cargo Management, Logistics Operations, and Freight Brokerage.",
+          "uid": 805,
+          "extends": "transportation",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Freight"
+        },
+        "logistics": {
+          "name": "logistics",
+          "family": "domain",
+          "description": "The coordination of complex operations involving people, facilities, and supplies. Subdomains: Warehousing, Distribution Management, Transportation Planning, and Reverse Logistics.",
+          "uid": 801,
+          "extends": "transportation",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Logistics"
+        },
+        "public_transit": {
+          "name": "public_transit",
+          "family": "domain",
+          "description": "Shared transportation services available for the public, such as buses and trains. Subdomains: Urban Transit Planning, Rail Systems, Bus Networks, and Transit Operations.",
+          "uid": 803,
+          "extends": "transportation",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Public Transit"
+        },
+        "supply_chain": {
+          "name": "supply_chain",
+          "family": "domain",
+          "description": "The system of production, processing, and distribution of goods. Subdomains: Supplier Management, Production Scheduling, Inventory Control, and Global Supply Chain.",
+          "uid": 804,
+          "extends": "transportation",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Supply Chain"
+        }
+      }
+    },
+    "healthcare": {
+      "name": "healthcare",
+      "description": "Management, delivery, and innovation of medical services, treatments, and technologies aimed at improving the health and well-being of individuals and populations.",
+      "uid": 9,
+      "caption": "Healthcare",
+      "classes": {
+        "health_information_systems": {
+          "name": "health_information_systems",
+          "family": "domain",
+          "description": "Systems for managing healthcare data to support clinical and administrative decision-making. Subdomains: Hospital Information Systems, Clinical Decision Support, Health Data Security, and Interoperability Solutions.",
+          "uid": 905,
+          "extends": "healthcare",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Health Information Systems"
+        },
+        "healthcare_informatics": {
+          "name": "healthcare_informatics",
+          "family": "domain",
+          "description": "The management and analysis of healthcare data to improve patient care and operational efficiency. Subdomains: Electronic Health Records, Health Data Analytics, Clinical Informatics, and Health IT Systems.",
+          "uid": 903,
+          "extends": "healthcare",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Healthcare Informatics"
+        },
+        "medical_technology": {
+          "name": "medical_technology",
+          "family": "domain",
+          "description": "Innovations and devices used to improve the diagnosis, treatment, and management of health conditions. Subdomains: Medical Devices, Diagnostic Equipment, Wearable Health Tech, and Biotech Innovations.",
+          "uid": 901,
+          "extends": "healthcare",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Medical Technology"
+        },
+        "patient_management_systems": {
+          "name": "patient_management_systems",
+          "family": "domain",
+          "description": "Software solutions that help healthcare providers manage patient information and clinical processes. Subdomains: Appointment Scheduling, Patient Portals, Billing and Coding, and Health Record Management.",
+          "uid": 904,
+          "extends": "healthcare",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Patient Management Systems"
+        },
+        "telemedicine": {
+          "name": "telemedicine",
+          "family": "domain",
+          "description": "The delivery of healthcare services through telecommunications technology. Subdomains: Remote Consultation, Telehealth Platforms, Mobile Health, and Virtual Care.",
+          "uid": 902,
+          "extends": "healthcare",
+          "constraints": {
+            "at_least_one": [
+              "id",
+              "name"
+            ]
+          },
+          "caption": "Telemedicine"
+        }
+      }
+    }
+  },
+  "name": "main_domains",
+  "description": "A comprehensive table outlining distinct fields of application and knowledge areas within the framework.",
+  "caption": "Domains"
+}

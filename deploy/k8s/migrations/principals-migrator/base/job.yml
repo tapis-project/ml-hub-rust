@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mlhub-principals-migrator
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: mlhub-principals-migrator
+    spec:
+      restartPolicy: Never
+      containers:
+        - env:
+            - name: MONGO_HOST
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_DBNAME
+              value: mlhub
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets 
+                  key: password
+            - name: MONGO_REPLICA_SET
+              value: rs0
+            - name: RUST_LOG
+              value: debug
+            - name: SHARED_DATA
+              value: /srv/mlhub
+          image: tapis/mlhub-principals-migrator:local
+          imagePullPolicy: Never
+          name: principals-migrator
+          resources: {}

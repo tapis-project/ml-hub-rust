@@ -1,0 +1,5 @@
+{{ feature_attr }}
+pub trait Identify {
+    fn uid(&self) -> u32;
+    fn name(&self) -> String;
+}

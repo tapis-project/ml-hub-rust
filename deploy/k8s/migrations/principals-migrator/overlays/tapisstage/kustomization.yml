@@ -1,0 +1,21 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-principals-migrator
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-principals-migrator
+      spec:
+        template:
+          spec:
+            containers:
+              - image: tapis/mlhub-principals-migrator:staging
+                imagePullPolicy: Always
+                name: principals-migrator
+                resources: {}
+

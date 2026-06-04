@@ -1,0 +1,13 @@
+{{ feature_attr }}
+{{ enum_docstring }}
+pub enum {{ EnumName }} {
+{{ enum_items }}
+}
+
+{{ identify_trait }}
+
+{{ identify_impl }}
+
+{{ enum_to_string_impl }}
+
+{{ enum_to_u32_impl }}
