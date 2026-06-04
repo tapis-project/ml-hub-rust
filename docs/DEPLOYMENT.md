@@ -32,7 +32,7 @@ You will need to start Minikube with at least 2 nodes. Run the following command
 
 Now that you have all the necessary tools installed, we can start up the MLHub Models suite. 
 
-> **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project and in the root directory of each component to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
+> **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
 
 This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
 
@@ -100,5 +100,5 @@ The `components.json` file contains and exhaustive list of every component in th
 
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI
-2. Run `kubectl port-forward svc/mlhub-mongo-service 27017:27017`
+2. Run `kubectl port-forward pod/mlhub-mongo-stateful-set-0 27017:27017`
 3. Create a connection to the ip:port combination output by that command 

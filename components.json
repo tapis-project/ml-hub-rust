@@ -523,7 +523,6 @@
       "rootDir": "sdks/typescript-sdk",
       "labels": ["sdk"],
       "commands": {
-        "code": "code {{ sdks-dir }}/{{ self.name }}",
         "build": "./{{ self.rootDir }}/build",
         "generate-all": "./{{ self.rootDir }}/exec-generate-all {{ project-root }}",
         "exec": "./{{ self.rootDir }}/exec {{ project-root }}",
