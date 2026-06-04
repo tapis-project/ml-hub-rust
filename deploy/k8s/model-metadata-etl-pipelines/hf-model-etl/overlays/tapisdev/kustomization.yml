@@ -16,7 +16,7 @@ patches:
           metadata:
             name: mlhub-hf-model-etl
           spec:
-            restartPolicy: Always
+            restartPolicy: Never
             initContainers:
               - name: extract
                 env:

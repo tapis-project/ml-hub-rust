@@ -16,19 +16,19 @@ patches:
           metadata:
             name: mlhub-hf-model-etl
           spec:
-            restartPolicy: Always
+            restartPolicy: Never
             initContainers:
               - name: extract
                 env:
                   - name: RUST_LOG
                     value: debug
                   - name: MAX_RECORDS
-                    value: '5000'
+                    value: '5000000'
                 image: tapis/mlhub-hf-model-etl-extract:26Q2
             containers:
               - name: hf-model-etl
                 env:
                   - name: MAX_PROCESSABLE_ENTRIES
-                    value: "5000"
+                    value: "5000000"
                 image: tapis/mlhub-hf-model-etl-transform-load:26Q2
                 imagePullPolicy: Always
