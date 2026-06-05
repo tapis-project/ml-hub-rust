@@ -11,6 +11,7 @@ use actix_web::{
     HttpMessage
 };
 use serde_json::json;
+use log::debug;
 use url_parse::core::Parser;
 
 pub async fn resolve_tenancy(
@@ -28,6 +29,8 @@ pub async fn resolve_tenancy(
 
     let conn = req.connection_info().clone();
     let url_string = format!("{}://{}{}", conn.scheme(), conn.host(), req.uri());
+
+    debug!("{}", &url_string);
     
     let url = match Parser::new(None).parse(&url_string) {
         Ok(u) => u,
@@ -37,6 +40,8 @@ pub async fn resolve_tenancy(
                 .map_into_right_body()
         )
     };
+
+    debug!("{:#?}", &url);
 
     let maybe_tenant_id = match config.tenancy_resolution_mode {
         TenancyResolutionMode::Subdomain => {

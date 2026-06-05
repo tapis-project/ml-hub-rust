@@ -1,6 +1,6 @@
 use crate::application::artifact_inputs::IngestArtifactInput;
 use crate::bootstrap::{factories::artifact_service_factory, state::AppState};
-use crate::presentation::http::v1::actix_web::helpers::{
+use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response, build_success_response,
 };
 use crate::presentation::http::v1::requests::{
