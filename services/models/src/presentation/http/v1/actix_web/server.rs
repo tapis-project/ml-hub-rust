@@ -122,6 +122,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
             .app_data(web::Data::new(state.clone()))
+            .wrap(Logger::default())
             
             // Public routes
             .service(handlers::index::index)
