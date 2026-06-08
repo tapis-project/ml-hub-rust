@@ -12,6 +12,7 @@ use actix_web::{
 };
 use serde_json::json;
 use url_parse::core::Parser;
+use log::debug;
 
 pub async fn resolve_tenancy(
     req: ServiceRequest,
@@ -26,6 +27,8 @@ pub async fn resolve_tenancy(
         )
     };
 
+    debug!("{:#?}", &req.headers());
+
     // Get the FQDN from X-Forwarded-Host first, then fallback to Host
     let maybe_fqdn = req
         .headers()
@@ -33,14 +36,18 @@ pub async fn resolve_tenancy(
         .or_else(|| req.headers().get("Host"))
         .and_then(|val| val.to_str().map(|v| String::from(v)).ok());
 
+    debug!("{:#?}", &maybe_fqdn);
+
     let fqdn = match maybe_fqdn {
         Some(domain) => domain,
         None => return Ok(
             req
-                .into_response(HttpResponse::InternalServerError().json(json!({"error": "Faield to resolve FQDN"})))
+                .into_response(HttpResponse::InternalServerError().json(json!({"error": "Failed to resolve FQDN"})))
                 .map_into_right_body()
         )
     };
+
+    debug!("{:#?}", &fqdn);
     
     let url = match Parser::new(None).parse(&fqdn) {
         Ok(u) => u,
@@ -50,6 +57,8 @@ pub async fn resolve_tenancy(
                 .map_into_right_body()
         )
     };
+
+    debug!("{:#?}", &url);
 
     let maybe_tenant_id = match config.tenancy_resolution_mode {
         TenancyResolutionMode::Subdomain => {
