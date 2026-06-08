@@ -11,7 +11,6 @@ use actix_web::{
     HttpMessage
 };
 use serde_json::json;
-use log::debug;
 use url_parse::core::Parser;
 
 pub async fn resolve_tenancy(
@@ -21,18 +20,29 @@ pub async fn resolve_tenancy(
     let config = match req.app_data::<web::Data<SiteConfiguration>>().cloned() {
         Some(c) => c.into_inner(),
         None => return Ok(
-                req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "SiteConfiguration missing"})))
-                    .map_into_right_body()
+            req
+                .into_response(HttpResponse::InternalServerError().json(json!({"error": "SiteConfiguration missing"})))
+                .map_into_right_body()
         )
     };
 
-    let conn = req.connection_info().clone();
-    let url_string = format!("{}://{}{}", conn.scheme(), conn.host(), req.uri());
+    // Get the FQDN from X-Forwarded-Host first, then fallback to Host
+    let maybe_fqdn = req
+        .headers()
+        .get("X-Forwarded-Host")
+        .or_else(|| req.headers().get("Host"))
+        .and_then(|val| val.to_str().map(|v| String::from(v)).ok());
 
-    debug!("{}", &url_string);
+    let fqdn = match maybe_fqdn {
+        Some(domain) => domain,
+        None => return Ok(
+            req
+                .into_response(HttpResponse::InternalServerError().json(json!({"error": "Faield to resolve FQDN"})))
+                .map_into_right_body()
+        )
+    };
     
-    let url = match Parser::new(None).parse(&url_string) {
+    let url = match Parser::new(None).parse(&fqdn) {
         Ok(u) => u,
         Err(err) => return Ok(
             req
@@ -40,8 +50,6 @@ pub async fn resolve_tenancy(
                 .map_into_right_body()
         )
     };
-
-    debug!("{:#?}", &url);
 
     let maybe_tenant_id = match config.tenancy_resolution_mode {
         TenancyResolutionMode::Subdomain => {
