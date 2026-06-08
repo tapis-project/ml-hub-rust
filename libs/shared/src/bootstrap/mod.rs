@@ -21,7 +21,7 @@ use crate::infra::principal::mongo::principal_repository::PrincipalRepository as
 // Domain
 use crate::domain::entities::identity::FederatedIdentity;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct SiteConfiguration {
     pub site_id: String,
     pub base_url: String,

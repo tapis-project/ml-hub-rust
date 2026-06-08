@@ -12,7 +12,7 @@ use actix_web::{
 };
 use serde_json::json;
 use url_parse::core::Parser;
-use log::debug;
+use log::error;
 
 pub async fn resolve_tenancy(
     req: ServiceRequest,
@@ -20,14 +20,15 @@ pub async fn resolve_tenancy(
 ) -> Result<ServiceResponse<EitherBody<impl MessageBody>>, Error> {
     let config = match req.app_data::<web::Data<SiteConfiguration>>().cloned() {
         Some(c) => c.into_inner(),
-        None => return Ok(
-            req
-                .into_response(HttpResponse::InternalServerError().json(json!({"error": "SiteConfiguration missing"})))
-                .map_into_right_body()
-        )
+        None => {
+            error!("Site configuration missing from the request's app data");
+            return Ok(
+                req
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "SiteConfiguration missing"})))
+                    .map_into_right_body()
+            )
+        }
     };
-
-    debug!("{:#?}", &req.headers());
 
     // Get the FQDN from X-Forwarded-Host first, then fallback to Host
     let maybe_fqdn = req
@@ -36,29 +37,29 @@ pub async fn resolve_tenancy(
         .or_else(|| req.headers().get("Host"))
         .and_then(|val| val.to_str().map(|v| String::from(v)).ok());
 
-    debug!("{:#?}", &maybe_fqdn);
-
     let fqdn = match maybe_fqdn {
         Some(domain) => domain,
-        None => return Ok(
-            req
-                .into_response(HttpResponse::InternalServerError().json(json!({"error": "Failed to resolve FQDN"})))
-                .map_into_right_body()
-        )
+        None => {
+            error!("Failed to resolve FQDN from X-Forwarded-Host and Host headers");
+            return Ok(
+                req
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Failed to resolve FQDN"})))
+                    .map_into_right_body()
+            )
+        }
     };
-
-    debug!("{:#?}", &fqdn);
     
     let url = match Parser::new(None).parse(&fqdn) {
         Ok(u) => u,
-        Err(err) => return Ok(
-            req
-                .into_response(HttpResponse::InternalServerError().json(json!({"error": format!("Failed parse url when resolving tenancy: {}", err.to_string())})))
-                .map_into_right_body()
-        )
+        Err(err) => {
+            error!("Failed to parse the URL from the FQDN resolved in the headers. Resolved FQDN: {:#?}", &fqdn);
+            return Ok(
+                req
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": format!("Failed parse url when resolving tenancy: {}", err.to_string())})))
+                    .map_into_right_body()
+            )
+        }
     };
-
-    debug!("{:#?}", &url);
 
     let maybe_tenant_id = match config.tenancy_resolution_mode {
         TenancyResolutionMode::Subdomain => {
@@ -70,11 +71,14 @@ pub async fn resolve_tenancy(
 
     let tenant_id = match maybe_tenant_id {
         Some(t) => t,
-        None => return Ok(
-            req
-                .into_response(HttpResponse::InternalServerError().json(json!({"error": "Unable to resolve tenant id"})))
-                .map_into_right_body()
-        )
+        None => {
+            error!("Unable to resolve tenant id using the following tenancy resolution mode: {}", &config.tenancy_resolution_mode);
+            return Ok(
+                req
+                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Unable to resolve tenant id"})))
+                    .map_into_right_body()
+            )
+        }
     };
 
     req.extensions_mut().insert(Tenant { id: tenant_id.to_string() });
