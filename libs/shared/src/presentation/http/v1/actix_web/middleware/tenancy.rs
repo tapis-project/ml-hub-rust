@@ -1,5 +1,4 @@
-use crate::bootstrap::TenancyResolutionMode;
-use crate::bootstrap::SiteConfiguration;
+use crate::infra::configuration::{TenancyResolutionMode, SiteConfiguration};
 use crate::domain::entities::tenancy::Tenant;
 use actix_web::HttpResponse;
 use actix_web::{
