@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::build_deployment_strategy_provider;
-use crate::infra::persistence::mongo::database::{ClientParams, initialize_client};
+pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use crate::presentation::http::v1::actix_web::handlers;
 use actix_web::{App, HttpServer, middleware::{from_fn, Logger}, web};
