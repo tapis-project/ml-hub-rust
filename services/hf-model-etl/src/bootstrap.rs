@@ -8,9 +8,9 @@ use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
+use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use shared::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
-    ArtifactRepository as MongoArtifactRepository,
 };
 use std::sync::Arc;
 

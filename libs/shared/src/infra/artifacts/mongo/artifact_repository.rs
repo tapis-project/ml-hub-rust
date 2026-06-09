@@ -1,7 +1,7 @@
 use crate::application::errors::ApplicationError;
 use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::infra::persistence::mongo::database::ARTIFACT_COLLECTION;
-use crate::infra::persistence::mongo::documents::artifact::{Artifact, ArtifactType, UpdateArtifactRequest, UpdateArtifactPathRequest};
+use crate::infra::artifacts::mongo::documents::{Artifact, ArtifactType, UpdateArtifactRequest, UpdateArtifactPathRequest};
 use crate::application;
 use crate::domain::entities;
 use mongodb::{

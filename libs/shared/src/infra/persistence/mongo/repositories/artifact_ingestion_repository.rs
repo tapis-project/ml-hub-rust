@@ -1,6 +1,6 @@
 use crate::application::errors::ApplicationError;
 use crate::infra::persistence::mongo::database::ARTIFACT_INGESTION_COLLECTION;
-use crate::infra::persistence::mongo::documents::artifact::ArtifactType as ArtifactTypeDoc;
+use crate::infra::artifacts::mongo::documents::ArtifactType as ArtifactTypeDoc;
 use crate::infra::persistence::mongo::documents::artifact_ingestion::{ArtifactIngestion, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest};
 use crate::application;
 use crate::domain::entities;

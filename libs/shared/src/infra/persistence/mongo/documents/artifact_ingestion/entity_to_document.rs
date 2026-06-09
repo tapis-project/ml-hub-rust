@@ -1,7 +1,7 @@
 use crate::domain::entities;
 use crate::infra::persistence::mongo::documents;
 use mongodb::bson::Uuid;
-use crate::infra::common::mongo::ToBsonDateTime;
+use crate::infra::_common::mongo::ToBsonDateTime;
 
 impl From<entities::artifact::ArtifactType> for documents::artifact_ingestion::ArtifactType {
     fn from(value: entities::artifact::ArtifactType) -> Self {

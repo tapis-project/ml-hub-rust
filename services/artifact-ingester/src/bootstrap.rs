@@ -9,8 +9,8 @@ use shared::application::ports::artifacts::{
 };
 use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::artifact_service::ArtifactService;
+use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use shared::infra::persistence::mongo::repositories::{
-    ArtifactRepository as MongoArtifactRepository,
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
     ModelMetadataRepository as MongoModelMetadataRepository,

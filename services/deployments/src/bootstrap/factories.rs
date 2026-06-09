@@ -12,10 +12,10 @@ use shared::application::ports::deployment::ModelDeploymentRepository;
 use shared::application::ports::events::EventPublisher;
 use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use shared::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
-    ArtifactRepository as MongoArtifactRepository,
 };
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;
 

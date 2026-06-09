@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::domain::entities::identity as entities;
-use crate::infra::common::mongo::{ToBsonDateTime, ToTimeStamp};
+use crate::infra::_common::mongo::{ToBsonDateTime, ToTimeStamp};
 
 pub const FEDERATED_IDENTITY_COLLECTION: &str = "FEDERATED_IDENTITIES";
 

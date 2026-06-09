@@ -2,6 +2,7 @@
 //! infrastucture and technologies implemented in this project such as databases, message brokers,
 //! file systems, and os level programs.
 
+pub mod artifacts;
 pub mod system;
 pub mod fs;
 pub mod messaging;
@@ -12,5 +13,5 @@ pub mod reconciliation;
 pub mod contracts;
 pub mod identity;
 pub mod configuration;
-pub mod common;
+pub mod _common;
 pub mod principal;

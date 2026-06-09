@@ -14,8 +14,8 @@ use crate::application::ports::artifacts::{
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::services::artifact_service::ArtifactService;
 use crate::application::services::model_metadata_service::ModelMetadataService;
+use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use crate::infra::persistence::mongo::repositories::{
-    ArtifactRepository as MongoArtifactRepository,
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
     ModelMetadataRepository as MongoModelMetadataRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
