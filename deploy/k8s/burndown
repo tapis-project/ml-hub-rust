@@ -1,26 +1,32 @@
 #!/usr/bin/env bash
 
-set -e
-
 here=$(pwd)
 
+overlay="{{ mlhub_env }}"
+
 cd "$here/traefik"
-./burndown.sh
-
-cd "$here/nfs"
-./burndown.sh
-
-cd "$here/mongo"
-./burndown.sh
-
-cd "$here/rabbit"
-./burndown.sh
-
-cd "$here/artifact-ingester"
-./burndown.sh
-
-cd "$here/artifact-publisher"
-./burndown.sh
+./burndown.sh "$overlay"
 
 cd "$here/models"
-./burndown.sh
+./burndown.sh "$overlay"
+
+cd "$here/deployments"
+./burndown.sh "$overlay"
+
+cd "$here/nfs"
+./burndown.sh "$overlay"
+
+cd "$here/mongo"
+./burndown.sh "$overlay"
+
+cd "$here/rabbit"
+./burndown.sh "$overlay"
+
+cd "$here/artifact-ingester"
+./burndown.sh "$overlay"
+
+cd "$here/artifact-publisher"
+./burndown.sh "$overlay"
+
+cd "$here/model-deployment-controller"
+./burndown.sh "$overlay"

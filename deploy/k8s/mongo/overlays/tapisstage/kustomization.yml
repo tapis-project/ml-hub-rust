@@ -3,7 +3,6 @@ resources:
 
 configMapGenerator:
 - name: mlhub-cm-mongo-init-script
-  behavior: replace
   files:
   - init-db.sh
 
