@@ -1,4 +1,6 @@
-use crate::bootstrap::Idp;
+// TODO This should not be comming from infra as this is an application-level
+// service.
+use crate::infra::identity::Idp;
 
 pub struct FederatedIdentityService;
 

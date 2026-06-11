@@ -357,7 +357,7 @@
     },
     {
       "name": "retry",
-      "rootDir": "libs/retry_utils",
+      "rootDir": "libs/retry-utils",
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {

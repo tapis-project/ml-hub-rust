@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::build_deployment_strategy_provider;
-use crate::infra::persistence::mongo::database::{ClientParams, initialize_client};
+pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use crate::presentation::http::v1::actix_web::handlers;
-use actix_web::{App, HttpServer, middleware::from_fn, web};
+use actix_web::{App, HttpServer, middleware::{from_fn, Logger}, web};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
 use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
@@ -122,6 +122,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
             .app_data(web::Data::new(state.clone()))
+            .wrap(Logger::default())
             
             // Public routes
             .service(handlers::index::index)
@@ -136,6 +137,7 @@ pub async fn run_server() -> std::io::Result<()> {
                 web::scope("")
                     .wrap(from_fn(authenticate))
                     .wrap(from_fn(resolve_tenancy))
+                    .wrap(Logger::default())
                     .service(handlers::get_model_by_platform::get_model_by_platform)
                     .service(handlers::list_models_by_platform::list_models_by_platform)
                     .service(handlers::ingest_external_model::ingest_external_model)

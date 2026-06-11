@@ -1,4 +1,4 @@
-use crate::infra::common::mongo::Index;
+use crate::infra::_common::mongo::Index;
 use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
 use mongodb::{bson::doc, options::IndexOptions, IndexModel};
 

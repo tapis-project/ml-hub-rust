@@ -1,6 +1,6 @@
 use crate::domain::entities;
 use crate::domain::entities::principal::PrincipalError;
-use crate::infra::common::mongo::{ToBsonDateTime, ToTimeStamp};
+use crate::infra::_common::mongo::{ToBsonDateTime, ToTimeStamp};
 use crate::infra::identity::mongo::documents::FederatedIdentity;
 
 use mongodb::bson::{oid::ObjectId, DateTime};

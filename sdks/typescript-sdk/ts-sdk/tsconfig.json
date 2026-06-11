@@ -3,8 +3,8 @@
     /* Language and Environment */
     "target": "ES2022",                  // modern async/await, class fields, etc.
     "lib": ["ES2022"],                   // standard library for Node 18+ features
-    "module": "NodeNext",                // Node’s ESM/CJS interoperability
-    "moduleResolution": "NodeNext",      // resolves both .ts/.mts/.cts
+    "module": "ESNext",                  
+    "moduleResolution": "bundler",       
     "allowJs": false,                    // disallow plain JS (optional)
 
     /* Type Checking */
@@ -15,6 +15,7 @@
 
     /* Emit */
     "outDir": "./dist",
+    "rootDir": "src",
     "declaration": true,                 // generate .d.ts
     "sourceMap": true,
 
@@ -30,6 +31,6 @@
     /* Experiments */
     "allowSyntheticDefaultImports": true // smoother ESM/CJS interop
   },
-  "include": ["src", "tests", "tests/e2e"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }

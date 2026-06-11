@@ -25,5 +25,5 @@ members = [
     "libs/shared",
     "libs/huggingface-tasks",
     "libs/tapis-client",
-    "libs/retry_utils",
+    "libs/retry-utils",
 ]

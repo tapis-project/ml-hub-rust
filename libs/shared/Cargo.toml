@@ -12,7 +12,7 @@ mongo = ["mongodb"]
 agntcy-sdk = { version = "0.8.0", path = "../../sdks/agntcy-sdk" }
 platforms = { version = "0.1.0", path = "../../libs/platforms" }
 huggingface-tasks = { version = "0.1.0", path = "../../libs/huggingface-tasks" }
-retry_utils = { version = "0.1.0", path = "../../libs/retry_utils" }
+retry-utils = { version = "0.1.0", path = "../../libs/retry-utils" }
 actix-multipart = {version = "0.7.2", optional = true}
 actix-web = {version = "4", optional = true}
 amqprs = "2.1.1"

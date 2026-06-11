@@ -1,6 +1,6 @@
 {
     "site_id": "tacc",
-    "base_url": "https://tapis.io",
+    "base_url": "https://admin.tapis.io",
     "idps": ["tapis"],
     "tenancy_resolution_mode": "subdomain"
 }
