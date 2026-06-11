@@ -43,7 +43,7 @@ async fn main() {
         }
     };
 
-    let artifact_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
+    let model_metadata_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
         .await
         .expect("failed to initialize artifact service");
 
@@ -115,7 +115,7 @@ async fn main() {
                                 }
                             }
                         };
-                        match artifact_service.register_model_metadata(UpsertModelMetadata { metadata }).await {
+                        match model_metadata_service.register_model_metadata(UpsertModelMetadata { metadata }).await {
                             Ok(_) => (),
                             Err(err) => {
                                 eprintln!("Error saving metadata to the database: {}", err.to_string());
