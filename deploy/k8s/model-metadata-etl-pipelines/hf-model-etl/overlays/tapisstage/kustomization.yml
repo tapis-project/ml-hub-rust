@@ -2,6 +2,11 @@ resources:
   - ../../base
   - ../../../../site-configs/overlays/tapisstage
 
+secretGenerator:
+  - name: mlhub-huggingface-secrets
+    literals:
+    - token={{ mlhub_etl_hf_token }}
+
 patches:
   - target:
       kind: Job

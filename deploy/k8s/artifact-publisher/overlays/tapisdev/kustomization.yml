@@ -17,5 +17,5 @@ patches:
             containers:
               - name: artifact-publisher
                 image: tapis/mlhub-artifact-publisher:dev
-                imagePullPolicy: Never
+                imagePullPolicy: Always
                 resources: {}

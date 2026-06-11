@@ -17,5 +17,5 @@ patches:
             containers:
               - name: artifact-ingester
                 image: tapis/mlhub-artifact-ingester:staging
-                imagePullPolicy: Never
+                imagePullPolicy: Always
                 resources: {}
