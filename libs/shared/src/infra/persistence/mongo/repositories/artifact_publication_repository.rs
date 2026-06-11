@@ -2,7 +2,7 @@ use crate::application::errors::ApplicationError;
 use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::infra::persistence::mongo::database::ARTIFACT_PUBLICATION_COLLECTION;
 use crate::infra::persistence::mongo::documents::artifact_publication::{ArtifactPublication, UpdateArtifactPublicationStatusRequest};
-use crate::infra::persistence::mongo::documents::artifact::ArtifactType as ArtifactTypeDoc;
+use crate::infra::artifacts::mongo::documents::ArtifactType as ArtifactTypeDoc;
 use crate::application;
 use crate::domain::entities;
 use mongodb::{

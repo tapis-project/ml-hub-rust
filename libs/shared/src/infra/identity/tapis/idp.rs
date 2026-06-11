@@ -1,9 +1,16 @@
-use crate::application::ports::identity::{FederatedIdentityProvider as Port, FederatedIdentityProviderError};
-use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps};
-use crate::bootstrap::Idp;
 use jsonwebtoken::Algorithm;
 use serde::Deserialize;
 use tapis_tenants::{TapisTenants, models::Tenant};
+
+// Application
+use crate::application::ports::identity::{FederatedIdentityProvider as Port, FederatedIdentityProviderError};
+
+// Domain
+use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps};
+
+use crate::infra::configuration::SiteConfiguration;
+// Infra
+use crate::infra::identity::Idp;
 use crate::infra::identity::helpers::{token_from_string, validate_claims, Token as Jwt};
 
 #[derive(Debug, Clone, Deserialize)]
@@ -75,19 +82,16 @@ pub struct FederatedIdentityProvider {
 }
 
 impl FederatedIdentityProvider {
-    pub async fn new() -> Result<Self, FederatedIdentityProviderError> {
-        let base_url = std::env::var(&"TAPIS_IDP_BASE_URL".to_string())
-            .unwrap_or(String::from("https://admin.tapis.io"));
-        
+    pub async fn new(site_configuration: SiteConfiguration) -> Result<Self, FederatedIdentityProviderError> {        
         Ok(Self {
-            tenants: TapisTenants::new(base_url.as_str(), None)
+            tenants: TapisTenants::new(site_configuration.base_url.clone().as_str(), None)
                 .map_err(|err| FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string()))?
                 .tenants
                 .list_tenants(None, None)
                 .await
                 .map_err(|err| FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string()))?
                 .result
-                .ok_or_else(|| FederatedIdentityProviderError::InitializationError(Idp::Tapis, "Tenants data missing".into()))?
+                .ok_or_else(|| FederatedIdentityProviderError::InitializationError(Idp::Tapis, "Tenants data missing".into()))?,
         })
     }
 }

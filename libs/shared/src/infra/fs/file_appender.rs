@@ -7,23 +7,23 @@ use tokio::io::AsyncWriteExt;
 use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
-pub enum StackingError {
-    #[error("Error creating file: {0}")]
-    StackingFileError(String),
+pub enum FileAppendError {
+    #[error("Error creating directories: {0}")]
+    MkdirError(String),
 
     #[error("File I/O error: {0}")]
     IOError(String),
 }
 
 // A file compression utility that zips and compresses files and directories
-pub struct FileStacker {}
+pub struct FileAppender {}
 
-impl FileStacker {
+impl FileAppender {
     pub fn new() -> Self {
         Self {}
     }
 
-    pub async fn stack(destination: &PathBuf, chunk: Vec<u8>) -> Result<(), StackingError> {
+    pub async fn append_chunk(destination: &PathBuf, chunk: Vec<u8>) -> Result<(), FileAppendError> {
         GlobalLogger::debug(
             format!(
                 "FILE STACKING (DESTINATION: {})",
@@ -33,9 +33,12 @@ impl FileStacker {
         );
         // 1. check if the parent directory exists, if not create it
         if let Some(parent_dir) = destination.parent() {
-            tokio::fs::create_dir_all(parent_dir).await.map_err(|e| {
-                StackingError::StackingFileError(format!("Fail to create dir: {}", e))
-            })?;
+            tokio::fs::create_dir_all(parent_dir)
+                .await
+                .map_err(|err| {
+                    FileAppendError::MkdirError(err.to_string())
+                }
+            )?;
         }
 
         // 2. use OpenOptions to open the file for writing
@@ -45,12 +48,12 @@ impl FileStacker {
             .append(true) // Append to the file if it exists
             .open(&destination)
             .await
-            .map_err(|e| StackingError::StackingFileError(format!("Fail to open file: {}", e)))?;
+            .map_err(|err| FileAppendError::IOError(format!("Fail to open file: {}", err)))?;
 
         // 3. write the chunk to the file
         file.write_all(&chunk)
             .await
-            .map_err(|e| StackingError::StackingFileError(format!("Fail to write: {}", e)))?;
+            .map_err(|err| FileAppendError::IOError(format!("Fail to write: {}", err)))?;
 
         Ok(())
     }

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
-use crate::bootstrap::Idp;
+use crate::infra::identity::Idp;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error)]

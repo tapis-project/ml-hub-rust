@@ -1,4 +1,5 @@
-use crate::{application::errors::ApplicationError, bootstrap::SiteConfiguration, constants::DEFAULT_SITE_CONFGIURATION_PATH};
+use crate::application::errors::ApplicationError;
+use crate::infra::configuration::{SiteConfiguration, DEFAULT_SITE_CONFGIURATION_PATH};
 use log::error;
 
 pub struct SiteConfigurationRepository {

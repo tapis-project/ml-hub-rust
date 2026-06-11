@@ -8,7 +8,7 @@ use crate::bootstrap::{
 };
 use crate::application::artifact_inputs::DownloadArtifactInput;
 use crate::presentation::http::v1::requests::{Headers, DownloadModelPath, DownloadModelRequest};
-use crate::presentation::http::v1::actix_web::helpers::build_error_response;
+use crate::presentation::http::v1::actix_web::response_helpers::build_error_response;
 
 #[post("models-api/artifacts/{artifact_id}")]
 async fn download_artifact(

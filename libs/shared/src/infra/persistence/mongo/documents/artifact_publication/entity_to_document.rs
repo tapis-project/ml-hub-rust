@@ -1,7 +1,7 @@
 use crate::domain::entities::artifact_publication as entities;
 use crate::domain::entities::artifact::ArtifactType;
 use crate::infra::persistence::mongo::documents::artifact_publication as documents;
-use crate::infra::common::mongo::ToBsonDateTime;
+use crate::infra::_common::mongo::ToBsonDateTime;
 use mongodb::bson::Uuid;
 
 impl From<ArtifactType> for documents::ArtifactType {

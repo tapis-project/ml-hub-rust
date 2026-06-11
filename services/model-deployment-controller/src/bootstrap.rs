@@ -11,10 +11,10 @@ use shared::application::services::model_deployment_service::ModelDeploymentServ
 use shared::application::ports::deployment::ModelDeploymentPlatformReconcilerProvider;
 use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
+use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use shared::infra::persistence::mongo::repositories::{
     ModelMetadataRepository as MongoModelMetadataRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
-    ArtifactRepository as MongoArtifactRepository,
 };
 use shared::infra::reconciliation::client_provider::ReconciliationClientProvider;
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;

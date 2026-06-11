@@ -1,20 +1,20 @@
 use std::path::PathBuf;
 
 use crate::domain::entities;
-use crate::infra::persistence::mongo::documents;
+use crate::infra::artifacts::mongo::documents;
 use uuid::Uuid;
 
-impl From<documents::artifact::ArtifactType> for entities::artifact::ArtifactType {
-    fn from(value: documents::artifact::ArtifactType) -> Self {
+impl From<documents::ArtifactType> for entities::artifact::ArtifactType {
+    fn from(value: documents::ArtifactType) -> Self {
         match value {
-            documents::artifact::ArtifactType::Model => entities::artifact::ArtifactType::Model,
-            documents::artifact::ArtifactType::Dataset => entities::artifact::ArtifactType::Dataset,
+            documents::ArtifactType::Model => entities::artifact::ArtifactType::Model,
+            documents::ArtifactType::Dataset => entities::artifact::ArtifactType::Dataset,
         }
     }
 }
 
-impl From<documents::artifact::Artifact> for entities::artifact::Artifact {
-    fn from(value: documents::artifact::Artifact) -> Self {
+impl From<documents::Artifact> for entities::artifact::Artifact {
+    fn from(value: documents::Artifact) -> Self {
         let path = match value.path {
             Some(s) =>  Some(PathBuf::from(s)),
             None => None

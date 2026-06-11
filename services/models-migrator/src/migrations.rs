@@ -2,7 +2,7 @@ use mongodb::Database;
 use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 use async_trait::async_trait;
 use shared::infra::persistence::mongo::documents::model_metadata::indexes::{TaskTypesIndex, ArtifactIdIndex, ModelAuthorNameIndexUnique};
-use shared::infra::common::mongo::Index;
+use shared::infra::_common::mongo::Index;
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
     vec![

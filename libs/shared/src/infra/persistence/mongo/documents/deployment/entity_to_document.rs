@@ -1,7 +1,7 @@
 use crate::domain::entities::deployment as entities;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
-use crate::infra::common::mongo::ToBsonDateTime;
+use crate::infra::_common::mongo::ToBsonDateTime;
 use mongodb::bson::Uuid;
 
 impl From<&entities::ModelDeployment> for documents::ModelDeployment {

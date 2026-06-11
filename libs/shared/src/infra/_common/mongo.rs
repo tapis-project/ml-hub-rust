@@ -1,7 +1,43 @@
 pub use crate::domain::entities::timestamp::TimeStamp;
+use crate::errors::Error as GenericError;
 pub use mongodb::bson::DateTime;
 use mongodb::{error::{Error, ErrorKind, WriteError, WriteFailure}, Database, IndexModel};
 use serde::Serialize;
+use mongodb::{Client, options::ClientOptions};
+
+pub struct ClientParams {
+    pub username: String,
+    pub password: String,
+    pub host: String,
+    pub port: String,
+    pub db: String,
+    pub replica_set: Option<String>
+}
+
+pub async fn initialize_client(params: ClientParams) -> Result<Client, GenericError> {
+    let replica_set = params.replica_set
+        .map(|rs| format!("&replicaSet={}", rs))
+        .unwrap_or("".into());
+
+    let uri = format!(
+        "mongodb://{}:{}@{}:{}/{}?authSource=admin{}",
+        params.username,
+        params.password,
+        params.host,
+        params.port,
+        params.db,
+        replica_set,
+    );
+
+    let options = ClientOptions::parse(uri)
+        .await
+        .map_err(|err| GenericError::new(err.to_string()))?;
+
+    let client = Client::with_options(options)
+        .map_err(|err| GenericError::new(err.to_string()))?;
+    
+    Ok(client)
+}
 
 #[async_trait::async_trait]
 pub trait Index {

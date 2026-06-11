@@ -24,7 +24,7 @@ use once_cell::sync::Lazy;
 use uuid::Uuid;
 use crate::logging::GlobalLogger;
 use crate::constants::ARTIFACT_CACHE_DIR_NAME;
-use crate::infra::fs::stacking::FileStacker;
+use crate::infra::fs::file_appender::FileAppender;
 use crate::infra::system::Env;
 
 #[derive(Debug, Error)]
@@ -445,7 +445,7 @@ impl ArtifactService {
             let filepath: Arc<Mutex<Option<PathBuf>>> = stacker_filepath.clone();
             Box::pin(async move {
                 let path = filepath.lock().await.as_ref().unwrap().clone();
-                FileStacker::stack(&path, chunk)
+                FileAppender::append_chunk(&path, chunk)
                     .await
                     .map_err(|e| ArtifactServiceError::NotFound(format!("Fail to stack file: {}", e)))
             }) as Pin<Box<dyn Future<Output = Result<(), ArtifactServiceError>> + Send + 'a>>

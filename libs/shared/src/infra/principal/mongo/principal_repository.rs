@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::application::inputs::principal::FindByFederatedIdentity;
 use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
-use crate::infra::common::mongo::is_duplicate_key_error;
+use crate::infra::_common::mongo::is_duplicate_key_error;
 use crate::infra::principal::mongo::documents::{Principal, PRINCIPAL_COLLECTION};
 use crate::application::ports;
 use crate::application::ports::principal::PrincipalRepositoryError;

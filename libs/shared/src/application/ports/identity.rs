@@ -1,6 +1,11 @@
-use crate::domain::entities::identity::FederatedIdentity;
-use crate::bootstrap::Idp;
 use thiserror::Error;
+
+// Domain
+use crate::domain::entities::identity::FederatedIdentity;
+
+// Infra
+use crate::infra::configuration::SiteConfiguration;
+use crate::infra::identity::Idp;
 
 #[derive(Debug, Error, Clone)]
 pub enum FederatedIdentityProviderError {
