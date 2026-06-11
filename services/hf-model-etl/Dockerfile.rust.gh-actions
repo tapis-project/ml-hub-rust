@@ -1,6 +1,5 @@
 # Stage 1: Compile the code
-# Digest refers to rust:1.93.1-trixie
-FROM rust@sha256:80302520b7199f0504975bca59a914015e9fee088f759875dbbc238ca9509ee1 AS builder
+FROM rust:1.88.0 AS builder
 
 ARG SERVICE_NAME
 ARG SERVICE_DIR
@@ -29,26 +28,13 @@ FROM debian:bookworm-slim
 
 ARG SERVICE_NAME
 
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
+RUN apt update
+RUN apt install libssl3
+RUN apt-get install -y --no-install-recommends ca-certificates
+RUN update-ca-certificates
 COPY --from=builder /usr/local/mlhub/services/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
 ENV RUST_LOG=debug,shared=debug
 
 CMD ["mlhub"]
-
-# FROM debian:trixie-slim
-
-# ARG SERVICE_NAME
-
-# # Remove unnecessary bins
-# RUN apt-get update && rm -rf /var/lib/apt/lists/*
-# RUN apt update
-# RUN apt install libssl3
-# RUN apt-get install -y --no-install-recommends ca-certificates git git-lfs
-# RUN update-ca-certificates
-
-# # Copy the binary
-# COPY target/release/${SERVICE_NAME} /usr/local/bin/mlhub
-
-# ENV RUST_LOG=debug
-
-# CMD ["mlhub"]
