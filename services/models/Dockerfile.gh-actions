@@ -21,7 +21,7 @@ WORKDIR /usr/local/mlhub/services/${SERVICE_NAME}
 COPY ${SERVICE_DIR} .
 
 # Install
-RUN cargo build --release --locked
+RUN cargo build --release
 
 # Stage 2: Copy the binary to a slim Linux image
 FROM debian:bookworm-slim
