@@ -37,5 +37,7 @@ patches:
                 env:
                   - name: MAX_PROCESSABLE_ENTRIES
                     value: "5000"
+                  - name: MONGO_HOST
+                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisdev.svc.cluster.local
                 image: tapis/mlhub-hf-model-etl-transform-load:dev
                 imagePullPolicy: Always

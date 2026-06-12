@@ -1,6 +1,7 @@
 pub use crate::domain::entities::timestamp::TimeStamp;
 use crate::errors::Error as GenericError;
 pub use mongodb::bson::DateTime;
+use mongodb::options::Credential;
 use mongodb::{error::{Error, ErrorKind, WriteError, WriteFailure}, Database, IndexModel};
 use serde::Serialize;
 use mongodb::{Client, options::ClientOptions};
@@ -15,23 +16,21 @@ pub struct ClientParams {
 }
 
 pub async fn initialize_client(params: ClientParams) -> Result<Client, GenericError> {
-    let replica_set = params.replica_set
-        .map(|rs| format!("&replicaSet={}", rs))
-        .unwrap_or("".into());
-
-    let uri = format!(
-        "mongodb://{}:{}@{}:{}/{}?authSource=admin{}",
-        params.username,
-        params.password,
-        params.host,
-        params.port,
-        params.db,
-        replica_set,
-    );
-
-    let options = ClientOptions::parse(uri)
-        .await
+    let mut options = ClientOptions::parse(format!("mongodb://{}:{}", params.host, params.port)).await
         .map_err(|err| GenericError::new(err.to_string()))?;
+
+    let credential = Credential::builder()
+        .username(params.username)
+        .password(params.password)
+        .source("admin".to_string())
+        .build();
+
+    options.credential = Some(credential);
+    options.default_database = Some(params.db);
+
+    if let Some(rs) = params.replica_set {
+        options.repl_set_name = Some(rs);
+    }
 
     let client = Client::with_options(options)
         .map_err(|err| GenericError::new(err.to_string()))?;

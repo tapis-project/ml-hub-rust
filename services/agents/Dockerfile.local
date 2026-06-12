@@ -1,35 +1,38 @@
 # Stage 1: Compile the code
-FROM rust:1.82.0 AS builder
+# Digest refers to rust:1.93.1-trixie
+FROM rust@sha256:80302520b7199f0504975bca59a914015e9fee088f759875dbbc238ca9509ee1 AS builder
 
 ARG SERVICE_NAME
-ARG SERVICE_DIR
-ARG LIBS_DIR
 
-# Create 
-RUN mkdir -p /usr/local/mlhub/${SERVICE_NAME} /usr/local/mlhub/libs
+# Set workspace root
+WORKDIR /usr/local/mlhub
 
-# Copy shared libraries code
-WORKDIR /usr/local/mlhub/libs
-COPY ${LIBS_DIR} .
+# Copy everyting so Cargo sees workspace root
+COPY . .
 
-# Copy service code
-WORKDIR /usr/local/mlhub/${SERVICE_NAME}
-COPY ${SERVICE_DIR} .
+# Build using workspace resolution
+RUN cargo build --release -p ${SERVICE_NAME} --locked
 
-# Install
-RUN cargo install --path .
-
-
-# Stage 2: Copy the binary to a slim Linux image
-FROM debian:bookworm-slim
+# Stage 2: Runtime image
+FROM debian:trixie-slim
 
 ARG SERVICE_NAME
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libssl3 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder \
+    /usr/local/mlhub/target/release/${SERVICE_NAME} \
+    /usr/local/bin/mlhub
 
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
 RUN apt update
 RUN apt install libssl3
-COPY --from=builder /usr/local/mlhub/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
+RUN apt-get install -y --no-install-recommends ca-certificates
+RUN update-ca-certificates
 
-ENV RUST_LOG=debug
+ENV RUST_LOG=debug,shared=debug
 
 CMD ["mlhub"]

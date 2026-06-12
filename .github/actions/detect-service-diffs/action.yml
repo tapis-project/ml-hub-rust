@@ -52,6 +52,7 @@ runs:
           models-migrator
           principals-migrator
           federated-identities-migrator
+          hf-model-etl
           # datasets
         )
 

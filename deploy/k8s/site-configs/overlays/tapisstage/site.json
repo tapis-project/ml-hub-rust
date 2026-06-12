@@ -1,5 +1,5 @@
 {
-    "site_id": "tacc-staging",
+    "site_id": "tacc",
     "base_url": "https://admin.staging.tapis.io",
     "idps": ["tapis"],
     "tenancy_resolution_mode": "subdomain"
