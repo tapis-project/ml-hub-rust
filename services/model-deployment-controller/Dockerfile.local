@@ -3,38 +3,35 @@
 FROM rust@sha256:80302520b7199f0504975bca59a914015e9fee088f759875dbbc238ca9509ee1 AS builder
 
 ARG SERVICE_NAME
-ARG SERVICE_DIR
-ARG LIBS_DIR
-ARG SDKS_DIR
 
-# Create 
-RUN mkdir -p /usr/local/mlhub/services/${SERVICE_NAME} /usr/local/mlhub/libs /usr/local/mlhub/sdks
+# Set workspace root
+WORKDIR /usr/local/mlhub
 
-# Copy shared libraries code
-WORKDIR /usr/local/mlhub/libs
-COPY ${LIBS_DIR} .
+# Copy EVERYTHING so Cargo sees workspace root
+COPY . .
 
-WORKDIR /usr/local/mlhub/sdks
-COPY ${SDKS_DIR} .
+# Build using workspace resolution
+RUN cargo build --release -p ${SERVICE_NAME} --locked
 
-# Copy service code
-WORKDIR /usr/local/mlhub/services/${SERVICE_NAME}
-COPY ${SERVICE_DIR} .
-
-# Install
-RUN cargo install --path .
-
-# Stage 2: Copy the binary to a slim Linux image
+# Stage 2: Runtime image
 FROM debian:trixie-slim
 
 ARG SERVICE_NAME
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libssl3 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder \
+    /usr/local/mlhub/target/release/${SERVICE_NAME} \
+    /usr/local/bin/mlhub
+
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
 RUN apt update
-RUN apt install -y libssl3
+RUN apt install libssl3
 RUN apt-get install -y --no-install-recommends ca-certificates git git-lfs
 RUN update-ca-certificates
-COPY --from=builder /usr/local/mlhub/services/${SERVICE_NAME}/target/release/${SERVICE_NAME} /usr/local/bin/mlhub
 
 ENV RUST_LOG=debug,shared=debug
 
