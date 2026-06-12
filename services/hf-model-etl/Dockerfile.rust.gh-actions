@@ -1,5 +1,5 @@
 # Stage 1: Compile the code
-FROM rust:1.88.0 AS builder
+FROM rust:1.91.1 AS builder
 
 ARG SERVICE_NAME
 ARG SERVICE_DIR
