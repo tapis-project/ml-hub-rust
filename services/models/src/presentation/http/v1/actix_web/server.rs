@@ -5,6 +5,7 @@ pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use crate::presentation::http::v1::actix_web::handlers;
 use actix_web::{App, HttpServer, middleware::{from_fn, Logger}, web};
+use actix_cors::Cors;
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
 use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
@@ -116,6 +117,11 @@ pub async fn run_server() -> std::io::Result<()> {
     };
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_header()
+            .allow_any_method()
+            .allow_any_method();
+
         App::new()
             .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
@@ -137,6 +143,8 @@ pub async fn run_server() -> std::io::Result<()> {
                 web::scope("")
                     .wrap(from_fn(authenticate))
                     .wrap(from_fn(resolve_tenancy))
+                    // TODO Security concern. Needs to be revisited
+                    .wrap(cors)
                     .wrap(Logger::default())
                     .service(handlers::get_model_by_platform::get_model_by_platform)
                     .service(handlers::list_models_by_platform::list_models_by_platform)

@@ -1,6 +1,6 @@
 {
     "site_id": "local-minikube",
-    "base_url": "https://admin.tapis.io",
+    "base_url": "https://admin.staging.tapis.io",
     "idps": ["tapis"],
     "tenancy_resolution_mode": "subdomain"
 }
