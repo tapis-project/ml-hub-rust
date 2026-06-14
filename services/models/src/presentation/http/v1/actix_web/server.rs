@@ -5,7 +5,6 @@ pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use crate::presentation::http::v1::actix_web::handlers;
 use actix_web::{App, HttpServer, middleware::{from_fn, Logger}, web};
-use actix_cors::Cors;
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
 use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
@@ -77,7 +76,7 @@ pub async fn run_server() -> std::io::Result<()> {
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
 
-    let mongo_client = initialize_client(ClientParams{
+    let mongo_client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
@@ -117,12 +116,8 @@ pub async fn run_server() -> std::io::Result<()> {
     };
 
     HttpServer::new(move || {
-        let cors = Cors::default()
-            .allow_any_header()
-            .allow_any_method()
-            .allow_any_origin();
-
         App::new()
+            // App-wide data and middlewares
             .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
@@ -143,9 +138,6 @@ pub async fn run_server() -> std::io::Result<()> {
                 web::scope("")
                     .wrap(from_fn(authenticate))
                     .wrap(from_fn(resolve_tenancy))
-                    // TODO Security concern. Needs to be revisited
-                    .wrap(cors)
-                    .wrap(Logger::default())
                     .service(handlers::get_model_by_platform::get_model_by_platform)
                     .service(handlers::list_models_by_platform::list_models_by_platform)
                     .service(handlers::ingest_external_model::ingest_external_model)
