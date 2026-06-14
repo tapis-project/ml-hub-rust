@@ -1,6 +1,7 @@
 use actix_web::dev::ServiceResponse;
 use actix_web::middleware::Next;
 use actix_web::{HttpMessage, HttpResponse};
+use actix_web::http::Method;
 use actix_web::{
     web,
     dev::ServiceRequest,
@@ -78,6 +79,11 @@ pub async fn authenticate(
         if maybe_token.is_some() {
             break
         }
+    }
+
+    // Explicitly allow ONLY the OPTIONS method to bypass authentication
+    if req.method() == Method::OPTIONS {
+        return Ok(next.call(req).await?.map_into_left_body())
     }
 
     // Respond with error if no token exists
