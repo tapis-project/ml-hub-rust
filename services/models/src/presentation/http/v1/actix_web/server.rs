@@ -120,7 +120,7 @@ pub async fn run_server() -> std::io::Result<()> {
         let cors = Cors::default()
             .allow_any_header()
             .allow_any_method()
-            .allow_any_method();
+            .allow_any_origin();
 
         App::new()
             .app_data(site_config.clone())
