@@ -10,8 +10,11 @@ use shared::bootstrap::build_shared_app_context;
 use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
-use shared::presentation::http::v1::actix_web::middleware::authentication::authenticate;
-use shared::presentation::http::v1::actix_web::middleware::tenancy::resolve_tenancy;
+use shared::presentation::http::v1::actix_web::middleware::{
+    authentication::authenticate,
+    tenancy::resolve_tenancy,
+    preflight::preflight_short_circuit,
+};
 use std::env;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
@@ -117,12 +120,15 @@ pub async fn run_server() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            // App-wide data and middlewares
+            // App-wide data
             .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
             .app_data(web::Data::new(state.clone()))
+            
+            // Globally-scoped middlewares
+            .wrap(from_fn(preflight_short_circuit))
             .wrap(Logger::default())
             
             // Public routes
