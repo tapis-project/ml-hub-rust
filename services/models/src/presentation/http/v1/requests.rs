@@ -33,5 +33,5 @@ pub use shared::presentation::http::v1::requests::artifacts::{
     ListArtifactIngestionsPath,
     ListArtifactPublicationsPath,
 };
-pub use shared::presentation::http::v1::responses::ArtifactPublication;
+pub use shared::presentation::http::v1::responses::artifacts::publications::ArtifactPublication;
 pub use shared::presentation::http::v1::requests::headers::Headers;

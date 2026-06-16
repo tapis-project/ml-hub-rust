@@ -1,14 +1,16 @@
-mod entity_to_response;
 mod output_to_response;
+
+use serde::Serialize;
+use serde_json::Value;
+
 pub mod models;
 pub mod deployment;
 pub mod operators;
 pub mod visibility;
+pub mod tasks;
+pub mod artifacts;
+pub mod platform_details;
 
-use serde::Serialize;
-use serde_json::Value;
-use platforms::Platform;
-use utoipa::ToSchema;
 
 #[derive(Serialize)]
 pub struct JsonResponse {
@@ -17,75 +19,4 @@ pub struct JsonResponse {
     pub result: Option<Value>,
     pub metadata: Option<Value>,
     pub version: Option<String>
-}
-
-#[derive(Serialize, ToSchema)]
-pub enum ArtifactType {
-    Model,
-    Dataset
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct Artifact {
-    pub id: String,
-    pub artifact_type: ArtifactType,
-    pub created_at: String,
-    pub last_modified: String,
-}
-
-#[derive(Serialize, ToSchema)]
-pub enum ArtifactIngestionStatus {
-    Submitted,
-    Resubmitted,
-    Pending,
-    Downloading,
-    Downloaded,
-    Archiving,
-    Archived,
-    Finished,
-    Failed,
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct ArtifactIngestion {
-    pub id: String,
-    pub artifact_id: String, 
-    pub platform: String,
-    pub status: ArtifactIngestionStatus,
-    pub last_message: Option<String>,
-    pub created_at: String,
-    pub last_modified: String,
-    pub webhook_url: Option<String>,
-}
-
-#[derive(Serialize, ToSchema)]
-pub enum ArtifactPublicationStatus {
-    Submitted,
-    Pending,
-    Extracting,
-    Extracted,
-    PublishingMetadata,
-    PublishedMetadata,
-    PublishingArtifact,
-    PublishedArtifact,
-    Finished,
-    Failed
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct ArtifactPublication  {
-    pub id: String,
-    pub status: ArtifactPublicationStatus,
-    pub artifact_id: String,
-    pub target_platform: String,
-    pub last_message: Option<String>,
-    pub attempts: u8,
-    pub created_at: String,
-    pub last_modified: String,
-}
-
-#[derive(Serialize, ToSchema)]
-pub struct PlatformDetails {
-    pub name: Platform,
-    pub capabilities: Vec<String>,
 }

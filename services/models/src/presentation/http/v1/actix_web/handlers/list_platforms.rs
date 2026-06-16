@@ -5,7 +5,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::presentation::http::v1::contracts;
-use shared::presentation::http::v1::responses::PlatformDetails;
+use shared::presentation::http::v1::responses::platform_details::PlatformDetails;
 
 #[utoipa::path(
     get,
