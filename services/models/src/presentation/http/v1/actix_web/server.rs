@@ -138,6 +138,7 @@ pub async fn run_server() -> std::io::Result<()> {
                 SwaggerUi::new("models-api/swagger-ui/{_:.*}")
                     .url("/models-api/specs/openapi.json", ApiDoc::openapi()),
             )
+            .service(handlers::openapi::openapi)
             
             // Protected routes
             .service(
@@ -165,7 +166,7 @@ pub async fn run_server() -> std::io::Result<()> {
                     .service(handlers::get_model_artifact::get_model_artifact)
                     .service(handlers::list_tasks::list_tasks)
                     .service(handlers::ingest_canonical_model::ingest_canonical_model)
-                    .service(handlers::openapi::openapi)
+                    
             )
     })
         .bind(addrs)?

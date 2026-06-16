@@ -1,9 +1,18 @@
 use serde_json::Value;
 use utoipa::ToSchema;
-use crate::presentation::http::v1::{requests::models::ModelMetadata, responses::{models::ModelArtifact, Artifact, ArtifactIngestion, ArtifactPublication, PlatformDetails}};
-use crate::presentation::http::v1::requests::task::Task;
+use crate::presentation::http::v1::responses::tasks::Task;
 use crate::presentation::http::v1::responses::deployment::client_strategy_set::ClientStrategySet;
 use crate::presentation::http::v1::responses::deployment::ModelDeployment;
+use crate::presentation::http::v1::responses::models::{
+    ModelMetadata,
+    ModelArtifact,
+};
+use crate::presentation::http::v1::responses::artifacts::{
+    Artifact,
+    ingestions::ArtifactIngestion,
+    publications::ArtifactPublication,
+};
+use crate::presentation::http::v1::responses::platform_details::PlatformDetails;
 
 #[derive(ToSchema)]
 pub struct ListTasksResponse {

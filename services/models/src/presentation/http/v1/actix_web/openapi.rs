@@ -1,5 +1,9 @@
 use platforms::Platform;
-use shared::presentation::http::v1::responses::{Artifact, ArtifactPublication, ArtifactIngestion};
+use shared::presentation::http::v1::responses::artifacts::{
+    Artifact,
+    publications::ArtifactPublication,
+    ingestions::ArtifactIngestion
+};
 use utoipa::OpenApi;
 use crate::config::VERSION;
 
