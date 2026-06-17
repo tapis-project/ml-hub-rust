@@ -1,6 +1,6 @@
 
 use crate::domain::entities::task as entities;
-use crate::presentation::http::v1::requests::task as dto;
+use crate::presentation::http::v1::requests::common::tasks as dto;
 
 impl From<entities::Task> for dto::Task {
     fn from(value: entities::Task) -> Self {

@@ -1,3 +1,5 @@
+//! This module contains mappings of this request's structs to application-layer input structs
+
 use crate::presentation::http::v1::requests::discover_models;
 use crate::application::inputs::discover_models as inputs;
 use crate::application::inputs::task as input_task;

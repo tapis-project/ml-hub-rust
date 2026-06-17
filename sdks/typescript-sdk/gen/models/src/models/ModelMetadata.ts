@@ -223,6 +223,12 @@ export interface ModelMetadata {
     task_types?: Array<Task> | null;
     /**
      * 
+     * @type {string}
+     * @memberof ModelMetadata
+     */
+    tenant_id?: string | null;
+    /**
+     * 
      * @type {boolean}
      * @memberof ModelMetadata
      */
@@ -294,6 +300,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'slimmed': !exists(json, 'slimmed') ? undefined : json['slimmed'],
         'supports_quantization': !exists(json, 'supports_quantization') ? undefined : json['supports_quantization'],
         'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
+        'tenant_id': !exists(json, 'tenant_id') ? undefined : json['tenant_id'],
         'training_distributed': !exists(json, 'training_distributed') ? undefined : json['training_distributed'],
         'training_hardware': !exists(json, 'training_hardware') ? undefined : HardwareRequirementsFromJSON(json['training_hardware']),
         'training_max_energy_consumption_watts': !exists(json, 'training_max_energy_consumption_watts') ? undefined : json['training_max_energy_consumption_watts'],
@@ -342,6 +349,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'slimmed': value.slimmed,
         'supports_quantization': value.supports_quantization,
         'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
+        'tenant_id': value.tenant_id,
         'training_distributed': value.training_distributed,
         'training_hardware': HardwareRequirementsToJSON(value.training_hardware),
         'training_max_energy_consumption_watts': value.training_max_energy_consumption_watts,

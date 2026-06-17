@@ -2666,6 +2666,7 @@ dependencies = [
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
+ "validator",
 ]
 
 [[package]]

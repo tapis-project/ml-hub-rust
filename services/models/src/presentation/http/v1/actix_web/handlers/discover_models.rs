@@ -8,7 +8,7 @@ use actix_web::{post, web, Responder};
 use shared::application::identity_context::IdentityContext;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
-use crate::presentation::http::v1::requests::ModelMetadata;
+use crate::presentation::http::v1::responses::ModelMetadata;
 use crate::bootstrap::state::AppState;
 use serde_json::{to_value, Value, Map};
 
@@ -78,7 +78,7 @@ async fn discover_models(
 
     let mut values: Vec<Value> = Vec::with_capacity(metadata_entries.len());
     for metadata_entity in metadata_entries {
-        let model_metadata = match ModelMetadata::try_from(metadata_entity) {
+        let model_metadata = match ModelMetadata::try_from(&metadata_entity) {
             Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string())
         };

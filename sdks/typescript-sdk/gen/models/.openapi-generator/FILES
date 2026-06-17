@@ -21,6 +21,7 @@ src/models/ArtifactType.ts
 src/models/AssociateModelMetadata.ts
 src/models/AssociateModelMetadataResponse.ts
 src/models/BadRequestResponse.ts
+src/models/Canonical.ts
 src/models/CreateModelMetadataResponse.ts
 src/models/DiscoverModelsByPlatformResponse.ts
 src/models/DiscoverModelsResponse.ts
@@ -42,6 +43,7 @@ src/models/ListModelsByPlatformResponse.ts
 src/models/ListModelsResponse.ts
 src/models/ListPlatformsResponse.ts
 src/models/ListTasksResponse.ts
+src/models/Locator.ts
 src/models/ModelArtifact.ts
 src/models/ModelIO.ts
 src/models/ModelMetadata.ts

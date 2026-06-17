@@ -16,7 +16,7 @@ use crate::application::ports::identity::FederatedIdentityProviderError;
 use crate::application::services::federated_identity_service::FederatedIdentityService;
 use crate::application::services::principal_service::{PrincipalService, PrincipalServiceError};
 use crate::domain::entities::tenancy::Tenant;
-use crate::presentation::http::v1::requests::headers::AuthToken;
+use crate::presentation::http::v1::requests::common::headers::AuthToken;
 use crate::application::services::federated_idp_registrar::FederatedIdpRegistrar;
 use crate::presentation::http::v1::actix_web::helpers::get_header_value;
 use crate::presentation::http::v1::adapters::derive_header_keys_from_authorities;

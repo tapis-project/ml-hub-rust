@@ -1636,6 +1636,63 @@
           }
         }
       },
+      "Canonical": {
+        "type": "object",
+        "required": [
+          "platform",
+          "model_id",
+          "locator"
+        ],
+        "properties": {
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "downloads": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "gated": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "likes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "locator": {
+            "$ref": "#/components/schemas/Locator"
+          },
+          "model_id": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "private": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "sha": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateModelMetadataResponse": {
         "type": "object",
         "required": [
@@ -1733,14 +1790,6 @@
           "criteria"
         ],
         "properties": {
-          "confidence_threshold": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "minimum": 0
-          },
           "criteria": {
             "type": "array",
             "items": {
@@ -2535,6 +2584,17 @@
           }
         }
       },
+      "Locator": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "ModelArtifact": {
         "type": "object",
         "required": [
@@ -2815,6 +2875,12 @@
               "$ref": "#/components/schemas/Task"
             },
             "description": "Inference Fields"
+          },
+          "tenant_id": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "training_distributed": {
             "type": [

@@ -4,11 +4,8 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 };
 use crate::presentation::http::v1::requests::{
     GetModelPath,
-    AssociateModelMetadata as AssociateModelMetadataDto
 };
 use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::model_metadata_service_factory;
-use crate::application::model_metadata_inputs::AssociateModelMetadata as AssociateModelMetadataInput;
 use actix_web::{
     get,
     web,

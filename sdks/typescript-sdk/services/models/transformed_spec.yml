@@ -1032,6 +1032,39 @@ components:
           minimum: 0
         version:
           type: string
+    Canonical:
+      type: object
+      required:
+        - platform
+        - model_id
+        - locator
+      properties:
+        author:
+          type: string
+          nullable: true
+        downloads:
+          type: integer
+          minimum: 0
+          nullable: true
+        gated:
+          type: boolean
+          nullable: true
+        likes:
+          type: integer
+          minimum: 0
+          nullable: true
+        locator:
+          $ref: '#/components/schemas/Locator'
+        model_id:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
+        private:
+          type: boolean
+          nullable: true
+        sha:
+          type: string
+          nullable: true
     CreateModelMetadataResponse:
       type: object
       required:
@@ -1103,11 +1136,6 @@ components:
       required:
         - criteria
       properties:
-        confidence_threshold:
-          type: integer
-          format: int32
-          minimum: 0
-          nullable: true
         criteria:
           type: array
           items:
@@ -1617,6 +1645,13 @@ components:
           minimum: 0
         version:
           type: string
+    Locator:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     ModelArtifact:
       type: object
       required:
@@ -1773,6 +1808,9 @@ components:
           items:
             $ref: '#/components/schemas/Task'
           description: Inference Fields
+          nullable: true
+        tenant_id:
+          type: string
           nullable: true
         training_distributed:
           type: boolean

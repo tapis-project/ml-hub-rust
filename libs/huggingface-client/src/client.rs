@@ -28,7 +28,7 @@ use shared::infra::fs::git::{
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::presentation::http::v1::requests::headers::{AuthorizationHeaderError, Headers};
+use shared::presentation::http::v1::requests::common::headers::{AuthorizationHeaderError, Headers};
 use shared::presentation::http::v1::requests::datasets::{
     GetDatasetByPlatformRequest,
     IngestDatasetRequest,
@@ -41,8 +41,10 @@ use shared::domain::entities::{
 use shared::application::inputs;
 use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::requests::models::{
-    GetModelByPlatformRequest, IngestModelRequest, ListModelsByPlatformRequest,
+use shared::presentation::http::v1::requests::{
+    get_model_by_platform::GetModelByPlatformRequest,
+    ingest_model::IngestModelRequest,
+    list_models_by_platform::ListModelsByPlatformRequest,
 };
 use std::path::PathBuf;
 use std::process::Command;

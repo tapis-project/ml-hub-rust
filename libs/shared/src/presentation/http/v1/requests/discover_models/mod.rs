@@ -1,11 +1,11 @@
-pub mod to_input;
+pub mod mappings;
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use std::collections::HashMap;
 use serde_json::Value;
-use crate::presentation::http::v1::requests::headers::Headers;
-use crate::presentation::http::v1::requests::task::Task;
+use crate::presentation::http::v1::requests::common::headers::Headers;
+use crate::presentation::http::v1::requests::common::tasks::Task;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DiscoverModelsByPlatformPath {

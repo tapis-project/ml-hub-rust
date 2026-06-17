@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/tapis-project/ml-hub-rust#readme",
   "dependencies": {
-    "@mlhub/models-ts-sdk": "0.1.1",
+    "@mlhub/models-ts-sdk": "file://../gen/models",
     "@mlhub/deployments-ts-sdk": "0.1.1"
   },
   "devDependencies": {

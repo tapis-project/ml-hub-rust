@@ -12,10 +12,10 @@ use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
-use shared::presentation::http::v1::requests::models::{
-    GetModelByPlatformRequest,
-    IngestModelRequest,
-    ListModelsByPlatformRequest,
+use shared::presentation::http::v1::requests::{
+    get_model_by_platform::GetModelByPlatformRequest,
+    ingest_model::IngestModelRequest,
+    list_models_by_platform::ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;

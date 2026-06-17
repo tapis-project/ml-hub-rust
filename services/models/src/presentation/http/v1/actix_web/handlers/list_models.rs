@@ -2,10 +2,6 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response,
     build_success_response,
 };
-use crate::presentation::http::v1::requests::{
-    ModelMetadata,
-    AssociateModelMetadata as AssociateModelMetadataDto
-};
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::model_metadata_service_factory;
 use crate::application::model_metadata_inputs::AssociateModelMetadata as AssociateModelMetadataInput;
@@ -15,7 +11,6 @@ use actix_web::{
     // HttpRequest, 
     Responder
 };
-use shared::logging::SharedLogger;
 use shared::presentation::http::v1::contracts::responses;
 
 #[utoipa::path(
@@ -23,7 +18,6 @@ use shared::presentation::http::v1::contracts::responses;
     path="/models-api/models",
     tag="Models",
     description="List all models",
-    request_body=ModelMetadata,
     responses(
         (status=200, description="Discovered models", body=responses::ListModelsResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
@@ -34,7 +28,6 @@ use shared::presentation::http::v1::contracts::responses;
 #[get("models-api/models")]
 async fn list_models(
     // query: web::Query<HashMap<String, String>>,
-    body: web::Json<ModelMetadata>,
     data: web::Data<AppState>,
 ) -> impl Responder {
     build_error_response(501, "Not Implemnted".into())
