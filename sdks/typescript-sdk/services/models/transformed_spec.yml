@@ -92,7 +92,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AssociateModelMetadata'
+              $ref: '#/components/schemas/AssociateModelMetadataBody'
         required: true
       responses:
         '200':
@@ -275,12 +275,6 @@ paths:
         - Models
       description: List all models
       operationId: list_models
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ModelMetadata'
-        required: true
       responses:
         '200':
           description: Discovered models
@@ -315,7 +309,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ModelMetadata'
+              $ref: '#/components/schemas/CreateModelMetadataBody'
         required: true
       responses:
         '200':
@@ -980,7 +974,7 @@ components:
       enum:
         - Model
         - Dataset
-    AssociateModelMetadata:
+    AssociateModelMetadataBody:
       type: object
       required:
         - name
@@ -1065,6 +1059,154 @@ components:
         sha:
           type: string
           nullable: true
+    CreateModelMetadataBody:
+      type: object
+      properties:
+        annotations: {}
+        author:
+          type: string
+          nullable: true
+        bias_evaluation_score:
+          type: integer
+          format: int32
+          nullable: true
+        edge_optimized:
+          type: boolean
+          nullable: true
+        finetuning_datasets:
+          type: array
+          items:
+            type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        inference_distributed:
+          type: boolean
+          nullable: true
+        inference_hardware:
+          $ref: '#/components/schemas/HardwareRequirements'
+          nullable: true
+        inference_max_compute_utilization_percentage:
+          type: integer
+          format: int32
+          nullable: true
+        inference_max_energy_consumption_watts:
+          type: integer
+          format: int32
+          nullable: true
+        inference_max_latency_ms:
+          type: integer
+          format: int32
+          description: Inference performance fields
+          nullable: true
+        inference_max_memory_usage_mb:
+          type: integer
+          format: int32
+          nullable: true
+        inference_min_throughput:
+          type: integer
+          format: int32
+          nullable: true
+        inference_precision:
+          type: string
+          nullable: true
+        inference_software_dependencies:
+          type: array
+          items:
+            type: string
+          nullable: true
+        keywords:
+          type: array
+          items:
+            type: string
+          description: Arbitrary labels
+          nullable: true
+        libraries:
+          type: array
+          items:
+            type: string
+          nullable: true
+        license:
+          type: string
+          nullable: true
+        model_inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelIO'
+          nullable: true
+        model_outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelIO'
+          nullable: true
+        model_type:
+          type: string
+          nullable: true
+        multi_modal:
+          type: boolean
+          description: Architecture fields
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        pretrained:
+          type: boolean
+          nullable: true
+        pretraining_datasets:
+          type: array
+          items:
+            type: string
+          nullable: true
+        pruned:
+          type: boolean
+          nullable: true
+        quantization_aware:
+          type: boolean
+          nullable: true
+        regulatory:
+          type: array
+          items:
+            type: string
+          description: |-
+            Regulatory and Compliance Fields
+            A vector or strings that represent regulatory standards. Ex HIPPA
+          nullable: true
+        slimmed:
+          type: boolean
+          nullable: true
+        supports_quantization:
+          type: boolean
+          nullable: true
+        task_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+          description: Inference Fields
+          nullable: true
+        tenant_id:
+          type: string
+          nullable: true
+        training_distributed:
+          type: boolean
+          nullable: true
+        training_hardware:
+          $ref: '#/components/schemas/HardwareRequirements'
+          nullable: true
+        training_max_energy_consumption_watts:
+          type: integer
+          format: int32
+          description: Training performance fields
+          nullable: true
+        training_precision:
+          type: string
+          nullable: true
+        training_time:
+          type: integer
+          format: int64
+          description: Training-related Fields
+          nullable: true
+      additionalProperties: false
     CreateModelMetadataResponse:
       type: object
       required:
@@ -1695,6 +1837,9 @@ components:
           type: integer
           format: int32
           nullable: true
+        canonical:
+          $ref: '#/components/schemas/Canonical'
+          nullable: true
         edge_optimized:
           type: boolean
           nullable: true
@@ -1831,7 +1976,6 @@ components:
           format: int64
           description: Training-related Fields
           nullable: true
-      additionalProperties: false
     NotFoundResponse:
       type: object
       required:

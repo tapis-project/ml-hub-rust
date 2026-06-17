@@ -16,28 +16,28 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface AssociateModelMetadata
+ * @interface AssociateModelMetadataBody
  */
-export interface AssociateModelMetadata {
+export interface AssociateModelMetadataBody {
     /**
      * 
      * @type {string}
-     * @memberof AssociateModelMetadata
+     * @memberof AssociateModelMetadataBody
      */
     author: string;
     /**
      * 
      * @type {string}
-     * @memberof AssociateModelMetadata
+     * @memberof AssociateModelMetadataBody
      */
     name: string;
 }
 
-export function AssociateModelMetadataFromJSON(json: any): AssociateModelMetadata {
-    return AssociateModelMetadataFromJSONTyped(json, false);
+export function AssociateModelMetadataBodyFromJSON(json: any): AssociateModelMetadataBody {
+    return AssociateModelMetadataBodyFromJSONTyped(json, false);
 }
 
-export function AssociateModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssociateModelMetadata {
+export function AssociateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssociateModelMetadataBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -48,7 +48,7 @@ export function AssociateModelMetadataFromJSONTyped(json: any, ignoreDiscriminat
     };
 }
 
-export function AssociateModelMetadataToJSON(value?: AssociateModelMetadata | null): any {
+export function AssociateModelMetadataBodyToJSON(value?: AssociateModelMetadataBody | null): any {
     if (value === undefined) {
         return undefined;
     }

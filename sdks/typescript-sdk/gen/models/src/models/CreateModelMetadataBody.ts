@@ -14,10 +14,6 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    Canonical,
-    CanonicalFromJSON,
-    CanonicalFromJSONTyped,
-    CanonicalToJSON,
     HardwareRequirements,
     HardwareRequirementsFromJSON,
     HardwareRequirementsFromJSONTyped,
@@ -35,245 +31,239 @@ import {
 /**
  * 
  * @export
- * @interface ModelMetadata
+ * @interface CreateModelMetadataBody
  */
-export interface ModelMetadata {
+export interface CreateModelMetadataBody {
     /**
      * 
      * @type {any}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     annotations?: any | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     author?: string | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     bias_evaluation_score?: number | null;
     /**
      * 
-     * @type {Canonical}
-     * @memberof ModelMetadata
-     */
-    canonical?: Canonical;
-    /**
-     * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     edge_optimized?: boolean | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     finetuning_datasets?: Array<string> | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     image?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_distributed?: boolean | null;
     /**
      * 
      * @type {HardwareRequirements}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_hardware?: HardwareRequirements;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_max_compute_utilization_percentage?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_max_energy_consumption_watts?: number | null;
     /**
      * Inference performance fields
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_max_latency_ms?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_max_memory_usage_mb?: number | null;
     /**
      * 
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_min_throughput?: number | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_precision?: string | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     inference_software_dependencies?: Array<string> | null;
     /**
      * Arbitrary labels
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     keywords?: Array<string> | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     libraries?: Array<string> | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     license?: string | null;
     /**
      * 
      * @type {Array<ModelIO>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     model_inputs?: Array<ModelIO> | null;
     /**
      * 
      * @type {Array<ModelIO>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     model_outputs?: Array<ModelIO> | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     model_type?: string | null;
     /**
      * Architecture fields
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     multi_modal?: boolean | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     name?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     pretrained?: boolean | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     pretraining_datasets?: Array<string> | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     pruned?: boolean | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     quantization_aware?: boolean | null;
     /**
      * Regulatory and Compliance Fields
      * A vector or strings that represent regulatory standards. Ex HIPPA
      * @type {Array<string>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     regulatory?: Array<string> | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     slimmed?: boolean | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     supports_quantization?: boolean | null;
     /**
      * Inference Fields
      * @type {Array<Task>}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     task_types?: Array<Task> | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     tenant_id?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     training_distributed?: boolean | null;
     /**
      * 
      * @type {HardwareRequirements}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     training_hardware?: HardwareRequirements;
     /**
      * Training performance fields
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     training_max_energy_consumption_watts?: number | null;
     /**
      * 
      * @type {string}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     training_precision?: string | null;
     /**
      * Training-related Fields
      * @type {number}
-     * @memberof ModelMetadata
+     * @memberof CreateModelMetadataBody
      */
     training_time?: number | null;
 }
 
-export function ModelMetadataFromJSON(json: any): ModelMetadata {
-    return ModelMetadataFromJSONTyped(json, false);
+export function CreateModelMetadataBodyFromJSON(json: any): CreateModelMetadataBody {
+    return CreateModelMetadataBodyFromJSONTyped(json, false);
 }
 
-export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelMetadata {
+export function CreateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): CreateModelMetadataBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -282,7 +272,6 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'annotations': !exists(json, 'annotations') ? undefined : json['annotations'],
         'author': !exists(json, 'author') ? undefined : json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
-        'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
         'image': !exists(json, 'image') ? undefined : json['image'],
@@ -320,7 +309,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
     };
 }
 
-export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
+export function CreateModelMetadataBodyToJSON(value?: CreateModelMetadataBody | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -332,7 +321,6 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'annotations': value.annotations,
         'author': value.author,
         'bias_evaluation_score': value.bias_evaluation_score,
-        'canonical': CanonicalToJSON(value.canonical),
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,
         'image': value.image,

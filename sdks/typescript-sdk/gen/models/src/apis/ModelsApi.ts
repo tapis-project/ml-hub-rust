@@ -18,6 +18,9 @@ import {
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
+    CreateModelMetadataBody,
+    CreateModelMetadataBodyFromJSON,
+    CreateModelMetadataBodyToJSON,
     CreateModelMetadataResponse,
     CreateModelMetadataResponseFromJSON,
     CreateModelMetadataResponseToJSON,
@@ -39,9 +42,6 @@ import {
     ListModelsResponse,
     ListModelsResponseFromJSON,
     ListModelsResponseToJSON,
-    ModelMetadata,
-    ModelMetadataFromJSON,
-    ModelMetadataToJSON,
     NotFoundResponse,
     NotFoundResponseFromJSON,
     NotFoundResponseToJSON,
@@ -51,7 +51,7 @@ import {
 } from '../models';
 
 export interface CreateModelMetadataRequest {
-    modelMetadata: ModelMetadata;
+    createModelMetadataBody: CreateModelMetadataBody;
 }
 
 export interface DiscoverModelsRequest {
@@ -72,10 +72,6 @@ export interface IngestCanonicalModelRequest {
     ingestArtifactRequest: IngestArtifactRequest;
 }
 
-export interface ListModelsRequest {
-    modelMetadata: ModelMetadata;
-}
-
 export interface ListModelsByAuthorRequest {
     author: string;
 }
@@ -89,8 +85,8 @@ export class ModelsApi extends runtime.BaseAPI {
      * Create a model metadata
      */
     async createModelMetadataRaw(requestParameters: CreateModelMetadataRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<CreateModelMetadataResponse>> {
-        if (requestParameters.modelMetadata === null || requestParameters.modelMetadata === undefined) {
-            throw new runtime.RequiredError('modelMetadata','Required parameter requestParameters.modelMetadata was null or undefined when calling createModelMetadata.');
+        if (requestParameters.createModelMetadataBody === null || requestParameters.createModelMetadataBody === undefined) {
+            throw new runtime.RequiredError('createModelMetadataBody','Required parameter requestParameters.createModelMetadataBody was null or undefined when calling createModelMetadata.');
         }
 
         const queryParameters: any = {};
@@ -104,7 +100,7 @@ export class ModelsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ModelMetadataToJSON(requestParameters.modelMetadata),
+            body: CreateModelMetadataBodyToJSON(requestParameters.createModelMetadataBody),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CreateModelMetadataResponseFromJSON(jsonValue));
@@ -241,23 +237,16 @@ export class ModelsApi extends runtime.BaseAPI {
     /**
      * List all models
      */
-    async listModelsRaw(requestParameters: ListModelsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
-        if (requestParameters.modelMetadata === null || requestParameters.modelMetadata === undefined) {
-            throw new runtime.RequiredError('modelMetadata','Required parameter requestParameters.modelMetadata was null or undefined when calling listModels.');
-        }
-
+    async listModelsRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
             path: `/models-api/models`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-            body: ModelMetadataToJSON(requestParameters.modelMetadata),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ListModelsResponseFromJSON(jsonValue));
@@ -266,8 +255,8 @@ export class ModelsApi extends runtime.BaseAPI {
     /**
      * List all models
      */
-    async listModels(requestParameters: ListModelsRequest, initOverrides?: RequestInit): Promise<ListModelsResponse> {
-        const response = await this.listModelsRaw(requestParameters, initOverrides);
+    async listModels(initOverrides?: RequestInit): Promise<ListModelsResponse> {
+        const response = await this.listModelsRaw(initOverrides);
         return await response.value();
     }
 

@@ -144,7 +144,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AssociateModelMetadata"
+                "$ref": "#/components/schemas/AssociateModelMetadataBody"
               }
             }
           },
@@ -446,16 +446,6 @@
         ],
         "description": "List all models",
         "operationId": "list_models",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ModelMetadata"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "Discovered models",
@@ -509,7 +499,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ModelMetadata"
+                "$ref": "#/components/schemas/CreateModelMetadataBody"
               }
             }
           },
@@ -1564,7 +1554,7 @@
           "Dataset"
         ]
       },
-      "AssociateModelMetadata": {
+      "AssociateModelMetadataBody": {
         "type": "object",
         "required": [
           "name",
@@ -1692,6 +1682,279 @@
             ]
           }
         }
+      },
+      "CreateModelMetadataBody": {
+        "type": "object",
+        "properties": {
+          "annotations": {},
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bias_evaluation_score": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "edge_optimized": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "finetuning_datasets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inference_distributed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "inference_hardware": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HardwareRequirements"
+              }
+            ]
+          },
+          "inference_max_compute_utilization_percentage": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "inference_max_energy_consumption_watts": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "inference_max_latency_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Inference performance fields"
+          },
+          "inference_max_memory_usage_mb": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "inference_min_throughput": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "inference_precision": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inference_software_dependencies": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "keywords": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels"
+          },
+          "libraries": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "license": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model_inputs": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ModelIO"
+            }
+          },
+          "model_outputs": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ModelIO"
+            }
+          },
+          "model_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi_modal": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Architecture fields"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pretrained": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "pretraining_datasets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "pruned": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "quantization_aware": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "regulatory": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Regulatory and Compliance Fields\nA vector or strings that represent regulatory standards. Ex HIPPA"
+          },
+          "slimmed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "supports_quantization": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "task_types": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            },
+            "description": "Inference Fields"
+          },
+          "tenant_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "training_distributed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "training_hardware": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HardwareRequirements"
+              }
+            ]
+          },
+          "training_max_energy_consumption_watts": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Training performance fields"
+          },
+          "training_precision": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "training_time": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Training-related Fields"
+          }
+        },
+        "additionalProperties": false
       },
       "CreateModelMetadataResponse": {
         "type": "object",
@@ -2667,6 +2930,16 @@
             ],
             "format": "int32"
           },
+          "canonical": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Canonical"
+              }
+            ]
+          },
           "edge_optimized": {
             "type": [
               "boolean",
@@ -2920,8 +3193,7 @@
             "format": "int64",
             "description": "Training-related Fields"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "NotFoundResponse": {
         "type": "object",

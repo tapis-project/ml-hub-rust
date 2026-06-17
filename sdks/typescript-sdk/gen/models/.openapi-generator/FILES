@@ -18,10 +18,11 @@ src/models/ArtifactIngestionStatus.ts
 src/models/ArtifactPublication.ts
 src/models/ArtifactPublicationStatus.ts
 src/models/ArtifactType.ts
-src/models/AssociateModelMetadata.ts
+src/models/AssociateModelMetadataBody.ts
 src/models/AssociateModelMetadataResponse.ts
 src/models/BadRequestResponse.ts
 src/models/Canonical.ts
+src/models/CreateModelMetadataBody.ts
 src/models/CreateModelMetadataResponse.ts
 src/models/DiscoverModelsByPlatformResponse.ts
 src/models/DiscoverModelsResponse.ts
