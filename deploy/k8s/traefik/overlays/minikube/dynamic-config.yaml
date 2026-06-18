@@ -39,7 +39,7 @@ http:
         - cors
 
     deployments-api:
-      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/deployments-api`)"
+      rule: "PathPrefix(`/deployments-api`)"
       service: deployments-api
       middlewares:
         - tapis-rewrite-host
