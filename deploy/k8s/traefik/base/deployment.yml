@@ -14,7 +14,7 @@ spec:
         app: mlhub-traefik-deployment
     spec:
       containers:
-        - name: traefik
+        - name: mlhub-traefik
           image: traefik:v3.2
           ports:
             - name: web

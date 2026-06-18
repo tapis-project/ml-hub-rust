@@ -35,7 +35,7 @@ http:
       rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/datasets-api`)"
       service: datasets-api
       middlewares:
-        - tapis-rewrite-host:
+        - tapis-rewrite-host
         - cors
 
     deployments-api:
