@@ -709,8 +709,17 @@
           "Models"
         ],
         "description": "Get model by the author and name",
-        "operationId": "get_model",
+        "operationId": "get_model_by_author_and_name",
         "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "The name of the model",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "author",
             "in": "path",
@@ -721,12 +730,19 @@
             }
           },
           {
-            "name": "name",
+            "name": "scope",
             "in": "path",
-            "description": "The name of the model",
+            "description": "Selector for global vs tenant-scoped models",
             "required": true,
             "schema": {
-              "type": "string"
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
             }
           }
         ],
