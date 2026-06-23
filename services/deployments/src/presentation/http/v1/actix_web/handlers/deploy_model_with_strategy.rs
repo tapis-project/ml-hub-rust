@@ -27,9 +27,9 @@ use shared::application::inputs::common::Scope as ScopeInput;
     description="Deploy a model to a target platform",
     request_body=DeployModelWithStrategyBody,
     params(
-        ("platform" = Platform, Path, description = "The target platform for the Model Deployment"),
-        ("strategy_name" = String, Path, description = "The name of the deployment strategy"),
-        ("model_scope" = Scope, Query, description = "Selector for global vs tenant-scoped models"),
+        DeployModelWithStrategyPathParams,
+        DeployModelWithStrategyQueryParams,
+        DeployModelWithStrategyBody,
     ),
     responses(
         (status=200, description="Model deployment", body=contracts::responses::ModelDeploymentResponse),
@@ -69,7 +69,7 @@ async fn deploy_model_with_strategy(
         tenant_id: identity_context.actor_tenant_id().clone(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
-        model_scope: ScopeInput::from(params.into_inner().model_scope.clone()),
+        model_scope: ScopeInput::from(params.into_inner().scope.clone()),
         platform: path.platform.clone(),
         strategy_name: strategy.name,
         params: body.params.clone(),
