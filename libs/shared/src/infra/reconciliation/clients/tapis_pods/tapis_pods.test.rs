@@ -25,6 +25,7 @@ mod tapis_pods_test {
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
@@ -51,6 +52,7 @@ mod tapis_pods_test {
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
@@ -337,6 +339,7 @@ mod tapis_pods_test {
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,

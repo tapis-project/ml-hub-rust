@@ -1,3 +1,4 @@
+pub mod common;
 pub mod artifacts;
 pub mod artifact_ingestion;
 pub mod artifact_publication;

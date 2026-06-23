@@ -7,17 +7,24 @@ use serde_json::Value;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+use crate::presentation::http::v1::requests::common::Scope;
+
+#[derive(Debug, Deserialize, Clone, ToSchema)]
 pub struct DeployModelWithStrategyPathParams {
     pub platform: Platform,
     pub strategy_name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+#[derive(Debug, Deserialize, Clone, ToSchema)]
 pub struct DeployModelWithStrategyBody {
     pub model_name: String,
     pub model_author: String,
     pub params: Value,
+}
+
+#[derive(Deserialize, Debug, Clone, ToSchema)]
+pub struct DeployModelWithStrategyQueryParams {
+    pub model_scope: Scope
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]

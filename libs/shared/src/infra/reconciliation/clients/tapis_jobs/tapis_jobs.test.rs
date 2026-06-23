@@ -30,6 +30,7 @@ mod tapis_jobs_test {
             model: ModelReference {
                 name: "Qwen3.5-0.8B".into(),
                 author: "Qwen".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
@@ -56,6 +57,7 @@ mod tapis_jobs_test {
             model: ModelReference {
                 name: "Qwen3.5-0.8B".into(),
                 author: "Qwen".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
@@ -473,6 +475,7 @@ mod tapis_jobs_test {
                 name: std::env::var("FLEXSERV_MODEL_NAME")
                     .unwrap_or_else(|_| "Qwen3.5-0.8B".into()),
                 author: std::env::var("FLEXSERV_MODEL_AUTHOR").unwrap_or_else(|_| "Qwen".into()),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,

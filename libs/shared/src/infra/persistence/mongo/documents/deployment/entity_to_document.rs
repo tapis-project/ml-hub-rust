@@ -109,7 +109,8 @@ impl From<entities::ModelReference> for documents::ModelReference {
     fn from(value: entities::ModelReference) -> Self {
         Self {
             name: value.name,
-            author: value.author
+            author: value.author,
+            tenant_id: value.tenant_id,
         }
     }
 }

@@ -9,13 +9,11 @@ use crate::application::errors::ApplicationError;
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::inputs::model_metadata::{
-    ModelMetadata as ModelMetadataRegistrationInput,
-    AssociateModelMetadata,
-    UpsertModelMetadata,
-    UpdateModelMetadataArtifactId,
+    AssociateModelMetadata, GetModelMetadataByAuthorAndNameInput, ModelMetadata as ModelMetadataRegistrationInput, UpdateModelMetadataArtifactId, UpsertModelMetadata
 };
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;
+use crate::application::services::tenancy_resolver::TenancyResolver;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
     ModelMetadataServiceError as ModelMetadataDomainServiceError
@@ -25,7 +23,6 @@ use thiserror::Error;
 use once_cell::sync::Lazy;
 use serde_json::{Value, to_value, json};
 use log::error;
-// use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
 pub enum ModelMetadataServiceError {
@@ -69,6 +66,21 @@ impl ModelMetadataService {
             artifact_repo,
             client_strategy_sets
         }
+    }
+
+    pub async fn get_by_author_and_name(&self, input: GetModelMetadataByAuthorAndNameInput) -> Result<Option<ModelMetadata>, ModelMetadataServiceError> {
+        let tenant_id = TenancyResolver::resolve_from_scope(&input.scope, &input.tenant_id);
+        
+        let find_metadata = || self.model_metadata_repo.find_by_name_and_author(
+            &input.name,
+            &input.author,
+            &tenant_id,
+        );
+
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None)
+            .await?;
+
+        Ok(maybe_metadata)
     }
 
     pub async fn associate_metadata_with_artifact(&self, input: AssociateModelMetadata) -> Result<(), ModelMetadataServiceError> {

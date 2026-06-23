@@ -5,6 +5,8 @@ use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy
 use crate::domain::entities::deployment::{DesiredState, ModelDeployment, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
 
+use crate::application::inputs::common::Scope;
+
 pub struct ClientModelDeploymentRequest {
     pub deployment: ModelDeployment,
     pub metadata: ModelMetadata,
@@ -29,6 +31,8 @@ pub struct DeployWithStrategyInput {
     pub platform: Platform,
     pub model_name: String,
     pub model_author: String,
+    pub model_scope: Scope,
+    pub tenant_id: String,
     pub strategy_name: String,
     pub params: Value,
 }

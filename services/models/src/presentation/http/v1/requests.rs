@@ -11,7 +11,8 @@ pub use shared::presentation::http::v1::requests::{
     upload_model::UploadModelRequest,
     associate_model_metadata::path::AssociateModelMetadataPath,
     associate_model_metadata::body::AssociateModelMetadataBody,
-    get_model::path::GetModelPath,
+    get_model_by_author_and_name::path::GetModelByAuthorAndNamePath,
+    get_model_by_author_and_name::query::GetModelByAuthorAndNameQueryParams,
     ingest_canonical_model::path::IngestCanonicalModelPath,
     ingest_canonical_model::IngestCanonicalModelRequest,
 };
@@ -34,3 +35,4 @@ pub use shared::presentation::http::v1::requests::artifacts::{
 };
 pub use shared::presentation::http::v1::responses::artifacts::publications::ArtifactPublication;
 pub use shared::presentation::http::v1::requests::common::headers::Headers;
+pub use shared::presentation::http::v1::requests::common::Scope;

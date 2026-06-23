@@ -10,7 +10,7 @@ pub mod associate_model_metadata;
 pub mod create_model_metadata;
 pub mod discover_models;
 pub mod download_model;
-pub mod get_model;
+pub mod get_model_by_author_and_name;
 pub mod get_model_by_platform;
 pub mod ingest_canonical_model;
 pub mod ingest_model;

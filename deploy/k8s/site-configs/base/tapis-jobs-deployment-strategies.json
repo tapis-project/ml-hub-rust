@@ -1,6 +1,6 @@
 {
     "platform": "tapis-jobs",
-    "description": "A set of strategies for deploying models to Tapis Pods",
+    "description": "A set of strategies for deploying models to cloud and HPC systems with Tapis",
     "strategies": [
         {
             "name": "Stampede3",
@@ -39,13 +39,13 @@
             "use_parameter_set": "TapisJobs"
         },
         {
-            "name": "HPC w/ GPUs",
-            "description": "Deploys a model to a user defined system",
+            "name": "BYO System",
+            "description": "Deploys a model to a user-owned system",
             "use_rule_sets": [
                 "FlexServerDeployerCompatible",
                 "VisiblePublic"
             ],
-            "use_parameter_set": "TapisJobs"
+            "use_parameter_set": "UserSystem"
         }
     ],
     "rule_sets": [
@@ -97,60 +97,66 @@
             "name": "TapisJobs",
             "parameters": [
                 {
-                    "name": "X-Tapis-Token",
-                    "in": "headers"
+                    "name": "allocation",
+                    "type": "string",
+                    "required": false
                 },
                 {
+                    "name": "backend",
+                    "type": "string",
+                    "required": false,
+                    "default": "transformers",
+                    "choices": [
+                        "transformers"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "UserSystem",
+            "parameters": [
+                {
                     "name": "allocation",
-                    "in": "request_body",
+                    "type": "string",
                     "required": false
                 },
                 {
                     "name": "system_id",
-                    "in": "request_body"
+                    "type": "string",
+                    "required": true
                 },
                 {
                     "name": "jobParameterSet",
-                    "in": "request_body",
                     "type": "object",
                     "required": false
                 },
                 {
                     "name": "backend",
-                    "in": "request_body",
+                    "type": "string",
+                    "required": false,
+                    "default": "transformers",
                     "choices": [
                         "transformers"
                     ]
-                },
-                {
-                    "name": "inference_server_config",
-                    "in": "request_body",
-                    "type": "object"
                 }
             ]
         },
         {
-            "name": "Pods",
+            "name": "FlexServDeployer",
             "parameters": [
                 {
-                    "name": "X-Tapis-Token",
-                    "in": "headers"
-                },
-                {
-                    "name": "backend",
-                    "in": "request_body",
-                    "choices": [
-                        "transformers"
-                    ],
+                    "name": "allocation",
+                    "type": "string",
                     "required": false
                 },
                 {
-                    "name": "uid",
-                    "in": "request_body"
-                },
-                {
-                    "name": "modelId",
-                    "in": "request_body"
+                    "name": "backend",
+                    "type": "string",
+                    "required": false,
+                    "default": "transformers",
+                    "choices": [
+                        "transformers"
+                    ]
                 }
             ]
         }

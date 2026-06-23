@@ -145,6 +145,7 @@ pub async fn run_server() -> std::io::Result<()> {
                 web::scope("")
                     .wrap(from_fn(authenticate))
                     .wrap(from_fn(resolve_tenancy))
+                    .service(handlers::get_model_by_author_and_name::get_model_by_author_and_name)
                     .service(handlers::get_model_by_platform::get_model_by_platform)
                     .service(handlers::list_models_by_platform::list_models_by_platform)
                     .service(handlers::ingest_external_model::ingest_external_model)

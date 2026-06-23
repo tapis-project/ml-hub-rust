@@ -1,6 +1,6 @@
 {
     "platform": "tapis-pods",
-    "description": "A set of strategies for deploying models to HPC systems via Tapis Jobs",
+    "description": "A set of strategies for deploying models to the Tapis K8s cluster with Tapis Pods",
     "strategies": [
         {
             "name": "Pods",
@@ -61,24 +61,13 @@
             "name": "Pods",
             "parameters": [
                 {
-                    "name": "X-Tapis-Token",
-                    "in": "headers"
-                },
-                {
                     "name": "backend",
-                    "in": "request_body",
+                    "type": "string",
+                    "required": false,
+                    "default": "transformers",
                     "choices": [
                         "transformers"
-                    ],
-                    "required": false
-                },
-                {
-                    "name": "uid",
-                    "in": "request_body"
-                },
-                {
-                    "name": "modelId",
-                    "in": "request_body"
+                    ]
                 }
             ]
         }

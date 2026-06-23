@@ -122,6 +122,7 @@ impl ModelDeployment {
 pub struct ModelReference {
     pub name: String,
     pub author: String,
+    pub tenant_id: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]

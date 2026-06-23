@@ -1,5 +1,5 @@
 use crate::application::artifact_inputs::IngestArtifactInput;
-use crate::bootstrap::factories::{model_metadata_repo_factory, artifact_service_factory};
+use crate::bootstrap::factories::{artifact_service_factory, model_metadata_repo_factory, model_metadata_service_factory};
 use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response, build_success_response,
@@ -11,7 +11,9 @@ use crate::presentation::http::v1::responses::ArtifactIngestion;
 use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use serde_json::to_value;
-use shared::application::inputs::model_metadata::UpdateModelMetadataArtifactId;
+use shared::application::identity_context::IdentityContext;
+use shared::application::inputs::common::Scope;
+use shared::application::inputs::model_metadata::{GetModelMetadataByAuthorAndNameInput, UpdateModelMetadataArtifactId};
 use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
 
@@ -39,17 +41,33 @@ async fn ingest_canonical_model(
     query: web::Query<HashMap<String, String>>,
     body: web::Json<IngestArtifactRequest>,
     data: web::Data<AppState>,
+    identity_context: IdentityContext,
 ) -> impl Responder {
-    let metadata_repo = model_metadata_repo_factory(&data.client, data.db_name.clone());
+    let model_metadata_service = match model_metadata_service_factory(
+        &data.client,
+        data.db_name.clone(),
+        data.client_strategy_sets.clone()
+    ).await {
+        Ok(s) => s,
+        Err(err) => return build_error_response(500, err.to_string())
+    };
 
-    let maybe_metadata = match metadata_repo.get_by_name_and_author(&path.name, &path.author).await {
+    let input = GetModelMetadataByAuthorAndNameInput {
+        author: path.author.clone(),
+        name: path.name.clone(),
+        tenant_id: identity_context.actor_tenant_id().clone(),
+        principal_id: identity_context.actor_principal_id().clone(),
+        scope: Scope::Global,
+    };
+
+    let maybe_metadata = match model_metadata_service.get_by_author_and_name(input).await {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
     let metadata = match maybe_metadata {
         Some(m) => m,
-        None => return build_error_response(404, format!("No model metadata found with author {} and name {}", &path.author, &path.name))
+        None => return build_error_response(404, format!("No model metadata found for author {} and name {}", &path.author, &path.name))
     };
 
     let canonical = match metadata.canonical {
@@ -101,6 +119,10 @@ async fn ingest_canonical_model(
         name: path.name.clone(),
         author: path.author.clone()
     };
+
+    // TODO Refactor! No repos called directly in the presentation layer.
+    // Put this in the model metadata service.
+    let metadata_repo = model_metadata_repo_factory(&data.client, data.db_name.clone());
 
     // Update model metadata with the artifact id
     match metadata_repo.update_artifact_id(&update_input).await {

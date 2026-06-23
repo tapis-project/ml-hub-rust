@@ -59,9 +59,9 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(())
     }
 
-    async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn find_by_name_and_author(&self, name: &String, author: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
         let result = self.read_collection
-            .find_one(doc!{ "name": name, "author": author })
+            .find_one(doc!{ "name": name, "author": author, "tenant_id": tenant_id })
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?
             .map(entities::model_metadata::ModelMetadata::try_from)

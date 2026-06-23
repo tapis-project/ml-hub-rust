@@ -8,6 +8,8 @@ use platforms::Platform;
 use serde_json::Value;
 use uuid::Uuid;
 
+use crate::application::inputs::common::Scope;
+
 #[derive(Debug, Clone)]
 pub struct SystemRequirement {
     pub name: String,
@@ -132,3 +134,13 @@ pub struct UpdateModelMetadataArtifactId {
 pub struct UpsertModelMetadata {
     pub metadata: ModelMetadata,
 }
+
+#[derive(Debug, Clone)]
+pub struct GetModelMetadataByAuthorAndNameInput {
+    pub author: String,
+    pub name: String,
+    pub tenant_id: String,
+    pub principal_id: String,
+    pub scope: Scope
+}
+

@@ -13,6 +13,7 @@ use serde_json::Value;
 pub struct ModelReference {
     pub name: String,
     pub author: String,
+    pub tenant_id: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

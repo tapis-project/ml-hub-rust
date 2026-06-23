@@ -2,6 +2,7 @@ use crate::application::errors::ApplicationError;
 use crate::application::identity_context::IdentityContext;
 use crate::application::workflows::Workflow;
 use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
+use crate::application::services::tenancy_resolver::TenancyResolver;
 use crate::application::inputs::deployment::{DeployWithStrategyInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput, StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput};
 use crate::application::outputs::deployment::{DeployModelWithStrategyOutput, StartModelDeploymentOutput, StopModelDeploymentOutput, UndeployModelDeploymentOutput };
 use crate::application::ports::artifacts::ArtifactRepository;
@@ -31,6 +32,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
+
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentServiceError {
@@ -136,7 +138,13 @@ impl ModelDeploymentService {
         input: DeployWithStrategyInput,
         identity_context: &IdentityContext,
     ) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
-        let find_model_metadata = || self.model_metadata_repo.get_by_name_and_author(&input.model_name, &input.model_author);
+        let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, &input.tenant_id);
+        
+        let find_model_metadata = || self.model_metadata_repo.find_by_name_and_author(
+            &input.model_name,
+            &input.model_author,
+            &model_tenant_id,
+        );
 
         // Fetch the metadata for the model of this deployment
         let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None).await?;
@@ -160,7 +168,8 @@ impl ModelDeploymentService {
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
         // Params provided by user are stored as metadata on the deployment. Downstream deployment clients use this data to make decisions about how to deploy a model.
-        let metadata = serde_json::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
+        let metadata = serde_json
+            ::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
             .ok()
             .filter(|m| !m.is_empty());
 
@@ -172,6 +181,7 @@ impl ModelDeploymentService {
             model: ModelReference {
                 name: input.model_name.clone(),
                 author: input.model_author.clone(),
+                tenant_id: model_tenant_id.clone()
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,

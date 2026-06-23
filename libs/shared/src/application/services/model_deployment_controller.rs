@@ -145,9 +145,10 @@ impl ModelDeploymentController {
         
         let client = self.client_provider.provide(&deployment.platform)?;
 
-        let find_model_metadata = || self.model_metadata_repo.get_by_name_and_author(
+        let find_model_metadata = || self.model_metadata_repo.find_by_name_and_author(
             &deployment.model.name,
-            &deployment.model.author
+            &deployment.model.author,
+            &deployment.model.tenant_id,
         );
 
         let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None)
