@@ -735,7 +735,11 @@
             "description": "Selector for global vs tenant-scoped models",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/Scope"
+              "type": "string",
+              "enum": [
+                "tenant",
+                "global"
+              ]
             }
           }
         ],
