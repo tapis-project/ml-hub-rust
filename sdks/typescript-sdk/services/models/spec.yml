@@ -437,20 +437,26 @@ paths:
       tags:
         - Models
       description: Get model by the author and name
-      operationId: get_model
+      operationId: get_model_by_author_and_name
       parameters:
-        - name: author
-          in: path
-          description: The author of the model
-          required: true
-          schema:
-            type: string
         - name: name
           in: path
           description: The name of the model
           required: true
           schema:
             type: string
+        - name: author
+          in: path
+          description: The author of the model
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: path
+          description: Selector for global vs tenant-scoped models
+          required: true
+          schema:
+            $ref: '#/components/schemas/Scope'
       responses:
         '200':
           description: Successfully fetched model

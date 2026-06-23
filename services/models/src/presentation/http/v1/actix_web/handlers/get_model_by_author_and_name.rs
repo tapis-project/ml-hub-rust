@@ -61,7 +61,7 @@ async fn get_model_by_author_and_name(
         name: path.name.clone(),
         tenant_id: identity_context.actor_tenant_id().clone(),
         principal_id: identity_context.actor_principal_id().clone(),
-        scope: ScopeInput::from(params.into_inner().scope.unwrap_or(Scope::Tenant).clone()),
+        scope: ScopeInput::from(params.into_inner().scope.clone()),
     };
 
     let maybe_metadata = match model_metadata_service.get_by_author_and_name(input).await {

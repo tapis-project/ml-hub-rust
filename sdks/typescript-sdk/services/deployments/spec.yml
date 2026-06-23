@@ -142,6 +142,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: model_scope
+          in: query
+          description: Selector for global vs tenant-scoped models
+          required: true
+          schema:
+            $ref: '#/components/schemas/Scope'
       requestBody:
         content:
           application/json:

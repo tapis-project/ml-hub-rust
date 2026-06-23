@@ -7,7 +7,7 @@ use crate::presentation::http::v1::requests::common::Scope;
 pub struct GetModelByAuthorAndNameQueryParams {
     #[serde(default = "default_scope")]
     /// Selector for global vs tenant-scoped models
-    pub scope: Option<Scope>
+    pub scope: Scope
 }
 
-fn default_scope () -> Option<Scope> { Some(Scope::Tenant) }
+fn default_scope () -> Scope { Scope::Tenant }

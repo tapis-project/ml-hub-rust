@@ -15,6 +15,6 @@ patches:
           spec:
             containers:
               - name: artifact-ingester
-                image: tapis/mlhub-artifact-ingester:26Q1
+                image: tapis/mlhub-artifact-ingester:26Q2.0
                 imagePullPolicy: Always
                 resources: {}
