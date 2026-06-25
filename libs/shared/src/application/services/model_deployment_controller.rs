@@ -145,9 +145,9 @@ impl ModelDeploymentController {
         
         let client = self.client_provider.provide(&deployment.platform)?;
 
-        let find_model_metadata = || self.model_metadata_repo.find_by_name_and_author(
-            &deployment.model.name,
+        let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
             &deployment.model.author,
+            &deployment.model.name,
             &deployment.model.tenant_id,
         );
 

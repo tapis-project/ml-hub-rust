@@ -20,7 +20,6 @@ pub mod list_models_by_platform;
 pub mod list_platforms;
 pub mod list_publications_for_artifact;
 pub mod list_tasks;
-pub mod list_models;
 pub mod publish_model_artifact;
 pub mod upload_model_artifact;
 pub mod openapi;

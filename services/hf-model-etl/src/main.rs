@@ -45,7 +45,7 @@ async fn main() {
 
     let model_metadata_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
         .await
-        .expect("failed to initialize artifact service");
+        .expect("failed to initialize model metadata service");
 
     let inbox_path = env::var("INBOX").expect("INBOX env var not set");
 

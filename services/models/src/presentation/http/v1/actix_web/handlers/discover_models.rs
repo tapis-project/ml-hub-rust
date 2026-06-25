@@ -6,6 +6,7 @@ use crate::presentation::http::v1::requests::{DiscoveryCriteria, DiscoverModelsQ
 use crate::bootstrap::factories::model_metadata_service_factory;
 use actix_web::{post, web, Responder};
 use shared::application::identity_context::IdentityContext;
+use shared::application::services::model_metadata_service::ModelMetadataService;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::responses::ModelMetadata;
@@ -22,6 +23,7 @@ use serde_json::{to_value, Value, Map};
         ("limit" = Option<u16>, Query, description = "The maximum number of models to return"),
         ("cursor" = Option<String>, Query, description = "The pagination cursor for fetching the next batch of models"),
         ("include_count" = Option<bool>, Query, description = "A flag for including the total count of available models"),
+        ("include_global_models" = Option<bool>, Query, description = "A flag for including global models in the response"),
     ),
     responses(
         (status=200, description="Discovered models", body=contracts::responses::DiscoverModelsResponse),
@@ -32,16 +34,11 @@ use serde_json::{to_value, Value, Map};
 )]
 #[post("models-api/models/search")]
 async fn discover_models(
-    data: web::Data<AppState>,
     body: web::Json<DiscoveryCriteria>,
     query: web::Query<DiscoverModelsQueryParams>,
     identity_context: IdentityContext,
+    model_metadata_service: web::Data<ModelMetadataService>,
 ) -> impl Responder {
-    let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
-    };
-
     let discovery_criteria = match DiscoveryCriteria::try_from(body.into_inner()) {
         Ok(c) => c,
         Err(err) => return build_error_response(500, err.to_string())

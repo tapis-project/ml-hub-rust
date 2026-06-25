@@ -144,3 +144,10 @@ pub struct GetModelMetadataByAuthorAndNameInput {
     pub scope: Scope
 }
 
+#[derive(Debug, Clone)]
+pub struct ListModelMetadataByAuthorInput {
+    pub author: String,
+    pub tenant_id: String,
+    pub principal_id: String,
+}
+

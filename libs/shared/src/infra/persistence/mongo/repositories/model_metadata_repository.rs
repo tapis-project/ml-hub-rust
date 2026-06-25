@@ -18,7 +18,6 @@ use mongodb::{
 };
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
-use log::debug;
 
 use super::super::database::MODEL_METADATA_COLLECTION;
 use super::super::documents::model_metadata_filter::ModelMetadataFilter;
@@ -59,9 +58,9 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(())
     }
 
-    async fn find_by_name_and_author(&self, name: &String, author: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn find_by_author_and_name(&self, name: &String, author: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
         let result = self.read_collection
-            .find_one(doc!{ "name": name, "author": author, "tenant_id": tenant_id })
+            .find_one(doc!{ "tenant_id": tenant_id, "author": author, "name": name })
             .await
             .map_err(|err| ApplicationError::RepoError(err.to_string()))?
             .map(entities::model_metadata::ModelMetadata::try_from)
@@ -69,6 +68,24 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
 
         Ok(result)
+    }
+
+    async fn find_all_by_author(&self, author: &String, tenant_id: &String) -> Result<Vec<entities::model_metadata::ModelMetadata>, ApplicationError> {
+        let filter = doc!{ "tenant_id": tenant_id, "author": author };
+
+        let mut cursor = self.read_collection.find(filter)
+            .await
+            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+
+        let mut results: Vec<entities::model_metadata::ModelMetadata> = vec![];
+        while let Some(entry) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+            let entity = domain::entities::model_metadata::ModelMetadata::try_from(entry)
+                .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+
+            results.push(entity);
+        }
+
+        Ok(results)
     }
 
     async fn update_artifact_id(&self, input: &application::inputs::model_metadata::UpdateModelMetadataArtifactId) -> Result<(), ApplicationError> {

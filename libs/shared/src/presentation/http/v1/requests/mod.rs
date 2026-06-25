@@ -15,6 +15,7 @@ pub mod get_model_by_platform;
 pub mod ingest_canonical_model;
 pub mod ingest_model;
 pub mod list_models_by_platform;
+pub mod list_models_by_author;
 pub mod upload_model;
 
 // pub mod skills;

@@ -140,9 +140,9 @@ impl ModelDeploymentService {
     ) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
         let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, &input.tenant_id);
         
-        let find_model_metadata = || self.model_metadata_repo.find_by_name_and_author(
-            &input.model_name,
+        let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
             &input.model_author,
+            &input.model_name,
             &model_tenant_id,
         );
 

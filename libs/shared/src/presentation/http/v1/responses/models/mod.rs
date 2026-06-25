@@ -6,17 +6,14 @@ use utoipa::ToSchema;
 
 use platforms::Platform;
 
-use crate::presentation::http::v1::responses::artifacts::ArtifactType;
 use crate::presentation::http::v1::responses::tasks::Task;
 
 
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ModelArtifact {
     pub id: String,
-    pub artifact_type: ArtifactType,
     pub created_at: String,
     pub last_modified: String,
-    pub metadata: Option<ModelMetadata>
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -124,3 +121,10 @@ pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
 }
+
+// // TODO Future
+// #[derive(Serialize, Debug, Clone, ToSchema)]
+// pub struct Model {
+//     pub metadata: ModelMetadata,
+//     pub artifact: Option<ModelArtifact>,
+// }

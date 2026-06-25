@@ -549,7 +549,7 @@
       "description": "Runs and ETL pipeline that pulls in model metadata from Huggingface Hub and converts it to MLHub Model Metadata",
       "rootDir": "services/hf-model-etl",
       "labels": ["bin"],
-      "lifecycle": "experimental",
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -567,7 +567,7 @@
       "name": "model-deployment-controller",
       "rootDir": "services/model-deployment-controller",
       "labels": ["bin", "worker"],
-      "lifecycle": "experimental",
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",

@@ -13,6 +13,7 @@ pub use shared::presentation::http::v1::requests::{
     associate_model_metadata::body::AssociateModelMetadataBody,
     get_model_by_author_and_name::path::GetModelByAuthorAndNamePath,
     get_model_by_author_and_name::query::GetModelByAuthorAndNameQueryParams,
+    list_models_by_author::path::ListModelsByAuthorPath,
     ingest_canonical_model::path::IngestCanonicalModelPath,
     ingest_canonical_model::IngestCanonicalModelRequest,
 };

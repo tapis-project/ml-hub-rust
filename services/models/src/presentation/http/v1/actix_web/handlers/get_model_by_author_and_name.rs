@@ -4,8 +4,8 @@ use actix_web::{
     Responder
 };
 use serde_json::to_value;
+use shared::application::services::model_metadata_service::ModelMetadataService;
 
-use crate::bootstrap::factories::model_metadata_service_factory;
 use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response,
     build_success_response,
@@ -13,9 +13,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 use crate::presentation::http::v1::requests::{
     GetModelByAuthorAndNamePath,
     GetModelByAuthorAndNameQueryParams,
-    Scope,
 };
-use crate::bootstrap::state::AppState;
 
 use shared::application::identity_context::IdentityContext;
 use shared::application::inputs::common::Scope as ScopeInput;
@@ -44,18 +42,9 @@ use shared::presentation::http::v1::responses::models::ModelMetadata;
 async fn get_model_by_author_and_name(
     path: web::Path<GetModelByAuthorAndNamePath>,
     params: web::Query<GetModelByAuthorAndNameQueryParams>,
-    data: web::Data<AppState>,
+    model_metadata_service: web::Data<ModelMetadataService>,
     identity_context: IdentityContext,
 ) -> impl Responder {
-    let model_metadata_service = match model_metadata_service_factory(
-        &data.client,
-        data.db_name.clone(),
-        data.client_strategy_sets.clone()
-    ).await {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
-    };
-
     let input = GetModelMetadataByAuthorAndNameInput {
         author: path.author.clone(),
         name: path.name.clone(),

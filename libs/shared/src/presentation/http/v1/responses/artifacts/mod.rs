@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use crate::domain::entities;
 
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub enum ArtifactType {
     Model,
     Dataset

@@ -1,5 +1,7 @@
 # Huggingface Task Code Generator and Library
 
+## NEW TASKS URL https://huggingface.co/api/models-tags-by-type
+
 This library generates a Rust enum for each task type available in Huggingface.
 
 For the following steps, run the code snippets from the root of the project

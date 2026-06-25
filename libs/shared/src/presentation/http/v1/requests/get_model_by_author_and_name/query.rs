@@ -9,7 +9,7 @@ pub struct GetModelByAuthorAndNameQueryParams {
     #[serde(default = "default_scope")]
     #[param(value_type = Scope, inline)]
     /// Selector for global vs tenant-scoped models
-    pub scope: Scope
+    pub scope: Scope,
 }
 
 fn default_scope () -> Scope { Scope::Tenant }

@@ -25,7 +25,6 @@ use super::handlers::list_platforms::__path_list_platforms;
 use super::handlers::list_publications_for_artifact::__path_list_publications_for_artifact;
 use super::handlers::discover_models::__path_discover_models;
 use super::handlers::list_tasks::__path_list_tasks;
-use super::handlers::list_models::__path_list_models;
 use super::handlers::list_models_by_author::__path_list_models_by_author;
 use super::handlers::get_model_by_author_and_name::__path_get_model_by_author_and_name;
 use super::handlers::create_model_metadata::__path_create_model_metadata;
@@ -50,7 +49,6 @@ use super::handlers::ingest_canonical_model::__path_ingest_canonical_model;
         list_platforms,
         discover_models,
         list_tasks,
-        list_models,
         list_models_by_author,
         get_model_by_author_and_name,
         create_model_metadata,

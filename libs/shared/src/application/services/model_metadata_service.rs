@@ -9,7 +9,7 @@ use crate::application::errors::ApplicationError;
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::inputs::model_metadata::{
-    AssociateModelMetadata, GetModelMetadataByAuthorAndNameInput, ModelMetadata as ModelMetadataRegistrationInput, UpdateModelMetadataArtifactId, UpsertModelMetadata
+    AssociateModelMetadata, GetModelMetadataByAuthorAndNameInput, ListModelMetadataByAuthorInput, ModelMetadata as ModelMetadataRegistrationInput, UpdateModelMetadataArtifactId, UpsertModelMetadata
 };
 use crate::application::inputs::discover_models::DiscoverModelsInput;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;
@@ -71,9 +71,9 @@ impl ModelMetadataService {
     pub async fn get_by_author_and_name(&self, input: GetModelMetadataByAuthorAndNameInput) -> Result<Option<ModelMetadata>, ModelMetadataServiceError> {
         let tenant_id = TenancyResolver::resolve_from_scope(&input.scope, &input.tenant_id);
         
-        let find_metadata = || self.model_metadata_repo.find_by_name_and_author(
-            &input.name,
+        let find_metadata = || self.model_metadata_repo.find_by_author_and_name(
             &input.author,
+            &input.name,
             &tenant_id,
         );
 
@@ -81,6 +81,18 @@ impl ModelMetadataService {
             .await?;
 
         Ok(maybe_metadata)
+    }
+
+    pub async fn list_by_author(&self, input: ListModelMetadataByAuthorInput) -> Result<Vec<ModelMetadata>, ModelMetadataServiceError> {
+        let find_metadata = || self.model_metadata_repo.find_all_by_author(
+            &input.author,
+            &input.tenant_id,
+        );
+
+        let model_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None)
+            .await?;
+
+        Ok(model_metadata)
     }
 
     pub async fn associate_metadata_with_artifact(&self, input: AssociateModelMetadata) -> Result<(), ModelMetadataServiceError> {
