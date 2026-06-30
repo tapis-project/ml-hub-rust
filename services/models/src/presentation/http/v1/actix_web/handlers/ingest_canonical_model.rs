@@ -11,7 +11,7 @@ use crate::presentation::http::v1::responses::ArtifactIngestion;
 use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use serde_json::to_value;
-use shared::application::identity_context::IdentityContext;
+use shared::shared_kernal::identity::IdentityContext;
 use shared::application::inputs::common::Scope;
 use shared::application::inputs::model_metadata::{GetModelMetadataByAuthorAndNameInput, UpdateModelMetadataArtifactId};
 use shared::presentation::http::v1::contracts;

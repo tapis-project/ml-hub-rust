@@ -3,8 +3,8 @@ use serde_json::json;
 
 pub fn full_model_metadata() -> ModelMetadata {
     ModelMetadata {
-        name: Some("foo".into()),
-        tenant_id: Some("foo".into()),
+        name: "foo".into(),
+        tenant_id: "foo".into(),
         artifact_id: Some(uuid::Uuid::now_v7()),
         annotations: Some(json!({ })),
         canonical: Some(Canonical {
@@ -20,7 +20,7 @@ pub fn full_model_metadata() -> ModelMetadata {
             private: Some(true),
             sha: None,
         }),
-        author: Some("bar".into()),
+        author: "bar".into(),
         model_inputs: Some(
             vec![ModelIO {
                 data_type: Some("f64".into()),

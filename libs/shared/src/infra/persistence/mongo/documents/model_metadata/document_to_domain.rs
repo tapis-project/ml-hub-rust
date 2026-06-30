@@ -1,14 +1,14 @@
-use crate::infra::persistence::mongo::documents::model_metadata;
+use crate::infra::persistence::mongo::documents::model_metadata as infra;
 use crate::domain::entities::model_metadata as domain;
 use crate::domain::entities::task as domain_task;
 use crate::errors::Error;
 use platforms::Platform;
 use uuid::Uuid;
 
-impl TryFrom<model_metadata::SystemRequirement> for domain::SystemRequirement {
+impl TryFrom<infra::SystemRequirement> for domain::SystemRequirement {
     type Error = Error;
     
-    fn try_from(value: model_metadata::SystemRequirement) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::SystemRequirement) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             version: value.version
@@ -16,10 +16,10 @@ impl TryFrom<model_metadata::SystemRequirement> for domain::SystemRequirement {
     }
 }
 
-impl TryFrom<model_metadata::Accelerator> for domain::Accelerator {
+impl TryFrom<infra::Accelerator> for domain::Accelerator {
     type Error = Error;
     
-    fn try_from(value: model_metadata::Accelerator) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::Accelerator) -> Result<Self, Self::Error> {
         let mut system_requirements: Vec<domain::SystemRequirement> = Vec::with_capacity(1);
         for requirement in value.system_requirements {
             system_requirements.push(domain::SystemRequirement::try_from(requirement)?);
@@ -34,10 +34,10 @@ impl TryFrom<model_metadata::Accelerator> for domain::Accelerator {
     }
 }
 
-impl TryFrom<model_metadata::HardwareRequirements> for domain::HardwareRequirements {
+impl TryFrom<infra::HardwareRequirements> for domain::HardwareRequirements {
     type Error = Error;
     
-    fn try_from(value: model_metadata::HardwareRequirements) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::HardwareRequirements) -> Result<Self, Self::Error> {
         let mut accelerators: Vec<domain::Accelerator> = Vec::with_capacity(1);
         for accelerator in value.accelerators.unwrap_or(Vec::with_capacity(0)) {
             accelerators.push(domain::Accelerator::try_from(accelerator)?);
@@ -53,10 +53,10 @@ impl TryFrom<model_metadata::HardwareRequirements> for domain::HardwareRequireme
     }
 }
 
-impl TryFrom<model_metadata::ModelIO> for domain::ModelIO {
+impl TryFrom<infra::ModelIO> for domain::ModelIO {
     type Error = Error;
     
-    fn try_from(value: model_metadata::ModelIO) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::ModelIO) -> Result<Self, Self::Error> {
         Ok(Self {
             data_type: value.data_type,
             shape: value.shape
@@ -64,20 +64,20 @@ impl TryFrom<model_metadata::ModelIO> for domain::ModelIO {
     }
 }
 
-impl TryFrom<model_metadata::Locator> for domain::Locator {
+impl TryFrom<infra::Locator> for domain::Locator {
     type Error = Error;
     
-    fn try_from(value: model_metadata::Locator) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::Locator) -> Result<Self, Self::Error> {
         Ok(Self {
             url: value.url  
         })
     }
 }
 
-impl TryFrom<model_metadata::Canonical> for domain::Canonical {
+impl TryFrom<infra::Canonical> for domain::Canonical {
     type Error = Error;
     
-    fn try_from(value: model_metadata::Canonical) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::Canonical) -> Result<Self, Self::Error> {
         Ok(Self {
             platform: Platform::try_from(value.platform.to_string().as_str())
                 .map_err(|err| Error::new(err.to_string()))?,
@@ -93,10 +93,10 @@ impl TryFrom<model_metadata::Canonical> for domain::Canonical {
     }
 }
 
-impl TryFrom<model_metadata::ModelMetadata> for domain::ModelMetadata {
+impl TryFrom<infra::ModelMetadata> for domain::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: model_metadata::ModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: infra::ModelMetadata) -> Result<Self, Self::Error> {
         let mut task_types: Vec<domain_task::Task> = Vec::new();
         for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
             task_types.push(domain_task::Task::from(task_type))

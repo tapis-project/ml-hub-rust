@@ -1,8 +1,6 @@
 use serde_json::Value;
 use crate::domain::entities::timestamp::TimeStamp;
 
-pub const MLHUB_SERVICE_ID: &'static str = "mlhub";
-
 #[derive(Clone, Debug)]
 pub struct FederatedIdentity {
     pub issuer: String,

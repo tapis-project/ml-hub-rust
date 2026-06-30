@@ -72,8 +72,8 @@ mod tapis_pods_test {
 
     fn minimal_model_metadata() -> ModelMetadata {
         let mut m = full_model_metadata();
-        m.name = Some("gpt2".into());
-        m.author = Some("openai-community".into());
+        m.name = "gpt2".into();
+        m.author ="openai-community".into();
         m
     }
 

@@ -1,6 +1,6 @@
 pub mod inputs_to_entities;
 pub mod input_to_input;
-pub mod entitie_to_input;
+pub mod entities_to_input;
 
 use crate::application::inputs::task::Task;
 
@@ -61,9 +61,8 @@ pub struct Locator {
 #[derive(Debug, Clone)]
 pub struct ModelMetadata {
     // General fields
-    pub name: Option<String>,
-    pub author: Option<String>,
-    pub tenant_id: Option<String>,
+    pub name: String,
+    pub author: String,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,

@@ -64,9 +64,9 @@ pub struct Locator {
 #[derive(Debug, Clone)]
 pub struct ModelMetadata {
     // General fields
-    pub name: Option<String>,
-    pub author: Option<String>,
-    pub tenant_id: Option<String>,
+    pub name: String,
+    pub author: String,
+    pub tenant_id: String,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,
@@ -201,8 +201,8 @@ impl ModelMetadata {
     ) -> Result<FieldValue, ModelMetadataError> {
         let fp: Vec<&str> = field_path.iter().map(|v| v.as_str()).collect();
         match fp.as_slice() {
-            ["name"] => Ok(FieldValue::Name(self.name.clone())),
-            ["author"] => Ok(FieldValue::Author(self.author.clone())),
+            ["name"] => Ok(FieldValue::Name(Some(self.name.clone()))),
+            ["author"] => Ok(FieldValue::Author(Some(self.author.clone()))),
             ["libraries"] => Ok(FieldValue::Libraries(self.libraries.clone())),
             ["keywords"] => Ok(FieldValue::Keywords(self.keywords.clone())),
             ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),

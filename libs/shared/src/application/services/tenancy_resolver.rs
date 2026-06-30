@@ -2,7 +2,7 @@
 //! in terms of Scope. If Scope is Global then the resolve to the GLOBAL_TENANT.
 //! If Scope is Tenant, resolve to the provided tenant id.
 
-use crate::{application::inputs::common::Scope, domain::entities::tenancy::GLOBAL_TENANT};
+use crate::{application::inputs::common::Scope, shared_kernal::tenancy::GLOBAL_TENANT};
 
 pub struct TenancyResolver;
 

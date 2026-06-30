@@ -77,8 +77,8 @@ mod tapis_jobs_test {
 
     fn minimal_model_metadata() -> ModelMetadata {
         let mut m = full_model_metadata();
-        m.name = Some("Qwen3.5-0.8B".into());
-        m.author = Some("Qwen".into());
+        m.name = "Qwen3.5-0.8B".into();
+        m.author = "Qwen".into();
         m
     }
 

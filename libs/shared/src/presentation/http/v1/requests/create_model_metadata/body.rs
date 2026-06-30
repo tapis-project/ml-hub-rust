@@ -46,11 +46,8 @@ pub struct ModelIO {
 #[serde(deny_unknown_fields)]
 pub struct CreateModelMetadataBody {
     // General fields
-    #[validate(required, length(min=1))]
-    pub name: Option<String>,
-    #[validate(required, length(min=1))]
-    pub author: Option<String>,
-    pub tenant_id: Option<String>,
+    #[validate(length(min=1))]
+    pub name: String,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,

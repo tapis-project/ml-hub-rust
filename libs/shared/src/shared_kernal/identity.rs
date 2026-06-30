@@ -1,4 +1,7 @@
 use crate::domain::entities::principal::{Principal, Kind};
+use crate::shared_kernal::tenancy::GLOBAL_TENANT;
+
+pub const MLHUB_SERVICE_PRINCIPAL_ID: &'static str = "mlhub";
 
 #[derive(Debug, Clone)]
 pub struct IdentityContext {
@@ -11,6 +14,14 @@ impl IdentityContext {
         Self {
             actor,
             token
+        }
+    }
+
+    // Creates a service account identity context
+    pub fn system() -> Self {
+        Self {
+            actor: Actor::system(),
+            token: "".into(),
         }
     }
 
@@ -49,6 +60,14 @@ impl Actor {
 
     pub fn kind(&self) -> &Kind {
         &self.kind
+    }
+
+    pub fn system() -> Self {
+        Self {
+            principal_id: MLHUB_SERVICE_PRINCIPAL_ID.into(),
+            tenant_id: GLOBAL_TENANT.into(),
+            kind: Kind::System,
+        }
     }
 }
 

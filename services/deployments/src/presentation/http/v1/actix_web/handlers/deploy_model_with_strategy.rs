@@ -16,7 +16,7 @@ use actix_web::{
     Responder,
 };
 use serde_json::to_value;
-use shared::application::identity_context::IdentityContext;
+use shared::shared_kernal::identity::IdentityContext;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
 use shared::application::inputs::common::Scope as ScopeInput;
 

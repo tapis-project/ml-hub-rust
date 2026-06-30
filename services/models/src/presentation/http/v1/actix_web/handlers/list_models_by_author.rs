@@ -12,7 +12,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 };
 use crate::presentation::http::v1::requests::ListModelsByAuthorPath;
 
-use shared::application::identity_context::IdentityContext;
+use shared::shared_kernal::identity::IdentityContext;
 use shared::application::inputs::model_metadata::ListModelMetadataByAuthorInput;
 use shared::presentation::http::v1::contracts::responses;
 use shared::presentation::http::v1::responses::models::ModelMetadata;
@@ -22,7 +22,7 @@ use shared::presentation::http::v1::responses::models::ModelMetadata;
     get,
     path="/models-api/models/{author}",
     tag="Models",
-    description="List models by author",
+    description="List models by author in the current tenant",
     params(
         ListModelsByAuthorPath,
     ),

@@ -15,7 +15,7 @@ use crate::presentation::http::v1::requests::{
     GetModelByAuthorAndNameQueryParams,
 };
 
-use shared::application::identity_context::IdentityContext;
+use shared::shared_kernal::identity::IdentityContext;
 use shared::application::inputs::common::Scope as ScopeInput;
 use shared::application::inputs::model_metadata::GetModelMetadataByAuthorAndNameInput;
 use shared::presentation::http::v1::contracts::responses;

@@ -1,6 +1,7 @@
 use std::time::Duration;
 use crate::application::errors::ApplicationError;
 use crate::application::outputs::discover_models::DiscoverModelsOutput;
+use crate::shared_kernal::identity::IdentityContext;
 use crate::{application, domain};
 use crate::domain::entities;
 use bson::oid::ObjectId;
@@ -41,8 +42,12 @@ impl ModelMetadataRepository {
 
 #[async_trait]
 impl application::ports::model_metadata::ModelMetadataRepository for ModelMetadataRepository {
-    async fn upsert(&self, input: &application::inputs::model_metadata::UpsertModelMetadata) -> Result<(), ApplicationError> {
-        let document = ModelMetadata::try_from(&input.metadata)
+    async fn upsert(
+        &self,
+        input: &application::inputs::model_metadata::UpsertModelMetadata,
+        ctx: &IdentityContext,
+    ) -> Result<(), ApplicationError> {
+        let document = ModelMetadata::try_from((&input.metadata, ctx))
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
         
         let filter = doc! {  
@@ -58,7 +63,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(())
     }
 
-    async fn find_by_author_and_name(&self, name: &String, author: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn find_by_author_and_name(&self, author: &String, name: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
         let result = self.read_collection
             .find_one(doc!{ "tenant_id": tenant_id, "author": author, "name": name })
             .await

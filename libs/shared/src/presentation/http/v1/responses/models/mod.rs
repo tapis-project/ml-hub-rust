@@ -19,9 +19,9 @@ pub struct ModelArtifact {
 #[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct ModelMetadata {
     // General fields
-    pub name: Option<String>,
-    pub author: Option<String>,
-    pub tenant_id: Option<String>,
+    pub name: String,
+    pub author: String,
+    pub tenant_id: String,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,

@@ -6,10 +6,9 @@ use serde_json::Value;
 use hf_model_etl::database::{initialize_client, ClientParams};
 use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
 use shared::application::inputs::model_metadata::UpsertModelMetadata;
-use shared::domain::entities::tenancy::GLOBAL_TENANT;
-use shared::domain::entities::identity::MLHUB_SERVICE_ID;
 use client_provider::ClientProvider;
 use clients::ClientError;
+use shared::shared_kernal::identity::IdentityContext;
 use std::sync::Arc;
 
 #[tokio::main]
@@ -96,12 +95,7 @@ async fn main() {
                 Ok(line) => {
                     if let Ok(hf_model) = serde_json::from_str::<Value>(line.as_str()) {
                         let metadata = match huggingface_client.from_platform_metadata(hf_model) {
-                            Ok(mut m) => {
-                                // Override author and tenant_id values set by the client
-                                m.author = Some(MLHUB_SERVICE_ID.into());
-                                m.tenant_id = Some(GLOBAL_TENANT.into());
-                                m
-                            },
+                            Ok(m) => m,
                             Err(err) => {
                                 match err {
                                     ClientError::Unimplemented => {
@@ -115,7 +109,10 @@ async fn main() {
                                 }
                             }
                         };
-                        match model_metadata_service.register_model_metadata(UpsertModelMetadata { metadata }).await {
+                        match model_metadata_service.register_model_metadata(
+                            UpsertModelMetadata { metadata },
+                            &IdentityContext::system()
+                        ).await {
                             Ok(_) => (),
                             Err(err) => {
                                 eprintln!("Error saving metadata to the database: {}", err.to_string());

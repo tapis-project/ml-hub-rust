@@ -1,8 +1,9 @@
 use std::sync::Arc;
-use crate::application::identity_context::IdentityContext;
+
+use crate::shared_kernal::identity::IdentityContext;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::entities::tenancy::GLOBAL_TENANT;
+use crate::shared_kernal::tenancy::GLOBAL_TENANT;
 use crate::domain::services::deployment_strategy::resolve_viable_strategies;
 use retry_utils::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;
@@ -19,6 +20,7 @@ use crate::domain::services::{
     ModelMetadataServiceError as ModelMetadataDomainServiceError
 };
 use crate::domain::entities;
+
 use thiserror::Error;
 use once_cell::sync::Lazy;
 use serde_json::{Value, to_value, json};
@@ -130,8 +132,8 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn register_model_metadata(&self, input: UpsertModelMetadata) -> Result<(), ModelMetadataServiceError> {
-        let metadata_entity = entities::model_metadata::ModelMetadata::try_from(input.metadata.clone())?;
+    pub async fn register_model_metadata(&self, input: UpsertModelMetadata, ctx: &IdentityContext) -> Result<(), ModelMetadataServiceError> {
+        let metadata_entity = entities::model_metadata::ModelMetadata::try_from((input.metadata.clone(), ctx))?;
         
         let modified_metadata = self.annotate_with_deployment_strategies(&metadata_entity);
 
@@ -139,7 +141,7 @@ impl ModelMetadataService {
             metadata:  ModelMetadataRegistrationInput::try_from(modified_metadata)?
         };
 
-        let upsert_metadata = || self.model_metadata_repo.upsert(&modified_input);
+        let upsert_metadata = || self.model_metadata_repo.upsert(&modified_input, &ctx);
 
         retry_async(upsert_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;

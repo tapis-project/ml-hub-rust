@@ -16,8 +16,7 @@ mod deployment_strategy_test {
 
         let model_metadata = full_model_metadata();
 
-        assert!(model_metadata.name.is_some());
-        assert!(model_metadata.name.clone().unwrap() == String::from("foo"));
+        assert!(model_metadata.name.clone() == String::from("foo"));
         assert!(evaluate_rule(&model_metadata, &name_in_value).unwrap());
     }
 
@@ -30,8 +29,7 @@ mod deployment_strategy_test {
         };
 
         let model_metadata = full_model_metadata();
-        assert!(model_metadata.name.is_some());
-        assert!(model_metadata.name.clone().unwrap() == String::from("foo"));
+        assert!(model_metadata.name.clone() == String::from("foo"));
 
         assert!(evaluate_rule(&model_metadata, &name_not_in_value).unwrap());
 
@@ -69,8 +67,7 @@ mod deployment_strategy_test {
 
         let model_metadata = full_model_metadata();
 
-        assert!(model_metadata.name.is_some());
-        assert!(model_metadata.name.clone().unwrap() == String::from("foo"));
+        assert!(model_metadata.name.clone() == String::from("foo"));
         assert!(evaluate_rule(&model_metadata, &eq).unwrap());
 
         let neq = Rule {

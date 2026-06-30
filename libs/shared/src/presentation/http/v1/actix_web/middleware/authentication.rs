@@ -10,7 +10,7 @@ use actix_web::{
 use serde_json::json;
 use log::{info, warn, error};
 
-use crate::application::identity_context::{IdentityContext, Actor};
+use crate::shared_kernal::identity::{IdentityContext, Actor};
 use crate::application::inputs::principal::GetOrCreateFromFederatedIdentity;
 use crate::application::ports::identity::FederatedIdentityProviderError;
 use crate::application::services::federated_identity_service::FederatedIdentityService;

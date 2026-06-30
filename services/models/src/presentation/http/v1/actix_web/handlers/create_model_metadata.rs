@@ -1,3 +1,5 @@
+use shared::shared_kernal::identity::IdentityContext;
+use shared::application::services::model_metadata_service::ModelMetadataService;
 use validator::Validate;
 
 use crate::presentation::http::v1::actix_web::response_helpers::{
@@ -5,8 +7,6 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
     build_success_response,
 };
 use crate::presentation::http::v1::requests::create_model_metadata::body::CreateModelMetadataBody;
-use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::model_metadata_service_factory;
 use crate::application::model_metadata_inputs::UpsertModelMetadata as UpsertModelMetadataInput;
 use actix_web::{
     post,
@@ -31,25 +31,21 @@ use shared::presentation::http::v1::contracts::responses;
 #[post("models-api/models")]
 async fn create_model_metadata(
     body: web::Json<CreateModelMetadataBody>,
-    data: web::Data<AppState>,
+    ctx: IdentityContext,
+    model_metadata_service: web::Data<ModelMetadataService>,
 ) -> impl Responder {
-    let dto = body.into_inner();
+    let request_body = body.into_inner();
 
-    if let Err(err) = dto.validate() {
+    if let Err(err) = request_body.validate() {
         return build_error_response(500, err.to_string())
     };
 
-    let input = match UpsertModelMetadataInput::try_from(dto) {
+    let input = match UpsertModelMetadataInput::try_from((request_body, &ctx)) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let model_metadata_service = match model_metadata_service_factory(&data.client, data.db_name.clone(), data.client_strategy_sets.clone()).await {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string())
-    };
-
-    match model_metadata_service.register_model_metadata(input).await {
+    match model_metadata_service.register_model_metadata(input, &ctx).await {
         Ok(_) => (),
         Err(err) => return build_error_response(500, err.to_string())
     };

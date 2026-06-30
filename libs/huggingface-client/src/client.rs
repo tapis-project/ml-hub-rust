@@ -360,11 +360,7 @@ impl PublishModelClient for HuggingFaceClient {
             None => return Err(ClientError::BadRequest { msg: "A model metadata entry must exist for this artifact in order to publish to huggingface".into(), scope: ClientErrorScope::Client })
         };
         
-        // Get the repo/model name from the metadata
-        let model_name = match metadata.name.clone() {
-            Some(n) => n,
-            None => return Err(ClientError::BadRequest { msg: "Model metadata must contain a name in order to publish to huggingface".into(), scope: ClientErrorScope::Client })
-        };
+        let model_name = metadata.name.clone();
 
         // Get the access token from the headers
         let access_token = match request.headers.get_first_value("Authorization") {
@@ -619,9 +615,8 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             };
             
             return Ok(inputs::model_metadata::ModelMetadata {
-                name: Some(name),
-                author: Some(format!("_{}", hf_model.author)), // NOTE: Will be overwritten by MLHub
-                tenant_id: Some("global".into()), // NOTE: Will be overwritten by MLHub
+                name,
+                author: format!("_{}", hf_model.author),
                 annotations: None,
                 canonical: Some(inputs::model_metadata::Canonical {
                     platform: Platform::HuggingFace,
