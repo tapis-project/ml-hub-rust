@@ -3,14 +3,12 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
     build_success_response,
 };
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DiscoverModelsQueryParams};
-use crate::bootstrap::factories::model_metadata_service_factory;
 use actix_web::{post, web, Responder};
 use shared::shared_kernal::identity::IdentityContext;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::responses::ModelMetadata;
-use crate::bootstrap::state::AppState;
 use serde_json::{to_value, Value, Map};
 
 #[utoipa::path(
