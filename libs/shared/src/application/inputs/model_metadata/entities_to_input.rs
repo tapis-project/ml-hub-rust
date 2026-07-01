@@ -126,7 +126,7 @@ impl TryFrom<domain::ModelMetadata> for inputs::ModelMetadata {
         
         Ok(Self {
             name: value.name,
-            author: value.author,
+            // author: value.author,
             canonical,
             libraries: value.libraries,
             model_type: value.model_type,

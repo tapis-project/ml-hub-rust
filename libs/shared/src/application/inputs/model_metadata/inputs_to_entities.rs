@@ -125,12 +125,10 @@ impl TryFrom<(inputs::ModelMetadata, &IdentityContext)> for domain::ModelMetadat
             .map(|v| domain::Canonical::try_from(v))
             .transpose()?;
         
-        let tenant_id = value.1.actor_tenant_id().clone();
-        
         Ok(Self {
             name: value.0.name,
-            author: value.0.author,
-            tenant_id,
+            author: value.1.actor_principal_id().clone(),
+            tenant_id: value.1.actor_tenant_id().clone(),
             artifact_id: None,
             canonical,
             libraries: value.0.libraries,

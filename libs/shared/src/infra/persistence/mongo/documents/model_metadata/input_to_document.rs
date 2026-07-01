@@ -128,13 +128,15 @@ impl TryFrom<(&inputs::ModelMetadata, &IdentityContext)> for model_metadata::Mod
 
         let tenant_id = value.1.actor_tenant_id().clone();
 
+        let author = value.1.actor_principal_id().clone();
+
         Ok(Self {
             _id: None,
             artifact_id: None,
+            author,
             tenant_id,
             canonical,
             name: value.0.name.clone(),
-            author: value.0.author.clone(),
             libraries: value.0.libraries.clone(),
             model_type: value.0.model_type.clone(),
             image: value.0.image.clone(),

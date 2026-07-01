@@ -40,7 +40,7 @@ async fn create_model_metadata(
         return build_error_response(500, err.to_string())
     };
 
-    let input = match UpsertModelMetadataInput::try_from((request_body, &ctx)) {
+    let input = match UpsertModelMetadataInput::try_from(request_body) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

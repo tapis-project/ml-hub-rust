@@ -616,7 +616,6 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             
             return Ok(inputs::model_metadata::ModelMetadata {
                 name,
-                author: format!("_{}", hf_model.author),
                 annotations: None,
                 canonical: Some(inputs::model_metadata::Canonical {
                     platform: Platform::HuggingFace,

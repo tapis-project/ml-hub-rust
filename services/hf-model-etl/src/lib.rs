@@ -11,7 +11,6 @@ pub enum HFModelMetadataError {
     MalformedModelId(String)
 }
 
-
 #[derive(Deserialize)]
 pub struct HFModelMetadata {
     pub author: String,
@@ -54,6 +53,7 @@ impl HFModelMetadata {
 
         hf_tags
     }
+    
     pub fn get_model_name(&self) -> Result<String, HFModelMetadataError> {
         let parts: Vec<String> = self.id.clone()
             .split("/")
