@@ -59,6 +59,7 @@ export interface DiscoverModelsRequest {
     limit?: number;
     cursor?: string;
     includeCount?: boolean;
+    includeGlobalModels?: boolean;
 }
 
 export interface GetModelByAuthorAndNameRequest {
@@ -135,6 +136,10 @@ export class ModelsApi extends runtime.BaseAPI {
 
         if (requestParameters.includeCount !== undefined) {
             queryParameters['include_count'] = requestParameters.includeCount;
+        }
+
+        if (requestParameters.includeGlobalModels !== undefined) {
+            queryParameters['include_global_models'] = requestParameters.includeGlobalModels;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -240,33 +245,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List all models
-     */
-    async listModelsRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/models-api/models`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ListModelsResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * List all models
-     */
-    async listModels(initOverrides?: RequestInit): Promise<ListModelsResponse> {
-        const response = await this.listModelsRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * List models by author
+     * List models by author in the current tenant
      */
     async listModelsByAuthorRaw(requestParameters: ListModelsByAuthorRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
         if (requestParameters.author === null || requestParameters.author === undefined) {
@@ -288,7 +267,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List models by author
+     * List models by author in the current tenant
      */
     async listModelsByAuthor(requestParameters: ListModelsByAuthorRequest, initOverrides?: RequestInit): Promise<ListModelsResponse> {
         const response = await this.listModelsByAuthorRaw(requestParameters, initOverrides);

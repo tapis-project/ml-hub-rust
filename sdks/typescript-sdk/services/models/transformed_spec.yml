@@ -270,36 +270,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
   /models-api/models:
-    get:
-      tags:
-        - Models
-      description: List all models
-      operationId: list_models
-      responses:
-        '200':
-          description: Discovered models
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListModelsResponse'
-        '400':
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BadRequestResponse'
-        '404':
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
-        '500':
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerErrorResponse'
     post:
       tags:
         - Models
@@ -363,6 +333,12 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: include_global_models
+          in: query
+          description: A flag for including global models in the response
+          required: false
+          schema:
+            type: boolean
       requestBody:
         content:
           application/json:
@@ -398,18 +374,18 @@ paths:
     get:
       tags:
         - Models
-      description: List models by author
+      description: List models by author in the current tenant
       operationId: list_models_by_author
       parameters:
         - name: author
           in: path
-          description: The author of the models
+          description: The author of the model
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Listed models by author
+          description: Successfully fetched models
           content:
             application/json:
               schema:
@@ -1070,11 +1046,10 @@ components:
           nullable: true
     CreateModelMetadataBody:
       type: object
+      required:
+        - name
       properties:
         annotations: {}
-        author:
-          type: string
-          nullable: true
         bias_evaluation_score:
           type: integer
           format: int32
@@ -1158,7 +1133,6 @@ components:
           nullable: true
         name:
           type: string
-          nullable: true
         pretrained:
           type: boolean
           nullable: true
@@ -1192,9 +1166,6 @@ components:
           items:
             $ref: '#/components/schemas/Task'
           description: Inference Fields
-          nullable: true
-        tenant_id:
-          type: string
           nullable: true
         training_distributed:
           type: boolean
@@ -1807,21 +1778,15 @@ components:
       type: object
       required:
         - id
-        - artifact_type
         - created_at
         - last_modified
       properties:
-        artifact_type:
-          $ref: '#/components/schemas/ArtifactType'
         created_at:
           type: string
         id:
           type: string
         last_modified:
           type: string
-        metadata:
-          $ref: '#/components/schemas/ModelMetadata'
-          nullable: true
     ModelIO:
       type: object
       properties:
@@ -1837,11 +1802,14 @@ components:
       additionalProperties: false
     ModelMetadata:
       type: object
+      required:
+        - name
+        - author
+        - tenant_id
       properties:
         annotations: {}
         author:
           type: string
-          nullable: true
         bias_evaluation_score:
           type: integer
           format: int32
@@ -1928,7 +1896,6 @@ components:
           nullable: true
         name:
           type: string
-          nullable: true
         pretrained:
           type: boolean
           nullable: true
@@ -1965,7 +1932,6 @@ components:
           nullable: true
         tenant_id:
           type: string
-          nullable: true
         training_distributed:
           type: boolean
           nullable: true

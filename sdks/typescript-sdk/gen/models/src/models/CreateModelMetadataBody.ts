@@ -42,12 +42,6 @@ export interface CreateModelMetadataBody {
     annotations?: any | null;
     /**
      * 
-     * @type {string}
-     * @memberof CreateModelMetadataBody
-     */
-    author?: string | null;
-    /**
-     * 
      * @type {number}
      * @memberof CreateModelMetadataBody
      */
@@ -171,7 +165,7 @@ export interface CreateModelMetadataBody {
      * @type {string}
      * @memberof CreateModelMetadataBody
      */
-    name?: string | null;
+    name: string;
     /**
      * 
      * @type {boolean}
@@ -223,12 +217,6 @@ export interface CreateModelMetadataBody {
     task_types?: Array<Task> | null;
     /**
      * 
-     * @type {string}
-     * @memberof CreateModelMetadataBody
-     */
-    tenant_id?: string | null;
-    /**
-     * 
      * @type {boolean}
      * @memberof CreateModelMetadataBody
      */
@@ -270,7 +258,6 @@ export function CreateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'annotations': !exists(json, 'annotations') ? undefined : json['annotations'],
-        'author': !exists(json, 'author') ? undefined : json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
@@ -291,7 +278,7 @@ export function CreateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscrimina
         'model_outputs': !exists(json, 'model_outputs') ? undefined : (json['model_outputs'] === null ? null : (json['model_outputs'] as Array<any>).map(ModelIOFromJSON)),
         'model_type': !exists(json, 'model_type') ? undefined : json['model_type'],
         'multi_modal': !exists(json, 'multi_modal') ? undefined : json['multi_modal'],
-        'name': !exists(json, 'name') ? undefined : json['name'],
+        'name': json['name'],
         'pretrained': !exists(json, 'pretrained') ? undefined : json['pretrained'],
         'pretraining_datasets': !exists(json, 'pretraining_datasets') ? undefined : json['pretraining_datasets'],
         'pruned': !exists(json, 'pruned') ? undefined : json['pruned'],
@@ -300,7 +287,6 @@ export function CreateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscrimina
         'slimmed': !exists(json, 'slimmed') ? undefined : json['slimmed'],
         'supports_quantization': !exists(json, 'supports_quantization') ? undefined : json['supports_quantization'],
         'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
-        'tenant_id': !exists(json, 'tenant_id') ? undefined : json['tenant_id'],
         'training_distributed': !exists(json, 'training_distributed') ? undefined : json['training_distributed'],
         'training_hardware': !exists(json, 'training_hardware') ? undefined : HardwareRequirementsFromJSON(json['training_hardware']),
         'training_max_energy_consumption_watts': !exists(json, 'training_max_energy_consumption_watts') ? undefined : json['training_max_energy_consumption_watts'],
@@ -319,7 +305,6 @@ export function CreateModelMetadataBodyToJSON(value?: CreateModelMetadataBody | 
     return {
         
         'annotations': value.annotations,
-        'author': value.author,
         'bias_evaluation_score': value.bias_evaluation_score,
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,
@@ -349,7 +334,6 @@ export function CreateModelMetadataBodyToJSON(value?: CreateModelMetadataBody | 
         'slimmed': value.slimmed,
         'supports_quantization': value.supports_quantization,
         'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
-        'tenant_id': value.tenant_id,
         'training_distributed': value.training_distributed,
         'training_hardware': HardwareRequirementsToJSON(value.training_hardware),
         'training_max_energy_consumption_watts': value.training_max_energy_consumption_watts,

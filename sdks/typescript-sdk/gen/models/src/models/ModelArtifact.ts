@@ -13,29 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import {
-    ArtifactType,
-    ArtifactTypeFromJSON,
-    ArtifactTypeFromJSONTyped,
-    ArtifactTypeToJSON,
-    ModelMetadata,
-    ModelMetadataFromJSON,
-    ModelMetadataFromJSONTyped,
-    ModelMetadataToJSON,
-} from './';
-
 /**
  * 
  * @export
  * @interface ModelArtifact
  */
 export interface ModelArtifact {
-    /**
-     * 
-     * @type {ArtifactType}
-     * @memberof ModelArtifact
-     */
-    artifact_type: ArtifactType;
     /**
      * 
      * @type {string}
@@ -54,12 +37,6 @@ export interface ModelArtifact {
      * @memberof ModelArtifact
      */
     last_modified: string;
-    /**
-     * 
-     * @type {ModelMetadata}
-     * @memberof ModelArtifact
-     */
-    metadata?: ModelMetadata;
 }
 
 export function ModelArtifactFromJSON(json: any): ModelArtifact {
@@ -72,11 +49,9 @@ export function ModelArtifactFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'artifact_type': ArtifactTypeFromJSON(json['artifact_type']),
         'created_at': json['created_at'],
         'id': json['id'],
         'last_modified': json['last_modified'],
-        'metadata': !exists(json, 'metadata') ? undefined : ModelMetadataFromJSON(json['metadata']),
     };
 }
 
@@ -89,11 +64,9 @@ export function ModelArtifactToJSON(value?: ModelArtifact | null): any {
     }
     return {
         
-        'artifact_type': ArtifactTypeToJSON(value.artifact_type),
         'created_at': value.created_at,
         'id': value.id,
         'last_modified': value.last_modified,
-        'metadata': ModelMetadataToJSON(value.metadata),
     };
 }
 

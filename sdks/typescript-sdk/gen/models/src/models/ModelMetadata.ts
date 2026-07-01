@@ -49,7 +49,7 @@ export interface ModelMetadata {
      * @type {string}
      * @memberof ModelMetadata
      */
-    author?: string | null;
+    author: string;
     /**
      * 
      * @type {number}
@@ -181,7 +181,7 @@ export interface ModelMetadata {
      * @type {string}
      * @memberof ModelMetadata
      */
-    name?: string | null;
+    name: string;
     /**
      * 
      * @type {boolean}
@@ -236,7 +236,7 @@ export interface ModelMetadata {
      * @type {string}
      * @memberof ModelMetadata
      */
-    tenant_id?: string | null;
+    tenant_id: string;
     /**
      * 
      * @type {boolean}
@@ -280,7 +280,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
     return {
         
         'annotations': !exists(json, 'annotations') ? undefined : json['annotations'],
-        'author': !exists(json, 'author') ? undefined : json['author'],
+        'author': json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
@@ -302,7 +302,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'model_outputs': !exists(json, 'model_outputs') ? undefined : (json['model_outputs'] === null ? null : (json['model_outputs'] as Array<any>).map(ModelIOFromJSON)),
         'model_type': !exists(json, 'model_type') ? undefined : json['model_type'],
         'multi_modal': !exists(json, 'multi_modal') ? undefined : json['multi_modal'],
-        'name': !exists(json, 'name') ? undefined : json['name'],
+        'name': json['name'],
         'pretrained': !exists(json, 'pretrained') ? undefined : json['pretrained'],
         'pretraining_datasets': !exists(json, 'pretraining_datasets') ? undefined : json['pretraining_datasets'],
         'pruned': !exists(json, 'pruned') ? undefined : json['pruned'],
@@ -311,7 +311,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'slimmed': !exists(json, 'slimmed') ? undefined : json['slimmed'],
         'supports_quantization': !exists(json, 'supports_quantization') ? undefined : json['supports_quantization'],
         'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
-        'tenant_id': !exists(json, 'tenant_id') ? undefined : json['tenant_id'],
+        'tenant_id': json['tenant_id'],
         'training_distributed': !exists(json, 'training_distributed') ? undefined : json['training_distributed'],
         'training_hardware': !exists(json, 'training_hardware') ? undefined : HardwareRequirementsFromJSON(json['training_hardware']),
         'training_max_energy_consumption_watts': !exists(json, 'training_max_energy_consumption_watts') ? undefined : json['training_max_energy_consumption_watts'],
