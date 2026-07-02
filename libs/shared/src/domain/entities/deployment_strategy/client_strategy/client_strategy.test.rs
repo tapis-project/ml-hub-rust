@@ -2,7 +2,7 @@
 mod client_strategy_test {
     use serde_json::Value;
 
-    use crate::domain::entities::deployment_strategy::{client_strategy::ClientStrategy, parameter_set::{Parameter, ParameterSet}, rule_set::{Rule, RuleSet}};
+    use crate::domain::entities::deployment_strategy::{client_strategy::ClientStrategy, parameter_set::{Parameter, ParameterSet, ParameterType}, rule_set::{Rule, RuleSet}};
 
     #[test]
     fn test_init() {
@@ -25,7 +25,14 @@ mod client_strategy_test {
                 name: "foo-params".into(),
                 parameters: vec![
                     Parameter {
-                        name: "foo-param".into()
+                        name: "foo-param".into(),
+                        required: true,
+                        secret: false,
+                        description: Some("bar".into()),
+                        r#type: ParameterType::String {
+                            choices: None,
+                            default: Some("foo".into())
+                        }
                     }
                 ]
             }),
@@ -43,7 +50,14 @@ mod client_strategy_test {
                 name: "foo-params".into(),
                 parameters: vec![
                     Parameter {
-                        name: "foo-param".into()
+                        name: "foo-param".into(),
+                        required: true,
+                        secret: false,
+                        description: Some("bar".into()),
+                        r#type: ParameterType::String {
+                            choices: None,
+                            default: Some("foo".into())
+                        }
                     }
                 ]
             }),
