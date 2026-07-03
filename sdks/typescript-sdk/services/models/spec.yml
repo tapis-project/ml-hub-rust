@@ -1124,13 +1124,6 @@ components:
             - 'null'
           items:
             type: string
-        keywords:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-          description: Arbitrary labels
         libraries:
           type:
             - array
@@ -1199,6 +1192,13 @@ components:
           type:
             - boolean
             - 'null'
+        tags:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: Arbitrary labels
         task_types:
           type:
             - array
@@ -1381,13 +1381,6 @@ components:
             - 'null'
           items:
             type: string
-        keywords:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-          description: Arbitrary labels
         libraries:
           type:
             - array
@@ -1458,6 +1451,13 @@ components:
           type:
             - boolean
             - 'null'
+        tags:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: Arbitrary labels
         task_types:
           type:
             - array
@@ -1968,13 +1968,6 @@ components:
             - 'null'
           items:
             type: string
-        keywords:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-          description: Arbitrary labels
         libraries:
           type:
             - array
@@ -2043,6 +2036,13 @@ components:
           type:
             - boolean
             - 'null'
+        tags:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+          description: Arbitrary labels
         task_types:
           type:
             - array

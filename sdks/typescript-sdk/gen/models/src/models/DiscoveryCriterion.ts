@@ -125,12 +125,6 @@ export interface DiscoveryCriterion {
      */
     inference_software_dependencies?: Array<string> | null;
     /**
-     * Arbitrary labels
-     * @type {Array<string>}
-     * @memberof DiscoveryCriterion
-     */
-    keywords?: Array<string> | null;
-    /**
      * 
      * @type {Array<string>}
      * @memberof DiscoveryCriterion
@@ -216,6 +210,12 @@ export interface DiscoveryCriterion {
      */
     supports_quantization?: boolean | null;
     /**
+     * Arbitrary labels
+     * @type {Array<string>}
+     * @memberof DiscoveryCriterion
+     */
+    tags?: Array<string> | null;
+    /**
      * Inference Fields
      * @type {Array<Task>}
      * @memberof DiscoveryCriterion
@@ -284,7 +284,6 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
         'inference_min_throughput': !exists(json, 'inference_min_throughput') ? undefined : json['inference_min_throughput'],
         'inference_precision': !exists(json, 'inference_precision') ? undefined : json['inference_precision'],
         'inference_software_dependencies': !exists(json, 'inference_software_dependencies') ? undefined : json['inference_software_dependencies'],
-        'keywords': !exists(json, 'keywords') ? undefined : json['keywords'],
         'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
         'license': !exists(json, 'license') ? undefined : json['license'],
         'model_inputs': !exists(json, 'model_inputs') ? undefined : (json['model_inputs'] === null ? null : (json['model_inputs'] as Array<any>).map(ModelIOFromJSON)),
@@ -299,6 +298,7 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
         'regulatory': !exists(json, 'regulatory') ? undefined : json['regulatory'],
         'slimmed': !exists(json, 'slimmed') ? undefined : json['slimmed'],
         'supports_quantization': !exists(json, 'supports_quantization') ? undefined : json['supports_quantization'],
+        'tags': !exists(json, 'tags') ? undefined : json['tags'],
         'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
         'training_distributed': !exists(json, 'training_distributed') ? undefined : json['training_distributed'],
         'training_hardware': !exists(json, 'training_hardware') ? undefined : HardwareRequirementsFromJSON(json['training_hardware']),
@@ -333,7 +333,6 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
         'inference_min_throughput': value.inference_min_throughput,
         'inference_precision': value.inference_precision,
         'inference_software_dependencies': value.inference_software_dependencies,
-        'keywords': value.keywords,
         'libraries': value.libraries,
         'license': value.license,
         'model_inputs': value.model_inputs === undefined ? undefined : (value.model_inputs === null ? null : (value.model_inputs as Array<any>).map(ModelIOToJSON)),
@@ -348,6 +347,7 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
         'regulatory': value.regulatory,
         'slimmed': value.slimmed,
         'supports_quantization': value.supports_quantization,
+        'tags': value.tags,
         'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
         'training_distributed': value.training_distributed,
         'training_hardware': HardwareRequirementsToJSON(value.training_hardware),

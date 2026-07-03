@@ -1712,14 +1712,6 @@
             },
             "nullable": true
           },
-          "keywords": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Arbitrary labels",
-            "nullable": true
-          },
           "libraries": {
             "type": "array",
             "items": {
@@ -1790,6 +1782,14 @@
           },
           "supports_quantization": {
             "type": "boolean",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels",
             "nullable": true
           },
           "task_types": {
@@ -2021,14 +2021,6 @@
             },
             "nullable": true
           },
-          "keywords": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Arbitrary labels",
-            "nullable": true
-          },
           "libraries": {
             "type": "array",
             "items": {
@@ -2100,6 +2092,14 @@
           },
           "supports_quantization": {
             "type": "boolean",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels",
             "nullable": true
           },
           "task_types": {
@@ -2779,14 +2779,6 @@
             },
             "nullable": true
           },
-          "keywords": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Arbitrary labels",
-            "nullable": true
-          },
           "libraries": {
             "type": "array",
             "items": {
@@ -2857,6 +2849,14 @@
           },
           "supports_quantization": {
             "type": "boolean",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels",
             "nullable": true
           },
           "task_types": {

@@ -1758,16 +1758,6 @@
               "type": "string"
             }
           },
-          "tags": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Arbitrary labels"
-          },
           "libraries": {
             "type": [
               "array",
@@ -1865,6 +1855,16 @@
               "boolean",
               "null"
             ]
+          },
+          "tags": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels"
           },
           "task_types": {
             "type": [
@@ -2133,16 +2133,6 @@
               "type": "string"
             }
           },
-          "tags": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Arbitrary labels"
-          },
           "libraries": {
             "type": [
               "array",
@@ -2243,6 +2233,16 @@
               "boolean",
               "null"
             ]
+          },
+          "tags": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels"
           },
           "task_types": {
             "type": [
@@ -2977,16 +2977,6 @@
               "type": "string"
             }
           },
-          "tags": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Arbitrary labels"
-          },
           "libraries": {
             "type": [
               "array",
@@ -3084,6 +3074,16 @@
               "boolean",
               "null"
             ]
+          },
+          "tags": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Arbitrary labels"
           },
           "task_types": {
             "type": [
