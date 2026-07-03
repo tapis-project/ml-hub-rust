@@ -71,7 +71,7 @@ pub enum Skill {
     TokenClassification,
     #[doc = "Capabilities for generating various forms of creative content, including narratives, poetry, and other creative writing forms."]
     CreativeContentGeneration,
-    #[doc = "Capability to perform efficient and accurate searches within large textual databases based on various criteria, including keywords, semantic meaning, or complex queries."]
+    #[doc = "Capability to perform efficient and accurate searches within large textual databases based on various criteria, including tags, semantic meaning, or complex queries."]
     InformationRetrievalSynthesisSearch,
     #[doc = "System capability to understand questions and provide accurate, relevant answers by analyzing available information sources."]
     QuestionAnswering,

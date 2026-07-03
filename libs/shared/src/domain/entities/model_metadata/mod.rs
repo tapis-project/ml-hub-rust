@@ -74,7 +74,7 @@ pub struct ModelMetadata {
     pub canonical: Option<Canonical>,
 
     /// Arbitrary labels
-    pub keywords: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
     pub annotations: Option<Value>,
 
     /// Architecture fields
@@ -125,7 +125,7 @@ pub enum FieldValue {
     Name(Option<String>),
     Author(Option<String>),
     Libraries(Option<Vec<String>>),
-    Keywords(Option<Vec<String>>),
+    tags(Option<Vec<String>>),
     TaskTypes(Option<Vec<Task>>),
     InferenceHardwareMemory(Option<i32>),
     CanonicalPrivate(Option<bool>),
@@ -155,8 +155,8 @@ impl Into<Value> for FieldValue {
                     None => Value::Null,
                 }
             },
-            FieldValue::Keywords(keywords) => {
-                match keywords {
+            FieldValue::tags(tags) => {
+                match tags {
                     Some(kws) => {
                         kws.iter().map(|kw| Value::String(kw.clone())).collect()
                     },
@@ -204,7 +204,7 @@ impl ModelMetadata {
             ["name"] => Ok(FieldValue::Name(Some(self.name.clone()))),
             ["author"] => Ok(FieldValue::Author(Some(self.author.clone()))),
             ["libraries"] => Ok(FieldValue::Libraries(self.libraries.clone())),
-            ["keywords"] => Ok(FieldValue::Keywords(self.keywords.clone())),
+            ["tags"] => Ok(FieldValue::tags(self.tags.clone())),
             ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
             ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
                 self.inference_hardware.clone().and_then(|hr| hr.memory_gb),

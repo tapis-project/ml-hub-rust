@@ -118,7 +118,7 @@ impl TryFrom<(&inputs::SearchCriterion, &Vec<String>)> for model_metadata_filter
             model_type: search_criteria.model_type.clone(),
             version: search_criteria.version.clone(),
             image: search_criteria.image.clone(),
-            keywords: search_criteria.keywords.clone(),
+            tags: search_criteria.tags.clone(),
             annotations: search_criteria.annotations.clone(),
             multi_modal: search_criteria.multi_modal.clone(),
             model_inputs: Some(model_inputs),

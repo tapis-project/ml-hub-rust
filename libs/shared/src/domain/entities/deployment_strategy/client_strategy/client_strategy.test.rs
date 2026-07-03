@@ -29,10 +29,9 @@ mod client_strategy_test {
                         required: true,
                         secret: false,
                         description: Some("bar".into()),
-                        r#type: ParameterType::String {
-                            choices: None,
-                            default: Some("foo".into())
-                        }
+                        r#type: ParameterType::String,
+                        choices: None,
+                        default: Some("foo".into())
                     }
                 ]
             }),
@@ -54,10 +53,9 @@ mod client_strategy_test {
                         required: true,
                         secret: false,
                         description: Some("bar".into()),
-                        r#type: ParameterType::String {
-                            choices: None,
-                            default: Some("foo".into())
-                        }
+                        r#type: ParameterType::String,
+                        choices: None,
+                        default: Some("foo".into())
                     }
                 ]
             }),

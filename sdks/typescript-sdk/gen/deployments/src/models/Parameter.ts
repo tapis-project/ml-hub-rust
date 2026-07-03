@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    ParameterType,
+    ParameterTypeFromJSON,
+    ParameterTypeFromJSONTyped,
+    ParameterTypeToJSON,
+} from './';
+
 /**
  * 
  * @export
@@ -21,10 +28,46 @@ import { exists, mapValues } from '../runtime';
 export interface Parameter {
     /**
      * 
+     * @type {Array<string>}
+     * @memberof Parameter
+     */
+    choices?: Array<string> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof Parameter
+     */
+    _default?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof Parameter
+     */
+    description?: string | null;
+    /**
+     * 
      * @type {string}
      * @memberof Parameter
      */
     name: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Parameter
+     */
+    required: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Parameter
+     */
+    secret: boolean;
+    /**
+     * 
+     * @type {ParameterType}
+     * @memberof Parameter
+     */
+    type: ParameterType;
 }
 
 export function ParameterFromJSON(json: any): Parameter {
@@ -37,7 +80,13 @@ export function ParameterFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
+        'choices': !exists(json, 'choices') ? undefined : json['choices'],
+        '_default': !exists(json, 'default') ? undefined : json['default'],
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
+        'required': json['required'],
+        'secret': json['secret'],
+        'type': ParameterTypeFromJSON(json['type']),
     };
 }
 
@@ -50,7 +99,13 @@ export function ParameterToJSON(value?: Parameter | null): any {
     }
     return {
         
+        'choices': value.choices,
+        'default': value._default,
+        'description': value.description,
         'name': value.name,
+        'required': value.required,
+        'secret': value.secret,
+        'type': ParameterTypeToJSON(value.type),
     };
 }
 

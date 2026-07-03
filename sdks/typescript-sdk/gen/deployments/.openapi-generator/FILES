@@ -23,6 +23,7 @@ src/models/Operator.ts
 src/models/ParallelismStrategy.ts
 src/models/Parameter.ts
 src/models/ParameterSet.ts
+src/models/ParameterType.ts
 src/models/Platform.ts
 src/models/ReplicaGroup.ts
 src/models/ResourceRequirements.ts

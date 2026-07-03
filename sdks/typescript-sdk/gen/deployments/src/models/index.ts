@@ -16,6 +16,7 @@ export * from './Operator';
 export * from './ParallelismStrategy';
 export * from './Parameter';
 export * from './ParameterSet';
+export * from './ParameterType';
 export * from './Platform';
 export * from './ReplicaGroup';
 export * from './ResourceRequirements';

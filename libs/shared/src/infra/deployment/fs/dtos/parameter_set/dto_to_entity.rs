@@ -8,7 +8,9 @@ impl From<dtos::parameter_set::Parameter> for entities::parameter_set::Parameter
             description: value.description,
             required: value.required,
             secret: value.secret,
-            r#type: entities::parameter_set::ParameterType::from(value.r#type)
+            r#type: entities::parameter_set::ParameterType::from(value.r#type),
+            choices: value.choices,
+            default: value.default,
         }
     }
 }
@@ -17,10 +19,10 @@ impl From<dtos::parameter_set::ParameterType> for entities::parameter_set::Param
     fn from(value: dtos::parameter_set::ParameterType) -> Self {
         use dtos::parameter_set::ParameterType;
         match value {
-            ParameterType::String { choices, default } => entities::parameter_set::ParameterType::String { choices, default },
-            ParameterType::Integer { choices, default } => entities::parameter_set::ParameterType::Integer { choices, default },
-            ParameterType::Float { choices, default } => entities::parameter_set::ParameterType::Float { choices, default },
-            ParameterType::Boolean { default } => entities::parameter_set::ParameterType::Boolean { default },
+            ParameterType::String => entities::parameter_set::ParameterType::String,
+            ParameterType::Integer => entities::parameter_set::ParameterType::Integer,
+            ParameterType::Float => entities::parameter_set::ParameterType::Float,
+            ParameterType::Boolean => entities::parameter_set::ParameterType::Boolean,
         }
     }
 }

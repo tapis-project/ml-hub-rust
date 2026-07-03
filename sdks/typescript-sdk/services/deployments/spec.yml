@@ -487,9 +487,32 @@ components:
       type: object
       required:
         - name
+        - required
+        - secret
+        - type
       properties:
+        choices:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+        default:
+          type:
+            - string
+            - 'null'
+        description:
+          type:
+            - string
+            - 'null'
         name:
           type: string
+        required:
+          type: boolean
+        secret:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/ParameterType'
     ParameterSet:
       type: object
       required:
@@ -502,6 +525,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Parameter'
+    ParameterType:
+      type: string
+      enum:
+        - String
+        - Integer
+        - Float
+        - Boolean
     Platform:
       type: string
       description: >-

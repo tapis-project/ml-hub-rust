@@ -72,7 +72,7 @@ pub struct ModelMetadataFilter {
 
     /// Arbitrary labels
     #[serde(skip_serializing_if = "is_vec_empty")]
-    pub keywords: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<Value>,
 

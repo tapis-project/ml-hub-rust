@@ -140,7 +140,7 @@ impl TryFrom<(&inputs::ModelMetadata, &IdentityContext)> for model_metadata::Mod
             libraries: value.0.libraries.clone(),
             model_type: value.0.model_type.clone(),
             image: value.0.image.clone(),
-            keywords: value.0.keywords.clone(),
+            tags: value.0.tags.clone(),
             annotations: value.0.annotations.clone(),
             multi_modal: value.0.multi_modal.clone(),
             model_inputs: Some(model_inputs),

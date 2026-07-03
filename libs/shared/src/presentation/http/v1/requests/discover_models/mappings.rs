@@ -105,7 +105,7 @@ impl TryFrom<&discover_models::DiscoveryCriterion> for inputs::SearchCriterion {
             model_type: value.model_type.clone(),
             version: value.version.clone(),
             image: value.image.clone(),
-            keywords: value.keywords.clone(),
+            tags: value.tags.clone(),
             annotations: value.annotations.clone(),
             multi_modal: value.multi_modal.clone(),
             model_inputs: Some(model_inputs),

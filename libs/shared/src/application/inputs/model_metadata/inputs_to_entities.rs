@@ -134,7 +134,7 @@ impl TryFrom<(inputs::ModelMetadata, &IdentityContext)> for domain::ModelMetadat
             libraries: value.0.libraries,
             model_type: value.0.model_type,
             image: value.0.image,
-            keywords: value.0.keywords,
+            tags: value.0.tags,
             annotations: value.0.annotations,
             multi_modal: value.0.multi_modal,
             model_inputs: Some(model_inputs),

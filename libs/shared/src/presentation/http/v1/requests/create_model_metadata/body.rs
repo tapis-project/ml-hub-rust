@@ -53,7 +53,7 @@ pub struct CreateModelMetadataBody {
     pub image: Option<String>,
 
     /// Arbitrary labels
-    pub keywords: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
     pub annotations: Option<Value>,
 
     /// Architecture fields

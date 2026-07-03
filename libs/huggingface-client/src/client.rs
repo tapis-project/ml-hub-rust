@@ -553,20 +553,20 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             .map_err(|err| ClientError::Internal { msg: format!("Failed to convert serializable client metadata into Value: {}", err.to_string()), scope: ClientErrorScope::Server })?;
 
         if let Ok(hf_model) = serde_json::from_value::<HFModelMetadata>(value) {
-            let keywords: Vec<String> = hf_model.tags.clone();
+            let tags: Vec<String> = hf_model.tags.clone();
     
-            // Task types derived from the keywords. The "pipeline_tag"
+            // Task types derived from the tags. The "pipeline_tag"
             // property will be the authroitative soure for the task type 
             // if none are found
             let mut derived_task_types: Vec<inputs::task::Task> = Vec::new();
-            for keyword in keywords.clone() {
-                match inputs::task::Task::try_from(inputs::task::Task::normalize_string(keyword).as_str()) {
+            for tag in tags.clone() {
+                match inputs::task::Task::try_from(inputs::task::Task::normalize_string(tag).as_str()) {
                     Ok(t) => derived_task_types.push(t),
-                    Err(_) => continue // Ignore as they keyword cannot be interpreted as a task type
+                    Err(_) => continue // Ignore as they tag cannot be interpreted as a task type
                 }
             }
             
-            // Compound tags are huggingface keywords whose value contains the ":" char.
+            // Compound tags are huggingface tags whose value contains the ":" char.
             // From these compund tags we can derive properties we are interested in like
             // license and task type
             let compound_tags = hf_model.parse_compound_tags();
@@ -598,7 +598,7 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             let mut libraries: Vec<String> = Vec::new();
             let known_libs: &[String] = &["transformers".into(), "diffusers".into(), "tensorflow".into(), "pytorch".into()];
             for lib in known_libs {
-                if keywords.contains(lib) && !libraries.contains(lib) {
+                if tags.contains(lib) && !libraries.contains(lib) {
                     libraries.push(lib.clone())
                 }
             }
@@ -635,7 +635,7 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 model_type: None,
                 libraries: Some(libraries),
                 image: None,
-                keywords: Some(keywords),
+                tags: Some(tags),
                 multi_modal: None,
                 task_types: Some(task_types),
                 inference_distributed: None,

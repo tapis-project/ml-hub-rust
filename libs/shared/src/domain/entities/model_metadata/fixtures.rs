@@ -36,7 +36,7 @@ pub fn full_model_metadata() -> ModelMetadata {
         model_type: Some("cnn".into()),
         libraries: Some(vec!["transformers".into(), "diffusers".into()]),
         image: Some("dockerhub://my/model".into()),
-        keywords: Some(vec!["text-generation".into(), "transformers".into()]),
+        tags: Some(vec!["text-generation".into(), "transformers".into()]),
         multi_modal: Some(true),
         task_types: Some(vec![Task::ImageClassification]),
         inference_distributed: Some(true),

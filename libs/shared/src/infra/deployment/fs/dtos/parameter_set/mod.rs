@@ -1,6 +1,6 @@
 pub mod dto_to_entity;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Parameter {
@@ -9,28 +9,19 @@ pub struct Parameter {
     pub required: bool,
     pub secret: bool,
     pub r#type: ParameterType,
+    pub choices: Option<Vec<String>>,
+    pub default: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ParameterType {
-    String {
-        choices: Option<Vec<String>>,
-        default: Option<String>,
-    },
-    Integer {
-        choices: Option<Vec<u128>>,
-        default: Option<u128>,
-    },
-    Float {
-        choices: Option<Vec<i128>>,
-        default: Option<i128>,
-    },
-    Boolean{
-        default: Option<bool>,
-    },
+    String,
+    Integer,
+    Float,
+    Boolean,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParameterSet {
     pub name: String,
     pub parameters: Vec<Parameter>

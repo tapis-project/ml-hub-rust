@@ -7,25 +7,16 @@ pub struct Parameter {
     pub required: bool,
     pub secret: bool,
     pub r#type: ParameterType,
+    pub choices: Option<Vec<String>>,
+    pub default: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub enum ParameterType {
-    String {
-        choices: Option<Vec<String>>,
-        default: Option<String>,
-    },
-    Integer {
-        default: Option<u128>,
-        choices: Option<Vec<u128>>,
-    },
-    Float {
-        default: Option<i128>,
-        choices: Option<Vec<i128>>,
-    },
-    Boolean{
-        default: Option<bool>,
-    },
+    String,
+    Integer,
+    Float,
+    Boolean,
 }
 
 #[derive(Clone, Debug, Serialize)]

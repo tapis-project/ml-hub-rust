@@ -42,7 +42,7 @@ impl TryFrom<&entities::ModelMetadata> for responses::ModelMetadata {
             model_type: value.model_type.clone(),
             tenant_id: value.tenant_id.clone(),
             image: value.image.clone(),
-            keywords: value.keywords.clone(),
+            tags: value.tags.clone(),
             annotations: value.annotations.clone(),
             multi_modal: value.multi_modal.clone(),
             model_inputs: Some(model_inputs),

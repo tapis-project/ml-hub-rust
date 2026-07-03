@@ -32,7 +32,7 @@ pub enum Skill {
     Translation,
     #[doc = "Defining or explaining steps to allocate and configure compute, storage, and networking resources."]
     InfrastructureProvisioning,
-    #[doc = "Capability to perform efficient and accurate searches within large textual databases based on various criteria, including keywords, semantic meaning, or complex queries."]
+    #[doc = "Capability to perform efficient and accurate searches within large textual databases based on various criteria, including tags, semantic meaning, or complex queries."]
     InformationRetrievalSynthesisSearch,
     #[doc = "Classify the sentiment of a text, that is, a positive movie review."]
     SentimentAnalysis,

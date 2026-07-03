@@ -28,7 +28,7 @@ pub struct ModelMetadata {
     pub canonical: Option<Canonical>,
 
     /// Arbitrary labels
-    pub keywords: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
     pub annotations: Option<Value>,
 
     /// Architecture fields
