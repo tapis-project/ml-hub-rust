@@ -151,7 +151,6 @@ pub struct DiscoverModelsResponse {
 
 #[derive(ToSchema)]
 pub struct GetModelResponse {
-    #[schema(value_type = Object)]
     pub result: ModelMetadata,
     pub status: u16,
     pub message: String,
