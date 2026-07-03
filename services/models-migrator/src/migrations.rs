@@ -1,7 +1,9 @@
-use mongodb::Database;
+use mongodb::{Database, bson::doc};
+use shared::domain::entities::model_metadata::ModelMetadata;
 use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 use async_trait::async_trait;
 use shared::infra::persistence::mongo::documents::model_metadata::indexes::{TaskTypesIndex, ArtifactIdIndex, ModelAuthorNameIndexUnique};
+use shared::infra::persistence::mongo::database::MODEL_METADATA_COLLECTION;
 use shared::infra::_common::mongo::Index;
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
@@ -9,6 +11,7 @@ pub fn get_migrations() -> Vec<Box<dyn Migration>> {
         Box::new(CreateModelAuthorNameIndexMigration),
         Box::new(CreateTaskTypesIndexMigration),
         Box::new(CreateArtifactIdIndexMigration),
+        Box::new(RenameModelMetadataKeywordsToTagsMigration),
     ]
 }
 
@@ -97,6 +100,31 @@ impl Migration for CreateArtifactIdIndexMigration {
             .expect("Collection to be created");
 
         db.collection::<<ArtifactIdIndex as Index>::Collection>(ArtifactIdIndex::collection_name()).drop_index(ArtifactIdIndex::INDEX_NAME).await?;
+        Ok(())
+    }
+}
+
+pub struct RenameModelMetadataKeywordsToTagsMigration;
+
+#[async_trait]
+impl Migration for RenameModelMetadataKeywordsToTagsMigration {
+    async fn up(&self, env: Env) -> anyhow::Result<()> {
+        let db: &Database = env.db.as_ref().unwrap();
+
+        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
+            .update_many(doc! {}, doc! { "$rename": { "keywords": "tags" } })
+            .await?;
+
+        Ok(())
+    }
+
+    async fn down(&self, env: Env) -> anyhow::Result<()> {
+        let db: &Database = env.db.as_ref().unwrap();
+
+        db.collection::<ModelMetadata>(MODEL_METADATA_COLLECTION)
+            .update_many(doc! {}, doc! { "$rename": { "tags": "keywords" } })
+            .await?;
+        
         Ok(())
     }
 }
