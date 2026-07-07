@@ -64,6 +64,12 @@ export interface ModelMetadata {
     canonical?: Canonical;
     /**
      * 
+     * @type {string}
+     * @memberof ModelMetadata
+     */
+    description?: string | null;
+    /**
+     * 
      * @type {boolean}
      * @memberof ModelMetadata
      */
@@ -283,6 +289,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'author': json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
         'image': !exists(json, 'image') ? undefined : json['image'],
@@ -333,6 +340,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'author': value.author,
         'bias_evaluation_score': value.bias_evaluation_score,
         'canonical': CanonicalToJSON(value.canonical),
+        'description': value.description,
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,
         'image': value.image,

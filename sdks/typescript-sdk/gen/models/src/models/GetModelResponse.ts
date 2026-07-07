@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    ModelMetadata,
+    ModelMetadataFromJSON,
+    ModelMetadataFromJSONTyped,
+    ModelMetadataToJSON,
+} from './';
+
 /**
  * 
  * @export
@@ -33,10 +40,10 @@ export interface GetModelResponse {
     metadata: object;
     /**
      * 
-     * @type {object}
+     * @type {ModelMetadata}
      * @memberof GetModelResponse
      */
-    result: object;
+    result: ModelMetadata;
     /**
      * 
      * @type {number}
@@ -63,7 +70,7 @@ export function GetModelResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': json['result'],
+        'result': ModelMetadataFromJSON(json['result']),
         'status': json['status'],
         'version': json['version'],
     };
@@ -80,7 +87,7 @@ export function GetModelResponseToJSON(value?: GetModelResponse | null): any {
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': value.result,
+        'result': ModelMetadataToJSON(value.result),
         'status': value.status,
         'version': value.version,
     };

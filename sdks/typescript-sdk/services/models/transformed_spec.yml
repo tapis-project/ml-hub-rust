@@ -1054,6 +1054,9 @@ components:
           type: integer
           format: int32
           nullable: true
+        description:
+          type: string
+          nullable: true
         edge_optimized:
           type: boolean
           nullable: true
@@ -1510,7 +1513,7 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          $ref: '#/components/schemas/ModelMetadata'
         status:
           type: integer
           format: int32
@@ -1816,6 +1819,9 @@ components:
           nullable: true
         canonical:
           $ref: '#/components/schemas/Canonical'
+          nullable: true
+        description:
+          type: string
           nullable: true
         edge_optimized:
           type: boolean

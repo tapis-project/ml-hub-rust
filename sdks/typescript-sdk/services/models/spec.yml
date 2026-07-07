@@ -1066,6 +1066,10 @@ components:
             - integer
             - 'null'
           format: int32
+        description:
+          type:
+            - string
+            - 'null'
         edge_optimized:
           type:
             - boolean
@@ -1591,7 +1595,7 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          $ref: '#/components/schemas/ModelMetadata'
         status:
           type: integer
           format: int32
@@ -1910,6 +1914,10 @@ components:
           oneOf:
             - type: 'null'
             - $ref: '#/components/schemas/Canonical'
+        description:
+          type:
+            - string
+            - 'null'
         edge_optimized:
           type:
             - boolean
