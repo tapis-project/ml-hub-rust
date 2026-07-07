@@ -1,0 +1,3 @@
+pub mod documents;
+
+const RESOURCE_FIELD_VALUE_COUNTS_COLLECTION: &'static str = "RESOURCE_FIELD_VALUE_COUNTS";
