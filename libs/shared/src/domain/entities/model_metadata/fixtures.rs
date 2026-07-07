@@ -4,6 +4,7 @@ use serde_json::json;
 pub fn full_model_metadata() -> ModelMetadata {
     ModelMetadata {
         name: "foo".into(),
+        description: Some("foo".into()),
         tenant_id: "foo".into(),
         artifact_id: Some(uuid::Uuid::now_v7()),
         annotations: Some(json!({ })),

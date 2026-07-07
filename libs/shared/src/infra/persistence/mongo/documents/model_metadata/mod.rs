@@ -67,6 +67,7 @@ pub struct ModelMetadata {
     // General fields
     pub name: String,
     pub author: String,
+    pub description: Option<String>,
     pub tenant_id: String,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,

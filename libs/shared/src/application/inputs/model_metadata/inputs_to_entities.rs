@@ -128,6 +128,7 @@ impl TryFrom<(inputs::ModelMetadata, &IdentityContext)> for domain::ModelMetadat
         Ok(Self {
             name: value.0.name,
             author: value.1.actor_principal_id().clone(),
+            description: value.0.description,
             tenant_id: value.1.actor_tenant_id().clone(),
             artifact_id: None,
             canonical,

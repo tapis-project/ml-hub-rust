@@ -37,6 +37,7 @@ impl TryFrom<&entities::ModelMetadata> for responses::ModelMetadata {
         Ok(Self {
             name: value.name.clone(),
             author: value.author.clone(),
+            description: value.description.clone(),
             canonical,
             libraries: value.libraries.clone(),
             model_type: value.model_type.clone(),

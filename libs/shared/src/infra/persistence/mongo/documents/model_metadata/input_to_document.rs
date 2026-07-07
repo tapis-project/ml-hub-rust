@@ -133,6 +133,7 @@ impl TryFrom<(&inputs::ModelMetadata, &IdentityContext)> for model_metadata::Mod
         Ok(Self {
             _id: None,
             artifact_id: None,
+            description: value.0.description.clone(),
             author,
             tenant_id,
             canonical,

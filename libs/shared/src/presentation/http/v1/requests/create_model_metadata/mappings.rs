@@ -91,6 +91,7 @@ impl TryFrom<requests::CreateModelMetadataBody> for inputs::ModelMetadata {
 
         Ok(Self {
             name: value.name,
+            description: value.description,
             canonical: None,
             libraries: value.libraries,
             model_type: value.model_type,

@@ -48,6 +48,8 @@ pub struct CreateModelMetadataBody {
     // General fields
     #[validate(length(min=1))]
     pub name: String,
+    #[validate(length(min=1, max=255))]
+    pub description: Option<String>,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,

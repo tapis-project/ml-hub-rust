@@ -62,6 +62,7 @@ pub struct Locator {
 pub struct ModelMetadata {
     // General fields
     pub name: String,
+    pub description: Option<String>,
     pub model_type: Option<String>,
     pub libraries: Option<Vec<String>>,
     pub image: Option<String>,
