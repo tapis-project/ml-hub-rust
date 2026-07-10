@@ -1,6 +1,6 @@
 use crate::application::inputs::model_metadata as inputs;
-use crate::application::inputs::task as input_task;
 use crate::domain::entities::model_metadata as domain;
+use crate::application::inputs::task as input_task;
 
 use crate::application::errors::ApplicationError;
 
@@ -93,7 +93,7 @@ impl TryFrom<domain::Canonical> for inputs::Canonical {
     }
 }
 
-impl TryFrom<domain::ModelMetadata> for inputs::ModelMetadata {
+impl TryFrom<domain::ModelMetadata> for inputs::RegisterModelMetadataInput {
     type Error = ApplicationError;
     
     fn try_from(value: domain::ModelMetadata) -> Result<Self, Self::Error> {
@@ -162,7 +162,6 @@ impl TryFrom<domain::ModelMetadata> for inputs::ModelMetadata {
             regulatory: value.regulatory,
             license: value.license,
             bias_evaluation_score: value.bias_evaluation_score,
-
         })
     }
 }

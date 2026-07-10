@@ -8,7 +8,6 @@ use platforms::Platform;
 
 use crate::presentation::http::v1::responses::tasks::Task;
 
-
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ModelArtifact {
     pub id: String,
@@ -73,6 +72,9 @@ pub struct ModelMetadata {
     pub regulatory: Option<Vec<String>>,
     pub license: Option<String>,
     pub bias_evaluation_score: Option<i8>,
+
+    /// Deployment strategy references
+    pub deployment_strategy_refs: Vec<DeploymentStrategyReference>,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -121,6 +123,13 @@ pub struct HardwareRequirements {
 pub struct ModelIO {
     pub data_type: Option<String>,
     pub shape: Option<Vec<i32>>
+}
+
+#[derive(Serialize,Debug, Clone, ToSchema)]
+pub struct DeploymentStrategyReference {
+    name: String,
+    platform: Platform,
+    description: Option<String>,
 }
 
 // // TODO Future

@@ -285,7 +285,7 @@ impl Client for ModelMetadataConversionClient {
 }
 
 impl ModelMetadataConversionClient {
-    pub fn from_platform_metadata<T>(&self, metadata: T) -> Result<shared::application::inputs::model_metadata::ModelMetadata, ClientError>
+    pub fn from_platform_metadata<T>(&self, metadata: T, author: String, tenant_id: String) -> Result<shared::domain::entities::model_metadata::ModelMetadata, ClientError>
     where T: serde::Serialize
     {
         let resp = match self {
@@ -295,14 +295,14 @@ impl ModelMetadataConversionClient {
                 }
                 
                 
-                c.from_platform_metadata(metadata)
+                c.from_platform_metadata(metadata, author, tenant_id)
             }
         };
         
         resp
     }
     
-    pub fn to_platform_metadata<T>(&self, _metadata: shared::application::inputs::model_metadata::ModelMetadata) -> Result<T, ClientError>
+    pub fn to_platform_metadata<T>(&self, _metadata: shared::domain::entities::model_metadata::ModelMetadata) -> Result<T, ClientError>
     where T: serde::Serialize 
     {
         Err(ClientError::Unimplemented)

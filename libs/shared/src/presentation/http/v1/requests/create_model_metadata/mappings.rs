@@ -62,7 +62,7 @@ impl TryFrom<requests::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<requests::CreateModelMetadataBody> for inputs::ModelMetadata {
+impl TryFrom<requests::CreateModelMetadataBody> for inputs::RegisterModelMetadataInput {
     type Error = Error;
     
     fn try_from(value: requests::CreateModelMetadataBody) -> Result<Self, Self::Error> {
@@ -127,19 +127,6 @@ impl TryFrom<requests::CreateModelMetadataBody> for inputs::ModelMetadata {
             regulatory: value.regulatory,
             license: value.license,
             bias_evaluation_score: value.bias_evaluation_score,
-        })
-    }
-}
-
-
-impl TryFrom<requests::CreateModelMetadataBody> for inputs::UpsertModelMetadata {
-    type Error = Error;
-
-    fn try_from(value: requests::CreateModelMetadataBody) -> Result<Self, Self::Error> {
-        let metadata = inputs::ModelMetadata::try_from(value)?;
-        
-        return Ok(Self {
-            metadata
         })
     }
 }

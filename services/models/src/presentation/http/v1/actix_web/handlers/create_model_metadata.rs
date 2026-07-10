@@ -7,7 +7,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
     build_success_response,
 };
 use crate::presentation::http::v1::requests::create_model_metadata::body::CreateModelMetadataBody;
-use crate::application::model_metadata_inputs::UpsertModelMetadata as UpsertModelMetadataInput;
+use crate::application::model_metadata_inputs::RegisterModelMetadataInput;
 use actix_web::{
     post,
     web, 
@@ -40,7 +40,7 @@ async fn create_model_metadata(
         return build_error_response(500, err.to_string())
     };
 
-    let input = match UpsertModelMetadataInput::try_from(request_body) {
+    let input = match RegisterModelMetadataInput::try_from(request_body) {
         Ok(i) => i,
         Err(err) => return build_error_response(500, err.to_string())
     };

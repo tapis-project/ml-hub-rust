@@ -1,6 +1,5 @@
 use std::time::Duration;
 use crate::application::errors::ApplicationError;
-use crate::application::outputs::discover_models::DiscoverModelsOutput;
 use crate::shared_kernal::identity::IdentityContext;
 use crate::{application, domain};
 use crate::domain::entities;
@@ -44,10 +43,10 @@ impl ModelMetadataRepository {
 impl application::ports::model_metadata::ModelMetadataRepository for ModelMetadataRepository {
     async fn upsert(
         &self,
-        input: &application::inputs::model_metadata::UpsertModelMetadata,
+        metadata: &entities::model_metadata::ModelMetadata,
         ctx: &IdentityContext,
     ) -> Result<(), ApplicationError> {
-        let document = ModelMetadata::try_from((&input.metadata, ctx))
+        let document = ModelMetadata::try_from((metadata, ctx))
             .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
         
         let filter = doc! {  
@@ -134,11 +133,11 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(maybe_metadata)
     }
 
-    async fn filter_model_metadata_by_criteria(
+    async fn search(
         &self,
-        input: &application::inputs::discover_models::DiscoverModelsInput,
+        input: &application::inputs::discover_models::SearchModelsInput,
         tenant_ids: &Vec<String>
-    ) -> Result<DiscoverModelsOutput, ApplicationError> {
+    ) -> Result<application::ports::model_metadata::ModelSearchResult, ApplicationError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
             let filter = ModelMetadataFilter::try_from((&criterion, tenant_ids))
@@ -229,7 +228,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         }
 
         return Ok(
-            DiscoverModelsOutput { models, count, cursor: pagination_cursor }
+            application::ports::model_metadata::ModelSearchResult { models, count, cursor: pagination_cursor }
         )
     }
 }

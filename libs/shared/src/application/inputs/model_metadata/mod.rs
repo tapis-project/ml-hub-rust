@@ -59,7 +59,7 @@ pub struct Locator {
 }
 
 #[derive(Debug, Clone)]
-pub struct ModelMetadata {
+pub struct RegisterModelMetadataInput {
     // General fields
     pub name: String,
     pub description: Option<String>,
@@ -127,11 +127,6 @@ pub struct UpdateModelMetadataArtifactId {
     pub artifact_id: Uuid,
     pub name: String,
     pub author: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct UpsertModelMetadata {
-    pub metadata: ModelMetadata,
 }
 
 #[derive(Debug, Clone)]

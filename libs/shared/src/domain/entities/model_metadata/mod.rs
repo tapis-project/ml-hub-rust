@@ -1,3 +1,7 @@
+/// Defines and manages the lifecycle of the ModelMetadata entity and all of its
+/// sub-components. The ModelMetadata enety is a metadata representation of a machine learning
+/// models.
+
 #[cfg(test)]
 pub mod fixtures;
 
@@ -7,60 +11,8 @@ use serde_json::Value;
 use thiserror::Error;
 use uuid::Uuid;
 
-#[derive(Error, Debug)]
-pub enum ModelMetadataError {
-    #[error("Invalid or disallowed field path: {0:?}")]
-    InvalidFieldPath(Vec<String>),
-}
 
-#[derive(Debug, Clone)]
-pub struct SystemRequirement {
-    pub name: String,
-    pub version: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct Accelerator {
-    pub accelerator_type: String,
-    pub memory_gb: Option<i32>,
-    pub cores: Option<i32>,
-    /// Firmware and software
-    pub system_requirements: Vec<SystemRequirement>,
-}
-
-#[derive(Debug, Clone)]
-pub struct HardwareRequirements {
-    pub cpus: Option<i32>,
-    pub memory_gb: Option<i32>,
-    pub disk_gb: Option<i32>,
-    pub accelerators: Option<Vec<Accelerator>>,
-    pub architectures: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ModelIO {
-    pub data_type: Option<String>,
-    pub shape: Option<Vec<i32>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Canonical {
-    pub platform: Platform,
-    pub model_id: String,
-    pub locator: Locator,
-    pub author: Option<String>,
-    pub likes: Option<u128>,
-    pub downloads: Option<u128>,
-    pub gated: Option<bool>,
-    pub private: Option<bool>,
-    pub sha: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Locator {
-    pub url: String,
-}
-
+/// ModelMetadata entity
 #[derive(Debug, Clone)]
 pub struct ModelMetadata {
     // General fields
@@ -119,14 +71,113 @@ pub struct ModelMetadata {
     pub regulatory: Option<Vec<String>>,
     pub license: Option<String>,
     pub bias_evaluation_score: Option<i8>,
+    
+    // Viable deployment strategy references
+    pub deployment_strategy_refs: Vec<DeploymentStrategyReference>
 }
+
+impl ModelMetadata {
+    /// Fetches the value for a select number of field paths on the metadata struct.
+    pub fn get_field_value_at_field_path(
+        &self,
+        field_path: &Vec<String>,
+    ) -> Result<FieldValue, ModelMetadataError> {
+        let fp: Vec<&str> = field_path.iter().map(|v| v.as_str()).collect();
+        match fp.as_slice() {
+            ["name"] => Ok(FieldValue::Name(Some(self.name.clone()))),
+            ["author"] => Ok(FieldValue::Author(Some(self.author.clone()))),
+            ["libraries"] => Ok(FieldValue::Libraries(self.libraries.clone())),
+            ["tags"] => Ok(FieldValue::Tags(self.tags.clone())),
+            ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
+            ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
+                self.inference_hardware.clone().and_then(|hr| hr.memory_gb),
+            )),
+            ["canonical", "gated"] => Ok(FieldValue::CanonicalGated(
+                self.canonical
+                    .as_ref()
+                    .and_then(|c| c.gated)
+            )),
+            ["canonical", "private"] => Ok(FieldValue::CanonicalPrivate(
+                self.canonical
+                    .as_ref()
+                    .and_then(|c| c.private)
+            )),
+            other => {
+                return Err(ModelMetadataError::InvalidFieldPath(
+                    other.to_vec().iter().map(|s| s.to_string()).collect(),
+                ))
+            }
+        }
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum ModelMetadataError {
+    #[error("Invalid or disallowed field path: {0:?}")]
+    InvalidFieldPath(Vec<String>),
+}
+
+#[derive(Debug, Clone)]
+pub struct SystemRequirement {
+    pub name: String,
+    pub version: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Accelerator {
+    pub accelerator_type: String,
+    pub memory_gb: Option<i32>,
+    pub cores: Option<i32>,
+    /// Firmware and software
+    pub system_requirements: Vec<SystemRequirement>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HardwareRequirements {
+    pub cpus: Option<i32>,
+    pub memory_gb: Option<i32>,
+    pub disk_gb: Option<i32>,
+    pub accelerators: Option<Vec<Accelerator>>,
+    pub architectures: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ModelIO {
+    pub data_type: Option<String>,
+    pub shape: Option<Vec<i32>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Canonical {
+    pub platform: Platform,
+    pub model_id: String,
+    pub locator: Locator,
+    pub author: Option<String>,
+    pub likes: Option<u128>,
+    pub downloads: Option<u128>,
+    pub gated: Option<bool>,
+    pub private: Option<bool>,
+    pub sha: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Locator {
+    pub url: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct DeploymentStrategyReference {
+    pub name: String,
+    pub platform: Platform,
+}
+
 
 #[derive(Clone, Debug)]
 pub enum FieldValue {
     Name(Option<String>),
     Author(Option<String>),
     Libraries(Option<Vec<String>>),
-    tags(Option<Vec<String>>),
+    Tags(Option<Vec<String>>),
     TaskTypes(Option<Vec<Task>>),
     InferenceHardwareMemory(Option<i32>),
     CanonicalPrivate(Option<bool>),
@@ -156,7 +207,7 @@ impl Into<Value> for FieldValue {
                     None => Value::Null,
                 }
             },
-            FieldValue::tags(tags) => {
+            FieldValue::Tags(tags) => {
                 match tags {
                     Some(kws) => {
                         kws.iter().map(|kw| Value::String(kw.clone())).collect()
@@ -189,41 +240,6 @@ impl Into<Value> for FieldValue {
                     Some(p) => Value::Bool(p),
                     None => Value::Null
                 }
-            }
-        }
-    }
-}
-
-impl ModelMetadata {
-    /// Fetches the value for a select number of field paths on the metdata struct.
-    pub fn get_field_value_at_field_path(
-        &self,
-        field_path: &Vec<String>,
-    ) -> Result<FieldValue, ModelMetadataError> {
-        let fp: Vec<&str> = field_path.iter().map(|v| v.as_str()).collect();
-        match fp.as_slice() {
-            ["name"] => Ok(FieldValue::Name(Some(self.name.clone()))),
-            ["author"] => Ok(FieldValue::Author(Some(self.author.clone()))),
-            ["libraries"] => Ok(FieldValue::Libraries(self.libraries.clone())),
-            ["tags"] => Ok(FieldValue::tags(self.tags.clone())),
-            ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
-            ["inference_hardware", "memory_gb"] => Ok(FieldValue::InferenceHardwareMemory(
-                self.inference_hardware.clone().and_then(|hr| hr.memory_gb),
-            )),
-            ["canonical", "gated"] => Ok(FieldValue::CanonicalGated(
-                self.canonical
-                    .as_ref()
-                    .and_then(|c| c.gated)
-            )),
-            ["canonical", "private"] => Ok(FieldValue::CanonicalPrivate(
-                self.canonical
-                    .as_ref()
-                    .and_then(|c| c.private)
-            )),
-            other => {
-                return Err(ModelMetadataError::InvalidFieldPath(
-                    other.to_vec().iter().map(|s| s.to_string()).collect(),
-                ))
             }
         }
     }

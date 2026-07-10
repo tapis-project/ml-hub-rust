@@ -14,7 +14,7 @@ pub enum StrategyEvaluationError {
     MetadataError(#[from] ModelMetadataError),
 }
 
-/// Iterates over the provided stragies and determines whether a strategy is viable
+/// Iterates over the provided strategies and determines whether a strategy is viable
 /// for the provided metadata. If any of the rules in the rule sets of the strategy
 /// are false, then the strategy is not valid.
 pub fn resolve_viable_strategies(model_metadata: &ModelMetadata, strategies: &Vec<Strategy>) -> Result<Vec<ViableStrategy>, StrategyEvaluationError> {

@@ -50,7 +50,7 @@ impl ClientStrategySet {
         
         let client_rule_sets = rule_sets.as_ref().unwrap_or_else(|| &EMPTY_RULE_SET);
 
-        // Covert ClientStrategies into Strategies
+        // Convert ClientStrategies into Strategies
         let mut strategies: Vec<Strategy> = Vec::new();
         for client_strat in client_strategies {
             // Set the current strategy rulesets to the explcitly defined rulesets
@@ -98,6 +98,7 @@ impl ClientStrategySet {
             strategies.push(
                 Strategy::new(
                     client_strat.name,
+                    platform.clone(),
                     client_strat.description,
                     strategy_rule_sets,
                     parameter_set,

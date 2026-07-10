@@ -59,7 +59,7 @@ async fn discover_models(
         query.include_global_models,
     );
 
-    let input = inputs::DiscoverModelsInput {
+    let input = inputs::SearchModelsInput {
         criteria,
         options
     };

@@ -60,12 +60,12 @@ async fn ingest_canonical_model(
         scope: Scope::Global,
     };
 
-    let maybe_metadata = match model_metadata_service.get_by_author_and_name(input).await {
+    let output = match model_metadata_service.get_by_author_and_name(input).await {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let metadata = match maybe_metadata {
+    let metadata = match output.model {
         Some(m) => m,
         None => return build_error_response(404, format!("No model metadata found for author {} and name {}", &path.author, &path.name))
     };

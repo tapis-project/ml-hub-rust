@@ -105,5 +105,6 @@ pub fn full_model_metadata() -> ModelMetadata {
         regulatory: Some(vec!["HIPPA".into()]),
         license: Some("MIT".into()),
         bias_evaluation_score: Some(-1),
+        deployment_strategy_refs: vec![]
     }
 }

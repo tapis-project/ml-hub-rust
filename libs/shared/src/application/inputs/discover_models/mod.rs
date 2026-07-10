@@ -88,10 +88,10 @@ pub struct SearchCriterion {
     pub bias_evaluation_score: Option<i8>,
 }
 
-/// Each field in the ModelMetadata will be ANDed and each individual ModelMetadata
+/// Each field in the ModelMetadata will be ANDed and each individual SearchCriteron
 /// themselves will be ORed
 #[derive(Debug, Clone)]
-pub struct DiscoverModelsInput {
+pub struct SearchModelsInput {
     pub criteria: Vec<SearchCriterion>,
     pub options: SearchOptions
 }

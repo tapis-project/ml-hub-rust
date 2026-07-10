@@ -16,11 +16,11 @@ pub struct ModelReference {
     pub tenant_id: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DeploymentStrategyReference {
-    pub platform: Platform,
-    pub name: String,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct DeploymentStrategyReference {
+//     pub platform: Platform,
+//     pub name: String,
+// }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum State {

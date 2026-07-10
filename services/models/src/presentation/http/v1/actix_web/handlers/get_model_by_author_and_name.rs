@@ -53,17 +53,17 @@ async fn get_model_by_author_and_name(
         scope: ScopeInput::from(params.into_inner().scope.clone()),
     };
 
-    let maybe_metadata = match model_metadata_service.get_by_author_and_name(input).await {
+    let output = match model_metadata_service.get_by_author_and_name(input).await {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let metadata_entity= match maybe_metadata {
+    let output_model = match output.model {
         Some(m) => m,
         None => return build_error_response(404, format!("No model metadata found for author {} and name {}", &path.author, &path.name))
     };
 
-    let metadata_resp = match ModelMetadata::try_from(&metadata_entity) {
+    let metadata_resp = match ModelMetadata::try_from(&output_model) {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };

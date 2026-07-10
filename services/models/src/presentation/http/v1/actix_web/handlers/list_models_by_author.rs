@@ -45,14 +45,14 @@ async fn list_models_by_author(
         principal_id: identity_context.actor_principal_id().clone(),
     };
 
-    let entities = match model_metadata_service.list_by_author(input).await {
+    let output = match model_metadata_service.list_by_author(input).await {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let mut values: Vec<Value> = Vec::with_capacity(entities.len());
-    for entity in entities {
-        let model_metadata_resp = match ModelMetadata::try_from(&entity) {
+    let mut values: Vec<Value> = Vec::with_capacity(output.models.len());
+    for model in output.models {
+        let model_metadata_resp = match ModelMetadata::try_from(&model) {
             Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string())
         };

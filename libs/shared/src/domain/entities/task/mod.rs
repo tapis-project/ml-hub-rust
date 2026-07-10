@@ -1,7 +1,16 @@
 pub mod huggingface_task_to_task;
 
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum TaskError {
+    #[error("Failed to convert from type {0} to type {1}")]
+    FailedConversion(String, String)
+}
+
+
 #[doc = "An enum of all task types available on Huggingface"]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Task {
     #[doc = "Any-to-any models can understand two or more modalities and output two or more modalities."]
     AnyToAny,
@@ -93,6 +102,64 @@ pub enum Task {
     TextTo3d,
     #[doc = "Image-to-3D models take in image input and produce 3D output."]
     ImageTo3d,
+}
+
+
+impl TryFrom<&str> for Task {
+    type Error = TaskError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let task = match value {
+            "AnyToAny" => Task::AnyToAny,
+            "AutomaticSpeechRecognition" => Task::AutomaticSpeechRecognition,
+            "AudioToAudio" => Task::AudioToAudio,
+            "AudioClassification" => Task::AudioClassification,
+            "AudioTextToText" => Task::AudioTextToText,
+            "DepthEstimation" => Task::DepthEstimation,
+            "DocumentQuestionAnswering" => Task::DocumentQuestionAnswering,
+            "FeatureExtraction" => Task::FeatureExtraction,
+            "FillMask" => Task::FillMask,
+            "ImageFeatureExtraction" => Task::ImageFeatureExtraction,
+            "ImageTextToText" => Task::ImageTextToText,
+            "ImageToVideo" => Task::ImageToVideo,
+            "ImageSegmentation" => Task::ImageSegmentation,
+            "ImageClassification" => Task::ImageClassification,
+            "ImageTo3d" => Task::ImageTo3d,
+            "ImageToImage" => Task::ImageToImage,
+            "ImageToText" => Task::ImageToText,
+            "KeypointDetection" => Task::KeypointDetection,
+            "MaskGeneration" => Task::MaskGeneration,
+            "ObjectDetection" => Task::ObjectDetection,
+            "QuestionAnswering" => Task::QuestionAnswering,
+            "ReinforcementLearning" => Task::ReinforcementLearning,
+            "SentenceSimilarity" => Task::SentenceSimilarity,
+            "Summarization" => Task::Summarization,
+            "TableQuestionAnswering" => Task::TableQuestionAnswering,
+            "TextGeneration" => Task::TextGeneration,
+            "TextRanking" => Task::TextRanking,
+            "TabularClassification" => Task::TabularClassification,
+            "TextTo3d" => Task::TextTo3d,
+            "TextClassification" => Task::TextClassification,
+            "TextToImage" => Task::TextToImage,
+            "Translation" => Task::Translation,
+            "TabularRegression" => Task::TabularRegression,
+            "TextToSpeech" => Task::TextToSpeech,
+            "TextToVideo" => Task::TextToVideo,
+            "TokenClassification" => Task::TokenClassification,
+            "UnconditionalImageGeneration" => Task::UnconditionalImageGeneration,
+            "VideoClassification" => Task::VideoClassification,
+            "VideoTextToText" => Task::VideoTextToText,
+            "VideoToVideo" => Task::VideoToVideo,
+            "VisualQuestionAnswering" => Task::VisualQuestionAnswering,
+            "VisualDocumentRetrieval" => Task::VisualDocumentRetrieval,
+            "ZeroShotClassification" => Task::ZeroShotClassification,
+            "ZeroShotImageClassification" => Task::ZeroShotImageClassification,
+            "ZeroShotObjectDetection" => Task::ZeroShotObjectDetection,
+            &_ => return Err(TaskError::FailedConversion("String".into(), "Task".into()))
+        };
+
+        Ok(task)
+    }
 }
 
 impl From<Task> for String {

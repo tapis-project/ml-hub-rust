@@ -4,6 +4,8 @@ use super::parameter_set::ParameterSet;
 use serde::Serialize;
 use thiserror::Error;
 
+use platforms::Platform;
+
 #[derive(Error, Debug)]
 pub enum StrategyError {
     #[error("Duplicate RuleSet name: {0}")]
@@ -13,6 +15,7 @@ pub enum StrategyError {
 #[derive(Clone, Debug, Serialize)]
 pub struct Strategy {
     pub name: String,
+    pub platform: Platform,
     pub description: Option<String>,
     rule_sets: Vec<RuleSet>,
     parameter_set: Option<ParameterSet>,
@@ -21,6 +24,7 @@ pub struct Strategy {
 impl Strategy {
     pub fn new(
         name: String,
+        platform: Platform,
         description: Option<String>,
         rule_sets: Vec<RuleSet>,
         parameter_set: Option<ParameterSet>,
@@ -37,6 +41,7 @@ impl Strategy {
 
         Ok(Self {
             name,
+            platform,
             description,
             rule_sets,
             parameter_set

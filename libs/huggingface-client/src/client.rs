@@ -23,6 +23,7 @@ use clients::{
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::{Client as ReqwestClient, StatusCode};
 use serde_json::Value;
+use shared::domain::entities;
 use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
@@ -38,7 +39,6 @@ use shared::presentation::http::v1::requests::datasets::{
 use shared::domain::entities::{
     artifact::Artifact,
 };
-use shared::application::inputs;
 use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::{
@@ -49,6 +49,7 @@ use shared::presentation::http::v1::requests::{
 use std::path::PathBuf;
 use std::process::Command;
 use platforms::Platform;
+use heck::ToPascalCase;
 
 struct HuggingFaceHeaders(Headers);
 
@@ -546,7 +547,7 @@ impl PublishDatasetClient for HuggingFaceClient {
 }
 
 impl ModelMetadataConversionClient for HuggingFaceClient {
-    fn from_platform_metadata<T>(&self, client_metadata: T) -> Result<inputs::model_metadata::ModelMetadata, ClientError>
+    fn from_platform_metadata<T>(&self, client_metadata: T, author: String, tenant_id: String) -> Result<entities::model_metadata::ModelMetadata, ClientError>
         where T: serde::Serialize
     {
         let value = serde_json::to_value(client_metadata)
@@ -558,9 +559,9 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             // Task types derived from the tags. The "pipeline_tag"
             // property will be the authroitative soure for the task type 
             // if none are found
-            let mut derived_task_types: Vec<inputs::task::Task> = Vec::new();
+            let mut derived_task_types: Vec<entities::task::Task> = Vec::new();
             for tag in tags.clone() {
-                match inputs::task::Task::try_from(inputs::task::Task::normalize_string(tag).as_str()) {
+                match entities::task::Task::try_from(Self::normalize_string(tag).as_str()) {
                     Ok(t) => derived_task_types.push(t),
                     Err(_) => continue // Ignore as they tag cannot be interpreted as a task type
                 }
@@ -579,8 +580,8 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 .and_then(|ct| Some(ct.value.clone()));
     
             // Convert pipeline tag to a variant of the task type enum.
-            let mut task_types: Vec<inputs::task::Task> = derived_task_types;
-            match inputs::task::Task::try_from(inputs::task::Task::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
+            let mut task_types: Vec<entities::task::Task> = derived_task_types;
+            match entities::task::Task::try_from(Self::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
                 Ok(t) => {
                     if !task_types.contains(&t) {
                         task_types.push(t)
@@ -614,16 +615,19 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 }
             };
             
-            return Ok(inputs::model_metadata::ModelMetadata {
+            return Ok(entities::model_metadata::ModelMetadata {
                 name,
+                artifact_id: None,
                 annotations: None,
                 description: None,
-                canonical: Some(inputs::model_metadata::Canonical {
+                author,
+                tenant_id,
+                canonical: Some(entities::model_metadata::Canonical {
                     platform: Platform::HuggingFace,
                     author: Some(hf_model.author.clone()),
                     model_id: hf_model.id.clone(),
                     downloads: Some(hf_model.downloads),
-                    locator: inputs::model_metadata::Locator {
+                    locator: entities::model_metadata::Locator {
                         url: format!("https://huggingface.co/{}", &hf_model.id.clone())
                     },
                     likes: Some(hf_model.likes),
@@ -664,6 +668,7 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 regulatory: None,
                 license,
                 bias_evaluation_score: None,
+                deployment_strategy_refs: vec![],
             });
         }
 
@@ -687,5 +692,13 @@ impl HuggingFaceClient {
             constants::HUGGING_FACE_BASE_URL,
             url.strip_prefix("/").unwrap_or(url).to_string()
         )
+    }
+
+    pub fn normalize_string(string: String) -> String {
+        string.split("/")
+            .into_iter()
+            .map(|p| p.to_pascal_case())
+            .collect::<Vec<String>>()
+            .join("")
     }
 }

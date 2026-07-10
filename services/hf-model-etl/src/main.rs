@@ -5,10 +5,11 @@ use std::env;
 use serde_json::Value;
 use hf_model_etl::database::{initialize_client, ClientParams};
 use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
-use shared::application::inputs::model_metadata::UpsertModelMetadata;
+use shared::application::inputs::model_metadata::RegisterModelMetadataInput;
 use client_provider::ClientProvider;
 use clients::ClientError;
-use shared::shared_kernal::identity::IdentityContext;
+use shared::shared_kernal::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
+use shared::shared_kernal::tenancy::GLOBAL_TENANT;
 use std::sync::Arc;
 
 #[tokio::main]
@@ -42,10 +43,6 @@ async fn main() {
         }
     };
 
-    let model_metadata_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
-        .await
-        .expect("failed to initialize model metadata service");
-
     let inbox_path = env::var("INBOX").expect("INBOX env var not set");
 
     let inbox = Path::new(&inbox_path);
@@ -60,8 +57,6 @@ async fn main() {
             for maybe_entry in entries {
                 match maybe_entry {
                     Ok(entry) => {
-                        println!("{:#?}", &entry);
-                        println!("entry path: {:#?}", entry.path());
                         file_paths.push(entry.path())
                     },
                     Err(err) => panic!("Error with dir entry: {}", err.to_string())
@@ -70,6 +65,10 @@ async fn main() {
         },
         Err(err) => panic!("Error reading dir: {}", err.to_string())
     };
+
+    let model_metadata_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
+        .await
+        .expect("failed to initialize model metadata service");
 
     // Fetch the huggingface model metadata conversion client from the client provider
     let huggingface_client = ClientProvider
@@ -94,7 +93,11 @@ async fn main() {
             match maybe_line {
                 Ok(line) => {
                     if let Ok(hf_model) = serde_json::from_str::<Value>(line.as_str()) {
-                        let metadata = match huggingface_client.from_platform_metadata(hf_model) {
+                        let metadata = match huggingface_client.from_platform_metadata(
+                            hf_model,
+                            MLHUB_SERVICE_PRINCIPAL_ID.into(),
+                            GLOBAL_TENANT.into(),
+                        ) {
                             Ok(m) => m,
                             Err(err) => {
                                 match err {
@@ -109,10 +112,18 @@ async fn main() {
                                 }
                             }
                         };
-                        match model_metadata_service.register_model_metadata(
-                            UpsertModelMetadata { metadata },
-                            &IdentityContext::system()
-                        ).await {
+
+                        // TODO Converting back into an application layer input here is just wrong. This is
+                        // an indication that this whole thing needs refactorings
+                        let input = match RegisterModelMetadataInput::try_from(metadata) {
+                            Ok(i) => i,
+                            Err(err) => {
+                                eprintln!("Error saving metadata to the database: {}", err.to_string());
+                                continue
+                            }
+                        };
+
+                        match model_metadata_service.register_model_metadata(input, &IdentityContext::system()).await {
                             Ok(_) => (),
                             Err(err) => {
                                 eprintln!("Error saving metadata to the database: {}", err.to_string());

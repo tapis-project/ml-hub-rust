@@ -1,12 +1,13 @@
-use crate::domain::entities::model_metadata as entities;
+use crate::application::outputs::model_metadata as output;
 use crate::presentation::http::v1::responses::models as responses;
 use crate::presentation::http::v1::responses::tasks::Task;
 use crate::errors::Error;
 
-impl TryFrom<&entities::ModelMetadata> for responses::ModelMetadata {
+impl TryFrom<&output::ModelMetadata> for responses::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: &entities::ModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: &output::ModelMetadata) -> Result<Self, Self::Error> {
+
         let mut task_types: Vec<Task> = Vec::new();
         for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
             task_types.push(Task::from(task_type))
@@ -33,6 +34,16 @@ impl TryFrom<&entities::ModelMetadata> for responses::ModelMetadata {
         let canonical = value.canonical
             .clone()
             .map(|c| responses::Canonical::from(c));
+
+        let deployment_strategy_refs: Vec<responses::DeploymentStrategyReference> = value.deployment_strategy_refs
+            .clone()
+            .into_iter()
+            .map(|r| responses::DeploymentStrategyReference {
+                name: r.name.clone(),
+                platform: r.platform.clone(),
+                description: r.description.clone(),
+            })
+            .collect();
 
         Ok(Self {
             name: value.name.clone(),
@@ -74,13 +85,13 @@ impl TryFrom<&entities::ModelMetadata> for responses::ModelMetadata {
             regulatory: value.regulatory.clone(),
             license: value.license.clone(),
             bias_evaluation_score: value.bias_evaluation_score,
-
+            deployment_strategy_refs,
         })
     }
 }
 
-impl From<entities::Canonical> for responses::Canonical {
-    fn from(value: entities::Canonical) -> Self {
+impl From<output::Canonical> for responses::Canonical {
+    fn from(value: output::Canonical) -> Self {
         Self {
             platform: value.platform,
             model_id: value.model_id,
@@ -95,16 +106,16 @@ impl From<entities::Canonical> for responses::Canonical {
     }
 }
 
-impl From<entities::Locator> for responses::Locator {
-    fn from(value: entities::Locator) -> Self {
+impl From<output::Locator> for responses::Locator {
+    fn from(value: output::Locator) -> Self {
         Self { url: value.url }
     }
 }
 
-impl TryFrom<entities::SystemRequirement> for responses::SystemRequirement {
+impl TryFrom<output::SystemRequirement> for responses::SystemRequirement {
     type Error = Error;
     
-    fn try_from(value: entities::SystemRequirement) -> Result<Self, Self::Error> {
+    fn try_from(value: output::SystemRequirement) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.name,
             version: value.version
@@ -112,10 +123,10 @@ impl TryFrom<entities::SystemRequirement> for responses::SystemRequirement {
     }
 }
 
-impl TryFrom<entities::Accelerator> for responses::Accelerator {
+impl TryFrom<output::Accelerator> for responses::Accelerator {
     type Error = Error;
     
-    fn try_from(value: entities::Accelerator) -> Result<Self, Self::Error> {
+    fn try_from(value: output::Accelerator) -> Result<Self, Self::Error> {
         let mut system_requirements: Vec<responses::SystemRequirement> = Vec::with_capacity(1);
         for requirement in value.system_requirements {
             system_requirements.push(responses::SystemRequirement::try_from(requirement)?);
@@ -130,10 +141,10 @@ impl TryFrom<entities::Accelerator> for responses::Accelerator {
     }
 }
 
-impl TryFrom<entities::HardwareRequirements> for responses::HardwareRequirements {
+impl TryFrom<output::HardwareRequirements> for responses::HardwareRequirements {
     type Error = Error;
     
-    fn try_from(value: entities::HardwareRequirements) -> Result<Self, Self::Error> {
+    fn try_from(value: output::HardwareRequirements) -> Result<Self, Self::Error> {
         let mut accelerators: Vec<responses::Accelerator> = Vec::with_capacity(1);
         for accelerator in value.accelerators.unwrap_or(Vec::with_capacity(0)) {
             accelerators.push(responses::Accelerator::try_from(accelerator)?);
@@ -149,10 +160,10 @@ impl TryFrom<entities::HardwareRequirements> for responses::HardwareRequirements
     }
 }
 
-impl TryFrom<entities::ModelIO> for responses::ModelIO {
+impl TryFrom<output::ModelIO> for responses::ModelIO {
     type Error = Error;
     
-    fn try_from(value: entities::ModelIO) -> Result<Self, Self::Error> {
+    fn try_from(value: output::ModelIO) -> Result<Self, Self::Error> {
         Ok(Self {
             data_type: value.data_type,
             shape: value.shape

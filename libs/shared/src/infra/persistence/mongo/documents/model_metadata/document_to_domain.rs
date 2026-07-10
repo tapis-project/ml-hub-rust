@@ -93,6 +93,15 @@ impl TryFrom<infra::Canonical> for domain::Canonical {
     }
 }
 
+impl From<infra::DeploymentStrategyReference> for domain::DeploymentStrategyReference {
+    fn from(value: infra::DeploymentStrategyReference) -> Self {
+        domain::DeploymentStrategyReference {
+            name: value.name,
+            platform: value.platform,
+        }
+    }
+}
+
 impl TryFrom<infra::ModelMetadata> for domain::ModelMetadata {
     type Error = Error;
     
@@ -123,6 +132,12 @@ impl TryFrom<infra::ModelMetadata> for domain::ModelMetadata {
         let canonical = value.canonical
             .map(|v| domain::Canonical::try_from(v))
             .transpose()?;
+
+        let deployment_strategy_refs = value.deployment_strategy_refs
+            .clone()
+            .into_iter()
+            .map(domain::DeploymentStrategyReference::from)
+            .collect::<Vec<domain::DeploymentStrategyReference>>();
 
         Ok(Self {
             name: value.name,
@@ -165,7 +180,7 @@ impl TryFrom<infra::ModelMetadata> for domain::ModelMetadata {
             regulatory: value.regulatory,
             license: value.license,
             bias_evaluation_score: value.bias_evaluation_score,
-
+            deployment_strategy_refs,
         })
     }
 }

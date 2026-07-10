@@ -94,10 +94,10 @@ impl TryFrom<inputs::Canonical> for domain::Canonical {
     }
 }
 
-impl TryFrom<(inputs::ModelMetadata, &IdentityContext)> for domain::ModelMetadata {
+impl TryFrom<(inputs::RegisterModelMetadataInput, &IdentityContext)> for domain::ModelMetadata {
     type Error = ApplicationError;
     
-    fn try_from(value: (inputs::ModelMetadata, &IdentityContext)) -> Result<Self, Self::Error> {
+    fn try_from(value: (inputs::RegisterModelMetadataInput, &IdentityContext)) -> Result<Self, Self::Error> {
         let mut task_types: Vec<domain_task::Task> = Vec::new();
         for task_type in value.0.task_types.unwrap_or(Vec::with_capacity(0)) {
             task_types.push(domain_task::Task::from(task_type))
@@ -166,7 +166,7 @@ impl TryFrom<(inputs::ModelMetadata, &IdentityContext)> for domain::ModelMetadat
             regulatory: value.0.regulatory,
             license: value.0.license,
             bias_evaluation_score: value.0.bias_evaluation_score,
-
+            deployment_strategy_refs: vec![] // Deploment strategies cannot be known a regsitration time
         })
     }
 }
