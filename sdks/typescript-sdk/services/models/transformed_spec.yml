@@ -1211,6 +1211,19 @@ components:
           minimum: 0
         version:
           type: string
+    DeploymentStrategyReference:
+      type: object
+      required:
+        - name
+        - platform
+      properties:
+        description:
+          type: string
+          nullable: true
+        name:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
     DiscoverModelsByPlatformResponse:
       type: object
       required:
@@ -1809,6 +1822,7 @@ components:
         - name
         - author
         - tenant_id
+        - deployment_strategy_refs
       properties:
         annotations: {}
         author:
@@ -1820,6 +1834,11 @@ components:
         canonical:
           $ref: '#/components/schemas/Canonical'
           nullable: true
+        deployment_strategy_refs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentStrategyReference'
+          description: Deployment strategy references
         description:
           type: string
           nullable: true

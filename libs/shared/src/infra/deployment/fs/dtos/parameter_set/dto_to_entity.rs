@@ -6,8 +6,8 @@ impl From<dtos::parameter_set::Parameter> for entities::parameter_set::Parameter
         Self {
             name: value.name,
             description: value.description,
-            required: value.required,
-            secret: value.secret,
+            required: value.required.unwrap_or(false),
+            secret: value.secret.unwrap_or(false),
             r#type: entities::parameter_set::ParameterType::from(value.r#type),
             choices: value.choices,
             default: value.default,

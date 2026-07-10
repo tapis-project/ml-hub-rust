@@ -13,6 +13,7 @@ export * from './BadRequestResponse';
 export * from './Canonical';
 export * from './CreateModelMetadataBody';
 export * from './CreateModelMetadataResponse';
+export * from './DeploymentStrategyReference';
 export * from './DiscoverModelsByPlatformResponse';
 export * from './DiscoverModelsResponse';
 export * from './DiscoveryCriteria';

@@ -18,6 +18,10 @@ import {
     CanonicalFromJSON,
     CanonicalFromJSONTyped,
     CanonicalToJSON,
+    DeploymentStrategyReference,
+    DeploymentStrategyReferenceFromJSON,
+    DeploymentStrategyReferenceFromJSONTyped,
+    DeploymentStrategyReferenceToJSON,
     HardwareRequirements,
     HardwareRequirementsFromJSON,
     HardwareRequirementsFromJSONTyped,
@@ -62,6 +66,12 @@ export interface ModelMetadata {
      * @memberof ModelMetadata
      */
     canonical?: Canonical;
+    /**
+     * Deployment strategy references
+     * @type {Array<DeploymentStrategyReference>}
+     * @memberof ModelMetadata
+     */
+    deployment_strategy_refs: Array<DeploymentStrategyReference>;
     /**
      * 
      * @type {string}
@@ -289,6 +299,7 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
         'author': json['author'],
         'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
         'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
+        'deployment_strategy_refs': ((json['deployment_strategy_refs'] as Array<any>).map(DeploymentStrategyReferenceFromJSON)),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
         'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
@@ -340,6 +351,7 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
         'author': value.author,
         'bias_evaluation_score': value.bias_evaluation_score,
         'canonical': CanonicalToJSON(value.canonical),
+        'deployment_strategy_refs': ((value.deployment_strategy_refs as Array<any>).map(DeploymentStrategyReferenceToJSON)),
         'description': value.description,
         'edge_optimized': value.edge_optimized,
         'finetuning_datasets': value.finetuning_datasets,

@@ -126,11 +126,6 @@
                     "required": true
                 },
                 {
-                    "name": "jobParameterSet",
-                    "type": "object",
-                    "required": false
-                },
-                {
                     "name": "backend",
                     "type": "string",
                     "required": false,

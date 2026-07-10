@@ -24,6 +24,7 @@ src/models/BadRequestResponse.ts
 src/models/Canonical.ts
 src/models/CreateModelMetadataBody.ts
 src/models/CreateModelMetadataResponse.ts
+src/models/DeploymentStrategyReference.ts
 src/models/DiscoverModelsByPlatformResponse.ts
 src/models/DiscoverModelsResponse.ts
 src/models/DiscoveryCriteria.ts
