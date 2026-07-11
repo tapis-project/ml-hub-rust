@@ -204,25 +204,25 @@ paths:
       operationId: list_strategies
       responses:
         '200':
-          description: Listed platforms
+          description: A list of all deployment strategies
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDeploymentStrategiesResponse'
         '400':
-          description: Not found
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BadRequestResponse'
         '404':
-          description: Not found
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFoundResponse'
         '500':
-          description: Not found
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -250,31 +250,6 @@ components:
           minimum: 0
         version:
           type: string
-    ClientStrategySet:
-      type: object
-      required:
-        - platform
-        - strategies
-      properties:
-        description:
-          type: string
-          nullable: true
-        parameter_sets:
-          type: array
-          items:
-            $ref: '#/components/schemas/ParameterSet'
-          nullable: true
-        platform:
-          $ref: '#/components/schemas/Platform'
-        rule_sets:
-          type: array
-          items:
-            $ref: '#/components/schemas/RuleSet'
-          nullable: true
-        strategies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Strategy'
     DeployModelWithStrategyBody:
       type: object
       required:
@@ -322,7 +297,7 @@ components:
         result:
           type: array
           items:
-            $ref: '#/components/schemas/ClientStrategySet'
+            $ref: '#/components/schemas/Strategy'
         status:
           type: integer
           format: int32
@@ -448,21 +423,6 @@ components:
           minimum: 0
         version:
           type: string
-    Operator:
-      type: string
-      enum:
-        - Eq
-        - Neq
-        - Gte
-        - Lte
-        - Gt
-        - Lt
-        - In
-        - Contains
-        - NotIn
-        - NoneIn
-        - AnyIn
-        - AllIn
     ParallelismStrategy:
       type: string
       enum:
@@ -497,18 +457,6 @@ components:
           type: boolean
         type:
           $ref: '#/components/schemas/ParameterType'
-    ParameterSet:
-      type: object
-      required:
-        - name
-        - parameters
-      properties:
-        name:
-          type: string
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/Parameter'
     ParameterType:
       type: string
       enum:
@@ -578,32 +526,6 @@ components:
         - spec
       properties:
         spec: {}
-    Rule:
-      type: object
-      required:
-        - field_path
-        - operator
-        - value
-      properties:
-        field_path:
-          type: array
-          items:
-            type: string
-        operator:
-          $ref: '#/components/schemas/Operator'
-        value: {}
-    RuleSet:
-      type: object
-      required:
-        - name
-        - rules
-      properties:
-        name:
-          type: string
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/Rule'
     ServerErrorResponse:
       type: object
       required:
@@ -638,20 +560,20 @@ components:
       type: object
       required:
         - name
-        - rule_sets
+        - platform
+        - parameters
       properties:
         description:
           type: string
           nullable: true
         name:
           type: string
-        parameter_set:
-          $ref: '#/components/schemas/ParameterSet'
-          nullable: true
-        rule_sets:
+        parameters:
           type: array
           items:
-            $ref: '#/components/schemas/RuleSet'
+            $ref: '#/components/schemas/Parameter'
+        platform:
+          $ref: '#/components/schemas/Platform'
     Visibility:
       type: string
       enum:

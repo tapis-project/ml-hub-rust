@@ -42,16 +42,16 @@
                         "canonical",
                         "gated"
                     ],
-                    "operator": "Eq",
-                    "value": false
+                    "operator": "In",
+                    "value": [false, null]
                 },
                 {
                     "field_path": [
                         "canonical",
                         "private"
                     ],
-                    "operator": "Eq",
-                    "value": false
+                    "operator": "In",
+                    "value": [false, null]
                 }
             ]
         }

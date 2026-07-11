@@ -1,5 +1,6 @@
 use serde_json::Value;
 use utoipa::ToSchema;
+use crate::presentation::http::v1::responses::deployment::strategy::Strategy;
 use crate::presentation::http::v1::responses::tasks::Task;
 use crate::presentation::http::v1::responses::deployment::client_strategy_set::ClientStrategySet;
 use crate::presentation::http::v1::responses::deployment::ModelDeployment;
@@ -212,7 +213,7 @@ pub struct ListModelArtifactResponse {
 
 #[derive(ToSchema)]
 pub struct ListDeploymentStrategiesResponse {
-    pub result: Vec<ClientStrategySet>,
+    pub result: Vec<Strategy>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
