@@ -8,8 +8,11 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
     fn from(value: &documents::ModelDeployment) -> Self {
         let props = entities::RehydrateModelDeploymentProps {
             id: Uuid::from_bytes(value.id.bytes()),
+            name: value.name.clone(),
+            description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
             platform: value.platform.clone(),
+            deployment_modality: entities::DeploymentModality::from(value.deployment_modality.clone()),
             revision: value.revision.clone(),
             owner: value.owner.clone(),
             model: entities::ModelReference::from(value.model.clone()),
@@ -68,6 +71,15 @@ impl From<documents::GpuResource> for entities::GpuResource {
             gpu_type: value.gpu_type,
             memory: value.memory,
             vendor: value.vendor,
+        }
+    }
+}
+
+impl From<documents::DeploymentModality> for entities::DeploymentModality {
+    fn from(value: documents::DeploymentModality) -> Self {
+        match value {
+            documents::DeploymentModality::Batch => entities::DeploymentModality::Batch,
+            documents::DeploymentModality::Service => entities::DeploymentModality::Service
         }
     }
 }

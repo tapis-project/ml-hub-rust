@@ -46,3 +46,4 @@ tapis-tenants = "0.2.0"
 base64 = "0.22.1"
 flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", rev = "8da1963" }
 url-parse = "1.0.10"
+derive_more = { version = "2.1.1", features = ["as_ref"] }

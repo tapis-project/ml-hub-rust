@@ -5,11 +5,8 @@ use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
     DeployModelWithStrategyPathParams,
-    DeployModelWithStrategyQueryParams,
-    Scope,
 };
 use crate::presentation::http::v1::responses::ModelDeployment;
-use platforms::Platform;
 use actix_web::{
     post,
     web,
@@ -28,7 +25,6 @@ use shared::application::inputs::common::Scope as ScopeInput;
     request_body=DeployModelWithStrategyBody,
     params(
         DeployModelWithStrategyPathParams,
-        DeployModelWithStrategyQueryParams,
         DeployModelWithStrategyBody,
     ),
     responses(
@@ -43,7 +39,6 @@ async fn deploy_model_with_strategy(
     data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    params: web::Query<DeployModelWithStrategyQueryParams>,
     identity_context: IdentityContext,
 ) -> impl Responder {
     let maybe_strategy = data.client_strategy_sets
@@ -66,10 +61,11 @@ async fn deploy_model_with_strategy(
     );
 
     let input = DeployWithStrategyInput {
-        tenant_id: identity_context.actor_tenant_id().clone(),
+        name: body.name.clone(),
+        description: body.description.clone(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
-        model_scope: ScopeInput::from(params.into_inner().scope.clone()),
+        model_scope: ScopeInput::from(body.scope.clone()),
         platform: path.platform.clone(),
         strategy_name: strategy.name,
         params: body.params.clone(),

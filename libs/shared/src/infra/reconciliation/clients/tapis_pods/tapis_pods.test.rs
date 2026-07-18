@@ -4,6 +4,7 @@ mod tapis_pods_test {
     use std::collections::HashMap;
     use crate::domain::entities::deployment::{
         ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, RehydrateModelDeploymentProps,
+        DeploymentModality
     };
     use crate::domain::entities::visibility::Visibility;
     use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
@@ -19,6 +20,8 @@ mod tapis_pods_test {
     fn deployment_with_metadata(metadata: HashMap<String, serde_json::Value>) -> ModelDeployment {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: "test".into(),
+            description: Some("test".into()),
             tenant_id: "test-tenant".into(),
             platform: Platform::TapisPods,
             owner: "test-owner".into(),
@@ -27,6 +30,7 @@ mod tapis_pods_test {
                 author: "openai-community".into(),
                 tenant_id: "test".into(),
             },
+            deployment_modality: DeploymentModality::Batch,
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: None,
@@ -46,8 +50,11 @@ mod tapis_pods_test {
     fn deployment_without_metadata() -> ModelDeployment {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: "test".into(),
+            description: Some("test".into()),
             tenant_id: "test-tenant".into(),
             platform: Platform::TapisPods,
+            deployment_modality: DeploymentModality::Batch,
             owner: "test-owner".into(),
             model: ModelReference {
                 name: "gpt2".into(),
@@ -333,8 +340,11 @@ mod tapis_pods_test {
         }
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: deployment_id,
+            name: "test".into(),
+            description: Some("test".into()),
             tenant_id: "test-tenant".into(),
             platform: Platform::TapisPods,
+            deployment_modality: DeploymentModality::Batch,
             owner: tapis_user.to_string(),
             model: ModelReference {
                 name: "gpt2".into(),

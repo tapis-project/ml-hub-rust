@@ -13,3 +13,5 @@ pub mod visibility;
 pub mod principal;
 pub mod identity;
 pub mod tenancy;
+pub mod annotations;
+pub mod taxonomy;

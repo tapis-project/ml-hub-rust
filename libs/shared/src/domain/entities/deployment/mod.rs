@@ -20,8 +20,15 @@ pub enum ModelDeploymentError {
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
     pub id: Uuid,
+    /// Display name of the deployment
+    pub name: String,
+    /// The modality of the deployment
+    pub deployment_modality: DeploymentModality,
+    /// Description of the deployment
+    pub description: Option<String>,
     /// The id of the tenant to which this model deployment belongs
     pub tenant_id: String,
+    /// The platform to which this model is deployed
     pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
@@ -33,6 +40,7 @@ pub struct ModelDeployment {
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
+    /// The deployment strategy used to create this model deployment
     pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
@@ -55,6 +63,9 @@ impl ModelDeployment {
 
         Self {
             id: props.id,
+            name: props.name,
+            description: props.description,
+            deployment_modality: props.deployment_modality,
             tenant_id: props.tenant_id,
             platform: props.platform,
             owner: props.owner,
@@ -78,8 +89,11 @@ impl ModelDeployment {
     pub fn rehydrate(props: RehydrateModelDeploymentProps) -> Self {
         Self {
             id: props.id,
+            name: props.name,
+            description: props.description,
             tenant_id: props.tenant_id,
             platform: props.platform,
+            deployment_modality: props.deployment_modality,
             owner: props.owner,
             model: props.model,
             state: props.state,
@@ -116,6 +130,12 @@ impl ModelDeployment {
         
         draft
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum DeploymentModality {
+    Batch,
+    Service,
 }
 
 #[derive(Clone, Debug)]
@@ -415,8 +435,11 @@ impl <'a>ModelDeploymentDraft<'a> {
 #[derive(Clone, Debug)]
 pub struct RehydrateModelDeploymentProps {
     pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
     pub tenant_id: String,
     pub platform: Platform,
+    pub deployment_modality: DeploymentModality,
     pub owner: String,
     pub model: ModelReference,
     pub state: State,
@@ -437,7 +460,10 @@ pub struct RehydrateModelDeploymentProps {
 #[derive(Clone, Debug)]
 pub struct ModelDeploymentProps {
     pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
     pub tenant_id: String,
+    pub deployment_modality: DeploymentModality,
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,

@@ -99,6 +99,8 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
     fn from(value: entities::ModelDeployment) -> Self {
         Self {
             id: value.id.clone(),
+            name: value.name.clone(),
+            description: value.description.clone(),
             platform: value.platform.clone(),
             owner: value.owner.clone(),
             model: responses::ModelReference::from(value.model.clone()),

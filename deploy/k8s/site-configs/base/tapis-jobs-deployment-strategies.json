@@ -97,8 +97,15 @@
             "name": "TapisJobs",
             "parameters": [
                 {
-                    "name": "allocation",
+                    "name": "project allocation",
                     "type": "string",
+                    "description": "The allocation to charge",
+                    "required": false
+                },
+                {
+                    "name": "slurm reservation",
+                    "type": "string",
+                    "description": "The slurm reservation to",
                     "required": false
                 },
                 {
@@ -106,9 +113,17 @@
                     "type": "string",
                     "required": false,
                     "default": "transformers",
+                    "description": "The inference backend to use for the model deployment",
                     "choices": [
                         "transformers"
                     ]
+                },
+                {
+                    "name": "hf_token",
+                    "type": "string",
+                    "description": "Huggingface Token",
+                    "secret": true,
+                    "required": false
                 }
             ]
         },
@@ -118,11 +133,13 @@
                 {
                     "name": "allocation",
                     "type": "string",
+                    "description": "The allocation to charge",
                     "required": false
                 },
                 {
                     "name": "system_id",
                     "type": "string",
+                    "description": "The ID of the Tapis System to which you want to deploy this model",
                     "required": true
                 },
                 {
@@ -130,6 +147,7 @@
                     "type": "string",
                     "required": false,
                     "default": "transformers",
+                    "description": "The inference backend to use for the model deployment",
                     "choices": [
                         "transformers"
                     ]
@@ -142,12 +160,14 @@
                 {
                     "name": "allocation",
                     "type": "string",
+                    "description": "The allocation to charge",
                     "required": false
                 },
                 {
                     "name": "backend",
                     "type": "string",
                     "required": false,
+                    "description": "The inference backend to use for the model deployment",
                     "default": "transformers",
                     "choices": [
                         "transformers"

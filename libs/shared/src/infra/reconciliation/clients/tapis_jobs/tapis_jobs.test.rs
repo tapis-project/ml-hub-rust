@@ -8,7 +8,7 @@ mod tapis_jobs_test {
     };
     use crate::domain::entities::deployment::{
         DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta,
-        ModelReference, RehydrateModelDeploymentProps, State,
+        ModelReference, RehydrateModelDeploymentProps, State, DeploymentModality,
     };
     use crate::domain::entities::model_metadata::{fixtures::full_model_metadata, ModelMetadata};
     use crate::domain::entities::timestamp::TimeStamp;
@@ -24,9 +24,12 @@ mod tapis_jobs_test {
     fn deployment_with_metadata(metadata: HashMap<String, serde_json::Value>) -> ModelDeployment {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: "test".into(),
+            description: Some("test".into()),
             platform: Platform::TapisJobs,
             tenant_id: "test-tenant".into(),
             owner: "test-owner".into(),
+            deployment_modality: DeploymentModality::Batch,
             model: ModelReference {
                 name: "Qwen3.5-0.8B".into(),
                 author: "Qwen".into(),
@@ -51,7 +54,10 @@ mod tapis_jobs_test {
     fn deployment_without_metadata() -> ModelDeployment {
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: "test".into(),
+            description: Some("test".into()),
             platform: Platform::TapisJobs,
+            deployment_modality: DeploymentModality::Batch,
             tenant_id: "test-tenant".into(),
             owner: "test-owner".into(),
             model: ModelReference {
@@ -468,6 +474,8 @@ mod tapis_jobs_test {
         }
         ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
             id: deployment_id,
+            name: "test".into(),
+            description: Some("test".into()),
             platform: Platform::TapisJobs,
             tenant_id: tenant_id.to_string(),
             owner: tapis_user.to_string(),
@@ -477,6 +485,7 @@ mod tapis_jobs_test {
                 author: std::env::var("FLEXSERV_MODEL_AUTHOR").unwrap_or_else(|_| "Qwen".into()),
                 tenant_id: "test".into(),
             },
+            deployment_modality: DeploymentModality::Batch,
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: None,

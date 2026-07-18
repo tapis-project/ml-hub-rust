@@ -17,6 +17,8 @@ use crate::presentation::http::v1::responses::visibility::Visibility;
 pub struct ModelDeployment {
     #[schema(value_type = String, format = "uuid")]
     pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,

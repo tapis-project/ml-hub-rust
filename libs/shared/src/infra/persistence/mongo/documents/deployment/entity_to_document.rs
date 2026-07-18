@@ -9,8 +9,11 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
+            name: value.name.clone(),
+            description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
             platform: value.platform.clone(),
+            deployment_modality: documents::DeploymentModality::from(value.deployment_modality.clone()),
             revision: value.revision().clone(),
             owner: value.owner.clone(),
             model: documents::ModelReference::from(value.model.clone()),
@@ -67,6 +70,15 @@ impl From<entities::GpuResource> for documents::GpuResource {
             gpu_type: value.gpu_type,
             memory: value.memory,
             vendor: value.vendor,
+        }
+    }
+}
+
+impl From<entities::DeploymentModality> for documents::DeploymentModality {
+    fn from(value: entities::DeploymentModality) -> Self {
+        match value {
+            entities::DeploymentModality::Batch => documents::DeploymentModality::Batch,
+            entities::DeploymentModality::Service => documents::DeploymentModality::Service
         }
     }
 }

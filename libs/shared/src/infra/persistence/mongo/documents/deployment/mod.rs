@@ -3,11 +3,37 @@ pub mod document_to_entity;
 
 use std::collections::HashMap;
 use openapiv3::OpenAPI;
-use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 use serde_json::Value;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ModelDeployment {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub _id: Option<ObjectId>,
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub deployment_modality: DeploymentModality,
+    pub tenant_id: String,
+    pub platform: platforms::Platform,
+    pub owner: String,
+    pub model: ModelReference,
+    pub state: State,
+    pub desired_state: DesiredState,
+    pub last_message: Option<String>,
+    pub deployment_strategy: Option<String>,
+    pub visibility: Visibility,
+    pub created_at: DateTime,
+    pub last_modified: DateTime,
+    pub last_state_change: DateTime,
+    pub last_desired_state_change: DateTime,
+    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub replicas: Option<ReplicaGroup>,
+    pub metadata: Option<HashMap<String, Value>>,
+    pub revision: u32, 
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelReference {
@@ -69,27 +95,9 @@ impl From<DesiredState> for String {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ModelDeployment {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub _id: Option<ObjectId>,
-    pub id: Uuid,
-    pub tenant_id: String,
-    pub platform: platforms::Platform,
-    pub owner: String,
-    pub model: ModelReference,
-    pub state: State,
-    pub desired_state: DesiredState,
-    pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
-    pub visibility: Visibility,
-    pub created_at: DateTime,
-    pub last_modified: DateTime,
-    pub last_state_change: DateTime,
-    pub last_desired_state_change: DateTime,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
-    pub metadata: Option<HashMap<String, Value>>,
-    pub revision: u32, 
+pub enum DeploymentModality {
+    Batch,
+    Service
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

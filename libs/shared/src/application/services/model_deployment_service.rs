@@ -138,7 +138,7 @@ impl ModelDeploymentService {
         input: DeployWithStrategyInput,
         identity_context: &IdentityContext,
     ) -> Result<DeployModelWithStrategyOutput, ApplicationError> {
-        let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, &input.tenant_id);
+        let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, identity_context.actor_tenant_id());
         
         let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
             &input.model_author,
@@ -175,8 +175,11 @@ impl ModelDeploymentService {
 
         let model_deployment_props = ModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: input.name,
+            description: input.description,
             tenant_id: identity_context.actor_tenant_id().clone(),
             platform: input.platform.clone(),
+            deployment_modality: input.deployment_modality.clone(),
             owner: identity_context.actor_principal_id().clone(),
             model: ModelReference {
                 name: input.model_name.clone(),

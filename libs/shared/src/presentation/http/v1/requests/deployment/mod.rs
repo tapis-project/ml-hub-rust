@@ -19,14 +19,11 @@ pub struct DeployModelWithStrategyPathParams {
 
 #[derive(Debug, Deserialize, Clone, IntoParams, ToSchema)]
 pub struct DeployModelWithStrategyBody {
+    pub name: String,
+    pub description: Option<String>,
     pub model_name: String,
     pub model_author: String,
     pub params: Value,
-}
-
-#[derive(Deserialize, Debug, Clone, IntoParams, ToSchema)]
-#[into_params(parameter_in = Query)]
-pub struct DeployModelWithStrategyQueryParams {
     #[serde(default = "default_scope")]
     #[param(value_type = Scope, inline, required)]
     /// Selector for global vs tenant-scoped models
