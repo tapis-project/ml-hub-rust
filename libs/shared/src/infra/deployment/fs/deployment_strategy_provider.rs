@@ -1,12 +1,14 @@
 use std::fs;
 use log::error;
 use serde_json;
+use async_trait::async_trait;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::infra::deployment::fs::dtos::{
     client_strategy_set::ClientStrategySet as Config
 };
 use crate::application::errors::ApplicationError;
-use crate::application::ports::deployment::DeploymentStrategyProvider;
+use crate::application::ports::deployment_strategy::{DeploymentStrategyProvider, GetStrategyByPlatformAndNameInput};
 use crate::constants::DEFAULT_CLIENT_DEPLOYMENT_STRATEGIES_DIR;
 
 pub struct DeploymentStrategyProviderFs {
@@ -78,8 +80,29 @@ impl DeploymentStrategyProviderFs {
     }
 }
 
+#[async_trait]
 impl DeploymentStrategyProvider for DeploymentStrategyProviderFs {
-    fn provide(&self) -> &Vec<ClientStrategySet> {
-        &self.client_strategy_sets
+    async fn list_all(&self) -> Vec<ClientStrategySet> {
+        self.client_strategy_sets.clone()
+    }
+
+    async fn get_strategy_by_platform_and_name(&self, input: GetStrategyByPlatformAndNameInput) -> Option<Strategy> {
+        let maybe_client_strategy_set = self.client_strategy_sets
+            .iter()
+            .filter(|css| css.platform == input.platform.clone())
+            .cloned()
+            .next();
+
+        let client_strategy_sets = match maybe_client_strategy_set {
+            Some(css) => css.clone(),
+            None => return None,
+        };
+
+        client_strategy_sets
+            .strategies()
+            .iter()
+            .filter(|s| s.name == input.name)
+            .cloned()
+            .next()
     }
 }

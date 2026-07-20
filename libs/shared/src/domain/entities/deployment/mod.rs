@@ -5,6 +5,8 @@ use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
+use crate::shared_kernel::enums::DeploymentModality;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use serde_json::Value;
 
 #[derive(Debug, Error)]
@@ -58,14 +60,14 @@ pub struct ModelDeployment {
 
 impl ModelDeployment {
     /// Create the model deployment from props
-    pub fn new(props: ModelDeploymentProps) -> Self {
+    pub fn deploy_with_srategy(props: DeployWithStrategyProps, strategy: &Strategy) -> Self {
         let now = TimeStamp::now();
 
         Self {
             id: props.id,
             name: props.name,
             description: props.description,
-            deployment_modality: props.deployment_modality,
+            deployment_modality: strategy.deployment_modality.clone(),
             tenant_id: props.tenant_id,
             platform: props.platform,
             owner: props.owner,
@@ -73,7 +75,7 @@ impl ModelDeployment {
             state: props.state,
             desired_state: props.desired_state,
             last_message: props.last_message,
-            deployment_strategy: props.deployment_strategy,
+            deployment_strategy: Some(strategy.name.clone()),
             visibility: props.visibility,
             created_at: now.clone(),
             last_modified: now.clone(),
@@ -86,7 +88,7 @@ impl ModelDeployment {
         }
     }
 
-    pub fn rehydrate(props: RehydrateModelDeploymentProps) -> Self {
+    pub fn reconstitute(props: ReconstituteModelDeploymentProps) -> Self {
         Self {
             id: props.id,
             name: props.name,
@@ -130,12 +132,6 @@ impl ModelDeployment {
         
         draft
     }
-}
-
-#[derive(Clone, Debug)]
-pub enum DeploymentModality {
-    Batch,
-    Service,
 }
 
 #[derive(Clone, Debug)]
@@ -433,13 +429,13 @@ impl <'a>ModelDeploymentDraft<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct RehydrateModelDeploymentProps {
+pub struct ReconstituteModelDeploymentProps {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
+    pub deployment_modality: DeploymentModality,
     pub tenant_id: String,
     pub platform: Platform,
-    pub deployment_modality: DeploymentModality,
     pub owner: String,
     pub model: ModelReference,
     pub state: State,
@@ -458,19 +454,17 @@ pub struct RehydrateModelDeploymentProps {
 }
 
 #[derive(Clone, Debug)]
-pub struct ModelDeploymentProps {
+pub struct DeployWithStrategyProps {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub tenant_id: String,
-    pub deployment_modality: DeploymentModality,
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: Option<ReplicaGroup>,

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use amqprs::channel::Channel;
 use shared::application::errors::ApplicationError;
 use shared::application::ports::artifacts::ArtifactRepository;
-use shared::application::ports::deployment::DeploymentStrategyProvider;
+use shared::application::ports::deployment_strategy::DeploymentStrategyProvider;
 use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
 use mongodb::Client;
 use shared::application::ports::deployment::ModelDeploymentRepository;
@@ -35,19 +35,20 @@ pub fn event_publisher_factory(channel: Arc<Channel>) -> Arc<dyn EventPublisher>
     Arc::new(RabbitMQModelDeploymentMessagePublisher::new(channel))
 }
 
-pub fn model_deployment_service_builder(client: &Client, db_name: String, channel: Arc<Channel>) -> ModelDeploymentService {
-    ModelDeploymentService::new(
-        model_deployment_repo_factory(client, db_name.clone()),
-        model_metadata_repo_factory(client, db_name.clone()),
-        artifact_repo_factory(client, db_name.clone()),
-        event_publisher_factory(channel.clone()),
-    )
-}
-
 pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategyProvider>, ApplicationError> {
     let provider = DeploymentStrategyProviderFs::new();
     match provider {
         Ok(p) => Ok(Arc::new(p)),
         Err(err) => Err(err)
     }
+}
+
+pub fn model_deployment_service_builder(client: &Client, db_name: String, channel: Arc<Channel>) -> Result<ModelDeploymentService, ApplicationError> {
+    Ok(ModelDeploymentService::new(
+        model_deployment_repo_factory(client, db_name.clone()),
+        model_metadata_repo_factory(client, db_name.clone()),
+        artifact_repo_factory(client, db_name.clone()),
+        event_publisher_factory(channel.clone()),
+        build_deployment_strategy_provider()?
+    ))
 }

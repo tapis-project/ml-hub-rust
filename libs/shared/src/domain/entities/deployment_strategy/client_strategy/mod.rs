@@ -1,4 +1,6 @@
 use thiserror::Error;
+use crate::shared_kernel::enums::DeploymentModality;
+
 use super::rule_set::RuleSet;
 use super::parameter_set::ParameterSet;
 
@@ -12,6 +14,7 @@ pub enum ClientStrategyError {
 pub struct ClientStrategy {
     pub name: String,
     pub description: Option<String>,
+    deployment_modality: DeploymentModality,
     rule_sets: Option<Vec<RuleSet>>,
     parameter_set: Option<ParameterSet>,
     use_rule_sets: Option<Vec<String>>,
@@ -22,6 +25,7 @@ impl ClientStrategy {
     pub fn new(
         name: String,
         description: Option<String>,
+        deployment_modality: DeploymentModality,
         rule_sets: Option<Vec<RuleSet>>,
         parameter_set: Option<ParameterSet>,
         use_rule_sets: Option<Vec<String>>,
@@ -47,6 +51,7 @@ impl ClientStrategy {
         Ok(Self {
             name,
             description,
+            deployment_modality,
             rule_sets,
             parameter_set,
             use_rule_sets,
@@ -68,6 +73,10 @@ impl ClientStrategy {
 
     pub fn parameter_set_ref(&self) -> &Option<String> {
         &self.use_parameter_set
+    }
+
+    pub fn deployment_modality(&self) -> &DeploymentModality {
+        &self.deployment_modality
     }
 }
 

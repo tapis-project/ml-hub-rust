@@ -17,3 +17,4 @@ amqprs = "2.1.1"
 async-trait = "0.1.88"
 mongodb = { version = "3.5.1" }
 log = "0.4"
+thiserror = "2.0.17"

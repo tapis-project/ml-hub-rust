@@ -2,13 +2,14 @@
 mod client_strategy_test {
     use serde_json::Value;
 
-    use crate::domain::entities::deployment_strategy::{client_strategy::ClientStrategy, parameter_set::{Parameter, ParameterSet, ParameterType}, rule_set::{Rule, RuleSet}};
+    use crate::{domain::entities::deployment_strategy::{client_strategy::ClientStrategy, parameter_set::{Parameter, ParameterSet, ParameterType}, rule_set::{Rule, RuleSet}}, shared_kernel::enums::DeploymentModality};
 
     #[test]
     fn test_init() {
         let valid = ClientStrategy::new(
             "foo".into(),
             Some("Test Client Strategy".into()),
+            DeploymentModality::Service,
             Some(vec![
                 RuleSet {
                     name: "foo".into(),
@@ -44,6 +45,7 @@ mod client_strategy_test {
         let missing_refs = ClientStrategy::new(
             "foo".into(),
             Some("Test Client Strategy".into()),
+            DeploymentModality::Service,
             None,
             Some(ParameterSet {
                 name: "foo-params".into(),

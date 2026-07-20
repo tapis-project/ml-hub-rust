@@ -97,9 +97,10 @@ impl ClientStrategySet {
             // Create the Strategy
             strategies.push(
                 Strategy::new(
-                    client_strat.name,
+                    client_strat.name.clone(),
                     platform.clone(),
-                    client_strat.description,
+                    client_strat.description.clone(),
+                    client_strat.deployment_modality().clone(),
                     strategy_rule_sets,
                     parameter_set,
                 )?

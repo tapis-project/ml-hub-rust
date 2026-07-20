@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput};
+use crate::application::ports::deployment_strategy::DeploymentStrategyProvider;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, Payload};
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
@@ -14,7 +15,6 @@ use crate::domain::entities::deployment::{DesiredState,
     ModelDeploymentMetadataDelta,
     ReplicaGroupDelta,
 };
-use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use thiserror::Error;
 use retry_utils::{
     retry_async,
@@ -80,7 +80,7 @@ impl DispatchReconcilerResult {
 }
 
 pub struct ModelDeploymentController {
-    client_strategy_sets: Arc<Vec<ClientStrategySet>>,
+    deployment_strategy_provider: Arc<dyn  DeploymentStrategyProvider>,
     model_deployment_service: ModelDeploymentService,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
     event_publisher: Arc<dyn EventPublisher>,
@@ -96,14 +96,14 @@ impl ModelDeploymentController {
     });
 
     pub fn new(
-        client_strategy_sets: Arc<Vec<ClientStrategySet>>,
+        deployment_strategy_provider: Arc<dyn  DeploymentStrategyProvider>,
         model_deployment_service: ModelDeploymentService,
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
     ) -> Self {
         Self {
-            client_strategy_sets,
+            deployment_strategy_provider,
             model_deployment_service,
             model_metadata_repo,
             event_publisher,
@@ -136,7 +136,7 @@ impl ModelDeploymentController {
             }
         }?;
         
-        let maybe_action = self.resolve_reconciliation_action(&deployment)?;
+        let maybe_action = self.resolve_reconciliation_action(&deployment).await?;
 
         let action = match maybe_action {
             Some(a) => a,
@@ -296,12 +296,14 @@ impl ModelDeploymentController {
     }
 
     /// Dermine what reconciliation action must be take to synchronize the actual state with the desired state
-    fn resolve_reconciliation_action(&self, deployment: &ModelDeployment) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
+    async fn resolve_reconciliation_action(&self, deployment: &ModelDeployment) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
         if deployment.is_state_syncronized() {
             return Ok(None)
         }
 
-        let maybe_strategy = self.client_strategy_sets
+        let maybe_strategy = self.deployment_strategy_provider
+            .list_all()
+            .await
             .iter()
             .find(|css| css.platform == deployment.platform.clone())
             .map(|cs| cs.strategies())

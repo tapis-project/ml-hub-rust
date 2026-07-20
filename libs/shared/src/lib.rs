@@ -1,4 +1,4 @@
-pub mod shared_kernal;
+pub mod shared_kernel;
 pub mod presentation;
 pub mod application;
 pub mod domain;

@@ -2,6 +2,7 @@ use crate::domain::entities::deployment as entities;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use crate::infra::_common::mongo::ToBsonDateTime;
+use crate::shared_kernel::enums::DeploymentModality;
 use mongodb::bson::Uuid;
 
 impl From<&entities::ModelDeployment> for documents::ModelDeployment {
@@ -74,11 +75,11 @@ impl From<entities::GpuResource> for documents::GpuResource {
     }
 }
 
-impl From<entities::DeploymentModality> for documents::DeploymentModality {
-    fn from(value: entities::DeploymentModality) -> Self {
+impl From<DeploymentModality> for documents::DeploymentModality {
+    fn from(value: DeploymentModality) -> Self {
         match value {
-            entities::DeploymentModality::Batch => documents::DeploymentModality::Batch,
-            entities::DeploymentModality::Service => documents::DeploymentModality::Service
+            DeploymentModality::Batch => documents::DeploymentModality::Batch,
+            DeploymentModality::Service => documents::DeploymentModality::Service
         }
     }
 }

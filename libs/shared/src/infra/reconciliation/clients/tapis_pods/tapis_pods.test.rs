@@ -3,12 +3,12 @@ mod tapis_pods_test {
     use super::super::*;
     use std::collections::HashMap;
     use crate::domain::entities::deployment::{
-        ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, RehydrateModelDeploymentProps,
-        DeploymentModality
+        ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, ReconstituteModelDeploymentProps
     };
     use crate::domain::entities::visibility::Visibility;
     use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
     use crate::domain::entities::timestamp::TimeStamp;
+    use crate::shared_kernel::enums::DeploymentModality;
     use platforms::Platform;
     use uuid::Uuid;
     use serde_json::json;
@@ -18,7 +18,7 @@ mod tapis_pods_test {
     }
 
     fn deployment_with_metadata(metadata: HashMap<String, serde_json::Value>) -> ModelDeployment {
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: Uuid::now_v7(),
             name: "test".into(),
             description: Some("test".into()),
@@ -48,7 +48,7 @@ mod tapis_pods_test {
     }
 
     fn deployment_without_metadata() -> ModelDeployment {
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: Uuid::now_v7(),
             name: "test".into(),
             description: Some("test".into()),
@@ -338,7 +338,7 @@ mod tapis_pods_test {
         if let Some(v) = volume_id {
             meta.insert("volume_id".into(), json!(v));
         }
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: deployment_id,
             name: "test".into(),
             description: Some("test".into()),

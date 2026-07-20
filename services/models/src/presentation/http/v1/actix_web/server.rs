@@ -38,15 +38,14 @@ pub async fn run_server() -> std::io::Result<()> {
             .unwrap_or(DEFAULT_PORT)
     );
 
-    let deployment_strategy_provider = build_deployment_strategy_provider();
+    let deployment_strategy_provider = build_deployment_strategy_provider()
+        .map_err(|err| {
+            error!("Failed to initialize DeploymentStrategyProvider: {}", err.to_string());
+            err
+        })
+        .expect("DeploymentStrategyProvider to be initialzed");
 
-    let client_strategy_sets = match deployment_strategy_provider {
-        Ok(p) => Arc::new(p.provide().clone()),
-        Err(err) => {
-            warn!("Error initializing deployment strategy provider: {}", err.to_string());
-            Arc::new(vec![])
-        }
-    };
+    let client_strategy_sets = Arc::new(deployment_strategy_provider.list_all().await.clone());
 
     let broker_host = std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
     let broker_port = std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");

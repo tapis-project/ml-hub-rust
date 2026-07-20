@@ -2,7 +2,7 @@ use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::application::errors::ApplicationError;
 use crate::application::inputs::model_metadata::{UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::SearchModelsInput;
-use crate::shared_kernal::identity::IdentityContext;
+use crate::shared_kernel::identity::IdentityContext;
 use uuid::Uuid;
 use async_trait::async_trait;
 

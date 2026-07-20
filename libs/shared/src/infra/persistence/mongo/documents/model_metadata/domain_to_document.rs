@@ -2,7 +2,7 @@ use crate::infra::persistence::mongo::documents::model_metadata;
 use crate::infra::persistence::mongo::documents::task as document_task;
 use crate::domain::entities::model_metadata as entities;
 use crate::errors::Error;
-use crate::shared_kernal::identity::IdentityContext;
+use crate::shared_kernel::identity::IdentityContext;
 
 impl TryFrom<entities::SystemRequirement> for model_metadata::SystemRequirement {
     type Error = Error;

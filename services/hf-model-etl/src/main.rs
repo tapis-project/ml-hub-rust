@@ -8,9 +8,10 @@ use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata
 use shared::application::inputs::model_metadata::RegisterModelMetadataInput;
 use client_provider::ClientProvider;
 use clients::ClientError;
-use shared::shared_kernal::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
-use shared::shared_kernal::tenancy::GLOBAL_TENANT;
+use shared::shared_kernel::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
+use shared::shared_kernel::constants::GLOBAL_TENANT;
 use std::sync::Arc;
+use log::error;
 
 #[tokio::main]
 async fn main() {
@@ -25,8 +26,8 @@ async fn main() {
         replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
-        .map_err(|err| {
-            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        .map_err(|e| {
+            error!("Database initialization error: {}", e.to_string().as_str()); 
         })
         .expect("Datbase initialization error");
 
@@ -36,10 +37,10 @@ async fn main() {
     let deployment_strategy_provider = build_deployment_strategy_provider();
 
     let client_strategy_sets = match deployment_strategy_provider {
-        Ok(p) => Arc::new(p.provide().clone()),
-        Err(_) => {
-            // TODO Log the error
-            Arc::new(vec![])
+        Ok(p) => Arc::new(p.list_all().await.clone()),
+        Err(e) => {
+            error!("Deployment strategy provider initialization error: {}", e.to_string().as_str());
+            panic!()
         }
     };
 
@@ -59,11 +60,11 @@ async fn main() {
                     Ok(entry) => {
                         file_paths.push(entry.path())
                     },
-                    Err(err) => panic!("Error with dir entry: {}", err.to_string())
+                    Err(e) => panic!("Error with dir entry: {}", e.to_string())
                 }
             }
         },
-        Err(err) => panic!("Error reading dir: {}", err.to_string())
+        Err(e) => panic!("Error reading dir: {}", e.to_string())
     };
 
     let model_metadata_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
@@ -79,8 +80,8 @@ async fn main() {
     for path in file_paths {
         let file = match File::open(&path) {
             Ok(f) => f,
-            Err(err) => {
-                eprintln!("Error opening file at path '{}': {}", &path.to_string_lossy().to_string().as_str(), err.to_string());
+            Err(e) => {
+                eprintln!("Error opening file at path '{}': {}", &path.to_string_lossy().to_string().as_str(), e.to_string());
                 continue
             }
         };
@@ -99,14 +100,14 @@ async fn main() {
                             GLOBAL_TENANT.into(),
                         ) {
                             Ok(m) => m,
-                            Err(err) => {
-                                match err {
+                            Err(e) => {
+                                match e {
                                     ClientError::Unimplemented => {
                                         eprintln!("Metadata client not implemented");
                                         return 
                                     },
                                     _ => {
-                                        eprintln!("Error converting metadata: {}", err.to_string());
+                                        eprintln!("Error converting metadata: {}", e.to_string());
                                         continue
                                     }
                                 }
@@ -117,23 +118,23 @@ async fn main() {
                         // an indication that this whole thing needs refactorings
                         let input = match RegisterModelMetadataInput::try_from(metadata) {
                             Ok(i) => i,
-                            Err(err) => {
-                                eprintln!("Error saving metadata to the database: {}", err.to_string());
+                            Err(e) => {
+                                eprintln!("Error saving metadata to the database: {}", e.to_string());
                                 continue
                             }
                         };
 
                         match model_metadata_service.register_model_metadata(input, &IdentityContext::system()).await {
                             Ok(_) => (),
-                            Err(err) => {
-                                eprintln!("Error saving metadata to the database: {}", err.to_string());
+                            Err(e) => {
+                                eprintln!("Error saving metadata to the database: {}", e.to_string());
                                 continue
                             }
                         }
                     };
                 },
-                Err(err) => {
-                    eprintln!("Error reading line: {}", err.to_string());
+                Err(e) => {
+                    eprintln!("Error reading line: {}", e.to_string());
                     continue
                 }
             }

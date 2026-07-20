@@ -1,4 +1,4 @@
-use shared::shared_kernal::identity::IdentityContext;
+use shared::shared_kernel::identity::IdentityContext;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use validator::Validate;
 

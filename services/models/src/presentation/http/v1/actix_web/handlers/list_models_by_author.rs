@@ -12,7 +12,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 };
 use crate::presentation::http::v1::requests::ListModelsByAuthorPath;
 
-use shared::shared_kernal::identity::IdentityContext;
+use shared::shared_kernel::identity::IdentityContext;
 use shared::application::inputs::model_metadata::ListModelMetadataByAuthorInput;
 use shared::presentation::http::v1::contracts::responses;
 use shared::presentation::http::v1::responses::models::ModelMetadata;

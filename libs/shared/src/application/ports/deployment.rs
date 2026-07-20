@@ -8,10 +8,6 @@ use async_trait::async_trait;
 use platforms::Platform;
 use thiserror::Error;
 
-pub trait DeploymentStrategyProvider {
-    fn provide(&self) -> &Vec<ClientStrategySet>;
-}
-
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
     async fn save(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;

@@ -1,6 +1,4 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
-use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::model_deployment_service_builder;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::responses::ModelDeployment;
 use actix_web::{
@@ -10,6 +8,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::inputs::deployment::StartModelDeploymentInput;
+use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::presentation::http::v1::requests::deployment::StartModelDeploymentPathParams;
 
 #[utoipa::path(
@@ -29,15 +28,9 @@ use shared::presentation::http::v1::requests::deployment::StartModelDeploymentPa
 )]
 #[post("deployments-api/deployments/{deployment_id}/start")]
 async fn start_model_deployment(
-    data: web::Data<AppState>,
     path: web::Path<StartModelDeploymentPathParams>,
+    service: web::Data<ModelDeploymentService>,
 ) -> impl Responder {
-    let service = model_deployment_service_builder(
-        &data.client,
-        data.db_name.clone(),
-        data.channel.clone(),
-    );
-
     let input = StartModelDeploymentInput {
        owner: "mlhub".into(),
        deployment_id: path.deployment_id,

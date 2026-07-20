@@ -1,6 +1,6 @@
 use actix_web::{FromRequest, HttpRequest, dev::Payload, Error, HttpMessage as _};
 use futures_util::future::{ready, Ready};
-use crate::shared_kernal::identity::IdentityContext;
+use crate::shared_kernel::identity::IdentityContext;
 
 impl FromRequest for IdentityContext {
     type Error = Error;

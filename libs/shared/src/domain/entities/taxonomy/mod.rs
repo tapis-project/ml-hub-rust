@@ -15,7 +15,7 @@ pub struct Node {
     node_path: NodePath,
     schmea_id: Option<SchemaId>,
     children: Vec<NodePath>,
-    annotation: Vec<Annotation>
+    annotations: Vec<Annotation>
 }
 
 pub struct Schema {

@@ -6,7 +6,8 @@ use thiserror::Error;
 
 use crate::domain::entities::artifact::ArtifactType;
 use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentProps};
+use crate::domain::entities::deployment::{ModelDeployment, DeployWithStrategyProps};
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
@@ -77,12 +78,13 @@ pub enum ModelDeploymentServiceError {
 pub struct ModelDeploymentService {}
 
 impl ModelDeploymentService {
-    pub fn create_model_deployment(
-        model_metadata: &ModelMetadata,
+    pub fn deploy_model_with_strategy(
+        _model_metadata: &ModelMetadata,
         // TODO Uncomment the line below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // artifact: &Artifact,
-        props: ModelDeploymentProps
+        props: DeployWithStrategyProps,
+        strategy: &Strategy
     ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
         // TODO Uncomment all lines below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
@@ -102,6 +104,6 @@ impl ModelDeploymentService {
         //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
         // };
 
-        Ok(ModelDeployment::new(props))
+        Ok(ModelDeployment::deploy_with_srategy(props, strategy))
     }
 }

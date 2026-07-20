@@ -12,3 +12,4 @@ tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1.0.228", features = ["derive"] }
 clients = { version = "0.1.0", path = "../../libs/clients" }
 thiserror = "2.0.17"
+log = "0.4"

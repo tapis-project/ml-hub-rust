@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
-use crate::shared_kernal::identity::IdentityContext;
+use crate::shared_kernel::identity::IdentityContext;
+use crate::shared_kernel::constants::GLOBAL_TENANT;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::{DeploymentStrategyReference, ModelMetadata};
-use crate::shared_kernal::tenancy::GLOBAL_TENANT;
 use crate::domain::services::deployment_strategy::resolve_viable_strategies;
 use retry_utils::{retry_async, RetryPolicy, FixedBackoff, Retry};
 use crate::application::errors::ApplicationError;

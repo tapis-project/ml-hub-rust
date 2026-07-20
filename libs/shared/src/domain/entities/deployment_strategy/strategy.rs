@@ -1,3 +1,5 @@
+use crate::shared_kernel::enums::DeploymentModality;
+
 use super::rule_set::RuleSet;
 use super::parameter_set::ParameterSet;
 
@@ -17,6 +19,7 @@ pub struct Strategy {
     pub name: String,
     pub platform: Platform,
     pub description: Option<String>,
+    pub deployment_modality: DeploymentModality,
     rule_sets: Vec<RuleSet>,
     parameter_set: Option<ParameterSet>,
 }
@@ -26,6 +29,7 @@ impl Strategy {
         name: String,
         platform: Platform,
         description: Option<String>,
+        deployment_modality: DeploymentModality,
         rule_sets: Vec<RuleSet>,
         parameter_set: Option<ParameterSet>,
     ) -> Result<Self, StrategyError> {
@@ -42,6 +46,7 @@ impl Strategy {
         Ok(Self {
             name,
             platform,
+            deployment_modality,
             description,
             rule_sets,
             parameter_set

@@ -2,7 +2,7 @@ use serde_json::Value;
 use platforms::Platform;
 use uuid::Uuid;
 use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy::client_strategy::ClientStrategy};
-use crate::domain::entities::deployment::{DeploymentModality, DesiredState, ModelDeployment, State};
+use crate::domain::entities::deployment::{DesiredState, ModelDeployment, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
 
 use crate::application::inputs::common::Scope;
@@ -30,7 +30,6 @@ pub struct FilterInput {
 pub struct DeployWithStrategyInput {
     pub name: String,
     pub description: Option<String>,
-    pub deployment_modality: DeploymentModality,
     pub platform: Platform,
     pub model_name: String,
     pub model_author: String,

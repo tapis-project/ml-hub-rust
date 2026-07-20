@@ -1,18 +1,19 @@
 use crate::domain::entities::deployment::{self as entities, ModelDeploymentMetadata};
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
+use crate::shared_kernel::enums::DeploymentModality;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use uuid::Uuid;
 
 impl From<&documents::ModelDeployment> for entities::ModelDeployment {
     fn from(value: &documents::ModelDeployment) -> Self {
-        let props = entities::RehydrateModelDeploymentProps {
+        let props = entities::ReconstituteModelDeploymentProps {
             id: Uuid::from_bytes(value.id.bytes()),
             name: value.name.clone(),
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
             platform: value.platform.clone(),
-            deployment_modality: entities::DeploymentModality::from(value.deployment_modality.clone()),
+            deployment_modality: DeploymentModality::from(value.deployment_modality.clone()),
             revision: value.revision.clone(),
             owner: value.owner.clone(),
             model: entities::ModelReference::from(value.model.clone()),
@@ -36,7 +37,7 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
                 .and_then(|m| Some(ModelDeploymentMetadata(m))),
         };
         
-        entities::ModelDeployment::rehydrate(props)
+        entities::ModelDeployment::reconstitute(props)
     }
 }
 
@@ -75,11 +76,11 @@ impl From<documents::GpuResource> for entities::GpuResource {
     }
 }
 
-impl From<documents::DeploymentModality> for entities::DeploymentModality {
+impl From<documents::DeploymentModality> for DeploymentModality {
     fn from(value: documents::DeploymentModality) -> Self {
         match value {
-            documents::DeploymentModality::Batch => entities::DeploymentModality::Batch,
-            documents::DeploymentModality::Service => entities::DeploymentModality::Service
+            documents::DeploymentModality::Batch => DeploymentModality::Batch,
+            documents::DeploymentModality::Service => DeploymentModality::Service
         }
     }
 }

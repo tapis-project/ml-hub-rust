@@ -3,7 +3,7 @@ use crate::domain::entities::task as domain_task;
 use crate::domain::entities::model_metadata as domain;
 
 use crate::application::errors::ApplicationError;
-use crate::shared_kernal::identity::IdentityContext;
+use crate::shared_kernel::identity::IdentityContext;
 
 impl TryFrom<inputs::SystemRequirement> for domain::SystemRequirement {
     type Error = ApplicationError;

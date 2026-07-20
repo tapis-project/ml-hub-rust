@@ -8,8 +8,9 @@ mod tapis_jobs_test {
     };
     use crate::domain::entities::deployment::{
         DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta,
-        ModelReference, RehydrateModelDeploymentProps, State, DeploymentModality,
+        ModelReference, ReconstituteModelDeploymentProps, State,
     };
+    use crate::shared_kernel::enums::DeploymentModality;
     use crate::domain::entities::model_metadata::{fixtures::full_model_metadata, ModelMetadata};
     use crate::domain::entities::timestamp::TimeStamp;
     use crate::domain::entities::visibility::Visibility;
@@ -22,7 +23,7 @@ mod tapis_jobs_test {
     }
 
     fn deployment_with_metadata(metadata: HashMap<String, serde_json::Value>) -> ModelDeployment {
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: Uuid::now_v7(),
             name: "test".into(),
             description: Some("test".into()),
@@ -52,7 +53,7 @@ mod tapis_jobs_test {
     }
 
     fn deployment_without_metadata() -> ModelDeployment {
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: Uuid::now_v7(),
             name: "test".into(),
             description: Some("test".into()),
@@ -472,7 +473,7 @@ mod tapis_jobs_test {
             meta.insert("tapis_hpc_max_minutes".into(), json!(max_min));
             meta.insert("tapis_hpc_allocation".into(), json!(alloc));
         }
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: deployment_id,
             name: "test".into(),
             description: Some("test".into()),

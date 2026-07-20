@@ -1,6 +1,5 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
 use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::model_deployment_service_builder;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
@@ -13,7 +12,8 @@ use actix_web::{
     Responder,
 };
 use serde_json::to_value;
-use shared::shared_kernal::identity::IdentityContext;
+use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::shared_kernel::identity::IdentityContext;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
 use shared::application::inputs::common::Scope as ScopeInput;
 
@@ -36,30 +36,11 @@ use shared::application::inputs::common::Scope as ScopeInput;
 )]
 #[post("deployments-api/platforms/{platform}/strategies/{strategy_name}")]
 async fn deploy_model_with_strategy(
-    data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
     identity_context: IdentityContext,
+    model_deployment_service: web::Data<ModelDeploymentService>,
 ) -> impl Responder {
-    let maybe_strategy = data.client_strategy_sets
-        .iter()
-        .find(|set| set.platform == path.platform.clone())
-        .map(|css| css.strategies())
-        .map(|strats| strats.iter().find(|strat| &strat.name == &path.strategy_name))
-        .map(|x| x.cloned())
-        .flatten();
-
-    let strategy = match maybe_strategy {
-        Some(s) => s,
-        None => return build_error_response(404, format!("No strategy found with name {} for platform {}", &path.platform, &path.strategy_name))
-    };
-
-    let service = model_deployment_service_builder(
-        &data.client,
-        data.db_name.clone(),
-        data.channel.clone(),
-    );
-
     let input = DeployWithStrategyInput {
         name: body.name.clone(),
         description: body.description.clone(),
@@ -67,11 +48,11 @@ async fn deploy_model_with_strategy(
         model_name: body.model_name.clone(),
         model_scope: ScopeInput::from(body.scope.clone()),
         platform: path.platform.clone(),
-        strategy_name: strategy.name,
+        strategy_name: path.strategy_name.clone(),
         params: body.params.clone(),
     };
 
-    let output = match service.deploy_model_with_strategy(input, &identity_context).await {
+    let output = match model_deployment_service.deploy_model_with_strategy(input, &identity_context).await {
         Ok(output) => output,
         Err(err) => return build_error_response(500, err.to_string()),
     };

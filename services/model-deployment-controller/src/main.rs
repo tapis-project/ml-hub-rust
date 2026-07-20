@@ -38,7 +38,7 @@ use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
 use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
-use model_deployment_controller::bootstrap::{build_deployment_strategy_provider, model_deployment_conroller_builder};
+use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
 use model_deployment_controller::database::{initialize_client, ClientParams};
 use log::{error, info, warn};
 
@@ -290,19 +290,15 @@ async fn main() -> () {
         })
         .expect("Datbase initialization error");
 
-    let deployment_strategy_provider = build_deployment_strategy_provider();
-
-    let client_strategy_sets = match deployment_strategy_provider {
-        Ok(p) => Arc::new(p.provide().clone()),
-        Err(err) => {
-            warn!("Error initializing deployment strategy provider: {}", err.to_string());
-            Arc::new(vec![])
+    let controller = match model_deployment_conroller_builder(&client, db_name, context.channel.clone()) {
+        Ok(c) => c,
+        Err(e) => {
+            error!("{}", e.to_string());
+            panic!("Failed to initialize ModelDeploymentController");
         }
     };
     
-    let consumer = ModelDeploymentControllerConsumer {
-        controller: model_deployment_conroller_builder(&client, db_name, context.channel.clone(), client_strategy_sets),
-    };
+    let consumer = ModelDeploymentControllerConsumer { controller };
      
     let args = BasicConsumeArguments::default()
         .queue(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into())

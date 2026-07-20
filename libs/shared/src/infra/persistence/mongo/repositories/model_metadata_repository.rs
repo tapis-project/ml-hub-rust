@@ -1,6 +1,6 @@
 use std::time::Duration;
 use crate::application::errors::ApplicationError;
-use crate::shared_kernal::identity::IdentityContext;
+use crate::shared_kernel::identity::IdentityContext;
 use crate::{application, domain};
 use crate::domain::entities;
 use bson::oid::ObjectId;

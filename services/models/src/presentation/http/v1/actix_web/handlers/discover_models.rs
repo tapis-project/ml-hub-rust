@@ -4,7 +4,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 };
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DiscoverModelsQueryParams};
 use actix_web::{post, web, Responder};
-use shared::shared_kernal::identity::IdentityContext;
+use shared::shared_kernel::identity::IdentityContext;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;

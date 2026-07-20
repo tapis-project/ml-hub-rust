@@ -1,4 +1,5 @@
 use crate::domain::entities::deployment_strategy as entities;
+use crate::shared_kernel::enums::DeploymentModality as DeploymentModalityEntity;
 use crate::infra::deployment::fs::dtos;
 
 impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strategy::ClientStrategy {
@@ -25,6 +26,7 @@ impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strateg
         let client_strat = entities::client_strategy::ClientStrategy::new(
             value.name,
             value.description,
+            DeploymentModalityEntity::from(value.deployment_modality),
             rule_sets,
             parameter_set,
             value.use_rule_sets,

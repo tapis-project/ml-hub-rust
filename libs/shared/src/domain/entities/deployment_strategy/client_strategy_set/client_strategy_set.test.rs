@@ -2,7 +2,7 @@
 mod client_strategy_set_test {
     use serde_json::Value;
 
-    use crate::domain::entities::deployment_strategy::{client_strategy::ClientStrategy, client_strategy_set::ClientStrategySet, parameter_set::{Parameter, ParameterSet, ParameterType}, rule_set::{Rule, RuleSet}};
+    use crate::{domain::entities::deployment_strategy::{client_strategy::ClientStrategy, client_strategy_set::ClientStrategySet, parameter_set::{Parameter, ParameterSet, ParameterType}, rule_set::{Rule, RuleSet}}, shared_kernel::enums::DeploymentModality};
 
     #[test]
     fn test_init() {
@@ -13,6 +13,7 @@ mod client_strategy_set_test {
                 ClientStrategy::new(
                     "foo".into(),
                     Some("Test Client Strategy".into()),
+                    DeploymentModality::Batch,
                     Some(vec![
                         RuleSet {
                             name: "foo".into(),
@@ -25,6 +26,7 @@ mod client_strategy_set_test {
                             ]
                         }
                     ]),
+
                     Some(ParameterSet {
                         name: "foo-params".into(),
                         parameters: vec![

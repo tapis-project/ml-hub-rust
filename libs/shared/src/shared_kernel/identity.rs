@@ -1,5 +1,5 @@
 use crate::domain::entities::principal::{Principal, Kind};
-use crate::shared_kernal::tenancy::GLOBAL_TENANT;
+use crate::shared_kernel::constants::GLOBAL_TENANT;
 
 pub const MLHUB_SERVICE_PRINCIPAL_ID: &'static str = "mlhub";
 
