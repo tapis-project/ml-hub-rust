@@ -1,0 +1,158 @@
+use client_provider::ClientProvider;
+use clients::ClientError;
+use patra_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
+use patra_model_etl::database::{initialize_client, ClientParams};
+use serde_json::Value;
+use shared::application::inputs::model_metadata::RegisterModelMetadataInput;
+use shared::shared_kernal::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
+use shared::shared_kernal::tenancy::GLOBAL_TENANT;
+use std::env;
+use std::fs::{read_dir, File};
+use std::io::{BufRead, BufReader};
+use std::path::Path;
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() {
+    // Database connection
+    let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
+    let client = initialize_client(ClientParams {
+        username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
+        password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
+        host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
+        port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
+        db: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
+        replica_set: Some(
+            env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set"),
+        ),
+    })
+    .await
+    .map_err(|err| {
+        panic!(
+            "Database initialization error: {}",
+            err.to_string().as_str()
+        );
+    })
+    .expect("Datbase initialization error");
+
+    let max_processable_entries = env::var("MAX_PROCESSABLE_ENTRIES")
+        .expect("MAX_PROCESSABLE_ENTRIES env var not set")
+        .parse::<i128>()
+        .expect("Failed to parse MAX_PROCESSABLE_ENTRIES into an i128");
+
+    let deployment_strategy_provider = build_deployment_strategy_provider();
+
+    let client_strategy_sets = match deployment_strategy_provider {
+        Ok(p) => Arc::new(p.provide().clone()),
+        Err(_) => {
+            // TODO Log the error
+            Arc::new(vec![])
+        }
+    };
+
+    let inbox_path = env::var("INBOX").expect("INBOX env var not set");
+
+    let inbox = Path::new(&inbox_path);
+    if !inbox.is_dir() {
+        panic!("Expected inbox path to be a directory")
+    }
+
+    // Get the paths of all the files to be processed
+    let mut file_paths = vec![];
+    match read_dir(inbox) {
+        Ok(entries) => {
+            for maybe_entry in entries {
+                match maybe_entry {
+                    Ok(entry) => file_paths.push(entry.path()),
+                    Err(err) => panic!("Error with dir entry: {}", err.to_string()),
+                }
+            }
+        }
+        Err(err) => panic!("Error reading dir: {}", err.to_string()),
+    };
+
+    let model_metadata_service =
+        model_metadata_service_factory(&client, db_name, client_strategy_sets)
+            .await
+            .expect("failed to initialize model metadata service");
+
+    // Fetch the patra model metadata conversion client from the client provider
+    let patra_client = ClientProvider::provide_model_metadata_conversion_client("patra")
+        .expect("PatraClient provided");
+
+    let mut entries_processed = 0;
+    for path in file_paths {
+        let file = match File::open(&path) {
+            Ok(f) => f,
+            Err(err) => {
+                eprintln!(
+                    "Error opening file at path '{}': {}",
+                    &path.to_string_lossy().to_string().as_str(),
+                    err.to_string()
+                );
+                continue;
+            }
+        };
+        let reader = BufReader::new(file);
+        for maybe_line in reader.lines() {
+            if entries_processed > max_processable_entries {
+                return;
+            }
+            entries_processed += 1;
+            match maybe_line {
+                Ok(line) => {
+                    if let Ok(patra_model) = serde_json::from_str::<Value>(line.as_str()) {
+                        let metadata = match patra_client.from_platform_metadata(
+                            patra_model,
+                            MLHUB_SERVICE_PRINCIPAL_ID.into(),
+                            GLOBAL_TENANT.into(),
+                        ) {
+                            Ok(m) => m,
+                            Err(err) => match err {
+                                ClientError::Unimplemented => {
+                                    eprintln!("Metadata client not implemented");
+                                    return;
+                                }
+                                _ => {
+                                    eprintln!("Error converting metadata: {}", err.to_string());
+                                    continue;
+                                }
+                            },
+                        };
+
+                        // TODO Converting back into an application layer input here is just wrong. This is
+                        // an indication that this whole thing needs refactorings
+                        let input = match RegisterModelMetadataInput::try_from(metadata) {
+                            Ok(i) => i,
+                            Err(err) => {
+                                eprintln!(
+                                    "Error saving metadata to the database: {}",
+                                    err.to_string()
+                                );
+                                continue;
+                            }
+                        };
+
+                        match model_metadata_service
+                            .register_model_metadata(input, &IdentityContext::system())
+                            .await
+                        {
+                            Ok(_) => (),
+                            Err(err) => {
+                                eprintln!(
+                                    "Error saving metadata to the database: {}",
+                                    err.to_string()
+                                );
+                                continue;
+                            }
+                        }
+                    };
+                }
+                Err(err) => {
+                    eprintln!("Error reading line: {}", err.to_string());
+                    continue;
+                }
+            }
+        }
+    }
+}

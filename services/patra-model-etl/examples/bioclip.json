@@ -1,0 +1,31 @@
+{
+  "id": 43,
+  "uuid": "8c517ed0-c9c0-4f57-bb9d-f066ab4ec34e",
+  "name": "BioCLIP 2 (via pybioclip)",
+  "version": "v2.0",
+  "short_description": "Biology foundation model for taxonomic classification and trait prediction.",
+  "full_description": "BioCLIP 2 is a large-scale vision-language foundation model for biological understanding. It is trained on the TreeOfLife-200M dataset, which contains 214 million images across 952k taxa. Unlike standard CLIP, it utilizes hierarchical contrastive learning to align image representations with the taxonomic tree of life, allowing it to generalize to unseen species and even predict ecological traits like habitat and life stage.",
+  "keywords": "biology, taxonomy, wildlife, organism detection, zero-shot, pybioclip, tree of life",
+  "author": "John Bradley / Imageomics Institute",
+  "input_data": "https://huggingface.co/datasets/imageomics/TreeOfLife-200M",
+  "output_data": "https://github.com/Imageomics/pybioclip",
+  "input_type": "images",
+  "categories": "classification",
+  "citation": "",
+  "foundational_model": "",
+  "training_datasheet_uuid": null,
+  "is_private": false,
+  "is_gated": false,
+  "ai_model": {
+    "model_id": 43,
+    "name": "BioCLIP 2",
+    "version": "BioCLIP 2.0",
+    "description": "The current SOTA model for zero-shot species classification, distilled and optimized for biological hierarchy.",
+    "owner": "Imageomics Institute / Ohio State University",
+    "location": "https://huggingface.co/imageomics/bioclip-2",
+    "license": "MIT License",
+    "framework": "PyTorch / OpenCLIP",
+    "model_type": "multimodal biological foundation model",
+    "test_accuracy": 0.88
+  }
+}

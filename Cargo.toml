@@ -10,6 +10,7 @@ members = [
     "services/artifact-publisher",
     "services/hf-model-etl",
     "services/models-migrator",
+    "services/patra-model-etl",
     "services/principals-migrator",
     "services/federated-identities-migrator",
     "services/model-deployment-controller",
