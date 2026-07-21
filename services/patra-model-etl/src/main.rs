@@ -4,8 +4,8 @@ use patra_model_etl::bootstrap::{build_deployment_strategy_provider, model_metad
 use patra_model_etl::database::{initialize_client, ClientParams};
 use serde_json::Value;
 use shared::application::inputs::model_metadata::RegisterModelMetadataInput;
-use shared::shared_kernal::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
-use shared::shared_kernal::tenancy::GLOBAL_TENANT;
+use shared::shared_kernel::constants::GLOBAL_TENANT;
+use shared::shared_kernel::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
 use std::env;
 use std::fs::{read_dir, File};
 use std::io::{BufRead, BufReader};
@@ -43,7 +43,7 @@ async fn main() {
     let deployment_strategy_provider = build_deployment_strategy_provider();
 
     let client_strategy_sets = match deployment_strategy_provider {
-        Ok(p) => Arc::new(p.provide().clone()),
+        Ok(p) => Arc::new(p.client_strategy_sets.clone()),
         Err(_) => {
             // TODO Log the error
             Arc::new(vec![])

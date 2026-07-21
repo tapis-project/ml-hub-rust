@@ -2,7 +2,6 @@
 //! with application-level concerns
 use mongodb::Client;
 use shared::application::errors::ApplicationError;
-use shared::application::ports::deployment::DeploymentStrategyProvider;
 use shared::application::ports::artifacts::ArtifactRepository;
 use shared::application::ports::model_metadata::ModelMetadataRepository;
 use shared::application::services::model_metadata_service::ModelMetadataService;
@@ -25,7 +24,7 @@ pub fn model_metadata_repo_factory(
     Arc::new(MongoModelMetadataRepository::new(client, db_name.clone()))
 }
 
-pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategyProvider>, ()> {
+pub fn build_deployment_strategy_provider() -> Result<Arc<DeploymentStrategyProviderFs>, ()> {
     let provider = DeploymentStrategyProviderFs::new();
     match provider {
         Ok(p) => Ok(Arc::new(p)),
