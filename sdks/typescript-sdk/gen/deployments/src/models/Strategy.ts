@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    DeploymentModality,
+    DeploymentModalityFromJSON,
+    DeploymentModalityFromJSONTyped,
+    DeploymentModalityToJSON,
     Parameter,
     ParameterFromJSON,
     ParameterFromJSONTyped,
@@ -30,6 +34,12 @@ import {
  * @interface Strategy
  */
 export interface Strategy {
+    /**
+     * 
+     * @type {DeploymentModality}
+     * @memberof Strategy
+     */
+    deployment_modality: DeploymentModality;
     /**
      * 
      * @type {string}
@@ -66,6 +76,7 @@ export function StrategyFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
+        'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
         'parameters': ((json['parameters'] as Array<any>).map(ParameterFromJSON)),
@@ -82,6 +93,7 @@ export function StrategyToJSON(value?: Strategy | null): any {
     }
     return {
         
+        'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
         'description': value.description,
         'name': value.name,
         'parameters': ((value.parameters as Array<any>).map(ParameterToJSON)),

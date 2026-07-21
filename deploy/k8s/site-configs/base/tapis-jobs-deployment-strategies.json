@@ -3,54 +3,19 @@
     "description": "A set of strategies for deploying models to cloud and HPC systems with Tapis",
     "strategies": [
         {
-            "name": "Stampede3",
-            "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
+            "name": "TACC-HPC",
+            "deployment_modality": "batch",
+            "description": "Deploys a model to an HPC system at TACC",
             "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
+                "FlexServCompatible",
+                "CanonicalHuggingfaceVisiblePublic"
             ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "Frontera",
-            "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "LoneStar6",
-            "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "Vista",
-            "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "BYO System",
-            "description": "Deploys a model to a user-owned system",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "UserSystem"
+            "use_parameter_set": "TACCHPC"
         }
     ],
     "rule_sets": [
         {
-            "name": "FlexServerDeployerCompatible",
+            "name": "FlexServCompatible",
             "rules": [
                 {
                     "field_path": [
@@ -71,7 +36,7 @@
             ]
         },
         {
-            "name": "VisiblePublic",
+            "name": "CanonicalHuggingfaceVisiblePublic",
             "rules": [
                 {
                     "field_path": [
@@ -94,22 +59,35 @@
     ],
     "parameter_sets": [
         {
-            "name": "TapisJobs",
+            "name": "TACCHPC",
             "parameters": [
                 {
-                    "name": "project allocation",
+                    "name": "HPC System",
+                    "type": "string",
+                    "description": "An HPC system at TACC",
+                    "required": true,
+                    "choices": [
+                        "Vista",
+                        "Stampede3",
+                        "Lonestar6",
+                        "Frontera",
+                        "Horizon"
+                    ]
+                },
+                {
+                    "name": "Slurm Project Allocation",
                     "type": "string",
                     "description": "The allocation to charge",
                     "required": false
                 },
                 {
-                    "name": "slurm reservation",
+                    "name": "Slurm Reservation",
                     "type": "string",
-                    "description": "The slurm reservation to",
+                    "description": "The slurm reservation to use",
                     "required": false
                 },
                 {
-                    "name": "backend",
+                    "name": "Inference Backend",
                     "type": "string",
                     "required": false,
                     "default": "transformers",
@@ -119,59 +97,11 @@
                     ]
                 },
                 {
-                    "name": "hf_token",
+                    "name": "HuggingFace Token",
                     "type": "string",
-                    "description": "Huggingface Token",
+                    "description": "The user's HuggingFace Token. Required to deploy models from private and gated HuggingFace repositories",
                     "secret": true,
                     "required": false
-                }
-            ]
-        },
-        {
-            "name": "UserSystem",
-            "parameters": [
-                {
-                    "name": "allocation",
-                    "type": "string",
-                    "description": "The allocation to charge",
-                    "required": false
-                },
-                {
-                    "name": "system_id",
-                    "type": "string",
-                    "description": "The ID of the Tapis System to which you want to deploy this model",
-                    "required": true
-                },
-                {
-                    "name": "backend",
-                    "type": "string",
-                    "required": false,
-                    "default": "transformers",
-                    "description": "The inference backend to use for the model deployment",
-                    "choices": [
-                        "transformers"
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "FlexServDeployer",
-            "parameters": [
-                {
-                    "name": "allocation",
-                    "type": "string",
-                    "description": "The allocation to charge",
-                    "required": false
-                },
-                {
-                    "name": "backend",
-                    "type": "string",
-                    "required": false,
-                    "description": "The inference backend to use for the model deployment",
-                    "default": "transformers",
-                    "choices": [
-                        "transformers"
-                    ]
                 }
             ]
         }

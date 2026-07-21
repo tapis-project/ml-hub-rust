@@ -9,6 +9,7 @@ src/apis/index.ts
 src/index.ts
 src/models/BadRequestResponse.ts
 src/models/DeployModelWithStrategyBody.ts
+src/models/DeploymentModality.ts
 src/models/DesiredState.ts
 src/models/GpuResource.ts
 src/models/ListDeploymentStrategiesResponse.ts
@@ -25,6 +26,7 @@ src/models/Platform.ts
 src/models/ReplicaGroup.ts
 src/models/ResourceRequirements.ts
 src/models/RestApi.ts
+src/models/Scope.ts
 src/models/ServerErrorResponse.ts
 src/models/State.ts
 src/models/Strategy.ts

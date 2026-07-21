@@ -13,12 +13,25 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    Scope,
+    ScopeFromJSON,
+    ScopeFromJSONTyped,
+    ScopeToJSON,
+} from './';
+
 /**
  * 
  * @export
  * @interface DeployModelWithStrategyBody
  */
 export interface DeployModelWithStrategyBody {
+    /**
+     * 
+     * @type {string}
+     * @memberof DeployModelWithStrategyBody
+     */
+    description?: string | null;
     /**
      * 
      * @type {string}
@@ -33,10 +46,22 @@ export interface DeployModelWithStrategyBody {
     model_name: string;
     /**
      * 
+     * @type {string}
+     * @memberof DeployModelWithStrategyBody
+     */
+    name: string;
+    /**
+     * 
      * @type {any}
      * @memberof DeployModelWithStrategyBody
      */
     params: any | null;
+    /**
+     * Selector for global vs tenant-scoped models
+     * @type {Scope}
+     * @memberof DeployModelWithStrategyBody
+     */
+    scope?: Scope | null;
 }
 
 export function DeployModelWithStrategyBodyFromJSON(json: any): DeployModelWithStrategyBody {
@@ -49,9 +74,12 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'model_author': json['model_author'],
         'model_name': json['model_name'],
+        'name': json['name'],
         'params': json['params'],
+        'scope': !exists(json, 'scope') ? undefined : ScopeFromJSON(json['scope']),
     };
 }
 
@@ -64,9 +92,12 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
     }
     return {
         
+        'description': value.description,
         'model_author': value.model_author,
         'model_name': value.model_name,
+        'name': value.name,
         'params': value.params,
+        'scope': ScopeToJSON(value.scope),
     };
 }
 

@@ -2,7 +2,6 @@ use serde_json::Value;
 use utoipa::ToSchema;
 use crate::presentation::http::v1::responses::deployment::strategy::Strategy;
 use crate::presentation::http::v1::responses::tasks::Task;
-use crate::presentation::http::v1::responses::deployment::client_strategy_set::ClientStrategySet;
 use crate::presentation::http::v1::responses::deployment::ModelDeployment;
 use crate::presentation::http::v1::responses::models::{
     ModelMetadata,

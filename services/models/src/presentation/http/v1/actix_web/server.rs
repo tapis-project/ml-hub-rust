@@ -18,7 +18,7 @@ use shared::presentation::http::v1::actix_web::middleware::{
 use std::env;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
-use log::{warn, error};
+use log::error;
 
 
 pub async fn run_server() -> std::io::Result<()> {

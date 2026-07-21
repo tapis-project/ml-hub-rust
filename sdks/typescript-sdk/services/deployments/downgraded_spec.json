@@ -223,41 +223,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "scope",
-            "in": "query",
-            "description": "Selector for global vs tenant-scoped models",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "tenant",
-                "global"
-              ]
-            }
-          },
-          {
-            "name": "model_name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "model_author",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "params",
-            "in": "path",
-            "required": true,
-            "schema": {}
           }
         ],
         "requestBody": {
@@ -399,19 +364,42 @@
       "DeployModelWithStrategyBody": {
         "type": "object",
         "required": [
+          "name",
           "model_name",
           "model_author",
           "params"
         ],
         "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "model_author": {
             "type": "string"
           },
           "model_name": {
             "type": "string"
           },
-          "params": {}
+          "name": {
+            "type": "string"
+          },
+          "params": {},
+          "scope": {
+            "description": "Selector for global vs tenant-scoped models",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Scope"
+              }
+            ]
+          }
         }
+      },
+      "DeploymentModality": {
+        "type": "string",
+        "enum": [
+          "Batch",
+          "Service"
+        ]
       },
       "DesiredState": {
         "type": "string",
@@ -475,6 +463,7 @@
         "type": "object",
         "required": [
           "id",
+          "name",
           "platform",
           "owner",
           "model",
@@ -505,6 +494,10 @@
             "type": "string",
             "nullable": true
           },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "desired_state": {
             "$ref": "#/components/schemas/DesiredState"
           },
@@ -532,6 +525,9 @@
           },
           "model": {
             "$ref": "#/components/schemas/ModelReference"
+          },
+          "name": {
+            "type": "string"
           },
           "owner": {
             "type": "string"
@@ -781,6 +777,13 @@
           "spec": {}
         }
       },
+      "Scope": {
+        "type": "string",
+        "enum": [
+          "tenant",
+          "global"
+        ]
+      },
       "ServerErrorResponse": {
         "type": "object",
         "required": [
@@ -825,9 +828,13 @@
         "required": [
           "name",
           "platform",
+          "deployment_modality",
           "parameters"
         ],
         "properties": {
+          "deployment_modality": {
+            "$ref": "#/components/schemas/DeploymentModality"
+          },
           "description": {
             "type": "string",
             "nullable": true

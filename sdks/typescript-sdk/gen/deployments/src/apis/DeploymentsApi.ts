@@ -38,10 +38,6 @@ import {
 export interface DeployModelWithStrategyRequest {
     platform: Platform;
     strategyName: string;
-    scope: DeployModelWithStrategyScopeEnum;
-    modelName: string;
-    modelAuthor: string;
-    params: any;
     deployModelWithStrategyBody: DeployModelWithStrategyBody;
 }
 
@@ -74,38 +70,18 @@ export class DeploymentsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('strategyName','Required parameter requestParameters.strategyName was null or undefined when calling deployModelWithStrategy.');
         }
 
-        if (requestParameters.scope === null || requestParameters.scope === undefined) {
-            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling deployModelWithStrategy.');
-        }
-
-        if (requestParameters.modelName === null || requestParameters.modelName === undefined) {
-            throw new runtime.RequiredError('modelName','Required parameter requestParameters.modelName was null or undefined when calling deployModelWithStrategy.');
-        }
-
-        if (requestParameters.modelAuthor === null || requestParameters.modelAuthor === undefined) {
-            throw new runtime.RequiredError('modelAuthor','Required parameter requestParameters.modelAuthor was null or undefined when calling deployModelWithStrategy.');
-        }
-
-        if (requestParameters.params === null || requestParameters.params === undefined) {
-            throw new runtime.RequiredError('params','Required parameter requestParameters.params was null or undefined when calling deployModelWithStrategy.');
-        }
-
         if (requestParameters.deployModelWithStrategyBody === null || requestParameters.deployModelWithStrategyBody === undefined) {
             throw new runtime.RequiredError('deployModelWithStrategyBody','Required parameter requestParameters.deployModelWithStrategyBody was null or undefined when calling deployModelWithStrategy.');
         }
 
         const queryParameters: any = {};
 
-        if (requestParameters.scope !== undefined) {
-            queryParameters['scope'] = requestParameters.scope;
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/deployments-api/platforms/{platform}/strategies/{strategy_name}`.replace(`{${"platform"}}`, encodeURIComponent(String(requestParameters.platform))).replace(`{${"strategy_name"}}`, encodeURIComponent(String(requestParameters.strategyName))).replace(`{${"model_name"}}`, encodeURIComponent(String(requestParameters.modelName))).replace(`{${"model_author"}}`, encodeURIComponent(String(requestParameters.modelAuthor))).replace(`{${"params"}}`, encodeURIComponent(String(requestParameters.params))),
+            path: `/deployments-api/platforms/{platform}/strategies/{strategy_name}`.replace(`{${"platform"}}`, encodeURIComponent(String(requestParameters.platform))).replace(`{${"strategy_name"}}`, encodeURIComponent(String(requestParameters.strategyName))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -213,13 +189,4 @@ export class DeploymentsApi extends runtime.BaseAPI {
         return await response.value();
     }
 
-}
-
-/**
-    * @export
-    * @enum {string}
-    */
-export enum DeployModelWithStrategyScopeEnum {
-    Tenant = 'tenant',
-    Global = 'global'
 }

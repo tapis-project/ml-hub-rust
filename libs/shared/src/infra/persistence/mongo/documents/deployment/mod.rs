@@ -95,6 +95,7 @@ impl From<DesiredState> for String {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum DeploymentModality {
     Batch,
     Service

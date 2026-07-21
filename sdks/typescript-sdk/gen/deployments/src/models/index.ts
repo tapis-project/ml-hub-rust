@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './BadRequestResponse';
 export * from './DeployModelWithStrategyBody';
+export * from './DeploymentModality';
 export * from './DesiredState';
 export * from './GpuResource';
 export * from './ListDeploymentStrategiesResponse';
@@ -18,6 +19,7 @@ export * from './Platform';
 export * from './ReplicaGroup';
 export * from './ResourceRequirements';
 export * from './RestApi';
+export * from './Scope';
 export * from './ServerErrorResponse';
 export * from './State';
 export * from './Strategy';

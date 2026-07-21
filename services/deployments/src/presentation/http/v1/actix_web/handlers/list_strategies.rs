@@ -1,7 +1,9 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
-use shared::{application::ports::deployment_strategy::DeploymentStrategyProvider, domain::entities::deployment_strategy::strategy::Strategy};
+use shared::{
+    application::services::deployment_strategy_service::DeploymentStrategyService,
+    domain::entities::deployment_strategy::strategy::Strategy
+};
 use crate::presentation::http::v1::responses;
-use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::contracts;
 use actix_web::{
     get,
@@ -23,9 +25,9 @@ use serde_json::{Value, to_value};
     )
 )]
 #[get("deployments-api/strategies")]
-async fn list_strategies(provider: web::Data<dyn DeploymentStrategyProvider>,) -> impl Responder {
+async fn list_strategies(service: web::Data<DeploymentStrategyService>) -> impl Responder {
     let mut strats: Vec<Strategy> = vec![];
-    for set in provider.list_all().await.iter() {
+    for set in service.list_all_strategies().await.iter() {
         strats.extend(set.strategies().clone())
     }
 

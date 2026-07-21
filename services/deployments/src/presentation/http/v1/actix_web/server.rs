@@ -2,6 +2,7 @@ use std::sync::Arc;
 use crate::presentation;
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::{build_deployment_strategy_provider, model_deployment_service_builder};
+use shared::application::services::deployment_strategy_service::DeploymentStrategyService;
 pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer, web, middleware::from_fn};
@@ -32,15 +33,6 @@ pub async fn run_server() -> std::io::Result<()> {
             .and_then(|port| port.parse::<u16>().ok())
             .unwrap_or(DEFAULT_PORT)
     );
-
-    let deployment_strategy_provider = build_deployment_strategy_provider()
-        .map_err(|err| {
-            error!("Failed to initialize DeploymentStrategyProvider: {}", err.to_string());
-            err
-        })
-        .expect("DeploymentStrategyProvider to be initialized");
-
-    let client_strategy_sets = Arc::new(deployment_strategy_provider.list_all().await.clone());
 
     let broker_host = std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
     let broker_port = std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
@@ -119,6 +111,19 @@ pub async fn run_server() -> std::io::Result<()> {
         .expect("ModelDeploymentService to be initialzed")
     );
 
+    // Deployment Strategy Provider
+    let deployment_strategy_provider = build_deployment_strategy_provider()
+    .map_err(|err| {
+        error!("Failed to initialize DeploymentStrategyProvider: {}", err.to_string());
+        err
+    })
+    .expect("DeploymentStrategyProvider to be initialized");
+
+    // Deployment Strategy Service
+    let deployment_strategy_service = Arc::new(DeploymentStrategyService::new(
+        deployment_strategy_provider
+    ));
+
     HttpServer::new(move || {
         App::new()
             .app_data(site_config.clone())
@@ -126,6 +131,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
             .app_data(web::Data::from(model_deployment_service.clone()))
+            .app_data(web::Data::from(deployment_strategy_service.clone()))
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(authenticate))
             .wrap(from_fn(resolve_tenancy))

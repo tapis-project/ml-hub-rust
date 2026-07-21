@@ -6,3 +6,4 @@ pub mod federated_idp_registrar;
 pub mod federated_identity_service;
 pub mod principal_service;
 pub mod tenancy_resolver;
+pub mod deployment_strategy_service;

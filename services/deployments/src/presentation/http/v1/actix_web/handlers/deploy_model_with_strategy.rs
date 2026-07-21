@@ -25,7 +25,6 @@ use shared::application::inputs::common::Scope as ScopeInput;
     request_body=DeployModelWithStrategyBody,
     params(
         DeployModelWithStrategyPathParams,
-        DeployModelWithStrategyBody,
     ),
     responses(
         (status=200, description="Model deployment", body=contracts::responses::ModelDeploymentResponse),

@@ -1,6 +1,7 @@
 use crate::domain::entities::deployment_strategy::strategy as entities;
 use crate::presentation::http::v1::responses::deployment:: parameter_set::Parameter;
 use crate::presentation::http::v1::responses::deployment::strategy as dtos;
+use crate::shared_kernel::enums::DeploymentModality;
 
 impl From<entities::Strategy> for dtos::Strategy {
     fn from(value: entities::Strategy) -> Self {
@@ -18,11 +19,16 @@ impl From<entities::Strategy> for dtos::Strategy {
             description: value.description.clone(),
             platform: value.platform.clone(),
             parameters,
-            // rule_sets: value.rule_sets()
-            //     .iter()
-            //     .map(|rs| RuleSet::from(rs.clone()))
-            //     .collect(),
-            
+            deployment_modality: dtos::DeploymentModality::from(value.deployment_modality),
+        }
+    }
+}
+
+impl From<DeploymentModality> for dtos::DeploymentModality {
+    fn from(value: DeploymentModality) -> Self {
+        match value {
+            DeploymentModality::Batch => dtos::DeploymentModality::Batch,
+            DeploymentModality::Service => dtos::DeploymentModality::Service,
         }
     }
 }

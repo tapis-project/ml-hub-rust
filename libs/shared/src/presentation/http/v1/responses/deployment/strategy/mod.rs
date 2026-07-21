@@ -11,6 +11,12 @@ pub struct Strategy {
     pub name: String,
     pub platform: Platform,
     pub description: Option<String>,
-    // pub rule_sets: Vec<RuleSet>,
+    pub deployment_modality: DeploymentModality,
     pub parameters: Vec<Parameter>,
+}
+
+#[derive(Clone, Debug, ToSchema, Serialize)]
+pub enum DeploymentModality {
+    Batch,
+    Service,
 }
