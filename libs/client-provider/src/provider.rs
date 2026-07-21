@@ -114,6 +114,7 @@ impl ClientProvider {
     pub fn provide_model_metadata_conversion_client(platform_name: &str) -> Result<ModelMetadataConversionClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(ModelMetadataConversionClient::HuggingFace(HuggingFaceClient::new())),
+            Platform::Patra => Ok(ModelMetadataConversionClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model metadata")))
         }
     }
