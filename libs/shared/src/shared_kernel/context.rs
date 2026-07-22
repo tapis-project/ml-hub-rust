@@ -1,27 +1,32 @@
+use uuid::Uuid;
+
 use crate::domain::entities::principal::{Principal, Kind};
 use crate::shared_kernel::constants::GLOBAL_TENANT;
 
 pub const MLHUB_SERVICE_PRINCIPAL_ID: &'static str = "mlhub";
 
 #[derive(Debug, Clone)]
-pub struct IdentityContext {
+pub struct RequestContext {
     actor: Actor,
-    token: String
+    token: String,
+    request_id: Uuid,
 }
 
-impl IdentityContext {
-    pub fn new(actor: Actor, token: String) -> Self {
+impl RequestContext {
+    pub fn new(actor: Actor, token: String, request_id: Option<Uuid>) -> Self {
         Self {
             actor,
-            token
+            token,
+            request_id: request_id.unwrap_or_else(|| Self::generate_request_id())
         }
     }
 
     // Creates a service account identity context
-    pub fn system() -> Self {
+    pub fn system(request_id: Option<Uuid>) -> Self {
         Self {
             actor: Actor::system(),
             token: "".into(),
+            request_id: request_id.unwrap_or_else(|| Self::generate_request_id())
         }
     }
 
@@ -39,6 +44,14 @@ impl IdentityContext {
 
     pub fn token(&self) -> &String {
         &self.token
+    }
+
+    pub fn request_id(&self) -> &String {
+        &self.token
+    }
+
+    fn generate_request_id() -> Uuid {
+        Uuid::now_v7()
     }
 }
 

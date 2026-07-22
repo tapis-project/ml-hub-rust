@@ -1,4 +1,4 @@
-use shared::shared_kernel::identity::IdentityContext;
+use shared::shared_kernel::context::RequestContext;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use validator::Validate;
 
@@ -31,7 +31,7 @@ use shared::presentation::http::v1::contracts::responses;
 #[post("models-api/models")]
 async fn create_model_metadata(
     body: web::Json<CreateModelMetadataBody>,
-    ctx: IdentityContext,
+    ctx: RequestContext,
     model_metadata_service: web::Data<ModelMetadataService>,
 ) -> impl Responder {
     let request_body = body.into_inner();

@@ -1,15 +1,14 @@
 use std::sync::Arc;
 
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
-use crate::shared_kernel::identity::IdentityContext;
+use crate::shared_kernel::context::RequestContext;
 use crate::shared_kernel::constants::GLOBAL_TENANT;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::domain::entities::model_metadata::{DeploymentStrategyReference, ModelMetadata};
 use crate::domain::services::deployment_strategy::resolve_viable_strategies;
 use retry_utils::{retry_async, RetryPolicy, FixedBackoff, Retry};
-use crate::application::errors::ApplicationError;
-use crate::application::ports::artifacts::ArtifactRepository;
-use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::ports::artifacts::{ArtifactRepository, ArtifactRepositoryError};
+use crate::application::ports::model_metadata::{ModelMetadataRepository, ModelMetadataRepositoryError};
 use crate::application::inputs::model_metadata::{
     AssociateModelMetadata,
     GetModelMetadataByAuthorAndNameInput,
@@ -34,7 +33,10 @@ use log::error;
 #[derive(Debug, Error)]
 pub enum ModelMetadataServiceError {
     #[error("Repository error: {0}")]
-    RepoError(#[from] ApplicationError),
+    ArtifactRepoError(#[from] ArtifactRepositoryError),
+
+    #[error("Repository error: {0}")]
+    ModelMetadataRepoError(#[from] ModelMetadataRepositoryError),
 
     #[error("Artifact not found: {0}")]
     ArtifactNotFound(String),
@@ -50,6 +52,9 @@ pub enum ModelMetadataServiceError {
 
     #[error("Failed to convert metadata: '{0}'")]
     OutputMetadataConversionError(String),
+
+    #[error("Internal Error: '{0}'")]
+    InternalError(String),
 }
 
 pub struct ModelMetadataService {
@@ -146,8 +151,9 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn register_model_metadata(&self, input: RegisterModelMetadataInput, ctx: &IdentityContext) -> Result<(), ModelMetadataServiceError> {
-        let metadata_entity = entities::model_metadata::ModelMetadata::try_from((input.clone(), ctx))?;
+    pub async fn register_model_metadata(&self, input: RegisterModelMetadataInput, ctx: &RequestContext) -> Result<(), ModelMetadataServiceError> {
+        let metadata_entity = entities::model_metadata::ModelMetadata::try_from((input.clone(), ctx))
+            .map_err(|e| ModelMetadataServiceError::InternalError(e.to_string()))?;
         
         let modified_metadata = self.annotate_with_deployment_strategies(&metadata_entity);
 
@@ -159,10 +165,10 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn discover_models(&self, input: SearchModelsInput, identity_context: &IdentityContext) -> Result<ModelMetadataListOutput, ModelMetadataServiceError> {
+    pub async fn discover_models(&self, input: SearchModelsInput, ctx: &RequestContext) -> Result<ModelMetadataListOutput, ModelMetadataServiceError> {
         // By default search in the user's tenant. Search the global tenant if
         // specified
-        let mut tenant_ids = vec![identity_context.actor_tenant_id().clone()];
+        let mut tenant_ids = vec![ctx.actor_tenant_id().clone()];
         if input.options.include_global_models().unwrap_or(false) {
             tenant_ids.push(String::from(GLOBAL_TENANT))
         }
@@ -170,8 +176,7 @@ impl ModelMetadataService {
         let search = || self.model_metadata_repo.search(&input, &tenant_ids);
 
         // Find model metadata by search criteria
-        let search_result = retry_async(search, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ModelMetadataServiceError::RepoError(err))?;
+        let search_result = retry_async(search, &Self::REPO_RETRY_POLICY, None).await?;
 
         let annotated_models: Vec<_> = search_result.models
             .iter()

@@ -75,10 +75,16 @@
                     ]
                 },
                 {
+                    "name": "Slurm Partition",
+                    "type": "string",
+                    "description": "Which Slurm partition to deploy to",
+                    "required": true
+                },
+                {
                     "name": "Slurm Project Allocation",
                     "type": "string",
                     "description": "The allocation to charge",
-                    "required": false
+                    "required": true
                 },
                 {
                     "name": "Slurm Reservation",
@@ -87,19 +93,16 @@
                     "required": false
                 },
                 {
-                    "name": "Inference Backend",
-                    "type": "string",
-                    "required": false,
-                    "default": "transformers",
-                    "description": "The inference backend to use for the model deployment",
-                    "choices": [
-                        "transformers"
-                    ]
-                },
-                {
                     "name": "HuggingFace Token",
                     "type": "string",
                     "description": "The user's HuggingFace Token. Required to deploy models from private and gated HuggingFace repositories",
+                    "secret": true,
+                    "required": false
+                },
+                {
+                    "name": "FlexServ Token",
+                    "type": "string",
+                    "description": "FlexServ requires will require this token to make inference calls. If one is not provided, FlexServ will generate one for you.",
                     "secret": true,
                     "required": false
                 }

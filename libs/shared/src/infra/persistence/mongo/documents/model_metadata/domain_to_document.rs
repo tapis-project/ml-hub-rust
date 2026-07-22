@@ -2,7 +2,7 @@ use crate::infra::persistence::mongo::documents::model_metadata;
 use crate::infra::persistence::mongo::documents::task as document_task;
 use crate::domain::entities::model_metadata as entities;
 use crate::errors::Error;
-use crate::shared_kernel::identity::IdentityContext;
+use crate::shared_kernel::context::RequestContext;
 
 impl TryFrom<entities::SystemRequirement> for model_metadata::SystemRequirement {
     type Error = Error;
@@ -101,10 +101,10 @@ impl From<entities::DeploymentStrategyReference> for model_metadata::DeploymentS
     }
 }
 
-impl TryFrom<(&entities::ModelMetadata, &IdentityContext)> for model_metadata::ModelMetadata {
+impl TryFrom<(&entities::ModelMetadata, &RequestContext)> for model_metadata::ModelMetadata {
     type Error = Error;
     
-    fn try_from(value: (&entities::ModelMetadata, &IdentityContext)) -> Result<Self, Self::Error> {
+    fn try_from(value: (&entities::ModelMetadata, &RequestContext)) -> Result<Self, Self::Error> {
 
         let mut task_types: Vec<document_task::Task> = Vec::new();
         for task_type in value.0.task_types.clone().unwrap_or(Vec::with_capacity(0)) {

@@ -11,7 +11,7 @@ use crate::presentation::http::v1::responses::ArtifactIngestion;
 use actix_web::{post, web, HttpRequest, Responder};
 use client_provider::ClientProvider;
 use serde_json::to_value;
-use shared::shared_kernel::identity::IdentityContext;
+use shared::shared_kernel::context::RequestContext;
 use shared::application::inputs::common::Scope;
 use shared::application::inputs::model_metadata::{GetModelMetadataByAuthorAndNameInput, UpdateModelMetadataArtifactId};
 use shared::presentation::http::v1::contracts;
@@ -41,7 +41,7 @@ async fn ingest_canonical_model(
     query: web::Query<HashMap<String, String>>,
     body: web::Json<IngestArtifactRequest>,
     data: web::Data<AppState>,
-    identity_context: IdentityContext,
+    identity_context: RequestContext,
 ) -> impl Responder {
     let model_metadata_service = match model_metadata_service_factory(
         &data.client,

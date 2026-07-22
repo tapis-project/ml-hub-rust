@@ -7,3 +7,4 @@ pub mod identity;
 pub mod principal;
 pub mod counts;
 pub mod deployment_strategy;
+pub mod errors;

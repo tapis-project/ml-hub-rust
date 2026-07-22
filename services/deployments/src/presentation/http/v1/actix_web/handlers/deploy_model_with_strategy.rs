@@ -1,5 +1,4 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
-use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
@@ -13,7 +12,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
-use shared::shared_kernel::identity::IdentityContext;
+use shared::shared_kernel::context::RequestContext;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
 use shared::application::inputs::common::Scope as ScopeInput;
 
@@ -37,7 +36,7 @@ use shared::application::inputs::common::Scope as ScopeInput;
 async fn deploy_model_with_strategy(
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    identity_context: IdentityContext,
+    ctx: RequestContext,
     model_deployment_service: web::Data<ModelDeploymentService>,
 ) -> impl Responder {
     let input = DeployWithStrategyInput {
@@ -51,7 +50,7 @@ async fn deploy_model_with_strategy(
         params: body.params.clone(),
     };
 
-    let output = match model_deployment_service.deploy_model_with_strategy(input, &identity_context).await {
+    let output = match model_deployment_service.deploy_model_with_strategy(input, &ctx).await {
         Ok(output) => output,
         Err(err) => return build_error_response(500, err.to_string()),
     };

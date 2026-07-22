@@ -15,7 +15,7 @@ use crate::presentation::http::v1::requests::{
     GetModelByAuthorAndNameQueryParams,
 };
 
-use shared::shared_kernel::identity::IdentityContext;
+use shared::shared_kernel::context::RequestContext;
 use shared::application::inputs::common::Scope as ScopeInput;
 use shared::application::inputs::model_metadata::GetModelMetadataByAuthorAndNameInput;
 use shared::presentation::http::v1::contracts::responses;
@@ -43,7 +43,7 @@ async fn get_model_by_author_and_name(
     path: web::Path<GetModelByAuthorAndNamePath>,
     params: web::Query<GetModelByAuthorAndNameQueryParams>,
     model_metadata_service: web::Data<ModelMetadataService>,
-    identity_context: IdentityContext,
+    identity_context: RequestContext,
 ) -> impl Responder {
     let input = GetModelMetadataByAuthorAndNameInput {
         author: path.author.clone(),

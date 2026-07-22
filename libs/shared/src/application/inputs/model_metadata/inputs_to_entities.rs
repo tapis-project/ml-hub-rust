@@ -3,7 +3,7 @@ use crate::domain::entities::task as domain_task;
 use crate::domain::entities::model_metadata as domain;
 
 use crate::application::errors::ApplicationError;
-use crate::shared_kernel::identity::IdentityContext;
+use crate::shared_kernel::context::RequestContext;
 
 impl TryFrom<inputs::SystemRequirement> for domain::SystemRequirement {
     type Error = ApplicationError;
@@ -94,10 +94,10 @@ impl TryFrom<inputs::Canonical> for domain::Canonical {
     }
 }
 
-impl TryFrom<(inputs::RegisterModelMetadataInput, &IdentityContext)> for domain::ModelMetadata {
+impl TryFrom<(inputs::RegisterModelMetadataInput, &RequestContext)> for domain::ModelMetadata {
     type Error = ApplicationError;
     
-    fn try_from(value: (inputs::RegisterModelMetadataInput, &IdentityContext)) -> Result<Self, Self::Error> {
+    fn try_from(value: (inputs::RegisterModelMetadataInput, &RequestContext)) -> Result<Self, Self::Error> {
         let mut task_types: Vec<domain_task::Task> = Vec::new();
         for task_type in value.0.task_types.unwrap_or(Vec::with_capacity(0)) {
             task_types.push(domain_task::Task::from(task_type))

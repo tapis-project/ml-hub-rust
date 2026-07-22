@@ -1,6 +1,7 @@
 use std::time::Duration;
-use crate::application::errors::ApplicationError;
-use crate::shared_kernel::identity::IdentityContext;
+use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::model_metadata::ModelMetadataRepositoryError;
+use crate::shared_kernel::context::RequestContext;
 use crate::{application, domain};
 use crate::domain::entities;
 use bson::oid::ObjectId;
@@ -44,11 +45,15 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
     async fn upsert(
         &self,
         metadata: &entities::model_metadata::ModelMetadata,
-        ctx: &IdentityContext,
-    ) -> Result<(), ApplicationError> {
+        ctx: &RequestContext,
+    ) -> Result<(), ModelMetadataRepositoryError> {
         let document = ModelMetadata::try_from((metadata, ctx))
-            .map_err(|err| ApplicationError::ConversionError(format!("Failed to convert from CreateModelInput to document::ModelMetadata: {}", err.to_string())))?;
-        
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                error
+            })?;
+
         let filter = doc! {  
             "name": &document.name,
             "author": &document.author,
@@ -57,34 +62,59 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         self.write_collection.replace_one(filter, &document)
             .upsert(true)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         Ok(())
     }
 
-    async fn find_by_author_and_name(&self, author: &String, name: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn find_by_author_and_name(&self, author: &String, name: &String, tenant_id: &String) -> Result<Option<entities::model_metadata::ModelMetadata>, ModelMetadataRepositoryError> {
         let result = self.read_collection
             .find_one(doc!{ "tenant_id": tenant_id, "author": author, "name": name })
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?
             .map(entities::model_metadata::ModelMetadata::try_from)
             .transpose()
-            .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         Ok(result)
     }
 
-    async fn find_all_by_author(&self, author: &String, tenant_id: &String) -> Result<Vec<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn find_all_by_author(&self, author: &String, tenant_id: &String) -> Result<Vec<entities::model_metadata::ModelMetadata>, ModelMetadataRepositoryError> {
         let filter = doc!{ "tenant_id": tenant_id, "author": author };
 
         let mut cursor = self.read_collection.find(filter)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
+
 
         let mut results: Vec<entities::model_metadata::ModelMetadata> = vec![];
-        while let Some(entry) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+        while let Some(entry) = cursor.try_next().await.map_err(|e| {
+            let error = CommonRepositoryError::new_internal();
+            log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+            error
+        })? {
             let entity = domain::entities::model_metadata::ModelMetadata::try_from(entry)
-                .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+                .map_err(|e| {
+                    let error = CommonRepositoryError::new_internal();
+                    log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
 
             results.push(entity);
         }
@@ -92,7 +122,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         Ok(results)
     }
 
-    async fn update_artifact_id(&self, input: &application::inputs::model_metadata::UpdateModelMetadataArtifactId) -> Result<(), ApplicationError> {
+    async fn update_artifact_id(&self, input: &application::inputs::model_metadata::UpdateModelMetadataArtifactId) -> Result<(), ModelMetadataRepositoryError> {
         let filter = doc! {
             "name": input.name.clone(),
             "author": input.author.clone(),
@@ -107,24 +137,47 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         self.write_collection
             .update_one(filter, document)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         Ok(())
     }
 
-    async fn find_by_artifact_id(&self, artifact_id: &uuid::Uuid) -> Result<Option<entities::model_metadata::ModelMetadata>, ApplicationError> {
+    async fn find_by_artifact_id(&self, artifact_id: &uuid::Uuid) -> Result<Option<entities::model_metadata::ModelMetadata>, ModelMetadataRepositoryError> {
         let filter = doc! {
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
 
         let mut cursor = self.read_collection.find(filter)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
-        let maybe_metadata = match cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))? {
+        let maybe_metadata = match cursor
+                .try_next()
+                .await
+                .map_err(|e|
+            {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?
+        {
             Some(m) => {
-                Some(domain::entities::model_metadata::ModelMetadata::try_from(m)
-                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?)
+                Some(
+                    domain::entities::model_metadata::ModelMetadata::try_from(m)
+                        .map_err(|e| {
+                            let error = CommonRepositoryError::new_internal();
+                            log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                            error
+                        })?
+                )
 
             },
             None => None
@@ -137,14 +190,22 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         &self,
         input: &application::inputs::discover_models::SearchModelsInput,
         tenant_ids: &Vec<String>
-    ) -> Result<application::ports::model_metadata::ModelSearchResult, ApplicationError> {
+    ) -> Result<application::ports::model_metadata::ModelSearchResult, ModelMetadataRepositoryError> {
         let mut filters: Vec<Bson> = Vec::new();
         for criterion in input.criteria.clone() {
             let filter = ModelMetadataFilter::try_from((&criterion, tenant_ids))
-                .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
+                .map_err(|e| {
+                    let error = CommonRepositoryError::new_internal();
+                    log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
 
             let serialized_filter = to_bson(&filter)
-                .map_err(|err| ApplicationError::ConversionError(format!("Failed to serialize ModelMetadata filter: {}", err.to_string())))?;
+                .map_err(|e| {
+                    let error = CommonRepositoryError::new_internal();
+                    log::error!("[{}] Serialization error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
 
             filters.push(serialized_filter);
         }
@@ -157,7 +218,11 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         // Find all documents after the cursor
         if let Some(pagination_cursor) = input.options.cursor() {
             let oid = ObjectId::parse_str(pagination_cursor)
-                .map_err(|err| ApplicationError::RepoError(format!("Invalid cursor value: {}", err.to_string())))?;
+                .map_err(|e| {
+                    let error = CommonRepositoryError::new_internal();
+                    log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
 
             match_document_value.extend(doc! { "_id": { "$gt": oid }});
         }
@@ -191,20 +256,36 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             .comment(String::from("Model Discovery Search"))
             .max_time(Duration::from_secs(2))
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = CommonRepositoryError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         let mut models: Vec<entities::model_metadata::ModelMetadata> = Vec::with_capacity(limit as usize);
         let mut pagination_cursor: Option<String> = None;
         let mut returned_model_count = 0;
-        while let Some(entry) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+        while let Some(entry) = cursor.try_next().await.map_err(|e| {
+            let error = CommonRepositoryError::new_internal();
+            log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+            error
+        })? {
             returned_model_count += 1;
             let doc: ModelMetadata = from_document(entry)
-                .map_err(|err| ApplicationError::RepoError(format!("Failed to convert Document to ModelMetadata: {}", err.to_string())))?;
+                .map_err(|e| {
+                    let error = CommonRepositoryError::new_internal();
+                    log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
             
             if returned_model_count <= limit {
                 pagination_cursor = doc._id.and_then(|oid| Some(oid.to_string()));
                 let model = entities::model_metadata::ModelMetadata::try_from(doc)
-                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+                    .map_err(|e| {
+                        let error = CommonRepositoryError::new_internal();
+                        log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                        error
+                    })?;
                 
                 models.push(model);
             }
@@ -222,7 +303,11 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
                 .estimated_document_count()
                 .max_time(Duration::from_millis(100))
                 .await
-                .map_err(|err| ApplicationError::RepoError(format!("Error fetching count: {}", err.to_string())))?;
+                .map_err(|e| {
+                    let error = CommonRepositoryError::new_internal();
+                    log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
             
             count = Some(returned_count as i64)
         }

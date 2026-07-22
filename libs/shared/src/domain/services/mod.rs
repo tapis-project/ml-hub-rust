@@ -64,7 +64,7 @@ impl ModelMetadataService {
 }
 
 #[derive(Debug, Error)]
-pub enum ModelDeploymentServiceError {
+pub enum ModelDeploymentDomainServiceError {
     #[error("Cannot create model deployment for model {0}/{1}. Artifact for the selected model must be fully ingested")]
     ArtifactIngestionRequired(String, String),
 
@@ -85,7 +85,7 @@ impl ModelDeploymentService {
         // artifact: &Artifact,
         props: DeployWithStrategyProps,
         strategy: &Strategy
-    ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+    ) -> Result<ModelDeployment, ModelDeploymentDomainServiceError> {
         // TODO Uncomment all lines below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // if model_metadata.artifact_id.is_none() {

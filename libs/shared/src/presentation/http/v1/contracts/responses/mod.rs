@@ -265,3 +265,13 @@ pub struct ServerErrorResponse {
     pub metadata: Value,
     pub version: String
 }
+
+#[derive(ToSchema)]
+pub struct ListModelDeploymentsResponse {
+    pub result: Vec<ModelDeployment>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}

@@ -8,7 +8,7 @@ use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata
 use shared::application::inputs::model_metadata::RegisterModelMetadataInput;
 use client_provider::ClientProvider;
 use clients::ClientError;
-use shared::shared_kernel::identity::{IdentityContext, MLHUB_SERVICE_PRINCIPAL_ID};
+use shared::shared_kernel::context::{RequestContext, MLHUB_SERVICE_PRINCIPAL_ID};
 use shared::shared_kernel::constants::GLOBAL_TENANT;
 use std::sync::Arc;
 use log::error;
@@ -117,14 +117,13 @@ async fn main() {
                         // TODO Converting back into an application layer input here is just wrong. This is
                         // an indication that this whole thing needs refactorings
                         let input = match RegisterModelMetadataInput::try_from(metadata) {
-                            Ok(i) => i,
-                            Err(e) => {
+                            Ok(i) => i,                            Err(e) => {
                                 eprintln!("Error saving metadata to the database: {}", e.to_string());
                                 continue
                             }
                         };
 
-                        match model_metadata_service.register_model_metadata(input, &IdentityContext::system()).await {
+                        match model_metadata_service.register_model_metadata(input, &RequestContext::system(None)).await {
                             Ok(_) => (),
                             Err(e) => {
                                 eprintln!("Error saving metadata to the database: {}", e.to_string());

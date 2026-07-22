@@ -4,7 +4,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 };
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DiscoverModelsQueryParams};
 use actix_web::{post, web, Responder};
-use shared::shared_kernel::identity::IdentityContext;
+use shared::shared_kernel::context::RequestContext;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
@@ -34,7 +34,7 @@ use serde_json::{to_value, Value, Map};
 async fn discover_models(
     body: web::Json<DiscoveryCriteria>,
     query: web::Query<DiscoverModelsQueryParams>,
-    identity_context: IdentityContext,
+    identity_context: RequestContext,
     model_metadata_service: web::Data<ModelMetadataService>,
 ) -> impl Responder {
     let discovery_criteria = match DiscoveryCriteria::try_from(body.into_inner()) {

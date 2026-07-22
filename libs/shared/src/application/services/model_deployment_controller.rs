@@ -80,7 +80,7 @@ impl DispatchReconcilerResult {
 }
 
 pub struct ModelDeploymentController {
-    deployment_strategy_provider: Arc<dyn  DeploymentStrategyProvider>,
+    deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
     model_deployment_service: ModelDeploymentService,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
     event_publisher: Arc<dyn EventPublisher>,

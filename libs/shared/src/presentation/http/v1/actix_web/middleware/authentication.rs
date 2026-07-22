@@ -10,7 +10,7 @@ use actix_web::{
 use serde_json::json;
 use log::{info, warn, error};
 
-use crate::shared_kernel::identity::{IdentityContext, Actor};
+use crate::shared_kernel::context::{RequestContext, Actor};
 use crate::application::inputs::principal::GetOrCreateFromFederatedIdentity;
 use crate::application::ports::identity::FederatedIdentityProviderError;
 use crate::application::services::federated_identity_service::FederatedIdentityService;
@@ -222,9 +222,10 @@ pub async fn authenticate(
             }
         };
 
-        let identity_conext = IdentityContext::new(
+        let identity_conext = RequestContext::new(
             Actor::from(principal),
-            "".into()
+            "".into(),
+            None
         );
 
         req.extensions_mut().insert(identity_conext);

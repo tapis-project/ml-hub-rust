@@ -1,18 +1,30 @@
 use std::sync::Arc;
+
+// Application layer
 use crate::application::inputs::deployment::{FilterInput, ReconcileModelDeploymentInput};
 use crate::application::workflows::reconciliation::{ReconciliationError, ReconciliationOutcome};
+
+// Domain layer
+use crate::application::ports::errors::CommonRepositoryError;
 use crate::domain::entities::deployment::ModelDeployment;
-use crate::application::errors::ApplicationError;
-use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
+
 use async_trait::async_trait;
 use platforms::Platform;
 use thiserror::Error;
 
+
+#[derive(Debug, Error)]
+pub enum ModelDeploymentRepositoryError {
+    #[error(transparent)]
+    Persistence(#[from] CommonRepositoryError),
+}
+
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
-    async fn save(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
-    async fn update(&self, deployment: &ModelDeployment) -> Result<(), ApplicationError>;
-    async fn find(&self, input: &FilterInput) -> Result<Option<ModelDeployment>, ApplicationError>;
+    async fn save(&self, deployment: &ModelDeployment) -> Result<(), ModelDeploymentRepositoryError>;
+    async fn update(&self, deployment: &ModelDeployment) -> Result<(), ModelDeploymentRepositoryError>;
+    async fn find(&self, input: &FilterInput) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+    async fn find_by_author(&self, author: &str) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
 }
 
 #[async_trait]

@@ -1,6 +1,5 @@
 use crate::application::ports::deployment_strategy::{DeploymentStrategyProvider, GetStrategyByPlatformAndNameInput};
-use crate::shared_kernel::identity::IdentityContext;
-use crate::application::errors::ApplicationError;
+use crate::shared_kernel::context::RequestContext;
 use crate::application::workflows::Workflow;
 use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
 use crate::application::services::tenancy_resolver::TenancyResolver;
@@ -9,8 +8,8 @@ use crate::application::outputs::deployment::{DeployModelWithStrategyOutput, Sta
 use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
-use crate::application::ports::deployment::ModelDeploymentRepository;
-use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::ports::deployment::{ModelDeploymentRepository, ModelDeploymentRepositoryError};
+use crate::application::ports::model_metadata::{ModelMetadataRepository, ModelMetadataRepositoryError};
 use retry_utils::{
     retry_async,
     ExponentialBackoff,
@@ -30,7 +29,7 @@ use crate::domain::entities::deployment::{
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
-    ModelDeploymentService as ModelDeploymentDomainService,
+    ModelDeploymentDomainServiceError, ModelDeploymentService as ModelDeploymentDomainService
 };
 use log::error;
 use once_cell::sync::Lazy;
@@ -51,14 +50,20 @@ pub enum ModelDeploymentServiceError {
     #[error("Desired state mismatch: Expected to find desired state `{0}` but found `{1}`")]
     DesiredStateMismatch(String, String),
 
-    #[error("Repository error: {0}")]
-    RepoError(#[from] ApplicationError),
+    #[error("Model Metadata repository error: {0}")]
+    ModelDMetadataRepoError(#[from] ModelMetadataRepositoryError),
+
+    #[error("Model Deployment repository error: {0}")]
+    ModelDeploymentRepoError(#[from] ModelDeploymentRepositoryError),
 
     #[error("Model Deployment not found: {0}")]
     DeploymentNotFound(String),
 
     #[error("Model deployment error: {0}")]
     ModelDeploymentError(#[from] ModelDeploymentError),
+
+    #[error("Model deployment domain error: {0}")]
+    ModelDeploymentDomainError(#[from] ModelDeploymentDomainServiceError),
 
     #[error("Invalid Strategy: {0}")]
     InvalidStrategy(String),
@@ -111,6 +116,17 @@ impl ModelDeploymentService {
         }
     }
 
+    pub async fn list_by_author(&self, input: ListModelDeploymentsByAuthorInput, ctx: &RequestContext) -> Result<Vec<ModelDeployment>, ModelDeploymentServiceError> {
+        let find_deployments = || self.model_deployment_repo.find_by_author(
+            &input.author
+        );
+
+        let deployments = retry_async(find_deployments, &Self::REPO_RETRY_POLICY, None)
+            .await?;
+
+        Ok(deployments)
+    }
+
     /// Fetches a model deployment only if its current `revision`, `state`, and
     /// `desired_state` match the expected values provided in `input`.
     ///
@@ -126,7 +142,8 @@ impl ModelDeploymentService {
         let find_model_deployment = || self.model_deployment_repo.find(&filter);
 
         // Fetch the deployment
-        let maybe_model_deployment = retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY, None).await?;
+        let maybe_model_deployment = retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY, None)
+            .await?;
 
         let deployment = match maybe_model_deployment {
             Some(d) => d,
@@ -151,7 +168,7 @@ impl ModelDeploymentService {
     pub async fn deploy_model_with_strategy(
         &self,
         input: DeployWithStrategyInput,
-        identity_context: &IdentityContext,
+        identity_context: &RequestContext,
     ) -> Result<DeployModelWithStrategyOutput, ModelDeploymentServiceError> {
         // Find the strategy by platform and name
         let maybe_strategy = self.deployment_strategy_provider
@@ -179,7 +196,8 @@ impl ModelDeploymentService {
         );
 
         // Fetch the metadata for the model of this deployment
-        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None).await?;
+        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None)
+            .await?;
         
         let model_metadata = match maybe_model_metadata {
             Some(mm) => mm,
@@ -233,11 +251,11 @@ impl ModelDeploymentService {
             &model_metadata,
             props,
             &strategy
-        )
-            .map_err(|err| ApplicationError::ModelDeploymentFailed(err.to_string()))?;
+        )?;
 
         // Save the deployment
-        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY, None).await?;
+        retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY, None)
+            .await?;
 
         // Build state drift event payload
         let payload = ModelDeploymentStateDriftDetectedPayload {
@@ -257,8 +275,8 @@ impl ModelDeploymentService {
         // Publish the state drift event
         match retry_async(publish_state_drift_event, &Self::EVENT_PUBLISHER_RETRY_POLICY, None).await {
             Ok(_) => (),
-            Err(err) => {
-                error!("Failed to publish state drift event for deployment {}: {}", &deployment.id, err.to_string());
+            Err(e) => {
+                error!("Failed to publish state drift event for deployment {}: {}", &deployment.id, e.to_string());
             }
         };
 
@@ -307,10 +325,15 @@ impl ModelDeploymentService {
         Ok(UndeployModelDeploymentOutput { deployment: modified_deployment })
     }
 
-    pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ApplicationError> {
+    pub async fn update(&self, input: UpdateModelDeploymentInput) -> Result<(), ModelDeploymentServiceError> {
         // Update the deployment
-        retry_async(|| self.model_deployment_repo.update(&input.deployment), &Self::REPO_RETRY_POLICY, None).await?;
+        retry_async(|| self.model_deployment_repo.update(&input.deployment), &Self::REPO_RETRY_POLICY, None)
+            .await?;
 
         Ok(())
     }
+}
+
+pub struct ListModelDeploymentsByAuthorInput {
+    pub author: String
 }

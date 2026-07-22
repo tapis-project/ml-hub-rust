@@ -3,14 +3,13 @@ use std::sync::Arc;
 use std::future::Future;
 use std::pin::Pin;
 use retry_utils::{retry_async, RetryPolicy, ExponentialBackoff, FixedBackoff, Retry, Jitter};
-use crate::application::errors::ApplicationError;
 use crate::application::inputs::artifacts::{DownloadArtifactInput, GetModelArtifactInput, IngestArtifactInput, ListIngestionsByArtifactIdInput, ListPublicationsByArtifactIdInput, UploadArtifactInput};
 use crate::application::inputs::artifact_publication::{GetModelPublicationInput, ListModelPublicationsInput, PublishArtifactInput};
 use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, ListModelIngestionsInput};
 use crate::application::outputs::artifacts::ModelArtifactOutput;
 use crate::application::ports::commands::{Command, CommandPublisher, CommandPublisherError, IngestArtifactCommandPayload, PublishArtifactCommandPayload};
-use crate::application::ports::artifacts::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository};
-use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::ports::artifacts::{ArtifactIngestionRepository, ArtifactIngestionRepositoryError, ArtifactPublicationRepository, ArtifactPublicationRepositoryError, ArtifactRepository, ArtifactRepositoryError};
+use crate::application::ports::model_metadata::{ModelMetadataRepository, ModelMetadataRepositoryError};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionStatus};
 use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError};
@@ -32,8 +31,17 @@ pub enum ArtifactServiceError {
     #[error("Message broker error: {0}")]
     PubisherError(#[from] CommandPublisherError),
 
-    #[error("Repository error: {0}")]
-    RepoError(#[from] ApplicationError),
+    #[error("Artifact repository error: {0}")]
+    ModelMetadataRepoError(#[from] ModelMetadataRepositoryError),
+
+    #[error("Artifact repository error: {0}")]
+    ArtifactRepoError(#[from] ArtifactRepositoryError),
+
+    #[error("Artifact Ingestion repository error: {0}")]
+    ArtifactIngestionRepoError(#[from] ArtifactIngestionRepositoryError),
+
+    #[error("Artifact Publication repository error: {0}")]
+    ArtifactPublicationRepoError(#[from] ArtifactPublicationRepositoryError),
 
     #[error("Artifact ingestion error: {0}")]
     ArtifactIngestionError(#[from] ArtifactIngestionError),
@@ -119,8 +127,7 @@ impl ArtifactService {
         let find_artifact = || self.artifact_repo.get_by_id(&input.artifact_id);
         
         // Find the artifact with retries
-        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None).await?;
 
         // Check that the artifact exists
         let artifact = match maybe_artifact {
@@ -144,8 +151,7 @@ impl ArtifactService {
         let save_publication = || self.publication_repo.save(&publication);
 
         // Save publication with retries. Propagate error
-        retry_async(save_publication, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(save_publication, &Self::REPO_RETRY_POLICY, None).await?;
 
         
         let payload = PublishArtifactCommandPayload {
@@ -174,8 +180,7 @@ impl ArtifactService {
             let update_ingestion = || 
                 self.publication_repo.update_status(&publication);
             
-            let _ = retry_async(update_ingestion, &Self::REPO_RETRY_POLICY, None).await
-                .map_err(|err| ArtifactServiceError::RepoError(err))?;
+            let _ = retry_async(update_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
             
             return Err(err)
         };
@@ -188,8 +193,7 @@ impl ArtifactService {
         let find_metadata = || self.metadata_repo.find_by_artifact_id(&artifact_id);
 
         // Find the metadata with retries
-        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None).await?;
 
         
         // Check that the artifact exists
@@ -211,8 +215,7 @@ impl ArtifactService {
         let find_publication = || self.publication_repo.find_by_id(publication_id);
 
         // Find the publication
-        let maybe_publication = retry_async(find_publication, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_publication = retry_async(find_publication, &Self::REPO_RETRY_POLICY, None).await?;
 
         let mut publication = match maybe_publication {
             Some(i) => i,
@@ -231,8 +234,7 @@ impl ArtifactService {
 
         let update_publication = || self.publication_repo.update_status(&publication);
 
-        retry_async(update_publication, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(update_publication, &Self::REPO_RETRY_POLICY, None).await?;
 
         Ok(())
     }
@@ -240,8 +242,7 @@ impl ArtifactService {
     pub async fn find_publication_by_publication_id(&self, publication_id: Uuid) -> Result<Option<ArtifactPublication>, ArtifactServiceError> {
         let find_publication = || self.publication_repo.find_by_id(publication_id);
 
-        let maybe_publication = retry_async(find_publication, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_publication = retry_async(find_publication, &Self::REPO_RETRY_POLICY, None).await?;
 
         return Ok(maybe_publication)
     }
@@ -253,8 +254,7 @@ impl ArtifactService {
         let save_artifact = || self.artifact_repo.save(&artifact);
         
         // Persist the new Artifact to the database
-        retry_async(save_artifact, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(save_artifact, &Self::REPO_RETRY_POLICY, None).await?;
         
         let mut ingestion = ArtifactIngestion::new(
             artifact.id.clone(),
@@ -268,8 +268,7 @@ impl ArtifactService {
 
         // Persist the new ArtifactIngestion to the database
         // TODO need to attempt to clean up the Artifact that was just persisted if ingestion fails
-        let _ = retry_async(save_ingestion, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err));
+        let _ = retry_async(save_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
 
         // Closure for submitting the artifact ingestion request
         let payload = IngestArtifactCommandPayload {
@@ -298,8 +297,7 @@ impl ArtifactService {
             let update_ingestion = || 
                 self.ingestion_repo.update_status(&ingestion);
             
-            let _ = retry_async(update_ingestion, &Self::REPO_RETRY_POLICY, None).await
-                .map_err(|err| ArtifactServiceError::RepoError(err))?;
+            let _ = retry_async(update_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
             
             return Err(err)
         };
@@ -312,8 +310,7 @@ impl ArtifactService {
         let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
 
         // Find the ingestion
-        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
 
         let ingestion = match maybe_ingestion {
             Some(i) => i,
@@ -324,8 +321,7 @@ impl ArtifactService {
         let find_artifact = || self.artifact_repo.get_by_id(&ingestion.artifact_id);
         
         // Find the artifact
-        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None).await?;
 
         let artifact = match maybe_artifact {
             Some(a) => a,
@@ -347,8 +343,7 @@ impl ArtifactService {
         let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
 
         // Find the ingestion
-        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
 
         let mut ingestion = match maybe_ingestion {
             Some(i) => i,
@@ -367,8 +362,7 @@ impl ArtifactService {
 
         let update_ingestion = || self.ingestion_repo.update_status(&ingestion);
 
-        retry_async(update_ingestion, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(update_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
 
         Ok(())
     }
@@ -376,8 +370,7 @@ impl ArtifactService {
     pub async fn find_ingestion_by_ingestion_id(&self, ingestion_id: Uuid) -> Result<Option<ArtifactIngestion>, ArtifactServiceError> {
         let find_ingestion = || self.ingestion_repo.find_by_id(ingestion_id);
 
-        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_ingestion = retry_async(find_ingestion, &Self::REPO_RETRY_POLICY, None).await?;
 
         return Ok(maybe_ingestion)
     }
@@ -396,8 +389,7 @@ impl ArtifactService {
         let update = || self.ingestion_repo.update(ingestion);
 
         // Update the ingestions
-        retry_async(update, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(update, &Self::REPO_RETRY_POLICY, None).await?;
 
         DomainArtifactService::finish_artifact_ingestion(artifact, ingestion)?;  
 
@@ -405,8 +397,7 @@ impl ArtifactService {
         let update = || self.artifact_repo.update(artifact);
 
         // Update the artifact
-        retry_async(update, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(update, &Self::REPO_RETRY_POLICY, None).await?;
 
         Ok(())
     }
@@ -428,8 +419,7 @@ impl ArtifactService {
         let save_artifact = || self.artifact_repo.save(&artifact);
 
         // Persist the new Artifact to the database
-        retry_async(save_artifact, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(save_artifact, &Self::REPO_RETRY_POLICY, None).await?;
 
         let environment = Env::new().expect("Env could not be initialized");
 
@@ -455,8 +445,7 @@ impl ArtifactService {
         let update_artifact_path = || self.artifact_repo.update_path(&artifact);
 
         // Persist the new Artifact to the database
-        retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        retry_async(update_artifact_path, &Self::REPO_RETRY_POLICY, None).await?;
         
         Ok((artifact.id.to_string(), stacker))
     }
@@ -466,8 +455,7 @@ impl ArtifactService {
         let find_artifact = || self.artifact_repo.get_by_id(&artifact_id);
 
         // Find the artifact
-        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ArtifactServiceError::RepoError(err))?;
+        let maybe_artifact = retry_async(find_artifact, &Self::REPO_RETRY_POLICY, None).await?;
 
         let artifact = match maybe_artifact {
             Some(a) => a,

@@ -18,14 +18,10 @@ use shared::infra::persistence::mongo::repositories::{
 use shared::infra::reconciliation::client_provider::ReconciliationClientProvider;
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;
 use shared::application::services::model_deployment_controller::ModelDeploymentController;
+use shared::shared_kernel::errors::BootstrapError;
 use std::sync::Arc;
-use thiserror::Error;
 
-#[derive(Debug, Error)]
-pub enum BootstrapError {
-    #[error("Failed to initialize '{0}': {1}")]
-    FailedToInitialize(String, String)
-}
+
 
 pub fn model_metadata_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelMetadataRepository> {
     Arc::new(MongoModelMetadataRepository::new(client, db_name))
