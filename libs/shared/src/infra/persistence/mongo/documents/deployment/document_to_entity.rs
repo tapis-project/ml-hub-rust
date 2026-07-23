@@ -88,10 +88,11 @@ impl From<documents::DeploymentModality> for DeploymentModality {
 impl From<documents::ParallelismStrategy> for entities::ParallelismStrategy {
     fn from(value: documents::ParallelismStrategy) -> Self {
         match value {
-            documents::ParallelismStrategy::DataSharding => entities::ParallelismStrategy::DataSharding,
-            documents::ParallelismStrategy::ModelSharding => entities::ParallelismStrategy::ModelSharding,
-            documents::ParallelismStrategy::TensorSharding => entities::ParallelismStrategy::TensorSharding,
-            documents::ParallelismStrategy::PipelineSharding => entities::ParallelismStrategy::PipelineSharding,
+            documents::ParallelismStrategy::PipelineParallelism => entities::ParallelismStrategy::PipelineParallelism,
+            documents::ParallelismStrategy::TensorParallelism => entities::ParallelismStrategy::TensorParallelism,
+            documents::ParallelismStrategy::SequenceParallelism => entities::ParallelismStrategy::SequenceParallelism,
+            documents::ParallelismStrategy::ContextParallelism => entities::ParallelismStrategy::ContextParallelism,
+            documents::ParallelismStrategy::ExpertParallelism => entities::ParallelismStrategy::ExpertParallelism,
         }
     }
 }

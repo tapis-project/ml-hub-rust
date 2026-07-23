@@ -246,10 +246,11 @@ pub struct GpuResource {
 
 #[derive(Clone, Debug)]
 pub enum ParallelismStrategy {
-    DataSharding,
-    ModelSharding,
-    PipelineSharding,
-    TensorSharding,
+    PipelineParallelism,
+    TensorParallelism,
+    SequenceParallelism,
+    ContextParallelism,
+    ExpertParallelism,
 }
 
 #[derive(Clone, Debug)]

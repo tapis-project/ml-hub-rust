@@ -51,9 +51,10 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         Ok(())
     }
 
-    async fn find_by_author(&self, author: &str) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+    async fn find_by_owner(&self, tenant_id: &str, owner: &str) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
         let filter = doc! {
-            "author": author
+            "tenant_id": tenant_id,
+            "owner": owner,
         };
 
         let mut results: Vec<entities::deployment::ModelDeployment> = vec![];

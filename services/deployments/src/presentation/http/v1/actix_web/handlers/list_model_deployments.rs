@@ -1,5 +1,5 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
-use shared::application::services::model_deployment_service::ListModelDeploymentsByAuthorInput;
+use shared::application::services::model_deployment_service::ListModelDeploymentsByOwnerInput;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::shared_kernel::context::RequestContext;
 use crate::presentation::http::v1::responses;
@@ -28,8 +28,8 @@ async fn list_model_deployments(
     service: web::Data<ModelDeploymentService>,
     ctx: RequestContext,
 ) -> impl Responder {
-    let maybe_deployments = service.list_by_author(
-        ListModelDeploymentsByAuthorInput { author: ctx.actor_principal_id().clone() }, 
+    let maybe_deployments = service.list_by_owner(
+        ListModelDeploymentsByOwnerInput { owner: ctx.actor_principal_id().clone() }, 
         &ctx
     ).await;
 

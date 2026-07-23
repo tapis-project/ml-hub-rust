@@ -4,8 +4,9 @@ use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::{build_deployment_strategy_provider, model_deployment_service_builder};
 use shared::application::services::deployment_strategy_service::DeploymentStrategyService;
 pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
+use shared::presentation::http::v1::actix_web::middleware::preflight::preflight_short_circuit;
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
-use actix_web::{App, HttpServer, web, middleware::from_fn};
+use actix_web::{App, HttpServer, web, middleware::{from_fn, Logger}};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
 use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
@@ -133,8 +134,14 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(web::Data::from(model_deployment_service.clone()))
             .app_data(web::Data::from(deployment_strategy_service.clone()))
             .app_data(web::Data::new(state.clone()))
+
+            // Globally-scoped middlewares
+            .wrap(from_fn(preflight_short_circuit))
+            .wrap(Logger::default())
+
             .wrap(from_fn(authenticate))
             .wrap(from_fn(resolve_tenancy))
+            
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::list_strategies::list_strategies)
             .service(presentation::http::v1::actix_web::handlers::deploy_model_with_strategy::deploy_model_with_strategy)

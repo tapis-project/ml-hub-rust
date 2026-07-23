@@ -116,9 +116,10 @@ impl ModelDeploymentService {
         }
     }
 
-    pub async fn list_by_author(&self, input: ListModelDeploymentsByAuthorInput, ctx: &RequestContext) -> Result<Vec<ModelDeployment>, ModelDeploymentServiceError> {
-        let find_deployments = || self.model_deployment_repo.find_by_author(
-            &input.author
+    pub async fn list_by_owner(&self, input: ListModelDeploymentsByOwnerInput, ctx: &RequestContext) -> Result<Vec<ModelDeployment>, ModelDeploymentServiceError> {
+        let find_deployments = || self.model_deployment_repo.find_by_owner(
+            &ctx.actor_tenant_id(),
+            &input.owner
         );
 
         let deployments = retry_async(find_deployments, &Self::REPO_RETRY_POLICY, None)
@@ -334,6 +335,6 @@ impl ModelDeploymentService {
     }
 }
 
-pub struct ListModelDeploymentsByAuthorInput {
-    pub author: String
+pub struct ListModelDeploymentsByOwnerInput {
+    pub owner: String
 }

@@ -37,10 +37,11 @@ impl From<entities::ModelReference> for responses::ModelReference {
 impl From<&entities::ParallelismStrategy> for responses::ParallelismStrategy {
     fn from(value: &entities::ParallelismStrategy) -> Self {
         match value {
-            entities::ParallelismStrategy::DataSharding => responses::ParallelismStrategy::DataSharding,
-            entities::ParallelismStrategy::ModelSharding => responses::ParallelismStrategy::ModelSharding,
-            entities::ParallelismStrategy::PipelineSharding => responses::ParallelismStrategy::PipelineSharding,
-            entities::ParallelismStrategy::TensorSharding => responses::ParallelismStrategy::TensorSharding,
+            entities::ParallelismStrategy::PipelineParallelism => responses::ParallelismStrategy::PipelineParallelism,
+            entities::ParallelismStrategy::TensorParallelism => responses::ParallelismStrategy::TensorParallelism,
+            entities::ParallelismStrategy::SequenceParallelism => responses::ParallelismStrategy::SequenceParallelism,
+            entities::ParallelismStrategy::ContextParallelism => responses::ParallelismStrategy::ContextParallelism,
+            entities::ParallelismStrategy::ExpertParallelism => responses::ParallelismStrategy::ExpertParallelism,
         }
     }
 }
