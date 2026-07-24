@@ -103,6 +103,8 @@ impl ClientStrategySet {
                     client_strat.deployment_modality().clone(),
                     strategy_rule_sets,
                     parameter_set,
+                    client_strat.config().clone(),
+                    client_strat.enabled(),
                 )?
             );
         }

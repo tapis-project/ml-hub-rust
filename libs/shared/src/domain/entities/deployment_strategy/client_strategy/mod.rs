@@ -3,6 +3,7 @@ use crate::shared_kernel::enums::DeploymentModality;
 
 use super::rule_set::RuleSet;
 use super::parameter_set::ParameterSet;
+use super::strategy::StrategyConfig;
 
 #[derive(Error, Debug)]
 pub enum ClientStrategyError {
@@ -19,6 +20,8 @@ pub struct ClientStrategy {
     parameter_set: Option<ParameterSet>,
     use_rule_sets: Option<Vec<String>>,
     use_parameter_set: Option<String>,
+    config: Option<StrategyConfig>,
+    enabled: bool,
 }
 
 impl ClientStrategy {
@@ -30,6 +33,8 @@ impl ClientStrategy {
         parameter_set: Option<ParameterSet>,
         use_rule_sets: Option<Vec<String>>,
         use_parameter_set: Option<String>,
+        config: Option<StrategyConfig>,
+        enabled: bool,
     ) -> Result<Self, ClientStrategyError> {
         // Must be at least 1 rule set or reference to a client rule set
         if rule_sets.is_none() && use_rule_sets.is_none() {
@@ -56,6 +61,8 @@ impl ClientStrategy {
             parameter_set,
             use_rule_sets,
             use_parameter_set,
+            config,
+            enabled,
         })
     }
 
@@ -77,6 +84,14 @@ impl ClientStrategy {
 
     pub fn deployment_modality(&self) -> &DeploymentModality {
         &self.deployment_modality
+    }
+
+    pub fn config(&self) -> &Option<StrategyConfig> {
+        &self.config
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
     }
 }
 

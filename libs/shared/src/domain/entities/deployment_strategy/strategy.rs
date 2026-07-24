@@ -1,4 +1,8 @@
+use std::num::{NonZero, NonZeroU64};
+
+use crate::domain::entities::deployment::ParallelismStrategy;
 use crate::shared_kernel::enums::DeploymentModality;
+use crate::shared_kernel::value_objects::Ttl;
 
 use super::rule_set::RuleSet;
 use super::parameter_set::ParameterSet;
@@ -22,6 +26,8 @@ pub struct Strategy {
     pub deployment_modality: DeploymentModality,
     rule_sets: Vec<RuleSet>,
     parameter_set: Option<ParameterSet>,
+    config: StrategyConfig,
+    enabled: bool,
 }
 
 impl Strategy {
@@ -32,6 +38,8 @@ impl Strategy {
         deployment_modality: DeploymentModality,
         rule_sets: Vec<RuleSet>,
         parameter_set: Option<ParameterSet>,
+        config: Option<StrategyConfig>,
+        enabled: bool
     ) -> Result<Self, StrategyError> {
         let mut rule_set_names: Vec<String> = Vec::new();
         for rule_set in &rule_sets {
@@ -49,7 +57,9 @@ impl Strategy {
             deployment_modality,
             description,
             rule_sets,
-            parameter_set
+            parameter_set,
+            config: config.unwrap_or_default(),
+            enabled,
         })
     }
 
@@ -59,6 +69,32 @@ impl Strategy {
 
     pub fn parameter_set(&self) -> &Option<ParameterSet> {
         &self.parameter_set
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct StrategyConfig {
+    /// Lifetime management
+    pub max_ttl: Option<Ttl>,
+
+    /// Replication and parallelism
+    pub supported_paralellism_strategies: Option<Vec<ParallelismStrategy>>,
+    pub min_replicas: Option<NonZero<u64>>,
+    pub max_replicas: Option<NonZero<u64>>,
+}
+
+impl Default for StrategyConfig {
+    fn default() -> Self {
+        // Use constant block to evaluate at runtime. Unwraps at COMPILE time rather
+        // than runtime
+        let min_replicas = Some(const { NonZeroU64::new(1).unwrap() });
+    
+        Self {
+            max_ttl: None,
+            supported_paralellism_strategies: None,
+            min_replicas,
+            max_replicas: None,
+        }
     }
 }
 

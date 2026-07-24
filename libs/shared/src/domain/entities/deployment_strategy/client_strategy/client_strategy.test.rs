@@ -38,6 +38,8 @@ mod client_strategy_test {
             }),
             None,
             Some("client-parmater-set".into()),
+            None,
+            true
         );
 
         assert!(valid.is_ok());
@@ -63,6 +65,8 @@ mod client_strategy_test {
             }),
             None,
             Some("client-parmater-set".into()),
+            None,
+            true
         );
 
         assert!(missing_refs.is_err())

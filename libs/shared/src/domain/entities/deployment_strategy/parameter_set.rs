@@ -7,7 +7,7 @@ pub struct Parameter {
     pub required: bool,
     pub secret: bool,
     pub r#type: ParameterType,
-    pub choices: Option<Vec<String>>,
+    pub choices: Option<Vec<Choice>>,
     pub default: Option<String>,
 }
 
@@ -23,4 +23,11 @@ pub enum ParameterType {
 pub struct ParameterSet {
     pub name: String,
     pub parameters: Vec<Parameter>
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct Choice {
+    pub value: String,
+    pub description: Option<String>,
+    pub enabled: bool
 }

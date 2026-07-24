@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use openapiv3::OpenAPI;
 use platforms::Platform;
+use serde::Serialize;
 use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
@@ -244,7 +245,7 @@ pub struct GpuResource {
     pub gpu_type: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum ParallelismStrategy {
     PipelineParallelism,
     TensorParallelism,

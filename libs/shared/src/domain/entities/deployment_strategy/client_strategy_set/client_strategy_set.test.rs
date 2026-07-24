@@ -26,7 +26,6 @@ mod client_strategy_set_test {
                             ]
                         }
                     ]),
-
                     Some(ParameterSet {
                         name: "foo-params".into(),
                         parameters: vec![
@@ -43,6 +42,8 @@ mod client_strategy_set_test {
                     }),
                     None,
                     Some("client-parmater-set".into()),
+                    None,
+                    true
                 ).unwrap()
             ],
             None,

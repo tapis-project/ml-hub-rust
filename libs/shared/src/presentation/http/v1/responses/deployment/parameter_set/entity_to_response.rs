@@ -3,13 +3,24 @@ use crate::presentation::http::v1::responses::deployment::parameter_set as dtos;
 
 impl From<entities::Parameter> for dtos::Parameter {
     fn from(value: entities::Parameter) -> Self {
+        let choices = match value.choices {
+            Some(cs) => {
+                Some(
+                    cs.iter()
+                        .map(|c| dtos::Choice::from(c.clone()))
+                        .collect::<Vec<dtos::Choice>>()
+                )
+            },
+            None => None
+        };
+
         Self {
             name: value.name,
             description: value.description,
             required: value.required,
             secret: value.secret,
             r#type: dtos::ParameterType::from(value.r#type),
-            choices: value.choices,
+            choices,
             default: value.default,
         }
     }
@@ -35,6 +46,16 @@ impl From<entities::ParameterSet> for dtos::ParameterSet {
                 .iter()
                 .map(|p| dtos::Parameter::from(p.clone()))
                 .collect()
+        }
+    }
+}
+
+impl From<entities::Choice> for dtos::Choice {
+    fn from(value: entities::Choice) -> Self {
+        Self {
+            value: value.value,
+            description: value.description.clone(),
+            enabled: value.enabled,
         }
     }
 }
