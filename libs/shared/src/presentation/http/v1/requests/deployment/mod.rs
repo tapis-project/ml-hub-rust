@@ -1,5 +1,4 @@
-// pub mod application_mappings;
-// pub mod domain_mappings;
+mod dto_to_shared_kernel;
 
 use platforms::Platform;
 use serde::{Deserialize, Serialize};
@@ -23,11 +22,18 @@ pub struct DeployModelWithStrategyBody {
     pub description: Option<String>,
     pub model_name: String,
     pub model_author: String,
+    pub deployment_modality: DeploymentModality,
     pub params: Value,
     #[serde(default = "default_scope")]
     #[param(value_type = Scope, inline, required)]
     /// Selector for global vs tenant-scoped models
     pub scope: Scope
+}
+
+#[derive(Clone, Debug, ToSchema, Deserialize)]
+pub enum DeploymentModality {
+    Batch,
+    Service,
 }
 
 fn default_scope () -> Scope { Scope::Tenant }

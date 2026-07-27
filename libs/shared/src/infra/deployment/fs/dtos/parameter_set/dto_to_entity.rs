@@ -55,7 +55,7 @@ impl From<dtos::parameter_set::Choice> for entities::parameter_set::Choice {
         Self {
             value: value.value,
             description: value.description.clone(),
-            enabled: value.enabled,
+            enabled: value.enabled.unwrap_or(true),
         }
     }
 }

@@ -10,7 +10,8 @@
                 "FlexServerDeployerCompatible",
                 "VisiblePublic"
             ],
-            "use_parameter_set": "Pods"
+            "use_parameter_set": "Pods",
+            "enabled": true
         }
     ],
     "rule_sets": [
@@ -68,7 +69,10 @@
                     "default": "transformers",
                     "description": "The inference backend to use for the model deployment",
                     "choices": [
-                        "transformers"
+                        {
+                            "value": "transformers",
+                            "description": "HuggingFace's transformers library"
+                        }
                     ]
                 }
             ]

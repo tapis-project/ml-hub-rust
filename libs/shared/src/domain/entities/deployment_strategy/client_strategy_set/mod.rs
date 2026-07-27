@@ -33,16 +33,16 @@ pub struct ClientStrategySet {
 }
 
 impl ClientStrategySet {
-    pub fn new(
+    pub fn reconstitute(
         platform: Platform,
         description: Option<String>,
         client_strategies: Vec<ClientStrategy>,
         rule_sets: Option<Vec<RuleSet>>,
         parameter_sets: Option<Vec<ParameterSet>>,
     ) -> Result<Self, ClientStrategySetError> {
-        // Must be 1 or more strategies
+        // Invariant: Client Strategy Seet MUST contain 1 or more strategies
         if client_strategies.len() == 0 {
-            return Err(ClientStrategySetError::MissingStrategies("One or more strategies must be provided".into()))
+            return Err(ClientStrategySetError::MissingStrategies("Client Strategy Seet MUST contain 1 or more strategies".into()))
         };
 
         // Static to allow borrowing in lazy evaluation with zero runtime cost
@@ -96,11 +96,10 @@ impl ClientStrategySet {
             
             // Create the Strategy
             strategies.push(
-                Strategy::new(
+                Strategy::reconstitute(
                     client_strat.name.clone(),
                     platform.clone(),
                     client_strat.description.clone(),
-                    client_strat.deployment_modality().clone(),
                     strategy_rule_sets,
                     parameter_set,
                     client_strat.config().clone(),

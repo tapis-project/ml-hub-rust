@@ -1,8 +1,9 @@
 use crate::domain::entities::deployment::ParallelismStrategy;
+use crate::domain::entities::deployment_strategy::strategy::StrategyConfigError;
 use crate::domain::entities::deployment_strategy as entities;
-use crate::shared_kernel::enums::DeploymentModality as DeploymentModalityEntity;
 use crate::infra::deployment::fs::dtos;
 use crate::shared_kernel::value_objects::Ttl;
+use crate::shared_kernel::enums::DeploymentModality;
 
 impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strategy::ClientStrategy {
     type Error = entities::client_strategy::ClientStrategyError;
@@ -24,20 +25,14 @@ impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strateg
             None => None,
         };
         
-        let config = match value.config {
-            Some(c) => Some(entities::strategy::StrategyConfig::from(c)),
-            None => None,
-        };
-        
-        let client_strat = entities::client_strategy::ClientStrategy::new(
+        let client_strat = entities::client_strategy::ClientStrategy::reconstitute(
             value.name,
             value.description,
-            DeploymentModalityEntity::from(value.deployment_modality),
             rule_sets,
             parameter_set,
             value.use_rule_sets,
             value.use_parameter_set,
-            config,
+            entities::strategy::StrategyConfig::try_from(value.config)?,
             value.enabled,
         )?;
 
@@ -45,18 +40,25 @@ impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strateg
     }
 }
 
-impl From<dtos::client_strategy::StrategyConfig> for entities::strategy::StrategyConfig {
-    fn from(value: dtos::client_strategy::StrategyConfig) -> Self {
-        Self {
-            max_ttl: value.max_ttl.map(|minutes| Ttl::from_minutes(minutes)),
-            min_replicas: value.min_replicas,
-            max_replicas: value.max_replicas,
-            supported_paralellism_strategies: value.supported_paralellism_strategies
-                .map(|vps| {
-                    vps.iter()
-                        .map(|ps| ParallelismStrategy::from(ps.clone()))
-                        .collect()
-                })
-        }
+impl TryFrom<dtos::client_strategy::StrategyConfig> for entities::strategy::StrategyConfig {
+    type Error = StrategyConfigError;
+
+    fn try_from(value: dtos::client_strategy::StrategyConfig) -> Result<Self, Self::Error> {
+        Ok(entities::strategy::StrategyConfig::reconstitute(
+            entities::strategy::ReconstitueStrategyConfigProps {
+                max_ttl: value.max_ttl.and_then(|ttl| Some(Ttl::from_minutes(ttl))),
+                supported_paralellism_strategies: value.supported_paralellism_strategies
+                    .unwrap_or(vec![])
+                    .into_iter()
+                    .map(|ps| ParallelismStrategy::from(ps))
+                    .collect(),
+                supported_deployment_modalities: value.supported_deployment_modalities
+                    .iter()
+                    .map(|dm| DeploymentModality::from(dm.clone()))
+                    .collect(),
+                min_replicas: value.min_replicas,
+                max_replicas: value.max_replicas,
+            }
+        )?)
     }
 }

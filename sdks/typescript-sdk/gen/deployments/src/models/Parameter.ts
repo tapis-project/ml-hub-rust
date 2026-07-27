@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    Choice,
+    ChoiceFromJSON,
+    ChoiceFromJSONTyped,
+    ChoiceToJSON,
     ParameterType,
     ParameterTypeFromJSON,
     ParameterTypeFromJSONTyped,
@@ -28,10 +32,10 @@ import {
 export interface Parameter {
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<Choice>}
      * @memberof Parameter
      */
-    choices?: Array<string> | null;
+    choices?: Array<Choice> | null;
     /**
      * 
      * @type {string}
@@ -80,7 +84,7 @@ export function ParameterFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'choices': !exists(json, 'choices') ? undefined : json['choices'],
+        'choices': !exists(json, 'choices') ? undefined : (json['choices'] === null ? null : (json['choices'] as Array<any>).map(ChoiceFromJSON)),
         '_default': !exists(json, 'default') ? undefined : json['default'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
@@ -99,7 +103,7 @@ export function ParameterToJSON(value?: Parameter | null): any {
     }
     return {
         
-        'choices': value.choices,
+        'choices': value.choices === undefined ? undefined : (value.choices === null ? null : (value.choices as Array<any>).map(ChoiceToJSON)),
         'default': value._default,
         'description': value.description,
         'name': value.name,

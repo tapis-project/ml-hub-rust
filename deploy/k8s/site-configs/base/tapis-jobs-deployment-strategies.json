@@ -67,11 +67,22 @@
                     "description": "An HPC system at TACC",
                     "required": true,
                     "choices": [
-                        "Vista",
-                        "Stampede3",
-                        "Lonestar6",
-                        "Frontera",
-                        "Horizon"
+                        {
+                            "value": "Vista"
+                        },
+                        {
+                            "value": "Stampede3"
+                        },
+                        {
+                            "value": "Lonestar6"
+                        },
+                        {
+                            "value": "Frontera"
+                        },
+                        {
+                            "value": "Horizon",
+                            "enabled": false
+                        }
                     ]
                 },
                 {

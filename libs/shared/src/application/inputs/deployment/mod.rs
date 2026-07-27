@@ -6,6 +6,7 @@ use crate::domain::entities::deployment::{DesiredState, ModelDeployment, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
 
 use crate::application::inputs::common::Scope;
+use crate::shared_kernel::enums::DeploymentModality;
 
 pub struct ClientModelDeploymentRequest {
     pub deployment: ModelDeployment,
@@ -35,6 +36,7 @@ pub struct DeployWithStrategyInput {
     pub model_author: String,
     pub model_scope: Scope,
     pub strategy_name: String,
+    pub deployment_modality: DeploymentModality,
     pub params: Value,
 }
 

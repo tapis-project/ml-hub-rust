@@ -8,11 +8,13 @@ src/apis/StrategiesApi.ts
 src/apis/index.ts
 src/index.ts
 src/models/BadRequestResponse.ts
+src/models/Choice.ts
 src/models/DeployModelWithStrategyBody.ts
 src/models/DeploymentModality.ts
 src/models/DesiredState.ts
 src/models/GpuResource.ts
 src/models/ListDeploymentStrategiesResponse.ts
+src/models/ListModelDeploymentsResponse.ts
 src/models/ModelDeployment.ts
 src/models/ModelDeploymentInterface.ts
 src/models/ModelDeploymentInterfaceOneOf.ts

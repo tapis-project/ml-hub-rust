@@ -412,6 +412,27 @@
           }
         }
       },
+      "Choice": {
+        "type": "object",
+        "required": [
+          "value",
+          "enabled"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "DeployModelWithStrategyBody": {
         "type": "object",
         "required": [
@@ -768,7 +789,7 @@
               "null"
             ],
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/Choice"
             }
           },
           "default": {

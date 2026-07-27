@@ -17,6 +17,9 @@ pub enum ModelDeploymentError {
 
     #[error("Invalid desired state change. Cannot move from desired state '{0}' to {1}")]
     InvalidDesiredStateTransition(String, String),
+
+    #[error("Selected deployment strategy ({0}) not supported")]
+    UnsupportedDeploymentModality(DeploymentModality),
 }
 
 #[derive(Clone, Debug)]
@@ -61,14 +64,18 @@ pub struct ModelDeployment {
 
 impl ModelDeployment {
     /// Create the model deployment from props
-    pub fn deploy_with_srategy(props: DeployWithStrategyProps, strategy: &Strategy) -> Self {
+    pub fn deploy_with_srategy(props: DeployWithStrategyProps, strategy: &Strategy) -> Result<Self, ModelDeploymentError> {
+        // Invariant: The selected deployment strategy must support the selected deployment modality.
+        if !strategy.config().supported_deployment_modalities.contains(&props.deployment_modality) {
+            return Err(ModelDeploymentError::UnsupportedDeploymentModality(props.deployment_modality))
+        }
+        
         let now = TimeStamp::now();
 
-        Self {
+        Ok(Self {
             id: props.id,
             name: props.name,
             description: props.description,
-            deployment_modality: strategy.deployment_modality.clone(),
             tenant_id: props.tenant_id,
             platform: props.platform,
             owner: props.owner,
@@ -76,6 +83,7 @@ impl ModelDeployment {
             state: props.state,
             desired_state: props.desired_state,
             last_message: props.last_message,
+            deployment_modality: props.deployment_modality.clone(),
             deployment_strategy: Some(strategy.name.clone()),
             visibility: props.visibility,
             created_at: now.clone(),
@@ -86,7 +94,7 @@ impl ModelDeployment {
             replicas: props.replicas,
             metadata: props.metadata,
             revision: 0,
-        }
+        })
     }
 
     pub fn reconstitute(props: ReconstituteModelDeploymentProps) -> Self {
@@ -468,6 +476,7 @@ pub struct DeployWithStrategyProps {
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
     pub visibility: Visibility,
+    pub deployment_modality: DeploymentModality,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: Option<ReplicaGroup>,
     pub metadata: Option<ModelDeploymentMetadata>,

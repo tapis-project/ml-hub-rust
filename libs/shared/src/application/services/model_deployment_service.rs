@@ -238,6 +238,7 @@ impl ModelDeploymentService {
                 author: input.model_author.clone(),
                 tenant_id: model_tenant_id.clone()
             },
+            deployment_modality: input.deployment_modality.clone(),
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: Some("Model deployment request recieved".into()),

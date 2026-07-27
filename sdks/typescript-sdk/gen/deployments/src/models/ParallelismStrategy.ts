@@ -18,10 +18,11 @@
  * @enum {string}
  */
 export enum ParallelismStrategy {
-    DataSharding = 'DataSharding',
-    ModelSharding = 'ModelSharding',
-    PipelineSharding = 'PipelineSharding',
-    TensorSharding = 'TensorSharding'
+    PipelineParallelism = 'PipelineParallelism',
+    TensorParallelism = 'TensorParallelism',
+    SequenceParallelism = 'SequenceParallelism',
+    ContextParallelism = 'ContextParallelism',
+    ExpertParallelism = 'ExpertParallelism'
 }
 
 export function ParallelismStrategyFromJSON(json: any): ParallelismStrategy {

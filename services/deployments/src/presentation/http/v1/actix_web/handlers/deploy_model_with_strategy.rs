@@ -48,6 +48,7 @@ async fn deploy_model_with_strategy(
         platform: path.platform.clone(),
         strategy_name: path.strategy_name.clone(),
         params: body.params.clone(),
+        deployment_modality: shared::shared_kernel::enums::DeploymentModality::from(body.deployment_modality.clone()),
     };
 
     let output = match model_deployment_service.deploy_model_with_strategy(input, &ctx).await {

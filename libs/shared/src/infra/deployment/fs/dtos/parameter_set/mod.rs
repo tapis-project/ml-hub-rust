@@ -37,5 +37,5 @@ pub struct ParameterSet {
 pub struct Choice {
     value: String,
     description: Option<String>,
-    enabled: bool
+    enabled: Option<bool>
 }

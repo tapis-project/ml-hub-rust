@@ -41,7 +41,7 @@ impl TryFrom<dtos::client_strategy_set::ClientStrategySet> for entities::client_
             None => None
         };
         
-        let client_strategy_set = entities::client_strategy_set::ClientStrategySet::new(
+        let client_strategy_set = entities::client_strategy_set::ClientStrategySet::reconstitute(
             value.platform,
             value.description,
             client_strategies,

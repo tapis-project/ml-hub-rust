@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::domain::entities::artifact::ArtifactType;
 use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::entities::deployment::{ModelDeployment, DeployWithStrategyProps};
+use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentError, DeployWithStrategyProps};
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
 
 #[derive(Debug, Error)]
@@ -73,6 +73,9 @@ pub enum ModelDeploymentDomainServiceError {
 
     #[error("The artifact associated with this deployment's model metadata is not a Model artifact")]
     InvalidArtifactType,
+
+    #[error(transparent)]
+    DomainError(#[from] ModelDeploymentError)
 }
 
 pub struct ModelDeploymentService {}
@@ -104,6 +107,6 @@ impl ModelDeploymentService {
         //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
         // };
 
-        Ok(ModelDeployment::deploy_with_srategy(props, strategy))
+        Ok(ModelDeployment::deploy_with_srategy(props, strategy)?)
     }
 }

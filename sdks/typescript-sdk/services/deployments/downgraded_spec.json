@@ -9,6 +9,57 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/deployments-api/deployments": {
+      "get": {
+        "tags": [
+          "Deployments"
+        ],
+        "description": "Lists all available deployments",
+        "operationId": "list_model_deployments",
+        "responses": {
+          "200": {
+            "description": "A list of model deployments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListModelDeploymentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/deployments-api/deployments/{deployment_id}/start": {
       "post": {
         "tags": [
@@ -361,6 +412,25 @@
           }
         }
       },
+      "Choice": {
+        "type": "object",
+        "required": [
+          "value",
+          "enabled"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "DeployModelWithStrategyBody": {
         "type": "object",
         "required": [
@@ -447,6 +517,38 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Strategy"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ListModelDeploymentsResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelDeployment"
             }
           },
           "status": {
@@ -648,10 +750,11 @@
       "ParallelismStrategy": {
         "type": "string",
         "enum": [
-          "DataSharding",
-          "ModelSharding",
-          "PipelineSharding",
-          "TensorSharding"
+          "PipelineParallelism",
+          "TensorParallelism",
+          "SequenceParallelism",
+          "ContextParallelism",
+          "ExpertParallelism"
         ]
       },
       "Parameter": {
@@ -666,7 +769,7 @@
           "choices": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/Choice"
             },
             "nullable": true
           },

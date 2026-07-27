@@ -1,11 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './BadRequestResponse';
+export * from './Choice';
 export * from './DeployModelWithStrategyBody';
 export * from './DeploymentModality';
 export * from './DesiredState';
 export * from './GpuResource';
 export * from './ListDeploymentStrategiesResponse';
+export * from './ListModelDeploymentsResponse';
 export * from './ModelDeployment';
 export * from './ModelDeploymentInterface';
 export * from './ModelDeploymentInterfaceOneOf';

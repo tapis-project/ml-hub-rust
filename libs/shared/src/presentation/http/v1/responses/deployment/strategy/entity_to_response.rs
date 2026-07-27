@@ -19,7 +19,8 @@ impl From<entities::Strategy> for dtos::Strategy {
             description: value.description.clone(),
             platform: value.platform.clone(),
             parameters,
-            deployment_modality: dtos::DeploymentModality::from(value.deployment_modality),
+            config: dtos::StrategyConfig::from(value.config().clone()),
+            enabled: value.enabled(),
         }
     }
 }
@@ -29,6 +30,24 @@ impl From<DeploymentModality> for dtos::DeploymentModality {
         match value {
             DeploymentModality::Batch => dtos::DeploymentModality::Batch,
             DeploymentModality::Service => dtos::DeploymentModality::Service,
+        }
+    }
+}
+
+impl From<entities::StrategyConfig> for dtos::StrategyConfig {
+    fn from(value: entities::StrategyConfig) -> Self {
+        Self {
+            max_ttl: value.max_ttl.map(|ttl| ttl.as_minutes()),
+            min_replicas: value.min_replicas.into(),
+            max_replicas: value.max_replicas.map(|max| max.into()),
+            supported_deployment_modalities: Vec::from(value.supported_deployment_modalities)
+                .iter()
+                .map(|dm| dtos::DeploymentModality::from(dm.clone()))
+                .collect(),
+            supported_paralellism_strategies: value.supported_paralellism_strategies
+                .iter()
+                .map(|ps| dtos::ParallelismStrategy::from(ps))
+                .collect()
         }
     }
 }
