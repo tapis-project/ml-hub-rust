@@ -54,7 +54,7 @@ pub struct ModelDeployment {
     pub last_state_change: TimeStamp,
     pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     /// Metadata provided by and for deployment clients
     pub metadata: Option<ModelDeploymentMetadata>,
     /// Indicates changes to desired state over time. This field is incremented
@@ -226,31 +226,17 @@ pub enum ModelDeploymentMetadataDelta {
 pub struct ReplicaGroup {
     /// Number of replicas
     pub count: u8,
-    /// Resources required by each replica
-    pub resources: ResourceRequirements,
     /// Sharding / parallelism strategies actually employed by the deployment runtime.
     pub parallelism_strategies: Vec<ParallelismStrategy>,
 }
 
-#[derive(Clone, Debug)]
-pub struct ResourceRequirements {
-    /// Number of cpu cores (float for platforms that support fractional cores)
-    pub cores: Option<f32>,
-    /// Required disk space in GB
-    pub disk: Option<f32>,
-    /// Required memory in GB
-    pub memory: Option<f32>,
-    pub gpu: Option<GpuResource>,
-}
-
-#[derive(Clone, Debug)]
-pub struct GpuResource {
-    /// Number vram in GB
-    pub memory: Option<f32>,
-    /// Ex Nvida
-    pub vendor: Option<String>,
-    /// Ex H100
-    pub gpu_type: Option<String>,
+impl Default for ReplicaGroup {
+    fn default() -> Self {
+        Self {
+            count: 1,
+            parallelism_strategies: vec![]
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -389,7 +375,7 @@ impl <'a>ModelDeploymentDraft<'a> {
     pub fn apply_replica_group_delta(&mut self, delta: ReplicaGroupDelta) -> &mut Self {
         match delta {
             ReplicaGroupDelta::Delete => { self.deployment.metadata = None },
-            ReplicaGroupDelta::Replace(r) => { self.deployment.replicas = Some(r); },
+            ReplicaGroupDelta::Replace(r) => { self.deployment.replicas = r; },
             ReplicaGroupDelta::NoChange => {},
         };
 
@@ -454,7 +440,7 @@ pub struct ReconstituteModelDeploymentProps {
     pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     pub revision: u32,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
@@ -478,6 +464,6 @@ pub struct DeployWithStrategyProps {
     pub visibility: Visibility,
     pub deployment_modality: DeploymentModality,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     pub metadata: Option<ModelDeploymentMetadata>,
 }

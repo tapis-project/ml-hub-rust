@@ -32,7 +32,7 @@ pub struct ModelDeployment {
     pub last_state_change: String,
     pub last_desired_state_change: String,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     pub metadata: Option<HashMap<String, Value>>,
     pub revision: u32,
 }
@@ -63,23 +63,7 @@ pub enum DesiredState {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReplicaGroup {
     pub count: u8,
-    pub resources: ResourceRequirements,
     pub parallelism_strategies: Vec<ParallelismStrategy>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct ResourceRequirements {
-    pub cores: Option<f32>,
-    pub disk: Option<f32>,
-    pub memory: Option<f32>,
-    pub gpu: Option<GpuResource>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct GpuResource {
-    pub memory: Option<f32>,
-    pub vendor: Option<String>,
-    pub gpu_type: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

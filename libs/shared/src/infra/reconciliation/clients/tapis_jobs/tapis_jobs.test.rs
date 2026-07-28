@@ -7,8 +7,7 @@ mod tapis_jobs_test {
         ReconciliationAction, ReconciliationOutcome,
     };
     use crate::domain::entities::deployment::{
-        DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta,
-        ModelReference, ReconstituteModelDeploymentProps, State,
+        DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, ModelReference, ReconstituteModelDeploymentProps, ReplicaGroup, State
     };
     use crate::shared_kernel::enums::DeploymentModality;
     use crate::domain::entities::model_metadata::{fixtures::full_model_metadata, ModelMetadata};
@@ -42,7 +41,7 @@ mod tapis_jobs_test {
             deployment_strategy: Some("tapis-jobs:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -72,7 +71,7 @@ mod tapis_jobs_test {
             deployment_strategy: None,
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -493,7 +492,7 @@ mod tapis_jobs_test {
             deployment_strategy: Some("tapis-jobs:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),

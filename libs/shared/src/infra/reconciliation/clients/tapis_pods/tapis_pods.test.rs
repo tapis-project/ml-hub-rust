@@ -3,7 +3,7 @@ mod tapis_pods_test {
     use super::super::*;
     use std::collections::HashMap;
     use crate::domain::entities::deployment::{
-        ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, ReconstituteModelDeploymentProps
+        DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelReference, ReconstituteModelDeploymentProps, ReplicaGroup, State
     };
     use crate::domain::entities::visibility::Visibility;
     use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
@@ -37,7 +37,7 @@ mod tapis_pods_test {
             deployment_strategy: Some("tapis-pods:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -67,7 +67,7 @@ mod tapis_pods_test {
             deployment_strategy: None,
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -357,7 +357,7 @@ mod tapis_pods_test {
             deployment_strategy: Some("tapis-pods:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),

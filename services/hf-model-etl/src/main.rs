@@ -17,7 +17,7 @@ use log::error;
 async fn main() {
     // Database connection
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
-    let client = initialize_client(ClientParams{
+    let client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),

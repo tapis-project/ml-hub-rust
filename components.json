@@ -319,7 +319,7 @@
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs mlhub-{{ self.name }}-stateful-set-0 -f",
-        "expose": "kubectl port-forward pod/mlhub-mongo-stateful-set-0 27017:27017", 
+        "forward": "minikube kubectl -- port-forward pod/mlhub-mongo-stateful-set-0 27017:27017", 
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code services/{{ self.name }}",
         "gui": "open -a \"MongoDB Compass\"",

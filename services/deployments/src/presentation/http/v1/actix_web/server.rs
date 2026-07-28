@@ -135,15 +135,17 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(web::Data::from(deployment_strategy_service.clone()))
             .app_data(web::Data::new(state.clone()))
 
-            // Globally-scoped middlewares
-            .wrap(from_fn(preflight_short_circuit))
-            .wrap(Logger::default())
-
+            // Globally-scoped middlewares.
+            // NOTE: Middleware runs in reverse order of registration
             .wrap(from_fn(authenticate))
             .wrap(from_fn(resolve_tenancy))
-            
+            .wrap(Logger::default())
+            .wrap(from_fn(preflight_short_circuit))
+
+
             .service(presentation::http::v1::actix_web::handlers::index::index)
             .service(presentation::http::v1::actix_web::handlers::list_strategies::list_strategies)
+            .service(presentation::http::v1::actix_web::handlers::list_model_deployments::list_model_deployments)
             .service(presentation::http::v1::actix_web::handlers::deploy_model_with_strategy::deploy_model_with_strategy)
             .service(presentation::http::v1::actix_web::handlers::start_model_deployment::start_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::stop_model_deployment::stop_model_deployment)

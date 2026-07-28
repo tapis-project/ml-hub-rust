@@ -4,8 +4,10 @@
     "strategies": [
         {
             "name": "Pods",
-            "deployment_modality": "service",
             "description": "Deploys a model as an HTTP server in Tapis Pods",
+            "config": {
+                "supported_deployment_modalities": [ "service" ]
+            },
             "use_rule_sets": [
                 "FlexServerDeployerCompatible",
                 "VisiblePublic"

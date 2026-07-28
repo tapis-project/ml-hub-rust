@@ -25,4 +25,5 @@ export * from './Scope';
 export * from './ServerErrorResponse';
 export * from './State';
 export * from './Strategy';
+export * from './StrategyConfig';
 export * from './Visibility';

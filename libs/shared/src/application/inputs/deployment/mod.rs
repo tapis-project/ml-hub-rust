@@ -2,7 +2,7 @@ use serde_json::Value;
 use platforms::Platform;
 use uuid::Uuid;
 use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy::client_strategy::ClientStrategy};
-use crate::domain::entities::deployment::{DesiredState, ModelDeployment, State};
+use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ParallelismStrategy, ReplicaGroup, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
 
 use crate::application::inputs::common::Scope;
@@ -37,6 +37,8 @@ pub struct DeployWithStrategyInput {
     pub model_scope: Scope,
     pub strategy_name: String,
     pub deployment_modality: DeploymentModality,
+    pub replicas: Option<u8>,
+    pub parallelism_strategies: Option<Vec<ParallelismStrategy>>,
     pub params: Value,
 }
 

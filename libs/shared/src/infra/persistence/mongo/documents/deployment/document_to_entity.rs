@@ -25,9 +25,7 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
                 .clone()
                 .and_then(|di| Some(entities::ModelDeploymentInterface::from(di))),
             deployment_strategy: value.deployment_strategy.clone(),
-            replicas: value.replicas
-                .clone()
-                .and_then(|rg| Some(entities::ReplicaGroup::from(rg))),
+            replicas: entities::ReplicaGroup::from(value.replicas.clone()),
             last_modified: TimeStamp::from(value.last_modified.to_chrono()),
             last_desired_state_change: TimeStamp::from(value.last_desired_state_change.to_chrono()),
             last_state_change: TimeStamp::from(value.last_state_change.to_chrono()),
@@ -45,33 +43,10 @@ impl From<documents::ReplicaGroup> for entities::ReplicaGroup {
     fn from(value: documents::ReplicaGroup) -> Self {
         Self {
             count: value.count,
-            resources: entities::ResourceRequirements::from(value.resources),
             parallelism_strategies: value.parallelism_strategies
                 .iter()
                 .map(|ps| entities::ParallelismStrategy::from(ps.clone()))
                 .collect()
-        }
-    }
-}
-
-impl From<documents::ResourceRequirements> for entities::ResourceRequirements {
-    fn from(value: documents::ResourceRequirements) -> Self {
-        Self {
-            cores: value.cores,
-            disk: value.disk,
-            memory: value.memory,
-            gpu: value.gpu
-                .and_then(|gr| Some(entities::GpuResource::from(gr))),
-        }
-    }
-}
-
-impl From<documents::GpuResource> for entities::GpuResource {
-    fn from(value: documents::GpuResource) -> Self {
-        Self {
-            gpu_type: value.gpu_type,
-            memory: value.memory,
-            vendor: value.vendor,
         }
     }
 }

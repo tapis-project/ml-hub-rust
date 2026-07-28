@@ -12,6 +12,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::domain::entities::deployment::ParallelismStrategy;
 use shared::shared_kernel::context::RequestContext;
 use shared::application::inputs::deployment::DeployWithStrategyInput;
 use shared::application::inputs::common::Scope as ScopeInput;
@@ -45,6 +46,14 @@ async fn deploy_model_with_strategy(
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
         model_scope: ScopeInput::from(body.scope.clone()),
+        replicas: body.replicas,
+        parallelism_strategies: body.parallelism_strategies
+            .clone()
+            .and_then(|ref pss| Some(
+                pss.iter()
+                    .map(|ps| ParallelismStrategy::from(ps.clone()))
+                    .collect()
+            )),
         platform: path.platform.clone(),
         strategy_name: path.strategy_name.clone(),
         params: body.params.clone(),

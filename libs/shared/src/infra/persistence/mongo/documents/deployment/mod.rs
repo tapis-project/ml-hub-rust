@@ -30,7 +30,7 @@ pub struct ModelDeployment {
     pub last_state_change: DateTime,
     pub last_desired_state_change: DateTime,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     pub metadata: Option<HashMap<String, Value>>,
     pub revision: u32, 
 }
@@ -104,7 +104,6 @@ pub enum DeploymentModality {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReplicaGroup {
     pub count: u8,
-    pub resources: ResourceRequirements,
     pub parallelism_strategies: Vec<ParallelismStrategy>,
 }
 

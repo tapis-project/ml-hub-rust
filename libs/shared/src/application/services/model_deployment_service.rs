@@ -19,13 +19,14 @@ use retry_utils::{
     RetryPolicy,
 };
 use crate::domain::entities::deployment::{
+    DeployWithStrategyProps,
     DesiredState,
     ModelDeployment,
     ModelDeploymentError,
     ModelDeploymentMetadata,
-    DeployWithStrategyProps,
     ModelReference,
-    State,
+    ReplicaGroup,
+    State
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
@@ -225,6 +226,12 @@ impl ModelDeploymentService {
             .ok()
             .filter(|m| !m.is_empty());
 
+        let replica_group = ReplicaGroup {
+            count: input.replicas.unwrap_or(1),
+            parallelism_strategies: input.parallelism_strategies
+                .unwrap_or(vec![])
+        };
+
         // Initialize props to deploy with strategy
         let props = DeployWithStrategyProps {
             id: Uuid::now_v7(),
@@ -244,7 +251,7 @@ impl ModelDeploymentService {
             last_message: Some("Model deployment request recieved".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: replica_group,
             metadata: metadata.map(ModelDeploymentMetadata),
         };
         

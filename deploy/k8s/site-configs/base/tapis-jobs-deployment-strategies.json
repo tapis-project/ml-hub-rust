@@ -4,8 +4,10 @@
     "strategies": [
         {
             "name": "TACC-HPC",
-            "deployment_modality": "batch",
             "description": "Deploys a model to an HPC system at TACC",
+            "config": {
+                "supported_deployment_modalities": [ "batch" ]
+            },
             "use_rule_sets": [
                 "FlexServCompatible",
                 "CanonicalHuggingfaceVisiblePublic"

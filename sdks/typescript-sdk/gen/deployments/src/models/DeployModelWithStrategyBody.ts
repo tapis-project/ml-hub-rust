@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    DeploymentModality,
+    DeploymentModalityFromJSON,
+    DeploymentModalityFromJSONTyped,
+    DeploymentModalityToJSON,
     Scope,
     ScopeFromJSON,
     ScopeFromJSONTyped,
@@ -26,6 +30,12 @@ import {
  * @interface DeployModelWithStrategyBody
  */
 export interface DeployModelWithStrategyBody {
+    /**
+     * 
+     * @type {DeploymentModality}
+     * @memberof DeployModelWithStrategyBody
+     */
+    deployment_modality: DeploymentModality;
     /**
      * 
      * @type {string}
@@ -74,6 +84,7 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
+        'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'model_author': json['model_author'],
         'model_name': json['model_name'],
@@ -92,6 +103,7 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
     }
     return {
         
+        'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
         'description': value.description,
         'model_author': value.model_author,
         'model_name': value.model_name,

@@ -32,6 +32,7 @@ src/models/Scope.ts
 src/models/ServerErrorResponse.ts
 src/models/State.ts
 src/models/Strategy.ts
+src/models/StrategyConfig.ts
 src/models/Visibility.ts
 src/models/index.ts
 src/runtime.ts

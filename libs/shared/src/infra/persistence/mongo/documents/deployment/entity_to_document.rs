@@ -26,13 +26,11 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
                 .clone()
                 .and_then(|di| Some(documents::ModelDeploymentInterface::from(di))),
             deployment_strategy: value.deployment_strategy.clone(),
-            replicas: value.replicas
-                .clone()
-                .and_then(|rg| Some(documents::ReplicaGroup::from(rg))),
-            last_modified: value.last_modified.to_bson(),
+            replicas: documents::ReplicaGroup::from(value.replicas.clone()),
             last_desired_state_change: value.last_desired_state_change.to_bson(),
             last_state_change: value.last_state_change.to_bson(),
             created_at: value.created_at.to_bson(),
+            last_modified: value.last_modified.to_bson(),
             metadata: value.metadata
                 .clone()
                 .and_then(|m| Some(m.into_inner().clone())),
@@ -44,33 +42,10 @@ impl From<entities::ReplicaGroup> for documents::ReplicaGroup {
     fn from(value: entities::ReplicaGroup) -> Self {
         Self {
             count: value.count,
-            resources: documents::ResourceRequirements::from(value.resources),
             parallelism_strategies: value.parallelism_strategies
                 .iter()
                 .map(|ps| documents::ParallelismStrategy::from(ps.clone()))
                 .collect()
-        }
-    }
-}
-
-impl From<entities::ResourceRequirements> for documents::ResourceRequirements {
-    fn from(value: entities::ResourceRequirements) -> Self {
-        Self {
-            cores: value.cores,
-            disk: value.disk,
-            memory: value.memory,
-            gpu: value.gpu
-                .and_then(|gr| Some(documents::GpuResource::from(gr))),
-        }
-    }
-}
-
-impl From<entities::GpuResource> for documents::GpuResource {
-    fn from(value: entities::GpuResource) -> Self {
-        Self {
-            gpu_type: value.gpu_type,
-            memory: value.memory,
-            vendor: value.vendor,
         }
     }
 }
