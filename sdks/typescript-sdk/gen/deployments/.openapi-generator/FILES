@@ -12,7 +12,6 @@ src/models/Choice.ts
 src/models/DeployModelWithStrategyBody.ts
 src/models/DeploymentModality.ts
 src/models/DesiredState.ts
-src/models/GpuResource.ts
 src/models/ListDeploymentStrategiesResponse.ts
 src/models/ListModelDeploymentsResponse.ts
 src/models/ModelDeployment.ts
@@ -26,7 +25,6 @@ src/models/Parameter.ts
 src/models/ParameterType.ts
 src/models/Platform.ts
 src/models/ReplicaGroup.ts
-src/models/ResourceRequirements.ts
 src/models/RestApi.ts
 src/models/Scope.ts
 src/models/ServerErrorResponse.ts

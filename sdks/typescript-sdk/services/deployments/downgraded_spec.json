@@ -457,7 +457,20 @@
           "name": {
             "type": "string"
           },
+          "parallelism_strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParallelismStrategy"
+            },
+            "nullable": true
+          },
           "params": {},
+          "replicas": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true
+          },
           "scope": {
             "description": "Selector for global vs tenant-scoped models",
             "allOf": [
@@ -482,24 +495,6 @@
           "Stopped",
           "NotDeployed"
         ]
-      },
-      "GpuResource": {
-        "type": "object",
-        "properties": {
-          "gpu_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "memory": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
-          },
-          "vendor": {
-            "type": "string",
-            "nullable": true
-          }
-        }
       },
       "ListDeploymentStrategiesResponse": {
         "type": "object",
@@ -580,6 +575,7 @@
           "last_modified",
           "last_state_change",
           "last_desired_state_change",
+          "replicas",
           "revision"
         ],
         "properties": {
@@ -642,14 +638,7 @@
             "$ref": "#/components/schemas/Platform"
           },
           "replicas": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/ReplicaGroup"
-              }
-            ]
+            "$ref": "#/components/schemas/ReplicaGroup"
           },
           "revision": {
             "type": "integer",
@@ -825,7 +814,6 @@
         "type": "object",
         "required": [
           "count",
-          "resources",
           "parallelism_strategies"
         ],
         "properties": {
@@ -839,39 +827,6 @@
             "items": {
               "$ref": "#/components/schemas/ParallelismStrategy"
             }
-          },
-          "resources": {
-            "$ref": "#/components/schemas/ResourceRequirements"
-          }
-        }
-      },
-      "ResourceRequirements": {
-        "type": "object",
-        "properties": {
-          "cores": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
-          },
-          "disk": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
-          },
-          "gpu": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/GpuResource"
-              }
-            ]
-          },
-          "memory": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
           }
         }
       },

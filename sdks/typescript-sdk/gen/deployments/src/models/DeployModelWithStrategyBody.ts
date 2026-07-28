@@ -18,6 +18,10 @@ import {
     DeploymentModalityFromJSON,
     DeploymentModalityFromJSONTyped,
     DeploymentModalityToJSON,
+    ParallelismStrategy,
+    ParallelismStrategyFromJSON,
+    ParallelismStrategyFromJSONTyped,
+    ParallelismStrategyToJSON,
     Scope,
     ScopeFromJSON,
     ScopeFromJSONTyped,
@@ -62,10 +66,22 @@ export interface DeployModelWithStrategyBody {
     name: string;
     /**
      * 
+     * @type {Array<ParallelismStrategy>}
+     * @memberof DeployModelWithStrategyBody
+     */
+    parallelism_strategies?: Array<ParallelismStrategy> | null;
+    /**
+     * 
      * @type {any}
      * @memberof DeployModelWithStrategyBody
      */
     params: any | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DeployModelWithStrategyBody
+     */
+    replicas?: number | null;
     /**
      * Selector for global vs tenant-scoped models
      * @type {Scope}
@@ -89,7 +105,9 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
         'model_author': json['model_author'],
         'model_name': json['model_name'],
         'name': json['name'],
+        'parallelism_strategies': !exists(json, 'parallelism_strategies') ? undefined : (json['parallelism_strategies'] === null ? null : (json['parallelism_strategies'] as Array<any>).map(ParallelismStrategyFromJSON)),
         'params': json['params'],
+        'replicas': !exists(json, 'replicas') ? undefined : json['replicas'],
         'scope': !exists(json, 'scope') ? undefined : ScopeFromJSON(json['scope']),
     };
 }
@@ -108,7 +126,9 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
         'model_author': value.model_author,
         'model_name': value.model_name,
         'name': value.name,
+        'parallelism_strategies': value.parallelism_strategies === undefined ? undefined : (value.parallelism_strategies === null ? null : (value.parallelism_strategies as Array<any>).map(ParallelismStrategyToJSON)),
         'params': value.params,
+        'replicas': value.replicas,
         'scope': ScopeToJSON(value.scope),
     };
 }

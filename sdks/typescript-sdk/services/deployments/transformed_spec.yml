@@ -291,7 +291,17 @@ components:
           type: string
         name:
           type: string
+        parallelism_strategies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParallelismStrategy'
+          nullable: true
         params: {}
+        replicas:
+          type: integer
+          format: int32
+          minimum: 0
+          nullable: true
         scope:
           description: Selector for global vs tenant-scoped models
           allOf:
@@ -307,19 +317,6 @@ components:
         - Running
         - Stopped
         - NotDeployed
-    GpuResource:
-      type: object
-      properties:
-        gpu_type:
-          type: string
-          nullable: true
-        memory:
-          type: number
-          format: float
-          nullable: true
-        vendor:
-          type: string
-          nullable: true
     ListDeploymentStrategiesResponse:
       type: object
       required:
@@ -381,6 +378,7 @@ components:
         - last_modified
         - last_state_change
         - last_desired_state_change
+        - replicas
         - revision
       properties:
         created_at:
@@ -422,7 +420,6 @@ components:
           $ref: '#/components/schemas/Platform'
         replicas:
           $ref: '#/components/schemas/ReplicaGroup'
-          nullable: true
         revision:
           type: integer
           format: int32
@@ -558,7 +555,6 @@ components:
       type: object
       required:
         - count
-        - resources
         - parallelism_strategies
       properties:
         count:
@@ -569,26 +565,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ParallelismStrategy'
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-    ResourceRequirements:
-      type: object
-      properties:
-        cores:
-          type: number
-          format: float
-          nullable: true
-        disk:
-          type: number
-          format: float
-          nullable: true
-        gpu:
-          $ref: '#/components/schemas/GpuResource'
-          nullable: true
-        memory:
-          type: number
-          format: float
-          nullable: true
     RestApi:
       type: object
       required:

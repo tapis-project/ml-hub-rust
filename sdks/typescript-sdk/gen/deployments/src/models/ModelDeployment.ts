@@ -145,7 +145,7 @@ export interface ModelDeployment {
      * @type {ReplicaGroup}
      * @memberof ModelDeployment
      */
-    replicas?: ReplicaGroup;
+    replicas: ReplicaGroup;
     /**
      * 
      * @type {number}
@@ -191,7 +191,7 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
         'name': json['name'],
         'owner': json['owner'],
         'platform': PlatformFromJSON(json['platform']),
-        'replicas': !exists(json, 'replicas') ? undefined : ReplicaGroupFromJSON(json['replicas']),
+        'replicas': ReplicaGroupFromJSON(json['replicas']),
         'revision': json['revision'],
         'state': StateFromJSON(json['state']),
         'visibility': VisibilityFromJSON(json['visibility']),
