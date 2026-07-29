@@ -26,10 +26,10 @@ use shared::{
         },
         workflows::reconciliation::ReconciliationError
     },
-    infra::{messaging::rabbitmq::{connection::open_channel,
+    infra::messaging::rabbitmq::{connection::open_channel,
         exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
         queues::DEAD_LETTER_QUEUE
-    }}
+    }, shared_kernel::context::RequestContext
 };
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
@@ -41,7 +41,6 @@ use std::env;
 use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
 use model_deployment_controller::database::{initialize_client, ClientParams};
 use log::{error, info, warn};
-
 
 struct MessagingContext {
     _connection: Connection,
@@ -86,9 +85,14 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
             }
         };
 
+        
+
         let maybe_outcome = match &event {
             Event::ModelDeploymentStateDriftDetected { payload, .. } => {
-                self.controller.dispatch_reconciler(payload).await
+                // Initialize a system request context with the correlation id of the event
+                let ctx = RequestContext::system(Some(*event.metadata().correlation_id()));
+
+                self.controller.dispatch_reconciler(&ctx, payload).await
             }
             _ => {
                 error!("Invalid event type for this consumer: {}", String::from(event.metadata().kind()));
@@ -102,6 +106,12 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
             Ok(result) => result,
             Err(err) => {
                 match err {
+                    ReconciliationDispatchError::InvalidActorKind(e) => {
+                        error!("{}", e.to_string());
+                        self.nack(&channel, &deliver, false, message_id).await;
+                        
+                        return
+                    },
                     ReconciliationDispatchError::ModelDeploymentDomainInvariantViolation(e) => {
                         error!("ModelDeploymentDomainInvariantViolation: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
@@ -133,10 +143,10 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                         return
                     },
                     ReconciliationDispatchError::ReconciliationClientInitilizationFailed(e) => {
-                        // Event was processible but client was incorrectly configured. Once the client
-                        // is reconfigured, this event can be processed again
+                        // Event was processible but client was incorrectly configured. This is a long term
+                        // failure so we will reject to prevent rapid attempts at reprocessing the message
                         error!("ReconciliationClientInitilizationFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, true, message_id).await;
+                        self.nack(&channel, &deliver, false, message_id).await;
         
                         return
                     },
@@ -270,7 +280,7 @@ async fn main() -> () {
         .await
         .expect("Model deployment reconciliation queue bound to exchange with routing key");
 
-    // Unique consumer tag. Make this unique per worker. 
+    // Unique consumer tag to identitfy the worker. 
     let consumer_tag = Uuid::now_v7();
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");

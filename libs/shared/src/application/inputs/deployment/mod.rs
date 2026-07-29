@@ -14,6 +14,7 @@ pub struct ClientModelDeploymentRequest {
     pub strategy: Option<ClientStrategy>
 }
 
+#[derive(Debug, Clone)]
 pub struct FindForReconciliationInput {
     pub deployment_id: Uuid,
     pub revision: u32,

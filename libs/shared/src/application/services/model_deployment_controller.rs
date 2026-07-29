@@ -15,6 +15,8 @@ use crate::domain::entities::deployment::{DesiredState,
     ModelDeploymentMetadataDelta,
     ReplicaGroupDelta,
 };
+use crate::domain::entities::principal::Kind;
+use crate::shared_kernel::context::RequestContext;
 use thiserror::Error;
 use retry_utils::{
     retry_async,
@@ -40,7 +42,7 @@ pub enum ReconciliationDispatchError {
     #[error("Model deployment domain invariant violation: {0}")]
     ModelDeploymentDomainInvariantViolation(#[from] ModelDeploymentError),
 
-    #[error("Failed to initalize reconciliation client")]
+    #[error("Failed to initalize reconciliation client: {0}")]
     ReconciliationClientInitilizationFailed(#[from] ModelDeploymentPlatformReconcilerProviderError),
 
     #[error("Reconciliation Failed: {0}")]
@@ -48,6 +50,9 @@ pub enum ReconciliationDispatchError {
 
     #[error("Missing deployment strategy: {0}")]
     MissingDeploymentStrategy(String),
+
+    #[error("Invalid Actor Kind: {0}")]
+    InvalidActorKind(String),
 }
 
 #[derive(Debug, Error)]
@@ -111,7 +116,11 @@ impl ModelDeploymentController {
         }
     }
 
-    pub async fn dispatch_reconciler(&self, payload: &ModelDeploymentStateDriftDetectedPayload) -> Result<DispatchReconcilerResult, ReconciliationDispatchError> {
+    pub async fn dispatch_reconciler(&self, ctx: &RequestContext, payload: &ModelDeploymentStateDriftDetectedPayload) -> Result<DispatchReconcilerResult, ReconciliationDispatchError> {
+        if ctx.actor_kind() != &Kind::System {
+            return Err(ReconciliationDispatchError::InvalidActorKind("Only System actors can dispatch model deployment reconcilers".into()))
+        }
+        
         let input = FindForReconciliationInput {
             deployment_id: payload.deployment_id.clone(),
             revision: payload.deployment_revision.clone(),
@@ -125,8 +134,8 @@ impl ModelDeploymentController {
 
         let mut deployment = match maybe_deployment {
             Ok(d) => Ok(d),
-            Err(err) => {
-                match err {
+            Err(e) => {
+                match e {
                     ModelDeploymentServiceError::DeploymentNotFound(_) => Err(ReconciliationDispatchError::StaleEvent("Deployment not found".into())),
                     ModelDeploymentServiceError::RevisionMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("Revision mismatch: Expected revision {0}. Actual revision: {1}", expected, actual))),
                     ModelDeploymentServiceError::StateMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("State mismatch: Expected state {0}. Actual state: {1}", expected, actual))),
@@ -143,7 +152,13 @@ impl ModelDeploymentController {
             None => return Ok(DispatchReconcilerResult::new(None, vec![] ))
         };
         
-        let client = self.client_provider.provide(&deployment.platform)?;
+        let client = match self.client_provider.provide(&deployment.platform) {
+            Ok(c) => c,
+            Err(e) => {
+                self.handle_deployment_failure(&mut deployment, "Internal Error: Failed to initialize deployment client").await;
+                return Err(e)?
+            }
+        };
 
         let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
             &deployment.model.author,
@@ -151,13 +166,20 @@ impl ModelDeploymentController {
             &deployment.model.tenant_id,
         );
 
-        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None)
-            .await
-            .map_err(|err| ReconciliationDispatchError::ModelMetadataRetrievalFailed(err.to_string()))?;
+        let maybe_model_metadata = match retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None).await {
+            Ok(r) => r,
+            Err(e) => {
+                self.handle_deployment_failure(&mut deployment, "Internal Error: Failed to fetch metadata").await;
+                return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(e.to_string()))
+            }
+        };
 
         let model_metadata = match maybe_model_metadata {
             Some(mm) => mm,
-            None => return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(format!("Model {}/{} not found", &deployment.model.author, &deployment.model.name)))
+            None => {
+                self.handle_deployment_failure(&mut deployment, "The model for this deployment cannot be found").await;
+                return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(format!("Model {}/{} not found", &deployment.model.author, &deployment.model.name)))
+            }
         };
         
         let outcome = client.reconcile(
@@ -272,7 +294,7 @@ impl ModelDeploymentController {
     
             let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY, None) 
                 .await
-                .map_err(|err| FinishReconciliationError::ModelDeploymentUpdateFailed(err.to_string()))?;
+                .map_err(|e| FinishReconciliationError::ModelDeploymentUpdateFailed(e.to_string()))?;
         }
 
         // Publish any events returned by the controller
@@ -286,9 +308,9 @@ impl ModelDeploymentController {
             
             let _ = self.event_publisher.publish(new_event)
                 .await
-                .map_err(|err| {
-                    error!("Failed to publish event produced while finishing reconciliation. Event id: {}, Event kind: {}. Error: {}", new_event.metadata().id().to_string(), String::from(new_event.metadata().kind()), err.to_string());
-                    FinishReconciliationError::EventPublicationFailed(err)
+                .map_err(|e| {
+                    error!("Failed to publish event produced while finishing reconciliation. Event id: {}, Event kind: {}. Error: {}", new_event.metadata().id().to_string(), String::from(new_event.metadata().kind()), e.to_string());
+                    FinishReconciliationError::EventPublicationFailed(e)
                 })?;
         }
 
@@ -325,5 +347,17 @@ impl ModelDeploymentController {
             (State::Running, DesiredState::Stopped) => Some(ReconciliationAction::Stop),
             _ => None,
         })
+    }
+
+    /// Handles deployment updates on failure.
+    async fn handle_deployment_failure(&self, deployment: &mut ModelDeployment, reason: &str) -> (){
+        if let Err(e) = deployment.mark_as_failed(Some(reason.into())) {
+            error!("Domain Error: Failed to mark deployment '{}' as failed: {}", deployment.id, e.to_string());
+            return
+        };
+
+        if let Err(e) = self.model_deployment_service.update(UpdateModelDeploymentInput { deployment: deployment.clone() }).await {
+            error!("Infrastructure Error: Failed to update status for model deployment '{}': {}", deployment.id, e.to_string());
+        };
     }
 }

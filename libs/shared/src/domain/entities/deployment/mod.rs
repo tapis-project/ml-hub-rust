@@ -141,6 +141,14 @@ impl ModelDeployment {
         
         draft
     }
+
+    pub fn mark_as_failed(&mut self, message: Option<String>) -> Result<(), ModelDeploymentError> {
+        self.revise()
+            .transition_to_state(State::Failed, message)?
+            .finish();
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug)]
