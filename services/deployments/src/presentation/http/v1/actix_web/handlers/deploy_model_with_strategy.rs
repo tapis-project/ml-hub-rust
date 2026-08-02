@@ -14,7 +14,7 @@ use serde_json::to_value;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::domain::entities::deployment::ParallelismStrategy;
 use shared::shared_kernel::context::RequestContext;
-use shared::application::inputs::deployment::DeployWithStrategyInput;
+use shared::application::inputs::deployment::{Argument, DeployWithStrategyInput};
 use shared::application::inputs::common::Scope as ScopeInput;
 
 #[utoipa::path(
@@ -56,7 +56,10 @@ async fn deploy_model_with_strategy(
             )),
         platform: path.platform.clone(),
         strategy_name: path.strategy_name.clone(),
-        params: body.params.clone(),
+        arguments: body.arguments
+            .unwrap_or_else(vec![])
+            .map(|a| Argument::from(a))
+            .collect(),
         deployment_modality: shared::shared_kernel::enums::DeploymentModality::from(body.deployment_modality.clone()),
     };
 

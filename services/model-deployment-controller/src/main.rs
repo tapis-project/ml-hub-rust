@@ -85,8 +85,6 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
             }
         };
 
-        
-
         let maybe_outcome = match &event {
             Event::ModelDeploymentStateDriftDetected { payload, .. } => {
                 // Initialize a system request context with the correlation id of the event

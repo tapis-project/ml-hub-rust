@@ -7,10 +7,7 @@ use crate::application::workflows::reconciliation::{
 use crate::domain::entities::deployment::{
     ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, State,
 };
-use flexserv_deployer::{
-    Backend, FlexServDeployment, FlexServHPCDeployment, FlexServInstance, HpcDeploymentOptions,
-    normalize_tenant_url,
-};
+use flexserv_deployer::{ Backend, FlexServDeployment, FlexServHPCDeployment, FlexServInstance};
 use flexserv_deployer::deployment::{DeploymentError as FlexServDeploymentError, DeploymentResult};
 use log::info;
 use serde_json::json;
@@ -130,31 +127,31 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Backend::Transformers { command: vec![] }
     }
 
-    fn create_deployment_from_entity(
-        deployment: &ModelDeployment,
-    ) -> Result<FlexServHPCDeployment, ReconciliationError> {
-        let (tenant_url, tapis_user, tapis_token) = Self::extract_tapis_credentials(deployment)?;
-        let model_id = format!("{}/{}", deployment.model.author, deployment.model.name);
+    // fn create_deployment_from_entity(
+    //     deployment: &ModelDeployment,
+    // ) -> Result<FlexServHPCDeployment, ReconciliationError> {
+    //     let (tenant_url, tapis_user, tapis_token) = Self::extract_tapis_credentials(deployment)?;
+    //     let model_id = format!("{}/{}", deployment.model.author, deployment.model.name);
 
-        let server = FlexServInstance::builder()
-            .tenant_url(normalize_tenant_url(&tenant_url))
-            .tapis_user(tapis_user.clone())
-            .model(model_id.clone())
-            .backend(Self::default_backend())
-            .build()
-            .map_err(|e| {
-                ReconciliationError::Unimplemented(format!("Failed to create FlexServInstance: {}", e))
-            })?;
+    //     let server = FlexServInstance::builder()
+    //         .tenant_url(normalize_tenant_url(&tenant_url))
+    //         .tapis_user(tapis_user.clone())
+    //         .model(model_id.clone())
+    //         .backend(Self::default_backend())
+    //         .build()
+    //         .map_err(|e| {
+    //             ReconciliationError::Unimplemented(format!("Failed to create FlexServInstance: {}", e))
+    //         })?;
 
-        if let Some(job_uuid) = Self::extract_job_uuid(deployment) {
-            let mut existing = FlexServHPCDeployment::from_existing(tapis_token, job_uuid);
-            existing.tenant_url = Some(normalize_tenant_url(&tenant_url));
-            Ok(existing)
-        } else {
-            let options = Self::extract_hpc_options(deployment)?;
-            Ok(FlexServHPCDeployment::new(server, tapis_token, options))
-        }
-    }
+    //     if let Some(job_uuid) = Self::extract_job_uuid(deployment) {
+    //         let mut existing = FlexServHPCDeployment::from_existing(tapis_token, job_uuid);
+    //         existing.tenant_url = Some(normalize_tenant_url(&tenant_url));
+    //         Ok(existing)
+    //     } else {
+    //         let options = Self::extract_hpc_options(deployment)?;
+    //         Ok(FlexServHPCDeployment::new(server, tapis_token, options))
+    //     }
+    // }
 
     fn result_to_metadata_delta(
         result: &DeploymentResult,
@@ -241,9 +238,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
     fn map_deployment_error(err: FlexServDeploymentError) -> ReconciliationError {
         match err {
-            FlexServDeploymentError::InvalidConfiguration(msg) => {
-                ReconciliationError::Unimplemented(format!("Invalid deployment configuration: {}", msg))
-            }
             FlexServDeploymentError::TapisAuthFailed(msg) => {
                 ReconciliationError::Unimplemented(format!("TAPIS authentication failed: {}", msg))
             }
@@ -278,25 +272,21 @@ impl TapisJobsModelDeploymentReconciliationClient {
         &self,
         input: &ReconcileModelDeploymentInput,
     ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        info!("Starting Tapis Jobs deployment {}", input.deployment.id);
-
-        let has_existing_job = Self::extract_job_uuid(&input.deployment).is_some();
-        let mut deployment = Self::create_deployment_from_entity(&input.deployment)?;
-
-        let result = if has_existing_job {
-            deployment.start().await
-        } else {
-            deployment.create().await
-        }
-        .map_err(Self::map_deployment_error)?;
-
-        if !has_existing_job {
-            if let DeploymentResult::HPCResult { job_uuid, .. } = &result {
-                info!("HPC job submitted: job_uuid={}", job_uuid);
+        let canonical_model = match input.model_metadata.canonical {
+            Some(c) => Ok(c.model_id),
+            None => Err(ReconciliationError::MissingCanonicalModel(input.model_metadata.name.clone(), input.model_metadata.author.clone()))
+        }?;
+        
+        // TODO handle exsiting job with jobuuid from deployment metadata
+        let result = FlexServHPCDeployment::new(
+            FlexServInstance {
+                backend: Backend::Transformers { command: vec![] },
+                default_embedding_model: None,
+                tapis_user: input.deployment.owner.clone(),
+                default_model: canonical_model,
             }
-        } else {
-            info!("HPC job resubmitted successfully");
-        }
+        ).create();
+
 
         Ok(ReconciliationOutcome::Started(StartedOutcomePayload {
             message: Some("Deployment started successfully".to_string()),

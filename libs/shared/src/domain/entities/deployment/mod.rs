@@ -1,3 +1,5 @@
+pub mod argument;
+
 use std::collections::HashMap;
 use openapiv3::OpenAPI;
 use platforms::Platform;
@@ -46,7 +48,7 @@ pub struct ModelDeployment {
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
-    /// The deployment strategy used to create this model deployment
+    /// The name of the deployment strategy used to create this model deployment
     pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
@@ -80,8 +82,8 @@ impl ModelDeployment {
             platform: props.platform,
             owner: props.owner,
             model: props.model,
-            state: props.state,
-            desired_state: props.desired_state,
+            state: State::NotDeployed,
+            desired_state: DesiredState::Running,
             last_message: props.last_message,
             deployment_modality: props.deployment_modality.clone(),
             deployment_strategy: Some(strategy.name.clone()),
@@ -466,8 +468,6 @@ pub struct DeployWithStrategyProps {
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,
-    pub state: State,
-    pub desired_state: DesiredState,
     pub last_message: Option<String>,
     pub visibility: Visibility,
     pub deployment_modality: DeploymentModality,

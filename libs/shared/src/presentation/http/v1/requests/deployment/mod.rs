@@ -1,5 +1,6 @@
 mod dto_to_shared_kernel;
 mod dto_to_entity;
+mod dto_to_input;
 
 use platforms::Platform;
 use serde::{Deserialize, Serialize};
@@ -24,13 +25,21 @@ pub struct DeployModelWithStrategyBody {
     pub model_name: String,
     pub model_author: String,
     pub deployment_modality: DeploymentModality,
-    pub params: Value,
+    pub arguments: Option<Vec<Argument>>,
     pub replicas: Option<u8>,
     pub parallelism_strategies: Option<Vec<ParallelismStrategy>>,
+    /// Selector for global vs tenant-scoped models
     #[serde(default = "default_scope")]
     #[param(value_type = Scope, inline, required)]
-    /// Selector for global vs tenant-scoped models
     pub scope: Scope
+}
+
+fn default_scope () -> Scope { Scope::Tenant }
+
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
+pub struct Argument {
+    pub parameter_name: String,
+    pub value: String
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
@@ -42,14 +51,11 @@ pub enum ParallelismStrategy {
     ExpertParallelism,
 }
 
-
 #[derive(Clone, Debug, ToSchema, Deserialize)]
 pub enum DeploymentModality {
     Batch,
     Service,
 }
-
-fn default_scope () -> Scope { Scope::Tenant }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct StartModelDeploymentPathParams {

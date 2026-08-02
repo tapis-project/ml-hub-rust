@@ -262,7 +262,7 @@ mod tapis_pods_test {
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let deployment = deployment_without_metadata();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start { strategy: None },
+            action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };
@@ -419,7 +419,7 @@ mod tapis_pods_test {
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start { strategy: None },
+            action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };
@@ -460,7 +460,7 @@ mod tapis_pods_test {
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start { strategy: None },
+            action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };

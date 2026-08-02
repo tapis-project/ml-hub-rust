@@ -1,8 +1,7 @@
-use serde_json::Value;
 use platforms::Platform;
 use uuid::Uuid;
 use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy::client_strategy::ClientStrategy};
-use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ParallelismStrategy, ReplicaGroup, State};
+use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ParallelismStrategy, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
 
 use crate::application::inputs::common::Scope;
@@ -28,7 +27,7 @@ pub struct FilterInput {
     pub state: Option<State>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeployWithStrategyInput {
     pub name: String,
     pub description: Option<String>,
@@ -40,7 +39,13 @@ pub struct DeployWithStrategyInput {
     pub deployment_modality: DeploymentModality,
     pub replicas: Option<u8>,
     pub parallelism_strategies: Option<Vec<ParallelismStrategy>>,
-    pub params: Value,
+    pub arguments: Vec<Argument>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Argument {
+    pub parameter_name: String,
+    pub value: String,
 }
 
 #[derive(Debug)]

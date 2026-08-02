@@ -1,4 +1,6 @@
+use crate::application::ports::cipher::{Cipher, CipherError};
 use crate::application::ports::deployment_strategy::{DeploymentStrategyProvider, GetStrategyByPlatformAndNameInput};
+use crate::domain::entities::deployment_strategy::strategy::StrategyError;
 use crate::shared_kernel::context::RequestContext;
 use crate::application::workflows::Workflow;
 use crate::application::workflows::deployment::{UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput};
@@ -23,10 +25,8 @@ use crate::domain::entities::deployment::{
     DesiredState,
     ModelDeployment,
     ModelDeploymentError,
-    ModelDeploymentMetadata,
     ModelReference,
     ReplicaGroup,
-    State
 };
 use crate::domain::entities::visibility::Visibility;
 use crate::domain::services::{
@@ -34,10 +34,12 @@ use crate::domain::services::{
 };
 use log::error;
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use thiserror::Error;
+
+use super::deployment_argument_service::{DeploymentArgumentService, DeploymentArgumentServiceError};
+
 
 
 #[derive(Debug, Error)]
@@ -57,6 +59,9 @@ pub enum ModelDeploymentServiceError {
     #[error("Model Deployment repository error: {0}")]
     ModelDeploymentRepoError(#[from] ModelDeploymentRepositoryError),
 
+    #[error("Argument persistence error: {0}")]
+    ArgumentPersistenceError(#[from] DeploymentArgumentServiceError),
+
     #[error("Model Deployment not found: {0}")]
     DeploymentNotFound(String),
 
@@ -69,18 +74,26 @@ pub enum ModelDeploymentServiceError {
     #[error("Invalid Strategy: {0}")]
     InvalidStrategy(String),
 
+    #[error("Invalid arguments: {0}")]
+    InvalidArguments(#[from] StrategyError),
+
+    #[error("Argument encryption error: {0}")]
+    ArgumentEncryptionError(#[from] CipherError),
+
     #[error("Model not found for author '{0}' with name '{1}'")]
     MissingModelMetadata(String, String),
 }
 
 pub struct ModelDeploymentService {
+    deployment_argument_service: DeploymentArgumentService,
     model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
     // TODO Leave _artifact_repo unused for now. See the link below 
     // https://github.com/tapis-project/ml-hub-rust/issues/73
     _artifact_repo: Arc<dyn ArtifactRepository>,
     event_publisher: Arc<dyn EventPublisher>,
-    deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>
+    deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
+    cipher: Arc<dyn Cipher>,
 }
 
 impl ModelDeploymentService {
@@ -102,18 +115,22 @@ impl ModelDeploymentService {
     });
 
     pub fn new(
+        deployment_argument_service: DeploymentArgumentService,
         model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
         artifact_repo: Arc<dyn ArtifactRepository>,
         event_publisher: Arc<dyn EventPublisher>,
-        deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>
+        deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
+        cipher: Arc<dyn Cipher>,
     ) -> Self {
         Self {
+            deployment_argument_service,
             model_deployment_repo,
             model_metadata_repo,
             _artifact_repo: artifact_repo,
             event_publisher,
-            deployment_strategy_provider
+            deployment_strategy_provider,
+            cipher,
         }
     }
 
@@ -170,7 +187,7 @@ impl ModelDeploymentService {
     pub async fn deploy_model_with_strategy(
         &self,
         input: DeployWithStrategyInput,
-        identity_context: &RequestContext,
+        ctx: &RequestContext,
     ) -> Result<DeployModelWithStrategyOutput, ModelDeploymentServiceError> {
         // Find the strategy by platform and name
         let maybe_strategy = self.deployment_strategy_provider
@@ -188,7 +205,7 @@ impl ModelDeploymentService {
         };
 
         // Resolve the tenant
-        let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, identity_context.actor_tenant_id());
+        let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, ctx.actor_tenant_id());
         
         // Find model metadata closure
         let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
@@ -220,12 +237,6 @@ impl ModelDeploymentService {
         //     .await?
         //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
         
-        // Params provided by user are stored as metadata on the deployment. Downstream deployment clients use this data to make decisions about how to deploy a model.
-        let metadata = serde_json
-            ::from_value::<HashMap<String, serde_json::Value>>(input.params.clone())
-            .ok()
-            .filter(|m| !m.is_empty());
-
         let replica_group = ReplicaGroup {
             count: input.replicas.unwrap_or(1),
             parallelism_strategies: input.parallelism_strategies
@@ -237,33 +248,32 @@ impl ModelDeploymentService {
             id: Uuid::now_v7(),
             name: input.name,
             description: input.description,
-            tenant_id: identity_context.actor_tenant_id().clone(),
+            tenant_id: ctx.actor_tenant_id().clone(),
             platform: input.platform.clone(),
-            owner: identity_context.actor_principal_id().clone(),
+            owner: ctx.actor_principal_id().clone(),
             model: ModelReference {
                 name: input.model_name.clone(),
                 author: input.model_author.clone(),
                 tenant_id: model_tenant_id.clone()
             },
             deployment_modality: input.deployment_modality.clone(),
-            state: State::NotDeployed,
-            desired_state: DesiredState::Running,
             last_message: Some("Model deployment request recieved".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
             replicas: replica_group,
-            metadata: metadata.map(ModelDeploymentMetadata),
+            metadata: None,
         };
         
         // Validate invariants for domain deployment
-        let deployment = ModelDeploymentDomainService::deploy_model_with_strategy(
-            &model_metadata,
-            props,
-            &strategy
-        )?;
-
+        let deployment = ModelDeploymentDomainService::new(self.cipher.clone())
+            .deploy_model_with_strategy(&model_metadata, props, &strategy).await?;
+        
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY, None)
+            .await?;
+
+        // Save the arguments
+        self.deployment_argument_service.save(&deployment, &strategy, &input.arguments)
             .await?;
 
         // Build state drift event payload
@@ -341,6 +351,8 @@ impl ModelDeploymentService {
 
         Ok(())
     }
+
+    
 }
 
 pub struct ListModelDeploymentsByOwnerInput {

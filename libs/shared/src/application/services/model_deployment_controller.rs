@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput};
-use crate::application::ports::deployment_strategy::DeploymentStrategyProvider;
+use crate::application::ports::cipher::Cipher;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, Payload};
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
@@ -26,6 +26,9 @@ use retry_utils::{
 };
 use log::error;
 use once_cell::sync::Lazy;
+
+use super::deployment_argument_service::{DeploymentArgumentService, DeploymentArgumentServiceError};
+use super::deployment_strategy_service::{DeploymentStrategyService, GetStrategyByPlatformAndNameInput};
 
 
 #[derive(Debug, Error)]
@@ -53,6 +56,9 @@ pub enum ReconciliationDispatchError {
 
     #[error("Invalid Actor Kind: {0}")]
     InvalidActorKind(String),
+
+    #[error("Argument service error: {0}")]
+    DeploymentArgumentServiceError(#[from] DeploymentArgumentServiceError)
 }
 
 #[derive(Debug, Error)]
@@ -85,11 +91,13 @@ impl DispatchReconcilerResult {
 }
 
 pub struct ModelDeploymentController {
-    deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
+    deployment_strategy_service: DeploymentStrategyService,
+    deployment_argument_service: DeploymentArgumentService,
     model_deployment_service: ModelDeploymentService,
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
     event_publisher: Arc<dyn EventPublisher>,
     client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
+    cipher: Arc<dyn Cipher>,
 }
 
 impl ModelDeploymentController {
@@ -101,18 +109,22 @@ impl ModelDeploymentController {
     });
 
     pub fn new(
-        deployment_strategy_provider: Arc<dyn  DeploymentStrategyProvider>,
+        deployment_strategy_service: DeploymentStrategyService,
+        deployment_argument_service: DeploymentArgumentService,
         model_deployment_service: ModelDeploymentService,
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
+        cipher: Arc<dyn Cipher>,
     ) -> Self {
         Self {
-            deployment_strategy_provider,
+            deployment_strategy_service,
+            deployment_argument_service,
             model_deployment_service,
             model_metadata_repo,
             event_publisher,
             client_provider,
+            cipher,
         }
     }
 
@@ -139,7 +151,7 @@ impl ModelDeploymentController {
                     ModelDeploymentServiceError::DeploymentNotFound(_) => Err(ReconciliationDispatchError::StaleEvent("Deployment not found".into())),
                     ModelDeploymentServiceError::RevisionMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("Revision mismatch: Expected revision {0}. Actual revision: {1}", expected, actual))),
                     ModelDeploymentServiceError::StateMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("State mismatch: Expected state {0}. Actual state: {1}", expected, actual))),
-                    ModelDeploymentServiceError::DesiredStateMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("State mismatch: Expected state {0}. Actual state: {1}", expected, actual))),
+                    ModelDeploymentServiceError::DesiredStateMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("Desired State mismatch: Expected state {0}. Actual state: {1}", expected, actual))),
                     other => Err(ReconciliationDispatchError::from(other)) 
                 }
             }
@@ -323,27 +335,28 @@ impl ModelDeploymentController {
             return Ok(None)
         }
 
-        let maybe_strategy = self.deployment_strategy_provider
-            .list_all()
-            .await
-            .iter()
-            .find(|css| css.platform == deployment.platform.clone())
-            .map(|cs| cs.strategies())
-            .map(|strats| strats.iter().find(|strat| Some(strat.name.clone()) == deployment.deployment_strategy.clone()))
-            .map(|maybe_strat| maybe_strat.cloned())
-            .flatten();
+        let maybe_strategy = match &deployment.deployment_strategy {
+            Some(name) => {
+                self.deployment_strategy_service.get_strategy_by_platform_and_name(
+                GetStrategyByPlatformAndNameInput {
+                    platform: deployment.platform.clone(),
+                    name: name.clone()
+                }).await
+            }, 
+            None => None
+        };
 
         if deployment.deployment_strategy.is_some() && maybe_strategy.is_none() {
             return Err(ReconciliationDispatchError::MissingDeploymentStrategy(format!("During reconciliation action resolution, the referenced deployment strategy '{}' was not found", deployment.deployment_strategy.clone().unwrap_or(String::from("No name found: Impossible")))))
         }
 
         Ok(match (&deployment.state, &deployment.desired_state) {
+            (State::NotDeployed, DesiredState::Running) |
+            (State::Stopped, DesiredState::Running) |
+            (State::Failed, DesiredState::Running) |
+            (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start),
             (State::Unknown, _) => Some(ReconciliationAction::Observe),
-            (State::NotDeployed, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
             (_, DesiredState::NotDeployed) => Some(ReconciliationAction::Undeploy),
-            (State::Stopped, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
-            (State::Failed, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
-            (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start { strategy: maybe_strategy }),
             (State::Running, DesiredState::Stopped) => Some(ReconciliationAction::Stop),
             _ => None,
         })

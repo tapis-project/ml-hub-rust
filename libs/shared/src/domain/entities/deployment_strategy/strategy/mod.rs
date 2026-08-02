@@ -2,12 +2,13 @@
 
 use std::num::{NonZero, NonZeroU64};
 
+use crate::domain::entities::deployment::argument::Argument;
+use crate::domain::entities::deployment_strategy::rule_set::RuleSet;
+use crate::domain::entities::deployment_strategy::parameter_set::{ParameterSet, ParameterSetError};
 use crate::domain::entities::deployment::ParallelismStrategy;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::shared_kernel::value_objects::Ttl;
 
-use super::rule_set::RuleSet;
-use super::parameter_set::ParameterSet;
 
 use nonempty::NonEmpty;
 use serde::Serialize;
@@ -15,13 +16,19 @@ use thiserror::Error;
 
 use platforms::Platform;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum StrategyError {
     #[error("Duplicate RuleSet name: {0}")]
     DuplicateRuleSetName(String),
 
     #[error(transparent)]
     ConfigurationError(#[from] StrategyConfigError),
+
+    #[error(transparent)]
+    InvalidArgumentsForParameterSet(#[from] ParameterSetError),
+
+    #[error("Extraneous arguments provided for strategy with no parameter set")]
+    UnexpectedArguments,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -81,6 +88,29 @@ impl Strategy {
     pub fn config(&self) -> &StrategyConfig {
         &self.config
     }
+
+    pub fn is_parameter_secret(&self, parameter_name: &str) -> bool {
+        let parameter_set = self.parameter_set();
+
+        let parameters = parameter_set
+            .as_ref()
+            .map_or(vec![], |ps| ps.get_required_params());
+
+        parameters.iter()
+            .filter(|p| p.name == parameter_name && p.secret)
+            .collect::<Vec<_>>()
+            .len() > 0
+    }
+
+    pub fn validate_arguments(&self, args: &[Argument]) -> Result<(), StrategyError> {
+        match &self.parameter_set {
+            Some(ps) => ps
+                .validate_arguments(args)
+                .map_err(StrategyError::InvalidArgumentsForParameterSet),
+            None if !args.is_empty() => Err(StrategyError::UnexpectedArguments),
+            None => Ok(()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -105,7 +135,7 @@ pub struct ReconstitueStrategyConfigProps {
     pub max_replicas: Option<u64>,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum StrategyConfigError {
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String)

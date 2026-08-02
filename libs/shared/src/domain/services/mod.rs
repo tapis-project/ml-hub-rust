@@ -1,5 +1,8 @@
 pub mod deployment_strategy;
 
+use std::sync::Arc;
+
+use crate::application::ports::cipher::{Cipher, CipherError};
 use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
@@ -8,11 +11,12 @@ use crate::domain::entities::artifact::ArtifactType;
 use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentError, DeployWithStrategyProps};
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
+use crate::domain::entities::deployment_strategy::strategy::StrategyError;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
     #[error("{0}")]
-    InvalidIngestionState(String)
+    InvalidIngestionState(String),
 }
 
 pub struct ArtifactService {}
@@ -75,19 +79,32 @@ pub enum ModelDeploymentDomainServiceError {
     InvalidArtifactType,
 
     #[error(transparent)]
-    DomainError(#[from] ModelDeploymentError)
+    DomainError(#[from] ModelDeploymentError),
+
+    #[error(transparent)]
+    ArgumentEncryptionError(#[from] CipherError),
+
+    #[error(transparent)]
+    StrategyError(#[from] StrategyError)
 }
 
-pub struct ModelDeploymentService {}
+pub struct ModelDeploymentService {
+    cipher: Arc<dyn Cipher>
+}
 
 impl ModelDeploymentService {
-    pub fn deploy_model_with_strategy(
+    pub fn new(cipher: Arc<dyn Cipher>) -> Self {
+        Self { cipher }
+    }
+
+    pub async fn deploy_model_with_strategy(
+        &self,
         _model_metadata: &ModelMetadata,
         // TODO Uncomment the line below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // artifact: &Artifact,
         props: DeployWithStrategyProps,
-        strategy: &Strategy
+        strategy: &Strategy,
     ) -> Result<ModelDeployment, ModelDeploymentDomainServiceError> {
         // TODO Uncomment all lines below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73

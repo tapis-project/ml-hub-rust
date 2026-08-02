@@ -3,7 +3,7 @@ use std::time::Duration;
 use thiserror::Error;
 use uuid::Uuid;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum CommonRepositoryError {
     #[error("Temporary infrastructure failure: {reason}")]
     Transient {

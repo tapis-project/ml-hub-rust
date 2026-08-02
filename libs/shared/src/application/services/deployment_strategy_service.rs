@@ -40,6 +40,6 @@ impl DeploymentStrategyService {
 }
 
 pub struct GetStrategyByPlatformAndNameInput {
-    platform: Platform,
-    name: String,
+    pub platform: Platform,
+    pub name: String,
 }

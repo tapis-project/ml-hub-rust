@@ -1,7 +1,6 @@
 use crate::domain::entities::artifact::{Artifact, ArtifactType};
 use crate::domain::entities::artifact_ingestion::ArtifactIngestion;
 use crate::domain::entities::artifact_publication::ArtifactPublication;
-use crate::application::errors::ApplicationError;
 use crate::application::ports::errors::CommonRepositoryError;
 use uuid::Uuid;
 use async_trait::async_trait;

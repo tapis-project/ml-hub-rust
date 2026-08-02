@@ -43,8 +43,8 @@ partially = { version = "0.2.1", features = ["derive"] }
 jsonwebtoken = { version = "10.3", features = ["rust_crypto"] }
 tapis-authenticator = "0.2.0"
 tapis-tenants = "0.2.0"
-base64 = "0.22.1"
-flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", rev = "8da1963" }
+base64 = "0.23.0"
+flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", rev = "8a086d9" }
 url-parse = "1.0.10"
 derive_more = { version = "2.1.1", features = ["as_ref"] }
 nonempty = { version = "0.12.0", features = ["serialize"] }

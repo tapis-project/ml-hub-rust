@@ -1,18 +1,25 @@
-use crate::domain::entities::{deployment::{ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta, ReplicaGroupDelta, State}, deployment_strategy::strategy::Strategy};
+use crate::domain::entities::deployment::{
+    ModelDeploymentInterfaceDelta, 
+    ModelDeploymentMetadataDelta, 
+    ReplicaGroupDelta, 
+    State
+};
+
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
 pub enum ReconciliationError {
     #[error("Unimplemented: {0}")]
-    Unimplemented(String)
+    Unimplemented(String),
+
+    #[error("No canoncal model found for model '{0}' by user '{1}'")]
+    MissingCanonicalModel(String, String),
 }
 
 #[derive(Clone, Debug)]
 pub enum ReconciliationAction {
     /// Create the deployment if it doesn't exist and start it
-    Start {
-        strategy: Option<Strategy>
-    },
+    Start,
     /// Stop the deployment
     Stop,
     /// Observe the reason for the Blocked or Unknown state
