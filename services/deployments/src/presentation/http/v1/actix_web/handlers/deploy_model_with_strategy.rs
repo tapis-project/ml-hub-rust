@@ -57,8 +57,10 @@ async fn deploy_model_with_strategy(
         platform: path.platform.clone(),
         strategy_name: path.strategy_name.clone(),
         arguments: body.arguments
-            .unwrap_or_else(vec![])
-            .map(|a| Argument::from(a))
+            .clone()
+            .unwrap_or_else(|| vec![])
+            .iter()
+            .map(|a| Argument::from(a.clone()))
             .collect(),
         deployment_modality: shared::shared_kernel::enums::DeploymentModality::from(body.deployment_modality.clone()),
     };

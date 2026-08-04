@@ -34,6 +34,7 @@ impl TryFrom<dtos::client_strategy::ClientStrategy> for entities::client_strateg
             value.use_parameter_set,
             entities::strategy::StrategyConfig::try_from(value.config)?,
             value.enabled,
+            value.data,
         )?;
 
         Ok(client_strat)

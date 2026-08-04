@@ -122,6 +122,12 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
         
                         return
                     },
+                    ReconciliationDispatchError::DeploymentArgumentServiceError(e) => {
+                        error!("DeploymentArgumentServiceError: {}", e.to_string());
+                        self.nack(&channel, &deliver, true, message_id).await;
+        
+                        return
+                    },
                     ReconciliationDispatchError::ModelDeploymentRetrievalFailed(e) => {
                         error!("ModelDeploymentRetrievalFailed: {}", e.to_string());
                         self.nack(&channel, &deliver, true, message_id).await;
@@ -152,6 +158,9 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                         error!("ReconciliationFailed: {}", e.to_string());
                         match e {
                             ReconciliationError::Unimplemented(_) => {
+                                self.nack(&channel, &deliver, false, message_id).await;
+                            },
+                            ReconciliationError::MissingCanonicalModel(..) => {
                                 self.nack(&channel, &deliver, false, message_id).await;
                             }
                         }

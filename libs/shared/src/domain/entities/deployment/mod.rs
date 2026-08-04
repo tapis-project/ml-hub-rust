@@ -236,6 +236,7 @@ pub enum ModelDeploymentMetadataDelta {
 pub struct ReplicaGroup {
     /// Number of replicas
     pub count: u8,
+    
     /// Sharding / parallelism strategies actually employed by the deployment runtime.
     pub parallelism_strategies: Vec<ParallelismStrategy>,
 }

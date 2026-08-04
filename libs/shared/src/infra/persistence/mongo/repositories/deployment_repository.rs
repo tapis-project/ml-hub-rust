@@ -17,6 +17,7 @@ use mongodb::{
     Collection,
 };
 use futures::stream::TryStreamExt;
+
 pub struct ModelDeploymentRepository {
     read_collection: Collection<ModelDeployment>,
     write_collection: Collection<ModelDeployment>

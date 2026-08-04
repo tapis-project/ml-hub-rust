@@ -38,10 +38,14 @@ impl Base64EncodedString {
 
     pub fn new_from_base64(payload: String) -> Result<Self, Base64EncodedStringError> {
         if BASE64_STANDARD.decode(&payload).is_err() {
-            return Err(Base64EncodedStringError::InvalidBase64Encoding("Encrypted data has an invalid encoding. Expected base64".into()));
+            return Err(Base64EncodedStringError::InvalidBase64Encoding("Expected base64".into()));
         }
 
         Ok(Self(payload))
+    }
+
+    pub fn into_inner(&self) -> &str {
+        &self.0
     }
 }
 

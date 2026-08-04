@@ -15,7 +15,7 @@ pub enum DeploymentArgumentRepositoryError {
 }
 
 #[async_trait]
-pub trait DeploymentArgumentRepository {
+pub trait DeploymentArgumentRepository: Send + Sync {
     async fn save_all(&self, deployment_id: &Uuid, arguments: &[Argument]) -> Result<(), DeploymentArgumentRepositoryError>;
-    async fn find_all_for_deployment(&self, deployment_id: Uuid) -> Result<Vec<Argument>, DeploymentArgumentRepositoryError>;
+    async fn find_all_for_deployment(&self, deployment_id: &Uuid) -> Result<Vec<Argument>, DeploymentArgumentRepositoryError>;
 }

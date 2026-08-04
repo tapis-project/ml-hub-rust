@@ -17,3 +17,4 @@ pub mod _common;
 pub mod principal;
 pub mod counts;
 pub mod encryption;
+pub mod argument;

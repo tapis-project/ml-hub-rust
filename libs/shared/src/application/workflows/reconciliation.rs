@@ -1,9 +1,9 @@
-use crate::domain::entities::deployment::{
+use crate::{application::services::deployment_argument_service::DecryptedArgument, domain::entities::deployment::{
     ModelDeploymentInterfaceDelta, 
     ModelDeploymentMetadataDelta, 
     ReplicaGroupDelta, 
     State
-};
+}};
 
 use thiserror::Error;
 
@@ -19,7 +19,7 @@ pub enum ReconciliationError {
 #[derive(Clone, Debug)]
 pub enum ReconciliationAction {
     /// Create the deployment if it doesn't exist and start it
-    Start,
+    Start { payload: Vec<DecryptedArgument> },
     /// Stop the deployment
     Stop,
     /// Observe the reason for the Blocked or Unknown state

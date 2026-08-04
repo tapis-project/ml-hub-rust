@@ -11,9 +11,7 @@ use crate::{
 
 use async_trait::async_trait;
 
-pub struct VaultCipher {
-
-}
+pub struct VaultCipher;
 
 #[async_trait]
 impl Cipher for VaultCipher {
@@ -22,9 +20,9 @@ impl Cipher for VaultCipher {
             CryptoContext::DeploymentArgumentSecret => {
                 // TODO actually implement
                 EncryptionEnvelopeMetadata::new_aes_gcm(
-                    KeyId::new("todo")
+                    KeyId::new("not implemented")
                         .map_err(|e| CipherError::EncryptionError(e.to_string()))?,
-                    Nonce::new(vec![1, 2, 3])
+                    Nonce::new(vec![0])
                         .map_err(|e| CipherError::EncryptionError(e.to_string()))?
                 )
             }

@@ -36,6 +36,10 @@ impl EncryptionEnvelope {
         }
     }
 
+    pub fn payload(&self) -> &Base64EncodedString {
+        &self.payload
+    }
+
     pub fn base64_decoded_payload(&self) -> Result<Vec<u8>, Base64EncodedStringError> {
         self.payload.decode()
     }

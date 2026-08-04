@@ -23,6 +23,7 @@ use retry_utils::{
 
 use thiserror::Error;
 use once_cell::sync::Lazy;
+use uuid::Uuid;
 
 
 #[derive(Debug, Clone, Error)]
@@ -73,6 +74,14 @@ impl DeploymentArgumentService {
         let save_args = || self.argument_repo.save_all(&deployment.id, &prepared_arguments);
 
         Ok(retry_async(save_args, &Self::REPO_RETRY_POLICY, None).await?)
+    }
+
+    pub async fn get_decrypted_arguments_for_deployment(&self, deployment_id: &Uuid) -> Result<Vec<DecryptedArgument>, DeploymentArgumentServiceError> {
+        let find_args = || self.argument_repo.find_all_for_deployment(deployment_id);
+
+        let arguments = retry_async(find_args, &Self::REPO_RETRY_POLICY, None).await?;
+
+        self.decrypt(arguments).await
     }
 
     pub async fn decrypt(&self, args: Vec<Argument>) -> Result<Vec<DecryptedArgument>, DeploymentArgumentServiceError> {

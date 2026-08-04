@@ -1,5 +1,6 @@
 
 
+use std::collections::HashMap;
 use std::num::{NonZero, NonZeroU64};
 
 use crate::domain::entities::deployment::argument::Argument;
@@ -8,7 +9,6 @@ use crate::domain::entities::deployment_strategy::parameter_set::{ParameterSet, 
 use crate::domain::entities::deployment::ParallelismStrategy;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::shared_kernel::value_objects::Ttl;
-
 
 use nonempty::NonEmpty;
 use serde::Serialize;
@@ -40,6 +40,8 @@ pub struct Strategy {
     parameter_set: Option<ParameterSet>,
     config: StrategyConfig,
     enabled: bool,
+    // Any additional configuration data that deployment clients might need to deploy models
+    data: Option<HashMap<String, String>>,
 }
 
 impl Strategy {
@@ -50,7 +52,8 @@ impl Strategy {
         rule_sets: Vec<RuleSet>,
         parameter_set: Option<ParameterSet>,
         config: StrategyConfig,
-        enabled: Option<bool>
+        enabled: Option<bool>,
+        data: Option<HashMap<String, String>>
     ) -> Result<Self, StrategyError> {
         let mut rule_set_names: Vec<String> = Vec::new();
         for rule_set in &rule_sets {
@@ -70,6 +73,7 @@ impl Strategy {
             parameter_set,
             config,
             enabled: enabled.unwrap_or(true),
+            data,
         })
     }
 
@@ -87,6 +91,10 @@ impl Strategy {
 
     pub fn config(&self) -> &StrategyConfig {
         &self.config
+    }
+
+    pub fn data(&self) -> &Option<HashMap<String, String>> {
+        &self.data
     }
 
     pub fn is_parameter_secret(&self, parameter_name: &str) -> bool {

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use thiserror::Error;
 
 use super::rule_set::RuleSet;
@@ -29,6 +31,7 @@ pub struct ClientStrategy {
     use_parameter_set: Option<String>,
     config: StrategyConfig,
     enabled: Option<bool>,
+    data: Option<HashMap<String, String>>,
 }
 
 impl ClientStrategy {
@@ -41,6 +44,7 @@ impl ClientStrategy {
         use_parameter_set: Option<String>,
         config: StrategyConfig,
         enabled: Option<bool>,
+        data: Option<HashMap<String, String>>,
     ) -> Result<Self, ClientStrategyError> {
         // Invariant: Rule sets MUST contain either rule sets or rule set references
         if rule_sets.is_none() && use_rule_sets.is_none() {
@@ -72,6 +76,7 @@ impl ClientStrategy {
             use_parameter_set,
             config,
             enabled,
+            data,
         })
     }
 
@@ -97,6 +102,10 @@ impl ClientStrategy {
 
     pub fn enabled(&self) -> Option<bool> {
         self.enabled
+    }
+
+    pub fn data(&self) -> &Option<HashMap<String, String>> {
+        &self.data
     }
 }
 

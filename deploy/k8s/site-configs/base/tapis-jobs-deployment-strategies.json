@@ -12,7 +12,11 @@
                 "FlexServCompatible",
                 "CanonicalHuggingfaceVisiblePublic"
             ],
-            "use_parameter_set": "TACCHPC"
+            "use_parameter_set": "TACCHPC",
+            "data": {
+                "app_def_url": "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/app.json",
+                "job_def_url": "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/job.json"
+            }
         }
     ],
     "rule_sets": [
@@ -76,7 +80,8 @@
                             "value": "Stampede3"
                         },
                         {
-                            "value": "Lonestar6"
+                            "value": "Lonestar6",
+                            "enabled": false
                         },
                         {
                             "value": "Frontera"
@@ -103,20 +108,6 @@
                     "name": "Slurm Reservation",
                     "type": "string",
                     "description": "The slurm reservation to use",
-                    "required": false
-                },
-                {
-                    "name": "HuggingFace Token",
-                    "type": "string",
-                    "description": "The user's HuggingFace Token. Required to deploy models from private and gated HuggingFace repositories",
-                    "secret": true,
-                    "required": false
-                },
-                {
-                    "name": "FlexServ Token",
-                    "type": "string",
-                    "description": "FlexServ requires will require this token to make inference calls. If one is not provided, FlexServ will generate one for you.",
-                    "secret": true,
                     "required": false
                 }
             ]

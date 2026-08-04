@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput};
-use crate::application::ports::cipher::Cipher;
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, Payload};
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
@@ -97,7 +96,6 @@ pub struct ModelDeploymentController {
     model_metadata_repo: Arc<dyn ModelMetadataRepository>,
     event_publisher: Arc<dyn EventPublisher>,
     client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
-    cipher: Arc<dyn Cipher>,
 }
 
 impl ModelDeploymentController {
@@ -115,7 +113,6 @@ impl ModelDeploymentController {
         model_metadata_repo: Arc<dyn ModelMetadataRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
-        cipher: Arc<dyn Cipher>,
     ) -> Self {
         Self {
             deployment_strategy_service,
@@ -124,7 +121,6 @@ impl ModelDeploymentController {
             model_metadata_repo,
             event_publisher,
             client_provider,
-            cipher,
         }
     }
 
@@ -350,11 +346,17 @@ impl ModelDeploymentController {
             return Err(ReconciliationDispatchError::MissingDeploymentStrategy(format!("During reconciliation action resolution, the referenced deployment strategy '{}' was not found", deployment.deployment_strategy.clone().unwrap_or(String::from("No name found: Impossible")))))
         }
 
+        // Fetch the arguments for this deployment
+        let decrypted_args = self.deployment_argument_service.get_decrypted_arguments_for_deployment(&deployment.id)
+            .await?;
+
         Ok(match (&deployment.state, &deployment.desired_state) {
             (State::NotDeployed, DesiredState::Running) |
             (State::Stopped, DesiredState::Running) |
             (State::Failed, DesiredState::Running) |
-            (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start),
+            (State::Blocked, DesiredState::Running) => Some(
+                ReconciliationAction::Start { payload: decrypted_args }
+            ),
             (State::Unknown, _) => Some(ReconciliationAction::Observe),
             (_, DesiredState::NotDeployed) => Some(ReconciliationAction::Undeploy),
             (State::Running, DesiredState::Stopped) => Some(ReconciliationAction::Stop),

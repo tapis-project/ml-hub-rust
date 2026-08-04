@@ -1,5 +1,7 @@
 #![cfg(test)]
 
+use std::collections::HashMap;
+
 use platforms::Platform;
 
 use crate::{
@@ -22,6 +24,7 @@ pub struct ReconstitutedClientStrategyBuilder {
     use_parameter_set: Option<String>,
     config: StrategyConfig,
     enabled: Option<bool>,
+    data: Option<HashMap<String, String>>
 }
 
 impl ReconstitutedClientStrategyBuilder {
@@ -45,7 +48,8 @@ impl ReconstitutedClientStrategyBuilder {
             parameter_set: None,
             use_parameter_set: None,
             config: ReconstitutedStrategyConfigBuilder::new().build(),
-            enabled: Some(true)
+            enabled: Some(true),
+            data: None,
         }
     }
 
@@ -99,6 +103,7 @@ impl ReconstitutedClientStrategyBuilder {
             self.use_parameter_set.clone(),
             self.config.clone(),
             self.enabled.clone(),
+            self.data.clone(),
         )?)
     }
 }
@@ -111,6 +116,7 @@ pub struct ReconstituteStrategyBuilder {
     parameter_set: Option<ParameterSet>,
     config: StrategyConfig,
     enabled: Option<bool>,
+    data: Option<HashMap<String, String>>,
 }
 
 impl ReconstituteStrategyBuilder {
@@ -122,7 +128,8 @@ impl ReconstituteStrategyBuilder {
             parameter_set: None,
             config: ReconstitutedStrategyConfigBuilder::new().build(),
             rule_sets: vec![],
-            enabled: Some(true)
+            enabled: Some(true),
+            data: None,
         }
     }
 
@@ -135,6 +142,7 @@ impl ReconstituteStrategyBuilder {
             self.parameter_set.clone(),
             self.config.clone(),
             self.enabled.clone(),
+            self.data.clone()
         )?)
     }
 }

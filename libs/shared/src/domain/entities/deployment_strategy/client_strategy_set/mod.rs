@@ -29,7 +29,7 @@ pub struct ClientStrategySet {
     pub description: Option<String>,
     rule_sets: Option<Vec<RuleSet>>,
     parameter_sets: Option<Vec<ParameterSet>>,
-    strategies: Vec<Strategy>
+    strategies: Vec<Strategy>,
 }
 
 impl ClientStrategySet {
@@ -104,6 +104,7 @@ impl ClientStrategySet {
                     parameter_set,
                     client_strat.config().clone(),
                     client_strat.enabled(),
+                    client_strat.data().clone()
                 )?
             );
         }
