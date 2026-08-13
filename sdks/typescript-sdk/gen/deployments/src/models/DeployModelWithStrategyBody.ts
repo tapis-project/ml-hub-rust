@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    Argument,
+    ArgumentFromJSON,
+    ArgumentFromJSONTyped,
+    ArgumentToJSON,
     DeploymentModality,
     DeploymentModalityFromJSON,
     DeploymentModalityFromJSONTyped,
@@ -34,6 +38,12 @@ import {
  * @interface DeployModelWithStrategyBody
  */
 export interface DeployModelWithStrategyBody {
+    /**
+     * 
+     * @type {Array<Argument>}
+     * @memberof DeployModelWithStrategyBody
+     */
+    arguments?: Array<Argument> | null;
     /**
      * 
      * @type {DeploymentModality}
@@ -72,12 +82,6 @@ export interface DeployModelWithStrategyBody {
     parallelism_strategies?: Array<ParallelismStrategy> | null;
     /**
      * 
-     * @type {any}
-     * @memberof DeployModelWithStrategyBody
-     */
-    params: any | null;
-    /**
-     * 
      * @type {number}
      * @memberof DeployModelWithStrategyBody
      */
@@ -100,13 +104,13 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
+        'arguments': !exists(json, 'arguments') ? undefined : (json['arguments'] === null ? null : (json['arguments'] as Array<any>).map(ArgumentFromJSON)),
         'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'model_author': json['model_author'],
         'model_name': json['model_name'],
         'name': json['name'],
         'parallelism_strategies': !exists(json, 'parallelism_strategies') ? undefined : (json['parallelism_strategies'] === null ? null : (json['parallelism_strategies'] as Array<any>).map(ParallelismStrategyFromJSON)),
-        'params': json['params'],
         'replicas': !exists(json, 'replicas') ? undefined : json['replicas'],
         'scope': !exists(json, 'scope') ? undefined : ScopeFromJSON(json['scope']),
     };
@@ -121,13 +125,13 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
     }
     return {
         
+        'arguments': value.arguments === undefined ? undefined : (value.arguments === null ? null : (value.arguments as Array<any>).map(ArgumentToJSON)),
         'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
         'description': value.description,
         'model_author': value.model_author,
         'model_name': value.model_name,
         'name': value.name,
         'parallelism_strategies': value.parallelism_strategies === undefined ? undefined : (value.parallelism_strategies === null ? null : (value.parallelism_strategies as Array<any>).map(ParallelismStrategyToJSON)),
-        'params': value.params,
         'replicas': value.replicas,
         'scope': ScopeToJSON(value.scope),
     };

@@ -1,7 +1,7 @@
 use crate::domain::entities::artifact::{Artifact, ArtifactType};
 use crate::domain::entities::artifact_ingestion::ArtifactIngestion;
 use crate::domain::entities::artifact_publication::ArtifactPublication;
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use uuid::Uuid;
 use async_trait::async_trait;
 use thiserror::Error;
@@ -9,7 +9,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum ArtifactRepositoryError {
     #[error(transparent)]
-    Persistence(#[from] CommonRepositoryError),
+    Persistence(#[from] InfrastructureError),
 }
 
 #[async_trait]
@@ -24,7 +24,7 @@ pub trait ArtifactRepository: Send + Sync {
 #[derive(Debug, Error)]
 pub enum ArtifactIngestionRepositoryError {
     #[error(transparent)]
-    Persistence(#[from] CommonRepositoryError),
+    Persistence(#[from] InfrastructureError),
 }
 
 #[async_trait]
@@ -40,7 +40,7 @@ pub trait ArtifactIngestionRepository: Send + Sync {
 #[derive(Debug, Error)]
 pub enum ArtifactPublicationRepositoryError {
     #[error(transparent)]
-    Persistence(#[from] CommonRepositoryError),
+    Persistence(#[from] InfrastructureError),
 }
 
 #[async_trait]

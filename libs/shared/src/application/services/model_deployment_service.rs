@@ -268,13 +268,16 @@ impl ModelDeploymentService {
         let deployment = ModelDeploymentDomainService::new(self.cipher.clone())
             .deploy_model_with_strategy(&model_metadata, props, &strategy).await?;
         
+        log::debug!("Save model deployent");
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY, None)
             .await?;
-
+        log::debug!("Model deployent saved");
         // Save the arguments
         self.deployment_argument_service.save(&deployment, &strategy, &input.arguments)
             .await?;
+
+            log::debug!("Deployment arguments saved");
 
         // Build state drift event payload
         let payload = ModelDeploymentStateDriftDetectedPayload {

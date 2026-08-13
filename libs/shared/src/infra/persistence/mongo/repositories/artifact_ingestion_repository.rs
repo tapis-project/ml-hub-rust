@@ -1,5 +1,5 @@
 use crate::application::ports::artifacts::ArtifactIngestionRepositoryError;
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::infra::persistence::mongo::database::ARTIFACT_INGESTION_COLLECTION;
 use crate::infra::artifacts::mongo::documents::ArtifactType as ArtifactTypeDoc;
 use crate::infra::persistence::mongo::documents::artifact_ingestion::{ArtifactIngestion, UpdateArtifactIngestionRequest, UpdateArtifactIngestionStatusRequest};
@@ -40,7 +40,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -71,7 +71,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
             .update_one(filter, document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -97,7 +97,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         self.write_collection.update_one(filter, document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -113,7 +113,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -122,14 +122,14 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         while let Some(ingestion_doc) = cursor.try_next()
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })? 
         {
             let ingestion = entities::artifact_ingestion::ArtifactIngestion::try_from(ingestion_doc)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?;
@@ -148,7 +148,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -157,7 +157,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         while let Some(ingestion_doc) = cursor.try_next()
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })? 
@@ -178,7 +178,7 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -186,14 +186,14 @@ impl application::ports::artifacts::ArtifactIngestionRepository for ArtifactInge
         while let Some(ingestion_doc) = cursor.try_next()
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?
         {
             let ingestion = entities::artifact_ingestion::ArtifactIngestion::try_from(ingestion_doc)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?;

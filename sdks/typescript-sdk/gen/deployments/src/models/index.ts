@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './Argument';
 export * from './BadRequestResponse';
 export * from './Choice';
 export * from './DeployModelWithStrategyBody';

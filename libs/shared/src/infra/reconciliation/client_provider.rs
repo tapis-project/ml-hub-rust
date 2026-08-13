@@ -15,7 +15,7 @@ impl ModelDeploymentPlatformReconcilerProvider for ReconciliationClientProvider 
     fn provide(&self, platform: &Platform) -> Result<Arc<dyn ModelDeploymentPlatformReconciliationClient>, ModelDeploymentPlatformReconcilerProviderError> {
         match platform {
             // Platform::TapisPods => Ok(Arc::new(TapisPodsModelDeploymentReconciliationClient::new())),
-            Platform::TapisJobs => Ok(Arc::new(TapisJobsModelDeploymentReconciliationClient::new())),
+            Platform::TapisJobs => Ok(Arc::new(TapisJobsModelDeploymentReconciliationClient::new()?)),
             _ => Err(ModelDeploymentPlatformReconcilerProviderError::PlatformClientNotFound(platform.to_string()))
         }
     }

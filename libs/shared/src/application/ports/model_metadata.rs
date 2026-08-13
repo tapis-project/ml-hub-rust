@@ -2,7 +2,7 @@ use crate::domain::entities::model_metadata::ModelMetadata;
 use crate::application::inputs::model_metadata::{UpdateModelMetadataArtifactId};
 use crate::application::inputs::discover_models::SearchModelsInput;
 use crate::shared_kernel::context::RequestContext;
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 
 use uuid::Uuid;
 use async_trait::async_trait;
@@ -11,7 +11,7 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum ModelMetadataRepositoryError {
     #[error(transparent)]
-    Persistence(#[from] CommonRepositoryError),
+    Persistence(#[from] InfrastructureError),
 }
 
 #[async_trait]

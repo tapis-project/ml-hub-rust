@@ -4,7 +4,7 @@ use crate::application::ports::events::{Event, EventPublisher, EventPublisherErr
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
 use crate::application::ports::model_metadata::ModelMetadataRepository;
 use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
-use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationError, ReconciliationOutcome};
+use crate::application::workflows::reconciliation::{ReconciliationAction, ReconcilerError, ReconciliationOutcome};
 use crate::application::ports::deployment::{ModelDeploymentPlatformReconcilerProvider, ModelDeploymentPlatformReconcilerProviderError};
 use crate::domain::entities::deployment::{DesiredState,
     ModelDeployment,
@@ -46,9 +46,6 @@ pub enum ReconciliationDispatchError {
 
     #[error("Failed to initalize reconciliation client: {0}")]
     ReconciliationClientInitilizationFailed(#[from] ModelDeploymentPlatformReconcilerProviderError),
-
-    #[error("Reconciliation Failed: {0}")]
-    ReconciliationFailed(#[from] ReconciliationError),
 
     #[error("Missing deployment strategy: {0}")]
     MissingDeploymentStrategy(String),
@@ -196,7 +193,7 @@ impl ModelDeploymentController {
                 deployment: deployment.clone(),
                 model_metadata
             }
-        ).await?;
+        ).await;
 
         // Determine which event to publish based on the reconciliation outcome
         let mut events: Vec<Payload> = Vec::with_capacity(1);
@@ -284,6 +281,46 @@ impl ModelDeploymentController {
                             deployment_id: deployment.id.clone(),
                             deployment_revision: deployment.revision().clone(),
                             message: payload.message,
+                        }
+                    )
+                );
+
+                Some(revised)
+            },
+            ReconciliationOutcome::Failed(payload) => {
+                let mut revised = deployment.revise();
+
+                revised
+                    .transition_to_state(State::Failed, payload.message.clone())?;
+
+                if let Some(metadata_delta) = payload.metadata {
+                    revised.apply_metadata_delta(metadata_delta);
+                }
+
+                let revised = revised.finish();
+
+                Some(revised)
+            },
+            ReconciliationOutcome::Unknown(payload) => {
+                let mut revised = deployment.revise();
+
+                revised
+                    .transition_to_state(State::Unknown, payload.message.clone())?;
+
+                if let Some(metadata_delta) = payload.metadata {
+                    revised.apply_metadata_delta(metadata_delta);
+                }
+
+                let revised = revised.finish();
+
+                events.push(
+                    Payload::ModelDeploymentStateDriftDetectedPayload(
+                        ModelDeploymentStateDriftDetectedPayload {
+                            deployment_id: deployment.id.clone(),
+                            deployment_revision: deployment.revision().clone(),
+                            desired_state: payload.desired_state.clone(),
+                            actual_state: deployment.state.clone(),
+                            message: payload.message.clone()
                         }
                     )
                 );

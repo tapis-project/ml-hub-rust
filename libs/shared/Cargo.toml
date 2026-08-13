@@ -33,7 +33,7 @@ mongodb = { version = "3.5.1", optional = true }
 bson = { version = "2", features = ["chrono-0_4"] }
 futures = "0.3.31"
 utoipa = { version = "5.4.0", features = ["uuid", "macros"]}
-utoipa-swagger-ui = "9.0.2"
+utoipa-swagger-ui = { version = "9.0.2", features = ["reqwest"] }
 partially = { version = "0.2.1", features = ["derive"] }
 jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
 tapis-tokens = "0.4.2"
@@ -41,6 +41,7 @@ tapis-authenticator = "0.4.2"
 tapis-tenants = "0.4.2"
 tapis-jobs = "0.4.2"
 base64 = "0.23.0"
+reqwest = { version = "0.12", features = ["json"] }
 # flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", rev = "1d0fc84" }
 url-parse = "1.0.10"
 derive_more = { version = "2.1.1", features = ["as_ref"] }

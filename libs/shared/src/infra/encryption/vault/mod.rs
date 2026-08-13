@@ -21,9 +21,15 @@ impl Cipher for VaultCipher {
                 // TODO actually implement
                 EncryptionEnvelopeMetadata::new_aes_gcm(
                     KeyId::new("not implemented")
-                        .map_err(|e| CipherError::EncryptionError(e.to_string()))?,
+                        .map_err(|e| {
+                            log::error!("Failed to create new KeyId: {}", e.to_string());
+                            CipherError::EncryptionError(e.to_string())
+                        })?,
                     Nonce::new(vec![0])
-                        .map_err(|e| CipherError::EncryptionError(e.to_string()))?
+                        .map_err(|e| {
+                            log::error!("Failed to create new Nonce from Vec: {}", e.to_string());
+                            CipherError::EncryptionError(e.to_string())
+                        })?,
                 )
             }
         };

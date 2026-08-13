@@ -3,7 +3,7 @@ use uuid::Uuid;
 use thiserror::Error;
 
 // Application
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 
 // Domain
 use crate::domain::entities::deployment::argument::Argument;
@@ -11,7 +11,7 @@ use crate::domain::entities::deployment::argument::Argument;
 #[derive(Debug, Error, Clone)]
 pub enum DeploymentArgumentRepositoryError {
     #[error(transparent)]
-    Persistence(#[from] CommonRepositoryError),
+    Persistence(#[from] InfrastructureError),
 }
 
 #[async_trait]

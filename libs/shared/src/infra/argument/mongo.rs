@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::application::ports::deployment_argument::{
     DeploymentArgumentRepository, DeploymentArgumentRepositoryError,
 };
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::deployment::argument::{Argument, ArgumentData};
 use crate::infra::persistence::mongo::database::DEPLOYMENT_ARGUMENT_COLLECTION;
 use crate::shared_kernel::security::value_objects::{KeyId, Nonce};
@@ -60,8 +60,8 @@ impl MongoDeploymentArgumentRepository {
         }
     }
 
-    fn internal_error(context: &str, error: impl std::fmt::Display) -> CommonRepositoryError {
-        let repository_error = CommonRepositoryError::new_internal();
+    fn internal_error(context: &str, error: impl std::fmt::Display) -> InfrastructureError {
+        let repository_error = InfrastructureError::new_internal();
         log::error!("[{}] {}: {}", repository_error.error_id(), context, error);
         repository_error
     }
@@ -143,16 +143,19 @@ impl DeploymentArgumentRepository for MongoDeploymentArgumentRepository {
         deployment_id: &Uuid,
         arguments: &[Argument],
     ) -> Result<(), DeploymentArgumentRepositoryError> {
+        log::debug!("Start save arguments");
         let arguments = arguments
             .iter()
             .map(Self::to_stored_argument)
             .collect::<Result<Vec<_>, _>>()?;
+        log::debug!("Arguments converted to stored arguments");
 
         let document = DeploymentArgumentsDocument {
             deployment_id: deployment_id.to_string(),
             arguments,
         };
 
+        log::debug!("Start Write");
         self.write_collection
             .replace_one(doc! { "_id": &document.deployment_id }, document)
             .upsert(true)
@@ -160,6 +163,8 @@ impl DeploymentArgumentRepository for MongoDeploymentArgumentRepository {
             .map_err(|error| {
                 Self::internal_error("Could not save deployment arguments to MongoDB", error)
             })?;
+
+        log::debug!("Written");
 
         Ok(())
     }

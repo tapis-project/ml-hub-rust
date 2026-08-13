@@ -4,7 +4,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 #[derive(Debug, Error, Clone)]
-pub enum CommonRepositoryError {
+pub enum InfrastructureError {
     #[error("Temporary infrastructure failure: {reason}")]
     Transient {
         error_id: Uuid,
@@ -16,7 +16,7 @@ pub enum CommonRepositoryError {
     InternalError { error_id: Uuid },
 }
 
-impl CommonRepositoryError {
+impl InfrastructureError {
     pub fn new_internal() -> Self {
         Self::InternalError {
             error_id: Self::gen_error_id(),

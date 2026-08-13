@@ -118,6 +118,7 @@ impl DeploymentArgumentService {
     }
 
     pub async fn prepare_arguments(&self, strategy: &Strategy, inputs: &[ArgumentInput]) -> Result<Vec<Argument>, DeploymentArgumentServiceError> {
+        log::debug!("Start arg prep");
         let mut prepared_args: Vec<Argument> = vec![];
         for arg in inputs {
             // Create the non-secret arguments
@@ -126,6 +127,7 @@ impl DeploymentArgumentService {
                 continue
             }
 
+            log::debug!("ecrypt arg");
             // Encrypt the argument value and create a secret argument
             let encryption_envelope = self.cipher.encrypt(
                 CryptoContext::DeploymentArgumentSecret,

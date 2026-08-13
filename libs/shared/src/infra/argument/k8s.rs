@@ -7,7 +7,7 @@ use kube::{Client, Api};
 use kube::api::{PostParams, DeleteParams, ObjectMeta};
 use serde::{Serialize, Deserialize};
 
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::deployment::argument::{Argument, ArgumentData};
 use crate::shared_kernel::security::value_objects::{KeyId, Nonce};
 use crate::shared_kernel::security::{EncryptionEnvelope, EncryptionEnvelopeMetadata};
@@ -71,7 +71,7 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
                         key_id: key_id.to_string(),
                         nonce: Base64EncodedString::try_from(nonce.clone())
                             .map_err(|e| {
-                                let error = CommonRepositoryError::new_internal();
+                                let error = InfrastructureError::new_internal();
                                 log::error!("[{}] Data integrity error when converting from Nonce into Base64EncodedString: {}", error.error_id(), e.to_string());
                                 error
                             })?
@@ -82,7 +82,7 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
             };
 
             let json_bytes = serde_json::to_vec(&payload).map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -105,7 +105,7 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
             .create(&PostParams::default(), &target_secret)
             .await
             .map_err(|_| {
-                CommonRepositoryError::new_internal()
+                InfrastructureError::new_internal()
             })?;
 
         Ok(())
@@ -124,7 +124,7 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
                 return Ok(Vec::new());
             }
             Err(e) => {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 return Err(DeploymentArgumentRepositoryError::from(error))
             }
@@ -136,7 +136,7 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
             for (param_name, byte_string) in data_map {
                 let payload: K8sArgumentPayload = serde_json::from_slice(&byte_string.0)
                     .map_err(|e| {
-                        let error = CommonRepositoryError::new_internal();
+                        let error = InfrastructureError::new_internal();
                         log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                         error
                     })?;
@@ -149,28 +149,28 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
                         // Enforce your value object safety constraints using new_from_base64
                         let envelope_string = Base64EncodedString::new_from_base64(payload_base64)
                             .map_err(|e| {
-                                let error = CommonRepositoryError::new_internal();
+                                let error = InfrastructureError::new_internal();
                                 log::error!("[{}] Data integrity error: {}", error.error_id(), e.to_string());
                                 error
                             })?;
                         
                         let key_id = KeyId::new(&key_id_string)
                             .map_err(|e| {
-                                let error = CommonRepositoryError::new_internal();
+                                let error = InfrastructureError::new_internal();
                                 log::error!("[{}] Data integrity error when creating KeyId from string: {}", error.error_id(), e.to_string());
                                 error
                             })?;
                         
                         let b64_nonce = Base64EncodedString::new_from_base64(nonce_string)
                             .map_err(|e| {
-                                let error = CommonRepositoryError::new_internal();
+                                let error = InfrastructureError::new_internal();
                                 log::error!("[{}] Data integrity error when converting stored nonce string into Base64EncodedString: {}", error.error_id(), e.to_string());
                                 error
                             })?;
 
                         let nonce = Nonce::try_from(b64_nonce)
                             .map_err(|e| {
-                                let error = CommonRepositoryError::new_internal();
+                                let error = InfrastructureError::new_internal();
                                 log::error!("[{}] Data integrity error: {}", error.error_id(), e.to_string());
                                 error
                             })?;

@@ -54,6 +54,11 @@ spec:
                 secretKeyRef:
                   name: mlhub-rabbit-secrets 
                   key: password
+            - name: MLHUB_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-secrets
+                  key: service-password
           image: tapis/mlhub-model-deployment-controller:local
           imagePullPolicy: Never
           name: model-deployment-controller

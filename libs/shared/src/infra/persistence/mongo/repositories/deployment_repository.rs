@@ -1,6 +1,6 @@
 // Application
 use crate::application::ports::deployment::ModelDeploymentRepositoryError;
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::application::inputs::deployment::FilterInput;
 use crate::application;
 
@@ -42,7 +42,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -63,13 +63,13 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
 
             while let Some(entry) = cursor.try_next().await.map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })? {
@@ -94,7 +94,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 "last_message": update.last_message,
                 "visibility": to_bson(&update.visibility)
                     .map_err(|e| {
-                        let error = CommonRepositoryError::new_internal();
+                        let error = InfrastructureError::new_internal();
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
@@ -103,19 +103,19 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 "last_desired_state_change": update.last_desired_state_change,
                 "deployment_interface": to_bson(&update.deployment_interface)
                     .map_err(|e| {
-                        let error = CommonRepositoryError::new_internal();
+                        let error = InfrastructureError::new_internal();
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
                 "replicas": to_bson(&update.replicas)
                     .map_err(|e| {
-                        let error = CommonRepositoryError::new_internal();
+                        let error = InfrastructureError::new_internal();
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
                 "metadata": to_bson(&update.metadata)
                     .map_err(|e| {
-                        let error = CommonRepositoryError::new_internal();
+                        let error = InfrastructureError::new_internal();
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
@@ -127,7 +127,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             .update_one(filter, document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -148,7 +148,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                     filter.insert("state", state);
                 },
                 Err(e) => {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                     return Err(ModelDeploymentRepositoryError::from(error))
                 }
@@ -158,7 +158,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -166,7 +166,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let maybe_model_deployment = cursor.try_next()
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;

@@ -1,5 +1,5 @@
 use crate::application::ports::artifacts::ArtifactRepositoryError;
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::infra::artifacts::mongo::ARTIFACT_COLLECTION;
 use crate::infra::artifacts::mongo::documents::{Artifact, ArtifactType, UpdateArtifactRequest, UpdateArtifactPathRequest};
@@ -40,7 +40,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         let result = self.write_collection.insert_one(&document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -58,7 +58,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -67,7 +67,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         while let Some(artifact) = cursor.try_next()
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?
@@ -75,7 +75,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
             artifacts.push(
                 entities::artifact::Artifact::try_from(artifact)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?
@@ -93,7 +93,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -101,14 +101,14 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         while let Some(artifact_doc) = cursor.try_next()
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?
         {
             let artifact = entities::artifact::Artifact::try_from(artifact_doc)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?;
@@ -122,7 +122,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
     async fn update(&self, artifact: &entities::artifact::Artifact) -> Result<(), ArtifactRepositoryError>  {
         let update = UpdateArtifactRequest::try_from(artifact.clone())
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -142,7 +142,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
             .update_one(filter, document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -153,7 +153,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
     async fn update_path(&self, artifact: &entities::artifact::Artifact) -> Result<(), ArtifactRepositoryError> {
         let update = UpdateArtifactPathRequest::try_from(artifact.clone())
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -172,7 +172,7 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         self.write_collection.update_one(filter, document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;

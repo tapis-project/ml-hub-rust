@@ -24,7 +24,6 @@ use shared::{
             ModelDeploymentController,
             ReconciliationDispatchError
         },
-        workflows::reconciliation::ReconciliationError
     },
     infra::messaging::rabbitmq::{connection::open_channel,
         exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
@@ -151,19 +150,6 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                         // failure so we will reject to prevent rapid attempts at reprocessing the message
                         error!("ReconciliationClientInitilizationFailed: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
-        
-                        return
-                    },
-                    ReconciliationDispatchError::ReconciliationFailed(e) => {
-                        error!("ReconciliationFailed: {}", e.to_string());
-                        match e {
-                            ReconciliationError::Unimplemented(_) => {
-                                self.nack(&channel, &deliver, false, message_id).await;
-                            },
-                            ReconciliationError::MissingCanonicalModel(..) => {
-                                self.nack(&channel, &deliver, false, message_id).await;
-                            }
-                        }
         
                         return
                     },

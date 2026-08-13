@@ -1,5 +1,5 @@
 use std::time::Duration;
-use crate::application::ports::errors::CommonRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::application::ports::model_metadata::ModelMetadataRepositoryError;
 use crate::shared_kernel::context::RequestContext;
 use crate::{application, domain};
@@ -49,7 +49,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
     ) -> Result<(), ModelMetadataRepositoryError> {
         let document = ModelMetadata::try_from((metadata, ctx))
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -63,7 +63,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             .upsert(true)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -76,14 +76,14 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             .find_one(doc!{ "tenant_id": tenant_id, "author": author, "name": name })
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?
             .map(entities::model_metadata::ModelMetadata::try_from)
             .transpose()
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -97,7 +97,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -105,13 +105,13 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
 
         let mut results: Vec<entities::model_metadata::ModelMetadata> = vec![];
         while let Some(entry) = cursor.try_next().await.map_err(|e| {
-            let error = CommonRepositoryError::new_internal();
+            let error = InfrastructureError::new_internal();
             log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
             error
         })? {
             let entity = domain::entities::model_metadata::ModelMetadata::try_from(entry)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?;
@@ -138,7 +138,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             .update_one(filter, document)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -154,7 +154,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         let mut cursor = self.read_collection.find(filter)
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -164,7 +164,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
                 .await
                 .map_err(|e|
             {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?
@@ -173,7 +173,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
                 Some(
                     domain::entities::model_metadata::ModelMetadata::try_from(m)
                         .map_err(|e| {
-                            let error = CommonRepositoryError::new_internal();
+                            let error = InfrastructureError::new_internal();
                             log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                             error
                         })?
@@ -195,14 +195,14 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         for criterion in input.criteria.clone() {
             let filter = ModelMetadataFilter::try_from((&criterion, tenant_ids))
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?;
 
             let serialized_filter = to_bson(&filter)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Serialization error: {}", error.error_id(), e.to_string());
                     error
                 })?;
@@ -219,7 +219,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         if let Some(pagination_cursor) = input.options.cursor() {
             let oid = ObjectId::parse_str(pagination_cursor)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                     error
                 })?;
@@ -257,7 +257,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
             .max_time(Duration::from_secs(2))
             .await
             .map_err(|e| {
-                let error = CommonRepositoryError::new_internal();
+                let error = InfrastructureError::new_internal();
                 log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                 error
             })?;
@@ -266,14 +266,14 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
         let mut pagination_cursor: Option<String> = None;
         let mut returned_model_count = 0;
         while let Some(entry) = cursor.try_next().await.map_err(|e| {
-            let error = CommonRepositoryError::new_internal();
+            let error = InfrastructureError::new_internal();
             log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
             error
         })? {
             returned_model_count += 1;
             let doc: ModelMetadata = from_document(entry)
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                     error
                 })?;
@@ -282,7 +282,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
                 pagination_cursor = doc._id.and_then(|oid| Some(oid.to_string()));
                 let model = entities::model_metadata::ModelMetadata::try_from(doc)
                     .map_err(|e| {
-                        let error = CommonRepositoryError::new_internal();
+                        let error = InfrastructureError::new_internal();
                         log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
                         error
                     })?;
@@ -304,7 +304,7 @@ impl application::ports::model_metadata::ModelMetadataRepository for ModelMetada
                 .max_time(Duration::from_millis(100))
                 .await
                 .map_err(|e| {
-                    let error = CommonRepositoryError::new_internal();
+                    let error = InfrastructureError::new_internal();
                     log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
                     error
                 })?;

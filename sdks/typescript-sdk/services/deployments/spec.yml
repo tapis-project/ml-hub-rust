@@ -237,6 +237,16 @@ paths:
                 $ref: '#/components/schemas/ServerErrorResponse'
 components:
   schemas:
+    Argument:
+      type: object
+      required:
+        - parameter_name
+        - value
+      properties:
+        parameter_name:
+          type: string
+        value:
+          type: string
     BadRequestResponse:
       type: object
       required:
@@ -279,8 +289,13 @@ components:
         - model_name
         - model_author
         - deployment_modality
-        - params
       properties:
+        arguments:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/Argument'
         deployment_modality:
           $ref: '#/components/schemas/DeploymentModality'
         description:
@@ -299,7 +314,6 @@ components:
             - 'null'
           items:
             $ref: '#/components/schemas/ParallelismStrategy'
-        params: {}
         replicas:
           type:
             - integer

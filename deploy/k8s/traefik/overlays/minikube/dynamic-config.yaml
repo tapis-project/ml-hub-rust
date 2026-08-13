@@ -3,7 +3,7 @@ http:
     tapis-rewrite-host:
       headers:
         customRequestHeaders:
-          Host: "{subdomain}.tapis.io"
+          Host: "dev.develop.tapis.io"
     cors:
       headers:
         accessControlAllowOriginList:
@@ -25,7 +25,7 @@ http:
       service: api@internal
 
     models-api:
-      rule: "PathPrefix(`/models-api`)"
+      rule: "Host(`dev.local.develop.tapis.io`) && PathPrefix(`/models-api`)"
       service: models-api
       middlewares:
         - tapis-rewrite-host
@@ -39,7 +39,7 @@ http:
         - cors
 
     deployments-api:
-      rule: "PathPrefix(`/deployments-api`)"
+      rule: "Host(`dev.local.develop.tapis.io`) && PathPrefix(`/deployments-api`)"
       service: deployments-api
       middlewares:
         - tapis-rewrite-host
