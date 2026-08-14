@@ -1,7 +1,7 @@
 use shared::application::inputs::common::Scope;
 use shared::application::inputs::model_metadata::GetModelMetadataByAuthorAndNameInput;
 use shared::domain::entities::model_metadata::ModelMetadata;
-use shared::presentation::http::v1::requests::fork_model::path::ForkModel;
+use crate::presentation::http::v1::requests::ForkModelPath;
 use shared::shared_kernel::context::RequestContext;
 use shared::application::services::model_metadata_service::ModelMetadataService;
 
@@ -19,10 +19,10 @@ use shared::presentation::http::v1::contracts::responses;
 
 #[utoipa::path(
     post,
-    path="/models-api/models/{author}/{name}",
-    tag="Platforms",
+    path="/models-api/models/fork/{author}/{name}",
+    tag="Models",
     params(
-        ForkModel,
+        ForkModelPath,
     ),
     description="Fork model metadata from a platform",
     responses(
@@ -32,9 +32,9 @@ use shared::presentation::http::v1::contracts::responses;
         (status=500, description="Server error", body=responses::ServerErrorResponse),
     )
 )]
-#[post("models-api/platforms/{platform}/models/{author}/{name}")]
+#[post("models-api/models/fork/{author}/{name}")]
 async fn fork_model(
-    path: web::Path<ForkModel>,
+    path: web::Path<ForkModelPath>,
     ctx: RequestContext,
     model_metadata_service: web::Data<ModelMetadataService>,
 ) -> impl Responder {

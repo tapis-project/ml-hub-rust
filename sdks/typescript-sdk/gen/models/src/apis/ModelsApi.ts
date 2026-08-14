@@ -30,6 +30,9 @@ import {
     DiscoveryCriteria,
     DiscoveryCriteriaFromJSON,
     DiscoveryCriteriaToJSON,
+    ForkModelResponse,
+    ForkModelResponseFromJSON,
+    ForkModelResponseToJSON,
     GetModelResponse,
     GetModelResponseFromJSON,
     GetModelResponseToJSON,
@@ -60,6 +63,11 @@ export interface DiscoverModelsRequest {
     cursor?: string;
     includeCount?: boolean;
     includeGlobalModels?: boolean;
+}
+
+export interface ForkModelRequest {
+    author: string;
+    name: string;
 }
 
 export interface GetModelByAuthorAndNameRequest {
@@ -162,6 +170,40 @@ export class ModelsApi extends runtime.BaseAPI {
      */
     async discoverModels(requestParameters: DiscoverModelsRequest, initOverrides?: RequestInit): Promise<DiscoverModelsResponse> {
         const response = await this.discoverModelsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Fork model metadata from a platform
+     */
+    async forkModelRaw(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ForkModelResponse>> {
+        if (requestParameters.author === null || requestParameters.author === undefined) {
+            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling forkModel.');
+        }
+
+        if (requestParameters.name === null || requestParameters.name === undefined) {
+            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling forkModel.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/models-api/models/fork/{author}/{name}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))).replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ForkModelResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Fork model metadata from a platform
+     */
+    async forkModel(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<ForkModelResponse> {
+        const response = await this.forkModelRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -283,7 +283,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Discovered models
+          description: Model created
           content:
             application/json:
               schema:
@@ -302,6 +302,48 @@ paths:
                 $ref: '#/components/schemas/NotFoundResponse'
         '500':
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/models/fork/{author}/{name}:
+    post:
+      tags:
+        - Models
+      description: Fork model metadata from a platform
+      operationId: fork_model
+      parameters:
+        - name: author
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Forked model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForkModelResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Server error
           content:
             application/json:
               schema:
@@ -833,30 +875,6 @@ paths:
                 $ref: '#/components/schemas/ServerErrorResponse'
 components:
   schemas:
-    Accelerator:
-      type: object
-      required:
-        - accelerator_type
-        - system_requirements
-      properties:
-        accelerator_type:
-          type: string
-        cores:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        memory_gb:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        system_requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemRequirement'
-          description: Firmware and software
-      additionalProperties: false
     Artifact:
       type: object
       required:
@@ -1060,74 +1078,10 @@ components:
       required:
         - name
       properties:
-        annotations: {}
-        bias_evaluation_score:
-          type:
-            - integer
-            - 'null'
-          format: int32
         description:
           type:
             - string
             - 'null'
-        edge_optimized:
-          type:
-            - boolean
-            - 'null'
-        finetuning_datasets:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        image:
-          type:
-            - string
-            - 'null'
-        inference_distributed:
-          type:
-            - boolean
-            - 'null'
-        inference_hardware:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/HardwareRequirements'
-        inference_max_compute_utilization_percentage:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_max_latency_ms:
-          type:
-            - integer
-            - 'null'
-          format: int32
-          description: Inference performance fields
-        inference_max_memory_usage_mb:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_min_throughput:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_precision:
-          type:
-            - string
-            - 'null'
-        inference_software_dependencies:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
         libraries:
           type:
             - array
@@ -1138,102 +1092,30 @@ components:
           type:
             - string
             - 'null'
-        model_inputs:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ModelIO'
-        model_outputs:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ModelIO'
         model_type:
           type:
             - string
             - 'null'
-        multi_modal:
-          type:
-            - boolean
-            - 'null'
-          description: Architecture fields
         name:
           type: string
-        pretrained:
-          type:
-            - boolean
-            - 'null'
-        pretraining_datasets:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        pruned:
-          type:
-            - boolean
-            - 'null'
-        quantization_aware:
-          type:
-            - boolean
-            - 'null'
         regulatory:
           type:
             - array
             - 'null'
           items:
             type: string
-          description: |-
-            Regulatory and Compliance Fields
-            A vector or strings that represent regulatory standards. Ex HIPPA
-        slimmed:
-          type:
-            - boolean
-            - 'null'
-        supports_quantization:
-          type:
-            - boolean
-            - 'null'
         tags:
           type:
             - array
             - 'null'
           items:
             type: string
-          description: Arbitrary labels
         task_types:
           type:
             - array
             - 'null'
           items:
             $ref: '#/components/schemas/Task'
-          description: Inference Fields
-        training_distributed:
-          type:
-            - boolean
-            - 'null'
-        training_hardware:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/HardwareRequirements'
-        training_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
-          format: int32
-          description: Training performance fields
-        training_precision:
-          type:
-            - string
-            - 'null'
-        training_time:
-          type:
-            - integer
-            - 'null'
-          format: int64
-          description: Training-related Fields
       additionalProperties: false
     CreateModelMetadataResponse:
       type: object
@@ -1331,74 +1213,10 @@ components:
     DiscoveryCriterion:
       type: object
       properties:
-        annotations: {}
         author:
           type:
             - string
             - 'null'
-        bias_evaluation_score:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        edge_optimized:
-          type:
-            - boolean
-            - 'null'
-        finetuning_datasets:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        image:
-          type:
-            - string
-            - 'null'
-        inference_distributed:
-          type:
-            - boolean
-            - 'null'
-        inference_hardware:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/HardwareRequirements'
-        inference_max_compute_utilization_percentage:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_max_latency_ms:
-          type:
-            - integer
-            - 'null'
-          format: int32
-          description: Inference performance fields
-        inference_max_memory_usage_mb:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_min_throughput:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_precision:
-          type:
-            - string
-            - 'null'
-        inference_software_dependencies:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
         libraries:
           type:
             - array
@@ -1409,48 +1227,13 @@ components:
           type:
             - string
             - 'null'
-        model_inputs:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ModelIO'
-        model_outputs:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ModelIO'
         model_type:
           type:
             - string
             - 'null'
-        multi_modal:
-          type:
-            - boolean
-            - 'null'
-          description: Architecture fields
         name:
           type:
             - string
-            - 'null'
-        pretrained:
-          type:
-            - boolean
-            - 'null'
-        pretraining_datasets:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        pruned:
-          type:
-            - boolean
-            - 'null'
-        quantization_aware:
-          type:
-            - boolean
             - 'null'
         regulatory:
           type:
@@ -1458,59 +1241,39 @@ components:
             - 'null'
           items:
             type: string
-          description: |-
-            Regulatory and Compliance Fields
-            A vector or strings that represent regulatory standards. Ex HIPPA
-        slimmed:
-          type:
-            - boolean
-            - 'null'
-        supports_quantization:
-          type:
-            - boolean
-            - 'null'
         tags:
           type:
             - array
             - 'null'
           items:
             type: string
-          description: Arbitrary labels
         task_types:
           type:
             - array
             - 'null'
           items:
             $ref: '#/components/schemas/Task'
-          description: Inference Fields
-        training_distributed:
-          type:
-            - boolean
-            - 'null'
-        training_hardware:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/HardwareRequirements'
-        training_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
+    ForkModelResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result: {}
+        status:
+          type: integer
           format: int32
-          description: Training performance fields
-        training_precision:
-          type:
-            - string
-            - 'null'
-        training_time:
-          type:
-            - integer
-            - 'null'
-          format: int64
-          description: Training-related Fields
+          default: 404
+          minimum: 0
         version:
-          type:
-            - string
-            - 'null'
+          type: string
     GetModelArtifactResponse:
       type: object
       required:
@@ -1616,37 +1379,6 @@ components:
           minimum: 0
         version:
           type: string
-    HardwareRequirements:
-      type: object
-      properties:
-        accelerators:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/Accelerator'
-        architectures:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        cpus:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        disk_gb:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        memory_gb:
-          type:
-            - integer
-            - 'null'
-          format: int32
-      additionalProperties: false
     IngestArtifactRequest:
       type: object
       required:
@@ -1894,21 +1626,6 @@ components:
           type: string
         last_modified:
           type: string
-    ModelIO:
-      type: object
-      properties:
-        data_type:
-          type:
-            - string
-            - 'null'
-        shape:
-          type:
-            - array
-            - 'null'
-          items:
-            type: integer
-            format: int32
-      additionalProperties: false
     ModelMetadata:
       type: object
       required:
@@ -1917,14 +1634,8 @@ components:
         - tenant_id
         - deployment_strategy_refs
       properties:
-        annotations: {}
         author:
           type: string
-        bias_evaluation_score:
-          type:
-            - integer
-            - 'null'
-          format: int32
         canonical:
           oneOf:
             - type: 'null'
@@ -1938,64 +1649,6 @@ components:
           type:
             - string
             - 'null'
-        edge_optimized:
-          type:
-            - boolean
-            - 'null'
-        finetuning_datasets:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        image:
-          type:
-            - string
-            - 'null'
-        inference_distributed:
-          type:
-            - boolean
-            - 'null'
-        inference_hardware:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/HardwareRequirements'
-        inference_max_compute_utilization_percentage:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_max_latency_ms:
-          type:
-            - integer
-            - 'null'
-          format: int32
-          description: Inference performance fields
-        inference_max_memory_usage_mb:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_min_throughput:
-          type:
-            - integer
-            - 'null'
-          format: int32
-        inference_precision:
-          type:
-            - string
-            - 'null'
-        inference_software_dependencies:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
         libraries:
           type:
             - array
@@ -2006,104 +1659,32 @@ components:
           type:
             - string
             - 'null'
-        model_inputs:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ModelIO'
-        model_outputs:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ModelIO'
         model_type:
           type:
             - string
             - 'null'
-        multi_modal:
-          type:
-            - boolean
-            - 'null'
-          description: Architecture fields
         name:
           type: string
-        pretrained:
-          type:
-            - boolean
-            - 'null'
-        pretraining_datasets:
-          type:
-            - array
-            - 'null'
-          items:
-            type: string
-        pruned:
-          type:
-            - boolean
-            - 'null'
-        quantization_aware:
-          type:
-            - boolean
-            - 'null'
         regulatory:
           type:
             - array
             - 'null'
           items:
             type: string
-          description: |-
-            Regulatory and Compliance Fields
-            A vector or strings that represent regulatory standards. Ex HIPPA
-        slimmed:
-          type:
-            - boolean
-            - 'null'
-        supports_quantization:
-          type:
-            - boolean
-            - 'null'
         tags:
           type:
             - array
             - 'null'
           items:
             type: string
-          description: Arbitrary labels
         task_types:
           type:
             - array
             - 'null'
           items:
             $ref: '#/components/schemas/Task'
-          description: Inference Fields
         tenant_id:
           type: string
-        training_distributed:
-          type:
-            - boolean
-            - 'null'
-        training_hardware:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/HardwareRequirements'
-        training_max_energy_consumption_watts:
-          type:
-            - integer
-            - 'null'
-          format: int32
-          description: Training performance fields
-        training_precision:
-          type:
-            - string
-            - 'null'
-        training_time:
-          type:
-            - integer
-            - 'null'
-          format: int64
-          description: Training-related Fields
     NotFoundResponse:
       type: object
       required:
@@ -2211,17 +1792,6 @@ components:
           minimum: 0
         version:
           type: string
-    SystemRequirement:
-      type: object
-      required:
-        - name
-        - version
-      properties:
-        name:
-          type: string
-        version:
-          type: string
-      additionalProperties: false
     Task:
       type: string
       description: An enum of all task types available on Huggingface

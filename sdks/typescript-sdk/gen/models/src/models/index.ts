@@ -1,6 +1,5 @@
 /* tslint:disable */
 /* eslint-disable */
-export * from './Accelerator';
 export * from './Artifact';
 export * from './ArtifactIngestion';
 export * from './ArtifactIngestionStatus';
@@ -18,12 +17,12 @@ export * from './DiscoverModelsByPlatformResponse';
 export * from './DiscoverModelsResponse';
 export * from './DiscoveryCriteria';
 export * from './DiscoveryCriterion';
+export * from './ForkModelResponse';
 export * from './GetModelArtifactResponse';
 export * from './GetModelByPlatformResponse';
 export * from './GetModelIngestionResponse';
 export * from './GetModelPublicationResponse';
 export * from './GetModelResponse';
-export * from './HardwareRequirements';
 export * from './IngestArtifactRequest';
 export * from './IngestModelArtifactResponse';
 export * from './ListModelArtifactResponse';
@@ -36,7 +35,6 @@ export * from './ListPlatformsResponse';
 export * from './ListTasksResponse';
 export * from './Locator';
 export * from './ModelArtifact';
-export * from './ModelIO';
 export * from './ModelMetadata';
 export * from './NotFoundResponse';
 export * from './Platform';
@@ -44,5 +42,4 @@ export * from './PlatformDetails';
 export * from './PublishArtifactRequest';
 export * from './PublishModelArtifactResponse';
 export * from './ServerErrorResponse';
-export * from './SystemRequirement';
 export * from './Task';

@@ -11,7 +11,6 @@ src/apis/PublicationsApi.ts
 src/apis/TasksApi.ts
 src/apis/index.ts
 src/index.ts
-src/models/Accelerator.ts
 src/models/Artifact.ts
 src/models/ArtifactIngestion.ts
 src/models/ArtifactIngestionStatus.ts
@@ -29,12 +28,12 @@ src/models/DiscoverModelsByPlatformResponse.ts
 src/models/DiscoverModelsResponse.ts
 src/models/DiscoveryCriteria.ts
 src/models/DiscoveryCriterion.ts
+src/models/ForkModelResponse.ts
 src/models/GetModelArtifactResponse.ts
 src/models/GetModelByPlatformResponse.ts
 src/models/GetModelIngestionResponse.ts
 src/models/GetModelPublicationResponse.ts
 src/models/GetModelResponse.ts
-src/models/HardwareRequirements.ts
 src/models/IngestArtifactRequest.ts
 src/models/IngestModelArtifactResponse.ts
 src/models/ListModelArtifactResponse.ts
@@ -47,7 +46,6 @@ src/models/ListPlatformsResponse.ts
 src/models/ListTasksResponse.ts
 src/models/Locator.ts
 src/models/ModelArtifact.ts
-src/models/ModelIO.ts
 src/models/ModelMetadata.ts
 src/models/NotFoundResponse.ts
 src/models/Platform.ts
@@ -55,7 +53,6 @@ src/models/PlatformDetails.ts
 src/models/PublishArtifactRequest.ts
 src/models/PublishModelArtifactResponse.ts
 src/models/ServerErrorResponse.ts
-src/models/SystemRequirement.ts
 src/models/Task.ts
 src/models/index.ts
 src/runtime.ts

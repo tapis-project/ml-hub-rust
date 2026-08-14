@@ -458,7 +458,7 @@
         },
         "responses": {
           "200": {
-            "description": "Discovered models",
+            "description": "Model created",
             "content": {
               "application/json": {
                 "schema": {
@@ -489,6 +489,75 @@
           },
           "500": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models-api/models/fork/{author}/{name}": {
+      "post": {
+        "tags": [
+          "Models"
+        ],
+        "description": "Fork model metadata from a platform",
+        "operationId": "fork_model",
+        "parameters": [
+          {
+            "name": "author",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Forked model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForkModelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1348,36 +1417,6 @@
   },
   "components": {
     "schemas": {
-      "Accelerator": {
-        "type": "object",
-        "required": [
-          "accelerator_type",
-          "system_requirements"
-        ],
-        "properties": {
-          "accelerator_type": {
-            "type": "string"
-          },
-          "cores": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "memory_gb": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "system_requirements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SystemRequirement"
-            },
-            "description": "Firmware and software"
-          }
-        },
-        "additionalProperties": false
-      },
       "Artifact": {
         "type": "object",
         "required": [
@@ -1640,80 +1679,8 @@
           "name"
         ],
         "properties": {
-          "annotations": {},
-          "bias_evaluation_score": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "description": {
             "type": "string",
-            "nullable": true
-          },
-          "edge_optimized": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "finetuning_datasets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "image": {
-            "type": "string",
-            "nullable": true
-          },
-          "inference_distributed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "inference_hardware": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/HardwareRequirements"
-              }
-            ]
-          },
-          "inference_max_compute_utilization_percentage": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_max_energy_consumption_watts": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_max_latency_ms": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Inference performance fields",
-            "nullable": true
-          },
-          "inference_max_memory_usage_mb": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_min_throughput": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_precision": {
-            "type": "string",
-            "nullable": true
-          },
-          "inference_software_dependencies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
             "nullable": true
           },
           "libraries": {
@@ -1727,65 +1694,18 @@
             "type": "string",
             "nullable": true
           },
-          "model_inputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelIO"
-            },
-            "nullable": true
-          },
-          "model_outputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelIO"
-            },
-            "nullable": true
-          },
           "model_type": {
             "type": "string",
             "nullable": true
           },
-          "multi_modal": {
-            "type": "boolean",
-            "description": "Architecture fields",
-            "nullable": true
-          },
           "name": {
             "type": "string"
-          },
-          "pretrained": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "pretraining_datasets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "pruned": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "quantization_aware": {
-            "type": "boolean",
-            "nullable": true
           },
           "regulatory": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Regulatory and Compliance Fields\nA vector or strings that represent regulatory standards. Ex HIPPA",
-            "nullable": true
-          },
-          "slimmed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "supports_quantization": {
-            "type": "boolean",
             "nullable": true
           },
           "tags": {
@@ -1793,7 +1713,6 @@
             "items": {
               "type": "string"
             },
-            "description": "Arbitrary labels",
             "nullable": true
           },
           "task_types": {
@@ -1801,37 +1720,6 @@
             "items": {
               "$ref": "#/components/schemas/Task"
             },
-            "description": "Inference Fields",
-            "nullable": true
-          },
-          "training_distributed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "training_hardware": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/HardwareRequirements"
-              }
-            ]
-          },
-          "training_max_energy_consumption_watts": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Training performance fields",
-            "nullable": true
-          },
-          "training_precision": {
-            "type": "string",
-            "nullable": true
-          },
-          "training_time": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Training-related Fields",
             "nullable": true
           }
         },
@@ -1968,80 +1856,8 @@
       "DiscoveryCriterion": {
         "type": "object",
         "properties": {
-          "annotations": {},
           "author": {
             "type": "string",
-            "nullable": true
-          },
-          "bias_evaluation_score": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "edge_optimized": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "finetuning_datasets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "image": {
-            "type": "string",
-            "nullable": true
-          },
-          "inference_distributed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "inference_hardware": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/HardwareRequirements"
-              }
-            ]
-          },
-          "inference_max_compute_utilization_percentage": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_max_energy_consumption_watts": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_max_latency_ms": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Inference performance fields",
-            "nullable": true
-          },
-          "inference_max_memory_usage_mb": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_min_throughput": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_precision": {
-            "type": "string",
-            "nullable": true
-          },
-          "inference_software_dependencies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
             "nullable": true
           },
           "libraries": {
@@ -2055,50 +1871,12 @@
             "type": "string",
             "nullable": true
           },
-          "model_inputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelIO"
-            },
-            "nullable": true
-          },
-          "model_outputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelIO"
-            },
-            "nullable": true
-          },
           "model_type": {
             "type": "string",
             "nullable": true
           },
-          "multi_modal": {
-            "type": "boolean",
-            "description": "Architecture fields",
-            "nullable": true
-          },
           "name": {
             "type": "string",
-            "nullable": true
-          },
-          "pretrained": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "pretraining_datasets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "pruned": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "quantization_aware": {
-            "type": "boolean",
             "nullable": true
           },
           "regulatory": {
@@ -2106,15 +1884,6 @@
             "items": {
               "type": "string"
             },
-            "description": "Regulatory and Compliance Fields\nA vector or strings that represent regulatory standards. Ex HIPPA",
-            "nullable": true
-          },
-          "slimmed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "supports_quantization": {
-            "type": "boolean",
             "nullable": true
           },
           "tags": {
@@ -2122,7 +1891,6 @@
             "items": {
               "type": "string"
             },
-            "description": "Arbitrary labels",
             "nullable": true
           },
           "task_types": {
@@ -2130,42 +1898,35 @@
             "items": {
               "$ref": "#/components/schemas/Task"
             },
-            "description": "Inference Fields",
             "nullable": true
+          }
+        }
+      },
+      "ForkModelResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
           },
-          "training_distributed": {
-            "type": "boolean",
-            "nullable": true
+          "metadata": {
+            "type": "object"
           },
-          "training_hardware": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/HardwareRequirements"
-              }
-            ]
-          },
-          "training_max_energy_consumption_watts": {
+          "result": {},
+          "status": {
             "type": "integer",
             "format": "int32",
-            "description": "Training performance fields",
-            "nullable": true
-          },
-          "training_precision": {
-            "type": "string",
-            "nullable": true
-          },
-          "training_time": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Training-related Fields",
-            "nullable": true
+            "default": 404,
+            "minimum": 0
           },
           "version": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
         }
       },
@@ -2313,41 +2074,6 @@
             "type": "string"
           }
         }
-      },
-      "HardwareRequirements": {
-        "type": "object",
-        "properties": {
-          "accelerators": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Accelerator"
-            },
-            "nullable": true
-          },
-          "architectures": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "cpus": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "disk_gb": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "memory_gb": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
       },
       "IngestArtifactRequest": {
         "type": "object",
@@ -2691,24 +2417,6 @@
           }
         }
       },
-      "ModelIO": {
-        "type": "object",
-        "properties": {
-          "data_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "shape": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "ModelMetadata": {
         "type": "object",
         "required": [
@@ -2718,14 +2426,8 @@
           "deployment_strategy_refs"
         ],
         "properties": {
-          "annotations": {},
           "author": {
             "type": "string"
-          },
-          "bias_evaluation_score": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
           },
           "canonical": {
             "oneOf": [
@@ -2748,72 +2450,6 @@
             "type": "string",
             "nullable": true
           },
-          "edge_optimized": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "finetuning_datasets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "image": {
-            "type": "string",
-            "nullable": true
-          },
-          "inference_distributed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "inference_hardware": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/HardwareRequirements"
-              }
-            ]
-          },
-          "inference_max_compute_utilization_percentage": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_max_energy_consumption_watts": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_max_latency_ms": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Inference performance fields",
-            "nullable": true
-          },
-          "inference_max_memory_usage_mb": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_min_throughput": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "inference_precision": {
-            "type": "string",
-            "nullable": true
-          },
-          "inference_software_dependencies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
           "libraries": {
             "type": "array",
             "items": {
@@ -2825,65 +2461,18 @@
             "type": "string",
             "nullable": true
           },
-          "model_inputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelIO"
-            },
-            "nullable": true
-          },
-          "model_outputs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelIO"
-            },
-            "nullable": true
-          },
           "model_type": {
             "type": "string",
             "nullable": true
           },
-          "multi_modal": {
-            "type": "boolean",
-            "description": "Architecture fields",
-            "nullable": true
-          },
           "name": {
             "type": "string"
-          },
-          "pretrained": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "pretraining_datasets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "pruned": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "quantization_aware": {
-            "type": "boolean",
-            "nullable": true
           },
           "regulatory": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Regulatory and Compliance Fields\nA vector or strings that represent regulatory standards. Ex HIPPA",
-            "nullable": true
-          },
-          "slimmed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "supports_quantization": {
-            "type": "boolean",
             "nullable": true
           },
           "tags": {
@@ -2891,7 +2480,6 @@
             "items": {
               "type": "string"
             },
-            "description": "Arbitrary labels",
             "nullable": true
           },
           "task_types": {
@@ -2899,41 +2487,10 @@
             "items": {
               "$ref": "#/components/schemas/Task"
             },
-            "description": "Inference Fields",
             "nullable": true
           },
           "tenant_id": {
             "type": "string"
-          },
-          "training_distributed": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "training_hardware": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/HardwareRequirements"
-              }
-            ]
-          },
-          "training_max_energy_consumption_watts": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Training performance fields",
-            "nullable": true
-          },
-          "training_precision": {
-            "type": "string",
-            "nullable": true
-          },
-          "training_time": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Training-related Fields",
-            "nullable": true
           }
         }
       },
@@ -3067,22 +2624,6 @@
             "type": "string"
           }
         }
-      },
-      "SystemRequirement": {
-        "type": "object",
-        "required": [
-          "name",
-          "version"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
       },
       "Task": {
         "type": "string",

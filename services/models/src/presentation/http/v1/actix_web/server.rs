@@ -180,6 +180,7 @@ pub async fn run_server() -> std::io::Result<()> {
                     .service(handlers::get_model_artifact::get_model_artifact)
                     .service(handlers::list_tasks::list_tasks)
                     .service(handlers::ingest_canonical_model::ingest_canonical_model)
+                    .service(handlers::fork_model::fork_model)
             )
     })
         .bind(addrs)?

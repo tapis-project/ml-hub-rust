@@ -1,10 +1,8 @@
-use platforms::Platform;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use utoipa::IntoParams;
 
-#[derive(Clone, Debug, Deserialize, IntoParams)]
-pub struct ForkModel {
-    pub platform: Platform,
+#[derive(Clone, Debug, Serialize, Deserialize, IntoParams)]
+pub struct ForkModelPath {
     pub author: String,
     pub name: String,
 }
