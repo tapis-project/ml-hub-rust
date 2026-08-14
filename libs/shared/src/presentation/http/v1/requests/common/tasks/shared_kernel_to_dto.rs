@@ -1,0 +1,55 @@
+
+use crate::shared_kernel::enums::Task;
+use crate::presentation::http::v1::requests::common::tasks as dto;
+
+impl From<Task> for dto::Task {
+    fn from(value: Task) -> Self {
+        match value {
+            Task::AnyToAny => dto::Task::AnyToAny,
+            Task::AutomaticSpeechRecognition => dto::Task::AutomaticSpeechRecognition,
+            Task::AudioToAudio => dto::Task::AudioToAudio,
+            Task::AudioClassification => dto::Task::AudioClassification,
+            Task::AudioTextToText => dto::Task::AudioTextToText,
+            Task::DepthEstimation => dto::Task::DepthEstimation,
+            Task::DocumentQuestionAnswering => dto::Task::DocumentQuestionAnswering,
+            Task::FeatureExtraction => dto::Task::FeatureExtraction,
+            Task::FillMask => dto::Task::FillMask,
+            Task::ImageFeatureExtraction => dto::Task::ImageFeatureExtraction,
+            Task::ImageTextToText => dto::Task::ImageTextToText,
+            Task::ImageToVideo => dto::Task::ImageToVideo,
+            Task::ImageSegmentation => dto::Task::ImageSegmentation,
+            Task::ImageClassification => dto::Task::ImageClassification,
+            Task::ImageTo3d => dto::Task::ImageTo3d,
+            Task::ImageToImage => dto::Task::ImageToImage,
+            Task::ImageToText => dto::Task::ImageToText,
+            Task::KeypointDetection => dto::Task::KeypointDetection,
+            Task::MaskGeneration => dto::Task::MaskGeneration,
+            Task::ObjectDetection => dto::Task::ObjectDetection,
+            Task::QuestionAnswering => dto::Task::QuestionAnswering,
+            Task::ReinforcementLearning => dto::Task::ReinforcementLearning,
+            Task::SentenceSimilarity => dto::Task::SentenceSimilarity,
+            Task::Summarization => dto::Task::Summarization,
+            Task::TableQuestionAnswering => dto::Task::TableQuestionAnswering,
+            Task::TextGeneration => dto::Task::TextGeneration,
+            Task::TextRanking => dto::Task::TextRanking,
+            Task::TabularClassification => dto::Task::TabularClassification,
+            Task::TextTo3d => dto::Task::TextTo3d,
+            Task::TextClassification => dto::Task::TextClassification,
+            Task::TextToImage => dto::Task::TextToImage,
+            Task::Translation => dto::Task::Translation,
+            Task::TabularRegression => dto::Task::TabularRegression,
+            Task::TextToSpeech => dto::Task::TextToSpeech,
+            Task::TextToVideo => dto::Task::TextToVideo,
+            Task::TokenClassification => dto::Task::TokenClassification,
+            Task::UnconditionalImageGeneration => dto::Task::UnconditionalImageGeneration,
+            Task::VideoClassification => dto::Task::VideoClassification,
+            Task::VideoTextToText => dto::Task::VideoTextToText,
+            Task::VideoToVideo => dto::Task::VideoToVideo,
+            Task::VisualQuestionAnswering => dto::Task::VisualQuestionAnswering,
+            Task::VisualDocumentRetrieval => dto::Task::VisualDocumentRetrieval,
+            Task::ZeroShotClassification => dto::Task::ZeroShotClassification,
+            Task::ZeroShotImageClassification => dto::Task::ZeroShotClassification,
+            Task::ZeroShotObjectDetection => dto::Task::ZeroShotObjectDetection,
+        }
+    }
+}

@@ -16,6 +16,7 @@ pub use shared::presentation::http::v1::requests::{
     list_models_by_author::path::ListModelsByAuthorPath,
     ingest_canonical_model::path::IngestCanonicalModelPath,
     ingest_canonical_model::IngestCanonicalModelRequest,
+    fork_model::path::ForkModel,
 };
 pub use shared::presentation::http::v1::requests::discover_models::{
     DiscoverModelsByPlatformPath,

@@ -3,8 +3,8 @@ use utoipa::ToSchema;
 use strum::IntoEnumIterator;
 use strum_macros::{AsRefStr, Display, EnumIter};
 
-pub mod dto_to_input;
-pub mod entity_to_dto;
+pub mod dto_to_shared_kernel;
+pub mod shared_kernel_to_dto;
 
 #[doc = "An enum of all task types available on Huggingface"]
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, ToSchema, EnumIter, Display, AsRefStr)]

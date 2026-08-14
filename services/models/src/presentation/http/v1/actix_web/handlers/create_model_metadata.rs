@@ -22,7 +22,7 @@ use shared::presentation::http::v1::contracts::responses;
     description="Create a model metadata",
     request_body=CreateModelMetadataBody,
     responses(
-        (status=200, description="Discovered models", body=responses::CreateModelMetadataResponse),
+        (status=200, description="Model created", body=responses::CreateModelMetadataResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
         (status=404, description="Not found", body=responses::NotFoundResponse),
         (status=500, description="Not found", body=responses::ServerErrorResponse),

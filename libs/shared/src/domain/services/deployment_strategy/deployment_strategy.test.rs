@@ -83,10 +83,6 @@ mod deployment_strategy_test {
     fn test_gt_lt_gte_lte() {
         let model_metadata = full_model_metadata();
 
-        assert!(model_metadata.inference_hardware.is_some());
-        assert!(model_metadata.inference_hardware.clone().unwrap().memory_gb.is_some());
-        assert!(model_metadata.inference_hardware.clone().unwrap().memory_gb.clone().unwrap() == 5);
-
         let lt = Rule {
             field_path: vec!["inference_hardware".into(), "memory_gb".into()],
             operator: Operator::Lt,

@@ -559,9 +559,9 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             // Task types derived from the tags. The "pipeline_tag"
             // property will be the authroitative soure for the task type 
             // if none are found
-            let mut derived_task_types: Vec<entities::task::Task> = Vec::new();
+            let mut derived_task_types: Vec<shared::shared_kernel::enums::Task> = Vec::new();
             for tag in tags.clone() {
-                match entities::task::Task::try_from(Self::normalize_string(tag).as_str()) {
+                match shared::shared_kernel::enums::Task::try_from(Self::normalize_string(tag).as_str()) {
                     Ok(t) => derived_task_types.push(t),
                     Err(_) => continue // Ignore as they tag cannot be interpreted as a task type
                 }
@@ -580,8 +580,8 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 .and_then(|ct| Some(ct.value.clone()));
     
             // Convert pipeline tag to a variant of the task type enum.
-            let mut task_types: Vec<entities::task::Task> = derived_task_types;
-            match entities::task::Task::try_from(Self::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
+            let mut task_types: Vec<shared::shared_kernel::enums::Task> = derived_task_types;
+            match shared::shared_kernel::enums::Task::try_from(Self::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
                 Ok(t) => {
                     if !task_types.contains(&t) {
                         task_types.push(t)
@@ -618,10 +618,10 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             return Ok(entities::model_metadata::ModelMetadata {
                 name,
                 artifact_id: None,
-                annotations: None,
                 description: None,
                 author,
                 tenant_id,
+                model_type: None,
                 canonical: Some(entities::model_metadata::Canonical {
                     platform: Platform::HuggingFace,
                     author: Some(hf_model.author.clone()),
@@ -635,39 +635,11 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                     private: Some(hf_model.private),
                     sha: Some(hf_model.sha),
                 }),
-                model_inputs: None,
-                model_outputs: None,
-                model_type: None,
                 libraries: Some(libraries),
-                image: None,
                 tags: Some(tags),
-                multi_modal: None,
                 task_types: Some(task_types),
-                inference_distributed: None,
-                inference_hardware: None,
-                inference_max_compute_utilization_percentage: None,
-                inference_max_energy_consumption_watts: None,
-                inference_max_latency_ms: None,
-                inference_max_memory_usage_mb: None,
-                inference_min_throughput: None,
-                inference_precision: None,
-                inference_software_dependencies: None,
-                training_distributed: None,
-                training_hardware: None,
-                training_max_energy_consumption_watts: None,
-                training_precision: None,
-                training_time: None,
-                pretrained: None,
-                pretraining_datasets: None,
-                finetuning_datasets: None,
-                edge_optimized: None,
-                quantization_aware: None,
-                supports_quantization: None,
-                pruned: None,
-                slimmed: None,
                 regulatory: None,
                 license,
-                bias_evaluation_score: None,
                 deployment_strategy_refs: vec![],
             });
         }

@@ -48,8 +48,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
             }
         };
 
-
-
         Ok(Self {
             client: Client::new(),
             mlhub_service_password,
@@ -71,7 +69,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
     fn state_from_job_status(status: Option<&str>) -> State {
         match status
             .unwrap_or_default()
-            .trim()
             .to_ascii_uppercase()
             .as_str()
         {

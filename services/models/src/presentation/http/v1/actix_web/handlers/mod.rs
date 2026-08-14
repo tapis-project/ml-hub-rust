@@ -22,4 +22,5 @@ pub mod list_publications_for_artifact;
 pub mod list_tasks;
 pub mod publish_model_artifact;
 pub mod upload_model_artifact;
+pub mod fork_model;
 pub mod openapi;

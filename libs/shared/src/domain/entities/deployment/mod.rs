@@ -8,6 +8,7 @@ use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
+use crate::impl_urn_generator;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use serde_json::Value;
@@ -63,6 +64,8 @@ pub struct ModelDeployment {
     /// every time desired state changes.
     revision: u32, 
 }
+
+impl_urn_generator!(ModelDeployment, tenant_id, "deployment", id);
 
 impl ModelDeployment {
     /// Create the model deployment from props

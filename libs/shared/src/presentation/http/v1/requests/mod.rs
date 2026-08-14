@@ -7,6 +7,7 @@ pub mod artifact_ingestions;
 pub mod artifact_publications;
 
 pub mod associate_model_metadata;
+pub mod fork_model;
 pub mod create_model_metadata;
 pub mod discover_models;
 pub mod download_model;

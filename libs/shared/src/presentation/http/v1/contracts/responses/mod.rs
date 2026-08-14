@@ -275,3 +275,15 @@ pub struct ListModelDeploymentsResponse {
     pub metadata: Value,
     pub version: String
 }
+
+#[derive(ToSchema)]
+pub struct ForkModelResponse {
+    #[schema(default=null)]
+    pub result: Value,
+    #[schema(default=404)]
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String
+}

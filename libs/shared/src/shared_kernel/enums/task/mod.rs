@@ -1,5 +1,9 @@
 pub mod huggingface_task_to_task;
 
+use serde::{Deserialize, Serialize};
+use strum_macros::Display;
+
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -10,7 +14,7 @@ pub enum TaskError {
 
 
 #[doc = "An enum of all task types available on Huggingface"]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Display, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub enum Task {
     #[doc = "Any-to-any models can understand two or more modalities and output two or more modalities."]
     AnyToAny,
@@ -102,8 +106,8 @@ pub enum Task {
     TextTo3d,
     #[doc = "Image-to-3D models take in image input and produce 3D output."]
     ImageTo3d,
-}
 
+}
 
 impl TryFrom<&str> for Task {
     type Error = TaskError;

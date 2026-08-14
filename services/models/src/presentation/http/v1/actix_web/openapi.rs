@@ -29,9 +29,11 @@ use super::handlers::list_models_by_author::__path_list_models_by_author;
 use super::handlers::get_model_by_author_and_name::__path_get_model_by_author_and_name;
 use super::handlers::create_model_metadata::__path_create_model_metadata;
 use super::handlers::ingest_canonical_model::__path_ingest_canonical_model;
+use super::handlers::fork_model::__path_fork_model;
 
 #[derive(OpenApi)]
 #[openapi(
+    info(title = "MLHub Models API", version=VERSION),
     paths(
         get_model_by_platform,
         get_model_artifact,
@@ -53,6 +55,7 @@ use super::handlers::ingest_canonical_model::__path_ingest_canonical_model;
         get_model_by_author_and_name,
         create_model_metadata,
         ingest_canonical_model,
+        fork_model,
     ),
     components(
         schemas(
@@ -62,6 +65,5 @@ use super::handlers::ingest_canonical_model::__path_ingest_canonical_model;
             ArtifactIngestion
         )
     ),
-    info(title = "MLHub Models API", version=VERSION)
 )]
 pub struct ApiDoc;
