@@ -24,11 +24,10 @@ use shared::{
             ModelDeploymentController,
             ReconciliationDispatchError
         },
-    },
-    infra::messaging::rabbitmq::{connection::open_channel,
+    }, domain::entities::site::SiteContext, infra::{_common::mongo::{initialize_client, ClientParams}, configuration::site_configuration_loader::SiteConfigurationLoader, messaging::rabbitmq::{connection::open_channel,
         exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
         queues::DEAD_LETTER_QUEUE
-    }, shared_kernel::context::RequestContext
+    }}, shared_kernel::context::RequestContext
 };
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
@@ -38,7 +37,6 @@ use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
 use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
-use model_deployment_controller::database::{initialize_client, ClientParams};
 use log::{error, info, warn};
 
 struct MessagingContext {
@@ -293,7 +291,18 @@ async fn main() -> () {
         })
         .expect("Datbase initialization error");
 
-    let controller = match model_deployment_conroller_builder(&client, db_name, context.channel.clone()) {
+    // Build site context form site configuration
+    let config_loader = SiteConfigurationLoader::new()
+        .map_err(|e| { error!("{}", e.to_string()) })
+        .expect("Site configuration repository to be intialized");
+
+    let config = config_loader.get_config();
+
+    let site_context = SiteContext {
+        base_url: config.base_url
+    };
+
+    let controller = match model_deployment_conroller_builder(site_context, &client, db_name, context.channel.clone()) {
         Ok(c) => c,
         Err(e) => {
             error!("{}", e.to_string());

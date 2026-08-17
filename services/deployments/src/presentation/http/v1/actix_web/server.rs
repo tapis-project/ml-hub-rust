@@ -9,7 +9,7 @@ use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{App, HttpServer, web, middleware::{from_fn, Logger}};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
-use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
+use shared::infra::configuration::site_configuration_loader::SiteConfigurationLoader;
 use shared::presentation::http::v1::actix_web::middleware::{authentication::authenticate, tenancy::resolve_tenancy};
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
@@ -47,16 +47,16 @@ pub async fn run_server() -> std::io::Result<()> {
         broker_password,
     )
         .await
-        .map_err(|err| { error!("{}", err.to_string()) })
+        .map_err(|e| { error!("{}", e.to_string()) })
         .expect("Connection to message broker established and channel created");
 
     declare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic)])
         .await
-        .map_err(|err| { error!("{}", err.to_string())})
+        .map_err(|e| { error!("{}", e.to_string())})
         .expect(format!("Exchange {}to be declared", MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE).as_str());
 
-    let config_repository = SiteConfigurationRepository::new()
-        .map_err(|err| { error!("{}", err.to_string()) })
+    let config_loader = SiteConfigurationLoader::new()
+        .map_err(|e| { error!("{}", e.to_string()) })
         .expect("Site configuration repository to be intialized");
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
@@ -70,20 +70,20 @@ pub async fn run_server() -> std::io::Result<()> {
         replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
-        .map_err(|err| {
-            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        .map_err(|e| {
+            panic!("Database initialization error: {}", e.to_string().as_str()); 
         })
         .expect("Datbase initialization error");
 
     let shared_app_context = build_shared_app_context(
-        config_repository.get_config(),
+        config_loader.get_config(),
         mongo_client.clone(),
         db_name.clone()
     )
         .await
-        .map_err(|err| {
-            error!("Failed to initialize SharedState: {}", err.to_string());
-            err
+        .map_err(|e| {
+            error!("Failed to initialize SharedState: {}", e.to_string());
+            e
         })
         .expect("SharedState to be initialzed");
     
@@ -105,18 +105,18 @@ pub async fn run_server() -> std::io::Result<()> {
             &mongo_client,
             db_name.clone(),
             state.channel.clone(),
-        ).map_err(|err| {
-            error!("Failed to initialize model deployment service: {}", err.to_string());
-            err
+        ).map_err(|e| {
+            error!("Failed to initialize model deployment service: {}", e.to_string());
+            e
         })
         .expect("ModelDeploymentService to be initialzed")
     );
 
     // Deployment Strategy Provider
     let deployment_strategy_provider = build_deployment_strategy_provider()
-    .map_err(|err| {
-        error!("Failed to initialize DeploymentStrategyProvider: {}", err.to_string());
-        err
+    .map_err(|e| {
+        error!("Failed to initialize DeploymentStrategyProvider: {}", e.to_string());
+        e
     })
     .expect("DeploymentStrategyProvider to be initialized");
 

@@ -14,3 +14,4 @@ pub mod identity;
 pub mod tenancy;
 pub mod annotations;
 pub mod taxonomy;
+pub mod site;

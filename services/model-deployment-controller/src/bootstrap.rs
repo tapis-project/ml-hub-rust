@@ -13,6 +13,7 @@ use shared::application::services::deployment_argument_service::DeploymentArgume
 use shared::application::services::deployment_strategy_service::DeploymentStrategyService;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::application::ports::deployment::ModelDeploymentPlatformReconcilerProvider;
+use shared::domain::entities::site::SiteContext;
 use shared::infra::argument::mongo::MongoDeploymentArgumentRepository;
 use shared::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
 use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
@@ -26,8 +27,6 @@ use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::Rabb
 use shared::application::services::model_deployment_controller::ModelDeploymentController;
 use shared::shared_kernel::errors::BootstrapError;
 use std::sync::Arc;
-
-
 
 pub fn model_metadata_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelMetadataRepository> {
     Arc::new(MongoModelMetadataRepository::new(client, db_name))
@@ -90,9 +89,10 @@ pub fn deployment_strategy_service_builder() -> Result<DeploymentStrategyService
     ))
 }
 
-pub fn model_deployment_conroller_builder(client: &Client, db_name: String, channel: Arc<Channel>) -> Result<Arc<ModelDeploymentController>, BootstrapError> {
+pub fn model_deployment_conroller_builder(site_context: SiteContext, client: &Client, db_name: String, channel: Arc<Channel>) -> Result<Arc<ModelDeploymentController>, BootstrapError> {
     Ok(Arc::new(
         ModelDeploymentController::new(
+            site_context,
             deployment_strategy_service_builder()?,
             deployment_argument_service_builder(client, &db_name),
             model_deployment_service_builder(client, db_name.clone(), channel.clone())?,

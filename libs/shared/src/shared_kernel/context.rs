@@ -46,8 +46,8 @@ impl RequestContext {
         &self.token
     }
 
-    pub fn request_id(&self) -> &String {
-        &self.token
+    pub fn request_id(&self) -> &Uuid {
+        &self.request_id
     }
 
     fn generate_request_id() -> Uuid {

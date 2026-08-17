@@ -7,6 +7,7 @@ use crate::application::workflows::reconciliation::{ReconcilerError, Reconciliat
 // Domain layer
 use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::deployment::ModelDeployment;
+use crate::domain::entities::site::SiteContext;
 
 use async_trait::async_trait;
 use platforms::Platform;
@@ -30,6 +31,7 @@ pub trait ModelDeploymentRepository: Send + Sync {
 #[async_trait]
 pub trait ModelDeploymentPlatformReconciliationClient: Send + Sync {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome;
+    fn get_site_context(&self) -> &SiteContext;
 }
 
 #[derive(Debug, Error)]
@@ -41,6 +43,7 @@ pub enum ModelDeploymentPlatformReconcilerProviderError {
     ClientInitializationError(#[from] ReconcilerError),
 }
 
+#[async_trait]
 pub trait ModelDeploymentPlatformReconcilerProvider: Send + Sync {
-    fn provide(&self, platform: &Platform) -> Result<Arc<dyn ModelDeploymentPlatformReconciliationClient>, ModelDeploymentPlatformReconcilerProviderError>;
+    async fn provide(&self, platform: &Platform, site_context: &SiteContext) -> Result<Arc<dyn ModelDeploymentPlatformReconciliationClient>, ModelDeploymentPlatformReconcilerProviderError>;
 }

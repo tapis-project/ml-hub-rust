@@ -7,7 +7,7 @@ use crate::presentation::http::v1::actix_web::handlers;
 use actix_web::{App, HttpServer, middleware::{from_fn, Logger}, web};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
-use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
+use shared::infra::configuration::site_configuration_loader::SiteConfigurationLoader;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
 use shared::presentation::http::v1::actix_web::middleware::{
@@ -39,9 +39,9 @@ pub async fn run_server() -> std::io::Result<()> {
     );
 
     let deployment_strategy_provider = build_deployment_strategy_provider()
-        .map_err(|err| {
-            error!("Failed to initialize DeploymentStrategyProvider: {}", err.to_string());
-            err
+        .map_err(|e| {
+            error!("Failed to initialize DeploymentStrategyProvider: {}", e.to_string());
+            e
         })
         .expect("DeploymentStrategyProvider to be initialzed");
 
@@ -59,7 +59,7 @@ pub async fn run_server() -> std::io::Result<()> {
         broker_password,
     )
         .await
-        .map_err(|err| { error!("{}", err.to_string()) })
+        .map_err(|e| { error!("{}", e.to_string()) })
         .expect("Connection to message broker established and channel created");
 
     declare_exchanges(
@@ -69,11 +69,11 @@ pub async fn run_server() -> std::io::Result<()> {
             (ARTIFACT_PUBLICATION_EXCHANGE, ExchangeType::Topic),
         ]
     ).await
-        .map_err(|err| { error!("{}", err.to_string())})
+        .map_err(|e| { error!("{}", e.to_string())})
         .expect(format!("Exchanges {} and {} to be declared", ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE).as_str());
 
-    let config_repository = SiteConfigurationRepository::new()
-        .map_err(|err| { error!("{}", err.to_string()) })
+    let config_loader = SiteConfigurationLoader::new()
+        .map_err(|e| { error!("{}", e.to_string()) })
         .expect("Site configuration repository to be intialized");
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
@@ -87,20 +87,20 @@ pub async fn run_server() -> std::io::Result<()> {
         replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
-        .map_err(|err| {
-            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        .map_err(|e| {
+            panic!("Database initialization error: {}", e.to_string().as_str()); 
         })
         .expect("Database initialization error");
 
     let shared_app_context = build_shared_app_context(
-        config_repository.get_config(),
+        config_loader.get_config(),
         mongo_client.clone(),
         db_name.clone()
     )
         .await
-        .map_err(|err| {
-            error!("Failed to initialize SharedState: {}", err.to_string());
-            err
+        .map_err(|e| {
+            error!("Failed to initialize SharedState: {}", e.to_string());
+            e
         })
         .expect("SharedState to be initialzed");
     
@@ -114,9 +114,9 @@ pub async fn run_server() -> std::io::Result<()> {
         db_name.clone(),
         client_strategy_sets.clone()
     ).await
-        .map_err(|err| {
-            error!("Failed to initialize ModelMetadataService: {}", err.to_string());
-            err
+        .map_err(|e| {
+            error!("Failed to initialize ModelMetadataService: {}", e.to_string());
+            e
         })
         .map(|s| Arc::new(s))
         .expect("ModelMetadataService to be initialized");

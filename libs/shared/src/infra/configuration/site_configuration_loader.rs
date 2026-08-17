@@ -1,27 +1,37 @@
-use crate::application::errors::ApplicationError;
 use crate::infra::configuration::{SiteConfiguration, DEFAULT_SITE_CONFGIURATION_PATH};
 use log::error;
 
-pub struct SiteConfigurationRepository {
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum SiteConfigurationLoaderError {
+    #[error("Failed to load the site configuration: {0}")]
+    LoadingError(String),
+
+    #[error("Failed to deserialize configuration")]
+    DeserializationError(#[from] serde_json::Error)
+}
+
+pub struct SiteConfigurationLoader {
     config: SiteConfiguration
 }
 
-impl SiteConfigurationRepository {
-    pub fn new() -> Result<Self, ApplicationError> {
+impl SiteConfigurationLoader {
+    pub fn new() -> Result<Self, SiteConfigurationLoaderError> {
         let config_path = std::env::var("SITE_CONFIG_PATH")
                 .unwrap_or(DEFAULT_SITE_CONFGIURATION_PATH.into());
 
         // Load the client strategy set from the file
         let contents = std::fs::read_to_string(std::path::PathBuf::from(config_path))
-            .map_err(|err| {
-                error!("Error reading contents of site configuration file {}", err.to_string());
-                ApplicationError::SiteConfigLoaderInitialization(format!("Failed to read config file: {}", err.to_string()))
+            .map_err(|e| {
+                error!("Error reading contents of site configuration file {}", e.to_string());
+                SiteConfigurationLoaderError::LoadingError(format!("Failed to read config file: {}", e.to_string()))
             })?;
         
         let config = serde_json::from_str::<SiteConfiguration>(&contents)
-            .map_err(|err| {
-                error!("Failed to deserialize site configuration: {}", err.to_string());
-                ApplicationError::SiteConfigLoaderInitialization(format!("Failed to deserialize configuration file contents: {}", err.to_string()))
+            .map_err(|e| {
+                error!("Failed to deserialize site configuration: {}", e.to_string());
+                SiteConfigurationLoaderError::DeserializationError(e)
             })?;
 
         Ok(Self { config })

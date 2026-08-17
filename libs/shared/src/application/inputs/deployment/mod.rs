@@ -1,5 +1,6 @@
 use platforms::Platform;
 use uuid::Uuid;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy::client_strategy::ClientStrategy};
 use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ParallelismStrategy, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
@@ -70,6 +71,7 @@ pub struct ReconcileModelDeploymentInput {
     pub action: ReconciliationAction,
     pub deployment: ModelDeployment,
     pub model_metadata: ModelMetadata,
+    pub strategy: Option<Strategy>,
 }
 
 #[derive(Clone)]

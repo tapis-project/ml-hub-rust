@@ -18,10 +18,7 @@
                 "stampede3_tapis_system_id": "MLHub-FlexServ-Stampede3",
                 "frontera_tapis_system_id": "MLHub-FlexServ-Frontera",
                 "lonestar6_tapis_system_id": "MLHub-FlexServ-Lonestar6",
-                "horizon_tapis_system_id": "MLHub-FlexServ-Horizon",
-                "flexserv_app_id": "FlexServ-1.4.0",
-                "flexserv_app_version": "1.4.0",
-                "job_def_url": "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/job.json"
+                "horizon_tapis_system_id": "MLHub-FlexServ-Horizon"
             }
         }
     ],

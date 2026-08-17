@@ -59,8 +59,3 @@ impl From<outputs::Locator> for entities::Locator {
         Self { url: value.url }
     }
 }
-
-// Helper - Formatter
-fn format_strategy_description_key(platform: &Platform, name: &String) -> String {
-    format!("{}:{}", platform, name)
-}
