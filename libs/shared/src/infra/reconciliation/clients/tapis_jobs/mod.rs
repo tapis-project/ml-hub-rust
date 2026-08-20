@@ -4,7 +4,7 @@ use reqwest::Client;
 use serde_json::json;
 use tapis_jobs::models::{JobArgSpec, ReqSubmitJob};
 use tapis_jobs::{with_headers, TapisJobs};
-use tapis_tokens::models::NewTokenResponse;
+use tapis_tokens::models::RefreshToken201Response;
 use thiserror::Error;
 
 use crate::application::ports::deployment::ModelDeploymentPlatformReconciliationClient;
@@ -189,7 +189,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
         Ok(ReconciliationOutcome::Started(StartedOutcome {
             message: Some("Deployment started successfully".to_string()),
-            state: State::Failed,
+            state: State::Unknown,
             metadata: Some(ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))),
             replicas: None,
             interface: None,
@@ -241,7 +241,8 @@ impl TapisJobsModelDeploymentReconciliationClient {
         let payload = json!({
             "account_type": "service",
             "token_tenant_id": "admin",
-            "token_username": "mlhub"
+            "token_username": "mlhub",
+            "target_site_id": self.site_context.site_id.clone(),
         });
 
         let resp = self.client.post(format!("{}/v3/tokens", self.get_site_context().base_url))
@@ -254,23 +255,29 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 log::error!("[{}] External service call error: {}", error.error_id(), e.to_string());
                 error
             })?
-            .json::<NewTokenResponse>()
+            .json::<RefreshToken201Response>()
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
                 log::error!("[{}] Deserialization error: {}", error.error_id(), e.to_string());
                 error
             })?
-            .access_token
+            .result
             .ok_or_else(|| InfrastructureError::new_internal())
             .map_err(|e| {
-                log::error!("[{}] Missing access token response: {}", e.error_id(), e.to_string());
+                log::error!("[{}] Missing result field in response: {}", e.error_id(), e.to_string());
                 e
             })?
             .access_token
             .ok_or_else(|| InfrastructureError::new_internal())
             .map_err(|e| {
-                log::error!("[{}] Missing access token: {}", e.error_id(), e.to_string());
+                log::error!("[{}] Missing access token field in result: {}", e.error_id(), e.to_string());
+                e
+            })?
+            .access_token
+            .ok_or_else(|| InfrastructureError::new_internal())
+            .map_err(|e| {
+                log::error!("[{}] Missing access token field inside of NewAccessTokenResponse: {}", e.error_id(), e.to_string());
                 e
             })?;
 
@@ -311,13 +318,15 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .clone()
             .replace("admin", &deployment.tenant_id.clone());
 
-        target_base_url
+        format!("{}/{}", target_base_url, "v3")
     }
 
     fn build_job_request(&self, model_id: &str, deployment: &ModelDeployment, strategy: &Strategy, args: &[DecryptedArgument]) -> Result<ReqSubmitJob, ReconciliationError> {
         let mut job_def = self.base_job_definition.clone();
+
+        let job_name = format!("MLHub-FlexServ-{}", &deployment.id);
         
-        job_def.name = deployment.name.clone();
+        job_def.name = job_name.clone();
         job_def.app_id = Self::FLEXSERV_APP_ID.into();
         job_def.app_version = Self::FLEXSERV_APP_VERSION.into();
         job_def.tenant = Some(deployment.tenant_id.clone());
@@ -346,7 +355,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
                 ReconciliationError::Fatal(error)
             })?;
-
 
         let strategy_data = strategy
             .data()
@@ -384,10 +392,10 @@ impl TapisJobsModelDeploymentReconciliationClient {
         
         // Set the slurm allocation
         let slurm_allocation = args.iter()
-            .find(|a| a.parameter_name == "Slurm Allocation")
+            .find(|a| a.parameter_name == "Slurm Project Allocation")
             .map(|arg| &arg.value)
             .ok_or_else(|| {
-                let message: String = "'Slurm Allocation' not provided in arguments".into();
+                let message: String = "'Slurm Project Allocation' not provided in arguments".into();
                 let error = InfrastructureError::new_internal();
                 log::error!("[{}] Missing argument: {}", error.error_id(), &message);
 
@@ -406,8 +414,9 @@ impl TapisJobsModelDeploymentReconciliationClient {
             spec.arg = Some(format!("-A {}", slurm_allocation));
         }
 
+        // Set the slurm reservation
         let maybe_slurm_reservation = args.iter()
-            .find(|a| a.parameter_name == "Slurm Reservation")
+            .find(|a| a.parameter_name == "Slurm Reservation" && !a.value.is_empty())
             .map(|arg| &arg.value);
 
         if let Some(slurm_reservation) = maybe_slurm_reservation {
@@ -416,7 +425,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
             if let Some(opts) = scheduler_opts {
                 opts.push(JobArgSpec { 
-                    name: Some("Slurm Reservation".to_string()), 
+                    name: Some("Reservation Name".to_string()), 
                     arg: Some(format!("-R {}", slurm_reservation)), 
                     description: Some("The Slurm Reservation (set by MLHub)".into()), 
                     include: Some(true), 
@@ -424,6 +433,24 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 });
             }   
         }
+
+        // Update the slurm job name.
+        // TODO Remove this when the following issue is resolved.
+        // https://github.com/tapis-project/tapis-jobs/issues/181
+        job_def.parameter_set
+            .as_mut()
+            .and_then(|params| params.scheduler_options.as_mut())
+            .map(|opts| {
+                opts.push(
+                    JobArgSpec {
+                        name: Some("Slurm job name".into()),
+                        description: Some("The name of the slurm job (overwritten by MLHub).".into()),
+                        arg: Some(format!("--job-name tap_{}", &job_name)),
+                        notes: None,
+                        include: Some(true),
+                    }
+                );
+            });
        
         Ok(job_def)
     }

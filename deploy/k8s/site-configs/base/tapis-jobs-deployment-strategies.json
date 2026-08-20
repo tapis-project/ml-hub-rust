@@ -14,7 +14,7 @@
             ],
             "use_parameter_set": "TACCHPC",
             "data": {
-                "vista_tapis_system_id": "MLHub-FlexServ-Vista",
+                "vista_tapis_system_id": "MLHub-FlexServ-Vista-PKI",
                 "stampede3_tapis_system_id": "MLHub-FlexServ-Stampede3",
                 "frontera_tapis_system_id": "MLHub-FlexServ-Frontera",
                 "lonestar6_tapis_system_id": "MLHub-FlexServ-Lonestar6",

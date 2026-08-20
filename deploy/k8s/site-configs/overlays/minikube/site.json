@@ -1,5 +1,5 @@
 {
-    "site_id": "local-minikube",
+    "site_id": "tacc",
     "base_url": "https://admin.develop.tapis.io",
     "idps": ["tapis"],
     "tenancy_resolution_mode": "subdomain"

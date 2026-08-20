@@ -299,7 +299,8 @@ async fn main() -> () {
     let config = config_loader.get_config();
 
     let site_context = SiteContext {
-        base_url: config.base_url
+        base_url: config.base_url.clone(),
+        site_id: config.site_id.clone(),
     };
 
     let controller = match model_deployment_conroller_builder(site_context, &client, db_name, context.channel.clone()) {
