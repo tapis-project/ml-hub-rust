@@ -1,6 +1,7 @@
 pub mod domain;
 pub mod skill;
 pub mod artifact;
+pub mod agent;
 pub mod artifact_ingestion;
 pub mod timestamp;
 pub mod artifact_publication;

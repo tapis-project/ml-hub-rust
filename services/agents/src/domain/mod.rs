@@ -1,1 +1,2 @@
-//! Domain model for agents.
+pub use shared::domain::entities;
+pub use shared::domain::services;

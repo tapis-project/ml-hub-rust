@@ -128,6 +128,8 @@ The application layer is responsible for orchestrating business logic. Service's
 
 The domain layer represents all business concepts and their relationships in the problem space. This layer is separated into two parts: Entities and Services. Entities are discrete representations of core business concepts, their data, and invariants. Services enforce the rules between entities and encapsulate domain specific operations. The domain layer is only known by the application layer. 
 
+The canonical implementations of shared domain entities and services live in `libs/shared/src/domain`. APIs re-export the shared modules they use from their local domain layer instead of duplicating domain models in each service.
+
 ### 4. The Infrastructure Layer
 
 This layer encapsulates the implementation details of the technologies used in this project such as databases, message brokers, and external service calls.
