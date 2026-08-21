@@ -18,6 +18,9 @@ import {
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
+    CreateModelMetadataBody,
+    CreateModelMetadataBodyFromJSON,
+    CreateModelMetadataBodyToJSON,
     CreateModelMetadataResponse,
     CreateModelMetadataResponseFromJSON,
     CreateModelMetadataResponseToJSON,
@@ -27,6 +30,9 @@ import {
     DiscoveryCriteria,
     DiscoveryCriteriaFromJSON,
     DiscoveryCriteriaToJSON,
+    ForkModelResponse,
+    ForkModelResponseFromJSON,
+    ForkModelResponseToJSON,
     GetModelResponse,
     GetModelResponseFromJSON,
     GetModelResponseToJSON,
@@ -39,9 +45,6 @@ import {
     ListModelsResponse,
     ListModelsResponseFromJSON,
     ListModelsResponseToJSON,
-    ModelMetadata,
-    ModelMetadataFromJSON,
-    ModelMetadataToJSON,
     NotFoundResponse,
     NotFoundResponseFromJSON,
     NotFoundResponseToJSON,
@@ -51,7 +54,7 @@ import {
 } from '../models';
 
 export interface CreateModelMetadataRequest {
-    modelMetadata: ModelMetadata;
+    createModelMetadataBody: CreateModelMetadataBody;
 }
 
 export interface DiscoverModelsRequest {
@@ -59,21 +62,24 @@ export interface DiscoverModelsRequest {
     limit?: number;
     cursor?: string;
     includeCount?: boolean;
+    includeGlobalModels?: boolean;
 }
 
-export interface GetModelRequest {
+export interface ForkModelRequest {
     author: string;
     name: string;
+}
+
+export interface GetModelByAuthorAndNameRequest {
+    name: string;
+    author: string;
+    scope?: GetModelByAuthorAndNameScopeEnum;
 }
 
 export interface IngestCanonicalModelRequest {
     author: string;
     name: string;
     ingestArtifactRequest: IngestArtifactRequest;
-}
-
-export interface ListModelsRequest {
-    modelMetadata: ModelMetadata;
 }
 
 export interface ListModelsByAuthorRequest {
@@ -89,8 +95,8 @@ export class ModelsApi extends runtime.BaseAPI {
      * Create a model metadata
      */
     async createModelMetadataRaw(requestParameters: CreateModelMetadataRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<CreateModelMetadataResponse>> {
-        if (requestParameters.modelMetadata === null || requestParameters.modelMetadata === undefined) {
-            throw new runtime.RequiredError('modelMetadata','Required parameter requestParameters.modelMetadata was null or undefined when calling createModelMetadata.');
+        if (requestParameters.createModelMetadataBody === null || requestParameters.createModelMetadataBody === undefined) {
+            throw new runtime.RequiredError('createModelMetadataBody','Required parameter requestParameters.createModelMetadataBody was null or undefined when calling createModelMetadata.');
         }
 
         const queryParameters: any = {};
@@ -104,7 +110,7 @@ export class ModelsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ModelMetadataToJSON(requestParameters.modelMetadata),
+            body: CreateModelMetadataBodyToJSON(requestParameters.createModelMetadataBody),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CreateModelMetadataResponseFromJSON(jsonValue));
@@ -140,6 +146,10 @@ export class ModelsApi extends runtime.BaseAPI {
             queryParameters['include_count'] = requestParameters.includeCount;
         }
 
+        if (requestParameters.includeGlobalModels !== undefined) {
+            queryParameters['include_global_models'] = requestParameters.includeGlobalModels;
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
@@ -164,15 +174,15 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get model by the author and name
+     * Fork model metadata from a platform
      */
-    async getModelRaw(requestParameters: GetModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<GetModelResponse>> {
+    async forkModelRaw(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ForkModelResponse>> {
         if (requestParameters.author === null || requestParameters.author === undefined) {
-            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling getModel.');
+            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling forkModel.');
         }
 
         if (requestParameters.name === null || requestParameters.name === undefined) {
-            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling getModel.');
+            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling forkModel.');
         }
 
         const queryParameters: any = {};
@@ -180,7 +190,45 @@ export class ModelsApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/models-api/models/{author}/{name}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))).replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))),
+            path: `/models-api/models/fork/{author}/{name}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))).replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ForkModelResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Fork model metadata from a platform
+     */
+    async forkModel(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<ForkModelResponse> {
+        const response = await this.forkModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get model by the author and name
+     */
+    async getModelByAuthorAndNameRaw(requestParameters: GetModelByAuthorAndNameRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<GetModelResponse>> {
+        if (requestParameters.name === null || requestParameters.name === undefined) {
+            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling getModelByAuthorAndName.');
+        }
+
+        if (requestParameters.author === null || requestParameters.author === undefined) {
+            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling getModelByAuthorAndName.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.scope !== undefined) {
+            queryParameters['scope'] = requestParameters.scope;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/models-api/models/{author}/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))).replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -192,8 +240,8 @@ export class ModelsApi extends runtime.BaseAPI {
     /**
      * Get model by the author and name
      */
-    async getModel(requestParameters: GetModelRequest, initOverrides?: RequestInit): Promise<GetModelResponse> {
-        const response = await this.getModelRaw(requestParameters, initOverrides);
+    async getModelByAuthorAndName(requestParameters: GetModelByAuthorAndNameRequest, initOverrides?: RequestInit): Promise<GetModelResponse> {
+        const response = await this.getModelByAuthorAndNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -239,40 +287,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List all models
-     */
-    async listModelsRaw(requestParameters: ListModelsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
-        if (requestParameters.modelMetadata === null || requestParameters.modelMetadata === undefined) {
-            throw new runtime.RequiredError('modelMetadata','Required parameter requestParameters.modelMetadata was null or undefined when calling listModels.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        const response = await this.request({
-            path: `/models-api/models`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-            body: ModelMetadataToJSON(requestParameters.modelMetadata),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ListModelsResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * List all models
-     */
-    async listModels(requestParameters: ListModelsRequest, initOverrides?: RequestInit): Promise<ListModelsResponse> {
-        const response = await this.listModelsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * List models by author
+     * List models by author in the current tenant
      */
     async listModelsByAuthorRaw(requestParameters: ListModelsByAuthorRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
         if (requestParameters.author === null || requestParameters.author === undefined) {
@@ -294,11 +309,20 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List models by author
+     * List models by author in the current tenant
      */
     async listModelsByAuthor(requestParameters: ListModelsByAuthorRequest, initOverrides?: RequestInit): Promise<ListModelsResponse> {
         const response = await this.listModelsByAuthorRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+}
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum GetModelByAuthorAndNameScopeEnum {
+    Tenant = 'tenant',
+    Global = 'global'
 }

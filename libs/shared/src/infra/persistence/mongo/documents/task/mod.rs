@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 pub mod document_to_entity;
 pub mod entity_to_document;
-pub mod input_to_document;
 
 #[doc = "An enum of all task types available on Huggingface"]
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]

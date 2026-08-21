@@ -4,7 +4,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::presentation::http::v1::contracts;
-use shared::presentation::http::v1::requests::task::Task;
+use shared::presentation::http::v1::requests::common::tasks::Task;
 
 #[utoipa::path(
     get,

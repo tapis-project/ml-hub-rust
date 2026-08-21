@@ -1,6 +1,7 @@
 use actix_web::dev::ServiceResponse;
 use actix_web::middleware::Next;
 use actix_web::{HttpMessage, HttpResponse};
+use actix_web::http::Method;
 use actix_web::{
     web,
     dev::ServiceRequest,
@@ -9,13 +10,13 @@ use actix_web::{
 use serde_json::json;
 use log::{info, warn, error};
 
-use crate::application::identity_context::{IdentityContext, Actor};
+use crate::shared_kernel::context::{RequestContext, Actor};
 use crate::application::inputs::principal::GetOrCreateFromFederatedIdentity;
 use crate::application::ports::identity::FederatedIdentityProviderError;
 use crate::application::services::federated_identity_service::FederatedIdentityService;
 use crate::application::services::principal_service::{PrincipalService, PrincipalServiceError};
 use crate::domain::entities::tenancy::Tenant;
-use crate::presentation::http::v1::requests::headers::AuthToken;
+use crate::presentation::http::v1::requests::common::headers::AuthToken;
 use crate::application::services::federated_idp_registrar::FederatedIdpRegistrar;
 use crate::presentation::http::v1::actix_web::helpers::get_header_value;
 use crate::presentation::http::v1::adapters::derive_header_keys_from_authorities;
@@ -78,6 +79,11 @@ pub async fn authenticate(
         if maybe_token.is_some() {
             break
         }
+    }
+
+    // Explicitly allow ONLY the OPTIONS method to bypass authentication
+    if req.method() == Method::OPTIONS {
+        return Ok(next.call(req).await?.map_into_left_body())
     }
 
     // Respond with error if no token exists
@@ -216,9 +222,10 @@ pub async fn authenticate(
             }
         };
 
-        let identity_conext = IdentityContext::new(
+        let identity_conext = RequestContext::new(
             Actor::from(principal),
-            "".into()
+            "".into(),
+            None
         );
 
         req.extensions_mut().insert(identity_conext);

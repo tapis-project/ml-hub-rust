@@ -4,7 +4,7 @@ use amqprs::channel::Channel;
 #[cfg(feature = "mongo")]
 use mongodb::Client;
 use shared::application::errors::ApplicationError;
-use shared::application::ports::deployment::DeploymentStrategyProvider;
+use shared::application::ports::deployment_strategy::DeploymentStrategyProvider;
 use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
 use crate::application::ports::artifacts::{
     ArtifactRepository,

@@ -21,6 +21,9 @@ import {
     DeployModelWithStrategyBody,
     DeployModelWithStrategyBodyFromJSON,
     DeployModelWithStrategyBodyToJSON,
+    ListModelDeploymentsResponse,
+    ListModelDeploymentsResponseFromJSON,
+    ListModelDeploymentsResponseToJSON,
     ModelDeploymentResponse,
     ModelDeploymentResponseFromJSON,
     ModelDeploymentResponseToJSON,
@@ -96,6 +99,32 @@ export class DeploymentsApi extends runtime.BaseAPI {
      */
     async deployModelWithStrategy(requestParameters: DeployModelWithStrategyRequest, initOverrides?: RequestInit): Promise<ModelDeploymentResponse> {
         const response = await this.deployModelWithStrategyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists all available deployments
+     */
+    async listModelDeploymentsRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelDeploymentsResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/deployments-api/deployments`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListModelDeploymentsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists all available deployments
+     */
+    async listModelDeployments(initOverrides?: RequestInit): Promise<ListModelDeploymentsResponse> {
+        const response = await this.listModelDeploymentsRaw(initOverrides);
         return await response.value();
     }
 

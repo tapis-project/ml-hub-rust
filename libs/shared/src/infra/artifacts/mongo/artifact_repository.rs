@@ -1,4 +1,5 @@
-use crate::application::errors::ApplicationError;
+use crate::application::ports::artifacts::ArtifactRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
 use crate::infra::artifacts::mongo::ARTIFACT_COLLECTION;
 use crate::infra::artifacts::mongo::documents::{Artifact, ArtifactType, UpdateArtifactRequest, UpdateArtifactPathRequest};
@@ -33,50 +34,84 @@ impl ArtifactRepository {
 
 #[async_trait]
 impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
-    async fn save(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError> {
+    async fn save(&self, artifact: &entities::artifact::Artifact) -> Result<(), ArtifactRepositoryError> {
         let mut document = Artifact::from(artifact.clone());
         
         let result = self.write_collection.insert_one(&document)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         document._id = result.inserted_id.as_object_id();
 
         Ok(())
     }
 
-    async fn list_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact::Artifact>, ApplicationError> {
+    async fn list_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact::Artifact>, ArtifactRepositoryError> {
         let filter = doc! {
             "artifact_type": String::from(ArtifactType::from(artifact_type))
         };
         
         let mut cursor = self.read_collection.find(filter)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         let mut artifacts:Vec<entities::artifact::Artifact> = Vec::new();
-        while let Some(artifact) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+        while let Some(artifact) = cursor.try_next()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?
+        {
             artifacts.push(
                 entities::artifact::Artifact::try_from(artifact)
-                    .map_err(|err| ApplicationError::RepoError(err.to_string()))?
+                .map_err(|e| {
+                    let error = InfrastructureError::new_internal();
+                    log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                    error
+                })?
             );
         }
         
         Ok(artifacts)
     }
 
-    async fn get_by_id(&self, id: &uuid::Uuid) -> Result<Option<entities::artifact::Artifact>, ApplicationError> {
+    async fn get_by_id(&self, id: &uuid::Uuid) -> Result<Option<entities::artifact::Artifact>, ArtifactRepositoryError> {
         let filter = doc! {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
 
         let mut cursor = self.read_collection.find(filter)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
-        while let Some(artifact_doc) = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?  {
+        while let Some(artifact_doc) = cursor.try_next()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?
+        {
             let artifact = entities::artifact::Artifact::try_from(artifact_doc)
-                .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+                .map_err(|e| {
+                    let error = InfrastructureError::new_internal();
+                    log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                    error
+                })?;
 
             return Ok(Some(artifact))
         }
@@ -84,8 +119,13 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         Ok(None)
     }
 
-    async fn update(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError>  {
-        let update = UpdateArtifactRequest::try_from(artifact.clone())?;
+    async fn update(&self, artifact: &entities::artifact::Artifact) -> Result<(), ArtifactRepositoryError>  {
+        let update = UpdateArtifactRequest::try_from(artifact.clone())
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         let filter = doc! {
             "id": Uuid::from_bytes(*artifact.id.as_bytes())
@@ -101,13 +141,22 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
         self.write_collection
             .update_one(filter, document)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         Ok(())
     }
 
-    async fn update_path(&self, artifact: &entities::artifact::Artifact) -> Result<(), ApplicationError> {
-        let update = UpdateArtifactPathRequest::try_from(artifact.clone())?;
+    async fn update_path(&self, artifact: &entities::artifact::Artifact) -> Result<(), ArtifactRepositoryError> {
+        let update = UpdateArtifactPathRequest::try_from(artifact.clone())
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         let filter = doc! {
             "id": Uuid::from_bytes(*artifact.id.as_bytes()),
@@ -122,7 +171,11 @@ impl application::ports::artifacts::ArtifactRepository for ArtifactRepository {
 
         self.write_collection.update_one(filter, document)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
         
         Ok(())
     }

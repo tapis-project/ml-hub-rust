@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use amqprs::channel::Channel;
 use mongodb::Client;
-use shared::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
+use shared::{domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet};
 
 #[derive(Clone)]
 pub struct AppState {

@@ -1,6 +1,6 @@
 // TODO Refactor: Should not be a requests. Needs mappings through to the
 // infra layer
-use crate::presentation::http::v1::requests::archive::Compression;
+use crate::presentation::http::v1::requests::common::archive::Compression;
 use std::path::PathBuf;
 use std::fs::{self, File};
 use std::io::{Read, Seek};

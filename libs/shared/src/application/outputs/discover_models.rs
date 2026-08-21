@@ -1,4 +1,4 @@
-use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::application::outputs::model_metadata::ModelMetadata;
 
 pub struct DiscoverModelsOutput {
     pub models: Vec<ModelMetadata>,

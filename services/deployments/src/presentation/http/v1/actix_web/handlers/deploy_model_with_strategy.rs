@@ -1,21 +1,21 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
-use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::model_deployment_service_builder;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::requests::{
     DeployModelWithStrategyBody,
     DeployModelWithStrategyPathParams,
 };
 use crate::presentation::http::v1::responses::ModelDeployment;
-use platforms::Platform;
 use actix_web::{
     post,
     web,
     Responder,
 };
 use serde_json::to_value;
-use shared::application::identity_context::IdentityContext;
-use shared::application::inputs::deployment::DeployWithStrategyInput;
+use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::domain::entities::deployment::ParallelismStrategy;
+use shared::shared_kernel::context::RequestContext;
+use shared::application::inputs::deployment::{Argument, DeployWithStrategyInput};
+use shared::application::inputs::common::Scope as ScopeInput;
 
 #[utoipa::path(
     post,
@@ -24,8 +24,7 @@ use shared::application::inputs::deployment::DeployWithStrategyInput;
     description="Deploy a model to a target platform",
     request_body=DeployModelWithStrategyBody,
     params(
-        ("platform" = Platform, Path, description = "The target platform for the Model Deployment"),
-        ("strategy_name" = String, Path, description = "The name of the deployment strategy")
+        DeployModelWithStrategyPathParams,
     ),
     responses(
         (status=200, description="Model deployment", body=contracts::responses::ModelDeploymentResponse),
@@ -36,39 +35,37 @@ use shared::application::inputs::deployment::DeployWithStrategyInput;
 )]
 #[post("deployments-api/platforms/{platform}/strategies/{strategy_name}")]
 async fn deploy_model_with_strategy(
-    data: web::Data<AppState>,
     body: web::Json<DeployModelWithStrategyBody>,
     path: web::Path<DeployModelWithStrategyPathParams>,
-    identity_context: IdentityContext,
+    ctx: RequestContext,
+    model_deployment_service: web::Data<ModelDeploymentService>,
 ) -> impl Responder {
-    let maybe_strategy = data.client_strategy_sets
-        .iter()
-        .find(|set| set.platform == path.platform.clone())
-        .map(|css| css.strategies())
-        .map(|strats| strats.iter().find(|strat| &strat.name == &path.strategy_name))
-        .map(|x| x.cloned())
-        .flatten();
-
-    let strategy = match maybe_strategy {
-        Some(s) => s,
-        None => return build_error_response(404, format!("No strategy found with name {} for platform {}", &path.platform, &path.strategy_name))
-    };
-
-    let service = model_deployment_service_builder(
-        &data.client,
-        data.db_name.clone(),
-        data.channel.clone(),
-    );
-
     let input = DeployWithStrategyInput {
+        name: body.name.clone(),
+        description: body.description.clone(),
         model_author: body.model_author.clone(),
         model_name: body.model_name.clone(),
+        model_scope: ScopeInput::from(body.scope.clone()),
+        replicas: body.replicas,
+        parallelism_strategies: body.parallelism_strategies
+            .clone()
+            .and_then(|ref pss| Some(
+                pss.iter()
+                    .map(|ps| ParallelismStrategy::from(ps.clone()))
+                    .collect()
+            )),
         platform: path.platform.clone(),
-        strategy_name: strategy.name,
-        params: body.params.clone(),
+        strategy_name: path.strategy_name.clone(),
+        arguments: body.arguments
+            .clone()
+            .unwrap_or_else(|| vec![])
+            .iter()
+            .map(|a| Argument::from(a.clone()))
+            .collect(),
+        deployment_modality: shared::shared_kernel::enums::DeploymentModality::from(body.deployment_modality.clone()),
     };
 
-    let output = match service.deploy_model_with_strategy(input, &identity_context).await {
+    let output = match model_deployment_service.deploy_model_with_strategy(input, &ctx).await {
         Ok(output) => output,
         Err(err) => return build_error_response(500, err.to_string()),
     };

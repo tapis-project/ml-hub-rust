@@ -16,6 +16,6 @@ patches:
           spec:
             containers:
               - name: model-deployment-controller
-                image: tapis/mlhub-model-deployment-controller:26Q1
+                image: tapis/mlhub-model-deployment-controller:26Q2.0
                 imagePullPolicy: Always
                 resources: {}

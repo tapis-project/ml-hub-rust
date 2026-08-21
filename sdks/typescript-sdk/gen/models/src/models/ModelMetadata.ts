@@ -14,14 +14,14 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    HardwareRequirements,
-    HardwareRequirementsFromJSON,
-    HardwareRequirementsFromJSONTyped,
-    HardwareRequirementsToJSON,
-    ModelIO,
-    ModelIOFromJSON,
-    ModelIOFromJSONTyped,
-    ModelIOToJSON,
+    Canonical,
+    CanonicalFromJSON,
+    CanonicalFromJSONTyped,
+    CanonicalToJSON,
+    DeploymentStrategyReference,
+    DeploymentStrategyReferenceFromJSON,
+    DeploymentStrategyReferenceFromJSONTyped,
+    DeploymentStrategyReferenceToJSON,
     Task,
     TaskFromJSON,
     TaskFromJSONTyped,
@@ -36,100 +36,28 @@ import {
 export interface ModelMetadata {
     /**
      * 
-     * @type {any}
+     * @type {string}
      * @memberof ModelMetadata
      */
-    annotations?: any | null;
+    author: string;
+    /**
+     * 
+     * @type {Canonical}
+     * @memberof ModelMetadata
+     */
+    canonical?: Canonical;
+    /**
+     * Deployment strategy references
+     * @type {Array<DeploymentStrategyReference>}
+     * @memberof ModelMetadata
+     */
+    deployment_strategy_refs: Array<DeploymentStrategyReference>;
     /**
      * 
      * @type {string}
      * @memberof ModelMetadata
      */
-    author?: string | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    bias_evaluation_score?: number | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    edge_optimized?: boolean | null;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ModelMetadata
-     */
-    finetuning_datasets?: Array<string> | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelMetadata
-     */
-    image?: string | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    inference_distributed?: boolean | null;
-    /**
-     * 
-     * @type {HardwareRequirements}
-     * @memberof ModelMetadata
-     */
-    inference_hardware?: HardwareRequirements;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    inference_max_compute_utilization_percentage?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    inference_max_energy_consumption_watts?: number | null;
-    /**
-     * Inference performance fields
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    inference_max_latency_ms?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    inference_max_memory_usage_mb?: number | null;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    inference_min_throughput?: number | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelMetadata
-     */
-    inference_precision?: string | null;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ModelMetadata
-     */
-    inference_software_dependencies?: Array<string> | null;
-    /**
-     * Arbitrary labels
-     * @type {Array<string>}
-     * @memberof ModelMetadata
-     */
-    keywords?: Array<string> | null;
+    description?: string | null;
     /**
      * 
      * @type {Array<string>}
@@ -144,113 +72,40 @@ export interface ModelMetadata {
     license?: string | null;
     /**
      * 
-     * @type {Array<ModelIO>}
-     * @memberof ModelMetadata
-     */
-    model_inputs?: Array<ModelIO> | null;
-    /**
-     * 
-     * @type {Array<ModelIO>}
-     * @memberof ModelMetadata
-     */
-    model_outputs?: Array<ModelIO> | null;
-    /**
-     * 
      * @type {string}
      * @memberof ModelMetadata
      */
     model_type?: string | null;
     /**
-     * Architecture fields
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    multi_modal?: boolean | null;
-    /**
      * 
      * @type {string}
      * @memberof ModelMetadata
      */
-    name?: string | null;
+    name: string;
     /**
      * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    pretrained?: boolean | null;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ModelMetadata
-     */
-    pretraining_datasets?: Array<string> | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    pruned?: boolean | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    quantization_aware?: boolean | null;
-    /**
-     * Regulatory and Compliance Fields
-     * A vector or strings that represent regulatory standards. Ex HIPPA
      * @type {Array<string>}
      * @memberof ModelMetadata
      */
     regulatory?: Array<string> | null;
     /**
      * 
-     * @type {boolean}
+     * @type {Array<string>}
      * @memberof ModelMetadata
      */
-    slimmed?: boolean | null;
+    tags?: Array<string> | null;
     /**
      * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    supports_quantization?: boolean | null;
-    /**
-     * Inference Fields
      * @type {Array<Task>}
      * @memberof ModelMetadata
      */
     task_types?: Array<Task> | null;
     /**
      * 
-     * @type {boolean}
-     * @memberof ModelMetadata
-     */
-    training_distributed?: boolean | null;
-    /**
-     * 
-     * @type {HardwareRequirements}
-     * @memberof ModelMetadata
-     */
-    training_hardware?: HardwareRequirements;
-    /**
-     * Training performance fields
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    training_max_energy_consumption_watts?: number | null;
-    /**
-     * 
      * @type {string}
      * @memberof ModelMetadata
      */
-    training_precision?: string | null;
-    /**
-     * Training-related Fields
-     * @type {number}
-     * @memberof ModelMetadata
-     */
-    training_time?: number | null;
+    tenant_id: string;
 }
 
 export function ModelMetadataFromJSON(json: any): ModelMetadata {
@@ -263,42 +118,18 @@ export function ModelMetadataFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'annotations': !exists(json, 'annotations') ? undefined : json['annotations'],
-        'author': !exists(json, 'author') ? undefined : json['author'],
-        'bias_evaluation_score': !exists(json, 'bias_evaluation_score') ? undefined : json['bias_evaluation_score'],
-        'edge_optimized': !exists(json, 'edge_optimized') ? undefined : json['edge_optimized'],
-        'finetuning_datasets': !exists(json, 'finetuning_datasets') ? undefined : json['finetuning_datasets'],
-        'image': !exists(json, 'image') ? undefined : json['image'],
-        'inference_distributed': !exists(json, 'inference_distributed') ? undefined : json['inference_distributed'],
-        'inference_hardware': !exists(json, 'inference_hardware') ? undefined : HardwareRequirementsFromJSON(json['inference_hardware']),
-        'inference_max_compute_utilization_percentage': !exists(json, 'inference_max_compute_utilization_percentage') ? undefined : json['inference_max_compute_utilization_percentage'],
-        'inference_max_energy_consumption_watts': !exists(json, 'inference_max_energy_consumption_watts') ? undefined : json['inference_max_energy_consumption_watts'],
-        'inference_max_latency_ms': !exists(json, 'inference_max_latency_ms') ? undefined : json['inference_max_latency_ms'],
-        'inference_max_memory_usage_mb': !exists(json, 'inference_max_memory_usage_mb') ? undefined : json['inference_max_memory_usage_mb'],
-        'inference_min_throughput': !exists(json, 'inference_min_throughput') ? undefined : json['inference_min_throughput'],
-        'inference_precision': !exists(json, 'inference_precision') ? undefined : json['inference_precision'],
-        'inference_software_dependencies': !exists(json, 'inference_software_dependencies') ? undefined : json['inference_software_dependencies'],
-        'keywords': !exists(json, 'keywords') ? undefined : json['keywords'],
+        'author': json['author'],
+        'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
+        'deployment_strategy_refs': ((json['deployment_strategy_refs'] as Array<any>).map(DeploymentStrategyReferenceFromJSON)),
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
         'license': !exists(json, 'license') ? undefined : json['license'],
-        'model_inputs': !exists(json, 'model_inputs') ? undefined : (json['model_inputs'] === null ? null : (json['model_inputs'] as Array<any>).map(ModelIOFromJSON)),
-        'model_outputs': !exists(json, 'model_outputs') ? undefined : (json['model_outputs'] === null ? null : (json['model_outputs'] as Array<any>).map(ModelIOFromJSON)),
         'model_type': !exists(json, 'model_type') ? undefined : json['model_type'],
-        'multi_modal': !exists(json, 'multi_modal') ? undefined : json['multi_modal'],
-        'name': !exists(json, 'name') ? undefined : json['name'],
-        'pretrained': !exists(json, 'pretrained') ? undefined : json['pretrained'],
-        'pretraining_datasets': !exists(json, 'pretraining_datasets') ? undefined : json['pretraining_datasets'],
-        'pruned': !exists(json, 'pruned') ? undefined : json['pruned'],
-        'quantization_aware': !exists(json, 'quantization_aware') ? undefined : json['quantization_aware'],
+        'name': json['name'],
         'regulatory': !exists(json, 'regulatory') ? undefined : json['regulatory'],
-        'slimmed': !exists(json, 'slimmed') ? undefined : json['slimmed'],
-        'supports_quantization': !exists(json, 'supports_quantization') ? undefined : json['supports_quantization'],
+        'tags': !exists(json, 'tags') ? undefined : json['tags'],
         'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
-        'training_distributed': !exists(json, 'training_distributed') ? undefined : json['training_distributed'],
-        'training_hardware': !exists(json, 'training_hardware') ? undefined : HardwareRequirementsFromJSON(json['training_hardware']),
-        'training_max_energy_consumption_watts': !exists(json, 'training_max_energy_consumption_watts') ? undefined : json['training_max_energy_consumption_watts'],
-        'training_precision': !exists(json, 'training_precision') ? undefined : json['training_precision'],
-        'training_time': !exists(json, 'training_time') ? undefined : json['training_time'],
+        'tenant_id': json['tenant_id'],
     };
 }
 
@@ -311,42 +142,18 @@ export function ModelMetadataToJSON(value?: ModelMetadata | null): any {
     }
     return {
         
-        'annotations': value.annotations,
         'author': value.author,
-        'bias_evaluation_score': value.bias_evaluation_score,
-        'edge_optimized': value.edge_optimized,
-        'finetuning_datasets': value.finetuning_datasets,
-        'image': value.image,
-        'inference_distributed': value.inference_distributed,
-        'inference_hardware': HardwareRequirementsToJSON(value.inference_hardware),
-        'inference_max_compute_utilization_percentage': value.inference_max_compute_utilization_percentage,
-        'inference_max_energy_consumption_watts': value.inference_max_energy_consumption_watts,
-        'inference_max_latency_ms': value.inference_max_latency_ms,
-        'inference_max_memory_usage_mb': value.inference_max_memory_usage_mb,
-        'inference_min_throughput': value.inference_min_throughput,
-        'inference_precision': value.inference_precision,
-        'inference_software_dependencies': value.inference_software_dependencies,
-        'keywords': value.keywords,
+        'canonical': CanonicalToJSON(value.canonical),
+        'deployment_strategy_refs': ((value.deployment_strategy_refs as Array<any>).map(DeploymentStrategyReferenceToJSON)),
+        'description': value.description,
         'libraries': value.libraries,
         'license': value.license,
-        'model_inputs': value.model_inputs === undefined ? undefined : (value.model_inputs === null ? null : (value.model_inputs as Array<any>).map(ModelIOToJSON)),
-        'model_outputs': value.model_outputs === undefined ? undefined : (value.model_outputs === null ? null : (value.model_outputs as Array<any>).map(ModelIOToJSON)),
         'model_type': value.model_type,
-        'multi_modal': value.multi_modal,
         'name': value.name,
-        'pretrained': value.pretrained,
-        'pretraining_datasets': value.pretraining_datasets,
-        'pruned': value.pruned,
-        'quantization_aware': value.quantization_aware,
         'regulatory': value.regulatory,
-        'slimmed': value.slimmed,
-        'supports_quantization': value.supports_quantization,
+        'tags': value.tags,
         'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
-        'training_distributed': value.training_distributed,
-        'training_hardware': HardwareRequirementsToJSON(value.training_hardware),
-        'training_max_energy_consumption_watts': value.training_max_energy_consumption_watts,
-        'training_precision': value.training_precision,
-        'training_time': value.training_time,
+        'tenant_id': value.tenant_id,
     };
 }
 

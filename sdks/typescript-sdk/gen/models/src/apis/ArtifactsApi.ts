@@ -15,9 +15,9 @@
 
 import * as runtime from '../runtime';
 import {
-    AssociateModelMetadata,
-    AssociateModelMetadataFromJSON,
-    AssociateModelMetadataToJSON,
+    AssociateModelMetadataBody,
+    AssociateModelMetadataBodyFromJSON,
+    AssociateModelMetadataBodyToJSON,
     AssociateModelMetadataResponse,
     AssociateModelMetadataResponseFromJSON,
     AssociateModelMetadataResponseToJSON,
@@ -40,7 +40,7 @@ import {
 
 export interface AssociateModelMetadataWithArtifactRequest {
     artifactId: string;
-    associateModelMetadata: AssociateModelMetadata;
+    associateModelMetadataBody: AssociateModelMetadataBody;
 }
 
 export interface GetModelArtifactRequest {
@@ -60,8 +60,8 @@ export class ArtifactsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('artifactId','Required parameter requestParameters.artifactId was null or undefined when calling associateModelMetadataWithArtifact.');
         }
 
-        if (requestParameters.associateModelMetadata === null || requestParameters.associateModelMetadata === undefined) {
-            throw new runtime.RequiredError('associateModelMetadata','Required parameter requestParameters.associateModelMetadata was null or undefined when calling associateModelMetadataWithArtifact.');
+        if (requestParameters.associateModelMetadataBody === null || requestParameters.associateModelMetadataBody === undefined) {
+            throw new runtime.RequiredError('associateModelMetadataBody','Required parameter requestParameters.associateModelMetadataBody was null or undefined when calling associateModelMetadataWithArtifact.');
         }
 
         const queryParameters: any = {};
@@ -75,7 +75,7 @@ export class ArtifactsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: AssociateModelMetadataToJSON(requestParameters.associateModelMetadata),
+            body: AssociateModelMetadataBodyToJSON(requestParameters.associateModelMetadataBody),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AssociateModelMetadataResponseFromJSON(jsonValue));

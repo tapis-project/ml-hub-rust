@@ -37,31 +37,11 @@ impl From<entities::ModelReference> for responses::ModelReference {
 impl From<&entities::ParallelismStrategy> for responses::ParallelismStrategy {
     fn from(value: &entities::ParallelismStrategy) -> Self {
         match value {
-            entities::ParallelismStrategy::DataSharding => responses::ParallelismStrategy::DataSharding,
-            entities::ParallelismStrategy::ModelSharding => responses::ParallelismStrategy::ModelSharding,
-            entities::ParallelismStrategy::PipelineSharding => responses::ParallelismStrategy::PipelineSharding,
-            entities::ParallelismStrategy::TensorSharding => responses::ParallelismStrategy::TensorSharding,
-        }
-    }
-}
-
-impl From<entities::GpuResource> for responses::GpuResource {
-    fn from(value: entities::GpuResource) -> Self {
-        Self {
-            memory: value.memory,
-            vendor: value.vendor,
-            gpu_type: value.gpu_type,
-        }
-    }
-}
-
-impl From<entities::ResourceRequirements> for responses::ResourceRequirements {
-    fn from(value: entities::ResourceRequirements) -> Self {
-        Self {
-            cores: value.cores,
-            disk: value.disk,
-            memory: value.memory,
-            gpu: value.gpu.and_then(|gpu| Some(responses::GpuResource::from(gpu)))
+            entities::ParallelismStrategy::PipelineParallelism => responses::ParallelismStrategy::PipelineParallelism,
+            entities::ParallelismStrategy::TensorParallelism => responses::ParallelismStrategy::TensorParallelism,
+            entities::ParallelismStrategy::SequenceParallelism => responses::ParallelismStrategy::SequenceParallelism,
+            entities::ParallelismStrategy::ContextParallelism => responses::ParallelismStrategy::ContextParallelism,
+            entities::ParallelismStrategy::ExpertParallelism => responses::ParallelismStrategy::ExpertParallelism,
         }
     }
 }
@@ -74,7 +54,6 @@ impl From<entities::ReplicaGroup> for responses::ReplicaGroup {
                 .iter()
                 .map(|s| responses::ParallelismStrategy::from(s))
                 .collect(),
-            resources: responses::ResourceRequirements::from(value.resources),
         }
     }
 }
@@ -99,6 +78,8 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
     fn from(value: entities::ModelDeployment) -> Self {
         Self {
             id: value.id.clone(),
+            name: value.name.clone(),
+            description: value.description.clone(),
             platform: value.platform.clone(),
             owner: value.owner.clone(),
             model: responses::ModelReference::from(value.model.clone()),
@@ -108,9 +89,7 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             last_desired_state_change: String::from(value.last_desired_state_change.clone()),
             last_state_change: String::from(value.last_state_change.clone()),
             last_modified: String::from(value.last_modified.clone()),
-            replicas: value.replicas
-                .clone()
-                .and_then(|r| Some(responses::ReplicaGroup::from(r))),
+            replicas: responses::ReplicaGroup::from(value.replicas.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
             revision: value.revision().clone(),

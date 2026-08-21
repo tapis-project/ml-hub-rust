@@ -23,12 +23,13 @@ use clients::{
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::{Client as ReqwestClient, StatusCode};
 use serde_json::Value;
+use shared::domain::entities;
 use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::presentation::http::v1::requests::headers::{AuthorizationHeaderError, Headers};
+use shared::presentation::http::v1::requests::common::headers::{AuthorizationHeaderError, Headers};
 use shared::presentation::http::v1::requests::datasets::{
     GetDatasetByPlatformRequest,
     IngestDatasetRequest,
@@ -38,15 +39,17 @@ use shared::presentation::http::v1::requests::datasets::{
 use shared::domain::entities::{
     artifact::Artifact,
 };
-use shared::application::inputs;
 use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::requests::models::{
-    GetModelByPlatformRequest, IngestModelRequest, ListModelsByPlatformRequest,
+use shared::presentation::http::v1::requests::{
+    get_model_by_platform::GetModelByPlatformRequest,
+    ingest_model::IngestModelRequest,
+    list_models_by_platform::ListModelsByPlatformRequest,
 };
 use std::path::PathBuf;
 use std::process::Command;
 use platforms::Platform;
+use heck::ToPascalCase;
 
 struct HuggingFaceHeaders(Headers);
 
@@ -358,11 +361,7 @@ impl PublishModelClient for HuggingFaceClient {
             None => return Err(ClientError::BadRequest { msg: "A model metadata entry must exist for this artifact in order to publish to huggingface".into(), scope: ClientErrorScope::Client })
         };
         
-        // Get the repo/model name from the metadata
-        let model_name = match metadata.name.clone() {
-            Some(n) => n,
-            None => return Err(ClientError::BadRequest { msg: "Model metadata must contain a name in order to publish to huggingface".into(), scope: ClientErrorScope::Client })
-        };
+        let model_name = metadata.name.clone();
 
         // Get the access token from the headers
         let access_token = match request.headers.get_first_value("Authorization") {
@@ -548,27 +547,27 @@ impl PublishDatasetClient for HuggingFaceClient {
 }
 
 impl ModelMetadataConversionClient for HuggingFaceClient {
-    fn from_platform_metadata<T>(&self, client_metadata: T) -> Result<inputs::model_metadata::ModelMetadata, ClientError>
+    fn from_platform_metadata<T>(&self, client_metadata: T, author: String, tenant_id: String) -> Result<entities::model_metadata::ModelMetadata, ClientError>
         where T: serde::Serialize
     {
         let value = serde_json::to_value(client_metadata)
             .map_err(|err| ClientError::Internal { msg: format!("Failed to convert serializable client metadata into Value: {}", err.to_string()), scope: ClientErrorScope::Server })?;
 
         if let Ok(hf_model) = serde_json::from_value::<HFModelMetadata>(value) {
-            let keywords: Vec<String> = hf_model.tags.clone();
+            let tags: Vec<String> = hf_model.tags.clone();
     
-            // Task types derived from the keywords. The "pipeline_tag"
+            // Task types derived from the tags. The "pipeline_tag"
             // property will be the authroitative soure for the task type 
             // if none are found
-            let mut derived_task_types: Vec<inputs::task::Task> = Vec::new();
-            for keyword in keywords.clone() {
-                match inputs::task::Task::try_from(inputs::task::Task::normalize_string(keyword).as_str()) {
+            let mut derived_task_types: Vec<shared::shared_kernel::enums::Task> = Vec::new();
+            for tag in tags.clone() {
+                match shared::shared_kernel::enums::Task::try_from(Self::normalize_string(tag).as_str()) {
                     Ok(t) => derived_task_types.push(t),
-                    Err(_) => continue // Ignore as they keyword cannot be interpreted as a task type
+                    Err(_) => continue // Ignore as they tag cannot be interpreted as a task type
                 }
             }
             
-            // Compound tags are huggingface keywords whose value contains the ":" char.
+            // Compound tags are huggingface tags whose value contains the ":" char.
             // From these compund tags we can derive properties we are interested in like
             // license and task type
             let compound_tags = hf_model.parse_compound_tags();
@@ -581,8 +580,8 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 .and_then(|ct| Some(ct.value.clone()));
     
             // Convert pipeline tag to a variant of the task type enum.
-            let mut task_types: Vec<inputs::task::Task> = derived_task_types;
-            match inputs::task::Task::try_from(inputs::task::Task::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
+            let mut task_types: Vec<shared::shared_kernel::enums::Task> = derived_task_types;
+            match shared::shared_kernel::enums::Task::try_from(Self::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
                 Ok(t) => {
                     if !task_types.contains(&t) {
                         task_types.push(t)
@@ -600,7 +599,7 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
             let mut libraries: Vec<String> = Vec::new();
             let known_libs: &[String] = &["transformers".into(), "diffusers".into(), "tensorflow".into(), "pytorch".into()];
             for lib in known_libs {
-                if keywords.contains(lib) && !libraries.contains(lib) {
+                if tags.contains(lib) && !libraries.contains(lib) {
                     libraries.push(lib.clone())
                 }
             }
@@ -616,17 +615,19 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 }
             };
             
-            return Ok(inputs::model_metadata::ModelMetadata {
-                name: Some(name),
-                author: Some(format!("_{}", hf_model.author)), // NOTE: Will be overwritten by MLHub
-                tenant_id: Some("global".into()), // NOTE: Will be overwritten by MLHub
-                annotations: None,
-                canonical: Some(inputs::model_metadata::Canonical {
+            return Ok(entities::model_metadata::ModelMetadata {
+                name,
+                artifact_id: None,
+                description: None,
+                author,
+                tenant_id,
+                model_type: None,
+                canonical: Some(entities::model_metadata::Canonical {
                     platform: Platform::HuggingFace,
                     author: Some(hf_model.author.clone()),
                     model_id: hf_model.id.clone(),
                     downloads: Some(hf_model.downloads),
-                    locator: inputs::model_metadata::Locator {
+                    locator: entities::model_metadata::Locator {
                         url: format!("https://huggingface.co/{}", &hf_model.id.clone())
                     },
                     likes: Some(hf_model.likes),
@@ -634,39 +635,12 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                     private: Some(hf_model.private),
                     sha: Some(hf_model.sha),
                 }),
-                model_inputs: None,
-                model_outputs: None,
-                model_type: None,
                 libraries: Some(libraries),
-                image: None,
-                keywords: Some(keywords),
-                multi_modal: None,
+                tags: Some(tags),
                 task_types: Some(task_types),
-                inference_distributed: None,
-                inference_hardware: None,
-                inference_max_compute_utilization_percentage: None,
-                inference_max_energy_consumption_watts: None,
-                inference_max_latency_ms: None,
-                inference_max_memory_usage_mb: None,
-                inference_min_throughput: None,
-                inference_precision: None,
-                inference_software_dependencies: None,
-                training_distributed: None,
-                training_hardware: None,
-                training_max_energy_consumption_watts: None,
-                training_precision: None,
-                training_time: None,
-                pretrained: None,
-                pretraining_datasets: None,
-                finetuning_datasets: None,
-                edge_optimized: None,
-                quantization_aware: None,
-                supports_quantization: None,
-                pruned: None,
-                slimmed: None,
                 regulatory: None,
                 license,
-                bias_evaluation_score: None,
+                deployment_strategy_refs: vec![],
             });
         }
 
@@ -690,5 +664,13 @@ impl HuggingFaceClient {
             constants::HUGGING_FACE_BASE_URL,
             url.strip_prefix("/").unwrap_or(url).to_string()
         )
+    }
+
+    pub fn normalize_string(string: String) -> String {
+        string.split("/")
+            .into_iter()
+            .map(|p| p.to_pascal_case())
+            .collect::<Vec<String>>()
+            .join("")
     }
 }

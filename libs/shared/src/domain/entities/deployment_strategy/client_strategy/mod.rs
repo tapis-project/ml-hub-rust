@@ -1,11 +1,24 @@
+use std::collections::HashMap;
+
 use thiserror::Error;
+
 use super::rule_set::RuleSet;
 use super::parameter_set::ParameterSet;
+use super::strategy::{StrategyConfig, StrategyConfigError};
 
 #[derive(Error, Debug)]
 pub enum ClientStrategyError {
     #[error("{0}")]
-    MissingRuleSets(String)
+    MissingRuleSetsAndReferences(String),
+
+    #[error("{0}")]
+    EmptyRuleSets(String),
+
+    #[error("{0}")]
+    EmptyRuleSetReferences(String),
+
+    #[error(transparent)]
+    ConfigError(#[from] StrategyConfigError),
 }
 
 #[derive(Debug, Clone)]
@@ -16,32 +29,42 @@ pub struct ClientStrategy {
     parameter_set: Option<ParameterSet>,
     use_rule_sets: Option<Vec<String>>,
     use_parameter_set: Option<String>,
+    config: StrategyConfig,
+    enabled: Option<bool>,
+    data: Option<HashMap<String, String>>,
 }
 
 impl ClientStrategy {
-    pub fn new(
+    pub fn reconstitute(
         name: String,
         description: Option<String>,
         rule_sets: Option<Vec<RuleSet>>,
         parameter_set: Option<ParameterSet>,
         use_rule_sets: Option<Vec<String>>,
         use_parameter_set: Option<String>,
+        config: StrategyConfig,
+        enabled: Option<bool>,
+        data: Option<HashMap<String, String>>,
     ) -> Result<Self, ClientStrategyError> {
-        // Must be at least 1 rule set or reference to a client rule set
+        // Invariant: Rule sets MUST contain either rule sets or rule set references
         if rule_sets.is_none() && use_rule_sets.is_none() {
-            return Err(ClientStrategyError::MissingRuleSets("Must provide 1 or more rule set or 1 or more rule set reference.".into()))
+            return Err(ClientStrategyError::MissingRuleSetsAndReferences(
+                "Invariant Violation: Client Strategy MUST provide at least one inline rule set or one rule set reference.".into()
+            ));
         }
 
-        if let Some(rs) = rule_sets.as_ref() {
-            if rs.is_empty() {
-                return Err(ClientStrategyError::MissingRuleSets("Must provide at least one rule set in the rule_sets array".into()))
-            }
+        // Invariant: Rule sets array must not be empty if provided
+        if rule_sets.as_ref().is_some_and(|rs| rs.is_empty()) {
+            return Err(ClientStrategyError::EmptyRuleSets(
+                "Invariant Violation: The inline rule_sets array MUST NOT be empty if provided.".into()
+            ));
         }
 
-        if let Some(rsr) = use_rule_sets.as_ref() {
-            if rsr.is_empty() {
-                return Err(ClientStrategyError::MissingRuleSets("Must provide at least one rule set reference in the use_rule_sets array".into()))
-            }
+        // Invariant 3: Rule set references array must not be empty if provided
+        if use_rule_sets.as_ref().is_some_and(|rsr| rsr.is_empty()) {
+            return Err(ClientStrategyError::EmptyRuleSetReferences(
+                "Invariant Violation: The use_rule_sets reference array cannot be empty if provided.".into()
+            ));
         }
         
         Ok(Self {
@@ -51,6 +74,9 @@ impl ClientStrategy {
             parameter_set,
             use_rule_sets,
             use_parameter_set,
+            config,
+            enabled,
+            data,
         })
     }
 
@@ -68,6 +94,18 @@ impl ClientStrategy {
 
     pub fn parameter_set_ref(&self) -> &Option<String> {
         &self.use_parameter_set
+    }
+
+    pub fn config(&self) -> &StrategyConfig {
+        &self.config
+    }
+
+    pub fn enabled(&self) -> Option<bool> {
+        self.enabled
+    }
+
+    pub fn data(&self) -> &Option<HashMap<String, String>> {
+        &self.data
     }
 }
 

@@ -1,36 +1,42 @@
 use std::sync::Arc;
-use crate::application::identity_context::IdentityContext;
+
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
+use crate::shared_kernel::context::RequestContext;
+use crate::shared_kernel::constants::GLOBAL_TENANT;
 use crate::domain::entities::deployment_strategy::client_strategy_set::ClientStrategySet;
-use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::entities::tenancy::GLOBAL_TENANT;
+use crate::domain::entities::model_metadata::{DeploymentStrategyReference, ModelMetadata};
 use crate::domain::services::deployment_strategy::resolve_viable_strategies;
 use retry_utils::{retry_async, RetryPolicy, FixedBackoff, Retry};
-use crate::application::errors::ApplicationError;
-use crate::application::ports::artifacts::ArtifactRepository;
-use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::ports::artifacts::{ArtifactRepository, ArtifactRepositoryError};
+use crate::application::ports::model_metadata::{ModelMetadataRepository, ModelMetadataRepositoryError};
 use crate::application::inputs::model_metadata::{
-    ModelMetadata as ModelMetadataRegistrationInput,
     AssociateModelMetadata,
-    UpsertModelMetadata,
+    GetModelMetadataByAuthorAndNameInput,
+    ListModelMetadataByAuthorInput,
+    RegisterModelMetadataInput,
     UpdateModelMetadataArtifactId,
 };
-use crate::application::inputs::discover_models::DiscoverModelsInput;
-use crate::application::outputs::discover_models::DiscoverModelsOutput;
+use crate::application::inputs::discover_models::SearchModelsInput;
+use crate::application::outputs::model_metadata::{ModelMetadataListOutput, ModelMetadataOutput};
+use crate::application::outputs::model_metadata::ModelMetadata as OutputModelMetadata;
+use crate::application::services::tenancy_resolver::TenancyResolver;
 use crate::domain::services::{
     ModelMetadataService as ModelMetadataDomainService,
     ModelMetadataServiceError as ModelMetadataDomainServiceError
 };
 use crate::domain::entities;
+
 use thiserror::Error;
 use once_cell::sync::Lazy;
-use serde_json::{Value, to_value, json};
 use log::error;
-// use crate::logging::GlobalLogger;
 
 #[derive(Debug, Error)]
 pub enum ModelMetadataServiceError {
     #[error("Repository error: {0}")]
-    RepoError(#[from] ApplicationError),
+    ArtifactRepoError(#[from] ArtifactRepositoryError),
+
+    #[error("Repository error: {0}")]
+    ModelMetadataRepoError(#[from] ModelMetadataRepositoryError),
 
     #[error("Artifact not found: {0}")]
     ArtifactNotFound(String),
@@ -43,6 +49,12 @@ pub enum ModelMetadataServiceError {
 
     #[error("Metadata already exists for Artifact '{0}'")]
     DuplicateMetadataError(String),
+
+    #[error("Failed to convert metadata: '{0}'")]
+    OutputMetadataConversionError(String),
+
+    #[error("Internal Error: '{0}'")]
+    InternalError(String),
 }
 
 pub struct ModelMetadataService {
@@ -69,6 +81,39 @@ impl ModelMetadataService {
             artifact_repo,
             client_strategy_sets
         }
+    }
+
+    pub async fn get_by_author_and_name(&self, input: GetModelMetadataByAuthorAndNameInput) -> Result<ModelMetadataOutput, ModelMetadataServiceError> {
+        let tenant_id = TenancyResolver::resolve_from_scope(&input.scope, &input.tenant_id);
+        
+        let find_metadata = || self.model_metadata_repo.find_by_author_and_name(
+            &input.author,
+            &input.name,
+            &tenant_id,
+        );
+
+        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None)
+            .await?;
+
+        let maybe_output = maybe_metadata
+            .map(|m| self.build_output_model_from_entity(m))
+            .transpose()?;
+
+        Ok(ModelMetadataOutput { model: maybe_output })
+    }
+
+    pub async fn list_by_author(&self, input: ListModelMetadataByAuthorInput) -> Result<ModelMetadataListOutput, ModelMetadataServiceError> {
+        let find_metadata = || self.model_metadata_repo.find_all_by_author(
+            &input.author,
+            &input.tenant_id,
+        );
+
+        let model_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None)
+            .await?;
+
+        let output_models = self.build_output_model_list_from_entities(model_metadata)?;
+
+        Ok(ModelMetadataListOutput { models: output_models, count: None, cursor: None })
     }
 
     pub async fn associate_metadata_with_artifact(&self, input: AssociateModelMetadata) -> Result<(), ModelMetadataServiceError> {
@@ -106,16 +151,13 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn register_model_metadata(&self, input: UpsertModelMetadata) -> Result<(), ModelMetadataServiceError> {
-        let metadata_entity = entities::model_metadata::ModelMetadata::try_from(input.metadata.clone())?;
+    pub async fn register_model_metadata(&self, input: RegisterModelMetadataInput, ctx: &RequestContext) -> Result<(), ModelMetadataServiceError> {
+        let metadata_entity = entities::model_metadata::ModelMetadata::try_from((input.clone(), ctx))
+            .map_err(|e| ModelMetadataServiceError::InternalError(e.to_string()))?;
         
         let modified_metadata = self.annotate_with_deployment_strategies(&metadata_entity);
 
-        let modified_input = UpsertModelMetadata {
-            metadata:  ModelMetadataRegistrationInput::try_from(modified_metadata)?
-        };
-
-        let upsert_metadata = || self.model_metadata_repo.upsert(&modified_input);
+        let upsert_metadata = || self.model_metadata_repo.upsert(&modified_metadata, &ctx);
 
         retry_async(upsert_metadata, &Self::REPO_RETRY_POLICY, None)
             .await?;
@@ -123,60 +165,85 @@ impl ModelMetadataService {
         return Ok(())
     }
 
-    pub async fn discover_models(&self, input: DiscoverModelsInput, identity_context: &IdentityContext) -> Result<DiscoverModelsOutput, ModelMetadataServiceError> {
+    pub async fn discover_models(&self, input: SearchModelsInput, ctx: &RequestContext) -> Result<ModelMetadataListOutput, ModelMetadataServiceError> {
         // By default search in the user's tenant. Search the global tenant if
-        // specificed
-        let mut tenant_ids = vec![identity_context.actor_tenant_id().clone()];
+        // specified
+        let mut tenant_ids = vec![ctx.actor_tenant_id().clone()];
         if input.options.include_global_models().unwrap_or(false) {
             tenant_ids.push(String::from(GLOBAL_TENANT))
         }
         
-        let discover_models = || self.model_metadata_repo.filter_model_metadata_by_criteria(&input, &tenant_ids);
+        let search = || self.model_metadata_repo.search(&input, &tenant_ids);
 
-        // Find model metadata by discovery criteria
-        let output = retry_async(discover_models, &Self::REPO_RETRY_POLICY, None).await
-            .map_err(|err| ModelMetadataServiceError::RepoError(err))?;
+        // Find model metadata by search criteria
+        let search_result = retry_async(search, &Self::REPO_RETRY_POLICY, None).await?;
 
-        let modified_models: Vec<_> = output.models
+        let annotated_models: Vec<_> = search_result.models
             .iter()
             .map(|m| self.annotate_with_deployment_strategies(m))
             .collect();
 
-        let modified_output = DiscoverModelsOutput {
-            models: modified_models,
-            ..output
+        // Build output models
+        let output_models = match self.build_output_model_list_from_entities(annotated_models) {
+            Ok(o) => o,
+            Err(err) => {
+                error!("Failed to convert annotated model entities into output models: {}", err.to_string());
+                return Err(err)
+            }
         };
         
-        Ok(modified_output)
+        let output = ModelMetadataListOutput {
+            models: output_models,
+            count: search_result.count,
+            cursor: search_result.cursor,  
+        };
+        
+        Ok(output)
+    }
+
+    // Converts ModelMetadata entity into an application output Model Modetadata
+    fn build_output_model_list_from_entities(&self, entities: Vec<ModelMetadata>) -> Result<Vec<OutputModelMetadata>, ModelMetadataServiceError> {
+        let mut outputs: Vec<OutputModelMetadata> = Vec::with_capacity(entities.len());
+        for entity in entities {
+            match self.build_output_model_from_entity(entity) {
+                Ok(o) => outputs.push(o),
+                Err(err) => return Err(err)
+            };
+        }
+
+        Ok(outputs)
+    }
+
+    // Converts ModelMetadata entities into the application output Model Modetadata
+    fn build_output_model_from_entity(&self, entity: ModelMetadata) -> Result<OutputModelMetadata, ModelMetadataServiceError> {
+        let strategies: Vec<Strategy> = self.client_strategy_sets
+            .iter()
+            .map(|s| s.strategies().clone())
+            .flatten()
+            .collect();
+
+        match OutputModelMetadata::try_from((&entity, &strategies)) {
+            Ok(o) => Ok(o),
+            Err(err) => return Err(ModelMetadataServiceError::OutputMetadataConversionError(err.to_string()))
+        }
     }
 
     fn annotate_with_deployment_strategies(&self, model: &ModelMetadata) -> ModelMetadata {
-        let mut modified_annotations = serde_json::Map::new();
-        
-        let mut deployment_strategies: Vec<Value> = vec![];
+        let mut deployment_strategy_refs: Vec<DeploymentStrategyReference> = vec![];
         
         for set in self.client_strategy_sets.iter() {
             // Ignore if there is in error resolving strategies
             match resolve_viable_strategies(model, set.strategies()) {
                 Ok(viable_strategies) => {
-                    let mut strategies: Vec<Value> = Vec::with_capacity(viable_strategies.len());
-                
-                    // Ignore strategies that cannot be converted to a Value.
                     for viable_strat in viable_strategies {
-                        to_value(viable_strat.into_inner())
-                            .map_err(|err| {
-                                error!("Error converting viable strategy to Value: {}", err.to_string())
-                            })
-                            .ok()
-                            .map(|v| strategies.push(v));
+                        let strat = viable_strat.into_inner();
+                        deployment_strategy_refs.push(
+                            DeploymentStrategyReference {
+                                name: strat.name,
+                                platform: strat.platform,
+                            }
+                        );
                     }
-                    
-                    deployment_strategies.push(
-                        json!({
-                            "platform": set.platform,
-                            "strategies": Value::Array(strategies)
-                        })
-                    );
                 }
                 Err(err) => {
                     error!("Error resolving viable strategies for model annotation: {}", err.to_string())
@@ -184,16 +251,8 @@ impl ModelMetadataService {
             } 
         }
 
-        modified_annotations.insert("deployment_strategies".into(), Value::Array(deployment_strategies));
-        
-        if let Some(value) = model.annotations.clone() {
-            for (k, v) in value.as_object().unwrap_or(&serde_json::Map::new()) {
-                modified_annotations.insert(k.clone(), v.clone());
-            }
-        };
-
         ModelMetadata {
-            annotations: Some(Value::from(modified_annotations)),
+            deployment_strategy_refs,
             ..model.clone()
         }
     }

@@ -4,7 +4,7 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 };
 use crate::presentation::http::v1::requests::{
     AssociateModelMetadataPath,
-    AssociateModelMetadata as AssociateModelMetadataDto
+    AssociateModelMetadataBody,
 };
 use crate::bootstrap::state::AppState;
 use crate::bootstrap::factories::model_metadata_service_factory;
@@ -24,7 +24,7 @@ use shared::presentation::http::v1::contracts::responses;
     params(
         ("artifact_id" = String, Path, description = "The ID of the model artifact")
     ),
-    request_body=AssociateModelMetadataDto,
+    request_body=AssociateModelMetadataBody,
     responses(
         (status=200, description="Successfully associated metadata with artifact", body=responses::AssociateModelMetadataResponse),
         (status=400, description="Not found", body=responses::BadRequestResponse),
@@ -37,7 +37,7 @@ async fn associate_model_metadata_with_artifact(
     // req: HttpRequest,
     path: web::Path<AssociateModelMetadataPath>,
     // query: web::Query<HashMap<String, String>>,
-    body: web::Json<AssociateModelMetadataDto>,
+    body: web::Json<AssociateModelMetadataBody>,
     data: web::Data<AppState>,
 ) -> impl Responder {
     let artifact_id = path.into_inner().artifact_id;

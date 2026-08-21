@@ -23,7 +23,7 @@ use shared::domain::entities::artifact::ArtifactType;
 use shared::infra::messaging::rabbitmq::exchanges::ARTIFACT_INGESTION_EXCHANGE;
 use shared::infra::messaging::rabbitmq::queues::ARTIFACT_INGESTION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::ARTIFACT_INGESTION_ROUTING_KEY;
-use shared::presentation::http::v1::requests::models::IngestModelRequest;
+use shared::presentation::http::v1::requests::ingest_model::IngestModelRequest;
 use shared::infra::system::Env;
 // use shared::datasets::presentation::http::v1::requests::IngestDatasetRequest;
 use shared::infra::messaging::messages::IngestArtifactMessage;

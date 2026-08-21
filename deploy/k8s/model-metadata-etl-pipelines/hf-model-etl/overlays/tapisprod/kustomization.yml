@@ -29,7 +29,7 @@ patches:
                     value: debug
                   - name: MAX_RECORDS
                     value: '5000000'
-                image: tapis/mlhub-hf-model-etl-extract:26Q2
+                image: tapis/mlhub-hf-model-etl-extract:26Q2.0
             containers:
               - name: hf-model-etl
                 env:
@@ -37,5 +37,5 @@ patches:
                     value: "5000000"
                   - name: MONGO_HOST
                     value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisprod.svc.cluster.local
-                image: tapis/mlhub-hf-model-etl-transform-load:26Q2
+                image: tapis/mlhub-hf-model-etl-transform-load:26Q2.0
                 imagePullPolicy: Always

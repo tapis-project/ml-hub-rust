@@ -12,10 +12,10 @@ use github_lfs_client::client::GithubLfsClient;
 use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
-use shared::presentation::http::v1::requests::models::{
-    GetModelByPlatformRequest,
-    IngestModelRequest,
-    ListModelsByPlatformRequest,
+use shared::presentation::http::v1::requests::{
+    get_model_by_platform::GetModelByPlatformRequest,
+    ingest_model::IngestModelRequest,
+    list_models_by_platform::ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
@@ -285,7 +285,7 @@ impl Client for ModelMetadataConversionClient {
 }
 
 impl ModelMetadataConversionClient {
-    pub fn from_platform_metadata<T>(&self, metadata: T) -> Result<shared::application::inputs::model_metadata::ModelMetadata, ClientError>
+    pub fn from_platform_metadata<T>(&self, metadata: T, author: String, tenant_id: String) -> Result<shared::domain::entities::model_metadata::ModelMetadata, ClientError>
     where T: serde::Serialize
     {
         let resp = match self {
@@ -295,14 +295,14 @@ impl ModelMetadataConversionClient {
                 }
                 
                 
-                c.from_platform_metadata(metadata)
+                c.from_platform_metadata(metadata, author, tenant_id)
             }
         };
         
         resp
     }
     
-    pub fn to_platform_metadata<T>(&self, _metadata: shared::application::inputs::model_metadata::ModelMetadata) -> Result<T, ClientError>
+    pub fn to_platform_metadata<T>(&self, _metadata: shared::domain::entities::model_metadata::ModelMetadata) -> Result<T, ClientError>
     where T: serde::Serialize 
     {
         Err(ClientError::Unimplemented)

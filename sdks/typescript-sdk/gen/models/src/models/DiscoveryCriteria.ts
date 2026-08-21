@@ -28,12 +28,6 @@ import {
 export interface DiscoveryCriteria {
     /**
      * 
-     * @type {number}
-     * @memberof DiscoveryCriteria
-     */
-    confidence_threshold?: number | null;
-    /**
-     * 
      * @type {Array<DiscoveryCriterion>}
      * @memberof DiscoveryCriteria
      */
@@ -56,7 +50,6 @@ export function DiscoveryCriteriaFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'confidence_threshold': !exists(json, 'confidence_threshold') ? undefined : json['confidence_threshold'],
         'criteria': ((json['criteria'] as Array<any>).map(DiscoveryCriterionFromJSON)),
         'prompt': !exists(json, 'prompt') ? undefined : json['prompt'],
     };
@@ -71,7 +64,6 @@ export function DiscoveryCriteriaToJSON(value?: DiscoveryCriteria | null): any {
     }
     return {
         
-        'confidence_threshold': value.confidence_threshold,
         'criteria': ((value.criteria as Array<any>).map(DiscoveryCriterionToJSON)),
         'prompt': value.prompt,
     };

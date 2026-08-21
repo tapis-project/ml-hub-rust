@@ -14,7 +14,7 @@ patches:
         template:
           spec:
             containers:
-              - image: tapis/mlhub-models-migrator:26Q1
+              - image: tapis/mlhub-models-migrator:26Q2.0
                 imagePullPolicy: Always
                 name: models-migrator
                 resources: {}

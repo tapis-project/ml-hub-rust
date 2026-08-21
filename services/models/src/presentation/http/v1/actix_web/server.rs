@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::bootstrap::state::AppState;
+use crate::bootstrap::{factories::model_metadata_service_factory, state::AppState};
 use crate::bootstrap::factories::build_deployment_strategy_provider;
 pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
@@ -7,15 +7,18 @@ use crate::presentation::http::v1::actix_web::handlers;
 use actix_web::{App, HttpServer, middleware::{from_fn, Logger}, web};
 use amqprs::channel::ExchangeType;
 use shared::bootstrap::build_shared_app_context;
-use shared::infra::configuration::site_configuration_loader::SiteConfigurationRepository;
+use shared::infra::configuration::site_configuration_loader::SiteConfigurationLoader;
 use shared::infra::messaging::rabbitmq::connection::open_channel;
 use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE};
-use shared::presentation::http::v1::actix_web::middleware::authentication::authenticate;
-use shared::presentation::http::v1::actix_web::middleware::tenancy::resolve_tenancy;
+use shared::presentation::http::v1::actix_web::middleware::{
+    authentication::authenticate,
+    tenancy::resolve_tenancy,
+    preflight::preflight_short_circuit,
+};
 use std::env;
 use utoipa_swagger_ui::SwaggerUi;
 use utoipa::OpenApi;
-use log::{warn, error};
+use log::error;
 
 
 pub async fn run_server() -> std::io::Result<()> {
@@ -35,15 +38,14 @@ pub async fn run_server() -> std::io::Result<()> {
             .unwrap_or(DEFAULT_PORT)
     );
 
-    let deployment_strategy_provider = build_deployment_strategy_provider();
+    let deployment_strategy_provider = build_deployment_strategy_provider()
+        .map_err(|e| {
+            error!("Failed to initialize DeploymentStrategyProvider: {}", e.to_string());
+            e
+        })
+        .expect("DeploymentStrategyProvider to be initialzed");
 
-    let client_strategy_sets = match deployment_strategy_provider {
-        Ok(p) => Arc::new(p.provide().clone()),
-        Err(err) => {
-            warn!("Error initializing deployment strategy provider: {}", err.to_string());
-            Arc::new(vec![])
-        }
-    };
+    let client_strategy_sets = Arc::new(deployment_strategy_provider.list_all().await.clone());
 
     let broker_host = std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
     let broker_port = std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
@@ -57,7 +59,7 @@ pub async fn run_server() -> std::io::Result<()> {
         broker_password,
     )
         .await
-        .map_err(|err| { error!("{}", err.to_string()) })
+        .map_err(|e| { error!("{}", e.to_string()) })
         .expect("Connection to message broker established and channel created");
 
     declare_exchanges(
@@ -67,16 +69,16 @@ pub async fn run_server() -> std::io::Result<()> {
             (ARTIFACT_PUBLICATION_EXCHANGE, ExchangeType::Topic),
         ]
     ).await
-        .map_err(|err| { error!("{}", err.to_string())})
+        .map_err(|e| { error!("{}", e.to_string())})
         .expect(format!("Exchanges {} and {} to be declared", ARTIFACT_INGESTION_EXCHANGE, ARTIFACT_PUBLICATION_EXCHANGE).as_str());
 
-    let config_repository = SiteConfigurationRepository::new()
-        .map_err(|err| { error!("{}", err.to_string()) })
+    let config_loader = SiteConfigurationLoader::new()
+        .map_err(|e| { error!("{}", e.to_string()) })
         .expect("Site configuration repository to be intialized");
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
 
-    let mongo_client = initialize_client(ClientParams{
+    let mongo_client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
@@ -85,20 +87,20 @@ pub async fn run_server() -> std::io::Result<()> {
         replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
     })
         .await
-        .map_err(|err| {
-            panic!("Database initialization error: {}", err.to_string().as_str()); 
+        .map_err(|e| {
+            panic!("Database initialization error: {}", e.to_string().as_str()); 
         })
         .expect("Database initialization error");
 
     let shared_app_context = build_shared_app_context(
-        config_repository.get_config(),
+        config_loader.get_config(),
         mongo_client.clone(),
         db_name.clone()
     )
         .await
-        .map_err(|err| {
-            error!("Failed to initialize SharedState: {}", err.to_string());
-            err
+        .map_err(|e| {
+            error!("Failed to initialize SharedState: {}", e.to_string());
+            e
         })
         .expect("SharedState to be initialzed");
     
@@ -107,21 +109,38 @@ pub async fn run_server() -> std::io::Result<()> {
     let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
     let principal_service = web::Data::new(shared_app_context.principal_service);
 
+    let model_metadata_service = model_metadata_service_factory(
+        &mongo_client,
+        db_name.clone(),
+        client_strategy_sets.clone()
+    ).await
+        .map_err(|e| {
+            error!("Failed to initialize ModelMetadataService: {}", e.to_string());
+            e
+        })
+        .map(|s| Arc::new(s))
+        .expect("ModelMetadataService to be initialized");
+
     // Initialize AppState
     let state = AppState {
         client_strategy_sets,
         channel: Arc::new(channel),
         db_name: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
-        client: mongo_client.clone()
+        client: mongo_client.clone(),
     };
 
     HttpServer::new(move || {
         App::new()
+            // App-wide data
             .app_data(site_config.clone())
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
+            .app_data(web::Data::from(model_metadata_service.clone()))
             .app_data(web::Data::new(state.clone()))
+            
+            // Globally-scoped middlewares
+            .wrap(from_fn(preflight_short_circuit))
             .wrap(Logger::default())
             
             // Public routes
@@ -131,14 +150,16 @@ pub async fn run_server() -> std::io::Result<()> {
                 SwaggerUi::new("models-api/swagger-ui/{_:.*}")
                     .url("/models-api/specs/openapi.json", ApiDoc::openapi()),
             )
+            .service(handlers::openapi::openapi)
             
             // Protected routes
             .service(
                 web::scope("")
                     .wrap(from_fn(authenticate))
                     .wrap(from_fn(resolve_tenancy))
-                    .wrap(Logger::default())
+                    .service(handlers::get_model_by_author_and_name::get_model_by_author_and_name)
                     .service(handlers::get_model_by_platform::get_model_by_platform)
+                    .service(handlers::list_models_by_author::list_models_by_author)
                     .service(handlers::list_models_by_platform::list_models_by_platform)
                     .service(handlers::ingest_external_model::ingest_external_model)
                     .service(handlers::discover_models_by_platform::discover_models_by_platform)
@@ -159,7 +180,7 @@ pub async fn run_server() -> std::io::Result<()> {
                     .service(handlers::get_model_artifact::get_model_artifact)
                     .service(handlers::list_tasks::list_tasks)
                     .service(handlers::ingest_canonical_model::ingest_canonical_model)
-                    .service(handlers::openapi::openapi)
+                    .service(handlers::fork_model::fork_model)
             )
     })
         .bind(addrs)?

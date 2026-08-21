@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use actix_multipart::Multipart;
 use bytes::Bytes;
-use crate::presentation::http::v1::requests::headers::Headers;
+use crate::presentation::http::v1::requests::common::headers::Headers;
 use crate::presentation::http::v1::requests::artifacts::{
     DownloadArtifactBody,
     IngestArtifactRequest

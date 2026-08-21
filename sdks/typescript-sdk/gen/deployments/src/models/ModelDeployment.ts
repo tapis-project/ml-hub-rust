@@ -70,6 +70,12 @@ export interface ModelDeployment {
     deployment_strategy?: string | null;
     /**
      * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    description?: string | null;
+    /**
+     * 
      * @type {DesiredState}
      * @memberof ModelDeployment
      */
@@ -121,6 +127,12 @@ export interface ModelDeployment {
      * @type {string}
      * @memberof ModelDeployment
      */
+    name: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
     owner: string;
     /**
      * 
@@ -133,7 +145,7 @@ export interface ModelDeployment {
      * @type {ReplicaGroup}
      * @memberof ModelDeployment
      */
-    replicas?: ReplicaGroup;
+    replicas: ReplicaGroup;
     /**
      * 
      * @type {number}
@@ -167,6 +179,7 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
         'created_at': json['created_at'],
         'deployment_interface': !exists(json, 'deployment_interface') ? undefined : ModelDeploymentInterfaceFromJSON(json['deployment_interface']),
         'deployment_strategy': !exists(json, 'deployment_strategy') ? undefined : json['deployment_strategy'],
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'desired_state': DesiredStateFromJSON(json['desired_state']),
         'id': json['id'],
         'last_desired_state_change': json['last_desired_state_change'],
@@ -175,9 +188,10 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
         'last_state_change': json['last_state_change'],
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
         'model': ModelReferenceFromJSON(json['model']),
+        'name': json['name'],
         'owner': json['owner'],
         'platform': PlatformFromJSON(json['platform']),
-        'replicas': !exists(json, 'replicas') ? undefined : ReplicaGroupFromJSON(json['replicas']),
+        'replicas': ReplicaGroupFromJSON(json['replicas']),
         'revision': json['revision'],
         'state': StateFromJSON(json['state']),
         'visibility': VisibilityFromJSON(json['visibility']),
@@ -196,6 +210,7 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
         'created_at': value.created_at,
         'deployment_interface': ModelDeploymentInterfaceToJSON(value.deployment_interface),
         'deployment_strategy': value.deployment_strategy,
+        'description': value.description,
         'desired_state': DesiredStateToJSON(value.desired_state),
         'id': value.id,
         'last_desired_state_change': value.last_desired_state_change,
@@ -204,6 +219,7 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
         'last_state_change': value.last_state_change,
         'metadata': value.metadata,
         'model': ModelReferenceToJSON(value.model),
+        'name': value.name,
         'owner': value.owner,
         'platform': PlatformToJSON(value.platform),
         'replicas': ReplicaGroupToJSON(value.replicas),

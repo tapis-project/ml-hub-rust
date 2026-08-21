@@ -4,7 +4,7 @@
     "model_type": "", // no mapping // change to array
     "libraries": "", // transformers | litserve | ollama | llamacpp // change to array
     "image": "", // not used
-    "keywords": null, // model.tags
+    "tags": null, // model.tags
     "annotations": {
         "_canonical": {
             "platform": "huggingface",

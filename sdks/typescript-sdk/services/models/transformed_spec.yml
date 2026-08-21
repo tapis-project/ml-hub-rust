@@ -92,7 +92,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AssociateModelMetadata'
+              $ref: '#/components/schemas/AssociateModelMetadataBody'
         required: true
       responses:
         '200':
@@ -270,42 +270,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
   /models-api/models:
-    get:
-      tags:
-        - Models
-      description: List all models
-      operationId: list_models
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ModelMetadata'
-        required: true
-      responses:
-        '200':
-          description: Discovered models
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListModelsResponse'
-        '400':
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BadRequestResponse'
-        '404':
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
-        '500':
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerErrorResponse'
     post:
       tags:
         - Models
@@ -315,11 +279,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ModelMetadata'
+              $ref: '#/components/schemas/CreateModelMetadataBody'
         required: true
       responses:
         '200':
-          description: Discovered models
+          description: Model created
           content:
             application/json:
               schema:
@@ -338,6 +302,48 @@ paths:
                 $ref: '#/components/schemas/NotFoundResponse'
         '500':
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/models/fork/{author}/{name}:
+    post:
+      tags:
+        - Models
+      description: Fork model metadata from a platform
+      operationId: fork_model
+      parameters:
+        - name: author
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Forked model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForkModelResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Server error
           content:
             application/json:
               schema:
@@ -366,6 +372,12 @@ paths:
         - name: include_count
           in: query
           description: A flag for including the total count of available models
+          required: false
+          schema:
+            type: boolean
+        - name: include_global_models
+          in: query
+          description: A flag for including global models in the response
           required: false
           schema:
             type: boolean
@@ -404,18 +416,18 @@ paths:
     get:
       tags:
         - Models
-      description: List models by author
+      description: List models by author in the current tenant
       operationId: list_models_by_author
       parameters:
         - name: author
           in: path
-          description: The author of the models
+          description: The author of the model
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Listed models by author
+          description: Successfully fetched models
           content:
             application/json:
               schema:
@@ -443,20 +455,29 @@ paths:
       tags:
         - Models
       description: Get model by the author and name
-      operationId: get_model
+      operationId: get_model_by_author_and_name
       parameters:
-        - name: author
-          in: path
-          description: The author of the model
-          required: true
-          schema:
-            type: string
         - name: name
           in: path
           description: The name of the model
           required: true
           schema:
             type: string
+        - name: author
+          in: path
+          description: The author of the model
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: query
+          description: Selector for global vs tenant-scoped models
+          required: false
+          schema:
+            type: string
+            enum:
+              - tenant
+              - global
       responses:
         '200':
           description: Successfully fetched model
@@ -854,28 +875,6 @@ paths:
                 $ref: '#/components/schemas/ServerErrorResponse'
 components:
   schemas:
-    Accelerator:
-      type: object
-      required:
-        - accelerator_type
-        - system_requirements
-      properties:
-        accelerator_type:
-          type: string
-        cores:
-          type: integer
-          format: int32
-          nullable: true
-        memory_gb:
-          type: integer
-          format: int32
-          nullable: true
-        system_requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/SystemRequirement'
-          description: Firmware and software
-      additionalProperties: false
     Artifact:
       type: object
       required:
@@ -980,7 +979,7 @@ components:
       enum:
         - Model
         - Dataset
-    AssociateModelMetadata:
+    AssociateModelMetadataBody:
       type: object
       required:
         - name
@@ -1032,6 +1031,76 @@ components:
           minimum: 0
         version:
           type: string
+    Canonical:
+      type: object
+      required:
+        - platform
+        - model_id
+        - locator
+      properties:
+        author:
+          type: string
+          nullable: true
+        downloads:
+          type: integer
+          minimum: 0
+          nullable: true
+        gated:
+          type: boolean
+          nullable: true
+        likes:
+          type: integer
+          minimum: 0
+          nullable: true
+        locator:
+          $ref: '#/components/schemas/Locator'
+        model_id:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
+        private:
+          type: boolean
+          nullable: true
+        sha:
+          type: string
+          nullable: true
+    CreateModelMetadataBody:
+      type: object
+      required:
+        - name
+      properties:
+        description:
+          type: string
+          nullable: true
+        libraries:
+          type: array
+          items:
+            type: string
+          nullable: true
+        license:
+          type: string
+          nullable: true
+        model_type:
+          type: string
+          nullable: true
+        name:
+          type: string
+        regulatory:
+          type: array
+          items:
+            type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        task_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+          nullable: true
+      additionalProperties: false
     CreateModelMetadataResponse:
       type: object
       required:
@@ -1053,6 +1122,19 @@ components:
           minimum: 0
         version:
           type: string
+    DeploymentStrategyReference:
+      type: object
+      required:
+        - name
+        - platform
+      properties:
+        description:
+          type: string
+          nullable: true
+        name:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
     DiscoverModelsByPlatformResponse:
       type: object
       required:
@@ -1103,11 +1185,6 @@ components:
       required:
         - criteria
       properties:
-        confidence_threshold:
-          type: integer
-          format: int32
-          minimum: 0
-          nullable: true
         criteria:
           type: array
           items:
@@ -1118,65 +1195,8 @@ components:
     DiscoveryCriterion:
       type: object
       properties:
-        annotations: {}
         author:
           type: string
-          nullable: true
-        bias_evaluation_score:
-          type: integer
-          format: int32
-          nullable: true
-        edge_optimized:
-          type: boolean
-          nullable: true
-        finetuning_datasets:
-          type: array
-          items:
-            type: string
-          nullable: true
-        image:
-          type: string
-          nullable: true
-        inference_distributed:
-          type: boolean
-          nullable: true
-        inference_hardware:
-          $ref: '#/components/schemas/HardwareRequirements'
-          nullable: true
-        inference_max_compute_utilization_percentage:
-          type: integer
-          format: int32
-          nullable: true
-        inference_max_energy_consumption_watts:
-          type: integer
-          format: int32
-          nullable: true
-        inference_max_latency_ms:
-          type: integer
-          format: int32
-          description: Inference performance fields
-          nullable: true
-        inference_max_memory_usage_mb:
-          type: integer
-          format: int32
-          nullable: true
-        inference_min_throughput:
-          type: integer
-          format: int32
-          nullable: true
-        inference_precision:
-          type: string
-          nullable: true
-        inference_software_dependencies:
-          type: array
-          items:
-            type: string
-          nullable: true
-        keywords:
-          type: array
-          items:
-            type: string
-          description: Arbitrary labels
           nullable: true
         libraries:
           type: array
@@ -1186,82 +1206,48 @@ components:
         license:
           type: string
           nullable: true
-        model_inputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ModelIO'
-          nullable: true
-        model_outputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ModelIO'
-          nullable: true
         model_type:
           type: string
           nullable: true
-        multi_modal:
-          type: boolean
-          description: Architecture fields
-          nullable: true
         name:
           type: string
-          nullable: true
-        pretrained:
-          type: boolean
-          nullable: true
-        pretraining_datasets:
-          type: array
-          items:
-            type: string
-          nullable: true
-        pruned:
-          type: boolean
-          nullable: true
-        quantization_aware:
-          type: boolean
           nullable: true
         regulatory:
           type: array
           items:
             type: string
-          description: |-
-            Regulatory and Compliance Fields
-            A vector or strings that represent regulatory standards. Ex HIPPA
           nullable: true
-        slimmed:
-          type: boolean
-          nullable: true
-        supports_quantization:
-          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
           nullable: true
         task_types:
           type: array
           items:
             $ref: '#/components/schemas/Task'
-          description: Inference Fields
           nullable: true
-        training_distributed:
-          type: boolean
-          nullable: true
-        training_hardware:
-          $ref: '#/components/schemas/HardwareRequirements'
-          nullable: true
-        training_max_energy_consumption_watts:
+    ForkModelResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result: {}
+        status:
           type: integer
           format: int32
-          description: Training performance fields
-          nullable: true
-        training_precision:
-          type: string
-          nullable: true
-        training_time:
-          type: integer
-          format: int64
-          description: Training-related Fields
-          nullable: true
+          default: 404
+          minimum: 0
         version:
           type: string
-          nullable: true
     GetModelArtifactResponse:
       type: object
       required:
@@ -1360,39 +1346,13 @@ components:
         metadata:
           type: object
         result:
-          type: object
+          $ref: '#/components/schemas/ModelMetadata'
         status:
           type: integer
           format: int32
           minimum: 0
         version:
           type: string
-    HardwareRequirements:
-      type: object
-      properties:
-        accelerators:
-          type: array
-          items:
-            $ref: '#/components/schemas/Accelerator'
-          nullable: true
-        architectures:
-          type: array
-          items:
-            type: string
-          nullable: true
-        cpus:
-          type: integer
-          format: int32
-          nullable: true
-        disk_gb:
-          type: integer
-          format: int32
-          nullable: true
-        memory_gb:
-          type: integer
-          format: int32
-          nullable: true
-      additionalProperties: false
     IngestArtifactRequest:
       type: object
       required:
@@ -1617,100 +1577,46 @@ components:
           minimum: 0
         version:
           type: string
+    Locator:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     ModelArtifact:
       type: object
       required:
         - id
-        - artifact_type
         - created_at
         - last_modified
       properties:
-        artifact_type:
-          $ref: '#/components/schemas/ArtifactType'
         created_at:
           type: string
         id:
           type: string
         last_modified:
           type: string
-        metadata:
-          $ref: '#/components/schemas/ModelMetadata'
-          nullable: true
-    ModelIO:
-      type: object
-      properties:
-        data_type:
-          type: string
-          nullable: true
-        shape:
-          type: array
-          items:
-            type: integer
-            format: int32
-          nullable: true
-      additionalProperties: false
     ModelMetadata:
       type: object
+      required:
+        - name
+        - author
+        - tenant_id
+        - deployment_strategy_refs
       properties:
-        annotations: {}
         author:
           type: string
+        canonical:
+          $ref: '#/components/schemas/Canonical'
           nullable: true
-        bias_evaluation_score:
-          type: integer
-          format: int32
-          nullable: true
-        edge_optimized:
-          type: boolean
-          nullable: true
-        finetuning_datasets:
+        deployment_strategy_refs:
           type: array
           items:
-            type: string
-          nullable: true
-        image:
+            $ref: '#/components/schemas/DeploymentStrategyReference'
+          description: Deployment strategy references
+        description:
           type: string
-          nullable: true
-        inference_distributed:
-          type: boolean
-          nullable: true
-        inference_hardware:
-          $ref: '#/components/schemas/HardwareRequirements'
-          nullable: true
-        inference_max_compute_utilization_percentage:
-          type: integer
-          format: int32
-          nullable: true
-        inference_max_energy_consumption_watts:
-          type: integer
-          format: int32
-          nullable: true
-        inference_max_latency_ms:
-          type: integer
-          format: int32
-          description: Inference performance fields
-          nullable: true
-        inference_max_memory_usage_mb:
-          type: integer
-          format: int32
-          nullable: true
-        inference_min_throughput:
-          type: integer
-          format: int32
-          nullable: true
-        inference_precision:
-          type: string
-          nullable: true
-        inference_software_dependencies:
-          type: array
-          items:
-            type: string
-          nullable: true
-        keywords:
-          type: array
-          items:
-            type: string
-          description: Arbitrary labels
           nullable: true
         libraries:
           type: array
@@ -1720,80 +1626,28 @@ components:
         license:
           type: string
           nullable: true
-        model_inputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ModelIO'
-          nullable: true
-        model_outputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/ModelIO'
-          nullable: true
         model_type:
           type: string
           nullable: true
-        multi_modal:
-          type: boolean
-          description: Architecture fields
-          nullable: true
         name:
           type: string
-          nullable: true
-        pretrained:
-          type: boolean
-          nullable: true
-        pretraining_datasets:
-          type: array
-          items:
-            type: string
-          nullable: true
-        pruned:
-          type: boolean
-          nullable: true
-        quantization_aware:
-          type: boolean
-          nullable: true
         regulatory:
           type: array
           items:
             type: string
-          description: |-
-            Regulatory and Compliance Fields
-            A vector or strings that represent regulatory standards. Ex HIPPA
           nullable: true
-        slimmed:
-          type: boolean
-          nullable: true
-        supports_quantization:
-          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
           nullable: true
         task_types:
           type: array
           items:
             $ref: '#/components/schemas/Task'
-          description: Inference Fields
           nullable: true
-        training_distributed:
-          type: boolean
-          nullable: true
-        training_hardware:
-          $ref: '#/components/schemas/HardwareRequirements'
-          nullable: true
-        training_max_energy_consumption_watts:
-          type: integer
-          format: int32
-          description: Training performance fields
-          nullable: true
-        training_precision:
+        tenant_id:
           type: string
-          nullable: true
-        training_time:
-          type: integer
-          format: int64
-          description: Training-related Fields
-          nullable: true
-      additionalProperties: false
     NotFoundResponse:
       type: object
       required:
@@ -1900,17 +1754,6 @@ components:
           minimum: 0
         version:
           type: string
-    SystemRequirement:
-      type: object
-      required:
-        - name
-        - version
-      properties:
-        name:
-          type: string
-        version:
-          type: string
-      additionalProperties: false
     Task:
       type: string
       description: An enum of all task types available on Huggingface

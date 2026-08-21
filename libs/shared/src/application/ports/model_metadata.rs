@@ -1,17 +1,32 @@
 use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::application::errors::ApplicationError;
-use crate::application::inputs::model_metadata::{UpsertModelMetadata, UpdateModelMetadataArtifactId};
-use crate::application::inputs::discover_models::DiscoverModelsInput;
-use crate::application::outputs::discover_models::DiscoverModelsOutput;
+use crate::application::inputs::model_metadata::{UpdateModelMetadataArtifactId};
+use crate::application::inputs::discover_models::SearchModelsInput;
+use crate::shared_kernel::context::RequestContext;
+use crate::application::ports::errors::InfrastructureError;
+
 use uuid::Uuid;
 use async_trait::async_trait;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum ModelMetadataRepositoryError {
+    #[error(transparent)]
+    Persistence(#[from] InfrastructureError),
+}
 
 #[async_trait]
 pub trait ModelMetadataRepository: Send + Sync {
-    async fn upsert(&self, input: &UpsertModelMetadata) -> Result<(), ApplicationError>;
-    async fn get_by_name_and_author(&self, name: &String, author: &String) -> Result<Option<ModelMetadata>, ApplicationError>;
-    async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<ModelMetadata>, ApplicationError>;
-    async fn filter_model_metadata_by_criteria(&self, input: &DiscoverModelsInput, tenant_ids: &Vec<String>) -> Result<DiscoverModelsOutput, ApplicationError>;
-    async fn update_artifact_id(&self, input: &UpdateModelMetadataArtifactId) -> Result<(), ApplicationError>;
-    // async fn list(&self) -> Result<Vec<ModelMetadata>, ApplicationError>;
+    // async fn save(&self, input: &CreateModelMetadata, ctx: &RequestContext) -> Result<(), ApplicationError>;
+    async fn upsert(&self, metadata: &ModelMetadata, ctx: &RequestContext) -> Result<(), ModelMetadataRepositoryError>;
+    async fn find_by_author_and_name(&self, author: &String, name: &String, tenant_id: &String) -> Result<Option<ModelMetadata>, ModelMetadataRepositoryError>;
+    async fn find_all_by_author(&self, author: &String, tenant_id: &String) -> Result<Vec<ModelMetadata>, ModelMetadataRepositoryError>;
+    async fn find_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<ModelMetadata>, ModelMetadataRepositoryError>;
+    async fn search(&self, input: &SearchModelsInput, tenant_ids: &Vec<String>) -> Result<ModelSearchResult, ModelMetadataRepositoryError>;
+    async fn update_artifact_id(&self, input: &UpdateModelMetadataArtifactId) -> Result<(), ModelMetadataRepositoryError>;
+}
+
+pub struct ModelSearchResult {
+    pub models: Vec<ModelMetadata>,
+    pub count: Option<i64>,
+    pub cursor: Option<String>,
 }

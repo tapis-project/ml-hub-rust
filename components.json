@@ -319,7 +319,7 @@
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs mlhub-{{ self.name }}-stateful-set-0 -f",
-        "expose": "kubectl port-forward pod/mlhub-mongo-stateful-set-0 27017:27017", 
+        "forward": "minikube kubectl -- port-forward pod/mlhub-mongo-stateful-set-0 27017:27017", 
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code services/{{ self.name }}",
         "gui": "open -a \"MongoDB Compass\"",
@@ -549,7 +549,7 @@
       "description": "Runs and ETL pipeline that pulls in model metadata from Huggingface Hub and converts it to MLHub Model Metadata",
       "rootDir": "services/hf-model-etl",
       "labels": ["bin"],
-      "lifecycle": "experimental",
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -567,7 +567,7 @@
       "name": "model-deployment-controller",
       "rootDir": "services/model-deployment-controller",
       "labels": ["bin", "worker"],
-      "lifecycle": "experimental",
+      "lifecycle": "production",
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",

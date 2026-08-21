@@ -1,0 +1,29 @@
+{
+    "openai": [
+        {
+            "name": "OpenAI",
+            "base_url": "https://api.openai.com/v1",
+            "openai_compatible": true,
+            "tenants": null,
+            "enabled": true
+        }
+    ],
+    "groq": [
+        {
+            "name": "Groq",
+            "base_url": "https://groq.com",
+            "openai_compatible": true,
+            "tenants": null,
+            "enabled": true
+        }
+    ],
+    "sambanova": [
+        {
+            "name": "SambaNova",
+            "base_url": "https://api.sambanova.ai/v1",
+            "openai_compatible": true,
+            "tenants": null,
+            "enabled": true
+        }
+    ]
+}

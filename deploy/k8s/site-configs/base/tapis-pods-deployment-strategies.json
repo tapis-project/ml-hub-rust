@@ -1,15 +1,19 @@
 {
     "platform": "tapis-pods",
-    "description": "A set of strategies for deploying models to HPC systems via Tapis Jobs",
+    "description": "A set of strategies for deploying models to the Tapis K8s cluster with Tapis Pods",
     "strategies": [
         {
             "name": "Pods",
-            "description": "Deploys a model as an HTTP server in Pods",
+            "description": "Deploys a model as an HTTP server in Tapis Pods",
+            "config": {
+                "supported_deployment_modalities": [ "service" ]
+            },
             "use_rule_sets": [
                 "FlexServerDeployerCompatible",
                 "VisiblePublic"
             ],
-            "use_parameter_set": "Pods"
+            "use_parameter_set": "Pods",
+            "enabled": true
         }
     ],
     "rule_sets": [
@@ -42,16 +46,16 @@
                         "canonical",
                         "gated"
                     ],
-                    "operator": "Eq",
-                    "value": false
+                    "operator": "In",
+                    "value": [false, null]
                 },
                 {
                     "field_path": [
                         "canonical",
                         "private"
                     ],
-                    "operator": "Eq",
-                    "value": false
+                    "operator": "In",
+                    "value": [false, null]
                 }
             ]
         }
@@ -61,24 +65,17 @@
             "name": "Pods",
             "parameters": [
                 {
-                    "name": "X-Tapis-Token",
-                    "in": "headers"
-                },
-                {
                     "name": "backend",
-                    "in": "request_body",
+                    "type": "string",
+                    "required": false,
+                    "default": "transformers",
+                    "description": "The inference backend to use for the model deployment",
                     "choices": [
-                        "transformers"
-                    ],
-                    "required": false
-                },
-                {
-                    "name": "uid",
-                    "in": "request_body"
-                },
-                {
-                    "name": "modelId",
-                    "in": "request_body"
+                        {
+                            "value": "transformers",
+                            "description": "HuggingFace's transformers library"
+                        }
+                    ]
                 }
             ]
         }

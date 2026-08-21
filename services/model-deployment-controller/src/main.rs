@@ -24,12 +24,10 @@ use shared::{
             ModelDeploymentController,
             ReconciliationDispatchError
         },
-        workflows::reconciliation::ReconciliationError
-    },
-    infra::{messaging::rabbitmq::{connection::open_channel,
+    }, domain::entities::site::SiteContext, infra::{_common::mongo::{initialize_client, ClientParams}, configuration::site_configuration_loader::SiteConfigurationLoader, messaging::rabbitmq::{connection::open_channel,
         exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
         queues::DEAD_LETTER_QUEUE
-    }}
+    }}, shared_kernel::context::RequestContext
 };
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
 use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
@@ -38,10 +36,8 @@ use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
 use shared::infra::messaging::codec::deserialize_event_message;
 use async_trait::async_trait;
 use std::env;
-use model_deployment_controller::bootstrap::{build_deployment_strategy_provider, model_deployment_conroller_builder};
-use model_deployment_controller::database::{initialize_client, ClientParams};
+use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
 use log::{error, info, warn};
-
 
 struct MessagingContext {
     _connection: Connection,
@@ -88,7 +84,10 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
 
         let maybe_outcome = match &event {
             Event::ModelDeploymentStateDriftDetected { payload, .. } => {
-                self.controller.dispatch_reconciler(payload).await
+                // Initialize a system request context with the correlation id of the event
+                let ctx = RequestContext::system(Some(*event.metadata().correlation_id()));
+
+                self.controller.dispatch_reconciler(&ctx, payload).await
             }
             _ => {
                 error!("Invalid event type for this consumer: {}", String::from(event.metadata().kind()));
@@ -102,6 +101,12 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
             Ok(result) => result,
             Err(err) => {
                 match err {
+                    ReconciliationDispatchError::InvalidActorKind(e) => {
+                        error!("{}", e.to_string());
+                        self.nack(&channel, &deliver, false, message_id).await;
+                        
+                        return
+                    },
                     ReconciliationDispatchError::ModelDeploymentDomainInvariantViolation(e) => {
                         error!("ModelDeploymentDomainInvariantViolation: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
@@ -111,6 +116,12 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                     ReconciliationDispatchError::MissingDeploymentStrategy(e) => {
                         error!("MissingDeploymentStrategy: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
+        
+                        return
+                    },
+                    ReconciliationDispatchError::DeploymentArgumentServiceError(e) => {
+                        error!("DeploymentArgumentServiceError: {}", e.to_string());
+                        self.nack(&channel, &deliver, true, message_id).await;
         
                         return
                     },
@@ -133,20 +144,10 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                         return
                     },
                     ReconciliationDispatchError::ReconciliationClientInitilizationFailed(e) => {
-                        // Event was processible but client was incorrectly configured. Once the client
-                        // is reconfigured, this event can be processed again
+                        // Event was processible but client was incorrectly configured. This is a long term
+                        // failure so we will reject to prevent rapid attempts at reprocessing the message
                         error!("ReconciliationClientInitilizationFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, true, message_id).await;
-        
-                        return
-                    },
-                    ReconciliationDispatchError::ReconciliationFailed(e) => {
-                        error!("ReconciliationFailed: {}", e.to_string());
-                        match e {
-                            ReconciliationError::Unimplemented(_) => {
-                                self.nack(&channel, &deliver, false, message_id).await;
-                            }
-                        }
+                        self.nack(&channel, &deliver, false, message_id).await;
         
                         return
                     },
@@ -270,7 +271,7 @@ async fn main() -> () {
         .await
         .expect("Model deployment reconciliation queue bound to exchange with routing key");
 
-    // Unique consumer tag. Make this unique per worker. 
+    // Unique consumer tag to identitfy the worker. 
     let consumer_tag = Uuid::now_v7();
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
@@ -290,19 +291,27 @@ async fn main() -> () {
         })
         .expect("Datbase initialization error");
 
-    let deployment_strategy_provider = build_deployment_strategy_provider();
+    // Build site context form site configuration
+    let config_loader = SiteConfigurationLoader::new()
+        .map_err(|e| { error!("{}", e.to_string()) })
+        .expect("Site configuration repository to be intialized");
 
-    let client_strategy_sets = match deployment_strategy_provider {
-        Ok(p) => Arc::new(p.provide().clone()),
-        Err(err) => {
-            warn!("Error initializing deployment strategy provider: {}", err.to_string());
-            Arc::new(vec![])
+    let config = config_loader.get_config();
+
+    let site_context = SiteContext {
+        base_url: config.base_url.clone(),
+        site_id: config.site_id.clone(),
+    };
+
+    let controller = match model_deployment_conroller_builder(site_context, &client, db_name, context.channel.clone()) {
+        Ok(c) => c,
+        Err(e) => {
+            error!("{}", e.to_string());
+            panic!("Failed to initialize ModelDeploymentController");
         }
     };
     
-    let consumer = ModelDeploymentControllerConsumer {
-        controller: model_deployment_conroller_builder(&client, db_name, context.channel.clone(), client_strategy_sets),
-    };
+    let consumer = ModelDeploymentControllerConsumer { controller };
      
     let args = BasicConsumeArguments::default()
         .queue(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into())

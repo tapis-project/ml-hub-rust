@@ -3,8 +3,8 @@ mod dto_to_input;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use super::headers::Headers;
-use crate::presentation::http::v1::requests::Parameters;
+use crate::presentation::http::v1::requests::common::headers::Headers;
+use crate::presentation::http::v1::requests::common::Parameters;
 
 #[derive(Serialize, Deserialize)]
 pub struct GetArtifactPath {

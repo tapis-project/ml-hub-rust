@@ -2,6 +2,7 @@ use crate::domain::entities::deployment as entities;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use crate::infra::_common::mongo::ToBsonDateTime;
+use crate::shared_kernel::enums::DeploymentModality;
 use mongodb::bson::Uuid;
 
 impl From<&entities::ModelDeployment> for documents::ModelDeployment {
@@ -9,8 +10,11 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
         Self {
             _id: None,
             id: Uuid::from_bytes(value.id.into_bytes()),
+            name: value.name.clone(),
+            description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
             platform: value.platform.clone(),
+            deployment_modality: documents::DeploymentModality::from(value.deployment_modality.clone()),
             revision: value.revision().clone(),
             owner: value.owner.clone(),
             model: documents::ModelReference::from(value.model.clone()),
@@ -22,13 +26,11 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
                 .clone()
                 .and_then(|di| Some(documents::ModelDeploymentInterface::from(di))),
             deployment_strategy: value.deployment_strategy.clone(),
-            replicas: value.replicas
-                .clone()
-                .and_then(|rg| Some(documents::ReplicaGroup::from(rg))),
-            last_modified: value.last_modified.to_bson(),
+            replicas: documents::ReplicaGroup::from(value.replicas.clone()),
             last_desired_state_change: value.last_desired_state_change.to_bson(),
             last_state_change: value.last_state_change.to_bson(),
             created_at: value.created_at.to_bson(),
+            last_modified: value.last_modified.to_bson(),
             metadata: value.metadata
                 .clone()
                 .and_then(|m| Some(m.into_inner().clone())),
@@ -40,7 +42,6 @@ impl From<entities::ReplicaGroup> for documents::ReplicaGroup {
     fn from(value: entities::ReplicaGroup) -> Self {
         Self {
             count: value.count,
-            resources: documents::ResourceRequirements::from(value.resources),
             parallelism_strategies: value.parallelism_strategies
                 .iter()
                 .map(|ps| documents::ParallelismStrategy::from(ps.clone()))
@@ -49,24 +50,11 @@ impl From<entities::ReplicaGroup> for documents::ReplicaGroup {
     }
 }
 
-impl From<entities::ResourceRequirements> for documents::ResourceRequirements {
-    fn from(value: entities::ResourceRequirements) -> Self {
-        Self {
-            cores: value.cores,
-            disk: value.disk,
-            memory: value.memory,
-            gpu: value.gpu
-                .and_then(|gr| Some(documents::GpuResource::from(gr))),
-        }
-    }
-}
-
-impl From<entities::GpuResource> for documents::GpuResource {
-    fn from(value: entities::GpuResource) -> Self {
-        Self {
-            gpu_type: value.gpu_type,
-            memory: value.memory,
-            vendor: value.vendor,
+impl From<DeploymentModality> for documents::DeploymentModality {
+    fn from(value: DeploymentModality) -> Self {
+        match value {
+            DeploymentModality::Batch => documents::DeploymentModality::Batch,
+            DeploymentModality::Service => documents::DeploymentModality::Service
         }
     }
 }
@@ -74,10 +62,11 @@ impl From<entities::GpuResource> for documents::GpuResource {
 impl From<entities::ParallelismStrategy> for documents::ParallelismStrategy {
     fn from(value: entities::ParallelismStrategy) -> Self {
         match value {
-            entities::ParallelismStrategy::DataSharding => documents::ParallelismStrategy::DataSharding,
-            entities::ParallelismStrategy::ModelSharding => documents::ParallelismStrategy::ModelSharding,
-            entities::ParallelismStrategy::TensorSharding => documents::ParallelismStrategy::TensorSharding,
-            entities::ParallelismStrategy::PipelineSharding => documents::ParallelismStrategy::PipelineSharding,
+            entities::ParallelismStrategy::PipelineParallelism => documents::ParallelismStrategy::PipelineParallelism,
+            entities::ParallelismStrategy::TensorParallelism => documents::ParallelismStrategy::TensorParallelism,
+            entities::ParallelismStrategy::SequenceParallelism => documents::ParallelismStrategy::SequenceParallelism,
+            entities::ParallelismStrategy::ContextParallelism => documents::ParallelismStrategy::ContextParallelism,
+            entities::ParallelismStrategy::ExpertParallelism => documents::ParallelismStrategy::ExpertParallelism,
         }
     }
 }
@@ -109,7 +98,8 @@ impl From<entities::ModelReference> for documents::ModelReference {
     fn from(value: entities::ModelReference) -> Self {
         Self {
             name: value.name,
-            author: value.author
+            author: value.author,
+            tenant_id: value.tenant_id,
         }
     }
 }
