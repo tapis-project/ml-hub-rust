@@ -96,6 +96,10 @@ This directory (`services`) contains the deployment files for the infrastructura
 
 This project takes a Domain Driven Design (DDD)-styled architectural approach. Each API and service in this project are composed of four structural layers (presentation, application, domain, and infrastructure) and a fifth bootstrap layer. Their purposes will be described in detail below and explained from outermost (upper) to the innermost (lower), with the bootstrap layer explained last. Each layer is connected by a set of "input" and "output" DTOs (data transfer objects) and translation logic that will convert one layer's DTOs into another's. These DTOs will be described in detail in each section.
 
+### Shared Layer Conventions
+
+Reusable layer code belongs in `libs/shared`; services re-export the shared modules they consume instead of duplicating domain, application, or presentation types. Domain entities keep state private, expose read-only accessors, create new identities at construction, and provide reconstitution constructors for persistence data. Presentation request DTOs model external input and validation, response DTOs model external output, and explicit mappings translate between presentation and domain types. HTTP handlers and bootstrap wiring are generally service-local.
+
 ### 1. The Presentation Layer
 
 The presentation layer the outermost layer responsible receiving and validating the user's requests, serving the responses, and calling out to the application layer to perform the operations related to the request. The inputs to this layer are called **requests** and the outputs are called **responses**. Requests represent data sent by a user to one of the APIs or services. Responses represent the data sent back to those users.
