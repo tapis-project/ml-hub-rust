@@ -1,10 +1,16 @@
+pub mod argument;
+
 use std::collections::HashMap;
 use openapiv3::OpenAPI;
 use platforms::Platform;
+use serde::Serialize;
 use uuid::Uuid;
 use thiserror::Error;
 use crate::domain::entities::timestamp::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
+use crate::impl_urn_generator;
+use crate::shared_kernel::enums::DeploymentModality;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use serde_json::Value;
 
 #[derive(Debug, Error)]
@@ -14,14 +20,24 @@ pub enum ModelDeploymentError {
 
     #[error("Invalid desired state change. Cannot move from desired state '{0}' to {1}")]
     InvalidDesiredStateTransition(String, String),
+
+    #[error("Selected deployment strategy ({0}) not supported")]
+    UnsupportedDeploymentModality(DeploymentModality),
 }
 
 #[derive(Clone, Debug)]
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
     pub id: Uuid,
+    /// Display name of the deployment
+    pub name: String,
+    /// The modality of the deployment
+    pub deployment_modality: DeploymentModality,
+    /// Description of the deployment
+    pub description: Option<String>,
     /// The id of the tenant to which this model deployment belongs
     pub tenant_id: String,
+    /// The platform to which this model is deployed
     pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
@@ -33,6 +49,7 @@ pub struct ModelDeployment {
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
+    /// The name of the deployment strategy used to create this model deployment
     pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
@@ -40,7 +57,7 @@ pub struct ModelDeployment {
     pub last_state_change: TimeStamp,
     pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     /// Metadata provided by and for deployment clients
     pub metadata: Option<ModelDeploymentMetadata>,
     /// Indicates changes to desired state over time. This field is incremented
@@ -48,21 +65,31 @@ pub struct ModelDeployment {
     revision: u32, 
 }
 
+impl_urn_generator!(ModelDeployment, tenant_id, "deployment", id);
+
 impl ModelDeployment {
     /// Create the model deployment from props
-    pub fn new(props: ModelDeploymentProps) -> Self {
+    pub fn deploy_with_srategy(props: DeployWithStrategyProps, strategy: &Strategy) -> Result<Self, ModelDeploymentError> {
+        // Invariant: The selected deployment strategy must support the selected deployment modality.
+        if !strategy.config().supported_deployment_modalities.contains(&props.deployment_modality) {
+            return Err(ModelDeploymentError::UnsupportedDeploymentModality(props.deployment_modality))
+        }
+        
         let now = TimeStamp::now();
 
-        Self {
+        Ok(Self {
             id: props.id,
+            name: props.name,
+            description: props.description,
             tenant_id: props.tenant_id,
             platform: props.platform,
             owner: props.owner,
             model: props.model,
-            state: props.state,
-            desired_state: props.desired_state,
+            state: State::NotDeployed,
+            desired_state: DesiredState::Running,
             last_message: props.last_message,
-            deployment_strategy: props.deployment_strategy,
+            deployment_modality: props.deployment_modality.clone(),
+            deployment_strategy: Some(strategy.name.clone()),
             visibility: props.visibility,
             created_at: now.clone(),
             last_modified: now.clone(),
@@ -72,14 +99,17 @@ impl ModelDeployment {
             replicas: props.replicas,
             metadata: props.metadata,
             revision: 0,
-        }
+        })
     }
 
-    pub fn rehydrate(props: RehydrateModelDeploymentProps) -> Self {
+    pub fn reconstitute(props: ReconstituteModelDeploymentProps) -> Self {
         Self {
             id: props.id,
+            name: props.name,
+            description: props.description,
             tenant_id: props.tenant_id,
             platform: props.platform,
+            deployment_modality: props.deployment_modality,
             owner: props.owner,
             model: props.model,
             state: props.state,
@@ -116,12 +146,21 @@ impl ModelDeployment {
         
         draft
     }
+
+    pub fn mark_as_failed(&mut self, message: Option<String>) -> Result<(), ModelDeploymentError> {
+        self.revise()
+            .transition_to_state(State::Failed, message)?
+            .finish();
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct ModelReference {
     pub name: String,
     pub author: String,
+    pub tenant_id: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -200,39 +239,27 @@ pub enum ModelDeploymentMetadataDelta {
 pub struct ReplicaGroup {
     /// Number of replicas
     pub count: u8,
-    /// Resources required by each replica
-    pub resources: ResourceRequirements,
+    
     /// Sharding / parallelism strategies actually employed by the deployment runtime.
     pub parallelism_strategies: Vec<ParallelismStrategy>,
 }
 
-#[derive(Clone, Debug)]
-pub struct ResourceRequirements {
-    /// Number of cpu cores (float for platforms that support fractional cores)
-    pub cores: Option<f32>,
-    /// Required disk space in GB
-    pub disk: Option<f32>,
-    /// Required memory in GB
-    pub memory: Option<f32>,
-    pub gpu: Option<GpuResource>,
+impl Default for ReplicaGroup {
+    fn default() -> Self {
+        Self {
+            count: 1,
+            parallelism_strategies: vec![]
+        }
+    }
 }
 
-#[derive(Clone, Debug)]
-pub struct GpuResource {
-    /// Number vram in GB
-    pub memory: Option<f32>,
-    /// Ex Nvida
-    pub vendor: Option<String>,
-    /// Ex H100
-    pub gpu_type: Option<String>,
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub enum ParallelismStrategy {
-    DataSharding,
-    ModelSharding,
-    PipelineSharding,
-    TensorSharding,
+    PipelineParallelism,
+    TensorParallelism,
+    SequenceParallelism,
+    ContextParallelism,
+    ExpertParallelism,
 }
 
 #[derive(Clone, Debug)]
@@ -362,7 +389,7 @@ impl <'a>ModelDeploymentDraft<'a> {
     pub fn apply_replica_group_delta(&mut self, delta: ReplicaGroupDelta) -> &mut Self {
         match delta {
             ReplicaGroupDelta::Delete => { self.deployment.metadata = None },
-            ReplicaGroupDelta::Replace(r) => { self.deployment.replicas = Some(r); },
+            ReplicaGroupDelta::Replace(r) => { self.deployment.replicas = r; },
             ReplicaGroupDelta::NoChange => {},
         };
 
@@ -412,8 +439,11 @@ impl <'a>ModelDeploymentDraft<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct RehydrateModelDeploymentProps {
+pub struct ReconstituteModelDeploymentProps {
     pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub deployment_modality: DeploymentModality,
     pub tenant_id: String,
     pub platform: Platform,
     pub owner: String,
@@ -424,7 +454,7 @@ pub struct RehydrateModelDeploymentProps {
     pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     pub revision: u32,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
@@ -434,18 +464,18 @@ pub struct RehydrateModelDeploymentProps {
 }
 
 #[derive(Clone, Debug)]
-pub struct ModelDeploymentProps {
+pub struct DeployWithStrategyProps {
     pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
     pub tenant_id: String,
     pub platform: Platform,
     pub owner: String,
     pub model: ModelReference,
-    pub state: State,
-    pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
+    pub deployment_modality: DeploymentModality,
     pub deployment_interface: Option<ModelDeploymentInterface>,
-    pub replicas: Option<ReplicaGroup>,
+    pub replicas: ReplicaGroup,
     pub metadata: Option<ModelDeploymentMetadata>,
 }

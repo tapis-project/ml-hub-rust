@@ -1,8 +1,16 @@
-use crate::application::{errors::ApplicationError, inputs::deployment::FilterInput};
+// Application
+use crate::application::ports::deployment::ModelDeploymentRepositoryError;
+use crate::application::ports::errors::InfrastructureError;
+use crate::application::inputs::deployment::FilterInput;
+use crate::application;
+
+// Domain
+use crate::domain::entities;
+
+// Infra
 use crate::infra::persistence::mongo::database::MODEL_DEPLOYMENT_COLLECTION;
 use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, State};
-use crate::application;
-use crate::domain::entities;
+
 use mongodb::{
     bson::{doc, Uuid, to_bson},
     Client,
@@ -28,19 +36,50 @@ impl ModelDeploymentRepository {
 
 #[async_trait::async_trait]
 impl application::ports::deployment::ModelDeploymentRepository for ModelDeploymentRepository {
-    async fn save(&self, input: &entities::deployment::ModelDeployment) -> Result<(), ApplicationError> {
+    async fn save(&self, input: &entities::deployment::ModelDeployment) -> Result<(), ModelDeploymentRepositoryError> {
         let mut document = ModelDeployment::from(input);
 
         let result = self.write_collection.insert_one(&document)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         document._id = result.inserted_id.as_object_id();
 
         Ok(())
     }
 
-    async fn update(&self, deployment: &entities::deployment::ModelDeployment) -> Result<(), ApplicationError>  {
+    async fn find_by_owner(&self, tenant_id: &str, owner: &str) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+        let filter = doc! {
+            "tenant_id": tenant_id,
+            "owner": owner,
+        };
+
+        let mut results: Vec<entities::deployment::ModelDeployment> = vec![];
+
+        let mut cursor = self.read_collection.find(filter)
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
+
+            while let Some(entry) = cursor.try_next().await.map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })? {
+                results.push(entities::deployment::ModelDeployment::from(&entry));
+            }
+
+        Ok(results)
+    }
+
+    async fn update(&self, deployment: &entities::deployment::ModelDeployment) -> Result<(), ModelDeploymentRepositoryError>  {
         let filter = doc! {
             "id": Uuid::from_bytes(*deployment.id.as_bytes())
         };
@@ -54,16 +93,32 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 "desired_state": String::from(update.desired_state),
                 "last_message": update.last_message,
                 "visibility": to_bson(&update.visibility)
-                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                    .map_err(|e| {
+                        let error = InfrastructureError::new_internal();
+                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
+                        error
+                    })?,
                 "last_modified": update.last_modified,
                 "last_state_change": update.last_state_change,
                 "last_desired_state_change": update.last_desired_state_change,
                 "deployment_interface": to_bson(&update.deployment_interface)
-                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                    .map_err(|e| {
+                        let error = InfrastructureError::new_internal();
+                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
+                        error
+                    })?,
                 "replicas": to_bson(&update.replicas)
-                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                    .map_err(|e| {
+                        let error = InfrastructureError::new_internal();
+                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
+                        error
+                    })?,
                 "metadata": to_bson(&update.metadata)
-                    .map_err(|err| ApplicationError::ConversionError(err.to_string()))?,
+                    .map_err(|e| {
+                        let error = InfrastructureError::new_internal();
+                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
+                        error
+                    })?,
                 "revision": update.revision,
             }
         };
@@ -71,12 +126,16 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         self.write_collection
             .update_one(filter, document)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
         Ok(())
     }
 
-    async fn find(&self, input: &FilterInput) -> Result<Option<entities::deployment::ModelDeployment>, ApplicationError> {
+    async fn find(&self, input: &FilterInput) -> Result<Option<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
         let mut filter = doc! {};
 
         if let Some(id) = input.deployment_id {
@@ -88,15 +147,29 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 Ok(state) => {
                     filter.insert("state", state);
                 },
-                Err(err) => return Err(ApplicationError::RepoError(err.to_string())),
+                Err(e) => {
+                    let error = InfrastructureError::new_internal();
+                    log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                    return Err(ModelDeploymentRepositoryError::from(error))
+                }
             }
         }
         
         let mut cursor = self.read_collection.find(filter)
             .await
-            .map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
 
-        let maybe_model_deployment = cursor.try_next().await.map_err(|err| ApplicationError::RepoError(err.to_string()))?;
+        let maybe_model_deployment = cursor.try_next()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                error
+            })?;
         
         match maybe_model_deployment {
             Some(m) => Ok(Some(entities::deployment::ModelDeployment::from(&m))),

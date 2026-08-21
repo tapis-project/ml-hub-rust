@@ -4,11 +4,11 @@ set -e
 
 overlay=$1
 
-# First, create the pvc. It has it's own overlay seperate to the rest of the manifests
+kubectl apply -f "./base/service.yaml"
+
+# Create the pvc. It has it's own overlay seperate to the rest of the manifests
 # to ensure it is not deleted on burndown
 ./storage/burnup.sh "$overlay"
-
-kubectl apply -f "./base/service.yaml"
 
 source ../utils.sh;
 

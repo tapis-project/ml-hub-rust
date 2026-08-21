@@ -4,7 +4,7 @@ model_type: cnn # -> ai_model.model_type
 version: 2.1.3 # -> ai_model.version
 framework: TensorFlow # -> ai_model.framework # Consider making an Vec<String>
 image: 'registry.example.com/vision-classifier:v2.1.3' # no mapping
-labels: # - model_card.keywords
+labels: # - model_card.tags
   - cv
   - image-classification
 label_map:

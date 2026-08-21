@@ -17,18 +17,6 @@ use once_cell::sync::Lazy;
 use std::sync::Arc;
 use uuid::Uuid;
 
-
-pub struct UpdateDesiredStateWorkflow {
-    model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
-    event_publisher: Arc<dyn EventPublisher>,
-}
-
-pub struct UpdateDesiredStateWorkflowInput {
-    pub deployment_id: Uuid,
-    pub desired_state: DesiredState,
-    pub last_message: Option<String>,
-}
-
 impl UpdateDesiredStateWorkflow {
     const REPO_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| {
         RetryPolicy::FixedBackoff(FixedBackoff {
@@ -80,7 +68,8 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             .finish();
             
         // Update the deployment
-        retry_async(|| self.model_deployment_repo.update(&modified_deployment), &Self::REPO_RETRY_POLICY, None).await?;
+        retry_async(|| self.model_deployment_repo.update(&modified_deployment), &Self::REPO_RETRY_POLICY, None)
+            .await?;
 
         let payload = ModelDeploymentStateDriftDetectedPayload {
             deployment_id: modified_deployment.id,
@@ -105,4 +94,15 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
 
         Ok(modified_deployment)
     }
+}
+
+pub struct UpdateDesiredStateWorkflow {
+    model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
+    event_publisher: Arc<dyn EventPublisher>,
+}
+
+pub struct UpdateDesiredStateWorkflowInput {
+    pub deployment_id: Uuid,
+    pub desired_state: DesiredState,
+    pub last_message: Option<String>,
 }

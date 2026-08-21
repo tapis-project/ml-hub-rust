@@ -14,14 +14,18 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    ParameterSet,
-    ParameterSetFromJSON,
-    ParameterSetFromJSONTyped,
-    ParameterSetToJSON,
-    RuleSet,
-    RuleSetFromJSON,
-    RuleSetFromJSONTyped,
-    RuleSetToJSON,
+    Parameter,
+    ParameterFromJSON,
+    ParameterFromJSONTyped,
+    ParameterToJSON,
+    Platform,
+    PlatformFromJSON,
+    PlatformFromJSONTyped,
+    PlatformToJSON,
+    StrategyConfig,
+    StrategyConfigFromJSON,
+    StrategyConfigFromJSONTyped,
+    StrategyConfigToJSON,
 } from './';
 
 /**
@@ -32,10 +36,22 @@ import {
 export interface Strategy {
     /**
      * 
+     * @type {StrategyConfig}
+     * @memberof Strategy
+     */
+    config: StrategyConfig;
+    /**
+     * 
      * @type {string}
      * @memberof Strategy
      */
     description?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Strategy
+     */
+    enabled: boolean;
     /**
      * 
      * @type {string}
@@ -44,16 +60,16 @@ export interface Strategy {
     name: string;
     /**
      * 
-     * @type {ParameterSet}
+     * @type {Array<Parameter>}
      * @memberof Strategy
      */
-    parameter_set?: ParameterSet;
+    parameters: Array<Parameter>;
     /**
      * 
-     * @type {Array<RuleSet>}
+     * @type {Platform}
      * @memberof Strategy
      */
-    rule_sets: Array<RuleSet>;
+    platform: Platform;
 }
 
 export function StrategyFromJSON(json: any): Strategy {
@@ -66,10 +82,12 @@ export function StrategyFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
+        'config': StrategyConfigFromJSON(json['config']),
         'description': !exists(json, 'description') ? undefined : json['description'],
+        'enabled': json['enabled'],
         'name': json['name'],
-        'parameter_set': !exists(json, 'parameter_set') ? undefined : ParameterSetFromJSON(json['parameter_set']),
-        'rule_sets': ((json['rule_sets'] as Array<any>).map(RuleSetFromJSON)),
+        'parameters': ((json['parameters'] as Array<any>).map(ParameterFromJSON)),
+        'platform': PlatformFromJSON(json['platform']),
     };
 }
 
@@ -82,10 +100,12 @@ export function StrategyToJSON(value?: Strategy | null): any {
     }
     return {
         
+        'config': StrategyConfigToJSON(value.config),
         'description': value.description,
+        'enabled': value.enabled,
         'name': value.name,
-        'parameter_set': ParameterSetToJSON(value.parameter_set),
-        'rule_sets': ((value.rule_sets as Array<any>).map(RuleSetToJSON)),
+        'parameters': ((value.parameters as Array<any>).map(ParameterToJSON)),
+        'platform': PlatformToJSON(value.platform),
     };
 }
 

@@ -3,11 +3,12 @@ mod tapis_pods_test {
     use super::super::*;
     use std::collections::HashMap;
     use crate::domain::entities::deployment::{
-        ModelDeployment, ModelDeploymentMetadata, ModelReference, State, DesiredState, RehydrateModelDeploymentProps,
+        DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelReference, ReconstituteModelDeploymentProps, ReplicaGroup, State
     };
     use crate::domain::entities::visibility::Visibility;
     use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
     use crate::domain::entities::timestamp::TimeStamp;
+    use crate::shared_kernel::enums::DeploymentModality;
     use platforms::Platform;
     use uuid::Uuid;
     use serde_json::json;
@@ -17,22 +18,26 @@ mod tapis_pods_test {
     }
 
     fn deployment_with_metadata(metadata: HashMap<String, serde_json::Value>) -> ModelDeployment {
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: "test".into(),
+            description: Some("test".into()),
             tenant_id: "test-tenant".into(),
             platform: Platform::TapisPods,
             owner: "test-owner".into(),
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
+                tenant_id: "test".into(),
             },
+            deployment_modality: DeploymentModality::Batch,
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: None,
             deployment_strategy: Some("tapis-pods:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -43,14 +48,18 @@ mod tapis_pods_test {
     }
 
     fn deployment_without_metadata() -> ModelDeployment {
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: Uuid::now_v7(),
+            name: "test".into(),
+            description: Some("test".into()),
             tenant_id: "test-tenant".into(),
             platform: Platform::TapisPods,
+            deployment_modality: DeploymentModality::Batch,
             owner: "test-owner".into(),
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
@@ -58,7 +67,7 @@ mod tapis_pods_test {
             deployment_strategy: None,
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -70,8 +79,8 @@ mod tapis_pods_test {
 
     fn minimal_model_metadata() -> ModelMetadata {
         let mut m = full_model_metadata();
-        m.name = Some("gpt2".into());
-        m.author = Some("openai-community".into());
+        m.name = "gpt2".into();
+        m.author ="openai-community".into();
         m
     }
 
@@ -253,7 +262,7 @@ mod tapis_pods_test {
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let deployment = deployment_without_metadata();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start { strategy: None },
+            action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };
@@ -329,14 +338,18 @@ mod tapis_pods_test {
         if let Some(v) = volume_id {
             meta.insert("volume_id".into(), json!(v));
         }
-        ModelDeployment::rehydrate(RehydrateModelDeploymentProps {
+        ModelDeployment::reconstitute(ReconstituteModelDeploymentProps {
             id: deployment_id,
+            name: "test".into(),
+            description: Some("test".into()),
             tenant_id: "test-tenant".into(),
             platform: Platform::TapisPods,
+            deployment_modality: DeploymentModality::Batch,
             owner: tapis_user.to_string(),
             model: ModelReference {
                 name: "gpt2".into(),
                 author: "openai-community".into(),
+                tenant_id: "test".into(),
             },
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
@@ -344,7 +357,7 @@ mod tapis_pods_test {
             deployment_strategy: Some("tapis-pods:default".into()),
             visibility: Visibility::Private,
             deployment_interface: None,
-            replicas: None,
+            replicas: ReplicaGroup::default(),
             revision: 0,
             last_modified: ts(),
             last_state_change: ts(),
@@ -406,7 +419,7 @@ mod tapis_pods_test {
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start { strategy: None },
+            action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };
@@ -447,7 +460,7 @@ mod tapis_pods_test {
 
         let client = TapisPodsModelDeploymentReconciliationClient::new();
         let input = ReconcileModelDeploymentInput {
-            action: ReconciliationAction::Start { strategy: None },
+            action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
             model_metadata: minimal_model_metadata(),
         };

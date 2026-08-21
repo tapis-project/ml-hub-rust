@@ -9,7 +9,7 @@ pub enum PrincipalError {
     TenantMismatch,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Kind {
     User,
     System,

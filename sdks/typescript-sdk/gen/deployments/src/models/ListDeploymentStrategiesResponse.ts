@@ -14,10 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    ClientStrategySet,
-    ClientStrategySetFromJSON,
-    ClientStrategySetFromJSONTyped,
-    ClientStrategySetToJSON,
+    Strategy,
+    StrategyFromJSON,
+    StrategyFromJSONTyped,
+    StrategyToJSON,
 } from './';
 
 /**
@@ -40,10 +40,10 @@ export interface ListDeploymentStrategiesResponse {
     metadata: object;
     /**
      * 
-     * @type {Array<ClientStrategySet>}
+     * @type {Array<Strategy>}
      * @memberof ListDeploymentStrategiesResponse
      */
-    result: Array<ClientStrategySet>;
+    result: Array<Strategy>;
     /**
      * 
      * @type {number}
@@ -70,7 +70,7 @@ export function ListDeploymentStrategiesResponseFromJSONTyped(json: any, ignoreD
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': ((json['result'] as Array<any>).map(ClientStrategySetFromJSON)),
+        'result': ((json['result'] as Array<any>).map(StrategyFromJSON)),
         'status': json['status'],
         'version': json['version'],
     };
@@ -87,7 +87,7 @@ export function ListDeploymentStrategiesResponseToJSON(value?: ListDeploymentStr
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': ((value.result as Array<any>).map(ClientStrategySetToJSON)),
+        'result': ((value.result as Array<any>).map(StrategyToJSON)),
         'status': value.status,
         'version': value.version,
     };

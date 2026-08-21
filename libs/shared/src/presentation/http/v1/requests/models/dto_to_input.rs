@@ -131,7 +131,7 @@ impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
             libraries: value.libraries,
             model_type: value.model_type,
             image: value.image,
-            keywords: value.keywords,
+            tags: value.tags,
             annotations: value.annotations,
             multi_modal: value.multi_modal,
             model_inputs: Some(model_inputs),

@@ -1,6 +1,4 @@
 use crate::presentation::http::v1::actix_web::helpers::{build_error_response, build_success_response};
-use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::model_deployment_service_builder;
 use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::responses::ModelDeployment;
 use actix_web::{
@@ -10,6 +8,7 @@ use actix_web::{
 };
 use serde_json::to_value;
 use shared::application::inputs::deployment::StopModelDeploymentInput;
+use shared::application::services::model_deployment_service::ModelDeploymentService;
 use crate::presentation::http::v1::requests::StopModelDeploymentPathParams;
 
 #[utoipa::path(
@@ -29,15 +28,9 @@ use crate::presentation::http::v1::requests::StopModelDeploymentPathParams;
 )]
 #[post("deployments-api/deployments/{deployment_id}/stop")]
 async fn stop_model_deployment(
-    data: web::Data<AppState>,
     path: web::Path<StopModelDeploymentPathParams>,
+    service: web::Data<ModelDeploymentService>,
 ) -> impl Responder {
-    let service = model_deployment_service_builder(
-        &data.client,
-        data.db_name.clone(),
-        data.channel.clone(),
-    );
-
     let input = StopModelDeploymentInput {
        owner: "mlhub".into(),
        deployment_id: path.deployment_id,

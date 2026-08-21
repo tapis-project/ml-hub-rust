@@ -1,71 +1,293 @@
+use platforms::Platform;
+use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::Client;
+use serde_json::json;
+use tapis_jobs::models::{JobArgSpec, ReqSubmitJob};
+use tapis_jobs::{with_headers, TapisJobs};
+use tapis_tokens::models::RefreshToken201Response;
+use thiserror::Error;
+
 use crate::application::ports::deployment::ModelDeploymentPlatformReconciliationClient;
 use crate::application::inputs::deployment::ReconcileModelDeploymentInput;
+use crate::application::ports::errors::InfrastructureError;
+use crate::application::services::deployment_argument_service::DecryptedArgument;
 use crate::application::workflows::reconciliation::{
-    ReconciliationAction, ReconciliationError, ReconciliationOutcome, StartedOutcomePayload,
-    StoppedOutcomePayload, UndeployedOutcomePayload, ObeservedOutcomePayload,
+    FailedOutcome, ObeservedOutcome, ReconcilerError, ReconciliationAction, ReconciliationOutcome, StartedOutcome, StoppedOutcome, UndeployedOutcome
 };
 use crate::domain::entities::deployment::{
     ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, State,
 };
-use flexserv_deployer::{
-    Backend, FlexServDeployment, FlexServHPCDeployment, FlexServInstance, HpcDeploymentOptions,
-    normalize_tenant_url,
-};
-use flexserv_deployer::deployment::{DeploymentError as FlexServDeploymentError, DeploymentResult};
-use log::info;
-use serde_json::json;
-use std::collections::HashMap;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
+use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::site::SiteContext;
 
-pub struct TapisJobsModelDeploymentReconciliationClient {}
+use std::collections::HashMap;
+use std::env;
+
+#[derive(Debug, Clone, Error)]
+enum ReconciliationError {
+    #[error(transparent)]
+    Fatal(#[from] InfrastructureError),
+
+    #[error("{0}")]
+    Recoverable(String),
+}
+
+pub struct TapisJobsModelDeploymentReconciliationClient {
+    mlhub_service_password: String,
+    site_context: SiteContext,
+    client: Client,
+    base_job_definition: ReqSubmitJob,
+}
 
 impl TapisJobsModelDeploymentReconciliationClient {
-    pub fn new() -> Self {
-        Self {}
+    const FLEXSERV_APP_ID: &'static str = "FlexServ-1.4.0";
+    const FLEXSERV_APP_VERSION: &'static str = "1.4.0";
+    const FLEXSERV_JOB_DEF_URL: &'static str = "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/job.json";
+    const TAPIS_JOB_UUID_KEY: &'static str = "tapis_job_uuid";
+
+    pub async fn new(site_context: &SiteContext) -> Result<Self, ReconcilerError> {
+        let mlhub_service_password = match env::var("MLHUB_SERVICE_PASSWORD") {
+            Ok(p) => p,
+            Err(_) => {
+                let msg = "Could not initialize Tapis Jobs deployment reconciler";
+                log::error!("{}", msg);
+                return Err(ReconcilerError::InitializationFailed(msg.into()))
+            }
+        };
+
+        // Initialize http client
+        let client = Client::new();
+        
+        // Fetch the base tapis job def
+        let base_job_definition = client.get(Self::FLEXSERV_JOB_DEF_URL)
+            .send()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Error fetching FlexServ job definition: {}", error.error_id(), e.to_string());
+                ReconcilerError::InitializationFailed(error.to_string())
+            })?
+            .json::<ReqSubmitJob>()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Error deserializing FlexServ job definition: {}", error.error_id(), e.to_string());
+                ReconcilerError::InitializationFailed(error.to_string())
+            })?;
+
+        Ok(Self {
+            client,
+            base_job_definition,
+            mlhub_service_password,
+            site_context: site_context.clone(),
+        })
     }
 
-    fn extract_tapis_credentials(
+    async fn handle_start(
+        &self,
         deployment: &ModelDeployment,
-    ) -> Result<(String, String, String), ReconciliationError> {
-        let metadata = deployment.metadata.as_ref().ok_or_else(|| {
-            ReconciliationError::Unimplemented(
-                "Deployment metadata is required for TapisJobs. Include tapis_tenant_url, tapis_user, tapis_token (e.g. from the deploy request)."
-                    .into(),
-            )
-        })?;
+        model: &ModelMetadata,
+        strategy: Option<Strategy>,
+        arguments: &[DecryptedArgument],
+    ) -> Result<ReconciliationOutcome, ReconciliationError> {
+        let (model_id, platform) = match model.canonical.clone() {
+            Some(c) => (c.model_id, c.platform),
+            None => {
+                let message = "Missing canonical model data";
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] {}", error.error_id(), &message);
+                return Err(ReconciliationError::Fatal(error))
+            }
+        };
 
-        let tenant_url = metadata
-            .get("tapis_tenant_url")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                ReconciliationError::Unimplemented(
-                    "deployment.metadata must include tapis_tenant_url".into(),
-                )
-            })?
-            .to_string();
-        let tapis_user = metadata
-            .get("tapis_user")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                ReconciliationError::Unimplemented("deployment.metadata must include tapis_user".into())
-            })?
-            .to_string();
-        let tapis_token = metadata
-            .get("tapis_token")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                ReconciliationError::Unimplemented(
-                    "deployment.metadata must include tapis_token".into(),
-                )
-            })?
-            .to_string();
+        if platform != Platform::HuggingFace {
+            let message = format!("Unsupported platform: {}", &deployment.platform);
+            let error = InfrastructureError::new_internal();
+            log::error!("[{}] {}", error.error_id(), &message);
+            return Err(ReconciliationError::Fatal(error))
+        }
 
-        Ok((tenant_url, tapis_user, tapis_token))
+        // TODO Check if Job UUID is in the metadata. If so, resubmit instead of submit
+        
+        let service_jwt = self.generate_service_token().await?;
+
+        let jobs_client = TapisJobs::new(&self.get_target_base_url(deployment), Some(&service_jwt))
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Failed to initialize TapisJobs client: {}", error.error_id(), e.to_string());
+                error
+            })?;
+        
+        let mut custom_headers = HeaderMap::new();
+        
+        // OBO Tapis tenant
+        let obo_tenant_id = deployment.tenant_id.as_str();
+        custom_headers.insert(
+            "X-Tapis-Tenant",
+            HeaderValue::from_str(&obo_tenant_id)
+                .map_err(|e| {
+                    let error = InfrastructureError::new_internal();
+                    log::error!("[{}] Invalid header value for X-Tapis-Tenant: {}", error.error_id(), e.to_string());
+                    error
+                })?
+        );
+
+        // OBO Tapis username
+        let obo_username = deployment.owner.as_str();
+        custom_headers.insert(
+            "X-Tapis-User",
+            HeaderValue::from_str(obo_username)
+                .map_err(|e| {
+                    let error = InfrastructureError::new_internal();
+                    log::error!("[{}] Invalid header value for X-Tapis-User: {}", error.error_id(), e.to_string());
+                    error
+                })?
+        );
+
+        let strat = match strategy {
+            Some(s) => s,
+            None => {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Missing strategy", error.error_id());
+                return Err(ReconciliationError::Fatal(error))
+            }
+        };
+
+        let job_def = self.build_job_request(
+            &model_id,
+            deployment,
+            &strat,
+            arguments
+        )?;
+
+        let job_uuid = with_headers(
+            custom_headers,
+            async { jobs_client.jobs.submit_job(job_def).await }
+        )
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Error when submitting FlexServ job to Tapis: {}", error.error_id(), e.to_string());
+                error
+            })?
+            .result
+            .ok_or_else(|| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Job is None", error.error_id());
+                error
+            })?
+            .uuid
+            .ok_or_else(|| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Uuid is None", error.error_id());
+                error
+            })?;
+
+        let mut map = HashMap::new();
+        map.insert(Self::TAPIS_JOB_UUID_KEY.to_string(), json!(job_uuid));
+
+        Ok(ReconciliationOutcome::Started(StartedOutcome {
+            message: Some("Deployment started successfully".to_string()),
+            state: State::Unknown,
+            metadata: Some(ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))),
+            replicas: None,
+            interface: None,
+        }))
     }
+
+    async fn resubmit_job() -> Result<ReconciliationOutcome, ReconciliationError> {
+        todo!();
+    }
+
+    async fn handle_stop(
+        &self,
+        input: &ReconcileModelDeploymentInput,
+    ) -> Result<ReconciliationOutcome, ReconciliationError> {
+
+        Ok(ReconciliationOutcome::Stopped(StoppedOutcome {
+            message: Some("Deployment stopped successfully".to_string()),
+            metadata: None,
+            replicas: None,
+            interface: None,
+        }))
+    }
+
+    async fn handle_undeploy(
+        &self,
+        input: &ReconcileModelDeploymentInput,
+    ) -> Result<ReconciliationOutcome, ReconciliationError> {
+
+        Ok(ReconciliationOutcome::Undeployed(UndeployedOutcome {
+            message: Some("Deployment canceled successfully".to_string()),
+            metadata: Some(ModelDeploymentMetadataDelta::Delete),
+        }))
+    }
+
+    async fn handle_observe(
+        &self,
+        input: &ReconcileModelDeploymentInput,
+    ) -> Result<ReconciliationOutcome, ReconciliationError> {
+        Ok(ReconciliationOutcome::Observed(ObeservedOutcome {
+            message: Some("Observing Tapis Job".into()),
+            state: State::Unknown, // TODO Put the actual observed state
+            metadata: None,
+            replicas: None,
+            interface: None,
+        }))
+    }
+
+    async fn generate_service_token(&self) -> Result<String, ReconciliationError> {    
+        let payload = json!({
+            "account_type": "service",
+            "token_tenant_id": "admin",
+            "token_username": "mlhub",
+            "target_site_id": self.site_context.site_id.clone(),
+        });
+
+        let resp = self.client.post(format!("{}/v3/tokens", self.get_site_context().base_url))
+            .basic_auth("mlhub", Some(&self.mlhub_service_password))
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] External service call error: {}", error.error_id(), e.to_string());
+                error
+            })?
+            .json::<RefreshToken201Response>()
+            .await
+            .map_err(|e| {
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Deserialization error: {}", error.error_id(), e.to_string());
+                error
+            })?
+            .result
+            .ok_or_else(|| InfrastructureError::new_internal())
+            .map_err(|e| {
+                log::error!("[{}] Missing result field in response: {}", e.error_id(), e.to_string());
+                e
+            })?
+            .access_token
+            .ok_or_else(|| InfrastructureError::new_internal())
+            .map_err(|e| {
+                log::error!("[{}] Missing access token field in result: {}", e.error_id(), e.to_string());
+                e
+            })?
+            .access_token
+            .ok_or_else(|| InfrastructureError::new_internal())
+            .map_err(|e| {
+                log::error!("[{}] Missing access token field inside of NewAccessTokenResponse: {}", e.error_id(), e.to_string());
+                e
+            })?;
+
+        Ok(resp)
+    } 
 
     /// `job_uuid` from metadata when the deployment already submitted a Tapis job.
     fn extract_job_uuid(deployment: &ModelDeployment) -> Option<String> {
         deployment.metadata.as_ref().and_then(|m| {
-            m.get("job_uuid")?
+            m.get("tapis_job_uuid")?
                 .as_str()
                 .map(str::trim)
                 .filter(|s| !s.is_empty())
@@ -73,157 +295,8 @@ impl TapisJobsModelDeploymentReconciliationClient {
         })
     }
 
-    /// HPC submission options from metadata (required for first-time `create` / Start with no `job_uuid`).
-    ///
-    /// Keys: `tapis_hpc_app_id`, `tapis_hpc_app_version`, `tapis_hpc_exec_system_id`,
-    /// `tapis_hpc_exec_system_logical_queue`, `tapis_hpc_max_minutes` (number or string),
-    /// `tapis_hpc_allocation`.
-    fn extract_hpc_options(
-        deployment: &ModelDeployment,
-    ) -> Result<HpcDeploymentOptions, ReconciliationError> {
-        let metadata = deployment.metadata.as_ref().ok_or_else(|| {
-            ReconciliationError::Unimplemented(
-                "Deployment metadata is required to build HPC job options.".into(),
-            )
-        })?;
-
-        let req_str = |key: &str| -> Result<String, ReconciliationError> {
-            metadata
-                .get(key)
-                .and_then(|v| v.as_str())
-                .map(str::trim)
-                .filter(|s| !s.is_empty())
-                .map(String::from)
-                .ok_or_else(|| {
-                    ReconciliationError::Unimplemented(format!(
-                        "deployment.metadata must include non-empty {}",
-                        key
-                    ))
-                })
-        };
-
-        let max_minutes: i32 = metadata
-            .get("tapis_hpc_max_minutes")
-            .and_then(|v| {
-                v.as_i64()
-                    .map(|n| n as i32)
-                    .or_else(|| v.as_u64().map(|n| n as i32))
-                    .or_else(|| v.as_str().and_then(|s| s.trim().parse().ok()))
-            })
-            .ok_or_else(|| {
-                ReconciliationError::Unimplemented(
-                    "deployment.metadata must include tapis_hpc_max_minutes (integer)".into(),
-                )
-            })?;
-
-        Ok(HpcDeploymentOptions::new(
-            req_str("tapis_hpc_app_id")?,
-            req_str("tapis_hpc_app_version")?,
-            req_str("tapis_hpc_exec_system_id")?,
-            req_str("tapis_hpc_exec_system_logical_queue")?,
-            max_minutes,
-            req_str("tapis_hpc_allocation")?,
-        ))
-    }
-
-    fn default_backend() -> Backend {
-        Backend::Transformers { command: vec![] }
-    }
-
-    fn create_deployment_from_entity(
-        deployment: &ModelDeployment,
-    ) -> Result<FlexServHPCDeployment, ReconciliationError> {
-        let (tenant_url, tapis_user, tapis_token) = Self::extract_tapis_credentials(deployment)?;
-        let model_id = format!("{}/{}", deployment.model.author, deployment.model.name);
-
-        let server = FlexServInstance::builder()
-            .tenant_url(normalize_tenant_url(&tenant_url))
-            .tapis_user(tapis_user.clone())
-            .model(model_id.clone())
-            .backend(Self::default_backend())
-            .build()
-            .map_err(|e| {
-                ReconciliationError::Unimplemented(format!("Failed to create FlexServInstance: {}", e))
-            })?;
-
-        if let Some(job_uuid) = Self::extract_job_uuid(deployment) {
-            let mut existing = FlexServHPCDeployment::from_existing(tapis_token, job_uuid);
-            existing.tenant_url = Some(normalize_tenant_url(&tenant_url));
-            Ok(existing)
-        } else {
-            let options = Self::extract_hpc_options(deployment)?;
-            Ok(FlexServHPCDeployment::new(server, tapis_token, options))
-        }
-    }
-
-    fn result_to_metadata_delta(
-        result: &DeploymentResult,
-        deployment: &ModelDeployment,
-    ) -> ModelDeploymentMetadataDelta {
-        match result {
-            DeploymentResult::HPCResult {
-                job_uuid,
-                status,
-                job,
-                hpc_url,
-                flexserv_token,
-                ..
-            } => {
-                if job_uuid.is_empty() {
-                    log::warn!("HPC operation returned empty job_uuid, not updating job metadata keys");
-                    return ModelDeploymentMetadataDelta::NoChange;
-                }
-                let mut map = HashMap::new();
-                map.insert("job_uuid".to_string(), json!(job_uuid));
-                map.insert(
-                    "model_id".to_string(),
-                    json!(format!(
-                        "{}/{}",
-                        deployment.model.author, deployment.model.name
-                    )),
-                );
-                if let Some(status) = status {
-                    if !status.is_empty() {
-                        map.insert("job_status".to_string(), json!(status));
-                    }
-                }
-                if let Some(job) = job {
-                    map.insert("job_info".to_string(), json!(job));
-                }
-                if let Some(url) = hpc_url {
-                    if !url.is_empty() {
-                        map.insert("hpc_url".to_string(), json!(url));
-                    }
-                }
-                if let Some(token) = flexserv_token {
-                    if !token.is_empty() {
-                        map.insert("flexserv_token".to_string(), json!(token));
-                    }
-                }
-                if let Some(metadata) = deployment.metadata.as_ref() {
-                    if let Some(tapis_user) = metadata.get("tapis_user") {
-                        map.insert("tapis_user".to_string(), tapis_user.clone());
-                    }
-                    if let Some(tapis_tenant) = metadata.get("tapis_tenant") {
-                        map.insert("tapis_tenant".to_string(), tapis_tenant.clone());
-                    } else if let Some(tapis_tenant_url) = metadata.get("tapis_tenant_url") {
-                        map.insert("tapis_tenant_url".to_string(), tapis_tenant_url.clone());
-                    }
-                }
-                ModelDeploymentMetadataDelta::Merge(ModelDeploymentMetadata(map))
-            }
-            _ => ModelDeploymentMetadataDelta::NoChange,
-        }
-    }
-
-    /// Infer [State] from raw TAPIS job status.
-    fn state_from_job_status(status: Option<&str>) -> State {
-        match status
-            .unwrap_or_default()
-            .trim()
-            .to_ascii_uppercase()
-            .as_str()
-        {
+    fn state_from_job_status(status: &str) -> State {
+        match status {
             "RUNNING" => State::Running,
             "QUEUED"
             | "PENDING"
@@ -239,141 +312,147 @@ impl TapisJobsModelDeploymentReconciliationClient {
         }
     }
 
-    fn map_deployment_error(err: FlexServDeploymentError) -> ReconciliationError {
-        match err {
-            FlexServDeploymentError::InvalidConfiguration(msg) => {
-                ReconciliationError::Unimplemented(format!("Invalid deployment configuration: {}", msg))
-            }
-            FlexServDeploymentError::TapisAuthFailed(msg) => {
-                ReconciliationError::Unimplemented(format!("TAPIS authentication failed: {}", msg))
-            }
-            FlexServDeploymentError::TapisAPIUnreachable(msg) => {
-                ReconciliationError::Unimplemented(format!("TAPIS API unreachable: {}", msg))
-            }
-            FlexServDeploymentError::TapisBadRequest(msg) => {
-                ReconciliationError::Unimplemented(format!("TAPIS bad request: {}", msg))
-            }
-            FlexServDeploymentError::TapisTimeout(msg) => {
-                ReconciliationError::Unimplemented(format!("TAPIS timeout: {}", msg))
-            }
-            FlexServDeploymentError::TapisInternalServerError(msg) => {
-                ReconciliationError::Unimplemented(format!("TAPIS internal server error: {}", msg))
-            }
-            FlexServDeploymentError::ModelUploadingFailed(msg) => {
-                ReconciliationError::Unimplemented(format!("Model upload failed: {}", msg))
-            }
-            FlexServDeploymentError::PodCreationFailed(msg) => {
-                ReconciliationError::Unimplemented(format!("Pod creation failed: {}", msg))
-            }
-            FlexServDeploymentError::JobCreationFailed(msg) => {
-                ReconciliationError::Unimplemented(format!("Job creation failed: {}", msg))
-            }
-            FlexServDeploymentError::UnknownError(msg) => {
-                ReconciliationError::Unimplemented(format!("Unknown error: {}", msg))
-            }
-        }
+    fn get_target_base_url(&self, deployment: &ModelDeployment) -> String {
+        let target_base_url = self.get_site_context()
+            .base_url
+            .clone()
+            .replace("admin", &deployment.tenant_id.clone());
+
+        format!("{}/{}", target_base_url, "v3")
     }
 
-    async fn handle_start(
-        &self,
-        input: &ReconcileModelDeploymentInput,
-    ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        info!("Starting Tapis Jobs deployment {}", input.deployment.id);
+    fn build_job_request(&self, model_id: &str, deployment: &ModelDeployment, strategy: &Strategy, args: &[DecryptedArgument]) -> Result<ReqSubmitJob, ReconciliationError> {
+        let mut job_def = self.base_job_definition.clone();
 
-        let has_existing_job = Self::extract_job_uuid(&input.deployment).is_some();
-        let mut deployment = Self::create_deployment_from_entity(&input.deployment)?;
-
-        let result = if has_existing_job {
-            deployment.start().await
-        } else {
-            deployment.create().await
-        }
-        .map_err(Self::map_deployment_error)?;
-
-        if !has_existing_job {
-            if let DeploymentResult::HPCResult { job_uuid, .. } = &result {
-                info!("HPC job submitted: job_uuid={}", job_uuid);
-            }
-        } else {
-            info!("HPC job resubmitted successfully");
-        }
-
-        Ok(ReconciliationOutcome::Started(StartedOutcomePayload {
-            message: Some("Deployment started successfully".to_string()),
-            state: State::Unknown,
-            metadata: Some(Self::result_to_metadata_delta(&result, &input.deployment)),
-            replicas: None,
-            interface: None,
-        }))
-    }
-
-    async fn handle_stop(
-        &self,
-        input: &ReconcileModelDeploymentInput,
-    ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        info!("Stopping Tapis Jobs deployment {}", input.deployment.id);
-        let deployment = Self::create_deployment_from_entity(&input.deployment)?;
-
-        let result = deployment
-            .stop()
-            .await
-            .map_err(Self::map_deployment_error)?;
-
-        Ok(ReconciliationOutcome::Stopped(StoppedOutcomePayload {
-            message: Some("Deployment stopped successfully".to_string()),
-            metadata: Some(Self::result_to_metadata_delta(&result, &input.deployment)),
-            replicas: None,
-            interface: None,
-        }))
-    }
-
-    async fn handle_undeploy(
-        &self,
-        input: &ReconcileModelDeploymentInput,
-    ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        info!("Undeploying Tapis Jobs deployment {}", input.deployment.id);
-        let deployment = Self::create_deployment_from_entity(&input.deployment)?;
-
-        deployment
-            .terminate()
-            .await
-            .map_err(Self::map_deployment_error)?;
-
-        Ok(ReconciliationOutcome::Undeployed(UndeployedOutcomePayload {
-            message: Some("Deployment canceled successfully".to_string()),
-            metadata: Some(ModelDeploymentMetadataDelta::Delete),
-        }))
-    }
-
-    async fn handle_observe(
-        &self,
-        input: &ReconcileModelDeploymentInput,
-    ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        info!("Observing Tapis Jobs deployment {}", input.deployment.id);
-        let deployment = Self::create_deployment_from_entity(&input.deployment)?;
-
-        let result = deployment
-            .monitor()
-            .await
-            .map_err(Self::map_deployment_error)?;
-
-        let observed_state = Self::state_from_job_status(match &result {
-            DeploymentResult::HPCResult { status, .. } => status.as_deref(),
-            _ => None,
+        let job_name = format!("MLHub-FlexServ-{}", &deployment.id);
+        
+        job_def.name = job_name.clone();
+        job_def.app_id = Self::FLEXSERV_APP_ID.into();
+        job_def.app_version = Self::FLEXSERV_APP_VERSION.into();
+        job_def.tenant = Some(deployment.tenant_id.clone());
+        job_def.owner = Some(deployment.owner.clone());
+        
+        // Set the model id
+        let target_spec = job_def.parameter_set
+            .as_mut()
+            .and_then(|params| params.app_args.as_mut())
+            .and_then(|args| {
+                args.iter_mut()
+                    .find(|spec| spec.name.as_deref() == Some("modelName"))
         });
 
-        info!(
-            "Observed state for deployment {}: {:?}",
-            input.deployment.id, observed_state
-        );
+        if let Some(spec) = target_spec {
+            spec.arg = Some(format!("--model-name {}", model_id));
+        }
 
-        Ok(ReconciliationOutcome::Observed(ObeservedOutcomePayload {
-            message: Some(format!("Deployment observed: {:?}", result)),
-            state: observed_state,
-            metadata: Some(Self::result_to_metadata_delta(&result, &input.deployment)),
-            replicas: None,
-            interface: None,
-        }))
+        let target_host_name = args.iter()
+            .find(|a| a.parameter_name == "HPC System")
+            .map(|arg| &arg.value)
+            .ok_or_else(|| {
+                let message: String = "'HPC System' not provided in arguments".into();
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Missing argument: {}", error.error_id(), &message);
+
+                ReconciliationError::Fatal(error)
+            })?;
+
+        let strategy_data = strategy
+            .data()
+            .clone()
+            .unwrap_or_default();
+        
+        // The key to retrieve the exec_system_id from the data on the Strategy
+        let exec_system_data_strategy_key = format!("{}_tapis_system_id", &target_host_name.to_ascii_lowercase());
+
+        let exec_system_id = strategy_data
+            .get(&exec_system_data_strategy_key)
+            .ok_or_else(|| {
+                let message = format!("Could not find data on strategy at key '{}'", &exec_system_data_strategy_key);
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Missing strategy data: {}", error.error_id(), &message);
+
+                ReconciliationError::Fatal(error)
+            })?;
+
+        job_def.exec_system_id = Some(exec_system_id.clone());
+        
+        // Set the logical queue
+        let exec_system_logical_queue = args.iter()
+            .find(|a| a.parameter_name == "Slurm Partition")
+            .map(|arg| &arg.value)
+            .ok_or_else(|| {
+                let message: String = "'Slurm Partition' not provided in arguments".into();
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Missing argument: {}", error.error_id(), &message);
+
+                ReconciliationError::Fatal(error)
+            })?;
+
+        job_def.exec_system_logical_queue = Some(exec_system_logical_queue.clone());
+        
+        // Set the slurm allocation
+        let slurm_allocation = args.iter()
+            .find(|a| a.parameter_name == "Slurm Project Allocation")
+            .map(|arg| &arg.value)
+            .ok_or_else(|| {
+                let message: String = "'Slurm Project Allocation' not provided in arguments".into();
+                let error = InfrastructureError::new_internal();
+                log::error!("[{}] Missing argument: {}", error.error_id(), &message);
+
+                ReconciliationError::Fatal(error)
+            })?;
+
+        let target_spec = job_def.parameter_set
+            .as_mut()
+            .and_then(|params| params.scheduler_options.as_mut())
+            .and_then(|opts| {
+                opts.iter_mut()
+                    .find(|spec| spec.name.as_deref() == Some("TACC Resource Allocation"))
+            });
+
+        if let Some(spec) = target_spec {
+            spec.arg = Some(format!("-A {}", slurm_allocation));
+        }
+
+        // Set the slurm reservation
+        let maybe_slurm_reservation = args.iter()
+            .find(|a| a.parameter_name == "Slurm Reservation" && !a.value.is_empty())
+            .map(|arg| &arg.value);
+
+        if let Some(slurm_reservation) = maybe_slurm_reservation {
+            let scheduler_opts = job_def.parameter_set.as_mut()
+                .and_then(|params| params.scheduler_options.as_mut());
+
+            if let Some(opts) = scheduler_opts {
+                opts.push(JobArgSpec { 
+                    name: Some("Reservation Name".to_string()), 
+                    arg: Some(format!("-R {}", slurm_reservation)), 
+                    description: Some("The Slurm Reservation (set by MLHub)".into()), 
+                    include: Some(true), 
+                    notes: None 
+                });
+            }   
+        }
+
+        // Update the slurm job name.
+        // TODO Remove this when the following issue is resolved.
+        // https://github.com/tapis-project/tapis-jobs/issues/181
+        job_def.parameter_set
+            .as_mut()
+            .and_then(|params| params.scheduler_options.as_mut())
+            .map(|opts| {
+                opts.push(
+                    JobArgSpec {
+                        name: Some("Slurm job name".into()),
+                        description: Some("The name of the slurm job (overwritten by MLHub).".into()),
+                        arg: Some(format!("--job-name tap_{}", &job_name)),
+                        notes: None,
+                        include: Some(true),
+                    }
+                );
+            });
+       
+        Ok(job_def)
     }
 }
 
@@ -382,16 +461,33 @@ impl ModelDeploymentPlatformReconciliationClient for TapisJobsModelDeploymentRec
     async fn reconcile(
         &self,
         input: ReconcileModelDeploymentInput,
-    ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        match input.action {
-            ReconciliationAction::Start { .. } => self.handle_start(&input).await,
+    ) -> ReconciliationOutcome {
+        let outcome = match input.action { 
+            ReconciliationAction::Start { payload } => self.handle_start(
+                &input.deployment,
+                &input.model_metadata,
+                input.strategy,
+                &payload,
+            ).await,
             ReconciliationAction::Stop => self.handle_stop(&input).await,
             ReconciliationAction::Undeploy => self.handle_undeploy(&input).await,
             ReconciliationAction::Observe => self.handle_observe(&input).await,
+        };
+
+        match outcome {
+            Ok(o) => o,
+            Err(e) => {
+                ReconciliationOutcome::Failed(FailedOutcome {
+                    message: Some(e.to_string().clone()),
+                    metadata: None,
+                    replicas: None,
+                    interface: None,
+                })
+            }
         }
     }
-}
 
-#[cfg(test)]
-#[path = "tapis_jobs.test.rs"]
-mod tapis_jobs_test;
+    fn get_site_context(&self) -> &SiteContext {
+        return &self.site_context;
+    }
+}

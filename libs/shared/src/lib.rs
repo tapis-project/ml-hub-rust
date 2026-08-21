@@ -1,7 +1,8 @@
-pub mod application;
+pub mod shared_kernel;
 pub mod presentation;
-pub mod infra;
+pub mod application;
 pub mod domain;
+pub mod infra;
 pub mod errors;
 pub mod constants;
 pub mod logging;

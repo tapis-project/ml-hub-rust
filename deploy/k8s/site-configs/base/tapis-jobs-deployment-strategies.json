@@ -1,56 +1,30 @@
 {
     "platform": "tapis-jobs",
-    "description": "A set of strategies for deploying models to Tapis Pods",
+    "description": "A set of strategies for deploying models to cloud and HPC systems with Tapis",
     "strategies": [
         {
-            "name": "Stampede3",
-            "description": "Deploys a model as a Slurm job on the Stapmede3 HPC System at TACC",
+            "name": "TACC-HPC",
+            "description": "Deploys a model to an HPC system at TACC",
+            "config": {
+                "supported_deployment_modalities": [ "batch" ]
+            },
             "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
+                "FlexServCompatible",
+                "CanonicalHuggingfaceVisiblePublic"
             ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "Frontera",
-            "description": "Deploys a model as a Slurm job on the Frontera HPC System at TACC",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "LoneStar6",
-            "description": "Deploys a model as a Slurm job on the LoneStar6 HPC System at TACC",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "Vista",
-            "description": "Deploys a model as a Slurm job on the Vista HPC System at TACC",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
-        },
-        {
-            "name": "HPC w/ GPUs",
-            "description": "Deploys a model to a user defined system",
-            "use_rule_sets": [
-                "FlexServerDeployerCompatible",
-                "VisiblePublic"
-            ],
-            "use_parameter_set": "TapisJobs"
+            "use_parameter_set": "TACCHPC",
+            "data": {
+                "vista_tapis_system_id": "MLHub-FlexServ-Vista-PKI",
+                "stampede3_tapis_system_id": "MLHub-FlexServ-Stampede3",
+                "frontera_tapis_system_id": "MLHub-FlexServ-Frontera",
+                "lonestar6_tapis_system_id": "MLHub-FlexServ-Lonestar6",
+                "horizon_tapis_system_id": "MLHub-FlexServ-Horizon"
+            }
         }
     ],
     "rule_sets": [
         {
-            "name": "FlexServerDeployerCompatible",
+            "name": "FlexServCompatible",
             "rules": [
                 {
                     "field_path": [
@@ -71,86 +45,73 @@
             ]
         },
         {
-            "name": "VisiblePublic",
+            "name": "CanonicalHuggingfaceVisiblePublic",
             "rules": [
                 {
                     "field_path": [
                         "canonical",
                         "gated"
                     ],
-                    "operator": "Eq",
-                    "value": false
+                    "operator": "In",
+                    "value": [false, null]
                 },
                 {
                     "field_path": [
                         "canonical",
                         "private"
                     ],
-                    "operator": "Eq",
-                    "value": false
+                    "operator": "In",
+                    "value": [false, null]
                 }
             ]
         }
     ],
     "parameter_sets": [
         {
-            "name": "TapisJobs",
+            "name": "TACCHPC",
             "parameters": [
                 {
-                    "name": "X-Tapis-Token",
-                    "in": "headers"
-                },
-                {
-                    "name": "allocation",
-                    "in": "request_body",
-                    "required": false
-                },
-                {
-                    "name": "system_id",
-                    "in": "request_body"
-                },
-                {
-                    "name": "jobParameterSet",
-                    "in": "request_body",
-                    "type": "object",
-                    "required": false
-                },
-                {
-                    "name": "backend",
-                    "in": "request_body",
+                    "name": "HPC System",
+                    "type": "string",
+                    "description": "An HPC system at TACC",
+                    "required": true,
                     "choices": [
-                        "transformers"
+                        {
+                            "value": "Vista"
+                        },
+                        {
+                            "value": "Stampede3"
+                        },
+                        {
+                            "value": "Lonestar6",
+                            "enabled": false
+                        },
+                        {
+                            "value": "Frontera"
+                        },
+                        {
+                            "value": "Horizon",
+                            "enabled": false
+                        }
                     ]
                 },
                 {
-                    "name": "inference_server_config",
-                    "in": "request_body",
-                    "type": "object"
-                }
-            ]
-        },
-        {
-            "name": "Pods",
-            "parameters": [
-                {
-                    "name": "X-Tapis-Token",
-                    "in": "headers"
+                    "name": "Slurm Partition",
+                    "type": "string",
+                    "description": "Which Slurm partition to deploy to",
+                    "required": true
                 },
                 {
-                    "name": "backend",
-                    "in": "request_body",
-                    "choices": [
-                        "transformers"
-                    ],
+                    "name": "Slurm Project Allocation",
+                    "type": "string",
+                    "description": "The allocation to charge",
+                    "required": true
+                },
+                {
+                    "name": "Slurm Reservation",
+                    "type": "string",
+                    "description": "The slurm reservation to use",
                     "required": false
-                },
-                {
-                    "name": "uid",
-                    "in": "request_body"
-                },
-                {
-                    "name": "modelId",
-                    "in": "request_body"
                 }
             ]
         }

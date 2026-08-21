@@ -1,9 +1,12 @@
 use std::path::PathBuf;
-use shared::presentation::http::v1::requests::models;
-use shared::presentation::http::v1::requests::discover_models;
-use shared::presentation::http::v1::requests::artifacts;
+use shared::presentation::http::v1::requests::{
+    list_models_by_platform,
+    get_model_by_platform,
+    discover_models,
+    artifacts,
+    ingest_model,
+};
 use shared::domain::entities;
-use shared::application::inputs;
 use serde::Serialize;
 use async_trait;
 use crate::client::Client;
@@ -19,7 +22,7 @@ pub trait ListModelsClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn list_models(&self, _request: &models::ListModelsByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn list_models(&self, _request: &list_models_by_platform::ListModelsByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -29,14 +32,14 @@ pub trait GetModelClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn get_model(&self, _request: &models::GetModelByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn get_model(&self, _request: &get_model_by_platform::GetModelByPlatformRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
 
 #[async_trait::async_trait]
 pub trait IngestModelClient: Client {
-    async fn ingest_model(&self, _request: &models::IngestModelRequest, _ingest_path: PathBuf) -> Result<(), ClientError> {
+    async fn ingest_model(&self, _request: &ingest_model::IngestModelRequest, _ingest_path: PathBuf) -> Result<(), ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
@@ -79,13 +82,13 @@ pub trait PublishModelMetadataClient: Client {
 
 /// Converts platform specific metadata into MLHub model metadata
 pub trait ModelMetadataConversionClient: Client {
-    fn from_platform_metadata<T>(&self, _metadata: T) -> Result<inputs::model_metadata::ModelMetadata, ClientError>
+    fn from_platform_metadata<T>(&self, _metadata: T, author: String, tenant_id: String) -> Result<entities::model_metadata::ModelMetadata, ClientError>
         where T: Serialize
     {
         return Err(ClientError::Unimplemented);
     }
 
-    fn to_platform_metadata<T>(&self, _metadata: inputs::model_metadata::ModelMetadata) -> Result<T, ClientError>
+    fn to_platform_metadata<T>(&self, _metadata: entities::model_metadata::ModelMetadata) -> Result<T, ClientError>
         where T: Serialize
     {
         return Err(ClientError::Unimplemented);

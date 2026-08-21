@@ -1,25 +1,37 @@
-pub mod entity_to_response;
+pub mod mappings;
 
 use serde::Serialize;
-use serde_json::Value;
 use utoipa::ToSchema;
 
 use platforms::Platform;
 
-use crate::presentation::http::v1::responses::artifacts::ArtifactType;
 use crate::presentation::http::v1::responses::tasks::Task;
 
-
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ModelArtifact {
     pub id: String,
-    pub artifact_type: ArtifactType,
     pub created_at: String,
     pub last_modified: String,
-    pub metadata: Option<ModelMetadata>
 }
 
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct ModelMetadata {
+    // General fields
+    pub name: String,
+    pub author: String,
+    pub description: Option<String>,
+    pub tenant_id: String,
+    pub model_type: Option<String>,
+    pub libraries: Option<Vec<String>>,
+    pub canonical: Option<Canonical>,
+    pub tags: Option<Vec<String>>,
+    pub task_types: Option<Vec<Task>>,
+    pub regulatory: Option<Vec<String>>,
+    pub license: Option<String>,
 
+    /// Deployment strategy references
+    pub deployment_strategy_refs: Vec<DeploymentStrategyReference>,
+}
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct Canonical {
@@ -69,59 +81,16 @@ pub struct ModelIO {
     pub shape: Option<Vec<i32>>
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct ModelMetadata {
-    // General fields
-    pub name: Option<String>,
-    pub author: Option<String>,
-    pub tenant_id: Option<String>,
-    pub model_type: Option<String>,
-    pub libraries: Option<Vec<String>>,
-    pub image: Option<String>,
-
-    /// Arbitrary labels
-    pub keywords: Option<Vec<String>>,
-    pub annotations: Option<Value>,
-
-    /// Architecture fields
-    pub multi_modal: Option<bool>,
-    pub model_inputs: Option<Vec<ModelIO>>,
-    pub model_outputs: Option<Vec<ModelIO>>,
-
-    /// Inference Fields
-    pub task_types: Option<Vec<Task>>,
-    pub inference_precision: Option<String>,
-    pub inference_hardware: Option<HardwareRequirements>,
-    pub inference_software_dependencies: Option<Vec<String>>,
-    pub inference_max_energy_consumption_watts: Option<i32>,
-
-    /// Inference performance fields
-    pub inference_max_latency_ms: Option<i32>,
-    pub inference_min_throughput: Option<i32>,
-    pub inference_max_compute_utilization_percentage: Option<i32>,
-    pub inference_max_memory_usage_mb: Option<i32>,
-    pub inference_distributed: Option<bool>,
-
-    /// Training-related Fields
-    pub training_time: Option<i64>,
-    pub training_precision: Option<String>,
-    pub training_hardware: Option<HardwareRequirements>,
-    pub pretraining_datasets: Option<Vec<String>>,
-    pub finetuning_datasets: Option<Vec<String>>,
-    pub edge_optimized: Option<bool>,
-    pub quantization_aware: Option<bool>,
-    pub supports_quantization: Option<bool>,
-    pub pretrained: Option<bool>,
-    pub pruned: Option<bool>,
-    pub slimmed: Option<bool>,
-    pub training_distributed: Option<bool>,
-
-    /// Training performance fields
-    pub training_max_energy_consumption_watts: Option<i32>,
-
-    /// Regulatory and Compliance Fields
-    /// A vector or strings that represent regulatory standards. Ex HIPPA
-    pub regulatory: Option<Vec<String>>,
-    pub license: Option<String>,
-    pub bias_evaluation_score: Option<i8>,
+#[derive(Serialize,Debug, Clone, ToSchema)]
+pub struct DeploymentStrategyReference {
+    name: String,
+    platform: Platform,
+    description: Option<String>,
 }
+
+// // TODO Future
+// #[derive(Serialize, Debug, Clone, ToSchema)]
+// pub struct Model {
+//     pub metadata: ModelMetadata,
+//     pub artifact: Option<ModelArtifact>,
+// }

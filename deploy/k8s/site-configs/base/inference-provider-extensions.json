@@ -1,0 +1,11 @@
+{
+    "sambanova": [
+        {
+            "name": "TACC SambaNova",
+            "base_url": "https://ai.tejas.tacc.utexas.edu/",
+            "openai_compatible": true,
+            "tenants": [ "tacc" ],
+            "enabled": true
+        }
+    ]
+}

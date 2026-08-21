@@ -6,9 +6,9 @@ use clients::{
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
 use shared::logging::SharedLogger;
-use shared::presentation::http::v1::requests::models::{
-    GetModelByPlatformRequest,
-    ListModelsByPlatformRequest,
+use shared::presentation::http::v1::requests::{
+    get_model_by_platform::GetModelByPlatformRequest,
+    list_models_by_platform::ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;

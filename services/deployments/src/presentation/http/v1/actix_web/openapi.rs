@@ -8,6 +8,7 @@ use super::handlers::deploy_model_with_strategy::__path_deploy_model_with_strate
 use super::handlers::start_model_deployment::__path_start_model_deployment;
 use super::handlers::stop_model_deployment::__path_stop_model_deployment;
 use super::handlers::undeploy_model_deployment::__path_undeploy_model_deployment;
+use super::handlers::list_model_deployments::__path_list_model_deployments;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -17,6 +18,7 @@ use super::handlers::undeploy_model_deployment::__path_undeploy_model_deployment
         start_model_deployment,
         stop_model_deployment,
         undeploy_model_deployment,
+        list_model_deployments,
     ),
     components(
         schemas(

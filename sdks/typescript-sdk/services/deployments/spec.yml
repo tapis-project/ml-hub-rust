@@ -6,6 +6,37 @@ info:
     name: ''
   version: 0.1.0
 paths:
+  /deployments-api/deployments:
+    get:
+      tags:
+        - Deployments
+      description: Lists all available deployments
+      operationId: list_model_deployments
+      responses:
+        '200':
+          description: A list of model deployments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelDeploymentsResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
   /deployments-api/deployments/{deployment_id}/start:
     post:
       tags:
@@ -181,31 +212,41 @@ paths:
       operationId: list_strategies
       responses:
         '200':
-          description: Listed platforms
+          description: A list of all deployment strategies
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListDeploymentStrategiesResponse'
         '400':
-          description: Not found
+          description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BadRequestResponse'
         '404':
-          description: Not found
+          description: Not Found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFoundResponse'
         '500':
-          description: Not found
+          description: Internal Server Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
 components:
   schemas:
+    Argument:
+      type: object
+      required:
+        - parameter_name
+        - value
+      properties:
+        parameter_name:
+          type: string
+        value:
+          type: string
     BadRequestResponse:
       type: object
       required:
@@ -227,68 +268,72 @@ components:
           minimum: 0
         version:
           type: string
-    ClientStrategySet:
+    Choice:
       type: object
       required:
-        - platform
-        - strategies
+        - value
+        - enabled
       properties:
         description:
           type:
             - string
             - 'null'
-        parameter_sets:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/ParameterSet'
-        platform:
-          $ref: '#/components/schemas/Platform'
-        rule_sets:
-          type:
-            - array
-            - 'null'
-          items:
-            $ref: '#/components/schemas/RuleSet'
-        strategies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Strategy'
+        enabled:
+          type: boolean
+        value:
+          type: string
     DeployModelWithStrategyBody:
       type: object
       required:
+        - name
         - model_name
         - model_author
-        - params
+        - deployment_modality
       properties:
+        arguments:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/Argument'
+        deployment_modality:
+          $ref: '#/components/schemas/DeploymentModality'
+        description:
+          type:
+            - string
+            - 'null'
         model_author:
           type: string
         model_name:
           type: string
-        params: {}
+        name:
+          type: string
+        parallelism_strategies:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/ParallelismStrategy'
+        replicas:
+          type:
+            - integer
+            - 'null'
+          format: int32
+          minimum: 0
+        scope:
+          $ref: '#/components/schemas/Scope'
+          description: Selector for global vs tenant-scoped models
+    DeploymentModality:
+      type: string
+      enum:
+        - Batch
+        - Service
     DesiredState:
       type: string
       enum:
         - Running
         - Stopped
         - NotDeployed
-    GpuResource:
-      type: object
-      properties:
-        gpu_type:
-          type:
-            - string
-            - 'null'
-        memory:
-          type:
-            - number
-            - 'null'
-          format: float
-        vendor:
-          type:
-            - string
-            - 'null'
     ListDeploymentStrategiesResponse:
       type: object
       required:
@@ -305,7 +350,30 @@ components:
         result:
           type: array
           items:
-            $ref: '#/components/schemas/ClientStrategySet'
+            $ref: '#/components/schemas/Strategy'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListModelDeploymentsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelDeployment'
         status:
           type: integer
           format: int32
@@ -316,6 +384,7 @@ components:
       type: object
       required:
         - id
+        - name
         - platform
         - owner
         - model
@@ -326,6 +395,7 @@ components:
         - last_modified
         - last_state_change
         - last_desired_state_change
+        - replicas
         - revision
       properties:
         created_at:
@@ -335,6 +405,10 @@ components:
             - type: 'null'
             - $ref: '#/components/schemas/ModelDeploymentInterface'
         deployment_strategy:
+          type:
+            - string
+            - 'null'
+        description:
           type:
             - string
             - 'null'
@@ -362,14 +436,14 @@ components:
             type: string
         model:
           $ref: '#/components/schemas/ModelReference'
+        name:
+          type: string
         owner:
           type: string
         platform:
           $ref: '#/components/schemas/Platform'
         replicas:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/ReplicaGroup'
+          $ref: '#/components/schemas/ReplicaGroup'
         revision:
           type: integer
           format: int32
@@ -438,47 +512,51 @@ components:
           minimum: 0
         version:
           type: string
-    Operator:
-      type: string
-      enum:
-        - Eq
-        - Neq
-        - Gte
-        - Lte
-        - Gt
-        - Lt
-        - In
-        - Contains
-        - NotIn
-        - NoneIn
-        - AnyIn
-        - AllIn
     ParallelismStrategy:
       type: string
       enum:
-        - DataSharding
-        - ModelSharding
-        - PipelineSharding
-        - TensorSharding
+        - PipelineParallelism
+        - TensorParallelism
+        - SequenceParallelism
+        - ContextParallelism
+        - ExpertParallelism
     Parameter:
       type: object
       required:
         - name
+        - required
+        - secret
+        - type
       properties:
-        name:
-          type: string
-    ParameterSet:
-      type: object
-      required:
-        - name
-        - parameters
-      properties:
-        name:
-          type: string
-        parameters:
-          type: array
+        choices:
+          type:
+            - array
+            - 'null'
           items:
-            $ref: '#/components/schemas/Parameter'
+            $ref: '#/components/schemas/Choice'
+        default:
+          type:
+            - string
+            - 'null'
+        description:
+          type:
+            - string
+            - 'null'
+        name:
+          type: string
+        required:
+          type: boolean
+        secret:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/ParameterType'
+    ParameterType:
+      type: string
+      enum:
+        - String
+        - Integer
+        - Float
+        - Boolean
     Platform:
       type: string
       description: >-
@@ -504,7 +582,6 @@ components:
       type: object
       required:
         - count
-        - resources
         - parallelism_strategies
       properties:
         count:
@@ -515,62 +592,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ParallelismStrategy'
-        resources:
-          $ref: '#/components/schemas/ResourceRequirements'
-    ResourceRequirements:
-      type: object
-      properties:
-        cores:
-          type:
-            - number
-            - 'null'
-          format: float
-        disk:
-          type:
-            - number
-            - 'null'
-          format: float
-        gpu:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/GpuResource'
-        memory:
-          type:
-            - number
-            - 'null'
-          format: float
     RestApi:
       type: object
       required:
         - spec
       properties:
         spec: {}
-    Rule:
-      type: object
-      required:
-        - field_path
-        - operator
-        - value
-      properties:
-        field_path:
-          type: array
-          items:
-            type: string
-        operator:
-          $ref: '#/components/schemas/Operator'
-        value: {}
-    RuleSet:
-      type: object
-      required:
-        - name
-        - rules
-      properties:
-        name:
-          type: string
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/Rule'
+    Scope:
+      type: string
+      enum:
+        - tenant
+        - global
     ServerErrorResponse:
       type: object
       required:
@@ -605,22 +637,58 @@ components:
       type: object
       required:
         - name
-        - rule_sets
+        - platform
+        - parameters
+        - config
+        - enabled
       properties:
+        config:
+          $ref: '#/components/schemas/StrategyConfig'
         description:
           type:
             - string
             - 'null'
+        enabled:
+          type: boolean
         name:
           type: string
-        parameter_set:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/ParameterSet'
-        rule_sets:
+        parameters:
           type: array
           items:
-            $ref: '#/components/schemas/RuleSet'
+            $ref: '#/components/schemas/Parameter'
+        platform:
+          $ref: '#/components/schemas/Platform'
+    StrategyConfig:
+      type: object
+      required:
+        - supported_paralellism_strategies
+        - supported_deployment_modalities
+        - min_replicas
+      properties:
+        max_replicas:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          minimum: 0
+        max_ttl:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          minimum: 0
+        min_replicas:
+          type: integer
+          format: int64
+          minimum: 0
+        supported_deployment_modalities:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentModality'
+        supported_paralellism_strategies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParallelismStrategy'
     Visibility:
       type: string
       enum:

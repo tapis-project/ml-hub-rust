@@ -1,0 +1,55 @@
+
+use crate::shared_kernel::enums::task::Task;
+use crate::domain::external::huggingface::task;
+
+impl From<task::Task> for Task {
+    fn from(value: task::Task) -> Self {
+        match value {
+            task::Task::AnyToAny => Task::AnyToAny,
+            task::Task::AutomaticSpeechRecognition => Task::AutomaticSpeechRecognition,
+            task::Task::AudioToAudio => Task::AudioToAudio,
+            task::Task::AudioClassification => Task::AudioClassification,
+            task::Task::AudioTextToText => Task::AudioTextToText,
+            task::Task::DepthEstimation => Task::DepthEstimation,
+            task::Task::DocumentQuestionAnswering => Task::DocumentQuestionAnswering,
+            task::Task::FeatureExtraction => Task::FeatureExtraction,
+            task::Task::FillMask => Task::FillMask,
+            task::Task::ImageFeatureExtraction => Task::ImageFeatureExtraction,
+            task::Task::ImageTextToText => Task::ImageTextToText,
+            task::Task::ImageToVideo => Task::ImageToVideo,
+            task::Task::ImageSegmentation => Task::ImageSegmentation,
+            task::Task::ImageClassification => Task::ImageClassification,
+            task::Task::ImageTo3d => Task::ImageTo3d,
+            task::Task::ImageToImage => Task::ImageToImage,
+            task::Task::ImageToText => Task::ImageToText,
+            task::Task::KeypointDetection => Task::KeypointDetection,
+            task::Task::MaskGeneration => Task::MaskGeneration,
+            task::Task::ObjectDetection => Task::ObjectDetection,
+            task::Task::QuestionAnswering => Task::QuestionAnswering,
+            task::Task::ReinforcementLearning => Task::ReinforcementLearning,
+            task::Task::SentenceSimilarity => Task::SentenceSimilarity,
+            task::Task::Summarization => Task::Summarization,
+            task::Task::TableQuestionAnswering => Task::TableQuestionAnswering,
+            task::Task::TextGeneration => Task::TextGeneration,
+            task::Task::TextRanking => Task::TextRanking,
+            task::Task::TabularClassification => Task::TabularClassification,
+            task::Task::TextTo3d => Task::TextTo3d,
+            task::Task::TextClassification => Task::TextClassification,
+            task::Task::TextToImage => Task::TextToImage,
+            task::Task::Translation => Task::Translation,
+            task::Task::TabularRegression => Task::TabularRegression,
+            task::Task::TextToSpeech => Task::TextToSpeech,
+            task::Task::TextToVideo => Task::TextToVideo,
+            task::Task::TokenClassification => Task::TokenClassification,
+            task::Task::UnconditionalImageGeneration => Task::UnconditionalImageGeneration,
+            task::Task::VideoClassification => Task::VideoClassification,
+            task::Task::VideoTextToText => Task::VideoTextToText,
+            task::Task::VideoToVideo => Task::VideoToVideo,
+            task::Task::VisualQuestionAnswering => Task::VisualQuestionAnswering,
+            task::Task::VisualDocumentRetrieval => Task::VisualDocumentRetrieval,
+            task::Task::ZeroShotClassification => Task::ZeroShotClassification,
+            task::Task::ZeroShotImageClassification => Task::ZeroShotClassification,
+            task::Task::ZeroShotObjectDetection => Task::ZeroShotObjectDetection,
+        }
+    }
+}

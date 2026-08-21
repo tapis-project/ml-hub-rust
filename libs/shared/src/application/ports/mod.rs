@@ -5,3 +5,8 @@ pub mod deployment;
 pub mod model_metadata;
 pub mod identity;
 pub mod principal;
+pub mod counts;
+pub mod deployment_strategy;
+pub mod cipher;
+pub mod errors;
+pub mod deployment_argument;

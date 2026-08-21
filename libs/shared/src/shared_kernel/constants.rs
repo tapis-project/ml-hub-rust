@@ -1,0 +1,1 @@
+pub const GLOBAL_TENANT: &str = "__GLOBAL__";

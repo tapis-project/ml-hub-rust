@@ -12,4 +12,5 @@ platforms = { version = "0.1.0", path = "../platforms" }
 serde_json = "1.0.135"
 clients = { version = "0.1.0", path = "../clients" }
 async-trait = "0.1.88"
+heck = "0.5.0"
 

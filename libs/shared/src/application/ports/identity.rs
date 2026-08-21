@@ -4,7 +4,6 @@ use thiserror::Error;
 use crate::domain::entities::identity::FederatedIdentity;
 
 // Infra
-use crate::infra::configuration::SiteConfiguration;
 use crate::infra::identity::Idp;
 
 #[derive(Debug, Error, Clone)]

@@ -1,9 +1,12 @@
-use serde_json::Value;
 use platforms::Platform;
 use uuid::Uuid;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy::client_strategy::ClientStrategy};
-use crate::domain::entities::deployment::{DesiredState, ModelDeployment, State};
+use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ParallelismStrategy, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
+
+use crate::application::inputs::common::Scope;
+use crate::shared_kernel::enums::DeploymentModality;
 
 pub struct ClientModelDeploymentRequest {
     pub deployment: ModelDeployment,
@@ -11,6 +14,7 @@ pub struct ClientModelDeploymentRequest {
     pub strategy: Option<ClientStrategy>
 }
 
+#[derive(Debug, Clone)]
 pub struct FindForReconciliationInput {
     pub deployment_id: Uuid,
     pub revision: u32,
@@ -24,13 +28,25 @@ pub struct FilterInput {
     pub state: Option<State>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeployWithStrategyInput {
+    pub name: String,
+    pub description: Option<String>,
     pub platform: Platform,
     pub model_name: String,
     pub model_author: String,
+    pub model_scope: Scope,
     pub strategy_name: String,
-    pub params: Value,
+    pub deployment_modality: DeploymentModality,
+    pub replicas: Option<u8>,
+    pub parallelism_strategies: Option<Vec<ParallelismStrategy>>,
+    pub arguments: Vec<Argument>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Argument {
+    pub parameter_name: String,
+    pub value: String,
 }
 
 #[derive(Debug)]
@@ -55,6 +71,7 @@ pub struct ReconcileModelDeploymentInput {
     pub action: ReconciliationAction,
     pub deployment: ModelDeployment,
     pub model_metadata: ModelMetadata,
+    pub strategy: Option<Strategy>,
 }
 
 #[derive(Clone)]

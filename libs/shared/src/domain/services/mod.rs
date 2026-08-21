@@ -1,17 +1,22 @@
 pub mod deployment_strategy;
 
+use std::sync::Arc;
+
+use crate::application::ports::cipher::{Cipher, CipherError};
 use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
 
 use crate::domain::entities::artifact::ArtifactType;
 use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentProps};
+use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentError, DeployWithStrategyProps};
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
+use crate::domain::entities::deployment_strategy::strategy::StrategyError;
 
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
     #[error("{0}")]
-    InvalidIngestionState(String)
+    InvalidIngestionState(String),
 }
 
 pub struct ArtifactService {}
@@ -63,7 +68,7 @@ impl ModelMetadataService {
 }
 
 #[derive(Debug, Error)]
-pub enum ModelDeploymentServiceError {
+pub enum ModelDeploymentDomainServiceError {
     #[error("Cannot create model deployment for model {0}/{1}. Artifact for the selected model must be fully ingested")]
     ArtifactIngestionRequired(String, String),
 
@@ -72,18 +77,35 @@ pub enum ModelDeploymentServiceError {
 
     #[error("The artifact associated with this deployment's model metadata is not a Model artifact")]
     InvalidArtifactType,
+
+    #[error(transparent)]
+    DomainError(#[from] ModelDeploymentError),
+
+    #[error(transparent)]
+    ArgumentEncryptionError(#[from] CipherError),
+
+    #[error(transparent)]
+    StrategyError(#[from] StrategyError)
 }
 
-pub struct ModelDeploymentService {}
+pub struct ModelDeploymentService {
+    cipher: Arc<dyn Cipher>
+}
 
 impl ModelDeploymentService {
-    pub fn create_model_deployment(
-        model_metadata: &ModelMetadata,
+    pub fn new(cipher: Arc<dyn Cipher>) -> Self {
+        Self { cipher }
+    }
+
+    pub async fn deploy_model_with_strategy(
+        &self,
+        _model_metadata: &ModelMetadata,
         // TODO Uncomment the line below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // artifact: &Artifact,
-        props: ModelDeploymentProps
-    ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+        props: DeployWithStrategyProps,
+        strategy: &Strategy,
+    ) -> Result<ModelDeployment, ModelDeploymentDomainServiceError> {
         // TODO Uncomment all lines below when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // if model_metadata.artifact_id.is_none() {
@@ -102,6 +124,6 @@ impl ModelDeploymentService {
         //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
         // };
 
-        Ok(ModelDeployment::new(props))
+        Ok(ModelDeployment::deploy_with_srategy(props, strategy)?)
     }
 }

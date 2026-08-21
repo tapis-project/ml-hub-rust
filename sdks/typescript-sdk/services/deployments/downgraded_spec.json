@@ -9,6 +9,57 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/deployments-api/deployments": {
+      "get": {
+        "tags": [
+          "Deployments"
+        ],
+        "description": "Lists all available deployments",
+        "operationId": "list_model_deployments",
+        "responses": {
+          "200": {
+            "description": "A list of model deployments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListModelDeploymentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/deployments-api/deployments/{deployment_id}/start": {
       "post": {
         "tags": [
@@ -288,7 +339,7 @@
         "operationId": "list_strategies",
         "responses": {
           "200": {
-            "description": "Listed platforms",
+            "description": "A list of all deployment strategies",
             "content": {
               "application/json": {
                 "schema": {
@@ -298,7 +349,7 @@
             }
           },
           "400": {
-            "description": "Not found",
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -308,7 +359,7 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
@@ -318,7 +369,7 @@
             }
           },
           "500": {
-            "description": "Not found",
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
@@ -333,6 +384,21 @@
   },
   "components": {
     "schemas": {
+      "Argument": {
+        "type": "object",
+        "required": [
+          "parameter_name",
+          "value"
+        ],
+        "properties": {
+          "parameter_name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "BadRequestResponse": {
         "type": "object",
         "required": [
@@ -361,58 +427,86 @@
           }
         }
       },
-      "ClientStrategySet": {
+      "Choice": {
         "type": "object",
         "required": [
-          "platform",
-          "strategies"
+          "value",
+          "enabled"
         ],
         "properties": {
           "description": {
             "type": "string",
             "nullable": true
           },
-          "parameter_sets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ParameterSet"
-            },
-            "nullable": true
+          "enabled": {
+            "type": "boolean"
           },
-          "platform": {
-            "$ref": "#/components/schemas/Platform"
-          },
-          "rule_sets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RuleSet"
-            },
-            "nullable": true
-          },
-          "strategies": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Strategy"
-            }
+          "value": {
+            "type": "string"
           }
         }
       },
       "DeployModelWithStrategyBody": {
         "type": "object",
         "required": [
+          "name",
           "model_name",
           "model_author",
-          "params"
+          "deployment_modality"
         ],
         "properties": {
+          "arguments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Argument"
+            },
+            "nullable": true
+          },
+          "deployment_modality": {
+            "$ref": "#/components/schemas/DeploymentModality"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "model_author": {
             "type": "string"
           },
           "model_name": {
             "type": "string"
           },
-          "params": {}
+          "name": {
+            "type": "string"
+          },
+          "parallelism_strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParallelismStrategy"
+            },
+            "nullable": true
+          },
+          "replicas": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "nullable": true
+          },
+          "scope": {
+            "description": "Selector for global vs tenant-scoped models",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Scope"
+              }
+            ]
+          }
         }
+      },
+      "DeploymentModality": {
+        "type": "string",
+        "enum": [
+          "Batch",
+          "Service"
+        ]
       },
       "DesiredState": {
         "type": "string",
@@ -421,24 +515,6 @@
           "Stopped",
           "NotDeployed"
         ]
-      },
-      "GpuResource": {
-        "type": "object",
-        "properties": {
-          "gpu_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "memory": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
-          },
-          "vendor": {
-            "type": "string",
-            "nullable": true
-          }
-        }
       },
       "ListDeploymentStrategiesResponse": {
         "type": "object",
@@ -459,7 +535,39 @@
           "result": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ClientStrategySet"
+              "$ref": "#/components/schemas/Strategy"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ListModelDeploymentsResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelDeployment"
             }
           },
           "status": {
@@ -476,6 +584,7 @@
         "type": "object",
         "required": [
           "id",
+          "name",
           "platform",
           "owner",
           "model",
@@ -486,6 +595,7 @@
           "last_modified",
           "last_state_change",
           "last_desired_state_change",
+          "replicas",
           "revision"
         ],
         "properties": {
@@ -503,6 +613,10 @@
             ]
           },
           "deployment_strategy": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
             "type": "string",
             "nullable": true
           },
@@ -534,6 +648,9 @@
           "model": {
             "$ref": "#/components/schemas/ModelReference"
           },
+          "name": {
+            "type": "string"
+          },
           "owner": {
             "type": "string"
           },
@@ -541,14 +658,7 @@
             "$ref": "#/components/schemas/Platform"
           },
           "replicas": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/ReplicaGroup"
-              }
-            ]
+            "$ref": "#/components/schemas/ReplicaGroup"
           },
           "revision": {
             "type": "integer",
@@ -650,60 +760,62 @@
           }
         }
       },
-      "Operator": {
-        "type": "string",
-        "enum": [
-          "Eq",
-          "Neq",
-          "Gte",
-          "Lte",
-          "Gt",
-          "Lt",
-          "In",
-          "Contains",
-          "NotIn",
-          "NoneIn",
-          "AnyIn",
-          "AllIn"
-        ]
-      },
       "ParallelismStrategy": {
         "type": "string",
         "enum": [
-          "DataSharding",
-          "ModelSharding",
-          "PipelineSharding",
-          "TensorSharding"
+          "PipelineParallelism",
+          "TensorParallelism",
+          "SequenceParallelism",
+          "ContextParallelism",
+          "ExpertParallelism"
         ]
       },
       "Parameter": {
         "type": "object",
         "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "ParameterSet": {
-        "type": "object",
-        "required": [
           "name",
-          "parameters"
+          "required",
+          "secret",
+          "type"
         ],
         "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            },
+            "nullable": true
+          },
+          "default": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "name": {
             "type": "string"
           },
-          "parameters": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Parameter"
-            }
+          "required": {
+            "type": "boolean"
+          },
+          "secret": {
+            "type": "boolean"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ParameterType"
           }
         }
+      },
+      "ParameterType": {
+        "type": "string",
+        "enum": [
+          "String",
+          "Integer",
+          "Float",
+          "Boolean"
+        ]
       },
       "Platform": {
         "type": "string",
@@ -722,7 +834,6 @@
         "type": "object",
         "required": [
           "count",
-          "resources",
           "parallelism_strategies"
         ],
         "properties": {
@@ -736,39 +847,6 @@
             "items": {
               "$ref": "#/components/schemas/ParallelismStrategy"
             }
-          },
-          "resources": {
-            "$ref": "#/components/schemas/ResourceRequirements"
-          }
-        }
-      },
-      "ResourceRequirements": {
-        "type": "object",
-        "properties": {
-          "cores": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
-          },
-          "disk": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
-          },
-          "gpu": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/GpuResource"
-              }
-            ]
-          },
-          "memory": {
-            "type": "number",
-            "format": "float",
-            "nullable": true
           }
         }
       },
@@ -781,43 +859,12 @@
           "spec": {}
         }
       },
-      "Rule": {
-        "type": "object",
-        "required": [
-          "field_path",
-          "operator",
-          "value"
-        ],
-        "properties": {
-          "field_path": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "operator": {
-            "$ref": "#/components/schemas/Operator"
-          },
-          "value": {}
-        }
-      },
-      "RuleSet": {
-        "type": "object",
-        "required": [
-          "name",
-          "rules"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "rules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Rule"
-            }
-          }
-        }
+      "Scope": {
+        "type": "string",
+        "enum": [
+          "tenant",
+          "global"
+        ]
       },
       "ServerErrorResponse": {
         "type": "object",
@@ -862,30 +909,71 @@
         "type": "object",
         "required": [
           "name",
-          "rule_sets"
+          "platform",
+          "parameters",
+          "config",
+          "enabled"
         ],
         "properties": {
+          "config": {
+            "$ref": "#/components/schemas/StrategyConfig"
+          },
           "description": {
             "type": "string",
             "nullable": true
           },
+          "enabled": {
+            "type": "boolean"
+          },
           "name": {
             "type": "string"
           },
-          "parameter_set": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/ParameterSet"
-              }
-            ]
-          },
-          "rule_sets": {
+          "parameters": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/RuleSet"
+              "$ref": "#/components/schemas/Parameter"
+            }
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          }
+        }
+      },
+      "StrategyConfig": {
+        "type": "object",
+        "required": [
+          "supported_paralellism_strategies",
+          "supported_deployment_modalities",
+          "min_replicas"
+        ],
+        "properties": {
+          "max_replicas": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "max_ttl": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "min_replicas": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "supported_deployment_modalities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentModality"
+            }
+          },
+          "supported_paralellism_strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParallelismStrategy"
             }
           }
         }
