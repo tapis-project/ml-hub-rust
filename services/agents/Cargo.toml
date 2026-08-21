@@ -1,12 +1,15 @@
 [package]
-name = "training"
+name = "agents"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "agents-openapi"
+path = "src/bin/openapi.rs"
+
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
 actix-web = "4"
-schemars = { package = "apistos-schemars", version = "0.8" }
-apistos = "0.4"
 env_logger = "0.11.5"
 log = "0.4"
+shared = { version = "0.1.0", path = "../../libs/shared" }
+utoipa = "5.4.0"
