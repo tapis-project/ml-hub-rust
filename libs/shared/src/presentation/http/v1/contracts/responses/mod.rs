@@ -13,6 +13,27 @@ use crate::presentation::http::v1::responses::artifacts::{
     publications::ArtifactPublication,
 };
 use crate::presentation::http::v1::responses::platform_details::PlatformDetails;
+use crate::presentation::http::v1::responses::agents::Agent;
+
+#[derive(ToSchema)]
+pub struct CreateAgentResponse {
+    pub result: Agent,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct ListAgentsResponse {
+    pub result: Vec<Agent>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
 
 #[derive(ToSchema)]
 pub struct ListTasksResponse {
