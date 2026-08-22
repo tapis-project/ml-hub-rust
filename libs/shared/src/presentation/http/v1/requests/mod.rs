@@ -9,7 +9,7 @@ pub mod artifact_publications;
 pub mod associate_model_metadata;
 pub mod fork_model;
 pub mod create_model_metadata;
-pub mod create_agent;
+pub mod create_agent_record;
 pub mod discover_models;
 pub mod download_model;
 pub mod get_model_by_author_and_name;
@@ -23,6 +23,5 @@ pub mod upload_model;
 // pub mod skills;
 // pub mod domains;
 pub mod errors;
-
 
 

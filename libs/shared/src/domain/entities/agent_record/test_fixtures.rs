@@ -2,16 +2,16 @@
 
 use uuid::Uuid;
 
-use super::{Agent, ReconstituteAgentProps};
+use super::{AgentRecord, ReconstituteAgentRecordProps};
 
-pub struct AgentBuilder {
+pub struct AgentRecordBuilder {
     id: Option<Uuid>,
     name: Option<String>,
     tenant_id: Option<String>,
     description: Option<String>,
 }
 
-impl AgentBuilder {
+impl AgentRecordBuilder {
     pub fn new() -> Self {
         Self {
             id: None,
@@ -41,18 +41,18 @@ impl AgentBuilder {
         self
     }
 
-    pub fn build_new(&self) -> Agent {
-        Agent::new(
-            self.name.clone().unwrap_or_else(|| "Test Agent".into()),
+    pub fn build_new(&self) -> AgentRecord {
+        AgentRecord::new(
+            self.name.clone().unwrap_or_else(|| "Test Agent Record".into()),
             self.tenant_id.clone().unwrap_or_else(|| "test-tenant".into()),
             self.description.clone(),
         )
     }
 
-    pub fn build_reconstituted(&self) -> Agent {
-        Agent::reconstitute(ReconstituteAgentProps {
+    pub fn build_reconstituted(&self) -> AgentRecord {
+        AgentRecord::reconstitute(ReconstituteAgentRecordProps {
             id: self.id.unwrap_or_else(Uuid::now_v7),
-            name: self.name.clone().unwrap_or_else(|| "Test Agent".into()),
+            name: self.name.clone().unwrap_or_else(|| "Test Agent Record".into()),
             tenant_id: self.tenant_id.clone().unwrap_or_else(|| "test-tenant".into()),
             description: self.description.clone(),
         })

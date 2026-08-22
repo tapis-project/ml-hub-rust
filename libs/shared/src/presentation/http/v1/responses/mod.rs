@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 pub mod models;
-pub mod agents;
+pub mod agent_records;
 pub mod deployment;
 pub mod operators;
 pub mod visibility;

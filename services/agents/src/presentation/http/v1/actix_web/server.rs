@@ -18,8 +18,8 @@ pub async fn run_server() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            .service(handlers::list_agents::list_agents)
-            .service(handlers::create_agent::create_agent)
+            .service(handlers::list_agent_records::list_agent_records)
+            .service(handlers::create_agent_record::create_agent_record)
             .service(handlers::healthcheck::healthcheck)
             .service(handlers::openapi::openapi)
     })

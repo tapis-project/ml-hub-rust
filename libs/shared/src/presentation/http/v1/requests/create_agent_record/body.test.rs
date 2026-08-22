@@ -1,12 +1,12 @@
 #[cfg(test)]
-mod body_test {
+mod create_agent_record_body_test {
     use validator::Validate;
 
-    use crate::presentation::http::v1::requests::create_agent::body::CreateAgentBody;
+    use crate::presentation::http::v1::requests::create_agent_record::body::CreateAgentRecordBody;
 
     #[test]
-    fn test_valid_create_agent_body() {
-        let body = CreateAgentBody {
+    fn test_valid_create_agent_record_body() {
+        let body = CreateAgentRecordBody {
             name: "assistant".into(),
             description: Some("A helpful agent".into()),
         };
@@ -15,8 +15,8 @@ mod body_test {
     }
 
     #[test]
-    fn test_create_agent_body_rejects_empty_name() {
-        let body = CreateAgentBody {
+    fn test_create_agent_record_body_rejects_empty_name() {
+        let body = CreateAgentRecordBody {
             name: String::new(),
             description: None,
         };
@@ -25,8 +25,8 @@ mod body_test {
     }
 
     #[test]
-    fn test_create_agent_body_rejects_unknown_fields() {
-        let result = serde_json::from_str::<CreateAgentBody>(
+    fn test_create_agent_record_body_rejects_unknown_fields() {
+        let result = serde_json::from_str::<CreateAgentRecordBody>(
             r#"{"name":"assistant","unexpected":true}"#,
         );
 

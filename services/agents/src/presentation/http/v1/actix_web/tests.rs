@@ -13,8 +13,8 @@ mod tests {
         InitError = (),
     >> {
         App::new()
-            .service(handlers::list_agents::list_agents)
-            .service(handlers::create_agent::create_agent)
+            .service(handlers::list_agent_records::list_agent_records)
+            .service(handlers::create_agent_record::create_agent_record)
             .service(handlers::healthcheck::healthcheck)
             .service(handlers::openapi::openapi)
     }
@@ -23,10 +23,10 @@ mod tests {
     async fn routes_have_the_expected_statuses() {
         let app = test::init_service(app()).await;
 
-        let list = test::TestRequest::get().uri("/agents-api/agents").to_request();
+        let list = test::TestRequest::get().uri("/agents-api/agent-records").to_request();
         assert_eq!(test::call_service(&app, list).await.status(), StatusCode::NOT_IMPLEMENTED);
 
-        let create = test::TestRequest::post().uri("/agents-api/agents").to_request();
+        let create = test::TestRequest::post().uri("/agents-api/agent-records").to_request();
         assert_eq!(test::call_service(&app, create).await.status(), StatusCode::NOT_IMPLEMENTED);
 
         let healthcheck = test::TestRequest::get().uri("/agents-api/healthcheck").to_request();
@@ -42,10 +42,11 @@ mod tests {
         assert_eq!(test::call_service(&app, request).await.status(), StatusCode::OK);
 
         let document = ApiDoc::openapi();
-        assert!(document.paths.paths.contains_key("/agents-api/agents"));
+        assert!(document.paths.paths.contains_key("/agents-api/agent-records"));
         assert!(document.paths.paths.contains_key("/agents-api/healthcheck"));
-        assert!(document.components.as_ref().unwrap().schemas.contains_key("CreateAgentBody"));
-        assert!(document.components.as_ref().unwrap().schemas.contains_key("CreateAgentResponse"));
-        assert!(document.components.as_ref().unwrap().schemas.contains_key("ListAgentsResponse"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("AgentRecord"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("CreateAgentRecordBody"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("CreateAgentRecordResponse"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("ListAgentRecordsResponse"));
     }
 }

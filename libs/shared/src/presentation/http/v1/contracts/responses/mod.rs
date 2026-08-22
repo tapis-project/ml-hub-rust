@@ -13,11 +13,11 @@ use crate::presentation::http::v1::responses::artifacts::{
     publications::ArtifactPublication,
 };
 use crate::presentation::http::v1::responses::platform_details::PlatformDetails;
-use crate::presentation::http::v1::responses::agents::Agent;
+use crate::presentation::http::v1::responses::agent_records::AgentRecord;
 
 #[derive(ToSchema)]
-pub struct CreateAgentResponse {
-    pub result: Agent,
+pub struct CreateAgentRecordResponse {
+    pub result: AgentRecord,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -26,8 +26,8 @@ pub struct CreateAgentResponse {
 }
 
 #[derive(ToSchema)]
-pub struct ListAgentsResponse {
-    pub result: Vec<Agent>,
+pub struct ListAgentRecordsResponse {
+    pub result: Vec<AgentRecord>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

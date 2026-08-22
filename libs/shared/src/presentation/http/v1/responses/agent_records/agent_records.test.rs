@@ -1,14 +1,14 @@
 #[cfg(test)]
-mod agents_test {
+mod agent_records_test {
     use uuid::Uuid;
 
-    use crate::domain::entities::agent::{Agent as DomainAgent, ReconstituteAgentProps};
-    use crate::presentation::http::v1::responses::agents::Agent;
+    use crate::domain::entities::agent_record::{AgentRecord as DomainAgentRecord, ReconstituteAgentRecordProps};
+    use crate::presentation::http::v1::responses::agent_records::AgentRecord;
 
     #[test]
-    fn test_agent_entity_to_response() {
+    fn test_agent_record_entity_to_response() {
         let id = Uuid::now_v7();
-        let response = Agent::from(DomainAgent::reconstitute(ReconstituteAgentProps {
+        let response = AgentRecord::from(DomainAgentRecord::reconstitute(ReconstituteAgentRecordProps {
             id,
             name: "assistant".into(),
             tenant_id: "tenant-a".into(),

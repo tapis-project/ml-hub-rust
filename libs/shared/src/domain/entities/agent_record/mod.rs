@@ -1,14 +1,14 @@
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-pub struct Agent {
+pub struct AgentRecord {
     id: Uuid,
     name: String,
     tenant_id: String,
     description: Option<String>,
 }
 
-impl Agent {
+impl AgentRecord {
     pub fn new(name: String, tenant_id: String, description: Option<String>) -> Self {
         Self {
             id: Uuid::now_v7(),
@@ -18,7 +18,7 @@ impl Agent {
         }
     }
 
-    pub fn reconstitute(props: ReconstituteAgentProps) -> Self {
+    pub fn reconstitute(props: ReconstituteAgentRecordProps) -> Self {
         Self {
             id: props.id,
             name: props.name,
@@ -45,7 +45,7 @@ impl Agent {
 }
 
 #[derive(Clone, Debug)]
-pub struct ReconstituteAgentProps {
+pub struct ReconstituteAgentRecordProps {
     pub id: Uuid,
     pub name: String,
     pub tenant_id: String,
@@ -56,5 +56,5 @@ pub struct ReconstituteAgentProps {
 pub mod test_fixtures;
 
 #[cfg(test)]
-#[path = "agent.test.rs"]
-mod agent_test;
+#[path = "agent_record.test.rs"]
+mod agent_record_test;

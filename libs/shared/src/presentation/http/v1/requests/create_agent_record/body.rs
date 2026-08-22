@@ -4,7 +4,7 @@ use validator::Validate;
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]
-pub struct CreateAgentBody {
+pub struct CreateAgentRecordBody {
     #[validate(length(min = 1))]
     pub name: String,
     #[validate(length(max = 255))]
