@@ -9,12 +9,14 @@ mod agent_record_test {
         let agent_record = AgentRecordBuilder::new()
             .with_name("assistant".into())
             .with_tenant_id("tenant-a".into())
+            .with_owner("owner-a".into())
             .with_description(Some("A helpful agent".into()))
             .build_new();
 
         assert_eq!(agent_record.id().get_version_num(), 7);
         assert_eq!(agent_record.name(), "assistant");
         assert_eq!(agent_record.tenant_id(), "tenant-a");
+        assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), &Some("A helpful agent".into()));
     }
 
@@ -25,12 +27,14 @@ mod agent_record_test {
             .with_id(id)
             .with_name("assistant".into())
             .with_tenant_id("tenant-a".into())
+            .with_owner("owner-a".into())
             .with_description(None)
             .build_reconstituted();
 
         assert_eq!(agent_record.id(), &id);
         assert_eq!(agent_record.name(), "assistant");
         assert_eq!(agent_record.tenant_id(), "tenant-a");
+        assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), &None);
     }
 }

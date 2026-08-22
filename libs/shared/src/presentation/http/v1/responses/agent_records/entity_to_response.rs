@@ -7,6 +7,7 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
             id: *value.id(),
             name: value.name().clone(),
             tenant_id: value.tenant_id().clone(),
+            owner: value.owner().clone(),
             description: value.description().clone(),
         }
     }

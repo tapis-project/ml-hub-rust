@@ -5,15 +5,17 @@ pub struct AgentRecord {
     id: Uuid,
     name: String,
     tenant_id: String,
+    owner: String,
     description: Option<String>,
 }
 
 impl AgentRecord {
-    pub fn new(name: String, tenant_id: String, description: Option<String>) -> Self {
+    pub fn new(name: String, tenant_id: String, owner: String, description: Option<String>) -> Self {
         Self {
             id: Uuid::now_v7(),
             name,
             tenant_id,
+            owner,
             description,
         }
     }
@@ -23,6 +25,7 @@ impl AgentRecord {
             id: props.id,
             name: props.name,
             tenant_id: props.tenant_id,
+            owner: props.owner,
             description: props.description,
         }
     }
@@ -39,6 +42,10 @@ impl AgentRecord {
         &self.tenant_id
     }
 
+    pub fn owner(&self) -> &String {
+        &self.owner
+    }
+
     pub fn description(&self) -> &Option<String> {
         &self.description
     }
@@ -49,6 +56,7 @@ pub struct ReconstituteAgentRecordProps {
     pub id: Uuid,
     pub name: String,
     pub tenant_id: String,
+    pub owner: String,
     pub description: Option<String>,
 }
 

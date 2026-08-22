@@ -8,6 +8,7 @@ pub struct AgentRecordBuilder {
     id: Option<Uuid>,
     name: Option<String>,
     tenant_id: Option<String>,
+    owner: Option<String>,
     description: Option<String>,
 }
 
@@ -17,6 +18,7 @@ impl AgentRecordBuilder {
             id: None,
             name: None,
             tenant_id: None,
+            owner: None,
             description: None,
         }
     }
@@ -36,6 +38,11 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_owner(mut self, owner: String) -> Self {
+        self.owner = Some(owner);
+        self
+    }
+
     pub fn with_description(mut self, description: Option<String>) -> Self {
         self.description = description;
         self
@@ -45,6 +52,7 @@ impl AgentRecordBuilder {
         AgentRecord::new(
             self.name.clone().unwrap_or_else(|| "Test Agent Record".into()),
             self.tenant_id.clone().unwrap_or_else(|| "test-tenant".into()),
+            self.owner.clone().unwrap_or_else(|| "test-owner".into()),
             self.description.clone(),
         )
     }
@@ -54,6 +62,7 @@ impl AgentRecordBuilder {
             id: self.id.unwrap_or_else(Uuid::now_v7),
             name: self.name.clone().unwrap_or_else(|| "Test Agent Record".into()),
             tenant_id: self.tenant_id.clone().unwrap_or_else(|| "test-tenant".into()),
+            owner: self.owner.clone().unwrap_or_else(|| "test-owner".into()),
             description: self.description.clone(),
         })
     }

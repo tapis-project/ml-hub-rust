@@ -10,6 +10,7 @@ pub struct AgentRecord {
     pub id: Uuid,
     pub name: String,
     pub tenant_id: String,
+    pub owner: String,
     pub description: Option<String>,
 }
 

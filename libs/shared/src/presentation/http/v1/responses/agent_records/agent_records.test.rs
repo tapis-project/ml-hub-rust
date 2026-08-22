@@ -12,12 +12,14 @@ mod agent_records_test {
             id,
             name: "assistant".into(),
             tenant_id: "tenant-a".into(),
+            owner: "owner-a".into(),
             description: Some("A helpful agent".into()),
         }));
 
         assert_eq!(response.id, id);
         assert_eq!(response.name, "assistant");
         assert_eq!(response.tenant_id, "tenant-a");
+        assert_eq!(response.owner, "owner-a");
         assert_eq!(response.description, Some("A helpful agent".into()));
     }
 }
