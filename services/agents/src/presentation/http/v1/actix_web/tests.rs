@@ -44,5 +44,8 @@ mod tests {
         let document = ApiDoc::openapi();
         assert!(document.paths.paths.contains_key("/agents-api/agents"));
         assert!(document.paths.paths.contains_key("/agents-api/healthcheck"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("CreateAgentBody"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("CreateAgentResponse"));
+        assert!(document.components.as_ref().unwrap().schemas.contains_key("ListAgentsResponse"));
     }
 }
