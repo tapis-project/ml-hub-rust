@@ -271,7 +271,8 @@ impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
 }
 
 pub enum ModelMetadataConversionClient {
-    HuggingFace(HuggingFaceClient)
+    HuggingFace(HuggingFaceClient),
+    Patra(PatraClient)
 }
 
 impl ModelMetadataConversionClient {
@@ -294,6 +295,13 @@ impl ModelMetadataConversionClient {
                     return Err(ClientError::Unimplemented)
                 }
                 
+                
+                c.from_platform_metadata(metadata, author, tenant_id)
+            }
+            ModelMetadataConversionClient::Patra(c) => {
+                if !c.has_capability(&Self::CAPABILITY) {
+                    return Err(ClientError::Unimplemented)
+                }
                 
                 c.from_platform_metadata(metadata, author, tenant_id)
             }

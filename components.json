@@ -28,6 +28,8 @@
     "artifact-publisher-image": "tapis/mlhub-artifact-publisher",
     "hf-model-etl-transform-load-image": "tapis/mlhub-hf-model-etl-transform-load",
     "hf-model-etl-extract-image": "tapis/mlhub-hf-model-etl-extract",
+    "patra-model-etl-transform-load-image": "tapis/mlhub-patra-model-etl-transform-load",
+    "patra-model-etl-extract-image": "tapis/mlhub-patra-model-etl-extract",
     "model-deployment-controller-deployment": "mlhub-model-deployment-controller-deployment",
     "model-deployment-controller-image": "tapis/mlhub-model-deployment-controller",
     "project-root": "$(pwd)"
@@ -556,6 +558,25 @@
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "buildl-extract": "docker build -f {{ self.rootDir }}/Dockerfile.python -t {{ hf-model-etl-extract-image }}:{{ local }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" . && minikube image load {{ hf-model-etl-extract-image }}:{{ local }} --overwrite",
         "buildl-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust -t {{ hf-model-etl-transform-load-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ hf-model-etl-transform-load-image }}:{{ local }} --overwrite",
+        "build-extract": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.python -t {{ extract-img }}:{{ tag }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" .",
+        "build-transform-load": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.rust.{{ env }} -t {{ transform-load-img }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" .",
+        "run": "cd {{ k8s-dir }}/model-metadata-etl-pipelines/{{ self.name }} && ./run.sh {{ overlay }}",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "pusht": "docker push --all-tags {{ extract-img }} && docker push --all-tags {{ transform-load-img }}"
+      }
+    },
+    {
+      "name": "patra-model-etl",
+      "description": "Runs an ETL pipeline that pulls in model metadata from Patra and converts it to MLHub Model Metadata",
+      "rootDir": "services/patra-model-etl",
+      "labels": ["bin"],
+      "lifecycle": "experimental",
+      "commands": {
+        "initialize": "",
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "buildl-extract": "docker build -f {{ self.rootDir }}/Dockerfile.python -t {{ patra-model-etl-extract-image }}:{{ local }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" . && minikube image load {{ patra-model-etl-extract-image }}:{{ local }} --overwrite",
+        "buildl-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust -t {{ patra-model-etl-transform-load-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ patra-model-etl-transform-load-image }}:{{ local }} --overwrite",
         "build-extract": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.python -t {{ extract-img }}:{{ tag }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" .",
         "build-transform-load": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.rust.{{ env }} -t {{ transform-load-img }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" .",
         "run": "cd {{ k8s-dir }}/model-metadata-etl-pipelines/{{ self.name }} && ./run.sh {{ overlay }}",

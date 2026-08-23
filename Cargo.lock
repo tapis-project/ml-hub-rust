@@ -3164,6 +3164,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "patra-model-etl"
+version = "0.1.0"
+dependencies = [
+ "client-provider",
+ "clients",
+ "mongodb",
+ "serde",
+ "serde_json",
+ "shared",
+ "tokio",
+]
+
+[[package]]
 name = "pbkdf2"
 version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,6 @@
+FROM python:3.12.8
+
+ARG SERVICE_DIR
+
+COPY ${SERVICE_DIR}/scripts/extract.py /src/extract.py
+COPY ${SERVICE_DIR}/examples /src/examples

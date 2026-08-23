@@ -1,0 +1,36 @@
+resources:
+  - ../../base
+  - ../../../../site-configs/overlays/minikube
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-patra-model-etl
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-patra-model-etl
+      spec:
+        template:
+          metadata:
+            name: mlhub-patra-model-etl
+          spec:
+            restartPolicy: Never
+            initContainers:
+              - name: extract
+                env:
+                  - name: RUST_LOG
+                    value: debug
+                  - name: RUST_BACKTRACE
+                    value: '1'
+                  - name: MAX_RECORDS
+                    value: '5000'
+                image: tapis/mlhub-patra-model-etl-extract:local
+            containers:
+              - name: patra-model-etl
+                env:
+                  - name: MAX_PROCESSABLE_ENTRIES
+                    value: "5000"
+                image: tapis/mlhub-patra-model-etl-transform-load:local
+                imagePullPolicy: Never

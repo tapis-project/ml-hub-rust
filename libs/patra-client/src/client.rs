@@ -1,20 +1,23 @@
+use crate::model_metadata::PatraModelMetadata;
 use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
-    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient, ListModelsClient, PublishModelMetadataClient
+    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient,
+    GetModelClient, ListModelsClient, ModelMetadataConversionClient, PublishModelMetadataClient,
 };
+use platforms::Platform;
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
+use shared::domain::entities;
+use shared::domain::entities::model_metadata::ModelMetadata;
 use shared::logging::SharedLogger;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
+use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::{
     get_model_by_platform::GetModelByPlatformRequest,
     list_models_by_platform::ListModelsByPlatformRequest,
 };
-use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
-use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::domain::entities:: model_metadata::ModelMetadata;
 use std::collections::hash_map::HashMap;
-use platforms::Platform;
 
 #[derive(Debug)]
 pub struct PatraClient {
@@ -27,12 +30,13 @@ impl Client for PatraClient {
     fn platform(&self) -> Option<Platform> {
         Some(Platform::Patra)
     }
-    
+
     fn capabilities(&self) -> Option<Vec<Capability>> {
         Some(vec![
             Capability::ListModels,
             Capability::GetModel,
-            Capability::DiscoverModels
+            Capability::DiscoverModels,
+            Capability::ConvertModelMetadata,
         ])
     }
 }
@@ -144,7 +148,7 @@ impl DiscoverModelsClient for PatraClient {
             Some(p) => p,
             None => return Err(ClientError::BadRequest { msg: "Missing field 'prompt': Model discovery with Patra requires a natural language prompt support via the 'prompt' field of the DiscoverModelsRequest".into(), scope: ClientErrorScope::Client })
         };
-        
+
         query_params.insert("q", prompt);
 
         let resp = self
@@ -192,14 +196,117 @@ impl PublishModelMetadataClient for PatraClient {
         _metadata: &ModelMetadata,
         _request: &PublishArtifactServiceRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Ok(
-            ClientJsonResponse::new(
-                None,
-                None,
-                None,
+        return Ok(ClientJsonResponse::new(None, None, None, None));
+    }
+}
+
+impl ModelMetadataConversionClient for PatraClient {
+    fn from_platform_metadata<T>(
+        &self,
+        client_metadata: T,
+        author: String,
+        tenant_id: String,
+    ) -> Result<ModelMetadata, ClientError>
+    where
+        T: serde::Serialize,
+    {
+        let value = serde_json::to_value(client_metadata).map_err(|err| ClientError::Internal {
+            msg: format!(
+                "Failed to convert serializable client metadata into Value: {}",
+                err
+            ),
+            scope: ClientErrorScope::Server,
+        })?;
+
+        let patra_model =
+            serde_json::from_value::<PatraModelMetadata>(value.clone()).map_err(|err| {
+                ClientError::Internal {
+                    msg: format!("Failed to convert Patra model metadata: {}", err),
+                    scope: ClientErrorScope::Server,
+                }
+            })?;
+
+        let tags = patra_model.parse_tags();
+
+        let raw_libraries = patra_model.parse_libs();
+        let known_libraries = &[
+            "transformers".into(),
+            "diffusers".into(),
+            "tensorflow".into(),
+            "pytorch".into(),
+        ];
+        let libraries: Vec<String> = known_libraries
+            .iter()
+            .filter(|lib| raw_libraries.contains(*lib))
+            .cloned()
+            .collect();
+
+        let model_inputs = patra_model.input_type.clone().map(|input_type| {
+            vec![entities::model_metadata::ModelIO {
+                data_type: Some(input_type),
+                shape: None,
+            }]
+        });
+
+        Ok(entities::model_metadata::ModelMetadata {
+            name: patra_model.model_name(),
+            artifact_id: None,
+            annotations: Some(value),
+            description: patra_model.description(),
+            author,
+            tenant_id,
+            canonical: Some(entities::model_metadata::Canonical {
+                platform: Platform::Patra,
+                author: patra_model.author.clone(),
+                model_id: patra_model.uuid.clone(),
+                downloads: None,
+                locator: entities::model_metadata::Locator {
+                    url: patra_model.locator_url(),
+                },
+                likes: None,
+                gated: patra_model.is_gated,
+                private: patra_model.is_private,
+                sha: None,
+            }),
+            model_inputs,
+            model_outputs: None,
+            model_type: patra_model.model_type(),
+            libraries: if libraries.is_empty() {
                 None
-            )
-        )
+            } else {
+                Some(libraries)
+            },
+            image: None,
+            tags: if tags.is_empty() { None } else { Some(tags) },
+            multi_modal: None,
+            task_types: None,
+            inference_distributed: None,
+            inference_hardware: None,
+            inference_max_compute_utilization_percentage: None,
+            inference_max_energy_consumption_watts: None,
+            inference_max_latency_ms: None,
+            inference_max_memory_usage_mb: None,
+            inference_min_throughput: None,
+            inference_precision: None,
+            inference_software_dependencies: None,
+            training_distributed: None,
+            training_hardware: None,
+            training_max_energy_consumption_watts: None,
+            training_precision: None,
+            training_time: None,
+            pretrained: None,
+            pretraining_datasets: None,
+            finetuning_datasets: None,
+            edge_optimized: None,
+            quantization_aware: None,
+            supports_quantization: None,
+            pruned: None,
+            slimmed: None,
+            regulatory: None,
+            license: patra_model.license(),
+            bias_evaluation_score: None,
+            deployment_strategy_refs: vec![],
+        })
     }
 }
 
