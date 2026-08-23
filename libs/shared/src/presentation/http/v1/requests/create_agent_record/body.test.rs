@@ -6,7 +6,7 @@ mod create_agent_record_body_test {
         AgentInterface, CreateAgentRecordBody, MessageBinding, Protocol,
     };
 
-    fn supported_interfaces() -> Vec<AgentInterface> {
+    fn interfaces() -> Vec<AgentInterface> {
         vec![AgentInterface {
             protocol: Protocol::RestHttp,
             message_binding: Some(MessageBinding::HttpJson),
@@ -18,7 +18,7 @@ mod create_agent_record_body_test {
         let body = CreateAgentRecordBody {
             name: "assistant".into(),
             description: "A helpful agent".into(),
-            supported_interfaces: supported_interfaces(),
+            interfaces: interfaces(),
         };
 
         assert!(body.validate().is_ok());
@@ -29,7 +29,7 @@ mod create_agent_record_body_test {
         let body = CreateAgentRecordBody {
             name: String::new(),
             description: "A helpful agent".into(),
-            supported_interfaces: supported_interfaces(),
+            interfaces: interfaces(),
         };
 
         assert!(body.validate().is_err());
@@ -38,25 +38,25 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_rejects_unknown_fields() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","supported_interfaces":[{"protocol":"RestHttp"}],"unexpected":true}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"protocol":"RestHttp"}],"unexpected":true}"#,
         );
 
         assert!(result.is_err());
     }
 
     #[test]
-    fn test_create_agent_record_body_rejects_empty_supported_interfaces() {
+    fn test_create_agent_record_body_rejects_empty_interfaces() {
         let body = CreateAgentRecordBody {
             name: "assistant".into(),
             description: "A helpful agent".into(),
-            supported_interfaces: vec![],
+            interfaces: vec![],
         };
 
         assert!(body.validate().is_err());
     }
 
     #[test]
-    fn test_create_agent_record_body_requires_supported_interfaces() {
+    fn test_create_agent_record_body_requires_interfaces() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
             r#"{"name":"assistant","description":"A helpful agent"}"#,
         );
@@ -67,7 +67,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_accepts_missing_message_binding() {
         let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","supported_interfaces":[{"protocol":"Stdio"}]}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"protocol":"Stdio"}]}"#,
         );
 
         let body = match body {
@@ -76,13 +76,13 @@ mod create_agent_record_body_test {
         };
 
         assert!(body.validate().is_ok());
-        assert!(body.supported_interfaces[0].message_binding.is_none());
+        assert!(body.interfaces[0].message_binding.is_none());
     }
 
     #[test]
     fn test_create_agent_record_body_rejects_invalid_interface_enum() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","supported_interfaces":[{"protocol":"Unknown"}]}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"protocol":"Unknown"}]}"#,
         );
 
         assert!(result.is_err());
@@ -91,7 +91,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_requires_description() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","supported_interfaces":[{"protocol":"RestHttp"}]}"#,
+            r#"{"name":"assistant","interfaces":[{"protocol":"RestHttp"}]}"#,
         );
 
         assert!(result.is_err());

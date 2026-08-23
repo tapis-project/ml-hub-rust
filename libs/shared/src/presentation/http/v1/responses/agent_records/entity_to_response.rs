@@ -9,8 +9,8 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
             tenant_id: value.tenant_id().clone(),
             owner: value.owner().clone(),
             description: value.description().clone(),
-            supported_interfaces: value
-                .supported_interfaces()
+            interfaces: value
+                .interfaces()
                 .iter()
                 .cloned()
                 .map(responses::AgentInterface::from)

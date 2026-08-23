@@ -12,7 +12,7 @@ pub struct AgentRecord {
     pub tenant_id: String,
     pub owner: String,
     pub description: String,
-    pub supported_interfaces: Vec<AgentInterface>,
+    pub interfaces: Vec<AgentInterface>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

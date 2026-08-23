@@ -22,12 +22,12 @@ mod agent_record_test {
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
         assert!(matches!(
-            agent_record.supported_interfaces().first().protocol(),
+            agent_record.interfaces().first().protocol(),
             Protocol::RestHttp
         ));
         assert!(matches!(
             agent_record
-                .supported_interfaces()
+                .interfaces()
                 .first()
                 .message_binding(),
             Some(MessageBinding::HttpJson)
@@ -45,7 +45,7 @@ mod agent_record_test {
             .with_tenant_id("tenant-a".into())
             .with_owner("owner-a".into())
             .with_description("A helpful agent".into())
-            .with_supported_interfaces(vec![AgentInterface::new(Protocol::Stdio, None)])
+            .with_interfaces(vec![AgentInterface::new(Protocol::Stdio, None)])
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -54,11 +54,11 @@ mod agent_record_test {
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
         assert!(matches!(
-            agent_record.supported_interfaces().first().protocol(),
+            agent_record.interfaces().first().protocol(),
             Protocol::Stdio
         ));
         assert!(agent_record
-            .supported_interfaces()
+            .interfaces()
             .first()
             .message_binding()
             .is_none());
@@ -69,7 +69,7 @@ mod agent_record_test {
     #[test]
     fn test_new_agent_record_requires_supported_interface() {
         let result = AgentRecordBuilder::new()
-            .with_supported_interfaces(vec![])
+            .with_interfaces(vec![])
             .build_new();
 
         let error = match result {
@@ -83,7 +83,7 @@ mod agent_record_test {
     #[test]
     fn test_reconstitute_agent_record_requires_supported_interface() {
         let result = AgentRecordBuilder::new()
-            .with_supported_interfaces(vec![])
+            .with_interfaces(vec![])
             .build_reconstituted();
 
         let error = match result {

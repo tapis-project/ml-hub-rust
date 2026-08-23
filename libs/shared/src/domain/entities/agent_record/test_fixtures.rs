@@ -13,7 +13,7 @@ pub struct AgentRecordBuilder {
     tenant_id: Option<String>,
     owner: Option<String>,
     description: Option<String>,
-    supported_interfaces: Option<Vec<AgentInterface>>,
+    interfaces: Option<Vec<AgentInterface>>,
 }
 
 impl AgentRecordBuilder {
@@ -24,7 +24,7 @@ impl AgentRecordBuilder {
             tenant_id: None,
             owner: None,
             description: None,
-            supported_interfaces: None,
+            interfaces: None,
         }
     }
 
@@ -53,8 +53,8 @@ impl AgentRecordBuilder {
         self
     }
 
-    pub fn with_supported_interfaces(mut self, supported_interfaces: Vec<AgentInterface>) -> Self {
-        self.supported_interfaces = Some(supported_interfaces);
+    pub fn with_interfaces(mut self, interfaces: Vec<AgentInterface>) -> Self {
+        self.interfaces = Some(interfaces);
         self
     }
 
@@ -70,7 +70,7 @@ impl AgentRecordBuilder {
             self.description
                 .clone()
                 .unwrap_or_else(|| "Test agent record description".into()),
-            self.supported_interfaces.clone().unwrap_or_else(|| {
+            self.interfaces.clone().unwrap_or_else(|| {
                 vec![AgentInterface::new(
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),
@@ -95,7 +95,7 @@ impl AgentRecordBuilder {
                 .description
                 .clone()
                 .unwrap_or_else(|| "Test agent record description".into()),
-            supported_interfaces: self.supported_interfaces.clone().unwrap_or_else(|| {
+            interfaces: self.interfaces.clone().unwrap_or_else(|| {
                 vec![AgentInterface::new(
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),

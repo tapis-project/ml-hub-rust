@@ -10,7 +10,7 @@ pub struct CreateAgentRecordBody {
     #[validate(length(max = 255))]
     pub description: String,
     #[validate(length(min = 1))]
-    pub supported_interfaces: Vec<AgentInterface>,
+    pub interfaces: Vec<AgentInterface>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]

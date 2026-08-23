@@ -9,7 +9,7 @@ pub struct AgentRecord {
     tenant_id: String,
     owner: String,
     description: String,
-    supported_interfaces: NonEmpty<AgentInterface>,
+    interfaces: NonEmpty<AgentInterface>,
 }
 
 impl AgentRecord {
@@ -18,9 +18,9 @@ impl AgentRecord {
         tenant_id: String,
         owner: String,
         description: String,
-        supported_interfaces: Vec<AgentInterface>,
+        interfaces: Vec<AgentInterface>,
     ) -> Result<Self, AgentRecordError> {
-        let supported_interfaces = Self::supported_interfaces_from_vec(supported_interfaces)?;
+        let interfaces = Self::interfaces_from_vec(interfaces)?;
 
         Ok(Self {
             id: Uuid::now_v7(),
@@ -28,12 +28,12 @@ impl AgentRecord {
             tenant_id,
             owner,
             description,
-            supported_interfaces,
+            interfaces,
         })
     }
 
     pub fn reconstitute(props: ReconstituteAgentRecordProps) -> Result<Self, AgentRecordError> {
-        let supported_interfaces = Self::supported_interfaces_from_vec(props.supported_interfaces)?;
+        let interfaces = Self::interfaces_from_vec(props.interfaces)?;
 
         Ok(Self {
             id: props.id,
@@ -41,7 +41,7 @@ impl AgentRecord {
             tenant_id: props.tenant_id,
             owner: props.owner,
             description: props.description,
-            supported_interfaces,
+            interfaces,
         })
     }
 
@@ -65,14 +65,14 @@ impl AgentRecord {
         &self.description
     }
 
-    pub fn supported_interfaces(&self) -> &NonEmpty<AgentInterface> {
-        &self.supported_interfaces
+    pub fn interfaces(&self) -> &NonEmpty<AgentInterface> {
+        &self.interfaces
     }
 
-    fn supported_interfaces_from_vec(
-        supported_interfaces: Vec<AgentInterface>,
+    fn interfaces_from_vec(
+        interfaces: Vec<AgentInterface>,
     ) -> Result<NonEmpty<AgentInterface>, AgentRecordError> {
-        NonEmpty::from_vec(supported_interfaces).ok_or_else(|| {
+        NonEmpty::from_vec(interfaces).ok_or_else(|| {
             AgentRecordError::DataIntegrityError(
                 "Agent record MUST have at least one supported interface".into(),
             )
@@ -87,7 +87,7 @@ pub struct ReconstituteAgentRecordProps {
     pub tenant_id: String,
     pub owner: String,
     pub description: String,
-    pub supported_interfaces: Vec<AgentInterface>,
+    pub interfaces: Vec<AgentInterface>,
 }
 
 #[derive(Clone, Debug)]
