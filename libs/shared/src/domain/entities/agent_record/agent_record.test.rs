@@ -3,8 +3,8 @@ mod agent_record_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        test_fixtures::AgentRecordBuilder, AgentInterface, AgentRecordError, MessageBinding,
-        Protocol,
+        test_fixtures::AgentRecordBuilder, AgentInterface, AgentRecordError, Capabilities,
+        MessageBinding, Protocol,
     };
 
     #[test]
@@ -21,6 +21,8 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
+        assert!(!agent_record.supports_streaming());
+        assert!(!agent_record.supports_push_notifications());
         assert_eq!(agent_record.interfaces().first().name(), "default");
         assert_eq!(
             agent_record.interfaces().first().description(),
@@ -53,6 +55,7 @@ mod agent_record_test {
                 Protocol::Stdio,
                 None,
             )])
+            .with_capabilities(Capabilities::new(true, true))
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -60,6 +63,8 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
+        assert!(agent_record.supports_streaming());
+        assert!(agent_record.supports_push_notifications());
         assert_eq!(agent_record.interfaces().first().name(), "stdio");
         assert!(matches!(
             agent_record.interfaces().first().protocol(),

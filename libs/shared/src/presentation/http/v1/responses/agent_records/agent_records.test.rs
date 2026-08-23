@@ -3,8 +3,8 @@ mod agent_records_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        AgentInterface as DomainAgentInterface, AgentRecord as DomainAgentRecord, MessageBinding,
-        Protocol, ReconstituteAgentRecordProps,
+        AgentInterface as DomainAgentInterface, AgentRecord as DomainAgentRecord,
+        Capabilities as DomainCapabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
     };
     use crate::presentation::http::v1::responses::agent_records::{
         AgentRecord, MessageBinding as ResponseMessageBinding, Protocol as ResponseProtocol,
@@ -29,6 +29,7 @@ mod agent_records_test {
                 ),
                 DomainAgentInterface::new("stdio".into(), None, Protocol::Stdio, None),
             ],
+            capabilities: DomainCapabilities::new(true, false),
         })?;
         let response = AgentRecord::from(domain_agent_record);
 
@@ -38,6 +39,8 @@ mod agent_records_test {
         assert_eq!(response.owner, "owner-a");
         assert_eq!(response.description, "A helpful agent");
         assert_eq!(response.interfaces.len(), 2);
+        assert!(response.capabilities.streaming);
+        assert!(!response.capabilities.push_notifications);
         assert_eq!(response.interfaces[0].name, "rest");
         assert_eq!(
             response.interfaces[0].description,

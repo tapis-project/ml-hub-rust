@@ -13,6 +13,13 @@ pub struct AgentRecord {
     pub owner: String,
     pub description: String,
     pub interfaces: Vec<AgentInterface>,
+    pub capabilities: Capabilities,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct Capabilities {
+    pub streaming: bool,
+    pub push_notifications: bool,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

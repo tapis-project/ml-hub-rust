@@ -17,6 +17,13 @@ pub struct CreateAgentRecordBody {
         custom(function = "validate_unique_interface_names")
     )]
     pub interfaces: Vec<AgentInterface>,
+    pub capabilities: Capabilities,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub struct Capabilities {
+    pub streaming: bool,
+    pub push_notifications: bool,
 }
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]

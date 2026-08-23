@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use nonempty::NonEmpty;
 use thiserror::Error;
 use uuid::Uuid;
@@ -10,6 +12,7 @@ pub struct AgentRecord {
     owner: String,
     description: String,
     interfaces: NonEmpty<AgentInterface>,
+    capabilities: Capabilities,
 }
 
 impl AgentRecord {
@@ -19,6 +22,7 @@ impl AgentRecord {
         owner: String,
         description: String,
         interfaces: Vec<AgentInterface>,
+        capabilities: Capabilities,
     ) -> Result<Self, AgentRecordError> {
         let interfaces = Self::interfaces_from_vec(interfaces)?;
         Self::ensure_unique_interface_names(&interfaces)
@@ -31,6 +35,7 @@ impl AgentRecord {
             owner,
             description,
             interfaces,
+            capabilities,
         })
     }
 
@@ -49,6 +54,7 @@ impl AgentRecord {
             owner: props.owner,
             description: props.description,
             interfaces,
+            capabilities: props.capabilities,
         })
     }
 
@@ -74,6 +80,14 @@ impl AgentRecord {
 
     pub fn interfaces(&self) -> &NonEmpty<AgentInterface> {
         &self.interfaces
+    }
+
+    pub fn supports_streaming(&self) -> bool {
+        self.capabilities.supports_streaming()
+    }
+
+    pub fn supports_push_notifications(&self) -> bool {
+        self.capabilities.supports_push_notifications()
     }
 
     fn interfaces_from_vec(
@@ -107,6 +121,30 @@ pub struct ReconstituteAgentRecordProps {
     pub owner: String,
     pub description: String,
     pub interfaces: Vec<AgentInterface>,
+    pub capabilities: Capabilities,
+}
+
+#[derive(Clone, Debug)]
+pub struct Capabilities {
+    streaming: bool,
+    push_notifications: bool,
+}
+
+impl Capabilities {
+    pub fn new(streaming: bool, push_notifications: bool) -> Self {
+        Self {
+            streaming,
+            push_notifications,
+        }
+    }
+
+    pub fn supports_streaming(&self) -> bool {
+        self.streaming
+    }
+
+    pub fn supports_push_notifications(&self) -> bool {
+        self.push_notifications
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -178,4 +216,3 @@ pub mod test_fixtures;
 #[cfg(test)]
 #[path = "agent_record.test.rs"]
 mod agent_record_test;
-use std::collections::HashSet;

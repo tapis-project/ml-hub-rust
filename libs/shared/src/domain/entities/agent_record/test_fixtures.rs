@@ -3,7 +3,7 @@
 use uuid::Uuid;
 
 use super::{
-    AgentInterface, AgentRecord, AgentRecordError, MessageBinding, Protocol,
+    AgentInterface, AgentRecord, AgentRecordError, Capabilities, MessageBinding, Protocol,
     ReconstituteAgentRecordProps,
 };
 
@@ -14,6 +14,7 @@ pub struct AgentRecordBuilder {
     owner: Option<String>,
     description: Option<String>,
     interfaces: Option<Vec<AgentInterface>>,
+    capabilities: Option<Capabilities>,
 }
 
 impl AgentRecordBuilder {
@@ -25,6 +26,7 @@ impl AgentRecordBuilder {
             owner: None,
             description: None,
             interfaces: None,
+            capabilities: None,
         }
     }
 
@@ -58,6 +60,11 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_capabilities(mut self, capabilities: Capabilities) -> Self {
+        self.capabilities = Some(capabilities);
+        self
+    }
+
     pub fn build_new(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::new(
             self.name
@@ -78,6 +85,9 @@ impl AgentRecordBuilder {
                     Some(MessageBinding::HttpJson),
                 )]
             }),
+            self.capabilities
+                .clone()
+                .unwrap_or_else(|| Capabilities::new(false, false)),
         )
     }
 
@@ -105,6 +115,10 @@ impl AgentRecordBuilder {
                     Some(MessageBinding::HttpJson),
                 )]
             }),
+            capabilities: self
+                .capabilities
+                .clone()
+                .unwrap_or_else(|| Capabilities::new(false, false)),
         })
     }
 }

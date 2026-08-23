@@ -15,6 +15,10 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 .cloned()
                 .map(responses::AgentInterface::from)
                 .collect(),
+            capabilities: responses::Capabilities {
+                streaming: value.supports_streaming(),
+                push_notifications: value.supports_push_notifications(),
+            },
         }
     }
 }
