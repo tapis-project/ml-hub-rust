@@ -8,7 +8,7 @@ pub struct CreateAgentRecordBody {
     #[validate(length(min = 1))]
     pub name: String,
     #[validate(length(max = 255))]
-    pub description: Option<String>,
+    pub description: String,
     #[validate(length(min = 1))]
     pub supported_interfaces: Vec<AgentInterface>,
 }

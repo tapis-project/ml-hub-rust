@@ -13,14 +13,14 @@ mod agent_record_test {
             .with_name("assistant".into())
             .with_tenant_id("tenant-a".into())
             .with_owner("owner-a".into())
-            .with_description(Some("A helpful agent".into()))
+            .with_description("A helpful agent".into())
             .build_new()?;
 
         assert_eq!(agent_record.id().get_version_num(), 7);
         assert_eq!(agent_record.name(), "assistant");
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
-        assert_eq!(agent_record.description(), &Some("A helpful agent".into()));
+        assert_eq!(agent_record.description(), "A helpful agent");
         assert!(matches!(
             agent_record.supported_interfaces().first().protocol(),
             Protocol::RestHttp
@@ -44,7 +44,7 @@ mod agent_record_test {
             .with_name("assistant".into())
             .with_tenant_id("tenant-a".into())
             .with_owner("owner-a".into())
-            .with_description(None)
+            .with_description("A helpful agent".into())
             .with_supported_interfaces(vec![AgentInterface::new(Protocol::Stdio, None)])
             .build_reconstituted()?;
 
@@ -52,7 +52,7 @@ mod agent_record_test {
         assert_eq!(agent_record.name(), "assistant");
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
-        assert_eq!(agent_record.description(), &None);
+        assert_eq!(agent_record.description(), "A helpful agent");
         assert!(matches!(
             agent_record.supported_interfaces().first().protocol(),
             Protocol::Stdio

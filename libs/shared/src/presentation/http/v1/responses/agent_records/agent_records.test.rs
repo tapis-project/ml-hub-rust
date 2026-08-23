@@ -11,28 +11,27 @@ mod agent_records_test {
     };
 
     #[test]
-    fn test_agent_record_entity_to_response() {
+    fn test_agent_record_entity_to_response(
+    ) -> Result<(), crate::domain::entities::agent_record::AgentRecordError> {
         let id = Uuid::now_v7();
-        let response = AgentRecord::from(
-            DomainAgentRecord::reconstitute(ReconstituteAgentRecordProps {
-                id,
-                name: "assistant".into(),
-                tenant_id: "tenant-a".into(),
-                owner: "owner-a".into(),
-                description: Some("A helpful agent".into()),
-                supported_interfaces: vec![
-                    DomainAgentInterface::new(Protocol::RestHttp, Some(MessageBinding::HttpJson)),
-                    DomainAgentInterface::new(Protocol::Stdio, None),
-                ],
-            })
-            .unwrap(),
-        );
+        let domain_agent_record = DomainAgentRecord::reconstitute(ReconstituteAgentRecordProps {
+            id,
+            name: "assistant".into(),
+            tenant_id: "tenant-a".into(),
+            owner: "owner-a".into(),
+            description: "A helpful agent".into(),
+            supported_interfaces: vec![
+                DomainAgentInterface::new(Protocol::RestHttp, Some(MessageBinding::HttpJson)),
+                DomainAgentInterface::new(Protocol::Stdio, None),
+            ],
+        })?;
+        let response = AgentRecord::from(domain_agent_record);
 
         assert_eq!(response.id, id);
         assert_eq!(response.name, "assistant");
         assert_eq!(response.tenant_id, "tenant-a");
         assert_eq!(response.owner, "owner-a");
-        assert_eq!(response.description, Some("A helpful agent".into()));
+        assert_eq!(response.description, "A helpful agent");
         assert_eq!(response.supported_interfaces.len(), 2);
         assert!(matches!(
             response.supported_interfaces[0].protocol,
@@ -47,5 +46,7 @@ mod agent_records_test {
             ResponseProtocol::Stdio
         ));
         assert!(response.supported_interfaces[1].message_binding.is_none());
+
+        Ok(())
     }
 }

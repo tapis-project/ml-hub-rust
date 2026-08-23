@@ -48,8 +48,8 @@ impl AgentRecordBuilder {
         self
     }
 
-    pub fn with_description(mut self, description: Option<String>) -> Self {
-        self.description = description;
+    pub fn with_description(mut self, description: String) -> Self {
+        self.description = Some(description);
         self
     }
 
@@ -67,7 +67,9 @@ impl AgentRecordBuilder {
                 .clone()
                 .unwrap_or_else(|| "test-tenant".into()),
             self.owner.clone().unwrap_or_else(|| "test-owner".into()),
-            self.description.clone(),
+            self.description
+                .clone()
+                .unwrap_or_else(|| "Test agent record description".into()),
             self.supported_interfaces.clone().unwrap_or_else(|| {
                 vec![AgentInterface::new(
                     Protocol::RestHttp,
@@ -89,7 +91,10 @@ impl AgentRecordBuilder {
                 .clone()
                 .unwrap_or_else(|| "test-tenant".into()),
             owner: self.owner.clone().unwrap_or_else(|| "test-owner".into()),
-            description: self.description.clone(),
+            description: self
+                .description
+                .clone()
+                .unwrap_or_else(|| "Test agent record description".into()),
             supported_interfaces: self.supported_interfaces.clone().unwrap_or_else(|| {
                 vec![AgentInterface::new(
                     Protocol::RestHttp,

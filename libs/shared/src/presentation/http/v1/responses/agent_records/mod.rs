@@ -11,7 +11,7 @@ pub struct AgentRecord {
     pub name: String,
     pub tenant_id: String,
     pub owner: String,
-    pub description: Option<String>,
+    pub description: String,
     pub supported_interfaces: Vec<AgentInterface>,
 }
 

@@ -8,7 +8,7 @@ pub struct AgentRecord {
     name: String,
     tenant_id: String,
     owner: String,
-    description: Option<String>,
+    description: String,
     supported_interfaces: NonEmpty<AgentInterface>,
 }
 
@@ -17,7 +17,7 @@ impl AgentRecord {
         name: String,
         tenant_id: String,
         owner: String,
-        description: Option<String>,
+        description: String,
         supported_interfaces: Vec<AgentInterface>,
     ) -> Result<Self, AgentRecordError> {
         let supported_interfaces = Self::supported_interfaces_from_vec(supported_interfaces)?;
@@ -61,7 +61,7 @@ impl AgentRecord {
         &self.owner
     }
 
-    pub fn description(&self) -> &Option<String> {
+    pub fn description(&self) -> &String {
         &self.description
     }
 
@@ -86,7 +86,7 @@ pub struct ReconstituteAgentRecordProps {
     pub name: String,
     pub tenant_id: String,
     pub owner: String,
-    pub description: Option<String>,
+    pub description: String,
     pub supported_interfaces: Vec<AgentInterface>,
 }
 
