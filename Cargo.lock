@@ -270,6 +270,7 @@ dependencies = [
  "actix-web",
  "env_logger",
  "log",
+ "mongodb",
  "shared",
  "utoipa",
 ]

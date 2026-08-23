@@ -11,5 +11,6 @@ path = "src/bin/openapi.rs"
 actix-web = "4"
 env_logger = "0.11.5"
 log = "0.4"
+mongodb = "3.5.1"
 shared = { version = "0.1.0", path = "../../libs/shared" }
 utoipa = "5.4.0"
