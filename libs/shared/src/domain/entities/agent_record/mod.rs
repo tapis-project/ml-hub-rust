@@ -21,6 +21,8 @@ impl AgentRecord {
         interfaces: Vec<AgentInterface>,
     ) -> Result<Self, AgentRecordError> {
         let interfaces = Self::interfaces_from_vec(interfaces)?;
+        Self::ensure_unique_interface_names(&interfaces)
+            .map_err(AgentRecordError::DuplicateAgentInterfaceIdentifier)?;
 
         Ok(Self {
             id: Uuid::now_v7(),
@@ -34,6 +36,11 @@ impl AgentRecord {
 
     pub fn reconstitute(props: ReconstituteAgentRecordProps) -> Result<Self, AgentRecordError> {
         let interfaces = Self::interfaces_from_vec(props.interfaces)?;
+        Self::ensure_unique_interface_names(&interfaces).map_err(|duplicate_name| {
+            AgentRecordError::DataIntegrityError(format!(
+                "Agent record contains interfaces with duplicate names. Duplicate found: {duplicate_name}"
+            ))
+        })?;
 
         Ok(Self {
             id: props.id,
@@ -78,6 +85,18 @@ impl AgentRecord {
             )
         })
     }
+
+    fn ensure_unique_interface_names(interfaces: &NonEmpty<AgentInterface>) -> Result<(), String> {
+        let mut names = HashSet::new();
+
+        for interface in interfaces {
+            if !names.insert(interface.name()) {
+                return Err(interface.name().clone());
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -92,16 +111,33 @@ pub struct ReconstituteAgentRecordProps {
 
 #[derive(Clone, Debug)]
 pub struct AgentInterface {
+    name: String,
+    description: Option<String>,
     protocol: Protocol,
     message_binding: Option<MessageBinding>,
 }
 
 impl AgentInterface {
-    pub fn new(protocol: Protocol, message_binding: Option<MessageBinding>) -> Self {
+    pub fn new(
+        name: String,
+        description: Option<String>,
+        protocol: Protocol,
+        message_binding: Option<MessageBinding>,
+    ) -> Self {
         Self {
+            name,
+            description,
             protocol,
             message_binding,
         }
+    }
+
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn description(&self) -> &Option<String> {
+        &self.description
     }
 
     pub fn protocol(&self) -> &Protocol {
@@ -129,6 +165,9 @@ pub enum MessageBinding {
 
 #[derive(Debug, Error, Clone)]
 pub enum AgentRecordError {
+    #[error("Duplicate agent interface identifier: {0}")]
+    DuplicateAgentInterfaceIdentifier(String),
+
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String),
 }
@@ -139,3 +178,4 @@ pub mod test_fixtures;
 #[cfg(test)]
 #[path = "agent_record.test.rs"]
 mod agent_record_test;
+use std::collections::HashSet;

@@ -17,6 +17,8 @@ pub struct AgentRecord {
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct AgentInterface {
+    pub name: String,
+    pub description: Option<String>,
     pub protocol: Protocol,
     pub message_binding: Option<MessageBinding>,
 }

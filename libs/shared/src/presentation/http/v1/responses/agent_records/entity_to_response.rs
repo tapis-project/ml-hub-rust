@@ -22,6 +22,8 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
 impl From<entities::AgentInterface> for responses::AgentInterface {
     fn from(value: entities::AgentInterface) -> Self {
         Self {
+            name: value.name().clone(),
+            description: value.description().clone(),
             protocol: value.protocol().clone().into(),
             message_binding: value.message_binding().clone().map(Into::into),
         }

@@ -72,6 +72,8 @@ impl AgentRecordBuilder {
                 .unwrap_or_else(|| "Test agent record description".into()),
             self.interfaces.clone().unwrap_or_else(|| {
                 vec![AgentInterface::new(
+                    "default".into(),
+                    Some("Default test interface".into()),
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),
                 )]
@@ -97,6 +99,8 @@ impl AgentRecordBuilder {
                 .unwrap_or_else(|| "Test agent record description".into()),
             interfaces: self.interfaces.clone().unwrap_or_else(|| {
                 vec![AgentInterface::new(
+                    "default".into(),
+                    Some("Default test interface".into()),
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),
                 )]

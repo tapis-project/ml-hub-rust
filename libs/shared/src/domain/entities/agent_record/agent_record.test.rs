@@ -21,15 +21,17 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
+        assert_eq!(agent_record.interfaces().first().name(), "default");
+        assert_eq!(
+            agent_record.interfaces().first().description(),
+            &Some("Default test interface".into())
+        );
         assert!(matches!(
             agent_record.interfaces().first().protocol(),
             Protocol::RestHttp
         ));
         assert!(matches!(
-            agent_record
-                .interfaces()
-                .first()
-                .message_binding(),
+            agent_record.interfaces().first().message_binding(),
             Some(MessageBinding::HttpJson)
         ));
 
@@ -45,7 +47,12 @@ mod agent_record_test {
             .with_tenant_id("tenant-a".into())
             .with_owner("owner-a".into())
             .with_description("A helpful agent".into())
-            .with_interfaces(vec![AgentInterface::new(Protocol::Stdio, None)])
+            .with_interfaces(vec![AgentInterface::new(
+                "stdio".into(),
+                None,
+                Protocol::Stdio,
+                None,
+            )])
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -53,6 +60,7 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
+        assert_eq!(agent_record.interfaces().first().name(), "stdio");
         assert!(matches!(
             agent_record.interfaces().first().protocol(),
             Protocol::Stdio
@@ -89,6 +97,47 @@ mod agent_record_test {
         let error = match result {
             Err(error) => error,
             Ok(_) => panic!("Expected agent record reconstitution to reject empty interfaces"),
+        };
+
+        assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
+    }
+
+    #[test]
+    fn test_new_agent_record_rejects_duplicate_interface_names() {
+        let result = AgentRecordBuilder::new()
+            .with_interfaces(vec![
+                AgentInterface::new("rest".into(), None, Protocol::RestHttp, None),
+                AgentInterface::new("rest".into(), None, Protocol::Stdio, None),
+            ])
+            .build_new();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => {
+                panic!("Expected agent record construction to reject duplicate interface names")
+            }
+        };
+
+        assert!(matches!(
+            error,
+            AgentRecordError::DuplicateAgentInterfaceIdentifier(identifier) if identifier == "rest"
+        ));
+    }
+
+    #[test]
+    fn test_reconstitute_agent_record_rejects_duplicate_interface_names() {
+        let result = AgentRecordBuilder::new()
+            .with_interfaces(vec![
+                AgentInterface::new("rest".into(), None, Protocol::RestHttp, None),
+                AgentInterface::new("rest".into(), None, Protocol::Stdio, None),
+            ])
+            .build_reconstituted();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => {
+                panic!("Expected agent record reconstitution to reject duplicate interface names")
+            }
         };
 
         assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));

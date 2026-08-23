@@ -8,6 +8,8 @@ mod create_agent_record_body_test {
 
     fn interfaces() -> Vec<AgentInterface> {
         vec![AgentInterface {
+            name: "rest".into(),
+            description: Some("REST interface".into()),
             protocol: Protocol::RestHttp,
             message_binding: Some(MessageBinding::HttpJson),
         }]
@@ -38,7 +40,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_rejects_unknown_fields() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"protocol":"RestHttp"}],"unexpected":true}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"unexpected":true}"#,
         );
 
         assert!(result.is_err());
@@ -67,7 +69,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_accepts_missing_message_binding() {
         let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"protocol":"Stdio"}]}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"stdio","protocol":"Stdio"}]}"#,
         );
 
         let body = match body {
@@ -76,13 +78,15 @@ mod create_agent_record_body_test {
         };
 
         assert!(body.validate().is_ok());
+        assert_eq!(body.interfaces[0].name, "stdio");
+        assert!(body.interfaces[0].description.is_none());
         assert!(body.interfaces[0].message_binding.is_none());
     }
 
     #[test]
     fn test_create_agent_record_body_rejects_invalid_interface_enum() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"protocol":"Unknown"}]}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"Unknown"}]}"#,
         );
 
         assert!(result.is_err());
@@ -91,9 +95,49 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_requires_description() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","interfaces":[{"protocol":"RestHttp"}]}"#,
+            r#"{"name":"assistant","interfaces":[{"name":"rest","protocol":"RestHttp"}]}"#,
         );
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_empty_interface_name() {
+        let body = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: vec![AgentInterface {
+                name: String::new(),
+                description: None,
+                protocol: Protocol::RestHttp,
+                message_binding: None,
+            }],
+        };
+
+        assert!(body.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_duplicate_interface_names() {
+        let body = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: vec![
+                AgentInterface {
+                    name: "rest".into(),
+                    description: None,
+                    protocol: Protocol::RestHttp,
+                    message_binding: None,
+                },
+                AgentInterface {
+                    name: "rest".into(),
+                    description: None,
+                    protocol: Protocol::Stdio,
+                    message_binding: None,
+                },
+            ],
+        };
+
+        assert!(body.validate().is_err());
     }
 }

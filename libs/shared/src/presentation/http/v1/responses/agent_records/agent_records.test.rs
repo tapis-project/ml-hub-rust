@@ -21,8 +21,13 @@ mod agent_records_test {
             owner: "owner-a".into(),
             description: "A helpful agent".into(),
             interfaces: vec![
-                DomainAgentInterface::new(Protocol::RestHttp, Some(MessageBinding::HttpJson)),
-                DomainAgentInterface::new(Protocol::Stdio, None),
+                DomainAgentInterface::new(
+                    "rest".into(),
+                    Some("REST interface".into()),
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                ),
+                DomainAgentInterface::new("stdio".into(), None, Protocol::Stdio, None),
             ],
         })?;
         let response = AgentRecord::from(domain_agent_record);
@@ -33,6 +38,11 @@ mod agent_records_test {
         assert_eq!(response.owner, "owner-a");
         assert_eq!(response.description, "A helpful agent");
         assert_eq!(response.interfaces.len(), 2);
+        assert_eq!(response.interfaces[0].name, "rest");
+        assert_eq!(
+            response.interfaces[0].description,
+            Some("REST interface".into())
+        );
         assert!(matches!(
             response.interfaces[0].protocol,
             ResponseProtocol::RestHttp
@@ -45,6 +55,8 @@ mod agent_records_test {
             response.interfaces[1].protocol,
             ResponseProtocol::Stdio
         ));
+        assert_eq!(response.interfaces[1].name, "stdio");
+        assert!(response.interfaces[1].description.is_none());
         assert!(response.interfaces[1].message_binding.is_none());
 
         Ok(())
