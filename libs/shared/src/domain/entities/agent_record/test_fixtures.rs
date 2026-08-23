@@ -2,7 +2,10 @@
 
 use uuid::Uuid;
 
-use super::{AgentRecord, ReconstituteAgentRecordProps};
+use super::{
+    AgentInterface, AgentRecord, AgentRecordError, MessageBinding, Protocol,
+    ReconstituteAgentRecordProps,
+};
 
 pub struct AgentRecordBuilder {
     id: Option<Uuid>,
@@ -10,6 +13,7 @@ pub struct AgentRecordBuilder {
     tenant_id: Option<String>,
     owner: Option<String>,
     description: Option<String>,
+    supported_interfaces: Option<Vec<AgentInterface>>,
 }
 
 impl AgentRecordBuilder {
@@ -20,6 +24,7 @@ impl AgentRecordBuilder {
             tenant_id: None,
             owner: None,
             description: None,
+            supported_interfaces: None,
         }
     }
 
@@ -48,22 +53,49 @@ impl AgentRecordBuilder {
         self
     }
 
-    pub fn build_new(&self) -> AgentRecord {
+    pub fn with_supported_interfaces(mut self, supported_interfaces: Vec<AgentInterface>) -> Self {
+        self.supported_interfaces = Some(supported_interfaces);
+        self
+    }
+
+    pub fn build_new(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::new(
-            self.name.clone().unwrap_or_else(|| "Test Agent Record".into()),
-            self.tenant_id.clone().unwrap_or_else(|| "test-tenant".into()),
+            self.name
+                .clone()
+                .unwrap_or_else(|| "Test Agent Record".into()),
+            self.tenant_id
+                .clone()
+                .unwrap_or_else(|| "test-tenant".into()),
             self.owner.clone().unwrap_or_else(|| "test-owner".into()),
             self.description.clone(),
+            self.supported_interfaces.clone().unwrap_or_else(|| {
+                vec![AgentInterface::new(
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                )]
+            }),
         )
     }
 
-    pub fn build_reconstituted(&self) -> AgentRecord {
+    pub fn build_reconstituted(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::reconstitute(ReconstituteAgentRecordProps {
             id: self.id.unwrap_or_else(Uuid::now_v7),
-            name: self.name.clone().unwrap_or_else(|| "Test Agent Record".into()),
-            tenant_id: self.tenant_id.clone().unwrap_or_else(|| "test-tenant".into()),
+            name: self
+                .name
+                .clone()
+                .unwrap_or_else(|| "Test Agent Record".into()),
+            tenant_id: self
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "test-tenant".into()),
             owner: self.owner.clone().unwrap_or_else(|| "test-owner".into()),
             description: self.description.clone(),
+            supported_interfaces: self.supported_interfaces.clone().unwrap_or_else(|| {
+                vec![AgentInterface::new(
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                )]
+            }),
         })
     }
 }

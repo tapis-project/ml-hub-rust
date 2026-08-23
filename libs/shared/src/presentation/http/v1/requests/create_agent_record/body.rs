@@ -9,6 +9,28 @@ pub struct CreateAgentRecordBody {
     pub name: String,
     #[validate(length(max = 255))]
     pub description: Option<String>,
+    #[validate(length(min = 1))]
+    pub supported_interfaces: Vec<AgentInterface>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub struct AgentInterface {
+    pub protocol: Protocol,
+    pub message_binding: Option<MessageBinding>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum Protocol {
+    RestHttp,
+    Rpc,
+    Stdio,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum MessageBinding {
+    HttpJson,
+    JsonRpc2_0,
+    Grpc,
 }
 
 #[cfg(test)]

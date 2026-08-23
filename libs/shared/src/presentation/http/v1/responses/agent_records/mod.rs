@@ -12,6 +12,27 @@ pub struct AgentRecord {
     pub tenant_id: String,
     pub owner: String,
     pub description: Option<String>,
+    pub supported_interfaces: Vec<AgentInterface>,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct AgentInterface {
+    pub protocol: Protocol,
+    pub message_binding: Option<MessageBinding>,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub enum Protocol {
+    RestHttp,
+    Rpc,
+    Stdio,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub enum MessageBinding {
+    HttpJson,
+    JsonRpc2_0,
+    Grpc,
 }
 
 #[cfg(test)]
