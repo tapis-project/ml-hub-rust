@@ -22,7 +22,8 @@ mod agent_record_test {
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
         assert_eq!(agent_record.version(), "0.1.0");
-        assert!(agent_record.provider().is_none());
+        assert_eq!(agent_record.provider_organization(), None);
+        assert_eq!(agent_record.provider_url(), None);
         assert!(!agent_record.supports_streaming());
         assert!(!agent_record.supports_push_notifications());
         assert_eq!(agent_record.interfaces().first().name(), "default");
@@ -72,17 +73,11 @@ mod agent_record_test {
         assert_eq!(agent_record.description(), "A helpful agent");
         assert_eq!(agent_record.version(), "1.2.3");
         assert_eq!(
-            agent_record
-                .provider()
-                .as_ref()
-                .map(|provider| provider.organization().as_str()),
+            agent_record.provider_organization(),
             Some("Example Geo Services Inc.")
         );
         assert_eq!(
-            agent_record
-                .provider()
-                .as_ref()
-                .map(|provider| provider.url().as_str()),
+            agent_record.provider_url(),
             Some("https://www.examplegeoservices.com")
         );
         assert!(agent_record.supports_streaming());

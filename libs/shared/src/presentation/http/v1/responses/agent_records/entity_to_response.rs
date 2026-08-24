@@ -19,17 +19,14 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 streaming: value.supports_streaming(),
                 push_notifications: value.supports_push_notifications(),
             },
-            provider: value.provider().clone().map(Into::into),
+            provider: match (value.provider_organization(), value.provider_url()) {
+                (Some(organization), Some(url)) => Some(responses::AgentProvider {
+                    organization: organization.into(),
+                    url: url.into(),
+                }),
+                _ => None,
+            },
             version: value.version().clone(),
-        }
-    }
-}
-
-impl From<entities::AgentProvider> for responses::AgentProvider {
-    fn from(value: entities::AgentProvider) -> Self {
-        Self {
-            organization: value.organization().clone(),
-            url: value.url().clone(),
         }
     }
 }

@@ -98,8 +98,14 @@ impl AgentRecord {
         self.capabilities.supports_push_notifications()
     }
 
-    pub fn provider(&self) -> &Option<AgentProvider> {
-        &self.provider
+    pub fn provider_organization(&self) -> Option<&str> {
+        self.provider
+            .as_ref()
+            .map(|provider| provider.organization())
+    }
+
+    pub fn provider_url(&self) -> Option<&str> {
+        self.provider.as_ref().map(|provider| provider.url())
     }
 
     pub fn version(&self) -> &String {
@@ -153,11 +159,11 @@ impl AgentProvider {
         Self { organization, url }
     }
 
-    pub fn organization(&self) -> &String {
+    pub fn organization(&self) -> &str {
         &self.organization
     }
 
-    pub fn url(&self) -> &String {
+    pub fn url(&self) -> &str {
         &self.url
     }
 }
