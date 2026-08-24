@@ -163,13 +163,13 @@ impl AgentRecord {
 pub struct ReconstituteAgentRecordProps {
     pub id: Uuid,
     pub name: String,
+    pub version: String,
     pub tenant_id: String,
     pub owner: String,
     pub description: String,
     pub interfaces: Vec<AgentInterface>,
     pub capabilities: Capabilities,
     pub provider: Option<AgentProvider>,
-    pub version: String,
     pub artifact_locators: Vec<ArtifactLocator>,
 }
 
