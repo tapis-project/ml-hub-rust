@@ -6,6 +6,7 @@ mod agent_record_test {
         test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
         AgentRecordError, ArtifactLocator, Capabilities, MessageBinding, Protocol,
     };
+    use crate::shared_kernel::identifiers::traits::UrnGenerator;
 
     #[test]
     fn test_new_agent_record() -> Result<(), AgentRecordError> {
@@ -42,6 +43,20 @@ mod agent_record_test {
             agent_record.interfaces().first().message_binding(),
             Some(MessageBinding::HttpJson)
         ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_agent_record_generates_urn() -> Result<(), AgentRecordError> {
+        let agent_record = AgentRecordBuilder::new()
+            .with_tenant_id("tenant-a".into())
+            .build_new()?;
+
+        assert_eq!(
+            agent_record.urn().as_str(),
+            format!("urn:mlhub:v1:tenant-a:agent_record:{}", agent_record.id())
+        );
 
         Ok(())
     }

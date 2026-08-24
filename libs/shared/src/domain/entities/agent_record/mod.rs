@@ -5,6 +5,8 @@ use semver::Version;
 use thiserror::Error;
 use uuid::Uuid;
 
+use crate::impl_urn_generator;
+
 #[derive(Clone, Debug)]
 pub struct AgentRecord {
     id: Uuid,
@@ -20,6 +22,8 @@ pub struct AgentRecord {
     icon_url: Option<String>,
     documentation_url: Option<String>,
 }
+
+impl_urn_generator!(AgentRecord, tenant_id, "agent_record", id);
 
 impl AgentRecord {
     pub fn new(
