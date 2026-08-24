@@ -14,6 +14,14 @@ pub struct AgentRecord {
     pub description: String,
     pub interfaces: Vec<AgentInterface>,
     pub capabilities: Capabilities,
+    pub provider: Option<AgentProvider>,
+    pub version: String,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct AgentProvider {
+    pub organization: String,
+    pub url: String,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

@@ -3,8 +3,8 @@ mod agent_record_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        test_fixtures::AgentRecordBuilder, AgentInterface, AgentRecordError, Capabilities,
-        MessageBinding, Protocol,
+        test_fixtures::AgentRecordBuilder, AgentInterface, AgentProvider, AgentRecordError,
+        Capabilities, MessageBinding, Protocol,
     };
 
     #[test]
@@ -21,6 +21,8 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
+        assert_eq!(agent_record.version(), "0.1.0");
+        assert!(agent_record.provider().is_none());
         assert!(!agent_record.supports_streaming());
         assert!(!agent_record.supports_push_notifications());
         assert_eq!(agent_record.interfaces().first().name(), "default");
@@ -56,6 +58,11 @@ mod agent_record_test {
                 None,
             )])
             .with_capabilities(Capabilities::new(true, true))
+            .with_provider(AgentProvider::new(
+                "Example Geo Services Inc.".into(),
+                "https://www.examplegeoservices.com".into(),
+            ))
+            .with_version("1.2.3".into())
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -63,6 +70,21 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
+        assert_eq!(agent_record.version(), "1.2.3");
+        assert_eq!(
+            agent_record
+                .provider()
+                .as_ref()
+                .map(|provider| provider.organization().as_str()),
+            Some("Example Geo Services Inc.")
+        );
+        assert_eq!(
+            agent_record
+                .provider()
+                .as_ref()
+                .map(|provider| provider.url().as_str()),
+            Some("https://www.examplegeoservices.com")
+        );
         assert!(agent_record.supports_streaming());
         assert!(agent_record.supports_push_notifications());
         assert_eq!(agent_record.interfaces().first().name(), "stdio");

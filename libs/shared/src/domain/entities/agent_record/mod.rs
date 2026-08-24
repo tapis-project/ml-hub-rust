@@ -13,6 +13,8 @@ pub struct AgentRecord {
     description: String,
     interfaces: NonEmpty<AgentInterface>,
     capabilities: Capabilities,
+    provider: Option<AgentProvider>,
+    version: String,
 }
 
 impl AgentRecord {
@@ -23,6 +25,8 @@ impl AgentRecord {
         description: String,
         interfaces: Vec<AgentInterface>,
         capabilities: Capabilities,
+        provider: Option<AgentProvider>,
+        version: String,
     ) -> Result<Self, AgentRecordError> {
         let interfaces = Self::interfaces_from_vec(interfaces)?;
         Self::ensure_unique_interface_names(&interfaces)
@@ -36,6 +40,8 @@ impl AgentRecord {
             description,
             interfaces,
             capabilities,
+            provider,
+            version,
         })
     }
 
@@ -55,6 +61,8 @@ impl AgentRecord {
             description: props.description,
             interfaces,
             capabilities: props.capabilities,
+            provider: props.provider,
+            version: props.version,
         })
     }
 
@@ -90,6 +98,14 @@ impl AgentRecord {
         self.capabilities.supports_push_notifications()
     }
 
+    pub fn provider(&self) -> &Option<AgentProvider> {
+        &self.provider
+    }
+
+    pub fn version(&self) -> &String {
+        &self.version
+    }
+
     fn interfaces_from_vec(
         interfaces: Vec<AgentInterface>,
     ) -> Result<NonEmpty<AgentInterface>, AgentRecordError> {
@@ -122,6 +138,28 @@ pub struct ReconstituteAgentRecordProps {
     pub description: String,
     pub interfaces: Vec<AgentInterface>,
     pub capabilities: Capabilities,
+    pub provider: Option<AgentProvider>,
+    pub version: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct AgentProvider {
+    organization: String,
+    url: String,
+}
+
+impl AgentProvider {
+    pub fn new(organization: String, url: String) -> Self {
+        Self { organization, url }
+    }
+
+    pub fn organization(&self) -> &String {
+        &self.organization
+    }
+
+    pub fn url(&self) -> &String {
+        &self.url
+    }
 }
 
 #[derive(Clone, Debug)]

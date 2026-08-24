@@ -3,7 +3,8 @@ mod create_agent_record_body_test {
     use validator::Validate;
 
     use crate::presentation::http::v1::requests::create_agent_record::body::{
-        AgentInterface, Capabilities, CreateAgentRecordBody, MessageBinding, Protocol,
+        AgentInterface, AgentProvider, Capabilities, CreateAgentRecordBody, MessageBinding,
+        Protocol,
     };
 
     fn interfaces() -> Vec<AgentInterface> {
@@ -29,6 +30,8 @@ mod create_agent_record_body_test {
             description: "A helpful agent".into(),
             interfaces: interfaces(),
             capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
         };
 
         assert!(body.validate().is_ok());
@@ -41,6 +44,8 @@ mod create_agent_record_body_test {
             description: "A helpful agent".into(),
             interfaces: interfaces(),
             capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
         };
 
         assert!(body.validate().is_err());
@@ -49,7 +54,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_rejects_unknown_fields() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"unexpected":true}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","unexpected":true}"#,
         );
 
         assert!(result.is_err());
@@ -62,6 +67,8 @@ mod create_agent_record_body_test {
             description: "A helpful agent".into(),
             interfaces: vec![],
             capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
         };
 
         assert!(body.validate().is_err());
@@ -70,7 +77,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_requires_interfaces() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","capabilities":{"streaming":false,"push_notifications":false}}"#,
+            r#"{"name":"assistant","description":"A helpful agent","capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
         );
 
         assert!(result.is_err());
@@ -79,7 +86,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_accepts_missing_message_binding() {
         let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"stdio","protocol":"Stdio"}],"capabilities":{"streaming":true,"push_notifications":false}}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"stdio","protocol":"Stdio"}],"capabilities":{"streaming":true,"push_notifications":false},"version":"1.0.0"}"#,
         );
 
         let body = match body {
@@ -91,6 +98,8 @@ mod create_agent_record_body_test {
         assert_eq!(body.interfaces[0].name, "stdio");
         assert!(body.capabilities.streaming);
         assert!(!body.capabilities.push_notifications);
+        assert!(body.provider.is_none());
+        assert_eq!(body.version, "1.0.0");
         assert!(body.interfaces[0].description.is_none());
         assert!(body.interfaces[0].message_binding.is_none());
     }
@@ -98,7 +107,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_rejects_invalid_interface_enum() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"Unknown"}],"capabilities":{"streaming":false,"push_notifications":false}}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"Unknown"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
         );
 
         assert!(result.is_err());
@@ -107,7 +116,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_requires_description() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false}}"#,
+            r#"{"name":"assistant","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
         );
 
         assert!(result.is_err());
@@ -125,6 +134,8 @@ mod create_agent_record_body_test {
                 message_binding: None,
             }],
             capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
         };
 
         assert!(body.validate().is_err());
@@ -150,6 +161,8 @@ mod create_agent_record_body_test {
                 },
             ],
             capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
         };
 
         assert!(body.validate().is_err());
@@ -158,9 +171,55 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_requires_capabilities() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}]}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"version":"1.0.0"}"#,
         );
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_requires_version() {
+        let result = serde_json::from_str::<CreateAgentRecordBody>(
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false}}"#,
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_accepts_provider() {
+        let body = serde_json::from_str::<CreateAgentRecordBody>(
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"provider":{"organization":"Example Geo Services Inc.","url":"https://www.examplegeoservices.com"},"version":"1.0.0"}"#,
+        );
+
+        let body = match body {
+            Ok(body) => body,
+            Err(error) => panic!("Expected valid create agent record body: {error}"),
+        };
+
+        assert!(body.validate().is_ok());
+        assert_eq!(
+            body.provider
+                .as_ref()
+                .map(|provider| provider.organization.as_str()),
+            Some("Example Geo Services Inc.")
+        );
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_invalid_provider() {
+        let body = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: interfaces(),
+            capabilities: capabilities(),
+            provider: Some(AgentProvider {
+                organization: String::new(),
+                url: "not-a-url".into(),
+            }),
+            version: "1.0.0".into(),
+        };
+
+        assert!(body.validate().is_err());
     }
 }

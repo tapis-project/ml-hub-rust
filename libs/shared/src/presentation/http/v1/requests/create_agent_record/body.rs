@@ -18,6 +18,18 @@ pub struct CreateAgentRecordBody {
     )]
     pub interfaces: Vec<AgentInterface>,
     pub capabilities: Capabilities,
+    #[validate(nested)]
+    pub provider: Option<AgentProvider>,
+    #[validate(length(min = 1))]
+    pub version: String,
+}
+
+#[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
+pub struct AgentProvider {
+    #[validate(length(min = 1))]
+    pub organization: String,
+    #[validate(url)]
+    pub url: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]

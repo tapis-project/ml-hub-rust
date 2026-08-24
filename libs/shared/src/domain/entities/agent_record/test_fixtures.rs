@@ -3,8 +3,8 @@
 use uuid::Uuid;
 
 use super::{
-    AgentInterface, AgentRecord, AgentRecordError, Capabilities, MessageBinding, Protocol,
-    ReconstituteAgentRecordProps,
+    AgentInterface, AgentProvider, AgentRecord, AgentRecordError, Capabilities, MessageBinding,
+    Protocol, ReconstituteAgentRecordProps,
 };
 
 pub struct AgentRecordBuilder {
@@ -15,6 +15,8 @@ pub struct AgentRecordBuilder {
     description: Option<String>,
     interfaces: Option<Vec<AgentInterface>>,
     capabilities: Option<Capabilities>,
+    provider: Option<AgentProvider>,
+    version: Option<String>,
 }
 
 impl AgentRecordBuilder {
@@ -27,6 +29,8 @@ impl AgentRecordBuilder {
             description: None,
             interfaces: None,
             capabilities: None,
+            provider: None,
+            version: None,
         }
     }
 
@@ -65,6 +69,16 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_provider(mut self, provider: AgentProvider) -> Self {
+        self.provider = Some(provider);
+        self
+    }
+
+    pub fn with_version(mut self, version: String) -> Self {
+        self.version = Some(version);
+        self
+    }
+
     pub fn build_new(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::new(
             self.name
@@ -88,6 +102,8 @@ impl AgentRecordBuilder {
             self.capabilities
                 .clone()
                 .unwrap_or_else(|| Capabilities::new(false, false)),
+            self.provider.clone(),
+            self.version.clone().unwrap_or_else(|| "0.1.0".into()),
         )
     }
 
@@ -119,6 +135,8 @@ impl AgentRecordBuilder {
                 .capabilities
                 .clone()
                 .unwrap_or_else(|| Capabilities::new(false, false)),
+            provider: self.provider.clone(),
+            version: self.version.clone().unwrap_or_else(|| "0.1.0".into()),
         })
     }
 }

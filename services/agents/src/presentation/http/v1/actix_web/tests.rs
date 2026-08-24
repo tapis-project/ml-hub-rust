@@ -90,6 +90,12 @@ mod tests {
             .as_ref()
             .unwrap()
             .schemas
+            .contains_key("AgentProvider"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
             .contains_key("CreateAgentRecordBody"));
         assert!(document
             .components
