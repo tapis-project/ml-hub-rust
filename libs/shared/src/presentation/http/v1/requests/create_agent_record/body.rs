@@ -27,6 +27,10 @@ pub struct CreateAgentRecordBody {
     #[schema(nullable, default = json!([]))]
     #[validate(nested)]
     pub artifact_locators: Vec<ArtifactLocator>,
+    #[validate(url)]
+    pub icon_url: Option<String>,
+    #[validate(url)]
+    pub documentation_url: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]

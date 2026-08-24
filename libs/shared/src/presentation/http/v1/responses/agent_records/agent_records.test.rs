@@ -42,6 +42,8 @@ mod agent_records_test {
                 DomainAgentArtifactType::SourceCode,
                 "tapis://example-system/path/to/agent-artifact".into(),
             )],
+            icon_url: Some("https://example.com/agent-icon.png".into()),
+            documentation_url: Some("https://docs.example.com/agents/assistant".into()),
         })?;
         let response = AgentRecord::from(domain_agent_record);
 
@@ -51,6 +53,14 @@ mod agent_records_test {
         assert_eq!(response.owner, "owner-a");
         assert_eq!(response.description, "A helpful agent");
         assert_eq!(response.version, "1.2.3");
+        assert_eq!(
+            response.icon_url.as_deref(),
+            Some("https://example.com/agent-icon.png")
+        );
+        assert_eq!(
+            response.documentation_url.as_deref(),
+            Some("https://docs.example.com/agents/assistant")
+        );
         assert_eq!(
             response
                 .provider

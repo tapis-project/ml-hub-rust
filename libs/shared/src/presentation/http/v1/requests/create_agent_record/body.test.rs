@@ -40,6 +40,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0-beta.1+build.42".into(),
             artifact_locators: artifact_locators(),
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_ok());
@@ -56,6 +58,8 @@ mod create_agent_record_body_test {
                 provider: None,
                 version: version.into(),
                 artifact_locators: artifact_locators(),
+                icon_url: None,
+                documentation_url: None,
             };
 
             assert!(body.validate().is_err(), "Expected {version} to be invalid");
@@ -72,6 +76,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_err());
@@ -96,6 +102,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_err());
@@ -127,6 +135,8 @@ mod create_agent_record_body_test {
         assert!(!body.capabilities.push_notifications);
         assert!(body.provider.is_none());
         assert_eq!(body.version, "1.0.0");
+        assert!(body.icon_url.is_none());
+        assert!(body.documentation_url.is_none());
         assert!(body.interfaces[0].description.is_none());
         assert!(body.interfaces[0].message_binding.is_none());
     }
@@ -164,6 +174,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_err());
@@ -192,6 +204,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_err());
@@ -248,6 +262,25 @@ mod create_agent_record_body_test {
             }),
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            icon_url: None,
+            documentation_url: None,
+        };
+
+        assert!(body.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_invalid_optional_urls() {
+        let body = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: interfaces(),
+            capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
+            artifact_locators: artifact_locators(),
+            icon_url: Some("not-a-url".into()),
+            documentation_url: Some("also-not-a-url".into()),
         };
 
         assert!(body.validate().is_err());
@@ -291,6 +324,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            icon_url: Some("https://example.com/agent-icon.png".into()),
+            documentation_url: Some("https://docs.example.com/agents/assistant".into()),
         };
 
         assert!(body.validate().is_ok());
@@ -309,6 +344,8 @@ mod create_agent_record_body_test {
                 artifact_type: AgentArtifactType::SourceCode,
                 url: "not-a-url".into(),
             }],
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_err());

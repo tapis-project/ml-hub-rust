@@ -27,6 +27,8 @@ mod agent_record_test {
         assert!(!agent_record.supports_streaming());
         assert!(!agent_record.supports_push_notifications());
         assert!(agent_record.artifact_locators().is_empty());
+        assert_eq!(agent_record.icon_url(), None);
+        assert_eq!(agent_record.documentation_url(), None);
         assert_eq!(agent_record.interfaces().first().name(), "default");
         assert_eq!(
             agent_record.interfaces().first().description(),
@@ -69,6 +71,8 @@ mod agent_record_test {
                 AgentArtifactType::DockerImage,
                 "registry.example.com/agents/assistant:1.2.3".into(),
             )])
+            .with_icon_url("https://example.com/agent-icon.png".into())
+            .with_documentation_url("https://docs.example.com/agents/assistant".into())
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -95,6 +99,14 @@ mod agent_record_test {
         assert_eq!(
             agent_record.artifact_locators()[0].url(),
             "registry.example.com/agents/assistant:1.2.3"
+        );
+        assert_eq!(
+            agent_record.icon_url(),
+            Some("https://example.com/agent-icon.png")
+        );
+        assert_eq!(
+            agent_record.documentation_url(),
+            Some("https://docs.example.com/agents/assistant")
         );
         assert_eq!(agent_record.interfaces().first().name(), "stdio");
         assert!(matches!(

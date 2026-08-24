@@ -17,6 +17,8 @@ pub struct AgentRecord {
     pub provider: Option<AgentProvider>,
     pub version: String,
     pub artifact_locators: Vec<ArtifactLocator>,
+    pub icon_url: Option<String>,
+    pub documentation_url: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

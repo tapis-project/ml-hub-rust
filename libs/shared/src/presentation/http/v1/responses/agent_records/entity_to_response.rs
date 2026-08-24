@@ -33,6 +33,8 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 .cloned()
                 .map(responses::ArtifactLocator::from)
                 .collect(),
+            icon_url: value.icon_url().map(str::to_owned),
+            documentation_url: value.documentation_url().map(str::to_owned),
         }
     }
 }

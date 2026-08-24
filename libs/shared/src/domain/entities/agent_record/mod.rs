@@ -17,6 +17,8 @@ pub struct AgentRecord {
     provider: Option<AgentProvider>,
     version: String,
     artifact_locators: Vec<ArtifactLocator>,
+    icon_url: Option<String>,
+    documentation_url: Option<String>,
 }
 
 impl AgentRecord {
@@ -30,6 +32,8 @@ impl AgentRecord {
         provider: Option<AgentProvider>,
         version: String,
         artifact_locators: Vec<ArtifactLocator>,
+        icon_url: Option<String>,
+        documentation_url: Option<String>,
     ) -> Result<Self, AgentRecordError> {
         if Self::validate_version(&version).is_err() {
             return Err(AgentRecordError::InvalidVersion(version));
@@ -50,6 +54,8 @@ impl AgentRecord {
             provider,
             version,
             artifact_locators,
+            icon_url,
+            documentation_url,
         })
     }
 
@@ -79,6 +85,8 @@ impl AgentRecord {
             provider: props.provider,
             version: props.version,
             artifact_locators: props.artifact_locators,
+            icon_url: props.icon_url,
+            documentation_url: props.documentation_url,
         })
     }
 
@@ -132,6 +140,14 @@ impl AgentRecord {
         &self.artifact_locators
     }
 
+    pub fn icon_url(&self) -> Option<&str> {
+        self.icon_url.as_deref()
+    }
+
+    pub fn documentation_url(&self) -> Option<&str> {
+        self.documentation_url.as_deref()
+    }
+
     fn interfaces_from_vec(
         interfaces: Vec<AgentInterface>,
     ) -> Result<NonEmpty<AgentInterface>, AgentRecordError> {
@@ -171,6 +187,8 @@ pub struct ReconstituteAgentRecordProps {
     pub capabilities: Capabilities,
     pub provider: Option<AgentProvider>,
     pub artifact_locators: Vec<ArtifactLocator>,
+    pub icon_url: Option<String>,
+    pub documentation_url: Option<String>,
 }
 
 #[derive(Clone, Debug)]

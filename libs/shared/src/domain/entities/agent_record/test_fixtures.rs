@@ -18,6 +18,8 @@ pub struct AgentRecordBuilder {
     provider: Option<AgentProvider>,
     version: Option<String>,
     artifact_locators: Option<Vec<ArtifactLocator>>,
+    icon_url: Option<String>,
+    documentation_url: Option<String>,
 }
 
 impl AgentRecordBuilder {
@@ -33,6 +35,8 @@ impl AgentRecordBuilder {
             provider: None,
             version: None,
             artifact_locators: None,
+            icon_url: None,
+            documentation_url: None,
         }
     }
 
@@ -86,6 +90,16 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_icon_url(mut self, icon_url: String) -> Self {
+        self.icon_url = Some(icon_url);
+        self
+    }
+
+    pub fn with_documentation_url(mut self, documentation_url: String) -> Self {
+        self.documentation_url = Some(documentation_url);
+        self
+    }
+
     pub fn build_new(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::new(
             self.name
@@ -112,6 +126,8 @@ impl AgentRecordBuilder {
             self.provider.clone(),
             self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             self.artifact_locators.clone().unwrap_or_default(),
+            self.icon_url.clone(),
+            self.documentation_url.clone(),
         )
     }
 
@@ -146,6 +162,8 @@ impl AgentRecordBuilder {
             provider: self.provider.clone(),
             version: self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             artifact_locators: self.artifact_locators.clone().unwrap_or_default(),
+            icon_url: self.icon_url.clone(),
+            documentation_url: self.documentation_url.clone(),
         })
     }
 }
