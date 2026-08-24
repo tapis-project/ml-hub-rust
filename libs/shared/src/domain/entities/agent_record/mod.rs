@@ -15,6 +15,7 @@ pub struct AgentRecord {
     capabilities: Capabilities,
     provider: Option<AgentProvider>,
     version: String,
+    artifact_locators: Vec<ArtifactLocator>,
 }
 
 impl AgentRecord {
@@ -27,6 +28,7 @@ impl AgentRecord {
         capabilities: Capabilities,
         provider: Option<AgentProvider>,
         version: String,
+        artifact_locators: Vec<ArtifactLocator>,
     ) -> Result<Self, AgentRecordError> {
         let interfaces = Self::interfaces_from_vec(interfaces)?;
         Self::ensure_unique_interface_names(&interfaces)
@@ -42,6 +44,7 @@ impl AgentRecord {
             capabilities,
             provider,
             version,
+            artifact_locators,
         })
     }
 
@@ -63,6 +66,7 @@ impl AgentRecord {
             capabilities: props.capabilities,
             provider: props.provider,
             version: props.version,
+            artifact_locators: props.artifact_locators,
         })
     }
 
@@ -112,6 +116,10 @@ impl AgentRecord {
         &self.version
     }
 
+    pub fn artifact_locators(&self) -> &[ArtifactLocator] {
+        &self.artifact_locators
+    }
+
     fn interfaces_from_vec(
         interfaces: Vec<AgentInterface>,
     ) -> Result<NonEmpty<AgentInterface>, AgentRecordError> {
@@ -146,6 +154,37 @@ pub struct ReconstituteAgentRecordProps {
     pub capabilities: Capabilities,
     pub provider: Option<AgentProvider>,
     pub version: String,
+    pub artifact_locators: Vec<ArtifactLocator>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ArtifactLocator {
+    artifact_type: AgentArtifactType,
+    url: String,
+}
+
+impl ArtifactLocator {
+    pub fn new(artifact_type: AgentArtifactType, url: String) -> Self {
+        Self { artifact_type, url }
+    }
+
+    pub fn artifact_type(&self) -> &AgentArtifactType {
+        &self.artifact_type
+    }
+
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum AgentArtifactType {
+    Binary,
+    DockerImage,
+    HelmChart,
+    PythonPackage,
+    SourceCode,
+    Unspecified,
 }
 
 #[derive(Clone, Debug)]

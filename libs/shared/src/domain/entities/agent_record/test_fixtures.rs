@@ -3,8 +3,8 @@
 use uuid::Uuid;
 
 use super::{
-    AgentInterface, AgentProvider, AgentRecord, AgentRecordError, Capabilities, MessageBinding,
-    Protocol, ReconstituteAgentRecordProps,
+    AgentInterface, AgentProvider, AgentRecord, AgentRecordError, ArtifactLocator, Capabilities,
+    MessageBinding, Protocol, ReconstituteAgentRecordProps,
 };
 
 pub struct AgentRecordBuilder {
@@ -17,6 +17,7 @@ pub struct AgentRecordBuilder {
     capabilities: Option<Capabilities>,
     provider: Option<AgentProvider>,
     version: Option<String>,
+    artifact_locators: Option<Vec<ArtifactLocator>>,
 }
 
 impl AgentRecordBuilder {
@@ -31,6 +32,7 @@ impl AgentRecordBuilder {
             capabilities: None,
             provider: None,
             version: None,
+            artifact_locators: None,
         }
     }
 
@@ -79,6 +81,11 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_artifact_locators(mut self, artifact_locators: Vec<ArtifactLocator>) -> Self {
+        self.artifact_locators = Some(artifact_locators);
+        self
+    }
+
     pub fn build_new(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::new(
             self.name
@@ -104,6 +111,7 @@ impl AgentRecordBuilder {
                 .unwrap_or_else(|| Capabilities::new(false, false)),
             self.provider.clone(),
             self.version.clone().unwrap_or_else(|| "0.1.0".into()),
+            self.artifact_locators.clone().unwrap_or_default(),
         )
     }
 
@@ -137,6 +145,7 @@ impl AgentRecordBuilder {
                 .unwrap_or_else(|| Capabilities::new(false, false)),
             provider: self.provider.clone(),
             version: self.version.clone().unwrap_or_else(|| "0.1.0".into()),
+            artifact_locators: self.artifact_locators.clone().unwrap_or_default(),
         })
     }
 }

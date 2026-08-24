@@ -27,6 +27,34 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 _ => None,
             },
             version: value.version().clone(),
+            artifact_locators: value
+                .artifact_locators()
+                .iter()
+                .cloned()
+                .map(responses::ArtifactLocator::from)
+                .collect(),
+        }
+    }
+}
+
+impl From<entities::ArtifactLocator> for responses::ArtifactLocator {
+    fn from(value: entities::ArtifactLocator) -> Self {
+        Self {
+            artifact_type: value.artifact_type().clone().into(),
+            url: value.url().into(),
+        }
+    }
+}
+
+impl From<entities::AgentArtifactType> for responses::AgentArtifactType {
+    fn from(value: entities::AgentArtifactType) -> Self {
+        match value {
+            entities::AgentArtifactType::Binary => Self::Binary,
+            entities::AgentArtifactType::DockerImage => Self::DockerImage,
+            entities::AgentArtifactType::HelmChart => Self::HelmChart,
+            entities::AgentArtifactType::PythonPackage => Self::PythonPackage,
+            entities::AgentArtifactType::SourceCode => Self::SourceCode,
+            entities::AgentArtifactType::Unspecified => Self::Unspecified,
         }
     }
 }

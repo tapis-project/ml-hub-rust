@@ -3,12 +3,14 @@ mod agent_records_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        AgentInterface as DomainAgentInterface, AgentProvider as DomainAgentProvider,
-        AgentRecord as DomainAgentRecord, Capabilities as DomainCapabilities, MessageBinding,
-        Protocol, ReconstituteAgentRecordProps,
+        AgentArtifactType as DomainAgentArtifactType, AgentInterface as DomainAgentInterface,
+        AgentProvider as DomainAgentProvider, AgentRecord as DomainAgentRecord,
+        ArtifactLocator as DomainArtifactLocator, Capabilities as DomainCapabilities,
+        MessageBinding, Protocol, ReconstituteAgentRecordProps,
     };
     use crate::presentation::http::v1::responses::agent_records::{
-        AgentRecord, MessageBinding as ResponseMessageBinding, Protocol as ResponseProtocol,
+        AgentArtifactType as ResponseAgentArtifactType, AgentRecord,
+        MessageBinding as ResponseMessageBinding, Protocol as ResponseProtocol,
     };
 
     #[test]
@@ -36,6 +38,10 @@ mod agent_records_test {
                 "https://www.examplegeoservices.com".into(),
             )),
             version: "1.2.3".into(),
+            artifact_locators: vec![DomainArtifactLocator::new(
+                DomainAgentArtifactType::SourceCode,
+                "tapis://example-system/path/to/agent-artifact".into(),
+            )],
         })?;
         let response = AgentRecord::from(domain_agent_record);
 
@@ -60,6 +66,15 @@ mod agent_records_test {
             Some("https://www.examplegeoservices.com")
         );
         assert_eq!(response.interfaces.len(), 2);
+        assert_eq!(response.artifact_locators.len(), 1);
+        assert!(matches!(
+            response.artifact_locators[0].artifact_type,
+            ResponseAgentArtifactType::SourceCode
+        ));
+        assert_eq!(
+            response.artifact_locators[0].url,
+            "tapis://example-system/path/to/agent-artifact"
+        );
         assert!(response.capabilities.streaming);
         assert!(!response.capabilities.push_notifications);
         assert_eq!(response.interfaces[0].name, "rest");

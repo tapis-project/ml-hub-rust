@@ -271,6 +271,7 @@ dependencies = [
  "env_logger",
  "log",
  "mongodb",
+ "serde_json",
  "shared",
  "utoipa",
 ]

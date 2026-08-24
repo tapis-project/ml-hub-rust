@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError};
 
@@ -22,6 +22,10 @@ pub struct CreateAgentRecordBody {
     pub provider: Option<AgentProvider>,
     #[validate(length(min = 1))]
     pub version: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_empty")]
+    #[schema(nullable, default = json!([]))]
+    #[validate(nested)]
+    pub artifact_locators: Vec<ArtifactLocator>,
 }
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
@@ -30,6 +34,23 @@ pub struct AgentProvider {
     pub organization: String,
     #[validate(url)]
     pub url: String,
+}
+
+#[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
+pub struct ArtifactLocator {
+    pub artifact_type: AgentArtifactType,
+    #[validate(url)]
+    pub url: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum AgentArtifactType {
+    Binary,
+    DockerImage,
+    HelmChart,
+    PythonPackage,
+    SourceCode,
+    Unspecified,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -74,6 +95,16 @@ fn validate_unique_interface_names(
     }
 
     Ok(())
+}
+
+fn deserialize_null_to_empty<'de, D>(deserializer: D) -> Result<Vec<ArtifactLocator>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    match Option::<Vec<ArtifactLocator>>::deserialize(deserializer)? {
+        Some(artifact_locators) => Ok(artifact_locators),
+        None => Ok(Vec::new()),
+    }
 }
 
 #[cfg(test)]

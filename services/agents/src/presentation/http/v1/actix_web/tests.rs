@@ -96,6 +96,18 @@ mod tests {
             .as_ref()
             .unwrap()
             .schemas
+            .contains_key("ArtifactLocator"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("AgentArtifactType"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
             .contains_key("CreateAgentRecordBody"));
         assert!(document
             .components
@@ -109,5 +121,35 @@ mod tests {
             .unwrap()
             .schemas
             .contains_key("ListAgentRecordsResponse"));
+
+        let document = serde_json::to_value(ApiDoc::openapi())
+            .expect("OpenAPI document should serialize to JSON");
+        let response_artifact_locators = document
+            .pointer("/components/schemas/AgentRecord/properties/artifact_locators")
+            .expect("AgentRecord response artifact_locators schema should exist");
+        assert_eq!(
+            response_artifact_locators.get("type"),
+            Some(&serde_json::Value::String("array".into()))
+        );
+        assert_ne!(
+            response_artifact_locators.get("nullable"),
+            Some(&serde_json::Value::Bool(true))
+        );
+        assert!(document
+            .pointer("/components/schemas/AgentRecord/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
+
+        let request_artifact_locators = document
+            .pointer("/components/schemas/CreateAgentRecordBody/properties/artifact_locators")
+            .expect("create request artifact_locators schema should exist");
+        assert!(request_artifact_locators
+            .get("type")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|types| types.iter().any(|value| value == "null")));
+        assert!(!document
+            .pointer("/components/schemas/CreateAgentRecordBody/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
     }
 }

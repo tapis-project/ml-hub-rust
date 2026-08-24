@@ -3,8 +3,8 @@ mod agent_record_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        test_fixtures::AgentRecordBuilder, AgentInterface, AgentProvider, AgentRecordError,
-        Capabilities, MessageBinding, Protocol,
+        test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
+        AgentRecordError, ArtifactLocator, Capabilities, MessageBinding, Protocol,
     };
 
     #[test]
@@ -26,6 +26,7 @@ mod agent_record_test {
         assert_eq!(agent_record.provider_url(), None);
         assert!(!agent_record.supports_streaming());
         assert!(!agent_record.supports_push_notifications());
+        assert!(agent_record.artifact_locators().is_empty());
         assert_eq!(agent_record.interfaces().first().name(), "default");
         assert_eq!(
             agent_record.interfaces().first().description(),
@@ -64,6 +65,10 @@ mod agent_record_test {
                 "https://www.examplegeoservices.com".into(),
             ))
             .with_version("1.2.3".into())
+            .with_artifact_locators(vec![ArtifactLocator::new(
+                AgentArtifactType::DockerImage,
+                "registry.example.com/agents/assistant:1.2.3".into(),
+            )])
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -82,6 +87,15 @@ mod agent_record_test {
         );
         assert!(agent_record.supports_streaming());
         assert!(agent_record.supports_push_notifications());
+        assert_eq!(agent_record.artifact_locators().len(), 1);
+        assert!(matches!(
+            agent_record.artifact_locators()[0].artifact_type(),
+            AgentArtifactType::DockerImage
+        ));
+        assert_eq!(
+            agent_record.artifact_locators()[0].url(),
+            "registry.example.com/agents/assistant:1.2.3"
+        );
         assert_eq!(agent_record.interfaces().first().name(), "stdio");
         assert!(matches!(
             agent_record.interfaces().first().protocol(),

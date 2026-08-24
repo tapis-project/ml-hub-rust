@@ -16,12 +16,29 @@ pub struct AgentRecord {
     pub capabilities: Capabilities,
     pub provider: Option<AgentProvider>,
     pub version: String,
+    pub artifact_locators: Vec<ArtifactLocator>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct AgentProvider {
     pub organization: String,
     pub url: String,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct ArtifactLocator {
+    pub artifact_type: AgentArtifactType,
+    pub url: String,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub enum AgentArtifactType {
+    Binary,
+    DockerImage,
+    HelmChart,
+    PythonPackage,
+    SourceCode,
+    Unspecified,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
