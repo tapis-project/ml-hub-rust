@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use nonempty::NonEmpty;
+use semver::Version;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -30,6 +31,10 @@ impl AgentRecord {
         version: String,
         artifact_locators: Vec<ArtifactLocator>,
     ) -> Result<Self, AgentRecordError> {
+        if Self::validate_version(&version).is_err() {
+            return Err(AgentRecordError::InvalidVersion(version));
+        }
+
         let interfaces = Self::interfaces_from_vec(interfaces)?;
         Self::ensure_unique_interface_names(&interfaces)
             .map_err(AgentRecordError::DuplicateAgentInterfaceIdentifier)?;
@@ -49,6 +54,13 @@ impl AgentRecord {
     }
 
     pub fn reconstitute(props: ReconstituteAgentRecordProps) -> Result<Self, AgentRecordError> {
+        if Self::validate_version(&props.version).is_err() {
+            return Err(AgentRecordError::DataIntegrityError(format!(
+                "Agent record contains an invalid semantic version: {}",
+                props.version
+            )));
+        }
+
         let interfaces = Self::interfaces_from_vec(props.interfaces)?;
         Self::ensure_unique_interface_names(&interfaces).map_err(|duplicate_name| {
             AgentRecordError::DataIntegrityError(format!(
@@ -140,6 +152,10 @@ impl AgentRecord {
         }
 
         Ok(())
+    }
+
+    fn validate_version(version: &str) -> Result<(), semver::Error> {
+        Version::parse(version).map(|_| ())
     }
 }
 
@@ -288,6 +304,9 @@ pub enum MessageBinding {
 pub enum AgentRecordError {
     #[error("Duplicate agent interface identifier: {0}")]
     DuplicateAgentInterfaceIdentifier(String),
+
+    #[error("Invalid agent record version: {0}")]
+    InvalidVersion(String),
 
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String),

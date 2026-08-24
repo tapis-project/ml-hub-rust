@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize};
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError};
@@ -20,7 +21,7 @@ pub struct CreateAgentRecordBody {
     pub capabilities: Capabilities,
     #[validate(nested)]
     pub provider: Option<AgentProvider>,
-    #[validate(length(min = 1))]
+    #[validate(length(min = 1), custom(function = "validate_semver"))]
     pub version: String,
     #[serde(default, deserialize_with = "deserialize_null_to_empty")]
     #[schema(nullable, default = json!([]))]
@@ -105,6 +106,12 @@ where
         Some(artifact_locators) => Ok(artifact_locators),
         None => Ok(Vec::new()),
     }
+}
+
+fn validate_semver(version: &str) -> Result<(), ValidationError> {
+    Version::parse(version)
+        .map(|_| ())
+        .map_err(|_| ValidationError::new("semver"))
 }
 
 #[cfg(test)]

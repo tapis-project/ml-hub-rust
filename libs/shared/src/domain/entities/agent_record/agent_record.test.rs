@@ -64,7 +64,7 @@ mod agent_record_test {
                 "Example Geo Services Inc.".into(),
                 "https://www.examplegeoservices.com".into(),
             ))
-            .with_version("1.2.3".into())
+            .with_version("1.2.3-rc.1+build.42".into())
             .with_artifact_locators(vec![ArtifactLocator::new(
                 AgentArtifactType::DockerImage,
                 "registry.example.com/agents/assistant:1.2.3".into(),
@@ -76,7 +76,7 @@ mod agent_record_test {
         assert_eq!(agent_record.tenant_id(), "tenant-a");
         assert_eq!(agent_record.owner(), "owner-a");
         assert_eq!(agent_record.description(), "A helpful agent");
-        assert_eq!(agent_record.version(), "1.2.3");
+        assert_eq!(agent_record.version(), "1.2.3-rc.1+build.42");
         assert_eq!(
             agent_record.provider_organization(),
             Some("Example Geo Services Inc.")
@@ -174,6 +174,37 @@ mod agent_record_test {
             Ok(_) => {
                 panic!("Expected agent record reconstitution to reject duplicate interface names")
             }
+        };
+
+        assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
+    }
+
+    #[test]
+    fn test_new_agent_record_rejects_invalid_semver_version() {
+        let result = AgentRecordBuilder::new()
+            .with_version("v1.2.3".into())
+            .build_new();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected agent record construction to reject invalid SemVer"),
+        };
+
+        assert!(matches!(
+            error,
+            AgentRecordError::InvalidVersion(version) if version == "v1.2.3"
+        ));
+    }
+
+    #[test]
+    fn test_reconstitute_agent_record_rejects_invalid_semver_version() {
+        let result = AgentRecordBuilder::new()
+            .with_version("1.2".into())
+            .build_reconstituted();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected agent record reconstitution to reject invalid SemVer"),
         };
 
         assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));

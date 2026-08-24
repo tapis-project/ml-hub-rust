@@ -38,11 +38,28 @@ mod create_agent_record_body_test {
             interfaces: interfaces(),
             capabilities: capabilities(),
             provider: None,
-            version: "1.0.0".into(),
+            version: "1.0.0-beta.1+build.42".into(),
             artifact_locators: artifact_locators(),
         };
 
         assert!(body.validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_invalid_semver_versions() {
+        for version in ["v1.0.0", "1.0", "not-a-version"] {
+            let body = CreateAgentRecordBody {
+                name: "assistant".into(),
+                description: "A helpful agent".into(),
+                interfaces: interfaces(),
+                capabilities: capabilities(),
+                provider: None,
+                version: version.into(),
+                artifact_locators: artifact_locators(),
+            };
+
+            assert!(body.validate().is_err(), "Expected {version} to be invalid");
+        }
     }
 
     #[test]
