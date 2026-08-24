@@ -27,6 +27,9 @@ pub struct CreateAgentRecordBody {
     #[schema(nullable, default = json!([]))]
     #[validate(nested)]
     pub artifact_locators: Vec<ArtifactLocator>,
+    #[serde(default)]
+    #[validate(nested, custom(function = "validate_unique_skill_ids"))]
+    pub skills: Vec<AgentSkill>,
     #[validate(url)]
     pub icon_url: Option<String>,
     #[validate(url)]
@@ -46,6 +49,17 @@ pub struct ArtifactLocator {
     pub artifact_type: AgentArtifactType,
     #[validate(url)]
     pub url: String,
+}
+
+#[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
+pub struct AgentSkill {
+    #[validate(custom(function = "validate_lower_kebab_case"))]
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    #[validate(length(min = 1))]
+    pub tags: Vec<String>,
+    pub examples: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -102,6 +116,18 @@ fn validate_unique_interface_names(
     Ok(())
 }
 
+fn validate_unique_skill_ids(skills: &Vec<AgentSkill>) -> Result<(), ValidationError> {
+    let mut ids = HashSet::new();
+
+    for skill in skills {
+        if !ids.insert(&skill.id) {
+            return Err(ValidationError::new("duplicate_agent_skill_id"));
+        }
+    }
+
+    Ok(())
+}
+
 fn deserialize_null_to_empty<'de, D>(deserializer: D) -> Result<Vec<ArtifactLocator>, D::Error>
 where
     D: Deserializer<'de>,
@@ -116,6 +142,22 @@ fn validate_semver(version: &str) -> Result<(), ValidationError> {
     Version::parse(version)
         .map(|_| ())
         .map_err(|_| ValidationError::new("semver"))
+}
+
+fn validate_lower_kebab_case(value: &str) -> Result<(), ValidationError> {
+    let is_valid = !value.is_empty()
+        && value.split('-').all(|segment| {
+            !segment.is_empty()
+                && segment
+                    .chars()
+                    .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit())
+        });
+
+    if is_valid {
+        Ok(())
+    } else {
+        Err(ValidationError::new("lower_kebab_case"))
+    }
 }
 
 #[cfg(test)]

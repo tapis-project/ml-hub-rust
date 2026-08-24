@@ -3,8 +3,8 @@
 use uuid::Uuid;
 
 use super::{
-    AgentInterface, AgentProvider, AgentRecord, AgentRecordError, ArtifactLocator, Capabilities,
-    MessageBinding, Protocol, ReconstituteAgentRecordProps,
+    AgentInterface, AgentProvider, AgentRecord, AgentRecordError, AgentSkill, ArtifactLocator,
+    Capabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
 };
 
 pub struct AgentRecordBuilder {
@@ -18,6 +18,7 @@ pub struct AgentRecordBuilder {
     provider: Option<AgentProvider>,
     version: Option<String>,
     artifact_locators: Option<Vec<ArtifactLocator>>,
+    skills: Option<Vec<AgentSkill>>,
     icon_url: Option<String>,
     documentation_url: Option<String>,
 }
@@ -35,6 +36,7 @@ impl AgentRecordBuilder {
             provider: None,
             version: None,
             artifact_locators: None,
+            skills: None,
             icon_url: None,
             documentation_url: None,
         }
@@ -90,6 +92,11 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_skills(mut self, skills: Vec<AgentSkill>) -> Self {
+        self.skills = Some(skills);
+        self
+    }
+
     pub fn with_icon_url(mut self, icon_url: String) -> Self {
         self.icon_url = Some(icon_url);
         self
@@ -126,6 +133,7 @@ impl AgentRecordBuilder {
             self.provider.clone(),
             self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             self.artifact_locators.clone().unwrap_or_default(),
+            self.skills.clone().unwrap_or_default(),
             self.icon_url.clone(),
             self.documentation_url.clone(),
         )
@@ -162,6 +170,7 @@ impl AgentRecordBuilder {
             provider: self.provider.clone(),
             version: self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             artifact_locators: self.artifact_locators.clone().unwrap_or_default(),
+            skills: self.skills.clone().unwrap_or_default(),
             icon_url: self.icon_url.clone(),
             documentation_url: self.documentation_url.clone(),
         })

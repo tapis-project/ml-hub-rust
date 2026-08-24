@@ -3,8 +3,8 @@ mod create_agent_record_body_test {
     use validator::Validate;
 
     use crate::presentation::http::v1::requests::create_agent_record::body::{
-        AgentArtifactType, AgentInterface, AgentProvider, ArtifactLocator, Capabilities,
-        CreateAgentRecordBody, MessageBinding, Protocol,
+        AgentArtifactType, AgentInterface, AgentProvider, AgentSkill, ArtifactLocator,
+        Capabilities, CreateAgentRecordBody, MessageBinding, Protocol,
     };
 
     fn interfaces() -> Vec<AgentInterface> {
@@ -30,6 +30,16 @@ mod create_agent_record_body_test {
         }]
     }
 
+    fn skills() -> Vec<AgentSkill> {
+        vec![AgentSkill {
+            id: "text-analysis".into(),
+            name: "Text analysis".into(),
+            description: "Analyzes text".into(),
+            tags: vec!["nlp".into()],
+            examples: vec!["Analyze this document".into()],
+        }]
+    }
+
     #[test]
     fn test_valid_create_agent_record_body() {
         let body = CreateAgentRecordBody {
@@ -40,6 +50,7 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0-beta.1+build.42".into(),
             artifact_locators: artifact_locators(),
+            skills: skills(),
             icon_url: None,
             documentation_url: None,
         };
@@ -58,6 +69,7 @@ mod create_agent_record_body_test {
                 provider: None,
                 version: version.into(),
                 artifact_locators: artifact_locators(),
+                skills: vec![],
                 icon_url: None,
                 documentation_url: None,
             };
@@ -76,6 +88,7 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: None,
             documentation_url: None,
         };
@@ -102,6 +115,7 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: None,
             documentation_url: None,
         };
@@ -135,6 +149,7 @@ mod create_agent_record_body_test {
         assert!(!body.capabilities.push_notifications);
         assert!(body.provider.is_none());
         assert_eq!(body.version, "1.0.0");
+        assert!(body.skills.is_empty());
         assert!(body.icon_url.is_none());
         assert!(body.documentation_url.is_none());
         assert!(body.interfaces[0].description.is_none());
@@ -174,6 +189,7 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: None,
             documentation_url: None,
         };
@@ -204,6 +220,7 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: None,
             documentation_url: None,
         };
@@ -262,6 +279,7 @@ mod create_agent_record_body_test {
             }),
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: None,
             documentation_url: None,
         };
@@ -279,8 +297,85 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: Some("not-a-url".into()),
             documentation_url: Some("also-not-a-url".into()),
+        };
+
+        assert!(body.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_invalid_skills() {
+        let invalid_identifier = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: interfaces(),
+            capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
+            artifact_locators: artifact_locators(),
+            skills: vec![AgentSkill {
+                id: "Text_Analysis".into(),
+                name: "Text analysis".into(),
+                description: "Analyzes text".into(),
+                tags: vec!["nlp".into()],
+                examples: vec![],
+            }],
+            icon_url: None,
+            documentation_url: None,
+        };
+        assert!(invalid_identifier.validate().is_err());
+
+        let empty_tags = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: interfaces(),
+            capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
+            artifact_locators: artifact_locators(),
+            skills: vec![AgentSkill {
+                id: "text-analysis".into(),
+                name: "Text analysis".into(),
+                description: "Analyzes text".into(),
+                tags: vec![],
+                examples: vec![],
+            }],
+            icon_url: None,
+            documentation_url: None,
+        };
+        assert!(empty_tags.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_duplicate_skill_ids() {
+        let body = CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            interfaces: interfaces(),
+            capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
+            artifact_locators: artifact_locators(),
+            skills: vec![
+                AgentSkill {
+                    id: "text-analysis".into(),
+                    name: "Text analysis".into(),
+                    description: "Analyzes text".into(),
+                    tags: vec!["nlp".into()],
+                    examples: vec![],
+                },
+                AgentSkill {
+                    id: "text-analysis".into(),
+                    name: "Other analysis".into(),
+                    description: "Analyzes other text".into(),
+                    tags: vec!["nlp".into()],
+                    examples: vec![],
+                },
+            ],
+            icon_url: None,
+            documentation_url: None,
         };
 
         assert!(body.validate().is_err());
@@ -324,6 +419,7 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: artifact_locators(),
+            skills: vec![],
             icon_url: Some("https://example.com/agent-icon.png".into()),
             documentation_url: Some("https://docs.example.com/agents/assistant".into()),
         };
@@ -344,6 +440,7 @@ mod create_agent_record_body_test {
                 artifact_type: AgentArtifactType::SourceCode,
                 url: "not-a-url".into(),
             }],
+            skills: vec![],
             icon_url: None,
             documentation_url: None,
         };

@@ -84,6 +84,12 @@ mod tests {
             .as_ref()
             .unwrap()
             .schemas
+            .contains_key("AgentSkill"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
             .contains_key("Capabilities"));
         assert!(document
             .components
@@ -151,5 +157,21 @@ mod tests {
             .pointer("/components/schemas/CreateAgentRecordBody/required")
             .and_then(serde_json::Value::as_array)
             .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
+
+        let response_skills = document
+            .pointer("/components/schemas/AgentRecord/properties/skills")
+            .expect("AgentRecord response skills schema should exist");
+        assert_eq!(
+            response_skills.get("type"),
+            Some(&serde_json::Value::String("array".into()))
+        );
+        assert!(document
+            .pointer("/components/schemas/AgentRecord/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "skills") }));
+        assert!(!document
+            .pointer("/components/schemas/CreateAgentRecordBody/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "skills") }));
     }
 }

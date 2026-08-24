@@ -33,8 +33,26 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 .cloned()
                 .map(responses::ArtifactLocator::from)
                 .collect(),
+            skills: value
+                .skills()
+                .iter()
+                .cloned()
+                .map(responses::AgentSkill::from)
+                .collect(),
             icon_url: value.icon_url().map(str::to_owned),
             documentation_url: value.documentation_url().map(str::to_owned),
+        }
+    }
+}
+
+impl From<entities::AgentSkill> for responses::AgentSkill {
+    fn from(value: entities::AgentSkill) -> Self {
+        Self {
+            id: value.id().into(),
+            name: value.name().into(),
+            description: value.description().into(),
+            tags: value.tags().iter().cloned().collect(),
+            examples: value.examples().to_vec(),
         }
     }
 }

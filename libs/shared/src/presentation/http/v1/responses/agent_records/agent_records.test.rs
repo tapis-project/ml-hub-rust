@@ -5,8 +5,8 @@ mod agent_records_test {
     use crate::domain::entities::agent_record::{
         AgentArtifactType as DomainAgentArtifactType, AgentInterface as DomainAgentInterface,
         AgentProvider as DomainAgentProvider, AgentRecord as DomainAgentRecord,
-        ArtifactLocator as DomainArtifactLocator, Capabilities as DomainCapabilities,
-        MessageBinding, Protocol, ReconstituteAgentRecordProps,
+        AgentSkill as DomainAgentSkill, ArtifactLocator as DomainArtifactLocator,
+        Capabilities as DomainCapabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
     };
     use crate::presentation::http::v1::responses::agent_records::{
         AgentArtifactType as ResponseAgentArtifactType, AgentRecord,
@@ -14,8 +14,7 @@ mod agent_records_test {
     };
 
     #[test]
-    fn test_agent_record_entity_to_response(
-    ) -> Result<(), crate::domain::entities::agent_record::AgentRecordError> {
+    fn test_agent_record_entity_to_response() -> Result<(), Box<dyn std::error::Error>> {
         let id = Uuid::now_v7();
         let domain_agent_record = DomainAgentRecord::reconstitute(ReconstituteAgentRecordProps {
             id,
@@ -42,6 +41,13 @@ mod agent_records_test {
                 DomainAgentArtifactType::SourceCode,
                 "tapis://example-system/path/to/agent-artifact".into(),
             )],
+            skills: vec![DomainAgentSkill::new(
+                "text-analysis".into(),
+                "Text analysis".into(),
+                "Analyzes text".into(),
+                vec!["nlp".into()],
+                vec!["Analyze this document".into()],
+            )?],
             icon_url: Some("https://example.com/agent-icon.png".into()),
             documentation_url: Some("https://docs.example.com/agents/assistant".into()),
         })?;
@@ -76,6 +82,12 @@ mod agent_records_test {
             Some("https://www.examplegeoservices.com")
         );
         assert_eq!(response.interfaces.len(), 2);
+        assert_eq!(response.skills.len(), 1);
+        assert_eq!(response.skills[0].id, "text-analysis");
+        assert_eq!(response.skills[0].name, "Text analysis");
+        assert_eq!(response.skills[0].description, "Analyzes text");
+        assert_eq!(response.skills[0].tags, vec!["nlp"]);
+        assert_eq!(response.skills[0].examples, vec!["Analyze this document"]);
         assert_eq!(response.artifact_locators.len(), 1);
         assert!(matches!(
             response.artifact_locators[0].artifact_type,

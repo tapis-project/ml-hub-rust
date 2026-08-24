@@ -4,7 +4,8 @@ mod agent_record_test {
 
     use crate::domain::entities::agent_record::{
         test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
-        AgentRecordError, ArtifactLocator, Capabilities, MessageBinding, Protocol,
+        AgentRecordError, AgentSkill, AgentSkillError, ArtifactLocator, Capabilities,
+        MessageBinding, Protocol, ReconstituteAgentSkillProps,
     };
     use crate::shared_kernel::identifiers::traits::UrnGenerator;
 
@@ -28,6 +29,7 @@ mod agent_record_test {
         assert!(!agent_record.supports_streaming());
         assert!(!agent_record.supports_push_notifications());
         assert!(agent_record.artifact_locators().is_empty());
+        assert!(agent_record.skills().is_empty());
         assert_eq!(agent_record.icon_url(), None);
         assert_eq!(agent_record.documentation_url(), None);
         assert_eq!(agent_record.interfaces().first().name(), "default");
@@ -62,7 +64,7 @@ mod agent_record_test {
     }
 
     #[test]
-    fn test_reconstitute_agent_record() -> Result<(), AgentRecordError> {
+    fn test_reconstitute_agent_record() -> Result<(), Box<dyn std::error::Error>> {
         let id = Uuid::now_v7();
         let agent_record = AgentRecordBuilder::new()
             .with_id(id)
@@ -86,6 +88,13 @@ mod agent_record_test {
                 AgentArtifactType::DockerImage,
                 "registry.example.com/agents/assistant:1.2.3".into(),
             )])
+            .with_skills(vec![AgentSkill::new(
+                "text-analysis".into(),
+                "Text analysis".into(),
+                "Analyzes text".into(),
+                vec!["nlp".into()],
+                vec!["Analyze this document".into()],
+            )?])
             .with_icon_url("https://example.com/agent-icon.png".into())
             .with_documentation_url("https://docs.example.com/agents/assistant".into())
             .build_reconstituted()?;
@@ -107,6 +116,9 @@ mod agent_record_test {
         assert!(agent_record.supports_streaming());
         assert!(agent_record.supports_push_notifications());
         assert_eq!(agent_record.artifact_locators().len(), 1);
+        assert_eq!(agent_record.skills().len(), 1);
+        assert_eq!(agent_record.skills()[0].id(), "text-analysis");
+        assert_eq!(agent_record.skills()[0].tags().first(), "nlp");
         assert!(matches!(
             agent_record.artifact_locators()[0].artifact_type(),
             AgentArtifactType::DockerImage
@@ -204,6 +216,139 @@ mod agent_record_test {
         };
 
         assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
+    }
+
+    #[test]
+    fn test_agent_skill_creation() -> Result<(), AgentSkillError> {
+        let skill = AgentSkill::new(
+            "text-analysis-v2".into(),
+            "Text analysis".into(),
+            "Analyzes text".into(),
+            vec!["nlp".into()],
+            vec!["Analyze this document".into()],
+        )?;
+
+        assert_eq!(skill.id(), "text-analysis-v2");
+        assert_eq!(skill.name(), "Text analysis");
+        assert_eq!(skill.description(), "Analyzes text");
+        assert_eq!(skill.tags().first(), "nlp");
+        assert_eq!(skill.examples(), ["Analyze this document"]);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_agent_skill_rejects_invalid_identifier_and_empty_tags() {
+        let invalid_identifier = AgentSkill::new(
+            "Text_Analysis".into(),
+            "Text analysis".into(),
+            "Analyzes text".into(),
+            vec!["nlp".into()],
+            vec![],
+        );
+        let invalid_identifier = match invalid_identifier {
+            Err(error) => error,
+            Ok(_) => panic!("Expected invalid skill identifier to be rejected"),
+        };
+        assert!(matches!(
+            invalid_identifier,
+            AgentSkillError::InvalidIdentifier(identifier) if identifier == "Text_Analysis"
+        ));
+
+        let empty_tags = AgentSkill::new(
+            "text-analysis".into(),
+            "Text analysis".into(),
+            "Analyzes text".into(),
+            vec![],
+            vec![],
+        );
+        let empty_tags = match empty_tags {
+            Err(error) => error,
+            Ok(_) => panic!("Expected empty skill tags to be rejected"),
+        };
+        assert!(matches!(empty_tags, AgentSkillError::EmptyTags));
+    }
+
+    #[test]
+    fn test_reconstitute_agent_skill_rejects_invalid_data() {
+        let result = AgentSkill::reconstitute(ReconstituteAgentSkillProps {
+            id: "Text_Analysis".into(),
+            name: "Text analysis".into(),
+            description: "Analyzes text".into(),
+            tags: vec!["nlp".into()],
+            examples: vec![],
+        });
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected invalid persisted skill data to be rejected"),
+        };
+        assert!(matches!(error, AgentSkillError::DataIntegrityError(..)));
+    }
+
+    #[test]
+    fn test_new_agent_record_rejects_duplicate_skill_ids() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let result = AgentRecordBuilder::new()
+            .with_skills(vec![
+                AgentSkill::new(
+                    "text-analysis".into(),
+                    "Text analysis".into(),
+                    "Analyzes text".into(),
+                    vec!["nlp".into()],
+                    vec![],
+                )?,
+                AgentSkill::new(
+                    "text-analysis".into(),
+                    "Other analysis".into(),
+                    "Analyzes other text".into(),
+                    vec!["nlp".into()],
+                    vec![],
+                )?,
+            ])
+            .build_new();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected duplicate skill IDs to be rejected"),
+        };
+        assert!(matches!(
+            error,
+            AgentRecordError::DuplicateAgentSkillIdentifier(identifier) if identifier == "text-analysis"
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_reconstitute_agent_record_rejects_duplicate_skill_ids(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let result = AgentRecordBuilder::new()
+            .with_skills(vec![
+                AgentSkill::new(
+                    "text-analysis".into(),
+                    "Text analysis".into(),
+                    "Analyzes text".into(),
+                    vec!["nlp".into()],
+                    vec![],
+                )?,
+                AgentSkill::new(
+                    "text-analysis".into(),
+                    "Other analysis".into(),
+                    "Analyzes other text".into(),
+                    vec!["nlp".into()],
+                    vec![],
+                )?,
+            ])
+            .build_reconstituted();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected duplicate persisted skill IDs to be rejected"),
+        };
+        assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
+
+        Ok(())
     }
 
     #[test]
