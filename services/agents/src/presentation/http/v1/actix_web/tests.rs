@@ -155,6 +155,38 @@ mod tests {
                 .as_ref()
                 .unwrap()
                 .schemas
+                .contains_key("RestHttpAgentInterface")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("RpcAgentInterface")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("StdioAgentInterface")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("RestHttpLivenessProbe")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
                 .contains_key("CreateAgentRecordResponse")
         );
         assert!(
@@ -205,6 +237,25 @@ mod tests {
                     required.iter().any(|field| field == "artifact_locators")
                 })
         );
+
+        for interface_collection in [
+            "rest_http_interfaces",
+            "rpc_interfaces",
+            "stdio_interfaces",
+        ] {
+            assert!(document
+                .pointer(&format!(
+                    "/components/schemas/CreateAgentRecordBody/properties/{interface_collection}"
+                ))
+                .is_some());
+            assert!(!document
+                .pointer("/components/schemas/CreateAgentRecordBody/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| { required.iter().any(|field| field == interface_collection) }));
+        }
+        assert!(document
+            .pointer("/components/schemas/CreateAgentRecordBody/properties/interfaces")
+            .is_none());
 
         let response_skills = document
             .pointer("/components/schemas/AgentRecord/properties/skills")

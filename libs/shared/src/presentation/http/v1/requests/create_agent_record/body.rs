@@ -7,17 +7,21 @@ use validator::{Validate, ValidationError};
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]
+#[validate(schema(function = "validate_interface_collections"))]
 pub struct CreateAgentRecordBody {
     #[validate(length(min = 1))]
     pub name: String,
     #[validate(length(max = 255))]
     pub description: String,
-    #[validate(
-        length(min = 1),
-        nested,
-        custom(function = "validate_unique_interface_names")
-    )]
-    pub interfaces: Vec<AgentInterface>,
+    #[serde(default)]
+    #[validate(nested)]
+    pub rest_http_interfaces: Vec<RestHttpAgentInterface>,
+    #[serde(default)]
+    #[validate(nested)]
+    pub rpc_interfaces: Vec<RpcAgentInterface>,
+    #[serde(default)]
+    #[validate(nested)]
+    pub stdio_interfaces: Vec<StdioAgentInterface>,
     pub capabilities: Capabilities,
     #[validate(nested)]
     pub provider: Option<AgentProvider>,
@@ -81,21 +85,34 @@ pub struct Capabilities {
 }
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
-pub struct AgentInterface {
+#[serde(deny_unknown_fields)]
+pub struct RestHttpAgentInterface {
     #[validate(length(min = 1))]
     pub name: String,
     #[validate(length(max = 255))]
     pub description: Option<String>,
-    pub protocol: Protocol,
     pub message_binding: Option<MessageBinding>,
-    pub liveness_probe_config: Option<LivenessProbeConfiguration>,
+    pub liveness_probe_config: Option<RestHttpLivenessProbe>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
-pub enum Protocol {
-    RestHttp,
-    Rpc,
-    Stdio,
+#[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct RpcAgentInterface {
+    #[validate(length(min = 1))]
+    pub name: String,
+    #[validate(length(max = 255))]
+    pub description: Option<String>,
+    pub message_binding: Option<MessageBinding>,
+}
+
+#[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct StdioAgentInterface {
+    #[validate(length(min = 1))]
+    pub name: String,
+    #[validate(length(max = 255))]
+    pub description: Option<String>,
+    pub message_binding: Option<MessageBinding>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -106,8 +123,9 @@ pub enum MessageBinding {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
-pub enum LivenessProbeConfiguration {
-    RestHttp { route: String, timeout_seconds: u32 },
+pub struct RestHttpLivenessProbe {
+    pub route: String,
+    pub timeout_seconds: u32,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -122,23 +140,25 @@ impl Default for Visibility {
     }
 }
 
-fn validate_unique_interface_names(
-    interfaces: &Vec<AgentInterface>,
+fn validate_interface_collections(
+    body: &CreateAgentRecordBody,
 ) -> Result<(), ValidationError> {
     let mut names = HashSet::new();
 
-    for interface in interfaces {
-        if !names.insert(&interface.name) {
+    for interface in body
+        .rest_http_interfaces
+        .iter()
+        .map(|interface| &interface.name)
+        .chain(body.rpc_interfaces.iter().map(|interface| &interface.name))
+        .chain(body.stdio_interfaces.iter().map(|interface| &interface.name))
+    {
+        if !names.insert(interface) {
             return Err(ValidationError::new("duplicate_agent_interface_name"));
         }
+    }
 
-        if interface.liveness_probe_config.is_some()
-            && !matches!(interface.protocol, Protocol::RestHttp)
-        {
-            return Err(ValidationError::new(
-                "incompatible_liveness_probe_configuration",
-            ));
-        }
+    if names.is_empty() {
+        return Err(ValidationError::new("missing_agent_interfaces"));
     }
 
     Ok(())

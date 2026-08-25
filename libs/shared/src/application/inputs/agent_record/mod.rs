@@ -77,3 +77,7 @@ pub struct AgentSkillInput {
     pub tags: Vec<String>,
     pub examples: Vec<String>,
 }
+
+#[cfg(test)]
+#[path = "mappers.test.rs"]
+mod mappers_test;

@@ -8,7 +8,13 @@ impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
         Self {
             name: value.name,
             description: value.description,
-            interfaces: value.interfaces.into_iter().map(Into::into).collect(),
+            interfaces: value
+                .rest_http_interfaces
+                .into_iter()
+                .map(Into::into)
+                .chain(value.rpc_interfaces.into_iter().map(Into::into))
+                .chain(value.stdio_interfaces.into_iter().map(Into::into))
+                .collect(),
             capabilities: value.capabilities.into(),
             provider: value.provider.map(Into::into),
             version: value.version,
@@ -34,38 +40,47 @@ impl From<requests::Visibility> for inputs::VisibilityInput {
     }
 }
 
-impl From<requests::AgentInterface> for inputs::AgentInterfaceInput {
-    fn from(value: requests::AgentInterface) -> Self {
+impl From<requests::RestHttpAgentInterface> for inputs::AgentInterfaceInput {
+    fn from(value: requests::RestHttpAgentInterface) -> Self {
         Self {
             name: value.name,
             description: value.description,
-            protocol: value.protocol.into(),
+            protocol: inputs::ProtocolInput::RestHttp,
             message_binding: value.message_binding.map(Into::into),
             liveness_probe_config: value.liveness_probe_config.map(Into::into),
         }
     }
 }
 
-impl From<requests::LivenessProbeConfiguration> for inputs::LivenessProbeConfigurationInput {
-    fn from(value: requests::LivenessProbeConfiguration) -> Self {
-        match value {
-            requests::LivenessProbeConfiguration::RestHttp {
-                route,
-                timeout_seconds,
-            } => Self::RestHttp {
-                route,
-                timeout_seconds,
-            },
+impl From<requests::RpcAgentInterface> for inputs::AgentInterfaceInput {
+    fn from(value: requests::RpcAgentInterface) -> Self {
+        Self {
+            name: value.name,
+            description: value.description,
+            protocol: inputs::ProtocolInput::Rpc,
+            message_binding: value.message_binding.map(Into::into),
+            liveness_probe_config: None,
         }
     }
 }
 
-impl From<requests::Protocol> for inputs::ProtocolInput {
-    fn from(value: requests::Protocol) -> Self {
-        match value {
-            requests::Protocol::RestHttp => Self::RestHttp,
-            requests::Protocol::Rpc => Self::Rpc,
-            requests::Protocol::Stdio => Self::Stdio,
+impl From<requests::StdioAgentInterface> for inputs::AgentInterfaceInput {
+    fn from(value: requests::StdioAgentInterface) -> Self {
+        Self {
+            name: value.name,
+            description: value.description,
+            protocol: inputs::ProtocolInput::Stdio,
+            message_binding: value.message_binding.map(Into::into),
+            liveness_probe_config: None,
+        }
+    }
+}
+
+impl From<requests::RestHttpLivenessProbe> for inputs::LivenessProbeConfigurationInput {
+    fn from(value: requests::RestHttpLivenessProbe) -> Self {
+        Self::RestHttp {
+            route: value.route,
+            timeout_seconds: value.timeout_seconds,
         }
     }
 }

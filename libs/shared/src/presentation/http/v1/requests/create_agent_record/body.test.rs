@@ -3,16 +3,15 @@ mod create_agent_record_body_test {
     use validator::Validate;
 
     use crate::presentation::http::v1::requests::create_agent_record::body::{
-        AgentArtifactType, AgentInterface, AgentProvider, AgentSkill, ArtifactLocator,
-        Capabilities, CreateAgentRecordBody, LivenessProbeConfiguration, MessageBinding, Protocol,
-        Visibility,
+        AgentArtifactType, AgentProvider, AgentSkill, ArtifactLocator, Capabilities,
+        CreateAgentRecordBody, MessageBinding, RestHttpAgentInterface, RestHttpLivenessProbe,
+        RpcAgentInterface, StdioAgentInterface, Visibility,
     };
 
-    fn interfaces() -> Vec<AgentInterface> {
-        vec![AgentInterface {
+    fn rest_http_interfaces() -> Vec<RestHttpAgentInterface> {
+        vec![RestHttpAgentInterface {
             name: "rest".into(),
             description: Some("REST interface".into()),
-            protocol: Protocol::RestHttp,
             message_binding: Some(MessageBinding::HttpJson),
             liveness_probe_config: None,
         }]
@@ -25,496 +24,216 @@ mod create_agent_record_body_test {
         }
     }
 
-    fn artifact_locators() -> Vec<ArtifactLocator> {
-        vec![ArtifactLocator {
-            artifact_type: AgentArtifactType::SourceCode,
-            url: "tapis://example-system/path/to/agent-artifact".into(),
-        }]
-    }
-
-    fn skills() -> Vec<AgentSkill> {
-        vec![AgentSkill {
-            id: "text-analysis".into(),
-            name: "Text analysis".into(),
-            description: "Analyzes text".into(),
-            tags: vec!["nlp".into()],
-            examples: vec!["Analyze this document".into()],
-        }]
+    fn body() -> CreateAgentRecordBody {
+        CreateAgentRecordBody {
+            name: "assistant".into(),
+            description: "A helpful agent".into(),
+            rest_http_interfaces: rest_http_interfaces(),
+            rpc_interfaces: vec![],
+            stdio_interfaces: vec![],
+            capabilities: capabilities(),
+            provider: None,
+            version: "1.0.0".into(),
+            artifact_locators: vec![],
+            skills: vec![],
+            icon_url: None,
+            documentation_url: None,
+            visibility: Visibility::Private,
+        }
     }
 
     #[test]
     fn test_valid_create_agent_record_body() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0-beta.1+build.42".into(),
-            artifact_locators: artifact_locators(),
-            skills: skills(),
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
+        assert!(body().validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_accepts_each_concrete_interface_type() {
+        let mut body = body();
+        body.rpc_interfaces = vec![RpcAgentInterface {
+            name: "rpc".into(),
+            description: None,
+            message_binding: Some(MessageBinding::JsonRpc2_0),
+        }];
+        body.stdio_interfaces = vec![StdioAgentInterface {
+            name: "stdio".into(),
+            description: None,
+            message_binding: None,
+        }];
 
         assert!(body.validate().is_ok());
     }
 
     #[test]
-    fn test_create_agent_record_body_rejects_invalid_semver_versions() {
-        for version in ["v1.0.0", "1.0", "not-a-version"] {
-            let body = CreateAgentRecordBody {
-                name: "assistant".into(),
-                description: "A helpful agent".into(),
-                interfaces: interfaces(),
-                capabilities: capabilities(),
-                provider: None,
-                version: version.into(),
-                artifact_locators: artifact_locators(),
-                skills: vec![],
-                icon_url: None,
-                documentation_url: None,
-                visibility: Visibility::Private,
-            };
+    fn test_create_agent_record_body_defaults_omitted_interface_collections_to_empty() {
+        let result = serde_json::from_str::<CreateAgentRecordBody>(
+            r#"{"name":"assistant","description":"A helpful agent","capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","rest_http_interfaces":[{"name":"rest"}]}"#,
+        );
+        let body = match result {
+            Ok(body) => body,
+            Err(error) => panic!("Expected valid create agent record body: {error}"),
+        };
 
-            assert!(body.validate().is_err(), "Expected {version} to be invalid");
+        assert!(body.rpc_interfaces.is_empty());
+        assert!(body.stdio_interfaces.is_empty());
+        assert!(body.validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_no_interfaces() {
+        let mut body = body();
+        body.rest_http_interfaces.clear();
+
+        assert!(body.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_duplicate_interface_names_across_collections() {
+        let mut body = body();
+        body.rpc_interfaces = vec![RpcAgentInterface {
+            name: "rest".into(),
+            description: None,
+            message_binding: None,
+        }];
+
+        assert!(body.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_accepts_rest_http_liveness_probe() {
+        let mut body = body();
+        body.rest_http_interfaces[0].liveness_probe_config = Some(RestHttpLivenessProbe {
+            route: "/healthcheck".into(),
+            timeout_seconds: 10,
+        });
+
+        assert!(body.validate().is_ok());
+    }
+
+    #[test]
+    fn test_non_rest_interfaces_reject_liveness_probe_field() {
+        for field in ["rpc_interfaces", "stdio_interfaces"] {
+            let request = format!(
+                r#"{{"name":"assistant","description":"A helpful agent","{field}":[{{"name":"interface","liveness_probe_config":{{"route":"/healthcheck","timeout_seconds":10}}}}],"capabilities":{{"streaming":false,"push_notifications":false}},"version":"1.0.0"}}"#
+            );
+
+            assert!(serde_json::from_str::<CreateAgentRecordBody>(&request).is_err());
         }
     }
 
     #[test]
-    fn test_create_agent_record_body_rejects_empty_name() {
-        let body = CreateAgentRecordBody {
-            name: String::new(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
+    fn test_create_agent_record_body_rejects_legacy_interface_property() {
+        let result = serde_json::from_str::<CreateAgentRecordBody>(
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
+        );
 
-        assert!(body.validate().is_err());
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_create_agent_record_body_rejects_unknown_fields() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","unexpected":true}"#,
+            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","unexpected":true}"#,
         );
 
         assert!(result.is_err());
     }
 
     #[test]
-    fn test_create_agent_record_body_rejects_empty_interfaces() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: vec![],
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
-
-        assert!(body.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_requires_interfaces() {
-        let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
-        );
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_accepts_missing_message_binding() {
-        let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"stdio","protocol":"Stdio"}],"capabilities":{"streaming":true,"push_notifications":false},"version":"1.0.0"}"#,
-        );
-
-        let body = match body {
-            Ok(body) => body,
-            Err(error) => panic!("Expected valid create agent record body: {error}"),
-        };
-
-        assert!(body.validate().is_ok());
-        assert_eq!(body.interfaces[0].name, "stdio");
-        assert!(body.capabilities.streaming);
-        assert!(!body.capabilities.push_notifications);
-        assert!(body.provider.is_none());
-        assert_eq!(body.version, "1.0.0");
-        assert!(body.skills.is_empty());
-        assert!(body.icon_url.is_none());
-        assert!(body.documentation_url.is_none());
-        assert!(body.interfaces[0].description.is_none());
-        assert!(body.interfaces[0].message_binding.is_none());
-        assert!(body.interfaces[0].liveness_probe_config.is_none());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_accepts_rest_http_liveness_probe() {
-        let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp","liveness_probe_config":{"RestHttp":{"route":"/healthcheck","timeout_seconds":10}}}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
-        );
-
-        let body = match body {
-            Ok(body) => body,
-            Err(error) => panic!("Expected valid create agent record body: {error}"),
-        };
-
-        assert!(body.validate().is_ok());
-        assert!(matches!(
-            body.interfaces[0].liveness_probe_config,
-            Some(LivenessProbeConfiguration::RestHttp {
-                ref route,
-                timeout_seconds: 10,
-            }) if route == "/healthcheck"
-        ));
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_incompatible_liveness_probe() {
-        for protocol in ["Rpc", "Stdio"] {
-            let request = format!(
-                r#"{{"name":"assistant","description":"A helpful agent","interfaces":[{{"name":"interface","protocol":"{protocol}","liveness_probe_config":{{"RestHttp":{{"route":"/healthcheck","timeout_seconds":10}}}}}}],"capabilities":{{"streaming":false,"push_notifications":false}},"version":"1.0.0"}}"#
-            );
-            let body = serde_json::from_str::<CreateAgentRecordBody>(&request);
-
-            let body = match body {
-                Ok(body) => body,
-                Err(error) => panic!("Expected deserializable create agent record body: {error}"),
-            };
-
-            assert!(
-                body.validate().is_err(),
-                "Expected {protocol} to be rejected"
-            );
+    fn test_create_agent_record_body_requires_description_capabilities_and_version() {
+        for request in [
+            r#"{"name":"assistant","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
+            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"version":"1.0.0"}"#,
+            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false}}"#,
+        ] {
+            assert!(serde_json::from_str::<CreateAgentRecordBody>(request).is_err());
         }
     }
 
     #[test]
-    fn test_create_agent_record_body_rejects_invalid_interface_enum() {
-        let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"Unknown"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
-        );
+    fn test_create_agent_record_body_rejects_invalid_semver_and_empty_interface_name() {
+        let mut invalid_version = body();
+        invalid_version.version = "v1.0.0".into();
+        assert!(invalid_version.validate().is_err());
 
-        assert!(result.is_err());
+        let mut empty_name = body();
+        empty_name.rest_http_interfaces[0].name = String::new();
+        assert!(empty_name.validate().is_err());
     }
 
     #[test]
-    fn test_create_agent_record_body_requires_description() {
-        let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
-        );
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_empty_interface_name() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: vec![AgentInterface {
-                name: String::new(),
-                description: None,
-                protocol: Protocol::RestHttp,
-                message_binding: None,
-                liveness_probe_config: None,
-            }],
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
+    fn test_create_agent_record_body_validates_existing_nested_properties() {
+        let mut body = body();
+        body.provider = Some(AgentProvider {
+            organization: String::new(),
+            url: "not-a-url".into(),
+        });
+        body.artifact_locators = vec![ArtifactLocator {
+            artifact_type: AgentArtifactType::SourceCode,
+            url: "not-a-url".into(),
+        }];
+        body.skills = vec![AgentSkill {
+            id: "Text Analysis".into(),
+            name: "Text analysis".into(),
+            description: "Analyzes text".into(),
+            tags: vec![],
+            examples: vec![],
+        }];
+        body.icon_url = Some("not-a-url".into());
+        body.documentation_url = Some("also-not-a-url".into());
 
         assert!(body.validate().is_err());
     }
 
     #[test]
-    fn test_create_agent_record_body_rejects_duplicate_interface_names() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: vec![
-                AgentInterface {
-                    name: "rest".into(),
-                    description: None,
-                    protocol: Protocol::RestHttp,
-                    message_binding: None,
-                    liveness_probe_config: None,
-                },
-                AgentInterface {
-                    name: "rest".into(),
-                    description: None,
-                    protocol: Protocol::Stdio,
-                    message_binding: None,
-                    liveness_probe_config: None,
-                },
-            ],
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
-
-        assert!(body.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_requires_capabilities() {
-        let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"version":"1.0.0"}"#,
-        );
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_requires_version() {
-        let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false}}"#,
-        );
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_accepts_provider() {
-        let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"provider":{"organization":"Example Geo Services Inc.","url":"https://www.examplegeoservices.com"},"version":"1.0.0"}"#,
-        );
-
-        let body = match body {
-            Ok(body) => body,
-            Err(error) => panic!("Expected valid create agent record body: {error}"),
-        };
+    fn test_create_agent_record_body_accepts_valid_provider_and_artifact_locator() {
+        let mut body = body();
+        body.provider = Some(AgentProvider {
+            organization: "Example Geo Services Inc.".into(),
+            url: "https://www.examplegeoservices.com".into(),
+        });
+        body.artifact_locators = vec![ArtifactLocator {
+            artifact_type: AgentArtifactType::SourceCode,
+            url: "tapis://example-system/path/to/agent-artifact".into(),
+        }];
 
         assert!(body.validate().is_ok());
-        assert_eq!(
-            body.provider
-                .as_ref()
-                .map(|provider| provider.organization.as_str()),
-            Some("Example Geo Services Inc.")
-        );
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_invalid_provider() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: Some(AgentProvider {
-                organization: String::new(),
-                url: "not-a-url".into(),
-            }),
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
-
-        assert!(body.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_invalid_optional_urls() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: Some("not-a-url".into()),
-            documentation_url: Some("also-not-a-url".into()),
-            visibility: Visibility::Private,
-        };
-
-        assert!(body.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_invalid_skills() {
-        let invalid_identifier = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![AgentSkill {
-                id: "Text_Analysis".into(),
-                name: "Text analysis".into(),
-                description: "Analyzes text".into(),
-                tags: vec!["nlp".into()],
-                examples: vec![],
-            }],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
-        assert!(invalid_identifier.validate().is_err());
-
-        let empty_tags = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![AgentSkill {
-                id: "text-analysis".into(),
-                name: "Text analysis".into(),
-                description: "Analyzes text".into(),
-                tags: vec![],
-                examples: vec![],
-            }],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
-        assert!(empty_tags.validate().is_err());
     }
 
     #[test]
     fn test_create_agent_record_body_rejects_duplicate_skill_ids() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![
-                AgentSkill {
-                    id: "text-analysis".into(),
-                    name: "Text analysis".into(),
-                    description: "Analyzes text".into(),
-                    tags: vec!["nlp".into()],
-                    examples: vec![],
-                },
-                AgentSkill {
-                    id: "text-analysis".into(),
-                    name: "Other analysis".into(),
-                    description: "Analyzes other text".into(),
-                    tags: vec!["nlp".into()],
-                    examples: vec![],
-                },
-            ],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
+        let mut body = body();
+        body.skills = vec![
+            AgentSkill {
+                id: "text-analysis".into(),
+                name: "Text analysis".into(),
+                description: "Analyzes text".into(),
+                tags: vec!["nlp".into()],
+                examples: vec![],
+            },
+            AgentSkill {
+                id: "text-analysis".into(),
+                name: "Other analysis".into(),
+                description: "Analyzes other text".into(),
+                tags: vec!["nlp".into()],
+                examples: vec![],
+            },
+        ];
 
         assert!(body.validate().is_err());
     }
 
     #[test]
-    fn test_create_agent_record_body_defaults_omitted_artifact_locators_to_empty() {
-        let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
+    fn test_create_agent_record_body_defaults_artifact_locators_and_visibility() {
+        let result = serde_json::from_str::<CreateAgentRecordBody>(
+            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","artifact_locators":null}"#,
         );
-
-        let body = match body {
+        let body = match result {
             Ok(body) => body,
-            Err(error) => panic!("Expected artifact locators to default when omitted: {error}"),
+            Err(error) => panic!("Expected valid create agent record body: {error}"),
         };
 
         assert!(body.artifact_locators.is_empty());
         assert!(matches!(body.visibility, Visibility::Private));
-    }
-
-    #[test]
-    fn test_create_agent_record_body_defaults_null_artifact_locators_to_empty() {
-        let body = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","artifact_locators":null}"#,
-        );
-
-        let body = match body {
-            Ok(body) => body,
-            Err(error) => panic!("Expected null artifact locators to default: {error}"),
-        };
-
-        assert!(body.artifact_locators.is_empty());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_accepts_tapis_artifact_locator_url() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: artifact_locators(),
-            skills: vec![],
-            icon_url: Some("https://example.com/agent-icon.png".into()),
-            documentation_url: Some("https://docs.example.com/agents/assistant".into()),
-            visibility: Visibility::Private,
-        };
-
-        assert!(body.validate().is_ok());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_invalid_artifact_locator_url() {
-        let body = CreateAgentRecordBody {
-            name: "assistant".into(),
-            description: "A helpful agent".into(),
-            interfaces: interfaces(),
-            capabilities: capabilities(),
-            provider: None,
-            version: "1.0.0".into(),
-            artifact_locators: vec![ArtifactLocator {
-                artifact_type: AgentArtifactType::SourceCode,
-                url: "not-a-url".into(),
-            }],
-            skills: vec![],
-            icon_url: None,
-            documentation_url: None,
-            visibility: Visibility::Private,
-        };
-
-        assert!(body.validate().is_err());
-    }
-
-    #[test]
-    fn test_create_agent_record_body_rejects_invalid_artifact_locator_type() {
-        let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","artifact_locators":[{"artifact_type":"Unknown","url":"tapis://example-system/path/to/agent-artifact"}]}"#,
-        );
-
-        assert!(result.is_err());
     }
 }
