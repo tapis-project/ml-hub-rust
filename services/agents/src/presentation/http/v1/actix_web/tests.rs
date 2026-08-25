@@ -38,7 +38,7 @@ mod tests {
             .to_request();
         assert_eq!(
             test::call_service(&app, create).await.status(),
-            StatusCode::NOT_IMPLEMENTED
+            StatusCode::BAD_REQUEST
         );
 
         let healthcheck = test::TestRequest::get()

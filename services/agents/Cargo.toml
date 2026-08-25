@@ -14,6 +14,7 @@ log = "0.4"
 mongodb = "3.5.1"
 shared = { version = "0.1.0", path = "../../libs/shared" }
 utoipa = "5.4.0"
+serde_json = { workspace = true }
+validator = { workspace = true }
 
 [dev-dependencies]
-serde_json = { workspace = true }

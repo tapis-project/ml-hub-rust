@@ -18,7 +18,7 @@ use shared::{
 
 use super::handlers;
 use crate::{
-    bootstrap::state::AppState,
+    bootstrap::{factories::agent_record_service_factory, state::AppState},
     config::{DEFAULT_HOST, DEFAULT_PORT},
 };
 
@@ -73,6 +73,10 @@ pub async fn run_server() -> std::io::Result<()> {
         client: mongo_client,
         db_name,
     };
+    let agent_record_service = web::Data::new(agent_record_service_factory(
+        &state.client,
+        state.db_name.clone(),
+    ));
 
     HttpServer::new(move || {
         App::new()
@@ -80,6 +84,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
+            .app_data(agent_record_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(preflight_short_circuit))
             .wrap(Logger::default())

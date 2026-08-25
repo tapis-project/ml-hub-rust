@@ -274,6 +274,7 @@ dependencies = [
  "serde_json",
  "shared",
  "utoipa",
+ "validator",
 ]
 
 [[package]]
