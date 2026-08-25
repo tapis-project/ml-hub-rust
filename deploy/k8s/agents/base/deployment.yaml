@@ -18,6 +18,8 @@ spec:
           env:
             - name: RUST_LOG
               value: debug
+            - name: SITE_CONFIG_PATH
+              value: /etc/mlhub/site.json
           ports:
             - containerPort: 8000
               name: webserver
@@ -30,3 +32,11 @@ spec:
             failureThreshold: 5
           resources: {}
           tty: true
+          volumeMounts:
+            - name: site-config
+              mountPath: /etc/mlhub/site.json
+              subPath: site.json
+      volumes:
+        - name: site-config
+          configMap:
+            name: mlhub-site-configs
