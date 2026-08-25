@@ -5,6 +5,7 @@ use semver::Version;
 use thiserror::Error;
 use uuid::Uuid;
 
+use crate::domain::entities::visibility::Visibility;
 use crate::impl_urn_generator;
 
 #[derive(Clone, Debug)]
@@ -22,6 +23,7 @@ pub struct AgentRecord {
     skills: Vec<AgentSkill>,
     icon_url: Option<String>,
     documentation_url: Option<String>,
+    visibility: Visibility,
 }
 
 impl_urn_generator!(AgentRecord, tenant_id, "agent_record", id);
@@ -40,6 +42,7 @@ impl AgentRecord {
         skills: Vec<AgentSkill>,
         icon_url: Option<String>,
         documentation_url: Option<String>,
+        visibility: Visibility,
     ) -> Result<Self, AgentRecordError> {
         if Self::validate_version(&version).is_err() {
             return Err(AgentRecordError::InvalidVersion(version));
@@ -65,6 +68,7 @@ impl AgentRecord {
             skills,
             icon_url,
             documentation_url,
+            visibility,
         })
     }
 
@@ -102,6 +106,7 @@ impl AgentRecord {
             skills: props.skills,
             icon_url: props.icon_url,
             documentation_url: props.documentation_url,
+            visibility: props.visibility,
         })
     }
 
@@ -167,6 +172,10 @@ impl AgentRecord {
         self.documentation_url.as_deref()
     }
 
+    pub fn is_public(&self) -> bool {
+        matches!(self.visibility, Visibility::Public)
+    }
+
     fn interfaces_from_vec(
         interfaces: Vec<AgentInterface>,
     ) -> Result<NonEmpty<AgentInterface>, AgentRecordError> {
@@ -221,6 +230,7 @@ pub struct ReconstituteAgentRecordProps {
     pub skills: Vec<AgentSkill>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
+    pub visibility: Visibility,
 }
 
 /// A discrete agent capability used for discovery, routing, compliance auditing, and coarse-grained classification.

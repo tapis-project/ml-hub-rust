@@ -5,13 +5,15 @@ use async_trait::async_trait;
 use super::*;
 use crate::application::inputs::agent_record::{
     AgentArtifactTypeInput, AgentInterfaceInput, AgentSkillInput, ArtifactLocatorInput,
-    CapabilitiesInput, CreateAgentRecordInput, MessageBindingInput, ProtocolInput,
+    CapabilitiesInput, CreateAgentRecordInput, MessageBindingInput, ProtocolInput, VisibilityInput,
 };
 use crate::application::ports::agent_record::AgentRecordRepository;
 use crate::domain::entities::agent_record::AgentSkill;
 
 struct TestAgentRecordRepository {
     saved: Mutex<Option<AgentRecord>>,
+    owner_list_calls: Mutex<Vec<(String, String)>>,
+    public_tenant_list_calls: Mutex<Vec<String>>,
 }
 
 #[async_trait]
@@ -26,15 +28,31 @@ impl AgentRecordRepository for TestAgentRecordRepository {
     }
     async fn list_by_owner(
         &self,
-        _: &str,
-        _: &str,
+        tenant_id: &str,
+        owner: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError> {
+        let mut calls = match self.owner_list_calls.lock() {
+            Ok(calls) => calls,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        calls.push((tenant_id.into(), owner.into()));
         Ok(Vec::new())
     }
     async fn list_by_tenant(
         &self,
         _: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError> {
+        Ok(Vec::new())
+    }
+    async fn list_public_by_tenant(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError> {
+        let mut calls = match self.public_tenant_list_calls.lock() {
+            Ok(calls) => calls,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        calls.push(tenant_id.into());
         Ok(Vec::new())
     }
 }
@@ -68,6 +86,7 @@ fn input() -> CreateAgentRecordInput {
         }],
         icon_url: Some("https://example.com/icon.svg".into()),
         documentation_url: Some("https://example.com/docs".into()),
+        visibility: VisibilityInput::Private,
     }
 }
 
@@ -76,6 +95,8 @@ async fn create_agent_record_derives_owner_and_tenant_from_context(
 ) -> Result<(), AgentRecordServiceError> {
     let repository = Arc::new(TestAgentRecordRepository {
         saved: Mutex::new(None),
+        owner_list_calls: Mutex::new(Vec::new()),
+        public_tenant_list_calls: Mutex::new(Vec::new()),
     });
     let service = AgentRecordService::new(repository.clone());
     let context = RequestContext::system(None);
@@ -97,5 +118,53 @@ async fn create_agent_record_derives_owner_and_tenant_from_context(
         saved.skills().first().map(AgentSkill::id),
         Some("geospatial-search")
     );
+    Ok(())
+}
+
+#[tokio::test]
+async fn list_for_user_uses_context_tenant_and_principal() -> Result<(), AgentRecordServiceError> {
+    let repository = Arc::new(TestAgentRecordRepository {
+        saved: Mutex::new(None),
+        owner_list_calls: Mutex::new(Vec::new()),
+        public_tenant_list_calls: Mutex::new(Vec::new()),
+    });
+    let service = AgentRecordService::new(repository.clone());
+    let context = RequestContext::system(None);
+
+    let agent_records = service.list_for_user(&context).await?;
+
+    assert!(agent_records.is_empty());
+    let calls = match repository.owner_list_calls.lock() {
+        Ok(calls) => calls,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    assert_eq!(
+        calls.as_slice(),
+        &[(
+            context.actor_tenant_id().clone(),
+            context.actor_principal_id().clone()
+        )]
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn list_for_tenant_uses_context_tenant() -> Result<(), AgentRecordServiceError> {
+    let repository = Arc::new(TestAgentRecordRepository {
+        saved: Mutex::new(None),
+        owner_list_calls: Mutex::new(Vec::new()),
+        public_tenant_list_calls: Mutex::new(Vec::new()),
+    });
+    let service = AgentRecordService::new(repository.clone());
+    let context = RequestContext::system(None);
+
+    let agent_records = service.list_for_tenant(&context).await?;
+
+    assert!(agent_records.is_empty());
+    let calls = match repository.public_tenant_list_calls.lock() {
+        Ok(calls) => calls,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    assert_eq!(calls.as_slice(), &[context.actor_tenant_id().clone()]);
     Ok(())
 }

@@ -34,6 +34,8 @@ pub struct CreateAgentRecordBody {
     pub icon_url: Option<String>,
     #[validate(url)]
     pub documentation_url: Option<String>,
+    #[serde(default)]
+    pub visibility: Visibility,
 }
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
@@ -100,6 +102,18 @@ pub enum MessageBinding {
     HttpJson,
     JsonRpc2_0,
     Grpc,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum Visibility {
+    Public,
+    Private,
+}
+
+impl Default for Visibility {
+    fn default() -> Self {
+        Self::Private
+    }
 }
 
 fn validate_unique_interface_names(

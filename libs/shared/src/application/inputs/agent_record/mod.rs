@@ -12,6 +12,13 @@ pub struct CreateAgentRecordInput {
     pub skills: Vec<AgentSkillInput>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
+    pub visibility: VisibilityInput,
+}
+
+#[derive(Debug, Clone)]
+pub enum VisibilityInput {
+    Public,
+    Private,
 }
 
 #[derive(Debug, Clone)]

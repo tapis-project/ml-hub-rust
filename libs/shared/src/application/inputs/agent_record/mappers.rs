@@ -1,5 +1,6 @@
 use crate::application::inputs::agent_record as inputs;
 use crate::domain::entities::agent_record as entities;
+use crate::domain::entities::visibility::Visibility as DomainVisibility;
 use crate::presentation::http::v1::requests::create_agent_record::body as requests;
 
 impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
@@ -19,6 +20,15 @@ impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
             skills: value.skills.into_iter().map(Into::into).collect(),
             icon_url: value.icon_url,
             documentation_url: value.documentation_url,
+            visibility: value.visibility.into(),
+        }
+    }
+}
+impl From<requests::Visibility> for inputs::VisibilityInput {
+    fn from(value: requests::Visibility) -> Self {
+        match value {
+            requests::Visibility::Public => Self::Public,
+            requests::Visibility::Private => Self::Private,
         }
     }
 }
@@ -164,5 +174,13 @@ impl TryFrom<inputs::AgentSkillInput> for entities::AgentSkill {
             value.tags,
             value.examples,
         )
+    }
+}
+impl From<inputs::VisibilityInput> for DomainVisibility {
+    fn from(value: inputs::VisibilityInput) -> Self {
+        match value {
+            inputs::VisibilityInput::Public => Self::Public,
+            inputs::VisibilityInput::Private => Self::Private,
+        }
     }
 }

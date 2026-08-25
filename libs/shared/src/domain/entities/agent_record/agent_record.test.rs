@@ -7,6 +7,7 @@ mod agent_record_test {
         AgentRecordError, AgentSkill, AgentSkillError, ArtifactLocator, Capabilities,
         MessageBinding, Protocol, ReconstituteAgentSkillProps,
     };
+    use crate::domain::entities::visibility::Visibility;
     use crate::shared_kernel::identifiers::traits::UrnGenerator;
 
     #[test]
@@ -32,6 +33,7 @@ mod agent_record_test {
         assert!(agent_record.skills().is_empty());
         assert_eq!(agent_record.icon_url(), None);
         assert_eq!(agent_record.documentation_url(), None);
+        assert!(!agent_record.is_public());
         assert_eq!(agent_record.interfaces().first().name(), "default");
         assert_eq!(
             agent_record.interfaces().first().description(),
@@ -97,6 +99,7 @@ mod agent_record_test {
             )?])
             .with_icon_url("https://example.com/agent-icon.png".into())
             .with_documentation_url("https://docs.example.com/agents/assistant".into())
+            .with_visibility(Visibility::Public)
             .build_reconstituted()?;
 
         assert_eq!(agent_record.id(), &id);
@@ -115,6 +118,7 @@ mod agent_record_test {
         );
         assert!(agent_record.supports_streaming());
         assert!(agent_record.supports_push_notifications());
+        assert!(agent_record.is_public());
         assert_eq!(agent_record.artifact_locators().len(), 1);
         assert_eq!(agent_record.skills().len(), 1);
         assert_eq!(agent_record.skills()[0].id(), "text-analysis");

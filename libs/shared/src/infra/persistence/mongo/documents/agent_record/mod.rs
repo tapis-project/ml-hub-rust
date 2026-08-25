@@ -21,6 +21,7 @@ pub struct AgentRecord {
     pub skills: Vec<AgentSkill>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
+    pub visibility: crate::infra::persistence::mongo::documents::visibility::Visibility,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

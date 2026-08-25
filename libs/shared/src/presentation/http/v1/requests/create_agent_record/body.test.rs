@@ -4,7 +4,7 @@ mod create_agent_record_body_test {
 
     use crate::presentation::http::v1::requests::create_agent_record::body::{
         AgentArtifactType, AgentInterface, AgentProvider, AgentSkill, ArtifactLocator,
-        Capabilities, CreateAgentRecordBody, MessageBinding, Protocol,
+        Capabilities, CreateAgentRecordBody, MessageBinding, Protocol, Visibility,
     };
 
     fn interfaces() -> Vec<AgentInterface> {
@@ -53,6 +53,7 @@ mod create_agent_record_body_test {
             skills: skills(),
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_ok());
@@ -72,6 +73,7 @@ mod create_agent_record_body_test {
                 skills: vec![],
                 icon_url: None,
                 documentation_url: None,
+                visibility: Visibility::Private,
             };
 
             assert!(body.validate().is_err(), "Expected {version} to be invalid");
@@ -91,6 +93,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -118,6 +121,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -192,6 +196,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -223,6 +228,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -282,6 +288,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -300,6 +307,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: Some("not-a-url".into()),
             documentation_url: Some("also-not-a-url".into()),
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -324,6 +332,7 @@ mod create_agent_record_body_test {
             }],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
         assert!(invalid_identifier.validate().is_err());
 
@@ -344,6 +353,7 @@ mod create_agent_record_body_test {
             }],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
         assert!(empty_tags.validate().is_err());
     }
@@ -376,6 +386,7 @@ mod create_agent_record_body_test {
             ],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());
@@ -393,6 +404,7 @@ mod create_agent_record_body_test {
         };
 
         assert!(body.artifact_locators.is_empty());
+        assert!(matches!(body.visibility, Visibility::Private));
     }
 
     #[test]
@@ -422,6 +434,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: Some("https://example.com/agent-icon.png".into()),
             documentation_url: Some("https://docs.example.com/agents/assistant".into()),
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_ok());
@@ -443,6 +456,7 @@ mod create_agent_record_body_test {
             skills: vec![],
             icon_url: None,
             documentation_url: None,
+            visibility: Visibility::Private,
         };
 
         assert!(body.validate().is_err());

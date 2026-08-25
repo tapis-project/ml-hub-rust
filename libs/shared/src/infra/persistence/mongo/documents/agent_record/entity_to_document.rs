@@ -1,5 +1,6 @@
 use crate::domain::entities::agent_record as entities;
 use crate::infra::persistence::mongo::documents::agent_record as documents;
+use crate::infra::persistence::mongo::documents::visibility::Visibility as DocumentVisibility;
 use mongodb::bson::Uuid;
 
 impl From<&entities::AgentRecord> for documents::AgentRecord {
@@ -43,6 +44,11 @@ impl From<&entities::AgentRecord> for documents::AgentRecord {
                 .collect(),
             icon_url: value.icon_url().map(str::to_owned),
             documentation_url: value.documentation_url().map(str::to_owned),
+            visibility: if value.is_public() {
+                DocumentVisibility::Public
+            } else {
+                DocumentVisibility::Private
+            },
         }
     }
 }

@@ -4,6 +4,8 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::presentation::http::v1::responses::visibility::Visibility;
+
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct AgentRecord {
     #[schema(value_type = String, format = "uuid")]
@@ -20,6 +22,7 @@ pub struct AgentRecord {
     pub skills: Vec<AgentSkill>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
+    pub visibility: Visibility,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

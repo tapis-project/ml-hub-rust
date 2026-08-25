@@ -34,6 +34,7 @@ impl TryFrom<documents::AgentRecord> for entities::AgentRecord {
             skills,
             icon_url: value.icon_url,
             documentation_url: value.documentation_url,
+            visibility: value.visibility.into(),
         })
     }
 }

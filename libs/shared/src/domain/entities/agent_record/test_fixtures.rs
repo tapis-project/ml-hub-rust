@@ -6,6 +6,7 @@ use super::{
     AgentInterface, AgentProvider, AgentRecord, AgentRecordError, AgentSkill, ArtifactLocator,
     Capabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
 };
+use crate::domain::entities::visibility::Visibility;
 
 pub struct AgentRecordBuilder {
     id: Option<Uuid>,
@@ -21,6 +22,7 @@ pub struct AgentRecordBuilder {
     skills: Option<Vec<AgentSkill>>,
     icon_url: Option<String>,
     documentation_url: Option<String>,
+    visibility: Option<Visibility>,
 }
 
 impl AgentRecordBuilder {
@@ -39,6 +41,7 @@ impl AgentRecordBuilder {
             skills: None,
             icon_url: None,
             documentation_url: None,
+            visibility: None,
         }
     }
 
@@ -107,6 +110,11 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_visibility(mut self, visibility: Visibility) -> Self {
+        self.visibility = Some(visibility);
+        self
+    }
+
     pub fn build_new(&self) -> Result<AgentRecord, AgentRecordError> {
         AgentRecord::new(
             self.name
@@ -136,6 +144,7 @@ impl AgentRecordBuilder {
             self.skills.clone().unwrap_or_default(),
             self.icon_url.clone(),
             self.documentation_url.clone(),
+            self.visibility.clone().unwrap_or(Visibility::Private),
         )
     }
 
@@ -173,6 +182,7 @@ impl AgentRecordBuilder {
             skills: self.skills.clone().unwrap_or_default(),
             icon_url: self.icon_url.clone(),
             documentation_url: self.documentation_url.clone(),
+            visibility: self.visibility.clone().unwrap_or(Visibility::Private),
         })
     }
 }

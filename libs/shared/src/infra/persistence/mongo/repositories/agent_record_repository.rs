@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
-use mongodb::{bson::doc, Client, Collection};
+use mongodb::{
+    bson::{doc, to_bson},
+    Client, Collection,
+};
 
 use crate::application;
 use crate::application::ports::agent_record::AgentRecordRepositoryError;
@@ -8,6 +11,7 @@ use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities;
 use crate::infra::persistence::mongo::database::AGENT_RECORD_COLLECTION;
 use crate::infra::persistence::mongo::documents::agent_record::AgentRecord;
+use crate::infra::persistence::mongo::documents::visibility::Visibility as DocumentVisibility;
 
 pub struct AgentRecordRepository {
     read_collection: Collection<AgentRecord>,
@@ -63,6 +67,24 @@ impl application::ports::agent_record::AgentRecordRepository for AgentRecordRepo
         tenant_id: &str,
     ) -> Result<Vec<entities::agent_record::AgentRecord>, AgentRecordRepositoryError> {
         self.list(doc! { "tenant_id": tenant_id }).await
+    }
+
+    async fn list_public_by_tenant(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<entities::agent_record::AgentRecord>, AgentRecordRepositoryError> {
+        let visibility = to_bson(&DocumentVisibility::Public).map_err(|error| {
+            let infrastructure_error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Visibility serialization error: {}",
+                infrastructure_error.error_id(),
+                error
+            );
+            infrastructure_error
+        })?;
+
+        self.list(doc! { "tenant_id": tenant_id, "visibility": visibility })
+            .await
     }
 }
 

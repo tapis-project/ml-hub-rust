@@ -1,5 +1,6 @@
 use crate::domain::entities::agent_record as entities;
 use crate::presentation::http::v1::responses::agent_records as responses;
+use crate::presentation::http::v1::responses::visibility::Visibility as ResponseVisibility;
 
 impl From<entities::AgentRecord> for responses::AgentRecord {
     fn from(value: entities::AgentRecord) -> Self {
@@ -41,6 +42,11 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 .collect(),
             icon_url: value.icon_url().map(str::to_owned),
             documentation_url: value.documentation_url().map(str::to_owned),
+            visibility: if value.is_public() {
+                ResponseVisibility::Public
+            } else {
+                ResponseVisibility::Private
+            },
         }
     }
 }

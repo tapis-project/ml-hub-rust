@@ -30,7 +30,7 @@ mod tests {
             .to_request();
         assert_eq!(
             test::call_service(&app, list).await.status(),
-            StatusCode::NOT_IMPLEMENTED
+            StatusCode::INTERNAL_SERVER_ERROR
         );
 
         let create = test::TestRequest::post()
@@ -103,6 +103,12 @@ mod tests {
             .unwrap()
             .schemas
             .contains_key("ArtifactLocator"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("Visibility"));
         assert!(document
             .components
             .as_ref()

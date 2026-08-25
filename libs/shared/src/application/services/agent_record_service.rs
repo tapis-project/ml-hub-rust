@@ -65,6 +65,7 @@ impl AgentRecordService {
                 .collect::<Result<Vec<_>, _>>()?,
             input.icon_url,
             input.documentation_url,
+            input.visibility.into(),
         )?;
 
         retry_async(
@@ -75,6 +76,40 @@ impl AgentRecordService {
         .await?;
 
         Ok(agent_record)
+    }
+
+    pub async fn list_for_user(
+        &self,
+        ctx: &RequestContext,
+    ) -> Result<Vec<AgentRecord>, AgentRecordServiceError> {
+        let agent_records = retry_async(
+            || {
+                self.agent_record_repository
+                    .list_by_owner(ctx.actor_tenant_id(), ctx.actor_principal_id())
+            },
+            &Self::REPOSITORY_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(agent_records)
+    }
+
+    pub async fn list_for_tenant(
+        &self,
+        ctx: &RequestContext,
+    ) -> Result<Vec<AgentRecord>, AgentRecordServiceError> {
+        let agent_records = retry_async(
+            || {
+                self.agent_record_repository
+                    .list_public_by_tenant(ctx.actor_tenant_id())
+            },
+            &Self::REPOSITORY_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(agent_records)
     }
 }
 

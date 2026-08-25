@@ -22,4 +22,8 @@ pub trait AgentRecordRepository: Send + Sync {
         &self,
         tenant_id: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
+    async fn list_public_by_tenant(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
 }
