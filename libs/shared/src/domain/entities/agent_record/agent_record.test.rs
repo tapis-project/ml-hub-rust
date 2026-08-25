@@ -3,9 +3,9 @@ mod agent_record_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
-        AgentRecordError, AgentSkill, AgentSkillError, ArtifactLocator, Capabilities,
-        MessageBinding, Protocol, ReconstituteAgentSkillProps,
+        AgentArtifactType, AgentInterface, AgentProvider, AgentRecordError, AgentSkill,
+        AgentSkillError, ArtifactLocator, Capabilities, LivenessProbeConfiguration, MessageBinding,
+        Protocol, ReconstituteAgentSkillProps, test_fixtures::AgentRecordBuilder,
     };
     use crate::shared_kernel::enums::Visibility;
     use crate::shared_kernel::identifiers::traits::UrnGenerator;
@@ -79,6 +79,7 @@ mod agent_record_test {
                 None,
                 Protocol::Stdio,
                 None,
+                None,
             )])
             .with_capabilities(Capabilities::new(true, true))
             .with_provider(AgentProvider::new(
@@ -144,11 +145,13 @@ mod agent_record_test {
             agent_record.interfaces().first().protocol(),
             Protocol::Stdio
         ));
-        assert!(agent_record
-            .interfaces()
-            .first()
-            .message_binding()
-            .is_none());
+        assert!(
+            agent_record
+                .interfaces()
+                .first()
+                .message_binding()
+                .is_none()
+        );
 
         Ok(())
     }
@@ -185,8 +188,8 @@ mod agent_record_test {
     fn test_new_agent_record_rejects_duplicate_interface_names() {
         let result = AgentRecordBuilder::new()
             .with_interfaces(vec![
-                AgentInterface::new("rest".into(), None, Protocol::RestHttp, None),
-                AgentInterface::new("rest".into(), None, Protocol::Stdio, None),
+                AgentInterface::new("rest".into(), None, Protocol::RestHttp, None, None),
+                AgentInterface::new("rest".into(), None, Protocol::Stdio, None, None),
             ])
             .build_new();
 
@@ -207,8 +210,8 @@ mod agent_record_test {
     fn test_reconstitute_agent_record_rejects_duplicate_interface_names() {
         let result = AgentRecordBuilder::new()
             .with_interfaces(vec![
-                AgentInterface::new("rest".into(), None, Protocol::RestHttp, None),
-                AgentInterface::new("rest".into(), None, Protocol::Stdio, None),
+                AgentInterface::new("rest".into(), None, Protocol::RestHttp, None, None),
+                AgentInterface::new("rest".into(), None, Protocol::Stdio, None, None),
             ])
             .build_reconstituted();
 
@@ -325,8 +328,8 @@ mod agent_record_test {
     }
 
     #[test]
-    fn test_reconstitute_agent_record_rejects_duplicate_skill_ids(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn test_reconstitute_agent_record_rejects_duplicate_skill_ids()
+    -> Result<(), Box<dyn std::error::Error>> {
         let result = AgentRecordBuilder::new()
             .with_skills(vec![
                 AgentSkill::new(
@@ -381,6 +384,82 @@ mod agent_record_test {
         let error = match result {
             Err(error) => error,
             Ok(_) => panic!("Expected agent record reconstitution to reject invalid SemVer"),
+        };
+
+        assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
+    }
+
+    #[test]
+    fn test_new_agent_record_accepts_rest_http_liveness_probe() -> Result<(), AgentRecordError> {
+        let agent_record = AgentRecordBuilder::new()
+            .with_interfaces(vec![AgentInterface::new(
+                "rest".into(),
+                None,
+                Protocol::RestHttp,
+                None,
+                Some(LivenessProbeConfiguration::RestHttp {
+                    route: "/healthcheck".into(),
+                    timeout_seconds: 10,
+                }),
+            )])
+            .build_new()?;
+
+        assert!(matches!(
+            agent_record.interfaces().first().liveness_probe_config(),
+            Some(LivenessProbeConfiguration::RestHttp {
+                route,
+                timeout_seconds: 10,
+            }) if route == "/healthcheck"
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_new_agent_record_rejects_incompatible_liveness_probe() {
+        let result = AgentRecordBuilder::new()
+            .with_interfaces(vec![AgentInterface::new(
+                "rpc".into(),
+                None,
+                Protocol::Rpc,
+                None,
+                Some(LivenessProbeConfiguration::RestHttp {
+                    route: "/healthcheck".into(),
+                    timeout_seconds: 10,
+                }),
+            )])
+            .build_new();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected incompatible liveness probe to be rejected"),
+        };
+
+        assert!(matches!(
+            error,
+            AgentRecordError::IncompatibleLivenessProbeConfiguration(interface_name)
+                if interface_name == "rpc"
+        ));
+    }
+
+    #[test]
+    fn test_reconstitute_agent_record_rejects_incompatible_liveness_probe() {
+        let result = AgentRecordBuilder::new()
+            .with_interfaces(vec![AgentInterface::new(
+                "stdio".into(),
+                None,
+                Protocol::Stdio,
+                None,
+                Some(LivenessProbeConfiguration::RestHttp {
+                    route: "/healthcheck".into(),
+                    timeout_seconds: 10,
+                }),
+            )])
+            .build_reconstituted();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected incompatible persisted liveness probe to be rejected"),
         };
 
         assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));

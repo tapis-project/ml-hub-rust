@@ -5,7 +5,8 @@ use async_trait::async_trait;
 use super::*;
 use crate::application::inputs::agent_record::{
     AgentArtifactTypeInput, AgentInterfaceInput, AgentSkillInput, ArtifactLocatorInput,
-    CapabilitiesInput, CreateAgentRecordInput, MessageBindingInput, ProtocolInput, VisibilityInput,
+    CapabilitiesInput, CreateAgentRecordInput, LivenessProbeConfigurationInput,
+    MessageBindingInput, ProtocolInput, VisibilityInput,
 };
 use crate::application::ports::agent_record::AgentRecordRepository;
 use crate::domain::entities::agent_record::AgentSkill;
@@ -63,6 +64,10 @@ fn input() -> CreateAgentRecordInput {
             description: Some("REST interface".into()),
             protocol: ProtocolInput::RestHttp,
             message_binding: Some(MessageBindingInput::HttpJson),
+            liveness_probe_config: Some(LivenessProbeConfigurationInput::RestHttp {
+                route: "/healthcheck".into(),
+                timeout_seconds: 10,
+            }),
         }],
         capabilities: CapabilitiesInput {
             streaming: true,
@@ -88,8 +93,8 @@ fn input() -> CreateAgentRecordInput {
 }
 
 #[tokio::test]
-async fn create_agent_record_derives_owner_and_tenant_from_context(
-) -> Result<(), AgentRecordServiceError> {
+async fn create_agent_record_derives_owner_and_tenant_from_context()
+-> Result<(), AgentRecordServiceError> {
     let repository = Arc::new(TestAgentRecordRepository {
         saved: Mutex::new(None),
         owner_list_calls: Mutex::new(Vec::new()),
@@ -111,6 +116,13 @@ async fn create_agent_record_derives_owner_and_tenant_from_context(
     assert_eq!(saved.id(), created.id());
     assert!(saved.supports_streaming());
     assert!(saved.supports_push_notifications());
+    assert!(matches!(
+        saved.interfaces().first().liveness_probe_config(),
+        Some(crate::domain::entities::agent_record::LivenessProbeConfiguration::RestHttp {
+            route,
+            timeout_seconds: 10,
+        }) if route == "/healthcheck"
+    ));
     assert_eq!(
         saved.skills().first().map(AgentSkill::id),
         Some("geospatial-search")
@@ -146,8 +158,8 @@ async fn list_for_user_uses_context_tenant_and_principal() -> Result<(), AgentRe
 }
 
 #[tokio::test]
-async fn list_shared_with_user_uses_context_tenant_and_principal(
-) -> Result<(), AgentRecordServiceError> {
+async fn list_shared_with_user_uses_context_tenant_and_principal()
+-> Result<(), AgentRecordServiceError> {
     let repository = Arc::new(TestAgentRecordRepository {
         saved: Mutex::new(None),
         owner_list_calls: Mutex::new(Vec::new()),

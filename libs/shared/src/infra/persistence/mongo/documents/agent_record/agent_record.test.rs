@@ -1,6 +1,6 @@
 use crate::domain::entities::agent_record::{
-    test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
-    AgentSkill, ArtifactLocator, Capabilities, MessageBinding, Protocol,
+    AgentArtifactType, AgentInterface, AgentProvider, AgentSkill, ArtifactLocator, Capabilities,
+    LivenessProbeConfiguration, MessageBinding, Protocol, test_fixtures::AgentRecordBuilder,
 };
 
 use super::AgentRecord as AgentRecordDocument;
@@ -20,6 +20,10 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
             Some("REST interface".into()),
             Protocol::RestHttp,
             Some(MessageBinding::HttpJson),
+            Some(LivenessProbeConfiguration::RestHttp {
+                route: "/healthcheck".into(),
+                timeout_seconds: 10,
+            }),
         )])
         .with_capabilities(Capabilities::new(true, true))
         .with_provider(AgentProvider::new(
@@ -68,6 +72,13 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
         reconstituted.documentation_url(),
         Some("https://example.com/docs")
     );
+    assert!(matches!(
+        reconstituted.interfaces().first().liveness_probe_config(),
+        Some(LivenessProbeConfiguration::RestHttp {
+            route,
+            timeout_seconds: 10,
+        }) if route == "/healthcheck"
+    ));
 
     Ok(())
 }

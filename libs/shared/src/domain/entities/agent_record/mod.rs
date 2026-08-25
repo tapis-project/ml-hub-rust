@@ -5,8 +5,8 @@ use semver::Version;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::shared_kernel::enums::Visibility;
 use crate::impl_urn_generator;
+use crate::shared_kernel::enums::Visibility;
 
 #[derive(Clone, Debug)]
 pub struct AgentRecord {
@@ -49,8 +49,13 @@ impl AgentRecord {
         }
 
         let interfaces = Self::interfaces_from_vec(interfaces)?;
+
         Self::ensure_unique_interface_names(&interfaces)
             .map_err(AgentRecordError::DuplicateAgentInterfaceIdentifier)?;
+
+        Self::ensure_compatible_liveness_probe_configurations(&interfaces)
+            .map_err(AgentRecordError::IncompatibleLivenessProbeConfiguration)?;
+
         Self::ensure_unique_skill_ids(&skills)
             .map_err(AgentRecordError::DuplicateAgentSkillIdentifier)?;
 
@@ -81,11 +86,21 @@ impl AgentRecord {
         }
 
         let interfaces = Self::interfaces_from_vec(props.interfaces)?;
+
         Self::ensure_unique_interface_names(&interfaces).map_err(|duplicate_name| {
             AgentRecordError::DataIntegrityError(format!(
                 "Agent record contains interfaces with duplicate names. Duplicate found: {duplicate_name}"
             ))
         })?;
+
+        Self::ensure_compatible_liveness_probe_configurations(&interfaces).map_err(
+            |interface_name| {
+                AgentRecordError::DataIntegrityError(format!(
+                    "Agent record contains an incompatible liveness probe configuration for interface: {interface_name}"
+                ))
+            },
+        )?;
+
         Self::ensure_unique_skill_ids(&props.skills).map_err(|duplicate_id| {
             AgentRecordError::DataIntegrityError(format!(
                 "Agent record contains skills with duplicate IDs. Duplicate found: {duplicate_id}"
@@ -204,6 +219,20 @@ impl AgentRecord {
         for skill in skills {
             if !ids.insert(skill.id()) {
                 return Err(skill.id().into());
+            }
+        }
+
+        Ok(())
+    }
+
+    fn ensure_compatible_liveness_probe_configurations(
+        interfaces: &NonEmpty<AgentInterface>,
+    ) -> Result<(), String> {
+        for interface in interfaces {
+            if interface.liveness_probe_config().is_some()
+                && !matches!(interface.protocol(), Protocol::RestHttp)
+            {
+                return Err(interface.name().clone());
             }
         }
 
@@ -396,6 +425,7 @@ pub struct AgentInterface {
     description: Option<String>,
     protocol: Protocol,
     message_binding: Option<MessageBinding>,
+    liveness_probe_config: Option<LivenessProbeConfiguration>,
 }
 
 impl AgentInterface {
@@ -404,12 +434,14 @@ impl AgentInterface {
         description: Option<String>,
         protocol: Protocol,
         message_binding: Option<MessageBinding>,
+        liveness_probe_config: Option<LivenessProbeConfiguration>,
     ) -> Self {
         Self {
             name,
             description,
             protocol,
             message_binding,
+            liveness_probe_config,
         }
     }
 
@@ -428,6 +460,10 @@ impl AgentInterface {
     pub fn message_binding(&self) -> &Option<MessageBinding> {
         &self.message_binding
     }
+
+    pub fn liveness_probe_config(&self) -> Option<&LivenessProbeConfiguration> {
+        self.liveness_probe_config.as_ref()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -444,6 +480,11 @@ pub enum MessageBinding {
     Grpc,
 }
 
+#[derive(Debug, Clone)]
+pub enum LivenessProbeConfiguration {
+    RestHttp { route: String, timeout_seconds: u32 },
+}
+
 #[derive(Debug, Error, Clone)]
 pub enum AgentRecordError {
     #[error("Duplicate agent interface identifier: {0}")]
@@ -451,6 +492,9 @@ pub enum AgentRecordError {
 
     #[error("Duplicate agent skill identifier: {0}")]
     DuplicateAgentSkillIdentifier(String),
+
+    #[error("Incompatible liveness probe configuration for agent interface: {0}")]
+    IncompatibleLivenessProbeConfiguration(String),
 
     #[error("Invalid agent record version: {0}")]
     InvalidVersion(String),

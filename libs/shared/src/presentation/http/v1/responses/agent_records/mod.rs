@@ -68,6 +68,7 @@ pub struct AgentInterface {
     pub description: Option<String>,
     pub protocol: Protocol,
     pub message_binding: Option<MessageBinding>,
+    pub liveness_probe_config: Option<LivenessProbeConfiguration>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
@@ -82,6 +83,11 @@ pub enum MessageBinding {
     HttpJson,
     JsonRpc2_0,
     Grpc,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub enum LivenessProbeConfiguration {
+    RestHttp { route: String, timeout_seconds: u32 },
 }
 
 #[cfg(test)]

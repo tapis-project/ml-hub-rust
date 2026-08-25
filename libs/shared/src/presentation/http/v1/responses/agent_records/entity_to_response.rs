@@ -92,6 +92,21 @@ impl From<entities::AgentInterface> for responses::AgentInterface {
             description: value.description().clone(),
             protocol: value.protocol().clone().into(),
             message_binding: value.message_binding().clone().map(Into::into),
+            liveness_probe_config: value.liveness_probe_config().cloned().map(Into::into),
+        }
+    }
+}
+
+impl From<entities::LivenessProbeConfiguration> for responses::LivenessProbeConfiguration {
+    fn from(value: entities::LivenessProbeConfiguration) -> Self {
+        match value {
+            entities::LivenessProbeConfiguration::RestHttp {
+                route,
+                timeout_seconds,
+            } => Self::RestHttp {
+                route,
+                timeout_seconds,
+            },
         }
     }
 }

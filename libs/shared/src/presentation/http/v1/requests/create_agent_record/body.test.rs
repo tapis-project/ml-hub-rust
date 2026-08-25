@@ -4,7 +4,8 @@ mod create_agent_record_body_test {
 
     use crate::presentation::http::v1::requests::create_agent_record::body::{
         AgentArtifactType, AgentInterface, AgentProvider, AgentSkill, ArtifactLocator,
-        Capabilities, CreateAgentRecordBody, MessageBinding, Protocol, Visibility,
+        Capabilities, CreateAgentRecordBody, LivenessProbeConfiguration, MessageBinding, Protocol,
+        Visibility,
     };
 
     fn interfaces() -> Vec<AgentInterface> {
@@ -13,6 +14,7 @@ mod create_agent_record_body_test {
             description: Some("REST interface".into()),
             protocol: Protocol::RestHttp,
             message_binding: Some(MessageBinding::HttpJson),
+            liveness_probe_config: None,
         }]
     }
 
@@ -158,6 +160,48 @@ mod create_agent_record_body_test {
         assert!(body.documentation_url.is_none());
         assert!(body.interfaces[0].description.is_none());
         assert!(body.interfaces[0].message_binding.is_none());
+        assert!(body.interfaces[0].liveness_probe_config.is_none());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_accepts_rest_http_liveness_probe() {
+        let body = serde_json::from_str::<CreateAgentRecordBody>(
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[{"name":"rest","protocol":"RestHttp","liveness_probe_config":{"RestHttp":{"route":"/healthcheck","timeout_seconds":10}}}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
+        );
+
+        let body = match body {
+            Ok(body) => body,
+            Err(error) => panic!("Expected valid create agent record body: {error}"),
+        };
+
+        assert!(body.validate().is_ok());
+        assert!(matches!(
+            body.interfaces[0].liveness_probe_config,
+            Some(LivenessProbeConfiguration::RestHttp {
+                ref route,
+                timeout_seconds: 10,
+            }) if route == "/healthcheck"
+        ));
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_incompatible_liveness_probe() {
+        for protocol in ["Rpc", "Stdio"] {
+            let request = format!(
+                r#"{{"name":"assistant","description":"A helpful agent","interfaces":[{{"name":"interface","protocol":"{protocol}","liveness_probe_config":{{"RestHttp":{{"route":"/healthcheck","timeout_seconds":10}}}}}}],"capabilities":{{"streaming":false,"push_notifications":false}},"version":"1.0.0"}}"#
+            );
+            let body = serde_json::from_str::<CreateAgentRecordBody>(&request);
+
+            let body = match body {
+                Ok(body) => body,
+                Err(error) => panic!("Expected deserializable create agent record body: {error}"),
+            };
+
+            assert!(
+                body.validate().is_err(),
+                "Expected {protocol} to be rejected"
+            );
+        }
     }
 
     #[test]
@@ -188,6 +232,7 @@ mod create_agent_record_body_test {
                 description: None,
                 protocol: Protocol::RestHttp,
                 message_binding: None,
+                liveness_probe_config: None,
             }],
             capabilities: capabilities(),
             provider: None,
@@ -213,12 +258,14 @@ mod create_agent_record_body_test {
                     description: None,
                     protocol: Protocol::RestHttp,
                     message_binding: None,
+                    liveness_probe_config: None,
                 },
                 AgentInterface {
                     name: "rest".into(),
                     description: None,
                     protocol: Protocol::Stdio,
                     message_binding: None,
+                    liveness_probe_config: None,
                 },
             ],
             capabilities: capabilities(),

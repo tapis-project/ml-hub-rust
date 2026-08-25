@@ -46,7 +46,22 @@ impl From<documents::AgentInterface> for entities::AgentInterface {
             value.description,
             value.protocol.into(),
             value.message_binding.map(Into::into),
+            value.liveness_probe_config.map(Into::into),
         )
+    }
+}
+
+impl From<documents::LivenessProbeConfiguration> for entities::LivenessProbeConfiguration {
+    fn from(value: documents::LivenessProbeConfiguration) -> Self {
+        match value {
+            documents::LivenessProbeConfiguration::RestHttp {
+                route,
+                timeout_seconds,
+            } => Self::RestHttp {
+                route,
+                timeout_seconds,
+            },
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::application::inputs::agent_record as inputs;
 use crate::domain::entities::agent_record as entities;
-use crate::shared_kernel::enums::Visibility as DomainVisibility;
 use crate::presentation::http::v1::requests::create_agent_record::body as requests;
+use crate::shared_kernel::enums::Visibility as DomainVisibility;
 
 impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
     fn from(value: requests::CreateAgentRecordBody) -> Self {
@@ -41,6 +41,21 @@ impl From<requests::AgentInterface> for inputs::AgentInterfaceInput {
             description: value.description,
             protocol: value.protocol.into(),
             message_binding: value.message_binding.map(Into::into),
+            liveness_probe_config: value.liveness_probe_config.map(Into::into),
+        }
+    }
+}
+
+impl From<requests::LivenessProbeConfiguration> for inputs::LivenessProbeConfigurationInput {
+    fn from(value: requests::LivenessProbeConfiguration) -> Self {
+        match value {
+            requests::LivenessProbeConfiguration::RestHttp {
+                route,
+                timeout_seconds,
+            } => Self::RestHttp {
+                route,
+                timeout_seconds,
+            },
         }
     }
 }
@@ -124,7 +139,22 @@ impl From<inputs::AgentInterfaceInput> for entities::AgentInterface {
             value.description,
             value.protocol.into(),
             value.message_binding.map(Into::into),
+            value.liveness_probe_config.map(Into::into),
         )
+    }
+}
+
+impl From<inputs::LivenessProbeConfigurationInput> for entities::LivenessProbeConfiguration {
+    fn from(value: inputs::LivenessProbeConfigurationInput) -> Self {
+        match value {
+            inputs::LivenessProbeConfigurationInput::RestHttp {
+                route,
+                timeout_seconds,
+            } => Self::RestHttp {
+                route,
+                timeout_seconds,
+            },
+        }
     }
 }
 

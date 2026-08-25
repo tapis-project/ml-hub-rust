@@ -27,6 +27,7 @@ pub struct AgentInterfaceInput {
     pub description: Option<String>,
     pub protocol: ProtocolInput,
     pub message_binding: Option<MessageBindingInput>,
+    pub liveness_probe_config: Option<LivenessProbeConfigurationInput>,
 }
 #[derive(Debug, Clone)]
 pub enum ProtocolInput {
@@ -39,6 +40,10 @@ pub enum MessageBindingInput {
     HttpJson,
     JsonRpc2_0,
     Grpc,
+}
+#[derive(Debug, Clone)]
+pub enum LivenessProbeConfigurationInput {
+    RestHttp { route: String, timeout_seconds: u32 },
 }
 #[derive(Debug, Clone)]
 pub struct CapabilitiesInput {

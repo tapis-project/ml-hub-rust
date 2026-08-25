@@ -88,6 +88,7 @@ pub struct AgentInterface {
     pub description: Option<String>,
     pub protocol: Protocol,
     pub message_binding: Option<MessageBinding>,
+    pub liveness_probe_config: Option<LivenessProbeConfiguration>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -102,6 +103,11 @@ pub enum MessageBinding {
     HttpJson,
     JsonRpc2_0,
     Grpc,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum LivenessProbeConfiguration {
+    RestHttp { route: String, timeout_seconds: u32 },
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -124,6 +130,14 @@ fn validate_unique_interface_names(
     for interface in interfaces {
         if !names.insert(&interface.name) {
             return Err(ValidationError::new("duplicate_agent_interface_name"));
+        }
+
+        if interface.liveness_probe_config.is_some()
+            && !matches!(interface.protocol, Protocol::RestHttp)
+        {
+            return Err(ValidationError::new(
+                "incompatible_liveness_probe_configuration",
+            ));
         }
     }
 

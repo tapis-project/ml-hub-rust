@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use actix_web::{http::StatusCode, test, App};
+    use actix_web::{App, http::StatusCode, test};
     use utoipa::OpenApi;
 
     use crate::presentation::http::v1::actix_web::{handlers, openapi::ApiDoc};
@@ -62,77 +62,109 @@ mod tests {
         );
 
         let document = ApiDoc::openapi();
-        assert!(document
-            .paths
-            .paths
-            .contains_key("/agents-api/agent-records"));
+        assert!(
+            document
+                .paths
+                .paths
+                .contains_key("/agents-api/agent-records")
+        );
         assert!(document.paths.paths.contains_key("/agents-api/healthcheck"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("AgentRecord"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("AgentInterface"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("AgentSkill"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("Capabilities"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("AgentProvider"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("ArtifactLocator"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("Visibility"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("AgentArtifactType"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("CreateAgentRecordBody"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("CreateAgentRecordResponse"));
-        assert!(document
-            .components
-            .as_ref()
-            .unwrap()
-            .schemas
-            .contains_key("ListAgentRecordsResponse"));
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("AgentRecord")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("AgentInterface")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("LivenessProbeConfiguration")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("AgentSkill")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("Capabilities")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("AgentProvider")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("ArtifactLocator")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("Visibility")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("AgentArtifactType")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("CreateAgentRecordBody")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("CreateAgentRecordResponse")
+        );
+        assert!(
+            document
+                .components
+                .as_ref()
+                .unwrap()
+                .schemas
+                .contains_key("ListAgentRecordsResponse")
+        );
 
         let document = serde_json::to_value(ApiDoc::openapi())
             .expect("OpenAPI document should serialize to JSON");
@@ -147,22 +179,32 @@ mod tests {
             response_artifact_locators.get("nullable"),
             Some(&serde_json::Value::Bool(true))
         );
-        assert!(document
-            .pointer("/components/schemas/AgentRecord/required")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
+        assert!(
+            document
+                .pointer("/components/schemas/AgentRecord/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| {
+                    required.iter().any(|field| field == "artifact_locators")
+                })
+        );
 
         let request_artifact_locators = document
             .pointer("/components/schemas/CreateAgentRecordBody/properties/artifact_locators")
             .expect("create request artifact_locators schema should exist");
-        assert!(request_artifact_locators
-            .get("type")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|types| types.iter().any(|value| value == "null")));
-        assert!(!document
-            .pointer("/components/schemas/CreateAgentRecordBody/required")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
+        assert!(
+            request_artifact_locators
+                .get("type")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|types| types.iter().any(|value| value == "null"))
+        );
+        assert!(
+            !document
+                .pointer("/components/schemas/CreateAgentRecordBody/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| {
+                    required.iter().any(|field| field == "artifact_locators")
+                })
+        );
 
         let response_skills = document
             .pointer("/components/schemas/AgentRecord/properties/skills")
@@ -171,13 +213,17 @@ mod tests {
             response_skills.get("type"),
             Some(&serde_json::Value::String("array".into()))
         );
-        assert!(document
-            .pointer("/components/schemas/AgentRecord/required")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|required| { required.iter().any(|field| field == "skills") }));
-        assert!(!document
-            .pointer("/components/schemas/CreateAgentRecordBody/required")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|required| { required.iter().any(|field| field == "skills") }));
+        assert!(
+            document
+                .pointer("/components/schemas/AgentRecord/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| { required.iter().any(|field| field == "skills") })
+        );
+        assert!(
+            !document
+                .pointer("/components/schemas/CreateAgentRecordBody/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| { required.iter().any(|field| field == "skills") })
+        );
     }
 }

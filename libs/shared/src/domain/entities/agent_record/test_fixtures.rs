@@ -133,6 +133,7 @@ impl AgentRecordBuilder {
                     Some("Default test interface".into()),
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),
+                    None,
                 )]
             }),
             self.capabilities
@@ -170,6 +171,7 @@ impl AgentRecordBuilder {
                     Some("Default test interface".into()),
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),
+                    None,
                 )]
             }),
             capabilities: self

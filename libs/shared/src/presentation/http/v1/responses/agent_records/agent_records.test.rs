@@ -6,14 +6,16 @@ mod agent_records_test {
         AgentArtifactType as DomainAgentArtifactType, AgentInterface as DomainAgentInterface,
         AgentProvider as DomainAgentProvider, AgentRecord as DomainAgentRecord,
         AgentSkill as DomainAgentSkill, ArtifactLocator as DomainArtifactLocator,
-        Capabilities as DomainCapabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
+        Capabilities as DomainCapabilities, LivenessProbeConfiguration, MessageBinding, Protocol,
+        ReconstituteAgentRecordProps,
     };
-    use crate::shared_kernel::enums::Visibility as DomainVisibility;
     use crate::presentation::http::v1::responses::agent_records::{
         AgentArtifactType as ResponseAgentArtifactType, AgentRecord,
+        LivenessProbeConfiguration as ResponseLivenessProbeConfiguration,
         MessageBinding as ResponseMessageBinding, Protocol as ResponseProtocol,
     };
     use crate::presentation::http::v1::responses::visibility::Visibility as ResponseVisibility;
+    use crate::shared_kernel::enums::Visibility as DomainVisibility;
 
     #[test]
     fn test_agent_record_entity_to_response() -> Result<(), Box<dyn std::error::Error>> {
@@ -30,8 +32,12 @@ mod agent_records_test {
                     Some("REST interface".into()),
                     Protocol::RestHttp,
                     Some(MessageBinding::HttpJson),
+                    Some(LivenessProbeConfiguration::RestHttp {
+                        route: "/healthcheck".into(),
+                        timeout_seconds: 10,
+                    }),
                 ),
-                DomainAgentInterface::new("stdio".into(), None, Protocol::Stdio, None),
+                DomainAgentInterface::new("stdio".into(), None, Protocol::Stdio, None, None),
             ],
             capabilities: DomainCapabilities::new(true, false),
             provider: Some(DomainAgentProvider::new(
@@ -115,6 +121,13 @@ mod agent_records_test {
         assert!(matches!(
             response.interfaces[0].message_binding,
             Some(ResponseMessageBinding::HttpJson)
+        ));
+        assert!(matches!(
+            response.interfaces[0].liveness_probe_config,
+            Some(ResponseLivenessProbeConfiguration::RestHttp {
+                ref route,
+                timeout_seconds: 10,
+            }) if route == "/healthcheck"
         ));
         assert!(matches!(
             response.interfaces[1].protocol,

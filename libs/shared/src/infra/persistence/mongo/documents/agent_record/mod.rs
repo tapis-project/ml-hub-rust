@@ -1,7 +1,7 @@
 pub mod document_to_entity;
 pub mod entity_to_document;
 
-use mongodb::bson::{oid::ObjectId, Uuid};
+use mongodb::bson::{Uuid, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -30,6 +30,7 @@ pub struct AgentInterface {
     pub description: Option<String>,
     pub protocol: Protocol,
     pub message_binding: Option<MessageBinding>,
+    pub liveness_probe_config: Option<LivenessProbeConfiguration>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -44,6 +45,11 @@ pub enum MessageBinding {
     HttpJson,
     JsonRpc2_0,
     Grpc,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum LivenessProbeConfiguration {
+    RestHttp { route: String, timeout_seconds: u32 },
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
