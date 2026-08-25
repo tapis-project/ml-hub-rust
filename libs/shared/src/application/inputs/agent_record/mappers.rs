@@ -80,7 +80,10 @@ impl From<requests::RestHttpLivenessProbe> for inputs::LivenessProbeConfiguratio
     fn from(value: requests::RestHttpLivenessProbe) -> Self {
         Self::RestHttp {
             route: value.route,
+            interval_seconds: value.interval_seconds,
             timeout_seconds: value.timeout_seconds,
+            missed_heartbeat_threshold: value.missed_heartbeat_threshold,
+            initial_delay_seconds: value.initial_delay_seconds,
         }
     }
 }
@@ -164,10 +167,16 @@ impl From<inputs::LivenessProbeConfigurationInput> for entities::LivenessProbeCo
         match value {
             inputs::LivenessProbeConfigurationInput::RestHttp {
                 route,
+                interval_seconds,
                 timeout_seconds,
+                missed_heartbeat_threshold,
+                initial_delay_seconds,
             } => Self::RestHttp {
                 route,
+                interval_seconds,
                 timeout_seconds,
+                missed_heartbeat_threshold,
+                initial_delay_seconds,
             },
         }
     }

@@ -22,7 +22,10 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
             Some(MessageBinding::HttpJson),
             Some(LivenessProbeConfiguration::RestHttp {
                 route: "/healthcheck".into(),
+                interval_seconds: 30,
                 timeout_seconds: 10,
+                missed_heartbeat_threshold: 3,
+                initial_delay_seconds: 60,
             }),
         )])
         .with_capabilities(Capabilities::new(true, true))
@@ -76,7 +79,10 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
         reconstituted.interfaces().first().liveness_probe_config(),
         Some(LivenessProbeConfiguration::RestHttp {
             route,
+            interval_seconds: 30,
             timeout_seconds: 10,
+            missed_heartbeat_threshold: 3,
+            initial_delay_seconds: 60,
         }) if route == "/healthcheck"
     ));
 

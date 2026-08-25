@@ -43,7 +43,13 @@ pub enum MessageBindingInput {
 }
 #[derive(Debug, Clone)]
 pub enum LivenessProbeConfigurationInput {
-    RestHttp { route: String, timeout_seconds: u32 },
+    RestHttp {
+        route: String,
+        interval_seconds: u32,
+        timeout_seconds: u32,
+        missed_heartbeat_threshold: u16,
+        initial_delay_seconds: u32,
+    },
 }
 #[derive(Debug, Clone)]
 pub struct CapabilitiesInput {

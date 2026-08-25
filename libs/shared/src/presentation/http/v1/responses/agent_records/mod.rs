@@ -96,7 +96,10 @@ pub enum MessageBinding {
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct RestHttpLivenessProbe {
     pub route: String,
+    pub interval_seconds: u32,
     pub timeout_seconds: u32,
+    pub missed_heartbeat_threshold: u16,
+    pub initial_delay_seconds: u32,
 }
 
 #[cfg(test)]

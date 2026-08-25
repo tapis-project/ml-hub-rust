@@ -125,7 +125,10 @@ pub enum MessageBinding {
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
 pub struct RestHttpLivenessProbe {
     pub route: String,
+    pub interval_seconds: u32,
     pub timeout_seconds: u32,
+    pub missed_heartbeat_threshold: u16,
+    pub initial_delay_seconds: u32,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]

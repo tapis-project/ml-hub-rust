@@ -260,6 +260,24 @@ mod tests {
             .pointer("/components/schemas/AgentRecord/properties/interfaces")
             .is_none());
 
+        for field in [
+            "route",
+            "interval_seconds",
+            "timeout_seconds",
+            "missed_heartbeat_threshold",
+            "initial_delay_seconds",
+        ] {
+            assert!(document
+                .pointer(&format!(
+                    "/components/schemas/RestHttpLivenessProbe/properties/{field}"
+                ))
+                .is_some());
+            assert!(document
+                .pointer("/components/schemas/RestHttpLivenessProbe/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| required.iter().any(|required_field| required_field == field)));
+        }
+
         let response_skills = document
             .pointer("/components/schemas/AgentRecord/properties/skills")
             .expect("AgentRecord response skills schema should exist");

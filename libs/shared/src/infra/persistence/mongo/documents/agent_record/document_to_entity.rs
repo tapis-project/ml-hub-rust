@@ -56,10 +56,16 @@ impl From<documents::LivenessProbeConfiguration> for entities::LivenessProbeConf
         match value {
             documents::LivenessProbeConfiguration::RestHttp {
                 route,
+                interval_seconds,
                 timeout_seconds,
+                missed_heartbeat_threshold,
+                initial_delay_seconds,
             } => Self::RestHttp {
                 route,
+                interval_seconds,
                 timeout_seconds,
+                missed_heartbeat_threshold,
+                initial_delay_seconds,
             },
         }
     }

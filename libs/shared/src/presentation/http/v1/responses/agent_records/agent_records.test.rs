@@ -34,7 +34,10 @@ mod agent_records_test {
                     Some(MessageBinding::HttpJson),
                     Some(LivenessProbeConfiguration::RestHttp {
                         route: "/healthcheck".into(),
+                        interval_seconds: 30,
                         timeout_seconds: 10,
+                        missed_heartbeat_threshold: 3,
+                        initial_delay_seconds: 60,
                     }),
                 ),
                 DomainAgentInterface::new(
@@ -131,7 +134,10 @@ mod agent_records_test {
             response.rest_http_interfaces[0].liveness_probe_config,
             Some(ResponseRestHttpLivenessProbe {
                 ref route,
+                interval_seconds: 30,
                 timeout_seconds: 10,
+                missed_heartbeat_threshold: 3,
+                initial_delay_seconds: 60,
             }) if route == "/healthcheck"
         ));
         assert!(matches!(

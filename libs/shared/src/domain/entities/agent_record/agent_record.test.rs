@@ -399,7 +399,10 @@ mod agent_record_test {
                 None,
                 Some(LivenessProbeConfiguration::RestHttp {
                     route: "/healthcheck".into(),
+                    interval_seconds: 30,
                     timeout_seconds: 10,
+                    missed_heartbeat_threshold: 3,
+                    initial_delay_seconds: 60,
                 }),
             )])
             .build_new()?;
@@ -408,7 +411,10 @@ mod agent_record_test {
             agent_record.interfaces().first().liveness_probe_config(),
             Some(LivenessProbeConfiguration::RestHttp {
                 route,
+                interval_seconds: 30,
                 timeout_seconds: 10,
+                missed_heartbeat_threshold: 3,
+                initial_delay_seconds: 60,
             }) if route == "/healthcheck"
         ));
 
@@ -425,7 +431,10 @@ mod agent_record_test {
                 None,
                 Some(LivenessProbeConfiguration::RestHttp {
                     route: "/healthcheck".into(),
+                    interval_seconds: 30,
                     timeout_seconds: 10,
+                    missed_heartbeat_threshold: 3,
+                    initial_delay_seconds: 60,
                 }),
             )])
             .build_new();
@@ -452,7 +461,10 @@ mod agent_record_test {
                 None,
                 Some(LivenessProbeConfiguration::RestHttp {
                     route: "/healthcheck".into(),
+                    interval_seconds: 30,
                     timeout_seconds: 10,
+                    missed_heartbeat_threshold: 3,
+                    initial_delay_seconds: 60,
                 }),
             )])
             .build_reconstituted();

@@ -104,7 +104,10 @@ mod create_agent_record_body_test {
         let mut body = body();
         body.rest_http_interfaces[0].liveness_probe_config = Some(RestHttpLivenessProbe {
             route: "/healthcheck".into(),
+            interval_seconds: 30,
             timeout_seconds: 10,
+            missed_heartbeat_threshold: 3,
+            initial_delay_seconds: 60,
         });
 
         assert!(body.validate().is_ok());

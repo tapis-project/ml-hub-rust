@@ -17,7 +17,10 @@ fn maps_concrete_request_interfaces_to_polymorphic_application_inputs() {
             message_binding: Some(MessageBinding::HttpJson),
             liveness_probe_config: Some(RestHttpLivenessProbe {
                 route: "/healthcheck".into(),
+                interval_seconds: 30,
                 timeout_seconds: 10,
+                missed_heartbeat_threshold: 3,
+                initial_delay_seconds: 60,
             }),
         }],
         rpc_interfaces: vec![RpcAgentInterface {
@@ -55,7 +58,10 @@ fn maps_concrete_request_interfaces_to_polymorphic_application_inputs() {
         input.interfaces[0].liveness_probe_config,
         Some(LivenessProbeConfigurationInput::RestHttp {
             ref route,
+            interval_seconds: 30,
             timeout_seconds: 10,
+            missed_heartbeat_threshold: 3,
+            initial_delay_seconds: 60,
         }) if route == "/healthcheck"
     ));
     assert!(matches!(input.interfaces[1].protocol, ProtocolInput::Rpc));

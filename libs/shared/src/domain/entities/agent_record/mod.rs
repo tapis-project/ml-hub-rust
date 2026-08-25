@@ -482,7 +482,25 @@ pub enum MessageBinding {
 
 #[derive(Debug, Clone)]
 pub enum LivenessProbeConfiguration {
-    RestHttp { route: String, timeout_seconds: u32 },
+    RestHttp {
+        // Serves as the default route to query for a heartbeat.
+        // Anything other than a 200 at this endpoint results in a
+        // missed heartbeat
+        route: String,
+
+        /// How frequently the platform should initiate or expect a heartbeat check
+        interval_seconds: u32,
+
+        /// Maximum time allowed for the agent to respond to the heartbeat request
+        timeout_seconds: u32,
+
+        /// Number of consecutive missed heartbeats required to mark the instance as Dead
+        missed_heartbeat_threshold: u16,
+
+        /// Time to wait after the agent boots up before starting heartbeat evaluations
+        /// (Crucial for allowing LLM weights to load or databases to initialize)
+        initial_delay_seconds: u32,
+    },
 }
 
 #[derive(Debug, Error, Clone)]

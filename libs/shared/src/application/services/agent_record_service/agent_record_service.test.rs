@@ -66,7 +66,10 @@ fn input() -> CreateAgentRecordInput {
             message_binding: Some(MessageBindingInput::HttpJson),
             liveness_probe_config: Some(LivenessProbeConfigurationInput::RestHttp {
                 route: "/healthcheck".into(),
+                interval_seconds: 30,
                 timeout_seconds: 10,
+                missed_heartbeat_threshold: 3,
+                initial_delay_seconds: 60,
             }),
         }],
         capabilities: CapabilitiesInput {
@@ -120,7 +123,10 @@ async fn create_agent_record_derives_owner_and_tenant_from_context()
         saved.interfaces().first().liveness_probe_config(),
         Some(crate::domain::entities::agent_record::LivenessProbeConfiguration::RestHttp {
             route,
+            interval_seconds: 30,
             timeout_seconds: 10,
+            missed_heartbeat_threshold: 3,
+            initial_delay_seconds: 60,
         }) if route == "/healthcheck"
     ));
     assert_eq!(
