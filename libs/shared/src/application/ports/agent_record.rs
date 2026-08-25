@@ -13,15 +13,18 @@ pub enum AgentRecordRepositoryError {
 #[async_trait]
 pub trait AgentRecordRepository: Send + Sync {
     async fn save(&self, agent_record: &AgentRecord) -> Result<(), AgentRecordRepositoryError>;
+
     async fn list_by_owner(
         &self,
         tenant_id: &str,
         owner: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
+
     async fn list_by_tenant(
         &self,
         tenant_id: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
+
     async fn list_public_by_tenant(
         &self,
         tenant_id: &str,

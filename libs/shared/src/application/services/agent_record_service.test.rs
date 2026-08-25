@@ -26,6 +26,7 @@ impl AgentRecordRepository for TestAgentRecordRepository {
         *saved = Some(agent_record.clone());
         Ok(())
     }
+
     async fn list_by_owner(
         &self,
         tenant_id: &str,
@@ -38,12 +39,14 @@ impl AgentRecordRepository for TestAgentRecordRepository {
         calls.push((tenant_id.into(), owner.into()));
         Ok(Vec::new())
     }
+
     async fn list_by_tenant(
         &self,
         _: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError> {
         Ok(Vec::new())
     }
+
     async fn list_public_by_tenant(
         &self,
         tenant_id: &str,

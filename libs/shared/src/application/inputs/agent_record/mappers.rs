@@ -24,6 +24,7 @@ impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
         }
     }
 }
+
 impl From<requests::Visibility> for inputs::VisibilityInput {
     fn from(value: requests::Visibility) -> Self {
         match value {
@@ -43,6 +44,7 @@ impl From<requests::AgentInterface> for inputs::AgentInterfaceInput {
         }
     }
 }
+
 impl From<requests::Protocol> for inputs::ProtocolInput {
     fn from(value: requests::Protocol) -> Self {
         match value {
@@ -52,6 +54,7 @@ impl From<requests::Protocol> for inputs::ProtocolInput {
         }
     }
 }
+
 impl From<requests::MessageBinding> for inputs::MessageBindingInput {
     fn from(value: requests::MessageBinding) -> Self {
         match value {
@@ -61,6 +64,7 @@ impl From<requests::MessageBinding> for inputs::MessageBindingInput {
         }
     }
 }
+
 impl From<requests::Capabilities> for inputs::CapabilitiesInput {
     fn from(value: requests::Capabilities) -> Self {
         Self {
@@ -69,6 +73,7 @@ impl From<requests::Capabilities> for inputs::CapabilitiesInput {
         }
     }
 }
+
 impl From<requests::AgentProvider> for inputs::AgentProviderInput {
     fn from(value: requests::AgentProvider) -> Self {
         Self {
@@ -77,6 +82,7 @@ impl From<requests::AgentProvider> for inputs::AgentProviderInput {
         }
     }
 }
+
 impl From<requests::ArtifactLocator> for inputs::ArtifactLocatorInput {
     fn from(value: requests::ArtifactLocator) -> Self {
         Self {
@@ -85,6 +91,7 @@ impl From<requests::ArtifactLocator> for inputs::ArtifactLocatorInput {
         }
     }
 }
+
 impl From<requests::AgentArtifactType> for inputs::AgentArtifactTypeInput {
     fn from(value: requests::AgentArtifactType) -> Self {
         match value {
@@ -97,6 +104,7 @@ impl From<requests::AgentArtifactType> for inputs::AgentArtifactTypeInput {
         }
     }
 }
+
 impl From<requests::AgentSkill> for inputs::AgentSkillInput {
     fn from(value: requests::AgentSkill) -> Self {
         Self {
@@ -119,6 +127,7 @@ impl From<inputs::AgentInterfaceInput> for entities::AgentInterface {
         )
     }
 }
+
 impl From<inputs::ProtocolInput> for entities::Protocol {
     fn from(value: inputs::ProtocolInput) -> Self {
         match value {
@@ -128,6 +137,7 @@ impl From<inputs::ProtocolInput> for entities::Protocol {
         }
     }
 }
+
 impl From<inputs::MessageBindingInput> for entities::MessageBinding {
     fn from(value: inputs::MessageBindingInput) -> Self {
         match value {
@@ -137,21 +147,25 @@ impl From<inputs::MessageBindingInput> for entities::MessageBinding {
         }
     }
 }
+
 impl From<inputs::CapabilitiesInput> for entities::Capabilities {
     fn from(value: inputs::CapabilitiesInput) -> Self {
         Self::new(value.streaming, value.push_notifications)
     }
 }
+
 impl From<inputs::AgentProviderInput> for entities::AgentProvider {
     fn from(value: inputs::AgentProviderInput) -> Self {
         Self::new(value.organization, value.url)
     }
 }
+
 impl From<inputs::ArtifactLocatorInput> for entities::ArtifactLocator {
     fn from(value: inputs::ArtifactLocatorInput) -> Self {
         Self::new(value.artifact_type.into(), value.url)
     }
 }
+
 impl From<inputs::AgentArtifactTypeInput> for entities::AgentArtifactType {
     fn from(value: inputs::AgentArtifactTypeInput) -> Self {
         match value {
@@ -164,6 +178,7 @@ impl From<inputs::AgentArtifactTypeInput> for entities::AgentArtifactType {
         }
     }
 }
+
 impl TryFrom<inputs::AgentSkillInput> for entities::AgentSkill {
     type Error = entities::AgentSkillError;
     fn try_from(value: inputs::AgentSkillInput) -> Result<Self, Self::Error> {
@@ -176,6 +191,7 @@ impl TryFrom<inputs::AgentSkillInput> for entities::AgentSkill {
         )
     }
 }
+
 impl From<inputs::VisibilityInput> for DomainVisibility {
     fn from(value: inputs::VisibilityInput) -> Self {
         match value {
