@@ -46,7 +46,7 @@ http:
         - cors
 
     agents-api:
-      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/agents-api`)"
+      rule: "Host(`tacc.local.develop.tapis.io`) && PathPrefix(`/agents-api`)"
       service: agents-api
       middlewares:
         - tapis-rewrite-host
