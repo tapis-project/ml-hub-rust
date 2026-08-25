@@ -10,11 +10,26 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
             tenant_id: value.tenant_id().clone(),
             owner: value.owner().clone(),
             description: value.description().clone(),
-            interfaces: value
+            rest_http_interfaces: value
                 .interfaces()
                 .iter()
+                .filter(|interface| matches!(interface.protocol(), entities::Protocol::RestHttp))
                 .cloned()
-                .map(responses::AgentInterface::from)
+                .map(responses::RestHttpAgentInterface::from)
+                .collect(),
+            rpc_interfaces: value
+                .interfaces()
+                .iter()
+                .filter(|interface| matches!(interface.protocol(), entities::Protocol::Rpc))
+                .cloned()
+                .map(responses::RpcAgentInterface::from)
+                .collect(),
+            stdio_interfaces: value
+                .interfaces()
+                .iter()
+                .filter(|interface| matches!(interface.protocol(), entities::Protocol::Stdio))
+                .cloned()
+                .map(responses::StdioAgentInterface::from)
                 .collect(),
             capabilities: responses::Capabilities {
                 streaming: value.supports_streaming(),
@@ -85,38 +100,47 @@ impl From<entities::AgentArtifactType> for responses::AgentArtifactType {
     }
 }
 
-impl From<entities::AgentInterface> for responses::AgentInterface {
+impl From<entities::AgentInterface> for responses::RestHttpAgentInterface {
     fn from(value: entities::AgentInterface) -> Self {
         Self {
             name: value.name().clone(),
             description: value.description().clone(),
-            protocol: value.protocol().clone().into(),
             message_binding: value.message_binding().clone().map(Into::into),
             liveness_probe_config: value.liveness_probe_config().cloned().map(Into::into),
         }
     }
 }
 
-impl From<entities::LivenessProbeConfiguration> for responses::LivenessProbeConfiguration {
+impl From<entities::AgentInterface> for responses::RpcAgentInterface {
+    fn from(value: entities::AgentInterface) -> Self {
+        Self {
+            name: value.name().clone(),
+            description: value.description().clone(),
+            message_binding: value.message_binding().clone().map(Into::into),
+        }
+    }
+}
+
+impl From<entities::AgentInterface> for responses::StdioAgentInterface {
+    fn from(value: entities::AgentInterface) -> Self {
+        Self {
+            name: value.name().clone(),
+            description: value.description().clone(),
+            message_binding: value.message_binding().clone().map(Into::into),
+        }
+    }
+}
+
+impl From<entities::LivenessProbeConfiguration> for responses::RestHttpLivenessProbe {
     fn from(value: entities::LivenessProbeConfiguration) -> Self {
         match value {
             entities::LivenessProbeConfiguration::RestHttp {
                 route,
                 timeout_seconds,
-            } => Self::RestHttp {
+            } => Self {
                 route,
                 timeout_seconds,
             },
-        }
-    }
-}
-
-impl From<entities::Protocol> for responses::Protocol {
-    fn from(value: entities::Protocol) -> Self {
-        match value {
-            entities::Protocol::RestHttp => Self::RestHttp,
-            entities::Protocol::Rpc => Self::Rpc,
-            entities::Protocol::Stdio => Self::Stdio,
         }
     }
 }

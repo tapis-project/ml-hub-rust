@@ -11,8 +11,8 @@ mod agent_records_test {
     };
     use crate::presentation::http::v1::responses::agent_records::{
         AgentArtifactType as ResponseAgentArtifactType, AgentRecord,
-        LivenessProbeConfiguration as ResponseLivenessProbeConfiguration,
-        MessageBinding as ResponseMessageBinding, Protocol as ResponseProtocol,
+        MessageBinding as ResponseMessageBinding,
+        RestHttpLivenessProbe as ResponseRestHttpLivenessProbe,
     };
     use crate::presentation::http::v1::responses::visibility::Visibility as ResponseVisibility;
     use crate::shared_kernel::enums::Visibility as DomainVisibility;
@@ -36,6 +36,13 @@ mod agent_records_test {
                         route: "/healthcheck".into(),
                         timeout_seconds: 10,
                     }),
+                ),
+                DomainAgentInterface::new(
+                    "rpc".into(),
+                    None,
+                    Protocol::Rpc,
+                    Some(MessageBinding::JsonRpc2_0),
+                    None,
                 ),
                 DomainAgentInterface::new("stdio".into(), None, Protocol::Stdio, None, None),
             ],
@@ -91,7 +98,9 @@ mod agent_records_test {
                 .map(|provider| provider.url.as_str()),
             Some("https://www.examplegeoservices.com")
         );
-        assert_eq!(response.interfaces.len(), 2);
+        assert_eq!(response.rest_http_interfaces.len(), 1);
+        assert_eq!(response.rpc_interfaces.len(), 1);
+        assert_eq!(response.stdio_interfaces.len(), 1);
         assert_eq!(response.skills.len(), 1);
         assert_eq!(response.skills[0].id, "text-analysis");
         assert_eq!(response.skills[0].name, "Text analysis");
@@ -109,33 +118,30 @@ mod agent_records_test {
         );
         assert!(response.capabilities.streaming);
         assert!(!response.capabilities.push_notifications);
-        assert_eq!(response.interfaces[0].name, "rest");
+        assert_eq!(response.rest_http_interfaces[0].name, "rest");
         assert_eq!(
-            response.interfaces[0].description,
+            response.rest_http_interfaces[0].description,
             Some("REST interface".into())
         );
         assert!(matches!(
-            response.interfaces[0].protocol,
-            ResponseProtocol::RestHttp
-        ));
-        assert!(matches!(
-            response.interfaces[0].message_binding,
+            response.rest_http_interfaces[0].message_binding,
             Some(ResponseMessageBinding::HttpJson)
         ));
         assert!(matches!(
-            response.interfaces[0].liveness_probe_config,
-            Some(ResponseLivenessProbeConfiguration::RestHttp {
+            response.rest_http_interfaces[0].liveness_probe_config,
+            Some(ResponseRestHttpLivenessProbe {
                 ref route,
                 timeout_seconds: 10,
             }) if route == "/healthcheck"
         ));
         assert!(matches!(
-            response.interfaces[1].protocol,
-            ResponseProtocol::Stdio
+            response.rpc_interfaces[0].message_binding,
+            Some(ResponseMessageBinding::JsonRpc2_0)
         ));
-        assert_eq!(response.interfaces[1].name, "stdio");
-        assert!(response.interfaces[1].description.is_none());
-        assert!(response.interfaces[1].message_binding.is_none());
+        assert_eq!(response.rpc_interfaces[0].name, "rpc");
+        assert_eq!(response.stdio_interfaces[0].name, "stdio");
+        assert!(response.stdio_interfaces[0].description.is_none());
+        assert!(response.stdio_interfaces[0].message_binding.is_none());
 
         Ok(())
     }

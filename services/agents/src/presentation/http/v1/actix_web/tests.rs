@@ -83,22 +83,6 @@ mod tests {
                 .as_ref()
                 .unwrap()
                 .schemas
-                .contains_key("AgentInterface")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("LivenessProbeConfiguration")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
                 .contains_key("AgentSkill")
         );
         assert!(
@@ -255,6 +239,25 @@ mod tests {
         }
         assert!(document
             .pointer("/components/schemas/CreateAgentRecordBody/properties/interfaces")
+            .is_none());
+
+        for interface_collection in [
+            "rest_http_interfaces",
+            "rpc_interfaces",
+            "stdio_interfaces",
+        ] {
+            assert!(document
+                .pointer(&format!(
+                    "/components/schemas/AgentRecord/properties/{interface_collection}"
+                ))
+                .is_some());
+            assert!(document
+                .pointer("/components/schemas/AgentRecord/required")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| { required.iter().any(|field| field == interface_collection) }));
+        }
+        assert!(document
+            .pointer("/components/schemas/AgentRecord/properties/interfaces")
             .is_none());
 
         let response_skills = document

@@ -14,7 +14,9 @@ pub struct AgentRecord {
     pub tenant_id: String,
     pub owner: String,
     pub description: String,
-    pub interfaces: Vec<AgentInterface>,
+    pub rest_http_interfaces: Vec<RestHttpAgentInterface>,
+    pub rpc_interfaces: Vec<RpcAgentInterface>,
+    pub stdio_interfaces: Vec<StdioAgentInterface>,
     pub capabilities: Capabilities,
     pub provider: Option<AgentProvider>,
     pub version: String,
@@ -63,19 +65,25 @@ pub struct Capabilities {
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
-pub struct AgentInterface {
+pub struct RestHttpAgentInterface {
     pub name: String,
     pub description: Option<String>,
-    pub protocol: Protocol,
     pub message_binding: Option<MessageBinding>,
-    pub liveness_probe_config: Option<LivenessProbeConfiguration>,
+    pub liveness_probe_config: Option<RestHttpLivenessProbe>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
-pub enum Protocol {
-    RestHttp,
-    Rpc,
-    Stdio,
+pub struct RpcAgentInterface {
+    pub name: String,
+    pub description: Option<String>,
+    pub message_binding: Option<MessageBinding>,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct StdioAgentInterface {
+    pub name: String,
+    pub description: Option<String>,
+    pub message_binding: Option<MessageBinding>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
@@ -86,8 +94,9 @@ pub enum MessageBinding {
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
-pub enum LivenessProbeConfiguration {
-    RestHttp { route: String, timeout_seconds: u32 },
+pub struct RestHttpLivenessProbe {
+    pub route: String,
+    pub timeout_seconds: u32,
 }
 
 #[cfg(test)]
