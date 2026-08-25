@@ -7,3 +7,5 @@ MLHub is a platform that facilitates the discovery and programatic deployment of
 - [Deploying MLHub Locally](./docs/DEPLOYMENT.md)
 - [Rules for contributing](./docs/CONTRIBUTING.md)
 - [Developers Guide](./docs/DEVELOPERS_GUIDE.md)
+- [API Development Playbook](./docs/API_DEVELOPMENT_PLAYBOOK.md)
+- [AI Agent Development Guide](./docs/AI_AGENT_DEVELOPMENT_GUIDE.md)

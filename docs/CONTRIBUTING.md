@@ -6,6 +6,8 @@ Please take a few minutes to review this document so you can understand the stan
 
 Before contributing to this project, please read this document as well as the [DEVELOPERS GUIDE](./DEVELOPERS_GUIDE.md) for a more in-depth explanation of this project's components, directory structure, and architecture.
 
+For the complete feature-development workflow, follow the [API Development Playbook](./API_DEVELOPMENT_PLAYBOOK.md). Contributors using AI coding agents should ensure those agents also follow the repository-root [AGENTS.md](../AGENTS.md) and the [AI Agent Development Guide](./AI_AGENT_DEVELOPMENT_GUIDE.md).
+
 ---
 
 ## Getting Started

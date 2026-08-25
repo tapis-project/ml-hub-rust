@@ -1,5 +1,9 @@
 # MLHub Developer Guide
 
+For the repository-wide process for adding APIs and extending their features, see the
+[API Development Playbook](./API_DEVELOPMENT_PLAYBOOK.md). AI-assisted contributors should also
+follow the root [AGENTS.md](../AGENTS.md) and the [AI Agent Development Guide](./AI_AGENT_DEVELOPMENT_GUIDE.md).
+
 ## Development Environement Setup
 
 You may use whichever IDE you please! But it is recommended to use VSCode. This project
@@ -99,6 +103,10 @@ This project takes a Domain Driven Design (DDD)-styled architectural approach. E
 ### Shared Layer Conventions
 
 Reusable layer code belongs in `libs/shared`; services re-export the shared modules they consume instead of duplicating domain, application, or presentation types. Domain entities keep state private, expose read-only accessors, create new identities at construction, and provide reconstitution constructors for persistence data. Presentation request DTOs model external input and validation, response DTOs model external output, and explicit mappings translate between presentation and domain types. HTTP handlers and bootstrap wiring are generally service-local.
+
+The API Development Playbook defines the required implementation, testing, deployment, and review
+workflow for these conventions. It is the canonical detailed reference; this guide provides the
+architectural overview.
 
 ### 1. The Presentation Layer
 
