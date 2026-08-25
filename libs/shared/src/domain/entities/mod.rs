@@ -8,7 +8,6 @@ pub mod model_metadata;
 pub mod deployment;
 pub mod deployment_strategy;
 pub mod operator;
-pub mod visibility;
 pub mod principal;
 pub mod identity;
 pub mod tenancy;

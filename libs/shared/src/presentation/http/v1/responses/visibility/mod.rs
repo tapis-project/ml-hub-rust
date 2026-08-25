@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::domain::entities;
+use crate::shared_kernel::enums::Visibility as DomainVisibility;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub enum Visibility {
@@ -9,11 +9,11 @@ pub enum Visibility {
     Private,
 }
 
-impl From<entities::visibility::Visibility> for Visibility {
-    fn from(value: entities::visibility::Visibility) -> Self {
+impl From<DomainVisibility> for Visibility {
+    fn from(value: DomainVisibility) -> Self {
         match value {
-            entities::visibility::Visibility::Private => Visibility::Private,
-            entities::visibility::Visibility::Public => Visibility::Public,
+            DomainVisibility::Private => Visibility::Private,
+            DomainVisibility::Public => Visibility::Public,
         }
     }
 }

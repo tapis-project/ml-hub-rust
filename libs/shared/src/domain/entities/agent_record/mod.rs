@@ -5,7 +5,7 @@ use semver::Version;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::domain::entities::visibility::Visibility;
+use crate::shared_kernel::enums::Visibility;
 use crate::impl_urn_generator;
 
 #[derive(Clone, Debug)]

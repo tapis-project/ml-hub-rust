@@ -6,7 +6,7 @@ use super::{
     AgentInterface, AgentProvider, AgentRecord, AgentRecordError, AgentSkill, ArtifactLocator,
     Capabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
 };
-use crate::domain::entities::visibility::Visibility;
+use crate::shared_kernel::enums::Visibility;
 
 pub struct AgentRecordBuilder {
     id: Option<Uuid>,

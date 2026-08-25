@@ -7,7 +7,7 @@ mod agent_record_test {
         AgentRecordError, AgentSkill, AgentSkillError, ArtifactLocator, Capabilities,
         MessageBinding, Protocol, ReconstituteAgentSkillProps,
     };
-    use crate::domain::entities::visibility::Visibility;
+    use crate::shared_kernel::enums::Visibility;
     use crate::shared_kernel::identifiers::traits::UrnGenerator;
 
     #[test]

@@ -8,7 +8,7 @@ mod agent_records_test {
         AgentSkill as DomainAgentSkill, ArtifactLocator as DomainArtifactLocator,
         Capabilities as DomainCapabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
     };
-    use crate::domain::entities::visibility::Visibility as DomainVisibility;
+    use crate::shared_kernel::enums::Visibility as DomainVisibility;
     use crate::presentation::http::v1::responses::agent_records::{
         AgentArtifactType as ResponseAgentArtifactType, AgentRecord,
         MessageBinding as ResponseMessageBinding, Protocol as ResponseProtocol,

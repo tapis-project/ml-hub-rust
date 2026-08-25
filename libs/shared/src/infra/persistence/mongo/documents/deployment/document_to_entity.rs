@@ -1,6 +1,6 @@
 use crate::domain::entities::deployment::{self as entities, ModelDeploymentMetadata};
 use crate::shared_kernel::value_objects::TimeStamp;
-use crate::domain::entities::visibility::Visibility;
+use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use uuid::Uuid;

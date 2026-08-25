@@ -1,6 +1,6 @@
 use crate::application::inputs::agent_record as inputs;
 use crate::domain::entities::agent_record as entities;
-use crate::domain::entities::visibility::Visibility as DomainVisibility;
+use crate::shared_kernel::enums::Visibility as DomainVisibility;
 use crate::presentation::http::v1::requests::create_agent_record::body as requests;
 
 impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
