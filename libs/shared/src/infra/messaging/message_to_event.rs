@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::application::ports::events::{self, EventMetadata};
 use crate::infra::messaging::messages;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 use crate::domain::entities::deployment::{State, DesiredState};
 use crate::infra::messaging::errors::SerializationError;
 

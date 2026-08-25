@@ -1,4 +1,4 @@
-pub use crate::domain::entities::timestamp::TimeStamp;
+pub use crate::shared_kernel::value_objects::TimeStamp;
 use crate::errors::Error as GenericError;
 pub use mongodb::bson::DateTime;
 use mongodb::options::Credential;

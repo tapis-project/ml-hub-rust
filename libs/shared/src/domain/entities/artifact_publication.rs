@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 use thiserror::Error;
 use crate::domain::entities::artifact::ArtifactType;
 

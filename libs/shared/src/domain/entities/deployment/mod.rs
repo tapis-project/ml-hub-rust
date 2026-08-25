@@ -6,7 +6,7 @@ use platforms::Platform;
 use serde::Serialize;
 use uuid::Uuid;
 use thiserror::Error;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 use crate::domain::entities::visibility::Visibility;
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::DeploymentModality;

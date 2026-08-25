@@ -1,6 +1,6 @@
 use crate::domain::entities::artifact_publication as entities;
 use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 use crate::infra::persistence::mongo::documents::artifact_publication as documents;
 use crate::infra::persistence::mongo::documents::artifact_publication::ArtifactType as ArtifactTypeDoc;
 use uuid::Uuid;

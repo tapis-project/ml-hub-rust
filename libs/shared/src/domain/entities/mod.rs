@@ -3,7 +3,6 @@ pub mod skill;
 pub mod artifact;
 pub mod agent_record;
 pub mod artifact_ingestion;
-pub mod timestamp;
 pub mod artifact_publication;
 pub mod model_metadata;
 pub mod deployment;

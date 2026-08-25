@@ -1,5 +1,5 @@
 use serde_json::Value;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 #[derive(Clone, Debug)]
 pub struct FederatedIdentity {
