@@ -50,19 +50,11 @@ Please refer to the official [Rust style guide](https://doc.rust-lang.org/nightl
 
 ## Design Patterns 🖼️
 
-We use specific design patterns to ensure consistency across the project. Here are some of the main patterns and guidelines on when to use them:
-
-- **Singleton Pattern**: Use this pattern for structs that should only have a single instance. Examples include configurations or database connection managers.
-  
-- **Factory Pattern**: Use this for encapsulating logic for creating complex or polymorphic objects.
-
-- **Repository Pattern**: Use this for data access layers to insulate the business logic from persistence-related infrastructure concerns.
-
-> **Note** See Service Pattern below
-
-- **Service Pattern** Use this pattern to encapsulate complex business logic including DTO validation, interactions with the Data Layer via repositories (mentioned above), orchestrating application and domain logic with cross-cutting concerns, etc.
-
-> **Note**: When adding new code, refer to existing patterns and follow them whenever applicable. If your contribution requires a new pattern, please mention it in the PR description so we can review its suitability for this project and add it to this documentation.
+The [Approved Design Patterns](./DEVELOPERS_GUIDE.md#approved-design-patterns) section of the
+Developer Guide is the canonical list of patterns and their intended use. Follow the established
+implementation style whenever a listed pattern applies. If a change requires a new pattern or a
+meaningful variation, explain it in the PR description so it can be reviewed and added to the
+catalog when approved.
 
 ---
 

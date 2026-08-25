@@ -636,7 +636,8 @@
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
-        "run-all": "./manage run-models migrations -t overlay {{ overlay }}; ./manage run-federated-identities migrations -t overlay {{ overlay }}; ./manage run-principals migrations -t overlay {{ overlay }}",
+        "buildl-all": "./manage buildl models-migrator federated-identities-migrator principals-migrator -s",
+        "run-all": "./manage run-models migrations -t overlay {{ overlay }} && ./manage run-federated-identities migrations -t overlay {{ overlay }} && ./manage run-principals migrations -t overlay {{ overlay }}",
         "run-models": "cd {{ k8s-dir }}/{{ self.name }}/models-migrator && ./burnup.sh {{ overlay }}",
         "run-federated-identities": "cd {{ k8s-dir }}/{{ self.name }}/federated-identities-migrator && ./burnup.sh {{ overlay }}",
         "run-principals": "cd {{ k8s-dir }}/{{ self.name }}/principals-migrator && ./burnup.sh {{ overlay }}"

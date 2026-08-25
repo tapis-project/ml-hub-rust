@@ -165,3 +165,27 @@ Bootstrap is the composition root. It loads configuration, creates concrete infr
 and adapters, injects those adapters into application services, and registers the resulting
 services as presentation app data. Bootstrap makes dependencies explicit without placing runtime
 wiring in domain or application code.
+
+## Approved Design Patterns 🖼️
+
+Use the following patterns when they fit the responsibility at hand. Follow the implementation
+style already present in Models, Deployments, and `libs/shared`; do not introduce a new pattern or
+variation without discussion and documentation.
+
+| Pattern | Use in MLHub |
+| --- | --- |
+| **Domain-Driven Design** | Model business concepts as entities and value objects in the domain layer. Keep invariants and domain-specific errors with those concepts. |
+| **Clean Architecture** | Organize code by presentation, application, domain, infrastructure, and bootstrap responsibilities. Keep technology and delivery details outside the domain. |
+| **Hexagonal Architecture (Ports and Adapters)** | Define application-owned ports for persistence, messaging, and external capabilities; implement them with infrastructure adapters. |
+| **Repository** | Encapsulate persistence access behind an application port. Repository adapters map between domain entities and infrastructure document DTOs. |
+| **Application Service** | Implement one or more use cases by coordinating domain behavior and ports. Services receive `RequestContext` first and do not own HTTP or database details. |
+| **Factory and Composition Root** | Build concrete clients, adapters, and application services in bootstrap factories, then inject them into the server. Keep construction logic out of handlers and domain code. |
+| **DTO and Mapper** | Keep request, application-input, domain, persistence-document, and response shapes separate. Translate explicitly with dedicated `From` or `TryFrom` mapper implementations. |
+| **Entity Reconstitution** | Create new entities through constructors and rebuild persisted entities through props-based `reconstitute` constructors, distinguishing invalid new input from corrupt persisted data. |
+| **Workflow** | Extract repeated application-service orchestration into a workflow only when it serves more than one use case. |
+| **Builder (test fixtures)** | Use optional-field builders to construct focused, readable domain test fixtures without duplicating setup. |
+| **Singleton** | Use an application-scoped configuration or client instance only when a single shared instance is required; prefer explicit bootstrap injection over global mutable state. |
+
+Related rules reinforce these patterns: preserve the Law of Demeter by exposing semantic domain
+queries instead of navigable internals, validate untrusted input at the presentation boundary, and
+keep domain validation authoritative for every caller.
