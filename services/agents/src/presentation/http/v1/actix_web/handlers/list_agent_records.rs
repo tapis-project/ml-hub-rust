@@ -24,7 +24,7 @@ use crate::presentation::http::v1::{
         (status = 500, description = "Unable to list agent records")
     )
 )]
-#[get("/agents-api/agent-records")]
+#[get("agents-api/agent-records")]
 pub async fn list_agent_records(
     query: web::Query<ListAgentRecordsQueryParams>,
     ctx: RequestContext,

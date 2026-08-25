@@ -24,7 +24,7 @@ use crate::presentation::http::v1::{
         (status = 500, description = "Unable to create agent record")
     )
 )]
-#[post("/agents-api/agent-records")]
+#[post("agents-api/agent-records")]
 pub async fn create_agent_record(
     body: web::Json<CreateAgentRecordBody>,
     ctx: RequestContext,
