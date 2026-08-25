@@ -35,28 +35,6 @@ When submitting a PR, ensure the following:
    - [ ] I have validated that the new feature(s) I added work as expected
    - [ ] I did not break any existing functionality
 
-## Testing
-
-Before submitting a PR, you should run all relevant unit and functional tests.
-
-Unit tests should be colocated with the functionality they are testing. Ex. If youre working in module `foo/bar.rs`, you should be writing tests in `foo/bar.test.rs`.
-
-This project uses `cargo`s built-in testing framework. PRs that add 3rd-party testing libraries will be rejected.
-
-0. **Unit Tests**: Add or update unit tests for any new features or bug fixes.
-0. **Test Coverage**: Our goal is to maintain at least 80% test coverage across all modules. If you can, please add coverage for any critical code paths.
-0. **Run Tests**: Before submitting your PR, ensure all tests pass by running the following from the root of the project:
-
-   ```bash
-   ./manage test <component>
-   ```
-
-   If your changes to the project affect more than one component, run the command above for each component. Sometimes you may need to run the tests for the entire project. In those instances, you will run the following from the root of the project:
-
-   ```bash
-   ./manage test
-   ```
-
 ## Attribution
 
 To ensure you are recognized for your contributions to ML Hub, please add a link to your Github (or equivalent) profile to the CONTRIBUTORS.md file in the projects root directory.
