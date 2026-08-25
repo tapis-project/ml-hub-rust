@@ -95,14 +95,14 @@ impl AgentRecordService {
         Ok(agent_records)
     }
 
-    pub async fn list_for_tenant(
+    pub async fn list_shared_with_user(
         &self,
         ctx: &RequestContext,
     ) -> Result<Vec<AgentRecord>, AgentRecordServiceError> {
         let agent_records = retry_async(
             || {
                 self.agent_record_repository
-                    .list_public_by_tenant(ctx.actor_tenant_id())
+                    .list_shared_with_user(ctx.actor_tenant_id(), ctx.actor_principal_id())
             },
             &Self::REPOSITORY_RETRY_POLICY,
             None,

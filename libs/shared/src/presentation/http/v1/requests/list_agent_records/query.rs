@@ -11,7 +11,7 @@ pub struct ListAgentRecordsQueryParams {
 #[derive(Clone, Debug, Deserialize, ToSchema)]
 pub enum Scope {
     Owned,
-    SharedPublic,
+    Shared,
 }
 
 impl Default for Scope {

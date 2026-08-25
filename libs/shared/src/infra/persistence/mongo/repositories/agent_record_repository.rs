@@ -62,16 +62,10 @@ impl application::ports::agent_record::AgentRecordRepository for AgentRecordRepo
             .await
     }
 
-    async fn list_by_tenant(
+    async fn list_shared_with_user(
         &self,
         tenant_id: &str,
-    ) -> Result<Vec<entities::agent_record::AgentRecord>, AgentRecordRepositoryError> {
-        self.list(doc! { "tenant_id": tenant_id }).await
-    }
-
-    async fn list_public_by_tenant(
-        &self,
-        tenant_id: &str,
+        _owner: &str,
     ) -> Result<Vec<entities::agent_record::AgentRecord>, AgentRecordRepositoryError> {
         let visibility = to_bson(&DocumentVisibility::Public).map_err(|error| {
             let infrastructure_error = InfrastructureError::new_internal();

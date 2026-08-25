@@ -13,18 +13,20 @@ mod list_agent_records_query_test {
     #[test]
     fn accepts_supported_scopes() -> Result<(), serde_json::Error> {
         let owned: ListAgentRecordsQueryParams = serde_json::from_str(r#"{"scope":"Owned"}"#)?;
-        let shared_public: ListAgentRecordsQueryParams =
-            serde_json::from_str(r#"{"scope":"SharedPublic"}"#)?;
+        let shared: ListAgentRecordsQueryParams = serde_json::from_str(r#"{"scope":"Shared"}"#)?;
 
         assert!(matches!(owned.scope, Scope::Owned));
-        assert!(matches!(shared_public.scope, Scope::SharedPublic));
+        assert!(matches!(shared.scope, Scope::Shared));
         Ok(())
     }
 
     #[test]
-    fn rejects_unknown_scope() {
-        let result = serde_json::from_str::<ListAgentRecordsQueryParams>(r#"{"scope":"Global"}"#);
+    fn rejects_removed_and_unknown_scopes() {
+        let removed =
+            serde_json::from_str::<ListAgentRecordsQueryParams>(r#"{"scope":"SharedPublic"}"#);
+        let unknown = serde_json::from_str::<ListAgentRecordsQueryParams>(r#"{"scope":"Global"}"#);
 
-        assert!(result.is_err());
+        assert!(removed.is_err());
+        assert!(unknown.is_err());
     }
 }

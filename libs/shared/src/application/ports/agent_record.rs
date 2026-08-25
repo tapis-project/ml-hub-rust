@@ -20,13 +20,9 @@ pub trait AgentRecordRepository: Send + Sync {
         owner: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
 
-    async fn list_by_tenant(
+    async fn list_shared_with_user(
         &self,
         tenant_id: &str,
-    ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
-
-    async fn list_public_by_tenant(
-        &self,
-        tenant_id: &str,
+        owner: &str,
     ) -> Result<Vec<AgentRecord>, AgentRecordRepositoryError>;
 }

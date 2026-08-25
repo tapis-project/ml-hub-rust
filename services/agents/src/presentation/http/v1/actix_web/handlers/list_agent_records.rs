@@ -32,7 +32,7 @@ pub async fn list_agent_records(
 ) -> impl Responder {
     let agent_records = match query.scope {
         Scope::Owned => agent_record_service.list_for_user(&ctx).await,
-        Scope::SharedPublic => agent_record_service.list_for_tenant(&ctx).await,
+        Scope::Shared => agent_record_service.list_shared_with_user(&ctx).await,
     };
     let agent_records = match agent_records {
         Ok(agent_records) => agent_records,
