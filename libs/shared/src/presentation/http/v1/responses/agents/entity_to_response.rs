@@ -60,6 +60,10 @@ impl From<entities::Agent> for responses::Agent {
             description: value.description().into(),
             deployment_modality: value.deployment_modality().into(),
             liveness: value.liveness().into(),
+            last_missed_heartbeat: value
+                .last_missed_heartbeat()
+                .map(|timestamp| String::from(timestamp.clone())),
+            consecutive_missed_heartbeats: value.consecutive_missed_heartbeats(),
             rest_http_endpoints,
             rpc_endpoints,
             stdio_endpoints,

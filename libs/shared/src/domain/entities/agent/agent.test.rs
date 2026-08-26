@@ -15,6 +15,24 @@ mod agent_test {
             crate::domain::entities::agent::AgentLiveness::Dead
         ));
         assert_eq!(agent.target_endpoints().len(), 1);
+        assert!(agent.last_missed_heartbeat().is_none());
+        assert_eq!(agent.consecutive_missed_heartbeats(), 0);
+        Ok(())
+    }
+
+    #[test]
+    fn reconstitute_agent_preserves_missed_heartbeat_state() -> Result<(), AgentError> {
+        let last_missed_heartbeat = crate::shared_kernel::value_objects::TimeStamp::parse_string(
+            "2026-08-26T12:00:00Z",
+        )
+        .map_err(|error| AgentError::DataIntegrityError(error.to_string()))?;
+        let agent = AgentBuilder::new()
+            .with_last_missed_heartbeat(last_missed_heartbeat.clone())
+            .with_consecutive_missed_heartbeats(3)
+            .build_reconstituted()?;
+
+        assert_eq!(agent.last_missed_heartbeat(), Some(&last_missed_heartbeat));
+        assert_eq!(agent.consecutive_missed_heartbeats(), 3);
         Ok(())
     }
 

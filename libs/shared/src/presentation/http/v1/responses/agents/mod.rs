@@ -18,6 +18,8 @@ pub struct Agent {
     pub description: String,
     pub deployment_modality: AgentDeploymentModality,
     pub liveness: AgentLiveness,
+    pub last_missed_heartbeat: Option<String>,
+    pub consecutive_missed_heartbeats: u16,
     pub rest_http_endpoints: Vec<RestHttpAgentEndpoint>,
     pub rpc_endpoints: Vec<RpcAgentEndpoint>,
     pub stdio_endpoints: Vec<StdioAgentEndpoint>,
@@ -62,3 +64,7 @@ pub enum AgentLiveness {
     Alive,
     Dead,
 }
+
+#[cfg(test)]
+#[path = "agents.test.rs"]
+mod agents_test;

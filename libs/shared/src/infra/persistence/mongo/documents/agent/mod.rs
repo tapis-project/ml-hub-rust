@@ -20,6 +20,9 @@ pub struct Agent {
     pub description: String,
     pub deployment_modality: AgentDeploymentModality,
     pub liveness: AgentLiveness,
+    pub last_missed_heartbeat: Option<String>,
+    #[serde(default)]
+    pub consecutive_missed_heartbeats: u16,
     pub target_endpoints: Vec<AgentEndpoint>,
     pub tags: Vec<String>,
     pub visibility: Visibility,
@@ -48,3 +51,7 @@ pub enum AgentDeploymentModality {
     Persistent,
     OnDemand,
 }
+
+#[cfg(test)]
+#[path = "agent.test.rs"]
+mod agent_test;

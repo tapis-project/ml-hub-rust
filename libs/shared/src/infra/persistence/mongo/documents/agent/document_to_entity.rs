@@ -1,5 +1,6 @@
 use crate::domain::entities::agent as entities;
 use crate::infra::persistence::mongo::documents::agent as documents;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 impl TryFrom<documents::Agent> for entities::Agent {
     type Error = entities::AgentError;
@@ -12,17 +13,21 @@ impl TryFrom<documents::Agent> for entities::Agent {
             description: value.description,
             deployment_modality: value.deployment_modality.into(),
             liveness: value.liveness.into(),
+            last_missed_heartbeat: value
+                .last_missed_heartbeat
+                .map(|timestamp| {
+                    TimeStamp::parse_string(&timestamp)
+                })
+                .transpose()
+                .map_err(|error| entities::AgentError::DataIntegrityError(error.to_string()))?,
+            consecutive_missed_heartbeats: value.consecutive_missed_heartbeats,
             endpoints: value.target_endpoints.into_iter().map(Into::into).collect(),
             tags: value.tags,
             visibility: value.visibility.into(),
-            created_at: crate::shared_kernel::value_objects::TimeStamp::parse_string(
-                &value.created_at,
-            )
-            .map_err(|error| entities::AgentError::DataIntegrityError(error.to_string()))?,
-            last_modified: crate::shared_kernel::value_objects::TimeStamp::parse_string(
-                &value.last_modified,
-            )
-            .map_err(|error| entities::AgentError::DataIntegrityError(error.to_string()))?,
+            created_at: TimeStamp::parse_string(&value.created_at)
+                .map_err(|error| entities::AgentError::DataIntegrityError(error.to_string()))?,
+            last_modified: TimeStamp::parse_string(&value.last_modified)
+                .map_err(|error| entities::AgentError::DataIntegrityError(error.to_string()))?,
             agent_record_id: value
                 .agent_record_id
                 .map(|id| uuid::Uuid::from_bytes(id.bytes())),

@@ -253,6 +253,29 @@ mod tests {
                 .is_some_and(|required| { required.iter().any(|field| field == "tags") }));
         }
 
+        let last_missed_heartbeat = match document
+            .pointer("/components/schemas/Agent/properties/last_missed_heartbeat")
+        {
+            Some(last_missed_heartbeat) => last_missed_heartbeat,
+            None => panic!("Agent last_missed_heartbeat schema should exist"),
+        };
+
+        assert!(last_missed_heartbeat
+            .get("type")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|types| types.iter().any(|value| value == "null")));
+        assert!(document
+            .pointer("/components/schemas/Agent/properties/consecutive_missed_heartbeats")
+            .is_some());
+        assert!(document
+            .pointer("/components/schemas/Agent/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| {
+                required
+                    .iter()
+                    .any(|field| field == "consecutive_missed_heartbeats")
+            }));
+
         for interface_collection in [
             "rest_http_interfaces",
             "rpc_interfaces",

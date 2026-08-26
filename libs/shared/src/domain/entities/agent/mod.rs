@@ -21,6 +21,8 @@ pub struct Agent {
     description: String,
     deployment_modality: AgentDeploymentModality,
     liveness: AgentLiveness,
+    last_missed_heartbeat: Option<TimeStamp>,
+    consecutive_missed_heartbeats: u16,
     /// The protocols, message bindings, and base URLs for communicating with the agent.
     target_endpoints: NonEmpty<AgentEndpoint>,
     tags: Tags,
@@ -62,6 +64,8 @@ impl Agent {
             description: props.description,
             deployment_modality: props.deployment_modality,
             liveness: AgentLiveness::Dead,
+            last_missed_heartbeat: None,
+            consecutive_missed_heartbeats: 0,
             target_endpoints: endpoints,
             tags,
             visibility: props.visibility,
@@ -96,6 +100,8 @@ impl Agent {
             description: props.description,
             deployment_modality: props.deployment_modality,
             liveness: props.liveness,
+            last_missed_heartbeat: props.last_missed_heartbeat,
+            consecutive_missed_heartbeats: props.consecutive_missed_heartbeats,
             target_endpoints: endpoints,
             tags,
             visibility: props.visibility,
@@ -131,6 +137,14 @@ impl Agent {
 
     pub fn liveness(&self) -> &AgentLiveness {
         &self.liveness
+    }
+
+    pub fn last_missed_heartbeat(&self) -> Option<&TimeStamp> {
+        self.last_missed_heartbeat.as_ref()
+    }
+
+    pub fn consecutive_missed_heartbeats(&self) -> u16 {
+        self.consecutive_missed_heartbeats
     }
 
     pub fn target_endpoints(&self) -> &NonEmpty<AgentEndpoint> {
@@ -301,6 +315,8 @@ pub struct ReconstituteAgentProps {
     pub tenant_id: String,
     pub deployment_modality: AgentDeploymentModality,
     pub liveness: AgentLiveness,
+    pub last_missed_heartbeat: Option<TimeStamp>,
+    pub consecutive_missed_heartbeats: u16,
     pub endpoints: Vec<AgentEndpoint>,
     pub tags: Vec<String>,
     pub visibility: Visibility,
