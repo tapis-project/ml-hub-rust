@@ -236,6 +236,12 @@ impl Agent {
 
         Ok(())
     }
+
+    pub fn modify(&mut self) -> AgentDraft<'_> {
+        AgentDraft {
+            agent: self
+        }
+    }
 }
 
 fn same_protocol(left: &Protocol, right: &Protocol) -> bool {
@@ -403,6 +409,33 @@ pub enum AgentError {
     MismatchedAgentInterfaceDetails(String),
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String),
+}
+
+pub struct AgentDraft<'a> {
+    agent: &'a mut Agent
+}
+
+impl <'a>AgentDraft<'a> {
+    /// Marks a hearbeat as missed and iterates
+    pub fn missed_heartbeat(&mut self) -> &mut Self {
+        self.touch();
+        self.agent.last_missed_heartbeat = Some(self.agent.last_modified.clone());
+        self.agent.consecutive_missed_heartbeats += 1;
+        
+        self
+    }
+
+    /// Updates last modified to the UTC timestamp
+    fn touch(&mut self) -> &mut Self {
+        let now = TimeStamp::now();
+        self.agent.last_modified = now.clone();
+
+        self
+    }
+
+    pub fn finish(&mut self) -> Agent {
+        self.agent.clone()
+    }
 }
 
 #[cfg(test)]
