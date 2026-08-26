@@ -97,6 +97,7 @@ fn input() -> CreateAgentRecordInput {
             tags: vec!["geospatial".into()],
             examples: vec!["Find flood zones.".into()],
         }],
+        tags: vec![],
         icon_url: Some("https://example.com/icon.svg".into()),
         documentation_url: Some("https://example.com/docs".into()),
         visibility: VisibilityInput::Private,

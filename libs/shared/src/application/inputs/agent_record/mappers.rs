@@ -24,6 +24,7 @@ impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
                 .map(Into::into)
                 .collect(),
             skills: value.skills.into_iter().map(Into::into).collect(),
+            tags: value.tags,
             icon_url: value.icon_url,
             documentation_url: value.documentation_url,
             visibility: value.visibility.into(),

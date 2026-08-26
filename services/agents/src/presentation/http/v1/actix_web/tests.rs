@@ -227,6 +227,32 @@ mod tests {
                 })
         );
 
+        for request_schema in ["CreateAgentBody", "CreateAgentRecordBody"] {
+            assert!(document
+                .pointer(&format!("/components/schemas/{request_schema}/properties/tags"))
+                .is_some());
+            assert!(!document
+                .pointer(&format!("/components/schemas/{request_schema}/required"))
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| { required.iter().any(|field| field == "tags") }));
+        }
+
+        for response_schema in ["Agent", "AgentRecord"] {
+            let tags = match document.pointer(&format!(
+                "/components/schemas/{response_schema}/properties/tags"
+            )) {
+                Some(tags) => tags,
+                None => panic!("{response_schema} response tags schema should exist"),
+            };
+
+            assert_eq!(tags.get("type"), Some(&serde_json::Value::String("array".into())));
+            assert_ne!(tags.get("nullable"), Some(&serde_json::Value::Bool(true)));
+            assert!(document
+                .pointer(&format!("/components/schemas/{response_schema}/required"))
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|required| { required.iter().any(|field| field == "tags") }));
+        }
+
         for interface_collection in [
             "rest_http_interfaces",
             "rpc_interfaces",

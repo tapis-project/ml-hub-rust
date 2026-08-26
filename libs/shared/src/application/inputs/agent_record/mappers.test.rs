@@ -41,6 +41,7 @@ fn maps_concrete_request_interfaces_to_polymorphic_application_inputs() {
         version: "1.0.0".into(),
         artifact_locators: vec![],
         skills: vec![],
+        tags: vec![],
         icon_url: None,
         documentation_url: None,
         visibility: Visibility::Private,

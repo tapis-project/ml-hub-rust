@@ -63,6 +63,7 @@ impl AgentRecordService {
                 .into_iter()
                 .map(TryInto::try_into)
                 .collect::<Result<Vec<_>, _>>()?,
+            input.tags,
             input.icon_url,
             input.documentation_url,
             input.visibility.into(),

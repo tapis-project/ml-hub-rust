@@ -10,6 +10,7 @@ use crate::domain::entities::agent_record::{
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::value_objects::TimeStamp;
+use crate::shared_kernel::value_objects::{Tags, TagsError};
 
 #[derive(Clone, Debug)]
 pub struct Agent {
@@ -22,6 +23,7 @@ pub struct Agent {
     liveness: AgentLiveness,
     /// The protocols, message bindings, and base URLs for communicating with the agent.
     target_endpoints: NonEmpty<AgentEndpoint>,
+    tags: Tags,
     visibility: Visibility,
     created_at: TimeStamp,
     last_modified: TimeStamp,
@@ -42,6 +44,14 @@ impl Agent {
             Self::validate_agent_record_interfaces(&endpoints, agent_record)?;
         }
 
+        let tags = if props.tags.is_empty() {
+            agent_record
+                .map(|record| record.tags().clone())
+                .unwrap_or_default()
+        } else {
+            Tags::new(props.tags).map_err(AgentError::InvalidTags)?
+        };
+
         let now = TimeStamp::now();
 
         Ok(Self {
@@ -53,6 +63,7 @@ impl Agent {
             deployment_modality: props.deployment_modality,
             liveness: AgentLiveness::Dead,
             target_endpoints: endpoints,
+            tags,
             visibility: props.visibility,
             created_at: now.clone(),
             last_modified: now,
@@ -73,6 +84,10 @@ impl Agent {
             ))
         })?;
 
+        let tags = Tags::reconstitute(props.tags).map_err(|error| {
+            AgentError::DataIntegrityError(format!("Agent contains invalid tags: {error}"))
+        })?;
+
         Ok(Self {
             id: props.id,
             tenant_id: props.tenant_id,
@@ -82,6 +97,7 @@ impl Agent {
             deployment_modality: props.deployment_modality,
             liveness: props.liveness,
             target_endpoints: endpoints,
+            tags,
             visibility: props.visibility,
             created_at: props.created_at,
             last_modified: props.last_modified,
@@ -119,6 +135,10 @@ impl Agent {
 
     pub fn target_endpoints(&self) -> &NonEmpty<AgentEndpoint> {
         &self.target_endpoints
+    }
+
+    pub fn tags(&self) -> &Tags {
+        &self.tags
     }
 
     pub fn is_public(&self) -> bool {
@@ -268,6 +288,7 @@ pub struct RegisterAgentProps {
     pub tenant_id: String,
     pub deployment_modality: AgentDeploymentModality,
     pub endpoints: Vec<AgentEndpoint>,
+    pub tags: Vec<String>,
     pub visibility: Visibility,
 }
 
@@ -281,6 +302,7 @@ pub struct ReconstituteAgentProps {
     pub deployment_modality: AgentDeploymentModality,
     pub liveness: AgentLiveness,
     pub endpoints: Vec<AgentEndpoint>,
+    pub tags: Vec<String>,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
@@ -358,6 +380,9 @@ pub enum AgentError {
     DuplicateAgentEndpointIdentifier(String),
     #[error("Incompatible liveness probe configuration for agent endpoint: {0}")]
     IncompatibleLivenessProbeConfiguration(String),
+
+    #[error("Invalid agent tags: {0}")]
+    InvalidTags(TagsError),
     #[error("Mismatched agent interface details: {0}")]
     MismatchedAgentInterfaceDetails(String),
     #[error("Data integrity error: {0}")]

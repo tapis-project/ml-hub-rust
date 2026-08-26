@@ -20,6 +20,7 @@ impl From<requests::CreateAgentBody> for inputs::RegisterAgentInput {
                 .chain(value.rpc_endpoints.into_iter().map(Into::into))
                 .chain(value.stdio_endpoints.into_iter().map(Into::into))
                 .collect(),
+            tags: value.tags,
             agent_record_id: value.agent_record_id,
             visibility: value.visibility.into(),
         }

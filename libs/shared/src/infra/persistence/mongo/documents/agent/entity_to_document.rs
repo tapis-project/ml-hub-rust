@@ -19,6 +19,11 @@ impl From<&entities::Agent> for documents::Agent {
                 .cloned()
                 .map(Into::into)
                 .collect(),
+            tags: value
+                .tags()
+                .iter()
+                .map(|tag| tag.as_str().to_owned())
+                .collect(),
             visibility: if value.is_public() {
                 Visibility::Public
             } else {

@@ -37,6 +37,7 @@ mod agent_test {
                     Some("https://example.test".into()),
                     None,
                 )],
+                tags: vec![],
                 visibility: Visibility::Private,
             },
             Some(&record),
@@ -64,6 +65,7 @@ mod agent_test {
                     None,
                     None,
                 )],
+                tags: vec![],
                 visibility: Visibility::Private,
             },
             Some(&record),
@@ -72,6 +74,73 @@ mod agent_test {
             result,
             Err(AgentError::MismatchedAgentInterfaceDetails(_))
         ));
+        Ok(())
+    }
+
+    #[test]
+    fn register_agent_inherits_agent_record_tags() -> Result<(), Box<dyn std::error::Error>> {
+        let record = AgentRecordBuilder::new()
+            .with_tags(vec!["inherited".into()])
+            .build_new()?;
+        let agent = Agent::register(
+            RegisterAgentProps {
+                name: "Agent".into(),
+                description: "Description".into(),
+                owner: "owner".into(),
+                tenant_id: "tenant".into(),
+                deployment_modality:
+                    crate::domain::entities::agent::AgentDeploymentModality::Persistent,
+                endpoints: vec![AgentEndpoint::new(
+                    Some("default".into()),
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                    Some("https://example.test".into()),
+                    None,
+                )],
+                tags: vec![],
+                visibility: Visibility::Private,
+            },
+            Some(&record),
+        )?;
+
+        assert_eq!(
+            agent.tags().iter().next().map(|tag| tag.as_str()),
+            Some("inherited")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn register_agent_prefers_explicit_tags_over_agent_record_tags(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let record = AgentRecordBuilder::new()
+            .with_tags(vec!["inherited".into()])
+            .build_new()?;
+        let agent = Agent::register(
+            RegisterAgentProps {
+                name: "Agent".into(),
+                description: "Description".into(),
+                owner: "owner".into(),
+                tenant_id: "tenant".into(),
+                deployment_modality:
+                    crate::domain::entities::agent::AgentDeploymentModality::Persistent,
+                endpoints: vec![AgentEndpoint::new(
+                    Some("default".into()),
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                    Some("https://example.test".into()),
+                    None,
+                )],
+                tags: vec!["explicit".into()],
+                visibility: Visibility::Private,
+            },
+            Some(&record),
+        )?;
+
+        assert_eq!(
+            agent.tags().iter().next().map(|tag| tag.as_str()),
+            Some("explicit")
+        );
         Ok(())
     }
 }

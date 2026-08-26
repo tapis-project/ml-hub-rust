@@ -5,6 +5,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError};
 
+use crate::shared_kernel::value_objects::{MAX_TAG_LENGTH_BYTES, MAX_TAGS};
+
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[validate(schema(function = "validate_interface_collections"))]
@@ -34,6 +36,9 @@ pub struct CreateAgentRecordBody {
     #[serde(default)]
     #[validate(nested, custom(function = "validate_unique_skill_ids"))]
     pub skills: Vec<AgentSkill>,
+    #[serde(default)]
+    #[validate(custom(function = "validate_tags"))]
+    pub tags: Vec<String>,
     #[validate(url)]
     pub icon_url: Option<String>,
     #[validate(url)]
@@ -174,6 +179,21 @@ fn validate_unique_skill_ids(skills: &Vec<AgentSkill>) -> Result<(), ValidationE
         if !ids.insert(&skill.id) {
             return Err(ValidationError::new("duplicate_agent_skill_id"));
         }
+    }
+
+    Ok(())
+}
+
+fn validate_tags(tags: &Vec<String>) -> Result<(), ValidationError> {
+    if tags.len() > MAX_TAGS {
+        return Err(ValidationError::new("too_many_tags"));
+    }
+
+    if tags
+        .iter()
+        .any(|tag| tag.is_empty() || tag.len() > MAX_TAG_LENGTH_BYTES)
+    {
+        return Err(ValidationError::new("invalid_tag"));
     }
 
     Ok(())

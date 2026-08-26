@@ -21,6 +21,7 @@ pub struct Agent {
     pub rest_http_endpoints: Vec<RestHttpAgentEndpoint>,
     pub rpc_endpoints: Vec<RpcAgentEndpoint>,
     pub stdio_endpoints: Vec<StdioAgentEndpoint>,
+    pub tags: Vec<String>,
     pub visibility: Visibility,
     pub created_at: String,
     pub last_modified: String,

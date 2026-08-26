@@ -19,6 +19,7 @@ pub struct AgentRecord {
     pub version: String,
     pub artifact_locators: Vec<ArtifactLocator>,
     pub skills: Vec<AgentSkill>,
+    pub tags: Vec<String>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
     pub visibility: crate::infra::persistence::mongo::documents::visibility::Visibility,

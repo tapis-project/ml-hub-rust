@@ -66,6 +66,7 @@ mod agent_records_test {
                 vec!["nlp".into()],
                 vec!["Analyze this document".into()],
             )?],
+            tags: vec!["tag".into()],
             icon_url: Some("https://example.com/agent-icon.png".into()),
             documentation_url: Some("https://docs.example.com/agents/assistant".into()),
             visibility: DomainVisibility::Public,
@@ -110,6 +111,7 @@ mod agent_records_test {
         assert_eq!(response.skills[0].description, "Analyzes text");
         assert_eq!(response.skills[0].tags, vec!["nlp"]);
         assert_eq!(response.skills[0].examples, vec!["Analyze this document"]);
+        assert_eq!(response.tags, vec!["tag"]);
         assert_eq!(response.artifact_locators.len(), 1);
         assert!(matches!(
             response.artifact_locators[0].artifact_type,

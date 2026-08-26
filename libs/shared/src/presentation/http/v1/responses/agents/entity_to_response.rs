@@ -63,6 +63,11 @@ impl From<entities::Agent> for responses::Agent {
             rest_http_endpoints,
             rpc_endpoints,
             stdio_endpoints,
+            tags: value
+                .tags()
+                .iter()
+                .map(|tag| tag.as_str().to_owned())
+                .collect(),
             visibility: if value.is_public() {
                 Visibility::Public
             } else {

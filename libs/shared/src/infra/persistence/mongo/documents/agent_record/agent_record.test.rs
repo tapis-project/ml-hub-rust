@@ -38,6 +38,7 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
             "tapis://example/agent:1.0.0".into(),
         )])
         .with_skills(vec![skill])
+        .with_tags(vec!["geospatial".into()])
         .with_icon_url("https://example.com/icon.svg".into())
         .with_documentation_url("https://example.com/docs".into())
         .build_new()?;
@@ -66,6 +67,10 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
     assert_eq!(
         reconstituted.skills().first().map(AgentSkill::id),
         Some("geospatial-search")
+    );
+    assert_eq!(
+        reconstituted.tags().iter().next().map(|tag| tag.as_str()),
+        Some("geospatial")
     );
     assert_eq!(
         reconstituted.icon_url(),

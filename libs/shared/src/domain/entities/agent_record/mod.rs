@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::Visibility;
+use crate::shared_kernel::value_objects::{Tags, TagsError};
 
 #[derive(Clone, Debug)]
 pub struct AgentRecord {
@@ -21,6 +22,7 @@ pub struct AgentRecord {
     provider: Option<AgentProvider>,
     artifact_locators: Vec<ArtifactLocator>,
     skills: Vec<AgentSkill>,
+    tags: Tags,
     icon_url: Option<String>,
     documentation_url: Option<String>,
     visibility: Visibility,
@@ -40,6 +42,7 @@ impl AgentRecord {
         version: String,
         artifact_locators: Vec<ArtifactLocator>,
         skills: Vec<AgentSkill>,
+        tags: Vec<String>,
         icon_url: Option<String>,
         documentation_url: Option<String>,
         visibility: Visibility,
@@ -59,6 +62,8 @@ impl AgentRecord {
         Self::ensure_unique_skill_ids(&skills)
             .map_err(AgentRecordError::DuplicateAgentSkillIdentifier)?;
 
+        let tags = Tags::new(tags).map_err(AgentRecordError::InvalidTags)?;
+
         Ok(Self {
             id: Uuid::now_v7(),
             name,
@@ -71,6 +76,7 @@ impl AgentRecord {
             version,
             artifact_locators,
             skills,
+            tags,
             icon_url,
             documentation_url,
             visibility,
@@ -107,6 +113,12 @@ impl AgentRecord {
             ))
         })?;
 
+        let tags = Tags::reconstitute(props.tags).map_err(|error| {
+            AgentRecordError::DataIntegrityError(format!(
+                "Agent record contains invalid tags: {error}"
+            ))
+        })?;
+
         Ok(Self {
             id: props.id,
             name: props.name,
@@ -119,6 +131,7 @@ impl AgentRecord {
             version: props.version,
             artifact_locators: props.artifact_locators,
             skills: props.skills,
+            tags,
             icon_url: props.icon_url,
             documentation_url: props.documentation_url,
             visibility: props.visibility,
@@ -177,6 +190,10 @@ impl AgentRecord {
 
     pub fn skills(&self) -> &[AgentSkill] {
         &self.skills
+    }
+
+    pub fn tags(&self) -> &Tags {
+        &self.tags
     }
 
     pub fn icon_url(&self) -> Option<&str> {
@@ -257,6 +274,7 @@ pub struct ReconstituteAgentRecordProps {
     pub provider: Option<AgentProvider>,
     pub artifact_locators: Vec<ArtifactLocator>,
     pub skills: Vec<AgentSkill>,
+    pub tags: Vec<String>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
     pub visibility: Visibility,
@@ -516,6 +534,9 @@ pub enum AgentRecordError {
 
     #[error("Invalid agent record version: {0}")]
     InvalidVersion(String),
+
+    #[error("Invalid agent record tags: {0}")]
+    InvalidTags(TagsError),
 
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String),

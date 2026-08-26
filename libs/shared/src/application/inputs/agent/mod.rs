@@ -8,6 +8,7 @@ pub struct RegisterAgentInput {
     pub description: String,
     pub deployment_modality: AgentDeploymentModalityInput,
     pub endpoints: Vec<AgentEndpointInput>,
+    pub tags: Vec<String>,
     pub agent_record_id: Option<Uuid>,
     pub visibility: VisibilityInput,
 }

@@ -20,6 +20,7 @@ mod create_agent_body_test {
             }],
             rpc_endpoints: vec![],
             stdio_endpoints: vec![],
+            tags: vec![],
             agent_record_id: None,
             visibility: Visibility::Private,
         }
@@ -52,5 +53,18 @@ mod create_agent_body_test {
     fn rejects_liveness_probes_for_non_rest_endpoints() {
         let request = r#"{"name":"agent","description":"A runnable agent","deployment_modality":"Persistent","rpc_endpoints":[{"name":"rpc","liveness_probe":{"route":"/health"}}]}"#;
         assert!(serde_json::from_str::<CreateAgentBody>(request).is_err());
+    }
+
+    #[test]
+    fn validates_bounded_tags() {
+        let mut request = body();
+        request.tags = vec!["tag".into()];
+        assert!(request.validate().is_ok());
+
+        request.tags = vec![String::new()];
+        assert!(request.validate().is_err());
+
+        request.tags = (0..17).map(|index| format!("tag-{index}")).collect();
+        assert!(request.validate().is_err());
     }
 }

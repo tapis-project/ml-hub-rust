@@ -21,6 +21,7 @@ pub struct Agent {
     pub deployment_modality: AgentDeploymentModality,
     pub liveness: AgentLiveness,
     pub target_endpoints: Vec<AgentEndpoint>,
+    pub tags: Vec<String>,
     pub visibility: Visibility,
     pub created_at: String,
     pub last_modified: String,

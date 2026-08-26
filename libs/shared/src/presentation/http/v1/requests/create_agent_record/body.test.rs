@@ -36,6 +36,7 @@ mod create_agent_record_body_test {
             version: "1.0.0".into(),
             artifact_locators: vec![],
             skills: vec![],
+            tags: vec![],
             icon_url: None,
             documentation_url: None,
             visibility: Visibility::Private,
@@ -201,6 +202,19 @@ mod create_agent_record_body_test {
         }];
 
         assert!(body.validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_validates_bounded_tags() {
+        let mut body = body();
+        body.tags = vec!["tag".into()];
+        assert!(body.validate().is_ok());
+
+        body.tags = vec!["x".repeat(65)];
+        assert!(body.validate().is_err());
+
+        body.tags = (0..17).map(|index| format!("tag-{index}")).collect();
+        assert!(body.validate().is_err());
     }
 
     #[test]

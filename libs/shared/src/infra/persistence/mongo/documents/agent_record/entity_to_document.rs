@@ -42,6 +42,11 @@ impl From<&entities::AgentRecord> for documents::AgentRecord {
                 .cloned()
                 .map(documents::AgentSkill::from)
                 .collect(),
+            tags: value
+                .tags()
+                .iter()
+                .map(|tag| tag.as_str().to_owned())
+                .collect(),
             icon_url: value.icon_url().map(str::to_owned),
             documentation_url: value.documentation_url().map(str::to_owned),
             visibility: if value.is_public() {

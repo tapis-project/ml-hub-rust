@@ -13,6 +13,7 @@ pub struct AgentBuilder {
     tenant_id: Option<String>,
     deployment_modality: Option<AgentDeploymentModality>,
     endpoints: Option<Vec<AgentEndpoint>>,
+    tags: Option<Vec<String>>,
     visibility: Option<Visibility>,
 }
 
@@ -25,12 +26,18 @@ impl AgentBuilder {
             tenant_id: None,
             deployment_modality: None,
             endpoints: None,
+            tags: None,
             visibility: None,
         }
     }
 
     pub fn with_endpoints(mut self, endpoints: Vec<AgentEndpoint>) -> Self {
         self.endpoints = Some(endpoints);
+        self
+    }
+
+    pub fn with_tags(mut self, tags: Vec<String>) -> Self {
+        self.tags = Some(tags);
         self
     }
 
@@ -51,7 +58,7 @@ impl AgentBuilder {
                     .deployment_modality
                     .clone()
                     .unwrap_or(AgentDeploymentModality::Persistent),
-                endpoints: self.endpoints.clone().unwrap_or_else(|| {
+            endpoints: self.endpoints.clone().unwrap_or_else(|| {
                     vec![AgentEndpoint::new(
                         Some("default".into()),
                         Protocol::RestHttp,
@@ -59,8 +66,9 @@ impl AgentBuilder {
                         Some("https://example.test".into()),
                         None,
                     )]
-                }),
-                visibility: self.visibility.clone().unwrap_or(Visibility::Private),
+            }),
+            tags: self.tags.clone().unwrap_or_default(),
+            visibility: self.visibility.clone().unwrap_or(Visibility::Private),
             },
             None,
         )

@@ -31,6 +31,7 @@ mod agent_record_test {
         assert!(!agent_record.supports_push_notifications());
         assert!(agent_record.artifact_locators().is_empty());
         assert!(agent_record.skills().is_empty());
+        assert!(agent_record.tags().is_empty());
         assert_eq!(agent_record.icon_url(), None);
         assert_eq!(agent_record.documentation_url(), None);
         assert!(!agent_record.is_public());
@@ -384,6 +385,34 @@ mod agent_record_test {
         let error = match result {
             Err(error) => error,
             Ok(_) => panic!("Expected agent record reconstitution to reject invalid SemVer"),
+        };
+
+        assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
+    }
+
+    #[test]
+    fn test_new_agent_record_rejects_invalid_tags() {
+        let result = AgentRecordBuilder::new()
+            .with_tags(vec![String::new()])
+            .build_new();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected agent record construction to reject invalid tags"),
+        };
+
+        assert!(matches!(error, AgentRecordError::InvalidTags(_)));
+    }
+
+    #[test]
+    fn test_reconstitute_agent_record_rejects_invalid_tags() {
+        let result = AgentRecordBuilder::new()
+            .with_tags(vec![String::new()])
+            .build_reconstituted();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected agent record reconstitution to reject invalid tags"),
         };
 
         assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));

@@ -78,6 +78,7 @@ impl AgentService {
                 tenant_id: ctx.actor_tenant_id().clone(),
                 deployment_modality: input.deployment_modality.into(),
                 endpoints: input.endpoints.into_iter().map(Into::into).collect(),
+                tags: input.tags,
                 visibility: input.visibility.into(),
             },
             agent_record.as_ref(),

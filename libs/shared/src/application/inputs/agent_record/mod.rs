@@ -10,6 +10,7 @@ pub struct CreateAgentRecordInput {
     pub version: String,
     pub artifact_locators: Vec<ArtifactLocatorInput>,
     pub skills: Vec<AgentSkillInput>,
+    pub tags: Vec<String>,
     pub icon_url: Option<String>,
     pub documentation_url: Option<String>,
     pub visibility: VisibilityInput,

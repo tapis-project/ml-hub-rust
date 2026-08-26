@@ -20,6 +20,7 @@ pub struct AgentRecordBuilder {
     version: Option<String>,
     artifact_locators: Option<Vec<ArtifactLocator>>,
     skills: Option<Vec<AgentSkill>>,
+    tags: Option<Vec<String>>,
     icon_url: Option<String>,
     documentation_url: Option<String>,
     visibility: Option<Visibility>,
@@ -39,6 +40,7 @@ impl AgentRecordBuilder {
             version: None,
             artifact_locators: None,
             skills: None,
+            tags: None,
             icon_url: None,
             documentation_url: None,
             visibility: None,
@@ -100,6 +102,11 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_tags(mut self, tags: Vec<String>) -> Self {
+        self.tags = Some(tags);
+        self
+    }
+
     pub fn with_icon_url(mut self, icon_url: String) -> Self {
         self.icon_url = Some(icon_url);
         self
@@ -143,6 +150,7 @@ impl AgentRecordBuilder {
             self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             self.artifact_locators.clone().unwrap_or_default(),
             self.skills.clone().unwrap_or_default(),
+            self.tags.clone().unwrap_or_default(),
             self.icon_url.clone(),
             self.documentation_url.clone(),
             self.visibility.clone().unwrap_or(Visibility::Private),
@@ -182,6 +190,7 @@ impl AgentRecordBuilder {
             version: self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             artifact_locators: self.artifact_locators.clone().unwrap_or_default(),
             skills: self.skills.clone().unwrap_or_default(),
+            tags: self.tags.clone().unwrap_or_default(),
             icon_url: self.icon_url.clone(),
             documentation_url: self.documentation_url.clone(),
             visibility: self.visibility.clone().unwrap_or(Visibility::Private),

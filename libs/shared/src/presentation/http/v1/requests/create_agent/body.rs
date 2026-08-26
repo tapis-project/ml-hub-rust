@@ -8,6 +8,7 @@ use validator::{Validate, ValidationError};
 use crate::presentation::http::v1::requests::create_agent_record::body::{
     MessageBinding, RestHttpLivenessProbe, Visibility,
 };
+use crate::shared_kernel::value_objects::{MAX_TAG_LENGTH_BYTES, MAX_TAGS};
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]
@@ -27,6 +28,9 @@ pub struct CreateAgentBody {
     #[serde(default)]
     #[validate(nested)]
     pub stdio_endpoints: Vec<StdioAgentEndpoint>,
+    #[serde(default)]
+    #[validate(custom(function = "validate_tags"))]
+    pub tags: Vec<String>,
     pub agent_record_id: Option<Uuid>,
     #[serde(default)]
     pub visibility: Visibility,
@@ -91,6 +95,21 @@ fn validate_endpoint_collections(body: &CreateAgentBody) -> Result<(), Validatio
     if count == 0 {
         return Err(ValidationError::new("missing_agent_endpoints"));
     }
+    Ok(())
+}
+
+fn validate_tags(tags: &Vec<String>) -> Result<(), ValidationError> {
+    if tags.len() > MAX_TAGS {
+        return Err(ValidationError::new("too_many_tags"));
+    }
+
+    if tags
+        .iter()
+        .any(|tag| tag.is_empty() || tag.len() > MAX_TAG_LENGTH_BYTES)
+    {
+        return Err(ValidationError::new("invalid_tag"));
+    }
+
     Ok(())
 }
 

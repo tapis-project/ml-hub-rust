@@ -13,6 +13,7 @@ impl TryFrom<documents::Agent> for entities::Agent {
             deployment_modality: value.deployment_modality.into(),
             liveness: value.liveness.into(),
             endpoints: value.target_endpoints.into_iter().map(Into::into).collect(),
+            tags: value.tags,
             visibility: value.visibility.into(),
             created_at: crate::shared_kernel::value_objects::TimeStamp::parse_string(
                 &value.created_at,

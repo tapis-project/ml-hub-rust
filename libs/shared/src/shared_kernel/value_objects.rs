@@ -5,6 +5,86 @@ use serde::Serialize;
 use thiserror::Error;
 use base64::prelude::*;
 
+pub const MAX_TAGS: usize = 16;
+pub const MAX_TAG_LENGTH_BYTES: usize = 64;
+
+#[derive(Debug, Clone, Error)]
+pub enum TagError {
+    #[error("Tag MUST not be empty")]
+    Empty,
+
+    #[error("Tag MUST not exceed {MAX_TAG_LENGTH_BYTES} bytes")]
+    TooLong,
+}
+
+#[derive(Clone, Debug)]
+pub struct Tag(String);
+
+impl Tag {
+    pub fn new(value: String) -> Result<Self, TagError> {
+        if value.is_empty() {
+            return Err(TagError::Empty);
+        }
+
+        if value.len() > MAX_TAG_LENGTH_BYTES {
+            return Err(TagError::TooLong);
+        }
+
+        Ok(Self(value))
+    }
+
+    pub fn reconstitute(value: String) -> Result<Self, TagError> {
+        Self::new(value)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+pub enum TagsError {
+    #[error("A resource MUST not have more than {MAX_TAGS} tags")]
+    TooMany,
+
+    #[error(transparent)]
+    Tag(#[from] TagError),
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Tags(Vec<Tag>);
+
+impl Tags {
+    pub fn new(values: Vec<String>) -> Result<Self, TagsError> {
+        if values.len() > MAX_TAGS {
+            return Err(TagsError::TooMany);
+        }
+
+        values
+            .into_iter()
+            .map(Tag::new)
+            .collect::<Result<Vec<_>, _>>()
+            .map(Self)
+            .map_err(Into::into)
+    }
+
+    pub fn reconstitute(values: Vec<String>) -> Result<Self, TagsError> {
+        Self::new(values)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Tag> {
+        self.0.iter()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum TimeStampError {
     #[error("{0}")]
@@ -88,3 +168,7 @@ impl Base64EncodedString {
         &self.0
     }
 }
+
+#[cfg(test)]
+#[path = "value_objects.test.rs"]
+mod value_objects_test;
