@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use chrono::{DateTime, ParseError, Utc};
+use semver::Version;
 use serde::Serialize;
 use thiserror::Error;
 use base64::prelude::*;
@@ -82,6 +83,31 @@ impl Tags {
 
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+}
+
+#[derive(Debug, Clone, Error)]
+pub enum SemanticVersionError {
+    #[error("Value MUST be a valid semantic version")]
+    Invalid,
+}
+
+#[derive(Clone, Debug)]
+pub struct SemanticVersion(String);
+
+impl SemanticVersion {
+    pub fn new(value: String) -> Result<Self, SemanticVersionError> {
+        Version::parse(&value).map_err(|_| SemanticVersionError::Invalid)?;
+
+        Ok(Self(value))
+    }
+
+    pub fn reconstitute(value: String) -> Result<Self, SemanticVersionError> {
+        Self::new(value)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 

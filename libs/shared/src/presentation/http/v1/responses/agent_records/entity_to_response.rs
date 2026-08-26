@@ -42,7 +42,7 @@ impl From<entities::AgentRecord> for responses::AgentRecord {
                 }),
                 _ => None,
             },
-            version: value.version().clone(),
+            version: value.version().to_owned(),
             artifact_locators: value
                 .artifact_locators()
                 .iter()

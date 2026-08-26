@@ -1,19 +1,20 @@
 use std::collections::HashSet;
 
 use nonempty::NonEmpty;
-use semver::Version;
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::Visibility;
-use crate::shared_kernel::value_objects::{Tags, TagsError};
+use crate::shared_kernel::value_objects::{
+    SemanticVersion, Tags, TagsError,
+};
 
 #[derive(Clone, Debug)]
 pub struct AgentRecord {
     id: Uuid,
     name: String,
-    version: String,
+    version: SemanticVersion,
     tenant_id: String,
     owner: String,
     description: String,
@@ -47,9 +48,8 @@ impl AgentRecord {
         documentation_url: Option<String>,
         visibility: Visibility,
     ) -> Result<Self, AgentRecordError> {
-        if Self::validate_version(&version).is_err() {
-            return Err(AgentRecordError::InvalidVersion(version));
-        }
+        let version = SemanticVersion::new(version.clone())
+            .map_err(|_| AgentRecordError::InvalidVersion(version))?;
 
         let interfaces = Self::interfaces_from_vec(interfaces)?;
 
@@ -84,12 +84,11 @@ impl AgentRecord {
     }
 
     pub fn reconstitute(props: ReconstituteAgentRecordProps) -> Result<Self, AgentRecordError> {
-        if Self::validate_version(&props.version).is_err() {
-            return Err(AgentRecordError::DataIntegrityError(format!(
-                "Agent record contains an invalid semantic version: {}",
-                props.version
-            )));
-        }
+        let version = SemanticVersion::reconstitute(props.version).map_err(|error| {
+            AgentRecordError::DataIntegrityError(format!(
+                "Agent record contains an invalid semantic version: {error}"
+            ))
+        })?;
 
         let interfaces = Self::interfaces_from_vec(props.interfaces)?;
 
@@ -128,7 +127,7 @@ impl AgentRecord {
             interfaces,
             capabilities: props.capabilities,
             provider: props.provider,
-            version: props.version,
+            version,
             artifact_locators: props.artifact_locators,
             skills: props.skills,
             tags,
@@ -180,8 +179,8 @@ impl AgentRecord {
         self.provider.as_ref().map(|provider| provider.url())
     }
 
-    pub fn version(&self) -> &String {
-        &self.version
+    pub fn version(&self) -> &str {
+        self.version.as_str()
     }
 
     pub fn artifact_locators(&self) -> &[ArtifactLocator] {
@@ -254,10 +253,6 @@ impl AgentRecord {
         }
 
         Ok(())
-    }
-
-    fn validate_version(version: &str) -> Result<(), semver::Error> {
-        Version::parse(version).map(|_| ())
     }
 }
 

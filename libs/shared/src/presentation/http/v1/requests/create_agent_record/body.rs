@@ -1,11 +1,12 @@
 use std::collections::HashSet;
 
-use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize};
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError};
 
-use crate::shared_kernel::value_objects::{MAX_TAG_LENGTH_BYTES, MAX_TAGS};
+use crate::shared_kernel::value_objects::{
+    SemanticVersion, MAX_TAG_LENGTH_BYTES, MAX_TAGS,
+};
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]
@@ -210,7 +211,7 @@ where
 }
 
 fn validate_semver(version: &str) -> Result<(), ValidationError> {
-    Version::parse(version)
+    SemanticVersion::new(version.into())
         .map(|_| ())
         .map_err(|_| ValidationError::new("semver"))
 }
