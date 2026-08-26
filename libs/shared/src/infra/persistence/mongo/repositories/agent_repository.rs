@@ -48,7 +48,7 @@ impl AgentRepository {
                 infrastructure_error
             })?);
         }
-
+        
         Ok(agents)
     }
 }
