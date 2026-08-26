@@ -46,7 +46,7 @@ Do not move backward across these layers by putting HTTP DTOs in domain code or 
 ## File and test organization
 
 - A component with supporting files or adjacent tests is a directory with `mod.rs`; its tests are adjacent `*.test.rs` files included from the module. A solitary component may use a same-named file.
-- Give every mapper and handler its own file. Leave blank lines between methods.
+- Give every mapper and handler its own file. Leave blank lines between methods, logical statements, and code blocks. Outside closures and iterator adapters, put each call in a long method chain on its own continuation line; separate a completed fallible operation from the next logical operation with a blank line.
 - Use optional-field builders for entity test setup. Return and handle errors explicitly; do not use `unwrap` for expected test outcomes.
 - Prefer narrow checks: shared/unit tests for shared changes, service/unit tests for service changes, `cargo check -p <service>`, Kustomize rendering for manifest work, and `git diff --check` for all edits.
 

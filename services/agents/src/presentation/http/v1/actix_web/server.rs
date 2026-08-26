@@ -18,7 +18,10 @@ use shared::{
 
 use super::handlers;
 use crate::{
-    bootstrap::{factories::agent_record_service_factory, state::AppState},
+    bootstrap::{
+        factories::{agent_record_service_factory, agent_service_factory},
+        state::AppState,
+    },
     config::{DEFAULT_HOST, DEFAULT_PORT},
 };
 
@@ -77,6 +80,7 @@ pub async fn run_server() -> std::io::Result<()> {
         &state.client,
         state.db_name.clone(),
     ));
+    let agent_service = web::Data::new(agent_service_factory(&state.client, state.db_name.clone()));
 
     HttpServer::new(move || {
         App::new()
@@ -85,6 +89,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
             .app_data(agent_record_service.clone())
+            .app_data(agent_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(preflight_short_circuit))
             .wrap(Logger::default())
@@ -95,7 +100,9 @@ pub async fn run_server() -> std::io::Result<()> {
                     .wrap(from_fn(authenticate))
                     .wrap(from_fn(resolve_tenancy))
                     .service(handlers::list_agent_records::list_agent_records)
-                    .service(handlers::create_agent_record::create_agent_record),
+                    .service(handlers::create_agent_record::create_agent_record)
+                    .service(handlers::list_agents::list_agents)
+                    .service(handlers::create_agent::create_agent),
             )
     })
     .bind(address)?

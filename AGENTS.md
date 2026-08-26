@@ -33,5 +33,6 @@ These instructions apply throughout this repository.
 ## Tests, formatting, and delivery
 
 - Co-locate tests as adjacent `*.test.rs` files and include them through the module convention used by nearby code. Use builders with optional fields for entity tests. Return and handle errors explicitly in tests; do not use `unwrap` for expected success or failure paths.
-- Keep a blank line between methods and imports scoped at the top of a file; alias imports rather than using inline fully qualified paths.
+- Keep a blank line between methods, logical statements, and code blocks; imports stay scoped at the top of a file. Alias imports rather than using inline fully qualified paths.
+- For a long method chain outside a closure or iterator adapter, put each chained call on its own continuation line. Leave a blank line after a completed fallible operation before beginning the next logical operation.
 - Run focused `cargo test`, `cargo check`, formatting checks, Kustomize rendering, and `git diff --check` in proportion to the change. Never expose credentials, tokens, or secrets in source, documentation, commands, or handoff messages.

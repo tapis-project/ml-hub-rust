@@ -3,6 +3,7 @@ use thiserror::Error;
 
 use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::agent_record::AgentRecord;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum AgentRecordRepositoryError {
@@ -13,6 +14,12 @@ pub enum AgentRecordRepositoryError {
 #[async_trait]
 pub trait AgentRecordRepository: Send + Sync {
     async fn save(&self, agent_record: &AgentRecord) -> Result<(), AgentRecordRepositoryError>;
+
+    async fn find_by_id(
+        &self,
+        tenant_id: &str,
+        id: Uuid,
+    ) -> Result<Option<AgentRecord>, AgentRecordRepositoryError>;
 
     async fn list_by_owner(
         &self,

@@ -1,0 +1,77 @@
+#[cfg(test)]
+mod agent_test {
+    use crate::domain::entities::agent::test_fixtures::AgentBuilder;
+    use crate::domain::entities::agent::{Agent, AgentEndpoint, AgentError, RegisterAgentProps};
+    use crate::domain::entities::agent_record::test_fixtures::AgentRecordBuilder;
+    use crate::domain::entities::agent_record::{MessageBinding, Protocol};
+    use crate::shared_kernel::enums::Visibility;
+
+    #[test]
+    fn register_agent_generates_v7_id_and_starts_dead() -> Result<(), AgentError> {
+        let agent = AgentBuilder::new().build_registered()?;
+        assert_eq!(agent.id().get_version_num(), 7);
+        assert!(matches!(
+            agent.liveness(),
+            crate::domain::entities::agent::AgentLiveness::Dead
+        ));
+        assert_eq!(agent.target_endpoints().len(), 1);
+        Ok(())
+    }
+
+    #[test]
+    fn register_agent_validates_associated_agent_record() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let record = AgentRecordBuilder::new().build_new()?;
+        let agent = Agent::register(
+            RegisterAgentProps {
+                name: "Agent".into(),
+                description: "Description".into(),
+                owner: "owner".into(),
+                tenant_id: "tenant".into(),
+                deployment_modality:
+                    crate::domain::entities::agent::AgentDeploymentModality::Persistent,
+                endpoints: vec![AgentEndpoint::new(
+                    Some("default".into()),
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                    Some("https://example.test".into()),
+                    None,
+                )],
+                visibility: Visibility::Private,
+            },
+            Some(&record),
+        )?;
+        assert_eq!(agent.agent_record_id(), Some(record.id()));
+        Ok(())
+    }
+
+    #[test]
+    fn register_agent_rejects_mismatched_agent_record_interface(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let record = AgentRecordBuilder::new().build_new()?;
+        let result = Agent::register(
+            RegisterAgentProps {
+                name: "Agent".into(),
+                description: "Description".into(),
+                owner: "owner".into(),
+                tenant_id: "tenant".into(),
+                deployment_modality:
+                    crate::domain::entities::agent::AgentDeploymentModality::Persistent,
+                endpoints: vec![AgentEndpoint::new(
+                    Some("default".into()),
+                    Protocol::Rpc,
+                    Some(MessageBinding::HttpJson),
+                    None,
+                    None,
+                )],
+                visibility: Visibility::Private,
+            },
+            Some(&record),
+        );
+        assert!(matches!(
+            result,
+            Err(AgentError::MismatchedAgentInterfaceDetails(_))
+        ));
+        Ok(())
+    }
+}

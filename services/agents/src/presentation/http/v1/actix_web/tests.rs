@@ -17,6 +17,8 @@ mod tests {
         App::new()
             .service(handlers::list_agent_records::list_agent_records)
             .service(handlers::create_agent_record::create_agent_record)
+            .service(handlers::list_agents::list_agents)
+            .service(handlers::create_agent::create_agent)
             .service(handlers::healthcheck::healthcheck)
             .service(handlers::openapi::openapi)
     }
@@ -69,6 +71,9 @@ mod tests {
                 .contains_key("/agents-api/agent-records")
         );
         assert!(document.paths.paths.contains_key("/agents-api/healthcheck"));
+        assert!(document.paths.paths.contains_key("/agents-api/agents"));
+        assert!(document.components.as_ref().is_some_and(|components| components.schemas.contains_key("Agent")));
+        assert!(document.components.as_ref().is_some_and(|components| components.schemas.contains_key("CreateAgentBody")));
         assert!(
             document
                 .components

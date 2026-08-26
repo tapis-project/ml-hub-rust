@@ -53,6 +53,40 @@ impl application::ports::agent_record::AgentRecordRepository for AgentRecordRepo
         Ok(())
     }
 
+    async fn find_by_id(
+        &self,
+        tenant_id: &str,
+        id: uuid::Uuid,
+    ) -> Result<Option<entities::agent_record::AgentRecord>, AgentRecordRepositoryError> {
+        let document_id = mongodb::bson::Uuid::from_bytes(*id.as_bytes());
+        let document = self
+            .read_collection
+            .find_one(doc! { "tenant_id": tenant_id, "id": document_id })
+            .await
+            .map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+                log::error!(
+                    "[{}] Persistence error: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+                infrastructure_error
+            })?;
+
+        document
+            .map(entities::agent_record::AgentRecord::try_from)
+            .transpose()
+            .map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+                log::error!(
+                    "[{}] Conversion error: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+                infrastructure_error.into()
+            })
+    }
+
     async fn list_by_owner(
         &self,
         tenant_id: &str,

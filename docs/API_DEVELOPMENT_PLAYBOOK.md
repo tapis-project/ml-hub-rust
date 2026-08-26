@@ -58,6 +58,7 @@ Request and response DTOs live in shared presentation modules and are re-exporte
 - Validate untrusted HTTP input with the project validator before application handling. Use nested validation, required/non-empty checks, URL checks, and custom collection validation where they mirror domain invariants.
 - Validation fails fast, but the domain remains authoritative for every caller and for reconstitution.
 - Use lower_snake_case field names. Keep enum values in their Rust variant casing unless an explicit wire-format requirement says otherwise.
+- Use blank lines to separate logical statements and blocks. Outside closures and iterator adapters, format long method chains with one chained call per continuation line.
 - Normalize optional request collections only when the contract requires it; responses that promise an array should serialize an empty array rather than `null`.
 - Map DTOs through `From`/`TryFrom`, never through handler-local conversion functions.
 - Give every Actix handler its own file. Keep handler route attributes consistent with Models and Deployments: API handler attributes are relative, while the OpenAPI document endpoint retains its established absolute form.

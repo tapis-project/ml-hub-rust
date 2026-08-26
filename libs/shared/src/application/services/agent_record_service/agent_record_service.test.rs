@@ -28,6 +28,14 @@ impl AgentRecordRepository for TestAgentRecordRepository {
         Ok(())
     }
 
+    async fn find_by_id(
+        &self,
+        _tenant_id: &str,
+        _id: uuid::Uuid,
+    ) -> Result<Option<AgentRecord>, AgentRecordRepositoryError> {
+        Ok(None)
+    }
+
     async fn list_by_owner(
         &self,
         tenant_id: &str,
@@ -96,8 +104,8 @@ fn input() -> CreateAgentRecordInput {
 }
 
 #[tokio::test]
-async fn create_agent_record_derives_owner_and_tenant_from_context()
--> Result<(), AgentRecordServiceError> {
+async fn create_agent_record_derives_owner_and_tenant_from_context(
+) -> Result<(), AgentRecordServiceError> {
     let repository = Arc::new(TestAgentRecordRepository {
         saved: Mutex::new(None),
         owner_list_calls: Mutex::new(Vec::new()),
@@ -164,8 +172,8 @@ async fn list_for_user_uses_context_tenant_and_principal() -> Result<(), AgentRe
 }
 
 #[tokio::test]
-async fn list_shared_with_user_uses_context_tenant_and_principal()
--> Result<(), AgentRecordServiceError> {
+async fn list_shared_with_user_uses_context_tenant_and_principal(
+) -> Result<(), AgentRecordServiceError> {
     let repository = Arc::new(TestAgentRecordRepository {
         saved: Mutex::new(None),
         owner_list_calls: Mutex::new(Vec::new()),

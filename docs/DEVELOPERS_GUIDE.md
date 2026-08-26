@@ -124,6 +124,13 @@ bootstrap factories, and deployment wiring are generally service-local. See the
 [API Development Playbook](./API_DEVELOPMENT_PLAYBOOK.md) for the required implementation,
 testing, deployment, and review workflow.
 
+### Rust Readability Conventions
+
+Separate logical statements and code blocks with blank lines. In particular, after a fallible
+operation such as a `map_err` or `?` expression, leave a blank line before beginning the next
+operation. For long method chains outside closures and iterator adapters, put each chained call
+on its own continuation line. Follow nearby code when a more specific local pattern exists.
+
 ### 1. Presentation
 
 Presentation is the HTTP boundary. Actix handlers receive requests, use shared request DTOs to

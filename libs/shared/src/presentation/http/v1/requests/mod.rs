@@ -11,6 +11,8 @@ pub mod fork_model;
 pub mod create_model_metadata;
 pub mod create_agent_record;
 pub mod list_agent_records;
+pub mod create_agent;
+pub mod list_agents;
 pub mod discover_models;
 pub mod download_model;
 pub mod get_model_by_author_and_name;
@@ -24,4 +26,3 @@ pub mod upload_model;
 // pub mod skills;
 // pub mod domains;
 pub mod errors;
-

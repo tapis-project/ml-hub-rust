@@ -5,6 +5,7 @@ use serde_json::Value;
 
 pub mod models;
 pub mod agent_records;
+pub mod agents;
 pub mod deployment;
 pub mod operators;
 pub mod visibility;
