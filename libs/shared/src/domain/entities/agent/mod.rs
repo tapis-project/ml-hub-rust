@@ -181,6 +181,8 @@ impl Agent {
         let mut names = HashSet::new();
 
         for endpoint in endpoints {
+            // TODO: Reject MLHub-controlled hosts and routes to prevent user-defined Agents from
+            // targeting internal APIs and causing self-directed traffic or denial of service.
             if let Some(name) = endpoint.name() {
                 if name.is_empty() {
                     return Err(AgentError::EmptyAgentEndpointIdentifier);

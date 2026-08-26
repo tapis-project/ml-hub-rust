@@ -3,6 +3,7 @@
 For the repository-wide process for adding APIs and extending their features, see the
 [API Development Playbook](./API_DEVELOPMENT_PLAYBOOK.md). AI-assisted contributors should also
 follow the root [AGENTS.md](../AGENTS.md) and the [AI Agent Development Guide](./AI_AGENT_DEVELOPMENT_GUIDE.md).
+Repository-wide deferred work is tracked in [TODOs](./TODO.md).
 
 ## Development Environement Setup
 
