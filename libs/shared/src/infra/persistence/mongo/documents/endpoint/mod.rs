@@ -11,7 +11,7 @@ pub struct Endpoint {
     pub id: Uuid,
     pub tenant_id: String,
     pub target_resource_urn: String,
-    pub target_url: String,
+    pub target_name: String,
     pub slug: String,
 }
 

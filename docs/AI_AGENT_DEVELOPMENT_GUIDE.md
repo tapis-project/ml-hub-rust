@@ -12,6 +12,8 @@ This runbook converts MLHub’s conventions into an execution sequence. Read the
 
 ## Feature workflow
 
+When preparing an implementation plan, group **Key Changes** first by entity or bounded feature, then by architectural layer where that distinction is useful. Keep one consolidated **Test Plan** section at the end.
+
 ### 1. Establish the service shape
 
 For a new API, mirror Models and Deployments before adding behavior: Cargo workspace membership, service modules, OpenAPI binary and endpoint, Docker artifacts, component catalog entry, Kubernetes base/overlays/scripts, and proxy entries. For an existing API, compare all changed areas with their closest counterparts before editing.

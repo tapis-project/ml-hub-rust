@@ -10,7 +10,7 @@ pub struct Endpoint {
     id: Uuid,
     tenant_id: String,
     target_resource_urn: Urn,
-    target_url: String,
+    target_name: String,
     slug: String,
 }
 
@@ -19,13 +19,13 @@ impl_urn_generator!(Endpoint, tenant_id, "endpoint", id);
 impl Endpoint {
     pub fn new_from_resource(
         resource: &impl NetworkAddressableResource,
-        target_url: String,
+        target_name: String,
     ) -> Self {
         Self {
             id: Uuid::now_v7(),
             tenant_id: resource.tenant_id(),
             target_resource_urn: resource.urn(),
-            target_url,
+            target_name,
             slug: Self::generate_slug(),
         }
     }
@@ -35,7 +35,7 @@ impl Endpoint {
             id: props.id,
             tenant_id: props.tenant_id,
             target_resource_urn: props.target_resource_urn,
-            target_url: props.target_url,
+            target_name: props.target_name,
             slug: props.slug,
         }
     }
@@ -52,8 +52,8 @@ impl Endpoint {
         &self.target_resource_urn
     }
 
-    pub fn target_url(&self) -> &str {
-        &self.target_url
+    pub fn target_name(&self) -> &str {
+        &self.target_name
     }
 
     pub fn slug(&self) -> &str {
@@ -76,12 +76,14 @@ pub struct ReconstituteEndpointProps {
     pub id: Uuid,
     pub tenant_id: String,
     pub target_resource_urn: Urn,
-    pub target_url: String,
+    pub target_name: String,
     pub slug: String,
 }
 
 pub trait NetworkAddressableResource: TenantScopedResource + UrnGenerator {
-    fn target_urls(&self) -> Vec<String>;
+    fn network_target_names(&self) -> Vec<String>;
+
+    fn resolve_target_url(&self, target_name: &str) -> Option<&str>;
 }
 
 #[cfg(test)]

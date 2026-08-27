@@ -10,7 +10,7 @@ fn endpoint_document_round_trip_preserves_fields() {
         id,
         tenant_id: "tenant-a".into(),
         target_resource_urn: Urn::new("urn:mlhub:v1:tenant-a:agent:agent-a".into()),
-        target_url: "https://agent.example.test".into(),
+        target_name: "rest".into(),
         slug: "abc123def4".into(),
     });
 
@@ -23,6 +23,6 @@ fn endpoint_document_round_trip_preserves_fields() {
         reconstituted.target_resource_urn(),
         endpoint.target_resource_urn()
     );
-    assert_eq!(reconstituted.target_url(), "https://agent.example.test");
+    assert_eq!(reconstituted.target_name(), "rest");
     assert_eq!(reconstituted.slug(), "abc123def4");
 }

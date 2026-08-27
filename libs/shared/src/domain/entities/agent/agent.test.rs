@@ -4,6 +4,7 @@ mod agent_test {
     use crate::domain::entities::agent::{Agent, AgentEndpoint, AgentError, RegisterAgentProps};
     use crate::domain::entities::agent_record::test_fixtures::AgentRecordBuilder;
     use crate::domain::entities::agent_record::{MessageBinding, Protocol};
+    use crate::domain::entities::endpoint::NetworkAddressableResource;
     use crate::shared_kernel::enums::Visibility;
 
     #[test]
@@ -17,6 +18,49 @@ mod agent_test {
         assert_eq!(agent.target_endpoints().len(), 1);
         assert!(agent.last_missed_heartbeat().is_none());
         assert_eq!(agent.consecutive_missed_heartbeats(), 0);
+        Ok(())
+    }
+
+    #[test]
+    fn network_addressable_endpoint_requires_a_name() {
+        let result = Agent::register(
+            RegisterAgentProps {
+                name: "Agent".into(),
+                description: "Description".into(),
+                owner: "owner".into(),
+                tenant_id: "tenant".into(),
+                deployment_modality:
+                    crate::domain::entities::agent::AgentDeploymentModality::Persistent,
+                endpoints: vec![AgentEndpoint::new(
+                    None,
+                    Protocol::RestHttp,
+                    Some(MessageBinding::HttpJson),
+                    Some("https://example.test".into()),
+                    None,
+                )],
+                tags: vec![],
+                visibility: Visibility::Private,
+            },
+            None,
+        );
+
+        assert!(matches!(
+            result,
+            Err(AgentError::MissingNetworkAddressableEndpointIdentifier)
+        ));
+    }
+
+    #[test]
+    fn resolves_network_target_url_by_name() -> Result<(), AgentError> {
+        let agent = AgentBuilder::new().build_registered()?;
+
+        assert_eq!(agent.network_target_names(), vec!["default"]);
+        assert_eq!(
+            agent.resolve_target_url("default"),
+            Some("https://example.test")
+        );
+        assert!(agent.resolve_target_url("missing").is_none());
+
         Ok(())
     }
 

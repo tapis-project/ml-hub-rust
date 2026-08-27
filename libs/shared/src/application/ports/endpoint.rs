@@ -12,11 +12,11 @@ pub enum EndpointRepositoryError {
 
 #[async_trait]
 pub trait EndpointRepository: Send + Sync {
-    async fn get_by_target_url(
+    async fn list_by_target_urn(
         &self,
         tenant_id: &str,
-        target_url: &str,
-    ) -> Result<Option<Endpoint>, EndpointRepositoryError>;
+        target_resource_urn: &str,
+    ) -> Result<Vec<Endpoint>, EndpointRepositoryError>;
 
     async fn get_by_slug(&self, slug: &str) -> Result<Option<Endpoint>, EndpointRepositoryError>;
 

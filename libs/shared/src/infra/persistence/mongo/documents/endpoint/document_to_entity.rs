@@ -8,7 +8,7 @@ impl From<documents::Endpoint> for entities::Endpoint {
             id: uuid::Uuid::from_bytes(value.id.bytes()),
             tenant_id: value.tenant_id,
             target_resource_urn: Urn::new(value.target_resource_urn),
-            target_url: value.target_url,
+            target_name: value.target_name,
             slug: value.slug,
         })
     }

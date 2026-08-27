@@ -27,11 +27,16 @@ mod endpoint_service_test {
     }
 
     impl NetworkAddressableResource for TestResource {
-        fn target_urls(&self) -> Vec<String> {
-            vec![
-                "https://agent.example.test".into(),
-                "https://agent-rpc.example.test".into(),
-            ]
+        fn network_target_names(&self) -> Vec<String> {
+            vec!["rest".into(), "rpc".into()]
+        }
+
+        fn resolve_target_url(&self, target_name: &str) -> Option<&str> {
+            match target_name {
+                "rest" => Some("https://agent.example.test"),
+                "rpc" => Some("https://agent-rpc.example.test"),
+                _ => None,
+            }
         }
     }
 
@@ -56,11 +61,11 @@ mod endpoint_service_test {
 
     #[async_trait]
     impl EndpointRepository for InMemoryEndpointRepository {
-        async fn get_by_target_url(
+        async fn list_by_target_urn(
             &self,
             tenant_id: &str,
-            target_url: &str,
-        ) -> Result<Option<Endpoint>, EndpointRepositoryError> {
+            target_resource_urn: &str,
+        ) -> Result<Vec<Endpoint>, EndpointRepositoryError> {
             let endpoints = match self.endpoints.lock() {
                 Ok(endpoints) => endpoints,
                 Err(error) => panic!("Endpoint repository mutex poisoned: {error}"),
@@ -68,10 +73,12 @@ mod endpoint_service_test {
 
             Ok(endpoints
                 .iter()
-                .find(|endpoint| {
-                    endpoint.tenant_id() == tenant_id && endpoint.target_url() == target_url
+                .filter(|endpoint| {
+                    endpoint.tenant_id() == tenant_id
+                        && endpoint.target_resource_urn().as_str() == target_resource_urn
                 })
-                .cloned())
+                .cloned()
+                .collect())
         }
 
         async fn get_by_slug(
@@ -104,11 +111,11 @@ mod endpoint_service_test {
 
     #[async_trait]
     impl EndpointRepository for FailingEndpointRepository {
-        async fn get_by_target_url(
+        async fn list_by_target_urn(
             &self,
             _tenant_id: &str,
-            _target_url: &str,
-        ) -> Result<Option<Endpoint>, EndpointRepositoryError> {
+            _target_resource_urn: &str,
+        ) -> Result<Vec<Endpoint>, EndpointRepositoryError> {
             Err(EndpointRepositoryError::Persistence(
                 InfrastructureError::new_internal(),
             ))

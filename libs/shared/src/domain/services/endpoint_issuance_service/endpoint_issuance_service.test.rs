@@ -10,7 +10,7 @@ mod endpoint_issuance_service_test {
 
     struct TestResource {
         tenant_id: String,
-        target_urls: Vec<String>,
+        target_names: Vec<String>,
     }
 
     impl TenantScopedResource for TestResource {
@@ -26,20 +26,23 @@ mod endpoint_issuance_service_test {
     }
 
     impl NetworkAddressableResource for TestResource {
-        fn target_urls(&self) -> Vec<String> {
-            self.target_urls.clone()
+        fn network_target_names(&self) -> Vec<String> {
+            self.target_names.clone()
+        }
+
+        fn resolve_target_url(&self, target_name: &str) -> Option<&str> {
+            self.target_names
+                .iter()
+                .any(|name| name == target_name)
+                .then_some("https://agent.example.test")
         }
     }
 
     #[test]
-    fn issues_one_endpoint_per_distinct_target_url() -> Result<(), EndpointIssuanceServiceError> {
+    fn issues_one_endpoint_per_distinct_target_name() -> Result<(), EndpointIssuanceServiceError> {
         let resource = TestResource {
             tenant_id: "__GLOBAL__".into(),
-            target_urls: vec![
-                "https://agent.example.test".into(),
-                "https://agent.example.test".into(),
-                "https://agent-rpc.example.test".into(),
-            ],
+            target_names: vec!["rest".into(), "rest".into(), "rpc".into()],
         };
 
         let endpoints = EndpointIssuanceService::issue_for_resource(&Actor::system(), &resource)?;
@@ -48,10 +51,10 @@ mod endpoint_issuance_service_test {
         assert_eq!(endpoints[0].tenant_id(), "__GLOBAL__");
         assert!(endpoints
             .iter()
-            .any(|endpoint| endpoint.target_url() == "https://agent.example.test"));
+            .any(|endpoint| endpoint.target_name() == "rest"));
         assert!(endpoints
             .iter()
-            .any(|endpoint| endpoint.target_url() == "https://agent-rpc.example.test"));
+            .any(|endpoint| endpoint.target_name() == "rpc"));
 
         Ok(())
     }
@@ -60,7 +63,7 @@ mod endpoint_issuance_service_test {
     fn rejects_resource_from_another_tenant() {
         let resource = TestResource {
             tenant_id: "tenant-a".into(),
-            target_urls: vec!["https://agent.example.test".into()],
+            target_names: vec!["rest".into()],
         };
 
         let result = EndpointIssuanceService::issue_for_resource(&Actor::system(), &resource);

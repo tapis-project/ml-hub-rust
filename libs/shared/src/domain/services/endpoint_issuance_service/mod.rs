@@ -21,13 +21,13 @@ impl EndpointIssuanceService {
             });
         }
 
-        let mut target_urls = HashSet::new();
+        let mut target_names = HashSet::new();
 
         Ok(resource
-            .target_urls()
+            .network_target_names()
             .into_iter()
-            .filter(|target_url| target_urls.insert(target_url.clone()))
-            .map(|target_url| Endpoint::new_from_resource(resource, target_url))
+            .filter(|target_name| target_names.insert(target_name.clone()))
+            .map(|target_name| Endpoint::new_from_resource(resource, target_name))
             .collect())
     }
 }

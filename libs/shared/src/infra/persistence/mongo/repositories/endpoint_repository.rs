@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use futures::stream::TryStreamExt;
 use mongodb::{bson::doc, Client, Collection};
 
 use crate::application::ports::endpoint::EndpointRepositoryError;
@@ -25,17 +26,16 @@ impl EndpointRepository {
 
 #[async_trait]
 impl crate::application::ports::endpoint::EndpointRepository for EndpointRepository {
-    async fn get_by_target_url(
+    async fn list_by_target_urn(
         &self,
         tenant_id: &str,
-        target_url: &str,
-    ) -> Result<Option<entities::Endpoint>, EndpointRepositoryError> {
-        self.read_collection
-            .find_one(doc! { "tenant_id": tenant_id, "target_url": target_url })
-            .await
-            .map_err(log_persistence_error)
-            .map_err(EndpointRepositoryError::from)
-            .map(|endpoint| endpoint.map(entities::Endpoint::from))
+        target_resource_urn: &str,
+    ) -> Result<Vec<entities::Endpoint>, EndpointRepositoryError> {
+        self.list(doc! {
+            "tenant_id": tenant_id,
+            "target_resource_urn": target_resource_urn,
+        })
+        .await
     }
 
     async fn get_by_slug(
@@ -57,6 +57,27 @@ impl crate::application::ports::endpoint::EndpointRepository for EndpointReposit
             .map_err(log_persistence_error)?;
 
         Ok(())
+    }
+}
+
+impl EndpointRepository {
+    async fn list(
+        &self,
+        filter: mongodb::bson::Document,
+    ) -> Result<Vec<entities::Endpoint>, EndpointRepositoryError> {
+        let mut cursor = self
+            .read_collection
+            .find(filter)
+            .await
+            .map_err(log_persistence_error)?;
+
+        let mut endpoints = Vec::new();
+
+        while let Some(document) = cursor.try_next().await.map_err(log_persistence_error)? {
+            endpoints.push(entities::Endpoint::from(document));
+        }
+
+        Ok(endpoints)
     }
 }
 

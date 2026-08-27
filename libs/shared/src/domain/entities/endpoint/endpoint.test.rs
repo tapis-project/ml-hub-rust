@@ -21,15 +21,18 @@ mod endpoint_test {
     }
 
     impl NetworkAddressableResource for TestResource {
-        fn target_urls(&self) -> Vec<String> {
-            vec!["https://agent.example.test".into()]
+        fn network_target_names(&self) -> Vec<String> {
+            vec!["rest".into()]
+        }
+
+        fn resolve_target_url(&self, target_name: &str) -> Option<&str> {
+            (target_name == "rest").then_some("https://agent.example.test")
         }
     }
 
     #[test]
     fn creates_endpoint_from_resource() {
-        let endpoint =
-            Endpoint::new_from_resource(&TestResource, "https://agent.example.test".into());
+        let endpoint = Endpoint::new_from_resource(&TestResource, "rest".into());
 
         assert_eq!(endpoint.id().get_version_num(), 7);
         assert_eq!(endpoint.tenant_id(), "tenant-a");
@@ -37,7 +40,11 @@ mod endpoint_test {
             endpoint.target_resource_urn().as_str(),
             "urn:mlhub:v1:tenant-a:agent:agent-a"
         );
-        assert_eq!(endpoint.target_url(), "https://agent.example.test");
+        assert_eq!(endpoint.target_name(), "rest");
+        assert_eq!(
+            TestResource.resolve_target_url(endpoint.target_name()),
+            Some("https://agent.example.test")
+        );
         assert_eq!(endpoint.slug().len(), 10);
         assert!(endpoint
             .slug()
@@ -52,7 +59,7 @@ mod endpoint_test {
             id,
             tenant_id: "tenant-a".into(),
             target_resource_urn: Urn::new("urn:mlhub:v1:tenant-a:agent:agent-a".into()),
-            target_url: "https://agent.example.test".into(),
+            target_name: "rest".into(),
             slug: "abc123def4".into(),
         });
 
@@ -62,7 +69,7 @@ mod endpoint_test {
             endpoint.target_resource_urn().as_str(),
             "urn:mlhub:v1:tenant-a:agent:agent-a"
         );
-        assert_eq!(endpoint.target_url(), "https://agent.example.test");
+        assert_eq!(endpoint.target_name(), "rest");
         assert_eq!(endpoint.slug(), "abc123def4");
     }
 }

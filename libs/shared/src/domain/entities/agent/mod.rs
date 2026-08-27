@@ -195,6 +195,10 @@ impl Agent {
                 }
             }
 
+            if endpoint.base_url().is_some() && endpoint.name().is_none() {
+                return Err(AgentError::MissingNetworkAddressableEndpointIdentifier);
+            }
+
             if endpoint.liveness_probe().is_some()
                 && !matches!(endpoint.protocol(), Protocol::RestHttp)
             {
@@ -402,6 +406,8 @@ pub enum AgentError {
     EmptyAgentEndpointIdentifier,
     #[error("Agent endpoint identifier is required when registering from an agent record")]
     MissingAgentEndpointIdentifier,
+    #[error("Agent endpoint identifier is required when it has a base URL")]
+    MissingNetworkAddressableEndpointIdentifier,
     #[error("Duplicate agent endpoint identifier: {0}")]
     DuplicateAgentEndpointIdentifier(String),
     #[error("Incompatible liveness probe configuration for agent endpoint: {0}")]
@@ -456,10 +462,20 @@ impl TenantScopedResource for Agent {
 }
 
 impl NetworkAddressableResource for Agent {
-    fn target_urls(&self) -> Vec<String> {
+    fn network_target_names(&self) -> Vec<String> {
         self.target_endpoints()
             .iter()
-            .filter_map(|endpoint| endpoint.base_url().map(str::to_owned))
+            .filter_map(|endpoint| match (endpoint.name(), endpoint.base_url()) {
+                (Some(name), Some(_)) => Some(name.to_owned()),
+                _ => None,
+            })
             .collect()
+    }
+
+    fn resolve_target_url(&self, target_name: &str) -> Option<&str> {
+        self.target_endpoints()
+            .iter()
+            .find(|endpoint| endpoint.name() == Some(target_name))
+            .and_then(AgentEndpoint::base_url)
     }
 }

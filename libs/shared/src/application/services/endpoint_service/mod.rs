@@ -44,18 +44,27 @@ impl EndpointService {
         resource: &impl NetworkAddressableResource,
     ) -> Result<Vec<Endpoint>, EndpointServiceError> {
         let candidates = EndpointIssuanceService::issue_for_resource(ctx.actor(), resource)?;
+
+        let tenant_id = resource.tenant_id();
+        let target_resource_urn = resource.urn();
+
+        let existing_endpoints = retry_async(
+            || {
+                self.endpoint_repository
+                    .list_by_target_urn(tenant_id.as_str(), target_resource_urn.as_str())
+            },
+            &Self::REPOSITORY_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
         let mut endpoints = Vec::with_capacity(candidates.len());
 
         for candidate in candidates {
-            let existing = retry_async(
-                || {
-                    self.endpoint_repository
-                        .get_by_target_url(candidate.tenant_id(), candidate.target_url())
-                },
-                &Self::REPOSITORY_RETRY_POLICY,
-                None,
-            )
-            .await?;
+            let existing = existing_endpoints
+                .iter()
+                .find(|endpoint| endpoint.target_name() == candidate.target_name())
+                .cloned();
 
             match existing {
                 Some(endpoint) => endpoints.push(endpoint),
