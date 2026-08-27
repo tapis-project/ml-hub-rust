@@ -8,6 +8,9 @@ use uuid::Uuid;
 use crate::application::inputs::agent::RegisterAgentInput;
 use crate::application::ports::agent::{AgentRepository, AgentRepositoryError};
 use crate::application::ports::agent_record::{AgentRecordRepository, AgentRecordRepositoryError};
+use crate::application::services::endpoint_issuance_service::{
+    EndpointIssuanceService, EndpointIssuanceServiceError,
+};
 use crate::domain::entities::agent::{Agent, AgentError, RegisterAgentProps};
 use crate::shared_kernel::context::RequestContext;
 
@@ -24,11 +27,15 @@ pub enum AgentServiceError {
 
     #[error("Agent domain error: {0}")]
     Domain(#[from] AgentError),
+
+    #[error("Endpoint issuance error: {0}")]
+    EndpointIssuance(#[from] EndpointIssuanceServiceError),
 }
 
 pub struct AgentService {
     agent_repository: Arc<dyn AgentRepository>,
     agent_record_repository: Arc<dyn AgentRecordRepository>,
+    endpoint_issuance_service: EndpointIssuanceService,
 }
 
 impl AgentService {
@@ -42,10 +49,12 @@ impl AgentService {
     pub fn new(
         agent_repository: Arc<dyn AgentRepository>,
         agent_record_repository: Arc<dyn AgentRecordRepository>,
+        endpoint_issuance_service: EndpointIssuanceService,
     ) -> Self {
         Self {
             agent_repository,
             agent_record_repository,
+            endpoint_issuance_service,
         }
     }
 
@@ -90,6 +99,11 @@ impl AgentService {
             None,
         )
         .await?;
+
+        self.endpoint_issuance_service
+            .issue_for_resource(ctx, &agent)
+            .await?;
+
         Ok(agent)
     }
 
@@ -123,3 +137,7 @@ impl AgentService {
         .await?)
     }
 }
+
+#[cfg(test)]
+#[path = "agent_service.test.rs"]
+mod agent_service_test;

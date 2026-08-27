@@ -10,4 +10,5 @@ pub mod deployment_strategy_service;
 pub mod deployment_argument_service;
 pub mod agent_record_service;
 pub mod agent_service;
-pub mod endpoint_service;
+pub mod endpoint_catalog_service;
+pub mod endpoint_issuance_service;

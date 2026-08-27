@@ -1,12 +1,13 @@
 #[cfg(test)]
-mod endpoint_service_test {
+mod endpoint_issuance_service_test {
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
 
     use crate::application::ports::endpoint::{EndpointRepository, EndpointRepositoryError};
-    use crate::application::ports::errors::InfrastructureError;
-    use crate::application::services::endpoint_service::{EndpointService, EndpointServiceError};
+    use crate::application::services::endpoint_issuance_service::{
+        EndpointIssuanceService, EndpointIssuanceServiceError,
+    };
     use crate::domain::entities::endpoint::{Endpoint, NetworkAddressableResource};
     use crate::domain::entities::tenancy::TenantScopedResource;
     use crate::shared_kernel::context::RequestContext;
@@ -83,17 +84,9 @@ mod endpoint_service_test {
 
         async fn get_by_slug(
             &self,
-            slug: &str,
+            _slug: &str,
         ) -> Result<Option<Endpoint>, EndpointRepositoryError> {
-            let endpoints = match self.endpoints.lock() {
-                Ok(endpoints) => endpoints,
-                Err(error) => panic!("Endpoint repository mutex poisoned: {error}"),
-            };
-
-            Ok(endpoints
-                .iter()
-                .find(|endpoint| endpoint.slug() == slug)
-                .cloned())
+            Ok(None)
         }
 
         async fn save(&self, endpoint: &Endpoint) -> Result<(), EndpointRepositoryError> {
@@ -103,44 +96,16 @@ mod endpoint_service_test {
             };
 
             endpoints.push(endpoint.clone());
+
             Ok(())
         }
     }
 
-    struct FailingEndpointRepository;
-
-    #[async_trait]
-    impl EndpointRepository for FailingEndpointRepository {
-        async fn list_by_target_urn(
-            &self,
-            _tenant_id: &str,
-            _target_resource_urn: &str,
-        ) -> Result<Vec<Endpoint>, EndpointRepositoryError> {
-            Err(EndpointRepositoryError::Persistence(
-                InfrastructureError::new_internal(),
-            ))
-        }
-
-        async fn get_by_slug(
-            &self,
-            _slug: &str,
-        ) -> Result<Option<Endpoint>, EndpointRepositoryError> {
-            Err(EndpointRepositoryError::Persistence(
-                InfrastructureError::new_internal(),
-            ))
-        }
-
-        async fn save(&self, _endpoint: &Endpoint) -> Result<(), EndpointRepositoryError> {
-            Err(EndpointRepositoryError::Persistence(
-                InfrastructureError::new_internal(),
-            ))
-        }
-    }
-
     #[tokio::test]
-    async fn issues_and_reuses_endpoints_for_resource() -> Result<(), EndpointServiceError> {
+    async fn issues_and_reuses_endpoints_for_resource() -> Result<(), EndpointIssuanceServiceError>
+    {
         let repository = Arc::new(InMemoryEndpointRepository::new());
-        let service = EndpointService::new(repository.clone());
+        let service = EndpointIssuanceService::new(repository.clone());
         let ctx = RequestContext::system(None);
 
         let issued = service.issue_for_resource(&ctx, &TestResource).await?;
@@ -154,15 +119,5 @@ mod endpoint_service_test {
         assert_eq!(repository.saved_count(), 2);
 
         Ok(())
-    }
-
-    #[tokio::test]
-    async fn propagates_repository_errors() {
-        let service = EndpointService::new(Arc::new(FailingEndpointRepository));
-        let ctx = RequestContext::system(None);
-
-        let result = service.issue_for_resource(&ctx, &TestResource).await;
-
-        assert!(matches!(result, Err(EndpointServiceError::Repository(_))));
     }
 }

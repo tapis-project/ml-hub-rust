@@ -7,24 +7,25 @@ use thiserror::Error;
 use crate::application::ports::endpoint::{EndpointRepository, EndpointRepositoryError};
 use crate::domain::entities::endpoint::{Endpoint, NetworkAddressableResource};
 use crate::domain::services::endpoint_issuance_service::{
-    EndpointIssuanceService, EndpointIssuanceServiceError,
+    EndpointIssuanceService as EndpointIssuanceDomainService,
+    EndpointIssuanceServiceError as EndpointIssuanceDomainServiceError,
 };
 use crate::shared_kernel::context::RequestContext;
 
 #[derive(Debug, Error)]
-pub enum EndpointServiceError {
+pub enum EndpointIssuanceServiceError {
     #[error(transparent)]
-    Domain(#[from] EndpointIssuanceServiceError),
+    Domain(#[from] EndpointIssuanceDomainServiceError),
 
     #[error(transparent)]
     Repository(#[from] EndpointRepositoryError),
 }
 
-pub struct EndpointService {
+pub struct EndpointIssuanceService {
     endpoint_repository: Arc<dyn EndpointRepository>,
 }
 
-impl EndpointService {
+impl EndpointIssuanceService {
     const REPOSITORY_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| {
         RetryPolicy::FixedBackoff(FixedBackoff {
             retries: Retry::NTimes(3),
@@ -42,8 +43,8 @@ impl EndpointService {
         &self,
         ctx: &RequestContext,
         resource: &impl NetworkAddressableResource,
-    ) -> Result<Vec<Endpoint>, EndpointServiceError> {
-        let candidates = EndpointIssuanceService::issue_for_resource(ctx.actor(), resource)?;
+    ) -> Result<Vec<Endpoint>, EndpointIssuanceServiceError> {
+        let candidates = EndpointIssuanceDomainService::issue_for_resource(ctx.actor(), resource)?;
 
         let tenant_id = resource.tenant_id();
         let target_resource_urn = resource.urn();
@@ -86,5 +87,5 @@ impl EndpointService {
 }
 
 #[cfg(test)]
-#[path = "endpoint_service.test.rs"]
-mod endpoint_service_test;
+#[path = "endpoint_issuance_service.test.rs"]
+mod endpoint_issuance_service_test;
