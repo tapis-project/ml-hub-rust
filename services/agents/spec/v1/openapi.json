@@ -79,6 +79,72 @@
         }
       }
     },
+    "/agents-api/agents": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "List agents",
+        "operationId": "list_agents",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Scope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of agents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAgentsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to list agents"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Register an agent",
+        "operationId": "create_agent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Agent registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAgentResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to register agent"
+          }
+        }
+      }
+    },
     "/agents-api/healthcheck": {
       "get": {
         "tags": [
@@ -96,6 +162,101 @@
   },
   "components": {
     "schemas": {
+      "Agent": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "tenant_id",
+          "owner",
+          "description",
+          "deployment_modality",
+          "liveness",
+          "consecutive_missed_heartbeats",
+          "rest_http_endpoints",
+          "rpc_endpoints",
+          "stdio_endpoints",
+          "tags",
+          "visibility",
+          "created_at",
+          "last_modified"
+        ],
+        "properties": {
+          "agent_record_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "consecutive_missed_heartbeats": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "deployment_modality": {
+            "$ref": "#/components/schemas/AgentDeploymentModality"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "last_missed_heartbeat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_modified": {
+            "type": "string"
+          },
+          "liveness": {
+            "$ref": "#/components/schemas/AgentLiveness"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "rest_http_endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestHttpAgentEndpoint"
+            }
+          },
+          "rpc_endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RpcAgentEndpoint"
+            }
+          },
+          "stdio_endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StdioAgentEndpoint"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        }
+      },
       "AgentArtifactType": {
         "type": "string",
         "enum": [
@@ -107,36 +268,19 @@
           "Unspecified"
         ]
       },
-      "AgentInterface": {
-        "type": "object",
-        "required": [
-          "name",
-          "protocol"
-        ],
-        "properties": {
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "message_binding": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/MessageBinding"
-              }
-            ]
-          },
-          "name": {
-            "type": "string"
-          },
-          "protocol": {
-            "$ref": "#/components/schemas/Protocol"
-          }
-        }
+      "AgentDeploymentModality": {
+        "type": "string",
+        "enum": [
+          "Persistent",
+          "OnDemand"
+        ]
+      },
+      "AgentLiveness": {
+        "type": "string",
+        "enum": [
+          "Alive",
+          "Dead"
+        ]
       },
       "AgentProvider": {
         "type": "object",
@@ -161,11 +305,14 @@
           "tenant_id",
           "owner",
           "description",
-          "interfaces",
+          "rest_http_interfaces",
+          "rpc_interfaces",
+          "stdio_interfaces",
           "capabilities",
           "version",
           "artifact_locators",
           "skills",
+          "tags",
           "visibility"
         ],
         "properties": {
@@ -197,12 +344,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "interfaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AgentInterface"
-            }
-          },
           "name": {
             "type": "string"
           },
@@ -219,10 +360,34 @@
               }
             ]
           },
+          "rest_http_interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestHttpAgentInterface"
+            }
+          },
+          "rpc_interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RpcAgentInterface"
+            }
+          },
           "skills": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AgentSkill"
+            }
+          },
+          "stdio_interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StdioAgentInterface"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "tenant_id": {
@@ -299,12 +464,65 @@
           }
         }
       },
+      "CreateAgentBody": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "deployment_modality"
+        ],
+        "properties": {
+          "agent_record_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "deployment_modality": {
+            "$ref": "#/components/schemas/AgentDeploymentModality"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rest_http_endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestHttpAgentEndpoint"
+            }
+          },
+          "rpc_endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RpcAgentEndpoint"
+            }
+          },
+          "stdio_endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StdioAgentEndpoint"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateAgentRecordBody": {
         "type": "object",
         "required": [
           "name",
           "description",
-          "interfaces",
           "capabilities",
           "version"
         ],
@@ -337,12 +555,6 @@
               "null"
             ]
           },
-          "interfaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AgentInterface"
-            }
-          },
           "name": {
             "type": "string"
           },
@@ -356,10 +568,34 @@
               }
             ]
           },
+          "rest_http_interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestHttpAgentInterface"
+            }
+          },
+          "rpc_interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RpcAgentInterface"
+            }
+          },
           "skills": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AgentSkill"
+            }
+          },
+          "stdio_interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StdioAgentInterface"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "version": {
@@ -389,6 +625,35 @@
           },
           "result": {
             "$ref": "#/components/schemas/AgentRecord"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateAgentResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "$ref": "#/components/schemas/Agent"
           },
           "status": {
             "type": "integer",
@@ -432,6 +697,38 @@
           }
         }
       },
+      "ListAgentsResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Agent"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
       "MessageBinding": {
         "type": "string",
         "enum": [
@@ -440,13 +737,222 @@
           "Grpc"
         ]
       },
-      "Protocol": {
-        "type": "string",
-        "enum": [
-          "RestHttp",
-          "Rpc",
-          "Stdio"
-        ]
+      "RestHttpAgentEndpoint": {
+        "type": "object",
+        "properties": {
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "liveness_probe": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RestHttpLivenessProbe"
+              }
+            ]
+          },
+          "message_binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MessageBinding"
+              }
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RestHttpAgentInterface": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "liveness_probe_config": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RestHttpLivenessProbe"
+              }
+            ]
+          },
+          "message_binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MessageBinding"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "RestHttpLivenessProbe": {
+        "type": "object",
+        "required": [
+          "route",
+          "interval_seconds",
+          "timeout_seconds",
+          "missed_heartbeat_threshold",
+          "initial_delay_seconds"
+        ],
+        "properties": {
+          "initial_delay_seconds": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "missed_heartbeat_threshold": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "route": {
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "RpcAgentEndpoint": {
+        "type": "object",
+        "properties": {
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MessageBinding"
+              }
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RpcAgentInterface": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MessageBinding"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "StdioAgentEndpoint": {
+        "type": "object",
+        "properties": {
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MessageBinding"
+              }
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "StdioAgentInterface": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_binding": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MessageBinding"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
       },
       "Visibility": {
         "type": "string",
