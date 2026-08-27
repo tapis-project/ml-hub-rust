@@ -7,6 +7,8 @@ use uuid::Uuid;
 use crate::domain::entities::agent_record::{
     AgentRecord, LivenessProbeConfiguration, MessageBinding, Protocol,
 };
+use crate::domain::entities::endpoint::NetworkAddressableResource;
+use crate::domain::entities::tenancy::TenantScopedResource;
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::value_objects::TimeStamp;
@@ -446,3 +448,18 @@ pub mod test_fixtures;
 #[cfg(test)]
 #[path = "agent.test.rs"]
 mod agent_test;
+
+impl TenantScopedResource for Agent {
+    fn tenant_id(&self) -> String {
+        self.tenant_id.clone()
+    }
+}
+
+impl NetworkAddressableResource for Agent {
+    fn target_urls(&self) -> Vec<String> {
+        self.target_endpoints()
+            .iter()
+            .filter_map(|endpoint| endpoint.base_url().map(str::to_owned))
+            .collect()
+    }
+}

@@ -9,3 +9,4 @@ pub mod deployment;
 pub mod visibility;
 pub mod agent_record;
 pub mod agent;
+pub mod endpoint;

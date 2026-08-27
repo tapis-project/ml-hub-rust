@@ -1,6 +1,7 @@
 pub mod artifacts;
 pub mod agent_record;
 pub mod agent;
+pub mod endpoint;
 pub mod commands;
 pub mod events;
 pub mod deployment;
