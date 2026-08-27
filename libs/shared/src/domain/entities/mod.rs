@@ -7,6 +7,7 @@ pub mod artifact_publication;
 pub mod deployment;
 pub mod deployment_strategy;
 pub mod domain;
+pub mod endpoint;
 pub mod identity;
 pub mod model_metadata;
 pub mod operator;
