@@ -52,6 +52,39 @@ mod tests {
         );
     }
 
+    #[test]
+    async fn openapi_inlines_the_list_agents_scope_parameter(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let document = serde_json::to_value(ApiDoc::openapi())?;
+        let parameters = match document
+            .pointer("/paths/~1agents-api~1agents/get/parameters")
+            .and_then(serde_json::Value::as_array)
+        {
+            Some(parameters) => parameters,
+            None => {
+                return Err(
+                    std::io::Error::other("List agents operation should define parameters").into(),
+                )
+            }
+        };
+        let scope = match parameters
+            .iter()
+            .find(|parameter| parameter.get("name") == Some(&serde_json::json!("scope")))
+        {
+            Some(scope) => scope,
+            None => {
+                return Err(std::io::Error::other("List agents operation should define scope").into())
+            }
+        };
+
+        assert_eq!(
+            scope.pointer("/schema/enum"),
+            Some(&serde_json::json!(["Owned", "Shared"]))
+        );
+
+        Ok(())
+    }
+
     #[actix_web::test]
     async fn openapi_endpoint_and_document_include_requested_routes() {
         let app = test::init_service(app()).await;

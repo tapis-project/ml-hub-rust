@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "MLHub Agents API",
     "description": "",
@@ -196,11 +196,9 @@
         ],
         "properties": {
           "agent_record_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           },
           "consecutive_missed_heartbeats": {
             "type": "integer",
@@ -227,10 +225,8 @@
             "format": "uuid"
           },
           "last_missed_heartbeat": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "last_modified": {
             "type": "string"
@@ -348,16 +344,12 @@
             "type": "string"
           },
           "documentation_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "icon_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "id": {
             "type": "string",
@@ -492,11 +484,9 @@
         ],
         "properties": {
           "agent_record_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           },
           "deployment_modality": {
             "$ref": "#/components/schemas/AgentDeploymentModality"
@@ -547,14 +537,12 @@
         ],
         "properties": {
           "artifact_locators": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": "array",
             "items": {
               "$ref": "#/components/schemas/ArtifactLocator"
             },
-            "default": []
+            "default": [],
+            "nullable": true
           },
           "capabilities": {
             "$ref": "#/components/schemas/Capabilities"
@@ -563,16 +551,12 @@
             "type": "string"
           },
           "documentation_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "icon_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string"
@@ -792,10 +776,8 @@
         "type": "object",
         "properties": {
           "base_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "liveness_probe": {
             "oneOf": [
@@ -818,10 +800,8 @@
             ]
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -832,10 +812,8 @@
         ],
         "properties": {
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "liveness_probe_config": {
             "oneOf": [
@@ -901,10 +879,8 @@
         "type": "object",
         "properties": {
           "base_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "message_binding": {
             "oneOf": [
@@ -917,10 +893,8 @@
             ]
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -931,10 +905,8 @@
         ],
         "properties": {
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "message_binding": {
             "oneOf": [
@@ -955,10 +927,8 @@
         "type": "object",
         "properties": {
           "base_url": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "message_binding": {
             "oneOf": [
@@ -971,10 +941,8 @@
             ]
           },
           "name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -985,10 +953,8 @@
         ],
         "properties": {
           "description": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string",
+            "nullable": true
           },
           "message_binding": {
             "oneOf": [

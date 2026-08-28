@@ -1,7 +1,7 @@
 {
-  "name": "@mlhub/deployments-ts-sdk",
+  "name": "@mlhub/agents-ts-sdk",
   "version": "0.18.0",
-  "description": "OpenAPI client for @mlhub/deployments-ts-sdk",
+  "description": "OpenAPI client for @mlhub/agents-ts-sdk",
   "author": "OpenAPI-Generator",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",

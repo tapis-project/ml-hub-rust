@@ -1,5 +1,5 @@
 {
-	"npmName": "@mlhub/models-ts-sdk",
+	"npmName": "@mlhub/agents-ts-sdk",
 	"npmVersion": "0.18.0",
 	"snapshot" : false,
 	"supportsES6": false,
