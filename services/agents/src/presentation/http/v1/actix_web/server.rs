@@ -92,7 +92,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(agent_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(preflight_short_circuit))
-            .wrap(Logger::default())
+            .wrap(Logger::default().exclude("/agents-api/healthcheck"))
             .service(handlers::healthcheck::healthcheck)
             .service(handlers::openapi::openapi)
             .service(
