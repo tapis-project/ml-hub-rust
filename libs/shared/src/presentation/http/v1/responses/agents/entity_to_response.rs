@@ -67,6 +67,7 @@ impl From<entities::Agent> for responses::Agent {
             rest_http_endpoints,
             rpc_endpoints,
             stdio_endpoints,
+            endpoints: Vec::new(),
             tags: value
                 .tags()
                 .iter()

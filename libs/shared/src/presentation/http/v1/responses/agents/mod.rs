@@ -1,3 +1,4 @@
+mod agent_with_endpoints_to_response;
 mod entity_to_response;
 
 use serde::Serialize;
@@ -6,6 +7,7 @@ use uuid::Uuid;
 
 use crate::presentation::http::v1::responses::agent_records::MessageBinding;
 use crate::presentation::http::v1::responses::agent_records::RestHttpLivenessProbe;
+use crate::presentation::http::v1::responses::endpoints::Endpoint;
 use crate::presentation::http::v1::responses::visibility::Visibility;
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
@@ -23,6 +25,7 @@ pub struct Agent {
     pub rest_http_endpoints: Vec<RestHttpAgentEndpoint>,
     pub rpc_endpoints: Vec<RpcAgentEndpoint>,
     pub stdio_endpoints: Vec<StdioAgentEndpoint>,
+    pub endpoints: Vec<Endpoint>,
     pub tags: Vec<String>,
     pub visibility: Visibility,
     pub created_at: String,

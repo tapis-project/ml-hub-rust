@@ -2,8 +2,9 @@ use actix_web::{get, web, Responder};
 use serde_json::to_value;
 use shared::{
     application::services::agent_service::AgentService,
+    application::services::endpoint_catalog_service::EndpointCatalogService,
     presentation::http::v1::requests::list_agents::query::Scope,
-    shared_kernel::context::RequestContext,
+    presentation::http::v1::responses::endpoints::Endpoint, shared_kernel::context::RequestContext,
 };
 
 use crate::presentation::http::v1::contracts::responses::ListAgentsResponse;
@@ -20,6 +21,7 @@ pub async fn list_agents(
     query: web::Query<ListAgentsQueryParams>,
     ctx: RequestContext,
     agent_service: web::Data<AgentService>,
+    endpoint_catalog_service: web::Data<EndpointCatalogService>,
 ) -> impl Responder {
     let agents = match query.scope {
         Scope::Owned => agent_service.list_for_user(&ctx).await,
@@ -29,7 +31,30 @@ pub async fn list_agents(
         Ok(agents) => agents,
         Err(error) => return build_error_response(500, error.to_string()),
     };
-    let response = match to_value(agents.into_iter().map(Agent::from).collect::<Vec<_>>()) {
+    let response_agents = if query.include_endpoints {
+        let mut response_agents = Vec::with_capacity(agents.len());
+
+        for agent in agents {
+            let endpoints = match endpoint_catalog_service
+                .find_by_network_addressable_resource(&ctx, &agent)
+                .await
+            {
+                Ok(endpoints) => endpoints
+                    .into_iter()
+                    .filter_map(|endpoint| Endpoint::try_from((endpoint, &agent)).ok())
+                    .collect(),
+                Err(error) => return build_error_response(500, error.to_string()),
+            };
+
+            response_agents.push(Agent::from((agent, endpoints)));
+        }
+
+        response_agents
+    } else {
+        agents.into_iter().map(Agent::from).collect()
+    };
+
+    let response = match to_value(response_agents) {
         Ok(response) => response,
         Err(error) => return build_error_response(500, error.to_string()),
     };

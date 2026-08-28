@@ -17,6 +17,7 @@ fn agent_response_preserves_missed_heartbeat_state() -> Result<(), Box<dyn std::
         Some("2026-08-26T12:00:00+00:00")
     );
     assert_eq!(response.consecutive_missed_heartbeats, 3);
+    assert!(response.endpoints.is_empty());
 
     Ok(())
 }
