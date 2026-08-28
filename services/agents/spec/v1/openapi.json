@@ -94,6 +94,14 @@
             "schema": {
               "$ref": "#/components/schemas/Scope"
             }
+          },
+          {
+            "name": "include_endpoints",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -176,6 +184,7 @@
           "rest_http_endpoints",
           "rpc_endpoints",
           "stdio_endpoints",
+          "endpoints",
           "tags",
           "visibility",
           "created_at",
@@ -202,6 +211,12 @@
           },
           "description": {
             "type": "string"
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Endpoint"
+            }
           },
           "id": {
             "type": "string",
@@ -661,6 +676,38 @@
             "minimum": 0
           },
           "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Endpoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "target_resource_urn",
+          "target_name",
+          "slug",
+          "target_base_url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "target_base_url": {
+            "type": "string"
+          },
+          "target_name": {
+            "type": "string"
+          },
+          "target_resource_urn": {
+            "type": "string"
+          },
+          "tenant_id": {
             "type": "string"
           }
         }
