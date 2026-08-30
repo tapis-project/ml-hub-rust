@@ -58,6 +58,8 @@ impl AgentRecordService {
                 .into_iter()
                 .map(Into::into)
                 .collect(),
+            input.default_input_modes,
+            input.default_output_modes,
             input
                 .skills
                 .into_iter()

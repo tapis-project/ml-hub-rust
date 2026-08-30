@@ -40,6 +40,8 @@ fn maps_concrete_request_interfaces_to_polymorphic_application_inputs() {
         provider: None,
         version: "1.0.0".into(),
         artifact_locators: vec![],
+        default_input_modes: vec!["application/json".into()],
+        default_output_modes: vec!["application/json".into()],
         skills: vec![],
         tags: vec![],
         icon_url: None,
@@ -47,10 +49,16 @@ fn maps_concrete_request_interfaces_to_polymorphic_application_inputs() {
         visibility: Visibility::Private,
     };
 
-    let input = CreateAgentRecordInput::from(request);
+    let input = match CreateAgentRecordInput::try_from(request) {
+        Ok(input) => input,
+        Err(error) => panic!("Expected valid I/O mode mapping: {error}"),
+    };
 
     assert_eq!(input.interfaces.len(), 3);
-    assert!(matches!(input.interfaces[0].protocol, ProtocolInput::RestHttp));
+    assert!(matches!(
+        input.interfaces[0].protocol,
+        ProtocolInput::RestHttp
+    ));
     assert!(matches!(
         input.interfaces[0].message_binding,
         Some(MessageBindingInput::HttpJson)
@@ -73,4 +81,6 @@ fn maps_concrete_request_interfaces_to_polymorphic_application_inputs() {
     assert!(input.interfaces[1].liveness_probe_config.is_none());
     assert!(matches!(input.interfaces[2].protocol, ProtocolInput::Stdio));
     assert!(input.interfaces[2].liveness_probe_config.is_none());
+    assert_eq!(input.default_input_modes[0].as_str(), "application/json");
+    assert_eq!(input.default_output_modes[0].as_str(), "application/json");
 }

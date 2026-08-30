@@ -31,6 +31,26 @@ impl TryFrom<documents::AgentRecord> for entities::AgentRecord {
                 .into_iter()
                 .map(entities::ArtifactLocator::from)
                 .collect(),
+            default_input_modes: value
+                .default_input_modes
+                .into_iter()
+                .map(|io_mode| entities::IoMode::new(&io_mode))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| {
+                    entities::AgentRecordError::DataIntegrityError(format!(
+                        "Agent record contains invalid default input modes: {error}"
+                    ))
+                })?,
+            default_output_modes: value
+                .default_output_modes
+                .into_iter()
+                .map(|io_mode| entities::IoMode::new(&io_mode))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| {
+                    entities::AgentRecordError::DataIntegrityError(format!(
+                        "Agent record contains invalid default output modes: {error}"
+                    ))
+                })?,
             skills,
             tags: value.tags,
             icon_url: value.icon_url,
@@ -133,6 +153,34 @@ impl TryFrom<documents::AgentSkill> for entities::AgentSkill {
             description: value.description,
             tags: value.tags,
             examples: value.examples,
+            input_modes: value
+                .input_modes
+                .map(|input_modes| {
+                    input_modes
+                        .into_iter()
+                        .map(|io_mode| entities::IoMode::new(&io_mode))
+                        .collect()
+                })
+                .transpose()
+                .map_err(|error| {
+                    entities::AgentRecordError::DataIntegrityError(format!(
+                        "Agent skill contains invalid input modes: {error}"
+                    ))
+                })?,
+            output_modes: value
+                .output_modes
+                .map(|output_modes| {
+                    output_modes
+                        .into_iter()
+                        .map(|io_mode| entities::IoMode::new(&io_mode))
+                        .collect()
+                })
+                .transpose()
+                .map_err(|error| {
+                    entities::AgentRecordError::DataIntegrityError(format!(
+                        "Agent skill contains invalid output modes: {error}"
+                    ))
+                })?,
         })
         .map_err(|error| entities::AgentRecordError::DataIntegrityError(error.to_string()))
     }

@@ -4188,6 +4188,7 @@ dependencies = [
  "k8s-openapi",
  "kube",
  "log",
+ "mime",
  "mongodb",
  "nanoid",
  "nonempty",

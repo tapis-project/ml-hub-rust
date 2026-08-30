@@ -1,6 +1,7 @@
 use actix_web::{post, web, Responder};
 use serde_json::to_value;
 use shared::{
+    application::inputs::agent_record::CreateAgentRecordInput,
     application::services::agent_record_service::AgentRecordService,
     shared_kernel::context::RequestContext,
 };
@@ -35,10 +36,12 @@ pub async fn create_agent_record(
         return build_error_response(500, error.to_string());
     }
 
-    let agent_record = match agent_record_service
-        .create_agent_record(&ctx, request_body.into())
-        .await
-    {
+    let input = match CreateAgentRecordInput::try_from(request_body) {
+        Ok(input) => input,
+        Err(error) => return build_error_response(500, error.to_string()),
+    };
+
+    let agent_record = match agent_record_service.create_agent_record(&ctx, input).await {
         Ok(agent_record) => agent_record,
         Err(error) => return build_error_response(500, error.to_string()),
     };

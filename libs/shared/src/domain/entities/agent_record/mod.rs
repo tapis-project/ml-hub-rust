@@ -6,9 +6,7 @@ use uuid::Uuid;
 
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::Visibility;
-use crate::shared_kernel::value_objects::{
-    SemanticVersion, Tags, TagsError,
-};
+use crate::shared_kernel::value_objects::{SemanticVersion, Tags, TagsError};
 
 #[derive(Clone, Debug)]
 pub struct AgentRecord {
@@ -22,6 +20,8 @@ pub struct AgentRecord {
     capabilities: Capabilities,
     provider: Option<AgentProvider>,
     artifact_locators: Vec<ArtifactLocator>,
+    default_input_modes: NonEmpty<IoMode>,
+    default_output_modes: NonEmpty<IoMode>,
     skills: Vec<AgentSkill>,
     tags: Tags,
     icon_url: Option<String>,
@@ -42,6 +42,8 @@ impl AgentRecord {
         provider: Option<AgentProvider>,
         version: String,
         artifact_locators: Vec<ArtifactLocator>,
+        default_input_modes: Vec<IoMode>,
+        default_output_modes: Vec<IoMode>,
         skills: Vec<AgentSkill>,
         tags: Vec<String>,
         icon_url: Option<String>,
@@ -52,6 +54,10 @@ impl AgentRecord {
             .map_err(|_| AgentRecordError::InvalidVersion(version))?;
 
         let interfaces = Self::interfaces_from_vec(interfaces)?;
+
+        let default_input_modes = Self::default_input_modes_from_vec(default_input_modes)?;
+
+        let default_output_modes = Self::default_output_modes_from_vec(default_output_modes)?;
 
         Self::ensure_unique_interface_names(&interfaces)
             .map_err(AgentRecordError::DuplicateAgentInterfaceIdentifier)?;
@@ -75,6 +81,8 @@ impl AgentRecord {
             provider,
             version,
             artifact_locators,
+            default_input_modes,
+            default_output_modes,
             skills,
             tags,
             icon_url,
@@ -91,6 +99,12 @@ impl AgentRecord {
         })?;
 
         let interfaces = Self::interfaces_from_vec(props.interfaces)?;
+
+        let default_input_modes =
+            Self::reconstitute_default_input_modes(props.default_input_modes)?;
+
+        let default_output_modes =
+            Self::reconstitute_default_output_modes(props.default_output_modes)?;
 
         Self::ensure_unique_interface_names(&interfaces).map_err(|duplicate_name| {
             AgentRecordError::DataIntegrityError(format!(
@@ -129,6 +143,8 @@ impl AgentRecord {
             provider: props.provider,
             version,
             artifact_locators: props.artifact_locators,
+            default_input_modes,
+            default_output_modes,
             skills: props.skills,
             tags,
             icon_url: props.icon_url,
@@ -187,6 +203,14 @@ impl AgentRecord {
         &self.artifact_locators
     }
 
+    pub fn default_input_modes(&self) -> &NonEmpty<IoMode> {
+        &self.default_input_modes
+    }
+
+    pub fn default_output_modes(&self) -> &NonEmpty<IoMode> {
+        &self.default_output_modes
+    }
+
     pub fn skills(&self) -> &[AgentSkill] {
         &self.skills
     }
@@ -214,6 +238,38 @@ impl AgentRecord {
             AgentRecordError::DataIntegrityError(
                 "Agent record MUST have at least one supported interface".into(),
             )
+        })
+    }
+
+    fn default_input_modes_from_vec(
+        default_input_modes: Vec<IoMode>,
+    ) -> Result<NonEmpty<IoMode>, AgentRecordError> {
+        NonEmpty::from_vec(default_input_modes).ok_or(AgentRecordError::EmptyDefaultInputModes)
+    }
+
+    fn default_output_modes_from_vec(
+        default_output_modes: Vec<IoMode>,
+    ) -> Result<NonEmpty<IoMode>, AgentRecordError> {
+        NonEmpty::from_vec(default_output_modes).ok_or(AgentRecordError::EmptyDefaultOutputModes)
+    }
+
+    fn reconstitute_default_input_modes(
+        default_input_modes: Vec<IoMode>,
+    ) -> Result<NonEmpty<IoMode>, AgentRecordError> {
+        Self::default_input_modes_from_vec(default_input_modes).map_err(|error| {
+            AgentRecordError::DataIntegrityError(format!(
+                "Agent record contains invalid default input modes: {error}"
+            ))
+        })
+    }
+
+    fn reconstitute_default_output_modes(
+        default_output_modes: Vec<IoMode>,
+    ) -> Result<NonEmpty<IoMode>, AgentRecordError> {
+        Self::default_output_modes_from_vec(default_output_modes).map_err(|error| {
+            AgentRecordError::DataIntegrityError(format!(
+                "Agent record contains invalid default output modes: {error}"
+            ))
         })
     }
 
@@ -268,6 +324,8 @@ pub struct ReconstituteAgentRecordProps {
     pub capabilities: Capabilities,
     pub provider: Option<AgentProvider>,
     pub artifact_locators: Vec<ArtifactLocator>,
+    pub default_input_modes: Vec<IoMode>,
+    pub default_output_modes: Vec<IoMode>,
     pub skills: Vec<AgentSkill>,
     pub tags: Vec<String>,
     pub icon_url: Option<String>,
@@ -283,6 +341,8 @@ pub struct AgentSkill {
     description: String,
     tags: NonEmpty<String>,
     examples: Vec<String>,
+    input_modes: Option<NonEmpty<IoMode>>,
+    output_modes: Option<NonEmpty<IoMode>>,
 }
 
 impl AgentSkill {
@@ -293,11 +353,27 @@ impl AgentSkill {
         tags: Vec<String>,
         examples: Vec<String>,
     ) -> Result<Self, AgentSkillError> {
+        Self::new_with_io_modes(id, name, description, tags, examples, None, None)
+    }
+
+    pub fn new_with_io_modes(
+        id: String,
+        name: String,
+        description: String,
+        tags: Vec<String>,
+        examples: Vec<String>,
+        input_modes: Option<Vec<IoMode>>,
+        output_modes: Option<Vec<IoMode>>,
+    ) -> Result<Self, AgentSkillError> {
         if !is_lower_kebab_case(&id) {
             return Err(AgentSkillError::InvalidIdentifier(id));
         }
 
         let tags = NonEmpty::from_vec(tags).ok_or(AgentSkillError::EmptyTags)?;
+
+        let input_modes = Self::input_modes_from_vec(input_modes)?;
+
+        let output_modes = Self::output_modes_from_vec(output_modes)?;
 
         Ok(Self {
             id,
@@ -305,16 +381,20 @@ impl AgentSkill {
             description,
             tags,
             examples,
+            input_modes,
+            output_modes,
         })
     }
 
     pub fn reconstitute(props: ReconstituteAgentSkillProps) -> Result<Self, AgentSkillError> {
-        Self::new(
+        Self::new_with_io_modes(
             props.id,
             props.name,
             props.description,
             props.tags,
             props.examples,
+            props.input_modes,
+            props.output_modes,
         )
         .map_err(|error| AgentSkillError::DataIntegrityError(error.to_string()))
     }
@@ -338,6 +418,34 @@ impl AgentSkill {
     pub fn examples(&self) -> &[String] {
         &self.examples
     }
+
+    pub fn input_modes(&self) -> Option<&NonEmpty<IoMode>> {
+        self.input_modes.as_ref()
+    }
+
+    pub fn output_modes(&self) -> Option<&NonEmpty<IoMode>> {
+        self.output_modes.as_ref()
+    }
+
+    fn input_modes_from_vec(
+        input_modes: Option<Vec<IoMode>>,
+    ) -> Result<Option<NonEmpty<IoMode>>, AgentSkillError> {
+        input_modes
+            .map(|input_modes| {
+                NonEmpty::from_vec(input_modes).ok_or(AgentSkillError::EmptyInputModes)
+            })
+            .transpose()
+    }
+
+    fn output_modes_from_vec(
+        output_modes: Option<Vec<IoMode>>,
+    ) -> Result<Option<NonEmpty<IoMode>>, AgentSkillError> {
+        output_modes
+            .map(|output_modes| {
+                NonEmpty::from_vec(output_modes).ok_or(AgentSkillError::EmptyOutputModes)
+            })
+            .transpose()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -347,6 +455,8 @@ pub struct ReconstituteAgentSkillProps {
     pub description: String,
     pub tags: Vec<String>,
     pub examples: Vec<String>,
+    pub input_modes: Option<Vec<IoMode>>,
+    pub output_modes: Option<Vec<IoMode>>,
 }
 
 fn is_lower_kebab_case(value: &str) -> bool {
@@ -533,6 +643,12 @@ pub enum AgentRecordError {
     #[error("Invalid agent record tags: {0}")]
     InvalidTags(TagsError),
 
+    #[error("Agent record MUST have at least one default input mode")]
+    EmptyDefaultInputModes,
+
+    #[error("Agent record MUST have at least one default output mode")]
+    EmptyDefaultOutputModes,
+
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String),
 }
@@ -545,8 +661,38 @@ pub enum AgentSkillError {
     #[error("Agent skill MUST have at least one tag")]
     EmptyTags,
 
+    #[error("Agent skill input modes MUST not be empty when supplied")]
+    EmptyInputModes,
+
+    #[error("Agent skill output modes MUST not be empty when supplied")]
+    EmptyOutputModes,
+
     #[error("Data integrity error: {0}")]
     DataIntegrityError(String),
+}
+
+#[derive(Debug, Clone, Error)]
+pub enum IoModeError {
+    #[error("Invalid I/O mode: '{0}'")]
+    Invalid(String),
+}
+
+#[derive(Clone, Debug)]
+pub struct IoMode(String);
+
+impl IoMode {
+    pub fn new(io_mode: &str) -> Result<Self, IoModeError> {
+        Ok(Self(
+            io_mode
+                .parse::<mime::Mime>()
+                .map_err(|_| IoModeError::Invalid(io_mode.into()))?
+                .to_string(),
+        ))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 #[cfg(test)]

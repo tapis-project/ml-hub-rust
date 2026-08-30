@@ -55,3 +55,4 @@ semver = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 validator = { workspace = true }
+mime = "0.3.17"

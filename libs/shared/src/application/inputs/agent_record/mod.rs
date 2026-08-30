@@ -1,3 +1,5 @@
+use crate::domain::entities::agent_record::IoMode;
+
 pub mod mappers;
 
 #[derive(Debug, Clone)]
@@ -9,6 +11,8 @@ pub struct CreateAgentRecordInput {
     pub provider: Option<AgentProviderInput>,
     pub version: String,
     pub artifact_locators: Vec<ArtifactLocatorInput>,
+    pub default_input_modes: Vec<IoMode>,
+    pub default_output_modes: Vec<IoMode>,
     pub skills: Vec<AgentSkillInput>,
     pub tags: Vec<String>,
     pub icon_url: Option<String>,
@@ -83,6 +87,8 @@ pub struct AgentSkillInput {
     pub description: String,
     pub tags: Vec<String>,
     pub examples: Vec<String>,
+    pub input_modes: Option<Vec<IoMode>>,
+    pub output_modes: Option<Vec<IoMode>>,
 }
 
 #[cfg(test)]

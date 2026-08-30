@@ -21,6 +21,8 @@ pub struct AgentRecord {
     pub provider: Option<AgentProvider>,
     pub version: String,
     pub artifact_locators: Vec<ArtifactLocator>,
+    pub default_input_modes: Vec<String>,
+    pub default_output_modes: Vec<String>,
     pub skills: Vec<AgentSkill>,
     pub tags: Vec<String>,
     pub icon_url: Option<String>,
@@ -47,6 +49,8 @@ pub struct AgentSkill {
     pub description: String,
     pub tags: Vec<String>,
     pub examples: Vec<String>,
+    pub input_modes: Option<Vec<String>>,
+    pub output_modes: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]

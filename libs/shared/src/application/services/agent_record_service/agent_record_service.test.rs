@@ -9,7 +9,7 @@ use crate::application::inputs::agent_record::{
     MessageBindingInput, ProtocolInput, VisibilityInput,
 };
 use crate::application::ports::agent_record::AgentRecordRepository;
-use crate::domain::entities::agent_record::AgentSkill;
+use crate::domain::entities::agent_record::{AgentSkill, IoMode};
 
 struct TestAgentRecordRepository {
     saved: Mutex<Option<AgentRecord>>,
@@ -90,17 +90,28 @@ fn input() -> CreateAgentRecordInput {
             artifact_type: AgentArtifactTypeInput::DockerImage,
             url: "tapis://example/agent:1.0.0".into(),
         }],
+        default_input_modes: vec![valid_io_mode("application/json")],
+        default_output_modes: vec![valid_io_mode("application/json")],
         skills: vec![AgentSkillInput {
             id: "geospatial-search".into(),
             name: "Geospatial search".into(),
             description: "Searches geospatial data.".into(),
             tags: vec!["geospatial".into()],
             examples: vec!["Find flood zones.".into()],
+            input_modes: None,
+            output_modes: None,
         }],
         tags: vec![],
         icon_url: Some("https://example.com/icon.svg".into()),
         documentation_url: Some("https://example.com/docs".into()),
         visibility: VisibilityInput::Private,
+    }
+}
+
+fn valid_io_mode(value: &str) -> IoMode {
+    match IoMode::new(value) {
+        Ok(io_mode) => io_mode,
+        Err(error) => panic!("Expected valid test I/O mode: {error}"),
     }
 }
 
@@ -142,6 +153,17 @@ async fn create_agent_record_derives_owner_and_tenant_from_context(
         saved.skills().first().map(AgentSkill::id),
         Some("geospatial-search")
     );
+    assert!(saved
+        .skills()
+        .first()
+        .and_then(AgentSkill::input_modes)
+        .is_none());
+    assert!(saved
+        .skills()
+        .first()
+        .and_then(AgentSkill::output_modes)
+        .is_none());
+
     Ok(())
 }
 

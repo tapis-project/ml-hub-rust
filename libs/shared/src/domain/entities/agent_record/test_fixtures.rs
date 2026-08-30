@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::{
     AgentInterface, AgentProvider, AgentRecord, AgentRecordError, AgentSkill, ArtifactLocator,
-    Capabilities, MessageBinding, Protocol, ReconstituteAgentRecordProps,
+    Capabilities, IoMode, MessageBinding, Protocol, ReconstituteAgentRecordProps,
 };
 use crate::shared_kernel::enums::Visibility;
 
@@ -19,6 +19,8 @@ pub struct AgentRecordBuilder {
     provider: Option<AgentProvider>,
     version: Option<String>,
     artifact_locators: Option<Vec<ArtifactLocator>>,
+    default_input_modes: Option<Vec<IoMode>>,
+    default_output_modes: Option<Vec<IoMode>>,
     skills: Option<Vec<AgentSkill>>,
     tags: Option<Vec<String>>,
     icon_url: Option<String>,
@@ -39,6 +41,8 @@ impl AgentRecordBuilder {
             provider: None,
             version: None,
             artifact_locators: None,
+            default_input_modes: None,
+            default_output_modes: None,
             skills: None,
             tags: None,
             icon_url: None,
@@ -97,6 +101,16 @@ impl AgentRecordBuilder {
         self
     }
 
+    pub fn with_default_input_modes(mut self, default_input_modes: Vec<IoMode>) -> Self {
+        self.default_input_modes = Some(default_input_modes);
+        self
+    }
+
+    pub fn with_default_output_modes(mut self, default_output_modes: Vec<IoMode>) -> Self {
+        self.default_output_modes = Some(default_output_modes);
+        self
+    }
+
     pub fn with_skills(mut self, skills: Vec<AgentSkill>) -> Self {
         self.skills = Some(skills);
         self
@@ -149,6 +163,16 @@ impl AgentRecordBuilder {
             self.provider.clone(),
             self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             self.artifact_locators.clone().unwrap_or_default(),
+            self.default_input_modes.clone().unwrap_or_else(|| {
+                vec![IoMode::new("application/json").unwrap_or_else(|error| {
+                    panic!("Default test input mode should be valid: {error}")
+                })]
+            }),
+            self.default_output_modes.clone().unwrap_or_else(|| {
+                vec![IoMode::new("application/json").unwrap_or_else(|error| {
+                    panic!("Default test output mode should be valid: {error}")
+                })]
+            }),
             self.skills.clone().unwrap_or_default(),
             self.tags.clone().unwrap_or_default(),
             self.icon_url.clone(),
@@ -189,6 +213,16 @@ impl AgentRecordBuilder {
             provider: self.provider.clone(),
             version: self.version.clone().unwrap_or_else(|| "0.1.0".into()),
             artifact_locators: self.artifact_locators.clone().unwrap_or_default(),
+            default_input_modes: self.default_input_modes.clone().unwrap_or_else(|| {
+                vec![IoMode::new("application/json").unwrap_or_else(|error| {
+                    panic!("Default test input mode should be valid: {error}")
+                })]
+            }),
+            default_output_modes: self.default_output_modes.clone().unwrap_or_else(|| {
+                vec![IoMode::new("application/json").unwrap_or_else(|error| {
+                    panic!("Default test output mode should be valid: {error}")
+                })]
+            }),
             skills: self.skills.clone().unwrap_or_default(),
             tags: self.tags.clone().unwrap_or_default(),
             icon_url: self.icon_url.clone(),

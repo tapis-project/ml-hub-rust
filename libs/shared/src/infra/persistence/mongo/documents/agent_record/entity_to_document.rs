@@ -36,6 +36,16 @@ impl From<&entities::AgentRecord> for documents::AgentRecord {
                 .cloned()
                 .map(documents::ArtifactLocator::from)
                 .collect(),
+            default_input_modes: value
+                .default_input_modes()
+                .iter()
+                .map(|io_mode| io_mode.as_str().to_owned())
+                .collect(),
+            default_output_modes: value
+                .default_output_modes()
+                .iter()
+                .map(|io_mode| io_mode.as_str().to_owned())
+                .collect(),
             skills: value
                 .skills()
                 .iter()
@@ -140,6 +150,18 @@ impl From<entities::AgentSkill> for documents::AgentSkill {
             description: value.description().into(),
             tags: value.tags().iter().cloned().collect(),
             examples: value.examples().to_vec(),
+            input_modes: value.input_modes().map(|input_modes| {
+                input_modes
+                    .iter()
+                    .map(|io_mode| io_mode.as_str().to_owned())
+                    .collect()
+            }),
+            output_modes: value.output_modes().map(|output_modes| {
+                output_modes
+                    .iter()
+                    .map(|io_mode| io_mode.as_str().to_owned())
+                    .collect()
+            }),
         }
     }
 }

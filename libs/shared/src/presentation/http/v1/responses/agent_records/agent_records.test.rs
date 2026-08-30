@@ -2,12 +2,13 @@
 mod agent_records_test {
     use uuid::Uuid;
 
+    use crate::domain::entities::agent_record::test_fixtures::AgentRecordBuilder;
     use crate::domain::entities::agent_record::{
         AgentArtifactType as DomainAgentArtifactType, AgentInterface as DomainAgentInterface,
         AgentProvider as DomainAgentProvider, AgentRecord as DomainAgentRecord,
         AgentSkill as DomainAgentSkill, ArtifactLocator as DomainArtifactLocator,
-        Capabilities as DomainCapabilities, LivenessProbeConfiguration, MessageBinding, Protocol,
-        ReconstituteAgentRecordProps,
+        Capabilities as DomainCapabilities, IoMode, LivenessProbeConfiguration, MessageBinding,
+        Protocol, ReconstituteAgentRecordProps,
     };
     use crate::presentation::http::v1::responses::agent_records::{
         AgentArtifactType as ResponseAgentArtifactType, AgentRecord,
@@ -59,6 +60,8 @@ mod agent_records_test {
                 DomainAgentArtifactType::SourceCode,
                 "tapis://example-system/path/to/agent-artifact".into(),
             )],
+            default_input_modes: vec![IoMode::new("application/json")?],
+            default_output_modes: vec![IoMode::new("application/json")?],
             skills: vec![DomainAgentSkill::new(
                 "text-analysis".into(),
                 "Text analysis".into(),
@@ -79,6 +82,8 @@ mod agent_records_test {
         assert_eq!(response.owner, "owner-a");
         assert_eq!(response.description, "A helpful agent");
         assert_eq!(response.version, "1.2.3");
+        assert_eq!(response.default_input_modes, vec!["application/json"]);
+        assert_eq!(response.default_output_modes, vec!["application/json"]);
         assert!(matches!(response.visibility, ResponseVisibility::Public));
         assert_eq!(
             response.icon_url.as_deref(),
@@ -111,6 +116,8 @@ mod agent_records_test {
         assert_eq!(response.skills[0].description, "Analyzes text");
         assert_eq!(response.skills[0].tags, vec!["nlp"]);
         assert_eq!(response.skills[0].examples, vec!["Analyze this document"]);
+        assert_eq!(response.skills[0].input_modes, None);
+        assert_eq!(response.skills[0].output_modes, None);
         assert_eq!(response.tags, vec!["tag"]);
         assert_eq!(response.artifact_locators.len(), 1);
         assert!(matches!(
@@ -150,6 +157,35 @@ mod agent_records_test {
         assert_eq!(response.stdio_interfaces[0].name, "stdio");
         assert!(response.stdio_interfaces[0].description.is_none());
         assert!(response.stdio_interfaces[0].message_binding.is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_agent_record_response_preserves_explicit_skill_io_mode_overrides(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let agent_record = AgentRecordBuilder::new()
+            .with_skills(vec![DomainAgentSkill::new_with_io_modes(
+                "text-analysis".into(),
+                "Text analysis".into(),
+                "Analyzes text".into(),
+                vec!["nlp".into()],
+                vec![],
+                Some(vec![IoMode::new("text/plain")?]),
+                Some(vec![IoMode::new("application/json")?]),
+            )?])
+            .build_new()?;
+
+        let response = AgentRecord::from(agent_record);
+
+        assert_eq!(
+            response.skills[0].input_modes,
+            Some(vec!["text/plain".into()])
+        );
+        assert_eq!(
+            response.skills[0].output_modes,
+            Some(vec!["application/json".into()])
+        );
 
         Ok(())
     }

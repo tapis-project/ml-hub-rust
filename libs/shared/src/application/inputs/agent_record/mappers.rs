@@ -3,9 +3,11 @@ use crate::domain::entities::agent_record as entities;
 use crate::presentation::http::v1::requests::create_agent_record::body as requests;
 use crate::shared_kernel::enums::Visibility as DomainVisibility;
 
-impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
-    fn from(value: requests::CreateAgentRecordBody) -> Self {
-        Self {
+impl TryFrom<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
+    type Error = entities::IoModeError;
+
+    fn try_from(value: requests::CreateAgentRecordBody) -> Result<Self, Self::Error> {
+        Ok(Self {
             name: value.name,
             description: value.description,
             interfaces: value
@@ -23,12 +25,26 @@ impl From<requests::CreateAgentRecordBody> for inputs::CreateAgentRecordInput {
                 .into_iter()
                 .map(Into::into)
                 .collect(),
-            skills: value.skills.into_iter().map(Into::into).collect(),
+            default_input_modes: value
+                .default_input_modes
+                .into_iter()
+                .map(|io_mode| entities::IoMode::new(&io_mode))
+                .collect::<Result<Vec<_>, _>>()?,
+            default_output_modes: value
+                .default_output_modes
+                .into_iter()
+                .map(|io_mode| entities::IoMode::new(&io_mode))
+                .collect::<Result<Vec<_>, _>>()?,
+            skills: value
+                .skills
+                .into_iter()
+                .map(inputs::AgentSkillInput::try_from)
+                .collect::<Result<Vec<_>, _>>()?,
             tags: value.tags,
             icon_url: value.icon_url,
             documentation_url: value.documentation_url,
             visibility: value.visibility.into(),
-        }
+        })
     }
 }
 
@@ -139,15 +155,35 @@ impl From<requests::AgentArtifactType> for inputs::AgentArtifactTypeInput {
     }
 }
 
-impl From<requests::AgentSkill> for inputs::AgentSkillInput {
-    fn from(value: requests::AgentSkill) -> Self {
-        Self {
+impl TryFrom<requests::AgentSkill> for inputs::AgentSkillInput {
+    type Error = entities::IoModeError;
+
+    fn try_from(value: requests::AgentSkill) -> Result<Self, Self::Error> {
+        Ok(Self {
             id: value.id,
             name: value.name,
             description: value.description,
             tags: value.tags,
             examples: value.examples,
-        }
+            input_modes: value
+                .input_modes
+                .map(|input_modes| {
+                    input_modes
+                        .into_iter()
+                        .map(|io_mode| entities::IoMode::new(&io_mode))
+                        .collect()
+                })
+                .transpose()?,
+            output_modes: value
+                .output_modes
+                .map(|output_modes| {
+                    output_modes
+                        .into_iter()
+                        .map(|io_mode| entities::IoMode::new(&io_mode))
+                        .collect()
+                })
+                .transpose()?,
+        })
     }
 }
 
@@ -237,12 +273,14 @@ impl From<inputs::AgentArtifactTypeInput> for entities::AgentArtifactType {
 impl TryFrom<inputs::AgentSkillInput> for entities::AgentSkill {
     type Error = entities::AgentSkillError;
     fn try_from(value: inputs::AgentSkillInput) -> Result<Self, Self::Error> {
-        Self::new(
+        Self::new_with_io_modes(
             value.id,
             value.name,
             value.description,
             value.tags,
             value.examples,
+            value.input_modes,
+            value.output_modes,
         )
     }
 }

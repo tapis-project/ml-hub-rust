@@ -4,9 +4,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use utoipa::ToSchema;
 use validator::{Validate, ValidationError};
 
-use crate::shared_kernel::value_objects::{
-    SemanticVersion, MAX_TAG_LENGTH_BYTES, MAX_TAGS,
-};
+use crate::domain::entities::agent_record::IoMode;
+use crate::shared_kernel::value_objects::{SemanticVersion, MAX_TAGS, MAX_TAG_LENGTH_BYTES};
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]
@@ -34,6 +33,10 @@ pub struct CreateAgentRecordBody {
     #[schema(nullable, default = json!([]))]
     #[validate(nested)]
     pub artifact_locators: Vec<ArtifactLocator>,
+    #[validate(custom(function = "validate_io_modes"))]
+    pub default_input_modes: Vec<String>,
+    #[validate(custom(function = "validate_io_modes"))]
+    pub default_output_modes: Vec<String>,
     #[serde(default)]
     #[validate(nested, custom(function = "validate_unique_skill_ids"))]
     pub skills: Vec<AgentSkill>,
@@ -72,6 +75,14 @@ pub struct AgentSkill {
     #[validate(length(min = 1))]
     pub tags: Vec<String>,
     pub examples: Vec<String>,
+    #[serde(default)]
+    #[schema(nullable)]
+    #[validate(custom(function = "validate_optional_io_modes"))]
+    pub input_modes: Option<Vec<String>>,
+    #[serde(default)]
+    #[schema(nullable)]
+    #[validate(custom(function = "validate_optional_io_modes"))]
+    pub output_modes: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -149,9 +160,7 @@ impl Default for Visibility {
     }
 }
 
-fn validate_interface_collections(
-    body: &CreateAgentRecordBody,
-) -> Result<(), ValidationError> {
+fn validate_interface_collections(body: &CreateAgentRecordBody) -> Result<(), ValidationError> {
     let mut names = HashSet::new();
 
     for interface in body
@@ -159,7 +168,11 @@ fn validate_interface_collections(
         .iter()
         .map(|interface| &interface.name)
         .chain(body.rpc_interfaces.iter().map(|interface| &interface.name))
-        .chain(body.stdio_interfaces.iter().map(|interface| &interface.name))
+        .chain(
+            body.stdio_interfaces
+                .iter()
+                .map(|interface| &interface.name),
+        )
     {
         if !names.insert(interface) {
             return Err(ValidationError::new("duplicate_agent_interface_name"));
@@ -198,6 +211,22 @@ fn validate_tags(tags: &Vec<String>) -> Result<(), ValidationError> {
     }
 
     Ok(())
+}
+
+fn validate_io_modes(io_modes: &Vec<String>) -> Result<(), ValidationError> {
+    if io_modes.is_empty() {
+        return Err(ValidationError::new("empty_io_modes"));
+    }
+
+    if io_modes.iter().any(|io_mode| IoMode::new(io_mode).is_err()) {
+        return Err(ValidationError::new("invalid_io_mode"));
+    }
+
+    Ok(())
+}
+
+fn validate_optional_io_modes(io_modes: &Vec<String>) -> Result<(), ValidationError> {
+    validate_io_modes(io_modes)
 }
 
 fn deserialize_null_to_empty<'de, D>(deserializer: D) -> Result<Vec<ArtifactLocator>, D::Error>

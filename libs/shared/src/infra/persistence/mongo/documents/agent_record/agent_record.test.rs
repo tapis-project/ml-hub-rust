@@ -1,6 +1,7 @@
 use crate::domain::entities::agent_record::{
-    AgentArtifactType, AgentInterface, AgentProvider, AgentSkill, ArtifactLocator, Capabilities,
-    LivenessProbeConfiguration, MessageBinding, Protocol, test_fixtures::AgentRecordBuilder,
+    test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
+    AgentSkill, ArtifactLocator, Capabilities, LivenessProbeConfiguration, MessageBinding,
+    Protocol,
 };
 
 use super::AgentRecord as AgentRecordDocument;
@@ -67,6 +68,24 @@ fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Err
     assert_eq!(
         reconstituted.skills().first().map(AgentSkill::id),
         Some("geospatial-search")
+    );
+    assert!(reconstituted
+        .skills()
+        .first()
+        .and_then(AgentSkill::input_modes)
+        .is_none());
+    assert!(reconstituted
+        .skills()
+        .first()
+        .and_then(AgentSkill::output_modes)
+        .is_none());
+    assert_eq!(
+        reconstituted.default_input_modes().first().as_str(),
+        "application/json"
+    );
+    assert_eq!(
+        reconstituted.default_output_modes().first().as_str(),
+        "application/json"
     );
     assert_eq!(
         reconstituted.tags().iter().next().map(|tag| tag.as_str()),

@@ -3,9 +3,9 @@ mod agent_record_test {
     use uuid::Uuid;
 
     use crate::domain::entities::agent_record::{
-        AgentArtifactType, AgentInterface, AgentProvider, AgentRecordError, AgentSkill,
-        AgentSkillError, ArtifactLocator, Capabilities, LivenessProbeConfiguration, MessageBinding,
-        Protocol, ReconstituteAgentSkillProps, test_fixtures::AgentRecordBuilder,
+        test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
+        AgentRecordError, AgentSkill, AgentSkillError, ArtifactLocator, Capabilities, IoMode,
+        LivenessProbeConfiguration, MessageBinding, Protocol, ReconstituteAgentSkillProps,
     };
     use crate::shared_kernel::enums::Visibility;
     use crate::shared_kernel::identifiers::traits::UrnGenerator;
@@ -30,6 +30,14 @@ mod agent_record_test {
         assert!(!agent_record.supports_streaming());
         assert!(!agent_record.supports_push_notifications());
         assert!(agent_record.artifact_locators().is_empty());
+        assert_eq!(
+            agent_record.default_input_modes().first().as_str(),
+            "application/json"
+        );
+        assert_eq!(
+            agent_record.default_output_modes().first().as_str(),
+            "application/json"
+        );
         assert!(agent_record.skills().is_empty());
         assert!(agent_record.tags().is_empty());
         assert_eq!(agent_record.icon_url(), None);
@@ -146,13 +154,11 @@ mod agent_record_test {
             agent_record.interfaces().first().protocol(),
             Protocol::Stdio
         ));
-        assert!(
-            agent_record
-                .interfaces()
-                .first()
-                .message_binding()
-                .is_none()
-        );
+        assert!(agent_record
+            .interfaces()
+            .first()
+            .message_binding()
+            .is_none());
 
         Ok(())
     }
@@ -241,8 +247,84 @@ mod agent_record_test {
         assert_eq!(skill.description(), "Analyzes text");
         assert_eq!(skill.tags().first(), "nlp");
         assert_eq!(skill.examples(), ["Analyze this document"]);
+        assert!(skill.input_modes().is_none());
+        assert!(skill.output_modes().is_none());
 
         Ok(())
+    }
+
+    #[test]
+    fn test_agent_skill_preserves_explicit_io_mode_overrides(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let skill = AgentSkill::new_with_io_modes(
+            "text-analysis-v2".into(),
+            "Text analysis".into(),
+            "Analyzes text".into(),
+            vec!["nlp".into()],
+            vec!["Analyze this document".into()],
+            Some(vec![IoMode::new("text/plain")?]),
+            Some(vec![IoMode::new("application/json")?]),
+        )?;
+
+        assert_eq!(
+            skill
+                .input_modes()
+                .map(|input_modes| input_modes.first().as_str()),
+            Some("text/plain")
+        );
+        assert_eq!(
+            skill
+                .output_modes()
+                .map(|output_modes| output_modes.first().as_str()),
+            Some("application/json")
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_agent_record_requires_default_io_modes() {
+        let input_modes_result = AgentRecordBuilder::new()
+            .with_default_input_modes(vec![])
+            .build_new();
+
+        let input_modes_error = match input_modes_result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected empty default input modes to be rejected"),
+        };
+
+        assert!(matches!(
+            input_modes_error,
+            AgentRecordError::EmptyDefaultInputModes
+        ));
+
+        let output_modes_result = AgentRecordBuilder::new()
+            .with_default_output_modes(vec![])
+            .build_new();
+
+        let output_modes_error = match output_modes_result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected empty default output modes to be rejected"),
+        };
+
+        assert!(matches!(
+            output_modes_error,
+            AgentRecordError::EmptyDefaultOutputModes
+        ));
+    }
+
+    #[test]
+    fn test_reconstitute_agent_record_rejects_empty_default_io_modes() {
+        let result = AgentRecordBuilder::new()
+            .with_default_input_modes(vec![])
+            .build_reconstituted();
+
+        let error = match result {
+            Err(error) => error,
+            Ok(_) => panic!("Expected empty persisted default input modes to be rejected"),
+        };
+
+        assert!(matches!(error, AgentRecordError::DataIntegrityError(..)));
     }
 
     #[test]
@@ -285,6 +367,8 @@ mod agent_record_test {
             description: "Analyzes text".into(),
             tags: vec!["nlp".into()],
             examples: vec![],
+            input_modes: None,
+            output_modes: None,
         });
 
         let error = match result {
@@ -329,8 +413,8 @@ mod agent_record_test {
     }
 
     #[test]
-    fn test_reconstitute_agent_record_rejects_duplicate_skill_ids()
-    -> Result<(), Box<dyn std::error::Error>> {
+    fn test_reconstitute_agent_record_rejects_duplicate_skill_ids(
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let result = AgentRecordBuilder::new()
             .with_skills(vec![
                 AgentSkill::new(

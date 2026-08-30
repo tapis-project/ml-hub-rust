@@ -35,6 +35,8 @@ mod create_agent_record_body_test {
             provider: None,
             version: "1.0.0".into(),
             artifact_locators: vec![],
+            default_input_modes: vec!["application/json".into()],
+            default_output_modes: vec!["application/json".into()],
             skills: vec![],
             tags: vec![],
             icon_url: None,
@@ -68,7 +70,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_defaults_omitted_interface_collections_to_empty() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","rest_http_interfaces":[{"name":"rest"}]}"#,
+            r#"{"name":"assistant","description":"A helpful agent","capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","default_input_modes":["application/json"],"default_output_modes":["application/json"],"rest_http_interfaces":[{"name":"rest"}]}"#,
         );
         let body = match result {
             Ok(body) => body,
@@ -118,7 +120,7 @@ mod create_agent_record_body_test {
     fn test_non_rest_interfaces_reject_liveness_probe_field() {
         for field in ["rpc_interfaces", "stdio_interfaces"] {
             let request = format!(
-                r#"{{"name":"assistant","description":"A helpful agent","{field}":[{{"name":"interface","liveness_probe_config":{{"route":"/healthcheck","timeout_seconds":10}}}}],"capabilities":{{"streaming":false,"push_notifications":false}},"version":"1.0.0"}}"#
+                r#"{{"name":"assistant","description":"A helpful agent","{field}":[{{"name":"interface","liveness_probe_config":{{"route":"/healthcheck","timeout_seconds":10}}}}],"capabilities":{{"streaming":false,"push_notifications":false}},"version":"1.0.0","default_input_modes":["application/json"],"default_output_modes":["application/json"]}}"#
             );
 
             assert!(serde_json::from_str::<CreateAgentRecordBody>(&request).is_err());
@@ -128,7 +130,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_rejects_legacy_interface_property() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","interfaces":[],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0"}"#,
+            r#"{"name":"assistant","description":"A helpful agent","interfaces":[],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","default_input_modes":["application/json"],"default_output_modes":["application/json"]}"#,
         );
 
         assert!(result.is_err());
@@ -137,7 +139,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_rejects_unknown_fields() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","unexpected":true}"#,
+            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","default_input_modes":["application/json"],"default_output_modes":["application/json"],"unexpected":true}"#,
         );
 
         assert!(result.is_err());
@@ -152,6 +154,78 @@ mod create_agent_record_body_test {
         ] {
             assert!(serde_json::from_str::<CreateAgentRecordBody>(request).is_err());
         }
+    }
+
+    #[test]
+    fn test_create_agent_record_body_requires_non_empty_default_io_modes() {
+        let mut missing_input_modes = body();
+        missing_input_modes.default_input_modes.clear();
+
+        assert!(missing_input_modes.validate().is_err());
+
+        let mut invalid_output_modes = body();
+        invalid_output_modes.default_output_modes = vec!["not-a-mime-type".into()];
+
+        assert!(invalid_output_modes.validate().is_err());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_accepts_absent_or_null_skill_io_modes() {
+        let request = r#"{
+            "name":"assistant",
+            "description":"A helpful agent",
+            "rest_http_interfaces":[{"name":"rest"}],
+            "capabilities":{"streaming":false,"push_notifications":false},
+            "version":"1.0.0",
+            "default_input_modes":["application/json"],
+            "default_output_modes":["application/json"],
+            "skills":[{
+                "id":"text-analysis",
+                "name":"Text analysis",
+                "description":"Analyzes text",
+                "tags":["nlp"],
+                "examples":[],
+                "input_modes":null
+            }]
+        }"#;
+
+        let body = match serde_json::from_str::<CreateAgentRecordBody>(request) {
+            Ok(body) => body,
+            Err(error) => panic!("Expected valid optional skill I/O modes: {error}"),
+        };
+
+        assert_eq!(body.skills[0].input_modes, None);
+        assert_eq!(body.skills[0].output_modes, None);
+        assert!(body.validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_agent_record_body_rejects_empty_or_invalid_skill_io_modes() {
+        let mut empty_input_modes = body();
+        empty_input_modes.skills = vec![AgentSkill {
+            id: "text-analysis".into(),
+            name: "Text analysis".into(),
+            description: "Analyzes text".into(),
+            tags: vec!["nlp".into()],
+            examples: vec![],
+            input_modes: Some(vec![]),
+            output_modes: None,
+        }];
+
+        assert!(empty_input_modes.validate().is_err());
+
+        let mut invalid_output_modes = body();
+        invalid_output_modes.skills = vec![AgentSkill {
+            id: "text-analysis".into(),
+            name: "Text analysis".into(),
+            description: "Analyzes text".into(),
+            tags: vec!["nlp".into()],
+            examples: vec![],
+            input_modes: None,
+            output_modes: Some(vec!["not-a-mime-type".into()]),
+        }];
+
+        assert!(invalid_output_modes.validate().is_err());
     }
 
     #[test]
@@ -182,6 +256,8 @@ mod create_agent_record_body_test {
             description: "Analyzes text".into(),
             tags: vec![],
             examples: vec![],
+            input_modes: None,
+            output_modes: None,
         }];
         body.icon_url = Some("not-a-url".into());
         body.documentation_url = Some("also-not-a-url".into());
@@ -227,6 +303,8 @@ mod create_agent_record_body_test {
                 description: "Analyzes text".into(),
                 tags: vec!["nlp".into()],
                 examples: vec![],
+                input_modes: None,
+                output_modes: None,
             },
             AgentSkill {
                 id: "text-analysis".into(),
@@ -234,6 +312,8 @@ mod create_agent_record_body_test {
                 description: "Analyzes other text".into(),
                 tags: vec!["nlp".into()],
                 examples: vec![],
+                input_modes: None,
+                output_modes: None,
             },
         ];
 
@@ -243,7 +323,7 @@ mod create_agent_record_body_test {
     #[test]
     fn test_create_agent_record_body_defaults_artifact_locators_and_visibility() {
         let result = serde_json::from_str::<CreateAgentRecordBody>(
-            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","artifact_locators":null}"#,
+            r#"{"name":"assistant","description":"A helpful agent","rest_http_interfaces":[{"name":"rest"}],"capabilities":{"streaming":false,"push_notifications":false},"version":"1.0.0","default_input_modes":["application/json"],"default_output_modes":["application/json"],"artifact_locators":null}"#,
         );
         let body = match result {
             Ok(body) => body,
