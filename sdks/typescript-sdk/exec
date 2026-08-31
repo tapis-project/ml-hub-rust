@@ -21,5 +21,6 @@ docker run \
     --mount type=bind,source="$projectRoot/services/models/spec/v1/openapi.json",target=/src/services/models/spec/v1/openapi.json \
     --mount type=bind,source="$projectRoot/services/deployments/spec/v1/openapi.json",target=/src/services/deployments/spec/v1/openapi.json \
     --mount type=bind,source="$projectRoot/services/agents/spec/v1/openapi.json",target=/src/services/agents/spec/v1/openapi.json \
+    --mount type=bind,source="$projectRoot/services/datasets/spec/v1/openapi.json",target=/src/services/datasets/spec/v1/openapi.json \
     --mount type=bind,source="$npmrcPath",target=/root/.npmrc \
     tapis/mlhub-typescript-sdk:local

@@ -63,6 +63,7 @@ Request and response DTOs live in shared presentation modules and are re-exporte
 - Map DTOs through `From`/`TryFrom`, never through handler-local conversion functions.
 - Give every Actix handler its own file. Keep handler route attributes consistent with Models and Deployments: API handler attributes are relative, while the OpenAPI document endpoint retains its established absolute form.
 - Describe every public handler with Utoipa request, query, response, and error contracts. The OpenAPI endpoint and binary derive their output from those annotations. Do not manually modify a checked-in generated specification unless the task explicitly asks for it.
+- For enum-valued query or path fields derived with `IntoParams`, annotate the field with `#[param(inline)]`. Without it, Utoipa can emit only a component reference and omit the usable enum choices from the operation parameter. Add a generated-OpenAPI test that asserts the parameter's inline `schema.enum` values, following the Agents scope-query test.
 
 Apply the established logger, preflight/CORS behavior, authentication, and tenant-resolution middleware. Explicitly public health and OpenAPI routes remain outside the protected scope; protected handlers receive `RequestContext` through the shared extractor.
 

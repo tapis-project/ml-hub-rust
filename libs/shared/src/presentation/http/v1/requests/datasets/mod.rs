@@ -72,6 +72,7 @@ pub enum Visibility {
 #[into_params(parameter_in = Query)]
 pub struct ListDatasetsQueryParams {
     #[serde(default)]
+    #[param(inline)]
     pub scope: Scope,
 }
 

@@ -1,7 +1,7 @@
 {
-  "name": "@mlhub/agents-ts-sdk",
+  "name": "@mlhub/datasets-ts-sdk",
   "version": "0.21.0",
-  "description": "OpenAPI client for @mlhub/agents-ts-sdk",
+  "description": "OpenAPI client for @mlhub/datasets-ts-sdk",
   "author": "OpenAPI-Generator",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
