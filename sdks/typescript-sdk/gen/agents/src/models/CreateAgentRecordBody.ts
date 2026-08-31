@@ -68,6 +68,18 @@ export interface CreateAgentRecordBody {
     capabilities: Capabilities;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof CreateAgentRecordBody
+     */
+    default_input_modes: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof CreateAgentRecordBody
+     */
+    default_output_modes: Array<string>;
+    /**
+     * 
      * @type {string}
      * @memberof CreateAgentRecordBody
      */
@@ -152,6 +164,8 @@ export function CreateAgentRecordBodyFromJSONTyped(json: any, ignoreDiscriminato
         
         'artifact_locators': !exists(json, 'artifact_locators') ? undefined : (json['artifact_locators'] === null ? null : (json['artifact_locators'] as Array<any>).map(ArtifactLocatorFromJSON)),
         'capabilities': CapabilitiesFromJSON(json['capabilities']),
+        'default_input_modes': json['default_input_modes'],
+        'default_output_modes': json['default_output_modes'],
         'description': json['description'],
         'documentation_url': !exists(json, 'documentation_url') ? undefined : json['documentation_url'],
         'icon_url': !exists(json, 'icon_url') ? undefined : json['icon_url'],
@@ -178,6 +192,8 @@ export function CreateAgentRecordBodyToJSON(value?: CreateAgentRecordBody | null
         
         'artifact_locators': value.artifact_locators === undefined ? undefined : (value.artifact_locators === null ? null : (value.artifact_locators as Array<any>).map(ArtifactLocatorToJSON)),
         'capabilities': CapabilitiesToJSON(value.capabilities),
+        'default_input_modes': value.default_input_modes,
+        'default_output_modes': value.default_output_modes,
         'description': value.description,
         'documentation_url': value.documentation_url,
         'icon_url': value.icon_url,

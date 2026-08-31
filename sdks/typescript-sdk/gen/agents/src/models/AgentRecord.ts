@@ -68,6 +68,18 @@ export interface AgentRecord {
     capabilities: Capabilities;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof AgentRecord
+     */
+    default_input_modes: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof AgentRecord
+     */
+    default_output_modes: Array<string>;
+    /**
+     * 
      * @type {string}
      * @memberof AgentRecord
      */
@@ -170,6 +182,8 @@ export function AgentRecordFromJSONTyped(json: any, ignoreDiscriminator: boolean
         
         'artifact_locators': ((json['artifact_locators'] as Array<any>).map(ArtifactLocatorFromJSON)),
         'capabilities': CapabilitiesFromJSON(json['capabilities']),
+        'default_input_modes': json['default_input_modes'],
+        'default_output_modes': json['default_output_modes'],
         'description': json['description'],
         'documentation_url': !exists(json, 'documentation_url') ? undefined : json['documentation_url'],
         'icon_url': !exists(json, 'icon_url') ? undefined : json['icon_url'],
@@ -199,6 +213,8 @@ export function AgentRecordToJSON(value?: AgentRecord | null): any {
         
         'artifact_locators': ((value.artifact_locators as Array<any>).map(ArtifactLocatorToJSON)),
         'capabilities': CapabilitiesToJSON(value.capabilities),
+        'default_input_modes': value.default_input_modes,
+        'default_output_modes': value.default_output_modes,
         'description': value.description,
         'documentation_url': value.documentation_url,
         'icon_url': value.icon_url,

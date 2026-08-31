@@ -330,6 +330,8 @@
           "capabilities",
           "version",
           "artifact_locators",
+          "default_input_modes",
+          "default_output_modes",
           "skills",
           "tags",
           "visibility"
@@ -343,6 +345,18 @@
           },
           "capabilities": {
             "$ref": "#/components/schemas/Capabilities"
+          },
+          "default_input_modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default_output_modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "description": {
             "type": "string"
@@ -442,8 +456,26 @@
           "id": {
             "type": "string"
           },
+          "input_modes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
           "name": {
             "type": "string"
+          },
+          "output_modes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
           },
           "tags": {
             "type": "array",
@@ -543,7 +575,9 @@
           "name",
           "description",
           "capabilities",
-          "version"
+          "version",
+          "default_input_modes",
+          "default_output_modes"
         ],
         "properties": {
           "artifact_locators": {
@@ -558,6 +592,18 @@
           },
           "capabilities": {
             "$ref": "#/components/schemas/Capabilities"
+          },
+          "default_input_modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default_output_modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "description": {
             "type": "string"

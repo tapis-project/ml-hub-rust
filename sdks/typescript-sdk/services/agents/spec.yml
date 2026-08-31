@@ -227,6 +227,8 @@ components:
         - capabilities
         - version
         - artifact_locators
+        - default_input_modes
+        - default_output_modes
         - skills
         - tags
         - visibility
@@ -237,6 +239,14 @@ components:
             $ref: '#/components/schemas/ArtifactLocator'
         capabilities:
           $ref: '#/components/schemas/Capabilities'
+        default_input_modes:
+          type: array
+          items:
+            type: string
+        default_output_modes:
+          type: array
+          items:
+            type: string
         description:
           type: string
         documentation_url:
@@ -301,8 +311,20 @@ components:
             type: string
         id:
           type: string
+        input_modes:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
         name:
           type: string
+        output_modes:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
         tags:
           type: array
           items:
@@ -371,6 +393,8 @@ components:
         - description
         - capabilities
         - version
+        - default_input_modes
+        - default_output_modes
       properties:
         artifact_locators:
           type:
@@ -381,6 +405,14 @@ components:
           default: []
         capabilities:
           $ref: '#/components/schemas/Capabilities'
+        default_input_modes:
+          type: array
+          items:
+            type: string
+        default_output_modes:
+          type: array
+          items:
+            type: string
         description:
           type: string
         documentation_url:

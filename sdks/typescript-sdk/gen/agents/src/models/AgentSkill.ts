@@ -39,10 +39,22 @@ export interface AgentSkill {
     id: string;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof AgentSkill
+     */
+    input_modes?: Array<string> | null;
+    /**
+     * 
      * @type {string}
      * @memberof AgentSkill
      */
     name: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof AgentSkill
+     */
+    output_modes?: Array<string> | null;
     /**
      * 
      * @type {Array<string>}
@@ -64,7 +76,9 @@ export function AgentSkillFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'description': json['description'],
         'examples': json['examples'],
         'id': json['id'],
+        'input_modes': !exists(json, 'input_modes') ? undefined : json['input_modes'],
         'name': json['name'],
+        'output_modes': !exists(json, 'output_modes') ? undefined : json['output_modes'],
         'tags': json['tags'],
     };
 }
@@ -81,7 +95,9 @@ export function AgentSkillToJSON(value?: AgentSkill | null): any {
         'description': value.description,
         'examples': value.examples,
         'id': value.id,
+        'input_modes': value.input_modes,
         'name': value.name,
+        'output_modes': value.output_modes,
         'tags': value.tags,
     };
 }
