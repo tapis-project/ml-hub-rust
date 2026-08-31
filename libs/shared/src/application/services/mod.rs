@@ -12,3 +12,4 @@ pub mod agent_record_service;
 pub mod agent_service;
 pub mod endpoint_catalog_service;
 pub mod endpoint_issuance_service;
+pub mod dataset_service;

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-datasets-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mlhub-datasets-api-deployment
+  template:
+    metadata:
+      labels:
+        app: mlhub-datasets-api-deployment
+    spec:
+      containers:
+        - name: datasets-api
+          image: tapis/mlhub-datasets-api:local
+          imagePullPolicy: Never
+          env:
+            - name: MONGO_HOST
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_DBNAME
+              value: mlhub
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets
+                  key: password
+            - name: MONGO_REPLICA_SET
+              value: rs0
+            - name: RUST_LOG
+              value: debug
+            - name: SITE_CONFIG_PATH
+              value: /etc/mlhub/site.json
+          ports:
+            - containerPort: 8000
+              name: webserver
+          readinessProbe:
+            httpGet:
+              path: /datasets-api/healthcheck
+              port: webserver
+            initialDelaySeconds: 2
+            periodSeconds: 15
+            failureThreshold: 5
+          resources: {}
+          tty: true
+          volumeMounts:
+            - name: site-config
+              mountPath: /etc/mlhub/site.json
+              subPath: site.json
+      volumes:
+        - name: site-config
+          configMap:
+            name: mlhub-site-configs

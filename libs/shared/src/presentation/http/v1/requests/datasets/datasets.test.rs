@@ -1,0 +1,45 @@
+use super::{DatasetProvider, RegisterDatasetBody};
+use validator::Validate;
+
+fn body_json(provider: &str, locators: &str) -> String {
+    format!(
+        r#"{{"provider":"{provider}",{locators}"items":[{{"path":"data.json","size":10}}],"size":10}}"#
+    )
+}
+
+#[test]
+fn request_accepts_matching_huggingface_locator() -> Result<(), Box<dyn std::error::Error>> {
+    let body: RegisterDatasetBody = serde_json::from_str(&body_json(
+        "HuggingFace",
+        r#""huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"#,
+    ))?;
+
+    body.validate()?;
+
+    assert!(matches!(body.provider, DatasetProvider::HuggingFace));
+
+    Ok(())
+}
+
+#[test]
+fn request_rejects_provider_locator_mismatch() -> Result<(), Box<dyn std::error::Error>> {
+    let body: RegisterDatasetBody = serde_json::from_str(&body_json(
+        "Tapis",
+        r#""huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"#,
+    ))?;
+
+    assert!(body.validate().is_err());
+
+    Ok(())
+}
+
+#[test]
+fn request_rejects_duplicate_item_paths() -> Result<(), Box<dyn std::error::Error>> {
+    let body: RegisterDatasetBody = serde_json::from_str(
+        r#"{"provider":"HuggingFace","huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"items":[{"path":"a","size":1},{"path":"a","size":1}],"size":2}"#,
+    )?;
+
+    assert!(body.validate().is_err());
+
+    Ok(())
+}

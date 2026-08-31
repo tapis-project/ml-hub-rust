@@ -3,7 +3,7 @@ resolver = "2"
 
 members = [
     "services/agents",
-    # "services/apis/datasets",
+    "services/datasets",
     "services/deployments",
     "services/models",
     "services/artifact-ingester",

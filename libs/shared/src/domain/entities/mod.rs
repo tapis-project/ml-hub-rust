@@ -4,6 +4,7 @@ pub mod annotations;
 pub mod artifact;
 pub mod artifact_ingestion;
 pub mod artifact_publication;
+pub mod dataset;
 pub mod deployment;
 pub mod deployment_strategy;
 pub mod domain;

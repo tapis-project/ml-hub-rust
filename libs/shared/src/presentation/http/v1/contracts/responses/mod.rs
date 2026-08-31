@@ -15,6 +15,7 @@ use crate::presentation::http::v1::responses::artifacts::{
 use crate::presentation::http::v1::responses::platform_details::PlatformDetails;
 use crate::presentation::http::v1::responses::agent_records::AgentRecord;
 use crate::presentation::http::v1::responses::agents::Agent;
+use crate::presentation::http::v1::responses::datasets::Dataset;
 
 #[derive(ToSchema)]
 pub struct CreateAgentResponse {
@@ -55,6 +56,10 @@ pub struct ListAgentRecordsResponse {
     pub metadata: Value,
     pub version: String,
 }
+
+#[derive(ToSchema)] pub struct RegisterDatasetResponse { pub result: Dataset, pub status: u16, pub message: String, #[schema(value_type = Object)] pub metadata: Value, pub version: String }
+#[derive(ToSchema)] pub struct GetDatasetResponse { pub result: Dataset, pub status: u16, pub message: String, #[schema(value_type = Object)] pub metadata: Value, pub version: String }
+#[derive(ToSchema)] pub struct ListDatasetsResponse { pub result: Vec<Dataset>, pub status: u16, pub message: String, #[schema(value_type = Object)] pub metadata: Value, pub version: String }
 
 #[derive(ToSchema)]
 pub struct ListTasksResponse {

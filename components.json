@@ -132,14 +132,15 @@
     },
     {
       "name": "datasets",
-      "rootDir": "services/apis/datasets",
+      "rootDir": "services/datasets",
+      "specPath": "services/datasets/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
-        "start": "{{ self.rootDir }}/scripts/burnup.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
-        "stop": "{{ self.rootDir }}/scripts/burndown.sh {{ self.rootDir }} $(kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}')",
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -156,7 +157,8 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin datasets-openapi | jq > {{ self.specPath }}/openapi.json"
       },
       "dependencies": [
         "traefik",

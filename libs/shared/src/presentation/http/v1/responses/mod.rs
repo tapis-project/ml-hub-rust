@@ -13,6 +13,7 @@ pub mod visibility;
 pub mod tasks;
 pub mod artifacts;
 pub mod platform_details;
+pub mod datasets;
 
 
 #[derive(Serialize)]

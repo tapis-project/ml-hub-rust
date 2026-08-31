@@ -10,3 +10,4 @@ pub mod deployment;
 pub mod principal;
 pub mod agent_record;
 pub mod agent;
+pub mod dataset;

@@ -1,0 +1,20 @@
+resources:
+  - ../../base
+  - ../../../site-configs/overlays/tapisstage
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-datasets-api-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-datasets-api-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: datasets-api
+                image: tapis/mlhub-datasets-api:stage
+                imagePullPolicy: Always
+                resources: {}
