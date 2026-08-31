@@ -14,15 +14,24 @@ pub mod list_agent_records;
 pub mod create_agent;
 pub mod list_agents;
 pub mod discover_models;
+pub mod download_dataset;
 pub mod download_model;
+pub mod get_dataset_by_platform;
 pub mod get_model_by_author_and_name;
 pub mod get_model_by_platform;
 pub mod ingest_canonical_model;
+pub mod ingest_dataset;
 pub mod ingest_model;
-pub mod list_models_by_platform;
+pub mod list_datasets_by_platform;
 pub mod list_models_by_author;
+pub mod list_models_by_platform;
+pub mod publish_dataset;
 pub mod upload_model;
 
 // pub mod skills;
 // pub mod domains;
 pub mod errors;
+
+#[cfg(test)]
+#[path = "dataset_client_contracts.test.rs"]
+mod dataset_client_contracts_test;
