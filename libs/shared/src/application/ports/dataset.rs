@@ -19,6 +19,14 @@ pub trait DatasetRepository: Send + Sync {
         id: Uuid,
     ) -> Result<Option<Dataset>, DatasetRepositoryError>;
 
+    async fn find_by_huggingface_repo_locator(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+        repo_id: &str,
+        sha: &str,
+    ) -> Result<Option<Dataset>, DatasetRepositoryError>;
+
     async fn list_by_owner(
         &self,
         tenant_id: &str,

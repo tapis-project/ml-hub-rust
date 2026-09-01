@@ -8,6 +8,7 @@ members = [
     "services/models",
     "services/artifact-ingester",
     "services/artifact-publisher",
+    "services/hf-dataset-etl",
     "services/hf-model-etl",
     "services/models-migrator",
     "services/principals-migrator",

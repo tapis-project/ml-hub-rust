@@ -7,7 +7,8 @@ use crate::{
     infra::persistence::mongo::{
         database::DATASET_COLLECTION,
         documents::{
-            dataset::Dataset as DatasetDocument, visibility::Visibility as DocumentVisibility,
+            dataset::{Dataset as DatasetDocument, DatasetProvider as DatasetDocumentProvider},
+            visibility::Visibility as DocumentVisibility,
         },
     },
 };
@@ -55,6 +56,33 @@ impl DatasetRepositoryPort for DatasetRepository {
         let document = self
             .read_collection
             .find_one(doc! { "tenant_id": tenant_id, "id": id })
+            .await
+            .map_err(map_error)?;
+
+        document
+            .map(entities::Dataset::try_from)
+            .transpose()
+            .map_err(map_conversion_error)
+    }
+
+    async fn find_by_huggingface_repo_locator(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+        repo_id: &str,
+        sha: &str,
+    ) -> Result<Option<entities::Dataset>, DatasetRepositoryError> {
+        let provider = to_bson(&DatasetDocumentProvider::HuggingFace).map_err(map_error)?;
+
+        let document = self
+            .read_collection
+            .find_one(doc! {
+                "tenant_id": tenant_id,
+                "owner": owner,
+                "provider": provider,
+                "huggingface_repo_locator.id": repo_id,
+                "huggingface_repo_locator.sha": sha,
+            })
             .await
             .map_err(map_error)?;
 

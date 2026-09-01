@@ -100,6 +100,27 @@ impl DatasetService {
         Ok(dataset)
     }
 
+    pub async fn find_by_huggingface_repo_locator(
+        &self,
+        ctx: &RequestContext,
+        repo_id: &str,
+        sha: &str,
+    ) -> Result<Option<Dataset>, DatasetServiceError> {
+        Ok(retry_async(
+            || {
+                self.dataset_repository.find_by_huggingface_repo_locator(
+                    ctx.actor_tenant_id(),
+                    ctx.actor_principal_id(),
+                    repo_id,
+                    sha,
+                )
+            },
+            &Self::REPOSITORY_RETRY_POLICY,
+            None,
+        )
+        .await?)
+    }
+
     pub async fn list_for_user(
         &self,
         ctx: &RequestContext,
