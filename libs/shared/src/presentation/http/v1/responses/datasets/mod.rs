@@ -17,7 +17,11 @@ pub struct Dataset {
     pub huggingface_repo_locator: Option<HuggingFaceRepoLocator>,
     #[schema(required = true, nullable)]
     pub tapis_system_locator: Option<TapisSystemLocator>,
+    /// Dataset items. Retrieval operations return at most the first 50 items in persisted order;
+    /// registration returns every registered item.
     pub items: Vec<DatasetItem>,
+    /// Total number of items in the complete Dataset before retrieval projection.
+    pub item_count: u64,
     pub size: u64,
     pub visibility: Visibility,
 }

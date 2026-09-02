@@ -1,5 +1,6 @@
 use crate::domain::entities::dataset::{
     Dataset, DatasetError, DatasetItem, DatasetProvider, HuggingFaceRepoLocator,
+    ReconstituteDatasetProps,
 };
 use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::identifiers::traits::UrnGenerator;
@@ -34,8 +35,9 @@ fn register_dataset_generates_v7_identity_and_urn() -> Result<(), Box<dyn std::e
 }
 
 #[test]
-fn register_dataset_requires_exact_item_size_sum() -> Result<(), Box<dyn std::error::Error>> {
-    let result = Dataset::register(
+fn register_dataset_preserves_a_declared_size_that_differs_from_item_sizes(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
         Vec::new(),
@@ -43,33 +45,28 @@ fn register_dataset_requires_exact_item_size_sum() -> Result<(), Box<dyn std::er
         vec![DatasetItem::new("data.json".into(), 10)?],
         11,
         Visibility::Private,
-    );
+    )?;
 
-    assert!(matches!(
-        result,
-        Err(DatasetError::SizeMismatch {
-            declared: 11,
-            calculated: 10
-        })
-    ));
+    assert_eq!(dataset.size(), 11);
 
     Ok(())
 }
 
 #[test]
-fn register_dataset_allows_empty_zero_size_dataset() -> Result<(), Box<dyn std::error::Error>> {
+fn register_dataset_allows_an_empty_dataset_with_a_nonzero_size(
+) -> Result<(), Box<dyn std::error::Error>> {
     let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
         Vec::new(),
         provider()?,
         Vec::new(),
-        0,
+        10,
         Visibility::Private,
     )?;
 
     assert!(dataset.items().is_empty());
-    assert_eq!(dataset.size(), 0);
+    assert_eq!(dataset.size(), 10);
 
     Ok(())
 }
@@ -95,8 +92,8 @@ fn register_dataset_rejects_duplicate_item_paths() -> Result<(), Box<dyn std::er
 }
 
 #[test]
-fn register_dataset_rejects_item_size_overflow() -> Result<(), Box<dyn std::error::Error>> {
-    let result = Dataset::register(
+fn register_dataset_does_not_sum_item_sizes() -> Result<(), Box<dyn std::error::Error>> {
+    let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
         Vec::new(),
@@ -107,9 +104,29 @@ fn register_dataset_rejects_item_size_overflow() -> Result<(), Box<dyn std::erro
         ],
         u64::MAX,
         Visibility::Private,
-    );
+    )?;
 
-    assert!(matches!(result, Err(DatasetError::ItemSizeOverflow)));
+    assert_eq!(dataset.items().len(), 2);
+    assert_eq!(dataset.size(), u64::MAX);
+
+    Ok(())
+}
+
+#[test]
+fn reconstitute_preserves_a_declared_size_that_differs_from_item_sizes(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let dataset = Dataset::reconstitute(ReconstituteDatasetProps {
+        id: uuid::Uuid::now_v7(),
+        tenant_id: "tenant-a".into(),
+        owner: "owner-a".into(),
+        tags: Vec::new(),
+        provider: provider()?,
+        items: vec![DatasetItem::reconstitute("data.json".into(), 10)?],
+        size: 11,
+        visibility: Visibility::Private,
+    })?;
+
+    assert_eq!(dataset.size(), 11);
 
     Ok(())
 }

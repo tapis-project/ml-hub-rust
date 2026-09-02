@@ -6,7 +6,10 @@ use std::{
 
 use async_trait::async_trait;
 use shared::{
-    application::ports::dataset::{DatasetRepository, DatasetRepositoryError},
+    application::{
+        outputs::dataset::DatasetQueryOutput,
+        ports::dataset::{DatasetRepository, DatasetRepositoryError},
+    },
     domain::entities::dataset::{Dataset, DatasetProvider},
 };
 use tempfile::tempdir;
@@ -36,7 +39,7 @@ impl DatasetRepository for TestDatasetRepository {
         &self,
         _tenant_id: &str,
         _id: Uuid,
-    ) -> Result<Option<Dataset>, DatasetRepositoryError> {
+    ) -> Result<Option<DatasetQueryOutput>, DatasetRepositoryError> {
         Ok(None)
     }
 
@@ -61,7 +64,7 @@ impl DatasetRepository for TestDatasetRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
         Ok(Vec::new())
     }
 
@@ -69,7 +72,7 @@ impl DatasetRepository for TestDatasetRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
         Ok(Vec::new())
     }
 }

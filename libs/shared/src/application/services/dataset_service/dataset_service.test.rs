@@ -2,6 +2,7 @@ use super::*;
 use crate::{
     application::{
         inputs::dataset::{DatasetProviderInput, HuggingFaceRepoLocatorInput, VisibilityInput},
+        outputs::dataset::DatasetQueryOutput,
         ports::dataset::DatasetRepository,
     },
     shared_kernel::context::RequestContext,
@@ -26,7 +27,7 @@ impl DatasetRepository for TestRepository {
         &self,
         _tenant_id: &str,
         _id: Uuid,
-    ) -> Result<Option<Dataset>, DatasetRepositoryError> {
+    ) -> Result<Option<DatasetQueryOutput>, DatasetRepositoryError> {
         Ok(None)
     }
 
@@ -50,7 +51,7 @@ impl DatasetRepository for TestRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
         Ok(Vec::new())
     }
 
@@ -58,7 +59,7 @@ impl DatasetRepository for TestRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
         Ok(Vec::new())
     }
 }

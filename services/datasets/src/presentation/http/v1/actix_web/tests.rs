@@ -19,6 +19,30 @@ fn openapi_contains_dataset_routes_and_schemas() {
 }
 
 #[test]
+fn openapi_documents_dataset_item_count_and_retrieval_limit(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert!(document
+        .pointer("/components/schemas/Dataset/properties/item_count")
+        .is_some());
+    assert_eq!(
+        document.pointer("/paths/~1datasets-api~1datasets/get/summary"),
+        Some(&serde_json::json!(
+            "List datasets with at most the first 50 items from each"
+        ))
+    );
+    assert_eq!(
+        document.pointer("/paths/~1datasets-api~1datasets~1{dataset_id}/get/summary"),
+        Some(&serde_json::json!(
+            "Get a dataset with at most its first 50 items"
+        ))
+    );
+
+    Ok(())
+}
+
+#[test]
 fn openapi_inlines_the_list_datasets_scope_parameter() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
 

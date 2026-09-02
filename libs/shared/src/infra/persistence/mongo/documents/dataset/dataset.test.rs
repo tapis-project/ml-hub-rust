@@ -1,8 +1,13 @@
 use crate::{
+    application::outputs::dataset::DatasetQueryOutput,
     domain::entities::dataset::{
         Dataset as DomainDataset, DatasetProvider as DomainProvider, HuggingFaceRepoLocator,
     },
-    infra::persistence::mongo::documents::dataset::{Dataset, DatasetProvider, TapisSystemLocator},
+    infra::persistence::mongo::documents::dataset::{
+        Dataset, DatasetProvider, DatasetQuery,
+        HuggingFaceRepoLocator as DocumentHuggingFaceLocator, TapisSystemLocator,
+    },
+    infra::persistence::mongo::documents::visibility::Visibility as DocumentVisibility,
     shared_kernel::enums::Visibility,
 };
 
@@ -67,4 +72,26 @@ fn document_rejects_mismatched_provider_locator() -> Result<(), Box<dyn std::err
     assert!(DomainDataset::try_from(document).is_err());
 
     Ok(())
+}
+
+#[test]
+fn query_document_rejects_mismatched_provider_locator() {
+    let document = DatasetQuery {
+        id: mongodb::bson::Uuid::from_bytes(*uuid::Uuid::now_v7().as_bytes()),
+        tenant_id: "tenant".into(),
+        owner: "owner".into(),
+        tags: Vec::new(),
+        provider: DatasetProvider::Tapis,
+        huggingface_repo_locator: Some(DocumentHuggingFaceLocator {
+            id: "owner/repo".into(),
+            sha: "abc".into(),
+        }),
+        tapis_system_locator: None,
+        items: Vec::new(),
+        item_count: 0,
+        size: 0,
+        visibility: DocumentVisibility::Private,
+    };
+
+    assert!(DatasetQueryOutput::try_from(document).is_err());
 }

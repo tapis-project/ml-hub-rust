@@ -10,7 +10,7 @@ use shared::{
     application::services::dataset_service::DatasetService, shared_kernel::context::RequestContext,
 };
 
-#[utoipa::path(get, path = "/datasets-api/datasets", tag = "Datasets", summary = "List datasets", params(ListDatasetsQueryParams), responses((status = 200, description = "Datasets listed", body = ListDatasetsResponse), (status = 500, description = "Unable to list datasets")))]
+#[utoipa::path(get, path = "/datasets-api/datasets", tag = "Datasets", summary = "List datasets with at most the first 50 items from each", params(ListDatasetsQueryParams), responses((status = 200, description = "Datasets listed", body = ListDatasetsResponse), (status = 500, description = "Unable to list datasets")))]
 #[get("datasets-api/datasets")]
 pub async fn list_datasets(
     query: web::Query<ListDatasetsQueryParams>,

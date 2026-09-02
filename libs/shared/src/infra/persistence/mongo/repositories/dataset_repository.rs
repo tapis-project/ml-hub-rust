@@ -1,13 +1,19 @@
 use crate::{
-    application::ports::{
-        dataset::{DatasetRepository as DatasetRepositoryPort, DatasetRepositoryError},
-        errors::InfrastructureError,
+    application::{
+        outputs::dataset::DatasetQueryOutput,
+        ports::{
+            dataset::{DatasetRepository as DatasetRepositoryPort, DatasetRepositoryError},
+            errors::InfrastructureError,
+        },
     },
     domain::entities::dataset as entities,
     infra::persistence::mongo::{
         database::DATASET_COLLECTION,
         documents::{
-            dataset::{Dataset as DatasetDocument, DatasetProvider as DatasetDocumentProvider},
+            dataset::{
+                Dataset as DatasetDocument, DatasetProvider as DatasetDocumentProvider,
+                DatasetQuery as DatasetQueryDocument,
+            },
             visibility::Visibility as DocumentVisibility,
         },
     },
@@ -15,9 +21,11 @@ use crate::{
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 use mongodb::{
-    bson::{doc, to_bson},
+    bson::{doc, from_document, to_bson, Document},
     Client, Collection,
 };
+
+const DATASET_QUERY_ITEM_LIMIT: i32 = 50;
 
 pub struct DatasetRepository {
     read_collection: Collection<DatasetDocument>,
@@ -50,17 +58,23 @@ impl DatasetRepositoryPort for DatasetRepository {
         &self,
         tenant_id: &str,
         id: uuid::Uuid,
-    ) -> Result<Option<entities::Dataset>, DatasetRepositoryError> {
+    ) -> Result<Option<DatasetQueryOutput>, DatasetRepositoryError> {
         let id = mongodb::bson::Uuid::from_bytes(*id.as_bytes());
 
-        let document = self
+        let pipeline = dataset_query_pipeline(dataset_id_filter(tenant_id, id), true);
+        let mut cursor = self
             .read_collection
-            .find_one(doc! { "tenant_id": tenant_id, "id": id })
+            .aggregate(pipeline)
             .await
             .map_err(map_error)?;
 
+        let document = cursor.try_next().await.map_err(map_error)?;
+
         document
-            .map(entities::Dataset::try_from)
+            .map(|document| from_document::<DatasetQueryDocument>(document).map_err(map_error))
+            .transpose()
+            .map_err(DatasetRepositoryError::from)?
+            .map(DatasetQueryOutput::try_from)
             .transpose()
             .map_err(map_conversion_error)
     }
@@ -96,38 +110,82 @@ impl DatasetRepositoryPort for DatasetRepository {
         &self,
         tenant_id: &str,
         owner: &str,
-    ) -> Result<Vec<entities::Dataset>, DatasetRepositoryError> {
-        self.list(doc! { "tenant_id": tenant_id, "owner": owner })
-            .await
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
+        self.list(owner_filter(tenant_id, owner)).await
     }
 
     async fn list_shared_with_user(
         &self,
         tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<entities::Dataset>, DatasetRepositoryError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
         let visibility = to_bson(&DocumentVisibility::Public).map_err(map_error)?;
 
-        self.list(doc! { "tenant_id": tenant_id, "visibility": visibility })
-            .await
+        self.list(shared_filter(tenant_id, visibility)).await
     }
 }
 
 impl DatasetRepository {
     async fn list(
         &self,
-        filter: mongodb::bson::Document,
-    ) -> Result<Vec<entities::Dataset>, DatasetRepositoryError> {
-        let mut cursor = self.read_collection.find(filter).await.map_err(map_error)?;
+        filter: Document,
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
+        let pipeline = dataset_query_pipeline(filter, false);
+        let mut cursor = self
+            .read_collection
+            .aggregate(pipeline)
+            .await
+            .map_err(map_error)?;
 
         let mut datasets = Vec::new();
 
         while let Some(document) = cursor.try_next().await.map_err(map_error)? {
-            datasets.push(entities::Dataset::try_from(document).map_err(map_conversion_error)?);
+            let document = from_document::<DatasetQueryDocument>(document).map_err(map_error)?;
+
+            datasets.push(DatasetQueryOutput::try_from(document).map_err(map_conversion_error)?);
         }
 
         Ok(datasets)
     }
+}
+
+fn dataset_id_filter(tenant_id: &str, id: mongodb::bson::Uuid) -> Document {
+    doc! { "tenant_id": tenant_id, "id": id }
+}
+
+fn owner_filter(tenant_id: &str, owner: &str) -> Document {
+    doc! { "tenant_id": tenant_id, "owner": owner }
+}
+
+fn shared_filter(tenant_id: &str, visibility: mongodb::bson::Bson) -> Document {
+    doc! { "tenant_id": tenant_id, "visibility": visibility }
+}
+
+fn dataset_query_pipeline(filter: Document, single_result: bool) -> Vec<Document> {
+    let mut pipeline = vec![
+        doc! { "$match": filter },
+        doc! {
+            "$project": {
+                "id": 1,
+                "tenant_id": 1,
+                "owner": 1,
+                "tags": 1,
+                "provider": 1,
+                "huggingface_repo_locator": 1,
+                "tapis_system_locator": 1,
+                "items": { "$slice": ["$items", DATASET_QUERY_ITEM_LIMIT] },
+                "item_count": { "$toLong": { "$size": "$items" } },
+                "size": 1,
+                "visibility": 1,
+            }
+        },
+    ];
+
+    if single_result {
+        pipeline.push(doc! { "$limit": 1 });
+    }
+
+    pipeline
 }
 
 fn map_error(error: impl std::fmt::Display) -> InfrastructureError {
@@ -141,3 +199,7 @@ fn map_error(error: impl std::fmt::Display) -> InfrastructureError {
 fn map_conversion_error(error: impl std::fmt::Display) -> DatasetRepositoryError {
     map_error(error).into()
 }
+
+#[cfg(test)]
+#[path = "dataset_repository.test.rs"]
+mod dataset_repository_test;

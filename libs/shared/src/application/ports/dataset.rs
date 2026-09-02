@@ -1,4 +1,7 @@
-use crate::{application::ports::errors::InfrastructureError, domain::entities::dataset::Dataset};
+use crate::{
+    application::{outputs::dataset::DatasetQueryOutput, ports::errors::InfrastructureError},
+    domain::entities::dataset::Dataset,
+};
 use async_trait::async_trait;
 use thiserror::Error;
 use uuid::Uuid;
@@ -17,7 +20,7 @@ pub trait DatasetRepository: Send + Sync {
         &self,
         tenant_id: &str,
         id: Uuid,
-    ) -> Result<Option<Dataset>, DatasetRepositoryError>;
+    ) -> Result<Option<DatasetQueryOutput>, DatasetRepositoryError>;
 
     async fn find_by_huggingface_repo_locator(
         &self,
@@ -31,11 +34,11 @@ pub trait DatasetRepository: Send + Sync {
         &self,
         tenant_id: &str,
         owner: &str,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError>;
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
 
     async fn list_shared_with_user(
         &self,
         tenant_id: &str,
         owner: &str,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError>;
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
 }

@@ -31,7 +31,7 @@ impl Dataset {
         size: u64,
         visibility: Visibility,
     ) -> Result<Self, DatasetError> {
-        Self::validate_items(&items, size)?;
+        Self::validate_unique_item_paths(&items)?;
 
         let tags = Tags::new(tags).map_err(DatasetError::InvalidTags)?;
 
@@ -48,7 +48,7 @@ impl Dataset {
     }
 
     pub fn reconstitute(props: ReconstituteDatasetProps) -> Result<Self, DatasetError> {
-        Self::validate_items(&props.items, props.size).map_err(|error| {
+        Self::validate_unique_item_paths(&props.items).map_err(|error| {
             DatasetError::DataIntegrityError(format!("Dataset contains invalid items: {error}"))
         })?;
 
@@ -100,25 +100,13 @@ impl Dataset {
         &self.visibility
     }
 
-    fn validate_items(items: &[DatasetItem], size: u64) -> Result<(), DatasetError> {
+    fn validate_unique_item_paths(items: &[DatasetItem]) -> Result<(), DatasetError> {
         let mut paths = HashSet::new();
-        let mut calculated_size = 0_u64;
 
         for item in items {
             if !paths.insert(item.path()) {
                 return Err(DatasetError::DuplicateItemPath(item.path().to_owned()));
             }
-
-            calculated_size = calculated_size
-                .checked_add(item.size())
-                .ok_or(DatasetError::ItemSizeOverflow)?;
-        }
-
-        if calculated_size != size {
-            return Err(DatasetError::SizeMismatch {
-                declared: size,
-                calculated: calculated_size,
-            });
         }
 
         Ok(())
@@ -268,12 +256,6 @@ fn ensure_not_empty(field: &'static str, value: &str) -> Result<(), DatasetLocat
 pub enum DatasetError {
     #[error("Dataset contains duplicate item path: {0}")]
     DuplicateItemPath(String),
-
-    #[error("Dataset item sizes exceed the supported u64 total")]
-    ItemSizeOverflow,
-
-    #[error("Dataset declared size {declared} does not match calculated item size {calculated}")]
-    SizeMismatch { declared: u64, calculated: u64 },
 
     #[error("Dataset contains invalid tags: {0}")]
     InvalidTags(#[source] TagsError),

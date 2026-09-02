@@ -1,5 +1,6 @@
 mod document_to_entity;
 mod entity_to_document;
+mod query_document_to_output;
 
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, Uuid};
@@ -45,6 +46,21 @@ pub struct TapisSystemLocator {
 pub struct DatasetItem {
     pub path: String,
     pub size: u64,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct DatasetQuery {
+    pub id: Uuid,
+    pub tenant_id: String,
+    pub owner: String,
+    pub tags: Vec<String>,
+    pub provider: DatasetProvider,
+    pub huggingface_repo_locator: Option<HuggingFaceRepoLocator>,
+    pub tapis_system_locator: Option<TapisSystemLocator>,
+    pub items: Vec<DatasetItem>,
+    pub item_count: i64,
+    pub size: u64,
+    pub visibility: Visibility,
 }
 
 #[cfg(test)]

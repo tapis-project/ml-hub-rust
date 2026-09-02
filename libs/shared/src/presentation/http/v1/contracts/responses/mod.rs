@@ -1,21 +1,15 @@
+use crate::presentation::http::v1::responses::{
+    agent_records::AgentRecord,
+    agents::Agent,
+    artifacts::{ingestions::ArtifactIngestion, publications::ArtifactPublication, Artifact},
+    datasets::Dataset,
+    deployment::{strategy::Strategy, ModelDeployment},
+    models::{ModelArtifact, ModelMetadata},
+    platform_details::PlatformDetails,
+    tasks::Task,
+};
 use serde_json::Value;
 use utoipa::ToSchema;
-use crate::presentation::http::v1::responses::deployment::strategy::Strategy;
-use crate::presentation::http::v1::responses::tasks::Task;
-use crate::presentation::http::v1::responses::deployment::ModelDeployment;
-use crate::presentation::http::v1::responses::models::{
-    ModelMetadata,
-    ModelArtifact,
-};
-use crate::presentation::http::v1::responses::artifacts::{
-    Artifact,
-    ingestions::ArtifactIngestion,
-    publications::ArtifactPublication,
-};
-use crate::presentation::http::v1::responses::platform_details::PlatformDetails;
-use crate::presentation::http::v1::responses::agent_records::AgentRecord;
-use crate::presentation::http::v1::responses::agents::Agent;
-use crate::presentation::http::v1::responses::datasets::Dataset;
 
 #[derive(ToSchema)]
 pub struct CreateAgentResponse {
@@ -57,9 +51,35 @@ pub struct ListAgentRecordsResponse {
     pub version: String,
 }
 
-#[derive(ToSchema)] pub struct RegisterDatasetResponse { pub result: Dataset, pub status: u16, pub message: String, #[schema(value_type = Object)] pub metadata: Value, pub version: String }
-#[derive(ToSchema)] pub struct GetDatasetResponse { pub result: Dataset, pub status: u16, pub message: String, #[schema(value_type = Object)] pub metadata: Value, pub version: String }
-#[derive(ToSchema)] pub struct ListDatasetsResponse { pub result: Vec<Dataset>, pub status: u16, pub message: String, #[schema(value_type = Object)] pub metadata: Value, pub version: String }
+#[derive(ToSchema)]
+pub struct RegisterDatasetResponse {
+    pub result: Dataset,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct GetDatasetResponse {
+    pub result: Dataset,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct ListDatasetsResponse {
+    pub result: Vec<Dataset>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
 
 #[derive(ToSchema)]
 pub struct ListTasksResponse {
@@ -68,7 +88,7 @@ pub struct ListTasksResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -78,7 +98,7 @@ pub struct ListPlatformsResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -88,7 +108,7 @@ pub struct PublishModelArtifactResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -98,7 +118,7 @@ pub struct ListModelPublicationsForArtifactResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -108,7 +128,7 @@ pub struct ListModelPublicationsResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -118,7 +138,7 @@ pub struct GetModelPublicationResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -128,9 +148,8 @@ pub struct IngestModelArtifactResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
-
 
 #[derive(ToSchema)]
 pub struct GetModelIngestionResponse {
@@ -139,7 +158,7 @@ pub struct GetModelIngestionResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -149,9 +168,8 @@ pub struct ListModelIngestionsResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
-
 
 #[derive(ToSchema)]
 pub struct AssociateModelMetadataResponse {
@@ -161,7 +179,7 @@ pub struct AssociateModelMetadataResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -172,7 +190,7 @@ pub struct CreateModelMetadataResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -182,9 +200,8 @@ pub struct DiscoverModelsByPlatformResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
-
 
 #[derive(ToSchema)]
 pub struct DiscoverModelsResponse {
@@ -193,7 +210,7 @@ pub struct DiscoverModelsResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -203,7 +220,7 @@ pub struct GetModelResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -213,7 +230,7 @@ pub struct ListModelsResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -224,7 +241,7 @@ pub struct GetModelByPlatformResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -234,7 +251,7 @@ pub struct ListModelsByPlatformResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -244,7 +261,7 @@ pub struct GetModelArtifactResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -254,7 +271,7 @@ pub struct ListModelArtifactResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -264,7 +281,7 @@ pub struct ListDeploymentStrategiesResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -274,43 +291,43 @@ pub struct ModelDeploymentResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
 pub struct BadRequestResponse {
-    #[schema(default=null)]
+    #[schema(default = null)]
     pub result: Value,
-    #[schema(default=400)]
+    #[schema(default = 400)]
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
 pub struct NotFoundResponse {
-    #[schema(default=null)]
+    #[schema(default = null)]
     pub result: Value,
-    #[schema(default=404)]
+    #[schema(default = 404)]
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
 pub struct ServerErrorResponse {
-    #[schema(default=null)]
+    #[schema(default = null)]
     pub result: Value,
-    #[schema(default=500)]
+    #[schema(default = 500)]
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
@@ -320,17 +337,17 @@ pub struct ListModelDeploymentsResponse {
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }
 
 #[derive(ToSchema)]
 pub struct ForkModelResponse {
-    #[schema(default=null)]
+    #[schema(default = null)]
     pub result: Value,
-    #[schema(default=404)]
+    #[schema(default = 404)]
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
     pub metadata: Value,
-    pub version: String
+    pub version: String,
 }

@@ -1,6 +1,7 @@
 use crate::{
     application::{
         inputs::dataset::RegisterDatasetInput,
+        outputs::dataset::DatasetQueryOutput,
         ports::dataset::{DatasetRepository, DatasetRepositoryError},
     },
     domain::entities::dataset::{Dataset, DatasetError, DatasetItemError, DatasetLocatorError},
@@ -79,7 +80,7 @@ impl DatasetService {
         &self,
         ctx: &RequestContext,
         id: Uuid,
-    ) -> Result<Dataset, DatasetServiceError> {
+    ) -> Result<DatasetQueryOutput, DatasetServiceError> {
         let dataset = retry_async(
             || {
                 self.dataset_repository
@@ -91,8 +92,8 @@ impl DatasetService {
         .await?
         .ok_or(DatasetServiceError::NotFound)?;
 
-        if dataset.owner() != ctx.actor_principal_id()
-            && !matches!(dataset.visibility(), Visibility::Public)
+        if &dataset.owner != ctx.actor_principal_id()
+            && !matches!(dataset.visibility, Visibility::Public)
         {
             return Err(DatasetServiceError::NotFound);
         }
@@ -124,7 +125,7 @@ impl DatasetService {
     pub async fn list_for_user(
         &self,
         ctx: &RequestContext,
-    ) -> Result<Vec<Dataset>, DatasetServiceError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetServiceError> {
         Ok(retry_async(
             || {
                 self.dataset_repository
@@ -139,7 +140,7 @@ impl DatasetService {
     pub async fn list_shared_with_user(
         &self,
         ctx: &RequestContext,
-    ) -> Result<Vec<Dataset>, DatasetServiceError> {
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetServiceError> {
         Ok(retry_async(
             || {
                 self.dataset_repository
