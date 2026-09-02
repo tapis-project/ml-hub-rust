@@ -50,6 +50,7 @@ pub struct DatasetItem {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatasetQuery {
+    pub _id: Option<ObjectId>,
     pub id: Uuid,
     pub tenant_id: String,
     pub owner: String,

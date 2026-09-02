@@ -77,6 +77,7 @@ fn document_rejects_mismatched_provider_locator() -> Result<(), Box<dyn std::err
 #[test]
 fn query_document_rejects_mismatched_provider_locator() {
     let document = DatasetQuery {
+        _id: None,
         id: mongodb::bson::Uuid::from_bytes(*uuid::Uuid::now_v7().as_bytes()),
         tenant_id: "tenant".into(),
         owner: "owner".into(),

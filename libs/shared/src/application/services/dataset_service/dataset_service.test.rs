@@ -1,8 +1,10 @@
 use super::*;
 use crate::{
     application::{
-        inputs::dataset::{DatasetProviderInput, HuggingFaceRepoLocatorInput, VisibilityInput},
-        outputs::dataset::DatasetQueryOutput,
+        inputs::dataset::{
+            DatasetProviderInput, HuggingFaceRepoLocatorInput, ListDatasetsInput, VisibilityInput,
+        },
+        outputs::dataset::{DatasetListOutput, DatasetQueryOutput},
         ports::dataset::DatasetRepository,
     },
     shared_kernel::context::RequestContext,
@@ -10,10 +12,11 @@ use crate::{
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 
+#[derive(Default)]
 struct TestRepository {
     saved: Mutex<Option<Dataset>>,
     huggingface_lookup: Mutex<Option<(String, String, String, String)>>,
-    tenant_list: Mutex<Option<String>>,
+    list_requests: Mutex<Vec<(String, u16, Option<String>, bool)>>,
 }
 
 #[async_trait]
@@ -52,38 +55,60 @@ impl DatasetRepository for TestRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        Ok(Vec::new())
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        self.capture_list_request("owner", input);
+
+        Ok(empty_dataset_list())
     }
 
     async fn list_by_tenant(
         &self,
         tenant_id: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        *self
-            .tenant_list
-            .lock()
-            .unwrap_or_else(|error| error.into_inner()) = Some(tenant_id.into());
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        self.capture_list_request(tenant_id, input);
 
-        Ok(Vec::new())
+        Ok(empty_dataset_list())
     }
 
     async fn list_shared_with_user(
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        Ok(Vec::new())
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        self.capture_list_request("shared", input);
+
+        Ok(empty_dataset_list())
+    }
+}
+
+impl TestRepository {
+    fn capture_list_request(&self, target: &str, input: &ListDatasetsInput) {
+        self.list_requests
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .push((
+                target.into(),
+                input.limit(),
+                input.cursor().map(Into::into),
+                input.include_count(),
+            ));
+    }
+}
+
+fn empty_dataset_list() -> DatasetListOutput {
+    DatasetListOutput {
+        datasets: Vec::new(),
+        cursor: None,
+        count: None,
     }
 }
 
 #[tokio::test]
 async fn register_dataset_derives_identity_and_saves() -> Result<(), DatasetServiceError> {
-    let repository = Arc::new(TestRepository {
-        saved: Mutex::new(None),
-        huggingface_lookup: Mutex::new(None),
-        tenant_list: Mutex::new(None),
-    });
+    let repository = Arc::new(TestRepository::default());
 
     let service = DatasetService::new(repository.clone());
     let context = RequestContext::system(None);
@@ -123,11 +148,7 @@ async fn register_dataset_derives_identity_and_saves() -> Result<(), DatasetServ
 #[tokio::test]
 async fn huggingface_snapshot_lookup_derives_tenant_and_owner_from_context(
 ) -> Result<(), DatasetServiceError> {
-    let repository = Arc::new(TestRepository {
-        saved: Mutex::new(None),
-        huggingface_lookup: Mutex::new(None),
-        tenant_list: Mutex::new(None),
-    });
+    let repository = Arc::new(TestRepository::default());
 
     let service = DatasetService::new(repository.clone());
     let context = RequestContext::system(None);
@@ -154,26 +175,30 @@ async fn huggingface_snapshot_lookup_derives_tenant_and_owner_from_context(
 }
 
 #[tokio::test]
-async fn list_global_uses_the_global_tenant() -> Result<(), DatasetServiceError> {
-    let repository = Arc::new(TestRepository {
-        saved: Mutex::new(None),
-        huggingface_lookup: Mutex::new(None),
-        tenant_list: Mutex::new(None),
-    });
+async fn dataset_list_methods_forward_pagination_options() -> Result<(), DatasetServiceError> {
+    let repository = Arc::new(TestRepository::default());
 
     let service = DatasetService::new(repository.clone());
     let context = RequestContext::system(None);
+    let input = ListDatasetsInput::new(Some(25), Some("cursor".into()), Some(true));
 
-    let datasets = service.list_global(&context).await?;
+    let owned = service.list_for_user(&context, &input).await?;
+    let shared = service.list_shared_with_user(&context, &input).await?;
+    let global = service.list_global(&context, &input).await?;
 
-    assert!(datasets.is_empty());
+    assert!(owned.datasets.is_empty());
+    assert!(shared.datasets.is_empty());
+    assert!(global.datasets.is_empty());
     assert_eq!(
-        repository
-            .tenant_list
+        *repository
+            .list_requests
             .lock()
-            .unwrap_or_else(|error| error.into_inner())
-            .as_deref(),
-        Some(GLOBAL_TENANT)
+            .unwrap_or_else(|error| error.into_inner()),
+        vec![
+            ("owner".into(), 25, Some("cursor".into()), true),
+            ("shared".into(), 25, Some("cursor".into()), true),
+            (GLOBAL_TENANT.into(), 25, Some("cursor".into()), true),
+        ]
     );
 
     Ok(())

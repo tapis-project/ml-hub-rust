@@ -73,7 +73,34 @@ fn openapi_inlines_the_list_datasets_scope_parameter() -> Result<(), Box<dyn std
         Some(&serde_json::json!(["Owned", "Shared", "Global"]))
     );
 
+    let parameter_names = parameters
+        .iter()
+        .filter_map(|parameter| parameter.get("name").and_then(serde_json::Value::as_str))
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        parameter_names,
+        vec!["scope", "limit", "cursor", "include_count"]
+    );
+
     Ok(())
+}
+
+#[test]
+fn list_metadata_omits_absent_pagination_values() {
+    let metadata = handlers::list_datasets::list_metadata(None, None);
+
+    assert_eq!(metadata, serde_json::json!({}));
+
+    let metadata = handlers::list_datasets::list_metadata(Some("next".into()), Some(250));
+
+    assert_eq!(
+        metadata,
+        serde_json::json!({
+            "cursor": "next",
+            "count": 250,
+        })
+    );
 }
 
 #[actix_web::test]

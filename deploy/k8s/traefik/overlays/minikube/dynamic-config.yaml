@@ -32,7 +32,7 @@ http:
         - cors
     
     datasets-api:
-      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.local.tapis.io`) && PathPrefix(`/datasets-api`)"
+      rule: "HostRegexp(`tacc.local.develop.tapis.io`) && PathPrefix(`/datasets-api`)"
       service: datasets-api
       middlewares:
         - tapis-rewrite-host

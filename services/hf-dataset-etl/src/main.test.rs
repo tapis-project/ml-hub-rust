@@ -7,7 +7,8 @@ use std::{
 use async_trait::async_trait;
 use shared::{
     application::{
-        outputs::dataset::DatasetQueryOutput,
+        inputs::dataset::ListDatasetsInput,
+        outputs::dataset::{DatasetListOutput, DatasetQueryOutput},
         ports::dataset::{DatasetRepository, DatasetRepositoryError},
     },
     domain::entities::dataset::{Dataset, DatasetProvider},
@@ -64,23 +65,34 @@ impl DatasetRepository for TestDatasetRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        Ok(Vec::new())
+        _input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        Ok(empty_dataset_list())
     }
 
     async fn list_by_tenant(
         &self,
         _tenant_id: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        Ok(Vec::new())
+        _input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        Ok(empty_dataset_list())
     }
 
     async fn list_shared_with_user(
         &self,
         _tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        Ok(Vec::new())
+        _input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        Ok(empty_dataset_list())
+    }
+}
+
+fn empty_dataset_list() -> DatasetListOutput {
+    DatasetListOutput {
+        datasets: Vec::new(),
+        cursor: None,
+        count: None,
     }
 }
 

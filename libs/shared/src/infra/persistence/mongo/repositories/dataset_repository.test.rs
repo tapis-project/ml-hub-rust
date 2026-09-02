@@ -1,9 +1,18 @@
 use super::{
-    dataset_id_filter, dataset_query_pipeline, owner_filter, shared_filter, tenant_filter,
-    DATASET_QUERY_ITEM_LIMIT,
+    dataset_documents_to_page, dataset_id_filter, dataset_list_pipeline, dataset_query_pipeline,
+    owner_filter, shared_filter, tenant_filter, DATASET_QUERY_ITEM_LIMIT,
 };
-use crate::shared_kernel::constants::GLOBAL_TENANT;
-use mongodb::bson::{doc, Bson};
+use crate::{
+    application::inputs::dataset::ListDatasetsInput,
+    infra::persistence::mongo::documents::{
+        dataset::{
+            DatasetProvider, DatasetQuery, HuggingFaceRepoLocator as DocumentHuggingFaceLocator,
+        },
+        visibility::Visibility as DocumentVisibility,
+    },
+    shared_kernel::constants::GLOBAL_TENANT,
+};
+use mongodb::bson::{doc, oid::ObjectId, Bson};
 
 #[test]
 fn dataset_query_pipeline_limits_items_and_counts_the_complete_array(
@@ -60,16 +69,69 @@ fn dataset_list_filters_are_tenant_scoped() {
 }
 
 #[test]
-fn global_dataset_pipeline_keeps_the_item_projection() {
-    let pipeline = dataset_query_pipeline(tenant_filter(GLOBAL_TENANT), false);
+fn global_dataset_pipeline_applies_cursor_sort_limit_and_item_projection(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let cursor = "000000000000000000000001";
+    let input = ListDatasetsInput::new(Some(25), Some(cursor.into()), Some(false));
+    let pipeline = dataset_list_pipeline(tenant_filter(GLOBAL_TENANT), &input)?;
+    let cursor = ObjectId::parse_str(cursor)?;
 
     assert_eq!(
         pipeline.first(),
-        Some(&doc! { "$match": { "tenant_id": GLOBAL_TENANT } })
+        Some(&doc! {
+            "$match": {
+                "tenant_id": GLOBAL_TENANT,
+                "_id": { "$gt": cursor },
+            }
+        })
     );
-    assert!(pipeline.get(1).is_some_and(|stage| {
+    assert_eq!(pipeline.get(1), Some(&doc! { "$sort": { "_id": 1 } }));
+    assert_eq!(pipeline.get(2), Some(&doc! { "$limit": 26_i64 }));
+    assert!(pipeline.get(3).is_some_and(|stage| {
         stage
             .get_document("$project")
             .is_ok_and(|projection| projection.contains_key("items"))
     }));
+
+    Ok(())
+}
+
+#[test]
+fn dataset_page_returns_a_cursor_only_when_an_extra_document_exists(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let first_id = ObjectId::parse_str("000000000000000000000001")?;
+    let second_id = ObjectId::parse_str("000000000000000000000002")?;
+
+    let (datasets, cursor) =
+        dataset_documents_to_page(vec![query_document(first_id), query_document(second_id)], 1)?;
+
+    assert_eq!(datasets.len(), 1);
+    assert_eq!(cursor, Some(first_id.to_hex()));
+
+    let (datasets, cursor) = dataset_documents_to_page(vec![query_document(first_id)], 1)?;
+
+    assert_eq!(datasets.len(), 1);
+    assert!(cursor.is_none());
+
+    Ok(())
+}
+
+fn query_document(id: ObjectId) -> DatasetQuery {
+    DatasetQuery {
+        _id: Some(id),
+        id: mongodb::bson::Uuid::from_bytes(*uuid::Uuid::now_v7().as_bytes()),
+        tenant_id: "tenant".into(),
+        owner: "owner".into(),
+        tags: Vec::new(),
+        provider: DatasetProvider::HuggingFace,
+        huggingface_repo_locator: Some(DocumentHuggingFaceLocator {
+            id: "owner/repo".into(),
+            sha: "abc".into(),
+        }),
+        tapis_system_locator: None,
+        items: Vec::new(),
+        item_count: 0,
+        size: 0,
+        visibility: DocumentVisibility::Public,
+    }
 }

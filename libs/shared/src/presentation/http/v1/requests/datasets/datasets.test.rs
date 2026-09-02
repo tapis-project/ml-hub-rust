@@ -1,4 +1,5 @@
 use super::{DatasetProvider, ListDatasetsQueryParams, RegisterDatasetBody, Scope};
+use crate::application::inputs::dataset::ListDatasetsInput;
 use validator::Validate;
 
 fn body_json(provider: &str, locators: &str) -> String {
@@ -49,6 +50,32 @@ fn list_query_accepts_global_scope() -> Result<(), Box<dyn std::error::Error>> {
     let query: ListDatasetsQueryParams = serde_json::from_str(r#"{"scope":"Global"}"#)?;
 
     assert!(matches!(query.scope, Scope::Global));
+
+    Ok(())
+}
+
+#[test]
+fn list_query_uses_default_pagination_options() -> Result<(), Box<dyn std::error::Error>> {
+    let query: ListDatasetsQueryParams = serde_json::from_str(r#"{}"#)?;
+    let input = ListDatasetsInput::from(&query);
+
+    assert_eq!(input.limit(), ListDatasetsInput::DEFAULT_LIMIT);
+    assert!(input.cursor().is_none());
+    assert!(!input.include_count());
+
+    Ok(())
+}
+
+#[test]
+fn list_query_caps_limit_and_preserves_cursor_and_count() -> Result<(), Box<dyn std::error::Error>>
+{
+    let query: ListDatasetsQueryParams =
+        serde_json::from_str(r#"{"limit":101,"cursor":"cursor","include_count":true}"#)?;
+    let input = ListDatasetsInput::from(&query);
+
+    assert_eq!(input.limit(), ListDatasetsInput::MAX_LIMIT);
+    assert_eq!(input.cursor(), Some("cursor"));
+    assert!(input.include_count());
 
     Ok(())
 }

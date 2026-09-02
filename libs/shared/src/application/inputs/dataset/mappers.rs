@@ -53,6 +53,12 @@ impl TryFrom<requests::RegisterDatasetBody> for inputs::RegisterDatasetInput {
     }
 }
 
+impl From<&requests::ListDatasetsQueryParams> for inputs::ListDatasetsInput {
+    fn from(value: &requests::ListDatasetsQueryParams) -> Self {
+        Self::new(value.limit, value.cursor.clone(), value.include_count)
+    }
+}
+
 impl From<requests::Visibility> for inputs::VisibilityInput {
     fn from(v: requests::Visibility) -> Self {
         match v {

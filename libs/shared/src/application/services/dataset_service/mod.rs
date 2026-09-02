@@ -1,7 +1,7 @@
 use crate::{
     application::{
-        inputs::dataset::RegisterDatasetInput,
-        outputs::dataset::DatasetQueryOutput,
+        inputs::dataset::{ListDatasetsInput, RegisterDatasetInput},
+        outputs::dataset::{DatasetListOutput, DatasetQueryOutput},
         ports::dataset::{DatasetRepository, DatasetRepositoryError},
     },
     domain::entities::dataset::{Dataset, DatasetError, DatasetItemError, DatasetLocatorError},
@@ -125,11 +125,15 @@ impl DatasetService {
     pub async fn list_for_user(
         &self,
         ctx: &RequestContext,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetServiceError> {
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetServiceError> {
         Ok(retry_async(
             || {
-                self.dataset_repository
-                    .list_by_owner(ctx.actor_tenant_id(), ctx.actor_principal_id())
+                self.dataset_repository.list_by_owner(
+                    ctx.actor_tenant_id(),
+                    ctx.actor_principal_id(),
+                    input,
+                )
             },
             &Self::REPOSITORY_RETRY_POLICY,
             None,
@@ -140,9 +144,10 @@ impl DatasetService {
     pub async fn list_global(
         &self,
         _ctx: &RequestContext,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetServiceError> {
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetServiceError> {
         Ok(retry_async(
-            || self.dataset_repository.list_by_tenant(GLOBAL_TENANT),
+            || self.dataset_repository.list_by_tenant(GLOBAL_TENANT, input),
             &Self::REPOSITORY_RETRY_POLICY,
             None,
         )
@@ -152,11 +157,15 @@ impl DatasetService {
     pub async fn list_shared_with_user(
         &self,
         ctx: &RequestContext,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetServiceError> {
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetServiceError> {
         Ok(retry_async(
             || {
-                self.dataset_repository
-                    .list_shared_with_user(ctx.actor_tenant_id(), ctx.actor_principal_id())
+                self.dataset_repository.list_shared_with_user(
+                    ctx.actor_tenant_id(),
+                    ctx.actor_principal_id(),
+                    input,
+                )
             },
             &Self::REPOSITORY_RETRY_POLICY,
             None,

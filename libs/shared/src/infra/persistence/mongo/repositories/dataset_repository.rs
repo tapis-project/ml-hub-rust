@@ -1,6 +1,7 @@
 use crate::{
     application::{
-        outputs::dataset::DatasetQueryOutput,
+        inputs::dataset::ListDatasetsInput,
+        outputs::dataset::{DatasetListOutput, DatasetQueryOutput},
         ports::{
             dataset::{DatasetRepository as DatasetRepositoryPort, DatasetRepositoryError},
             errors::InfrastructureError,
@@ -21,9 +22,10 @@ use crate::{
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 use mongodb::{
-    bson::{doc, from_document, to_bson, Document},
+    bson::{doc, from_document, oid::ObjectId, to_bson, Document},
     Client, Collection,
 };
+use std::time::Duration;
 
 const DATASET_QUERY_ITEM_LIMIT: i32 = 50;
 
@@ -110,25 +112,28 @@ impl DatasetRepositoryPort for DatasetRepository {
         &self,
         tenant_id: &str,
         owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        self.list(owner_filter(tenant_id, owner)).await
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        self.list(owner_filter(tenant_id, owner), input).await
     }
 
     async fn list_by_tenant(
         &self,
         tenant_id: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        self.list(tenant_filter(tenant_id)).await
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        self.list(tenant_filter(tenant_id), input).await
     }
 
     async fn list_shared_with_user(
         &self,
         tenant_id: &str,
         _owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
         let visibility = to_bson(&DocumentVisibility::Public).map_err(map_error)?;
 
-        self.list(shared_filter(tenant_id, visibility)).await
+        self.list(shared_filter(tenant_id, visibility), input).await
     }
 }
 
@@ -136,23 +141,41 @@ impl DatasetRepository {
     async fn list(
         &self,
         filter: Document,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
-        let pipeline = dataset_query_pipeline(filter, false);
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError> {
+        let pipeline = dataset_list_pipeline(filter, input)?;
         let mut cursor = self
             .read_collection
             .aggregate(pipeline)
             .await
             .map_err(map_error)?;
 
-        let mut datasets = Vec::new();
+        let mut documents = Vec::with_capacity(usize::from(input.limit()) + 1);
 
         while let Some(document) = cursor.try_next().await.map_err(map_error)? {
             let document = from_document::<DatasetQueryDocument>(document).map_err(map_error)?;
 
-            datasets.push(DatasetQueryOutput::try_from(document).map_err(map_conversion_error)?);
+            documents.push(document);
         }
 
-        Ok(datasets)
+        let (datasets, cursor) = dataset_documents_to_page(documents, input.limit())?;
+        let count = if input.include_count() {
+            Some(
+                self.read_collection
+                    .estimated_document_count()
+                    .max_time(Duration::from_millis(100))
+                    .await
+                    .map_err(map_error)?,
+            )
+        } else {
+            None
+        };
+
+        Ok(DatasetListOutput {
+            datasets,
+            cursor,
+            count,
+        })
     }
 }
 
@@ -173,30 +196,77 @@ fn shared_filter(tenant_id: &str, visibility: mongodb::bson::Bson) -> Document {
 }
 
 fn dataset_query_pipeline(filter: Document, single_result: bool) -> Vec<Document> {
-    let mut pipeline = vec![
-        doc! { "$match": filter },
-        doc! {
-            "$project": {
-                "id": 1,
-                "tenant_id": 1,
-                "owner": 1,
-                "tags": 1,
-                "provider": 1,
-                "huggingface_repo_locator": 1,
-                "tapis_system_locator": 1,
-                "items": { "$slice": ["$items", DATASET_QUERY_ITEM_LIMIT] },
-                "item_count": { "$toLong": { "$size": "$items" } },
-                "size": 1,
-                "visibility": 1,
-            }
-        },
-    ];
+    let mut pipeline = vec![doc! { "$match": filter }, dataset_query_projection()];
 
     if single_result {
         pipeline.push(doc! { "$limit": 1 });
     }
 
     pipeline
+}
+
+fn dataset_list_pipeline(
+    mut filter: Document,
+    input: &ListDatasetsInput,
+) -> Result<Vec<Document>, DatasetRepositoryError> {
+    if let Some(cursor) = input.cursor() {
+        let id = ObjectId::parse_str(cursor).map_err(map_error)?;
+
+        filter.extend(doc! { "_id": { "$gt": id } });
+    }
+
+    Ok(vec![
+        doc! { "$match": filter },
+        doc! { "$sort": { "_id": 1 } },
+        doc! { "$limit": i64::from(input.limit()) + 1 },
+        dataset_query_projection(),
+    ])
+}
+
+fn dataset_documents_to_page(
+    documents: Vec<DatasetQueryDocument>,
+    limit: u16,
+) -> Result<(Vec<DatasetQueryOutput>, Option<String>), DatasetRepositoryError> {
+    let limit = usize::from(limit);
+    let has_next_page = documents.len() > limit;
+    let mut datasets = Vec::with_capacity(limit);
+    let mut last_id = None;
+
+    for document in documents.into_iter().take(limit) {
+        let id = document._id.ok_or_else(|| {
+            map_conversion_error("Dataset query result did not include its MongoDB ID")
+        })?;
+
+        datasets.push(DatasetQueryOutput::try_from(document).map_err(map_conversion_error)?);
+
+        last_id = Some(id);
+    }
+
+    let cursor = if has_next_page {
+        last_id.map(|id: ObjectId| id.to_hex())
+    } else {
+        None
+    };
+
+    Ok((datasets, cursor))
+}
+
+fn dataset_query_projection() -> Document {
+    doc! {
+        "$project": {
+            "id": 1,
+            "tenant_id": 1,
+            "owner": 1,
+            "tags": 1,
+            "provider": 1,
+            "huggingface_repo_locator": 1,
+            "tapis_system_locator": 1,
+            "items": { "$slice": ["$items", DATASET_QUERY_ITEM_LIMIT] },
+            "item_count": { "$toLong": { "$size": "$items" } },
+            "size": 1,
+            "visibility": 1,
+        }
+    }
 }
 
 fn map_error(error: impl std::fmt::Display) -> InfrastructureError {

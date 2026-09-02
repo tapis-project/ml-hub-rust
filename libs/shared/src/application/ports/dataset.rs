@@ -1,5 +1,9 @@
 use crate::{
-    application::{outputs::dataset::DatasetQueryOutput, ports::errors::InfrastructureError},
+    application::{
+        inputs::dataset::ListDatasetsInput,
+        outputs::dataset::{DatasetListOutput, DatasetQueryOutput},
+        ports::errors::InfrastructureError,
+    },
     domain::entities::dataset::Dataset,
 };
 use async_trait::async_trait;
@@ -34,16 +38,19 @@ pub trait DatasetRepository: Send + Sync {
         &self,
         tenant_id: &str,
         owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError>;
 
     async fn list_by_tenant(
         &self,
         tenant_id: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError>;
 
     async fn list_shared_with_user(
         &self,
         tenant_id: &str,
         owner: &str,
-    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
+        input: &ListDatasetsInput,
+    ) -> Result<DatasetListOutput, DatasetRepositoryError>;
 }

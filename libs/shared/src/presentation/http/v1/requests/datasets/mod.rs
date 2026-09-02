@@ -74,6 +74,12 @@ pub struct ListDatasetsQueryParams {
     #[serde(default)]
     #[param(inline)]
     pub scope: Scope,
+    /// Maximum number of Datasets to return. Values are capped at 100.
+    pub limit: Option<u16>,
+    /// Opaque cursor returned by the previous page.
+    pub cursor: Option<String>,
+    /// Include an estimated count of all persisted Datasets in response metadata.
+    pub include_count: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, ToSchema)]

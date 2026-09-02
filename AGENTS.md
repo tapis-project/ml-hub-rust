@@ -28,6 +28,7 @@ These instructions apply throughout this repository.
 - Put request/response DTOs and OpenAPI contracts in shared presentation modules; use validation at the request boundary to fail fast while retaining domain validation as authoritative.
 - Use lower_snake_case for field names. Preserve Rust enum variant casing on the wire unless the API explicitly requires a transformation.
 - Document handlers with Utoipa. Generated OpenAPI is source-derived: do not manually edit checked-in generated specifications unless explicitly requested.
+- Write `#[utoipa::path(...)]` attributes across multiple lines. Put the HTTP method, path, tag, summary or description, parameters, request body, and response block on separate lines; put each response entry on its own line. Never use a one-line Utoipa path attribute.
 - Utoipa does not reliably expose an enum's variants when an `IntoParams` query or path field is emitted as a component reference. Add `#[param(inline)]` to enum-valued parameter fields and test the generated operation parameter for its inline `schema.enum` values; follow the Agents scope-query example.
 - Apply the established authentication, tenancy, logging, and CORS/preflight middleware. Keep explicitly public routes public.
 

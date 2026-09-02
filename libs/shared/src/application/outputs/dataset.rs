@@ -5,6 +5,13 @@ use crate::{
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
+pub struct DatasetListOutput {
+    pub datasets: Vec<DatasetQueryOutput>,
+    pub cursor: Option<String>,
+    pub count: Option<u64>,
+}
+
+#[derive(Clone, Debug)]
 pub struct DatasetQueryOutput {
     pub id: Uuid,
     pub tenant_id: String,
