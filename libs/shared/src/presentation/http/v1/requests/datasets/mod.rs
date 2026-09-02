@@ -81,6 +81,7 @@ pub enum Scope {
     #[default]
     Owned,
     Shared,
+    Global,
 }
 
 #[derive(Clone, Debug, Deserialize, IntoParams)]

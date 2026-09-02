@@ -70,7 +70,7 @@ fn openapi_inlines_the_list_datasets_scope_parameter() -> Result<(), Box<dyn std
 
     assert_eq!(
         scope.pointer("/schema/enum"),
-        Some(&serde_json::json!(["Owned", "Shared"]))
+        Some(&serde_json::json!(["Owned", "Shared", "Global"]))
     );
 
     Ok(())

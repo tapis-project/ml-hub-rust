@@ -5,7 +5,7 @@ use crate::{
         ports::dataset::{DatasetRepository, DatasetRepositoryError},
     },
     domain::entities::dataset::{Dataset, DatasetError, DatasetItemError, DatasetLocatorError},
-    shared_kernel::{context::RequestContext, enums::Visibility},
+    shared_kernel::{constants::GLOBAL_TENANT, context::RequestContext, enums::Visibility},
 };
 use once_cell::sync::Lazy;
 use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
@@ -131,6 +131,18 @@ impl DatasetService {
                 self.dataset_repository
                     .list_by_owner(ctx.actor_tenant_id(), ctx.actor_principal_id())
             },
+            &Self::REPOSITORY_RETRY_POLICY,
+            None,
+        )
+        .await?)
+    }
+
+    pub async fn list_global(
+        &self,
+        _ctx: &RequestContext,
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetServiceError> {
+        Ok(retry_async(
+            || self.dataset_repository.list_by_tenant(GLOBAL_TENANT),
             &Self::REPOSITORY_RETRY_POLICY,
             None,
         )

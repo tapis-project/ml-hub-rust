@@ -47,7 +47,7 @@ export interface RegisterDatasetRequest {
 export class DatasetsApi extends runtime.BaseAPI {
 
     /**
-     * Get a dataset
+     * Get a dataset with at most its first 50 items
      */
     async getDatasetRaw(requestParameters: GetDatasetRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<GetDatasetResponse>> {
         if (requestParameters.datasetId === null || requestParameters.datasetId === undefined) {
@@ -69,7 +69,7 @@ export class DatasetsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get a dataset
+     * Get a dataset with at most its first 50 items
      */
     async getDataset(requestParameters: GetDatasetRequest, initOverrides?: RequestInit): Promise<GetDatasetResponse> {
         const response = await this.getDatasetRaw(requestParameters, initOverrides);
@@ -77,7 +77,7 @@ export class DatasetsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List datasets
+     * List datasets with at most the first 50 items from each
      */
     async listDatasetsRaw(requestParameters: ListDatasetsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListDatasetsResponse>> {
         const queryParameters: any = {};
@@ -99,7 +99,7 @@ export class DatasetsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List datasets
+     * List datasets with at most the first 50 items from each
      */
     async listDatasets(requestParameters: ListDatasetsRequest, initOverrides?: RequestInit): Promise<ListDatasetsResponse> {
         const response = await this.listDatasetsRaw(requestParameters, initOverrides);
@@ -147,5 +147,6 @@ export class DatasetsApi extends runtime.BaseAPI {
     */
 export enum ListDatasetsScopeEnum {
     Owned = 'Owned',
-    Shared = 'Shared'
+    Shared = 'Shared',
+    Global = 'Global'
 }

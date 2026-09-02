@@ -68,6 +68,13 @@ impl DatasetRepository for TestDatasetRepository {
         Ok(Vec::new())
     }
 
+    async fn list_by_tenant(
+        &self,
+        _tenant_id: &str,
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
+        Ok(Vec::new())
+    }
+
     async fn list_shared_with_user(
         &self,
         _tenant_id: &str,

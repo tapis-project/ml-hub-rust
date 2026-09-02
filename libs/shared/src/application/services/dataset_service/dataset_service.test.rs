@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 struct TestRepository {
     saved: Mutex<Option<Dataset>>,
     huggingface_lookup: Mutex<Option<(String, String, String, String)>>,
+    tenant_list: Mutex<Option<String>>,
 }
 
 #[async_trait]
@@ -55,6 +56,18 @@ impl DatasetRepository for TestRepository {
         Ok(Vec::new())
     }
 
+    async fn list_by_tenant(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
+        *self
+            .tenant_list
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = Some(tenant_id.into());
+
+        Ok(Vec::new())
+    }
+
     async fn list_shared_with_user(
         &self,
         _tenant_id: &str,
@@ -69,6 +82,7 @@ async fn register_dataset_derives_identity_and_saves() -> Result<(), DatasetServ
     let repository = Arc::new(TestRepository {
         saved: Mutex::new(None),
         huggingface_lookup: Mutex::new(None),
+        tenant_list: Mutex::new(None),
     });
 
     let service = DatasetService::new(repository.clone());
@@ -112,6 +126,7 @@ async fn huggingface_snapshot_lookup_derives_tenant_and_owner_from_context(
     let repository = Arc::new(TestRepository {
         saved: Mutex::new(None),
         huggingface_lookup: Mutex::new(None),
+        tenant_list: Mutex::new(None),
     });
 
     let service = DatasetService::new(repository.clone());
@@ -133,6 +148,32 @@ async fn huggingface_snapshot_lookup_derives_tenant_and_owner_from_context(
             "owner/repo".into(),
             "abc".into(),
         ))
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn list_global_uses_the_global_tenant() -> Result<(), DatasetServiceError> {
+    let repository = Arc::new(TestRepository {
+        saved: Mutex::new(None),
+        huggingface_lookup: Mutex::new(None),
+        tenant_list: Mutex::new(None),
+    });
+
+    let service = DatasetService::new(repository.clone());
+    let context = RequestContext::system(None);
+
+    let datasets = service.list_global(&context).await?;
+
+    assert!(datasets.is_empty());
+    assert_eq!(
+        repository
+            .tenant_list
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .as_deref(),
+        Some(GLOBAL_TENANT)
     );
 
     Ok(())

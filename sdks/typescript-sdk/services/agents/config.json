@@ -1,6 +1,6 @@
 {
 	"npmName": "@mlhub/agents-ts-sdk",
-	"npmVersion": "0.21.0",
+	"npmVersion": "0.23.0",
 	"snapshot" : false,
 	"supportsES6": false,
 	"modelPropertyNaming": "original",

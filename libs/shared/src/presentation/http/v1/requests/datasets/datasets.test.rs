@@ -1,4 +1,4 @@
-use super::{DatasetProvider, RegisterDatasetBody};
+use super::{DatasetProvider, ListDatasetsQueryParams, RegisterDatasetBody, Scope};
 use validator::Validate;
 
 fn body_json(provider: &str, locators: &str) -> String {
@@ -40,6 +40,15 @@ fn request_rejects_duplicate_item_paths() -> Result<(), Box<dyn std::error::Erro
     )?;
 
     assert!(body.validate().is_err());
+
+    Ok(())
+}
+
+#[test]
+fn list_query_accepts_global_scope() -> Result<(), Box<dyn std::error::Error>> {
+    let query: ListDatasetsQueryParams = serde_json::from_str(r#"{"scope":"Global"}"#)?;
+
+    assert!(matches!(query.scope, Scope::Global));
 
     Ok(())
 }

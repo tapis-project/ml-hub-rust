@@ -10,7 +10,7 @@ paths:
     get:
       tags:
         - Datasets
-      summary: List datasets
+      summary: List datasets with at most the first 50 items from each
       operationId: list_datasets
       parameters:
         - name: scope
@@ -21,6 +21,7 @@ paths:
             enum:
               - Owned
               - Shared
+              - Global
       responses:
         '200':
           description: Datasets listed
@@ -56,7 +57,7 @@ paths:
     get:
       tags:
         - Datasets
-      summary: Get a dataset
+      summary: Get a dataset with at most its first 50 items
       operationId: get_dataset
       parameters:
         - name: dataset_id
@@ -98,6 +99,7 @@ components:
         - huggingface_repo_locator
         - tapis_system_locator
         - items
+        - item_count
         - size
         - visibility
       properties:
@@ -107,10 +109,22 @@ components:
         id:
           type: string
           format: uuid
+        item_count:
+          type: integer
+          format: int64
+          description: >-
+            Total number of items in the complete Dataset before retrieval
+            projection.
+          minimum: 0
         items:
           type: array
           items:
             $ref: '#/components/schemas/DatasetItem'
+          description: >-
+            Dataset items. Retrieval operations return at most the first 50
+            items in persisted order;
+
+            registration returns every registered item.
         owner:
           type: string
         provider:

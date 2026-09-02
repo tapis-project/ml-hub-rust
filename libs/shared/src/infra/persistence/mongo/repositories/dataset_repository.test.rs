@@ -1,7 +1,8 @@
 use super::{
-    dataset_id_filter, dataset_query_pipeline, owner_filter, shared_filter,
+    dataset_id_filter, dataset_query_pipeline, owner_filter, shared_filter, tenant_filter,
     DATASET_QUERY_ITEM_LIMIT,
 };
+use crate::shared_kernel::constants::GLOBAL_TENANT;
 use mongodb::bson::{doc, Bson};
 
 #[test]
@@ -52,4 +53,23 @@ fn dataset_list_filters_are_tenant_scoped() {
         shared_filter("tenant", Bson::String("Public".into())),
         doc! { "tenant_id": "tenant", "visibility": "Public" }
     );
+    assert_eq!(
+        tenant_filter(GLOBAL_TENANT),
+        doc! { "tenant_id": GLOBAL_TENANT }
+    );
+}
+
+#[test]
+fn global_dataset_pipeline_keeps_the_item_projection() {
+    let pipeline = dataset_query_pipeline(tenant_filter(GLOBAL_TENANT), false);
+
+    assert_eq!(
+        pipeline.first(),
+        Some(&doc! { "$match": { "tenant_id": GLOBAL_TENANT } })
+    );
+    assert!(pipeline.get(1).is_some_and(|stage| {
+        stage
+            .get_document("$project")
+            .is_ok_and(|projection| projection.contains_key("items"))
+    }));
 }

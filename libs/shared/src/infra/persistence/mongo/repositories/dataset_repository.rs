@@ -114,6 +114,13 @@ impl DatasetRepositoryPort for DatasetRepository {
         self.list(owner_filter(tenant_id, owner)).await
     }
 
+    async fn list_by_tenant(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError> {
+        self.list(tenant_filter(tenant_id)).await
+    }
+
     async fn list_shared_with_user(
         &self,
         tenant_id: &str,
@@ -155,6 +162,10 @@ fn dataset_id_filter(tenant_id: &str, id: mongodb::bson::Uuid) -> Document {
 
 fn owner_filter(tenant_id: &str, owner: &str) -> Document {
     doc! { "tenant_id": tenant_id, "owner": owner }
+}
+
+fn tenant_filter(tenant_id: &str) -> Document {
+    doc! { "tenant_id": tenant_id }
 }
 
 fn shared_filter(tenant_id: &str, visibility: mongodb::bson::Bson) -> Document {

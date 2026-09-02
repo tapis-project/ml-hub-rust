@@ -20,6 +20,7 @@ pub async fn list_datasets(
     let datasets = match query.scope {
         Scope::Owned => service.list_for_user(&ctx).await,
         Scope::Shared => service.list_shared_with_user(&ctx).await,
+        Scope::Global => service.list_global(&ctx).await,
     };
 
     let datasets = match datasets {

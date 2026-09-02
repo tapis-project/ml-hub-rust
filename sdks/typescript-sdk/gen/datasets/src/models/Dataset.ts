@@ -55,7 +55,14 @@ export interface Dataset {
      */
     id: string;
     /**
-     * 
+     * Total number of items in the complete Dataset before retrieval projection.
+     * @type {number}
+     * @memberof Dataset
+     */
+    item_count: number;
+    /**
+     * Dataset items. Retrieval operations return at most the first 50 items in persisted order;
+     * registration returns every registered item.
      * @type {Array<DatasetItem>}
      * @memberof Dataset
      */
@@ -116,6 +123,7 @@ export function DatasetFromJSONTyped(json: any, ignoreDiscriminator: boolean): D
         
         'huggingface_repo_locator': HuggingFaceRepoLocatorFromJSON(json['huggingface_repo_locator']),
         'id': json['id'],
+        'item_count': json['item_count'],
         'items': ((json['items'] as Array<any>).map(DatasetItemFromJSON)),
         'owner': json['owner'],
         'provider': DatasetProviderFromJSON(json['provider']),
@@ -138,6 +146,7 @@ export function DatasetToJSON(value?: Dataset | null): any {
         
         'huggingface_repo_locator': HuggingFaceRepoLocatorToJSON(value.huggingface_repo_locator),
         'id': value.id,
+        'item_count': value.item_count,
         'items': ((value.items as Array<any>).map(DatasetItemToJSON)),
         'owner': value.owner,
         'provider': DatasetProviderToJSON(value.provider),

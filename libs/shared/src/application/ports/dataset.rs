@@ -36,6 +36,11 @@ pub trait DatasetRepository: Send + Sync {
         owner: &str,
     ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
 
+    async fn list_by_tenant(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<DatasetQueryOutput>, DatasetRepositoryError>;
+
     async fn list_shared_with_user(
         &self,
         tenant_id: &str,
