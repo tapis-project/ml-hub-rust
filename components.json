@@ -565,6 +565,7 @@
       "labels": ["sdk"],
       "commands": {
         "build": "./{{ self.rootDir }}/build",
+        "bump": "node ./{{ self.rootDir }}/scripts/bump-version.js",
         "generate-all": "./{{ self.rootDir }}/exec-generate-all {{ project-root }}",
         "exec": "./{{ self.rootDir }}/exec {{ project-root }} $(realpath ~/.npmrc)",
         "publish-models": "npm publish {{ self.rootDir }}/gen/models --access public",

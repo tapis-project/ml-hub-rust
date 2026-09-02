@@ -35,6 +35,9 @@ export interface GetDatasetRequest {
 
 export interface ListDatasetsRequest {
     scope?: ListDatasetsScopeEnum;
+    limit?: number;
+    cursor?: string;
+    includeCount?: boolean;
 }
 
 export interface RegisterDatasetRequest {
@@ -84,6 +87,18 @@ export class DatasetsApi extends runtime.BaseAPI {
 
         if (requestParameters.scope !== undefined) {
             queryParameters['scope'] = requestParameters.scope;
+        }
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.cursor !== undefined) {
+            queryParameters['cursor'] = requestParameters.cursor;
+        }
+
+        if (requestParameters.includeCount !== undefined) {
+            queryParameters['include_count'] = requestParameters.includeCount;
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

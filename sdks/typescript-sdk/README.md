@@ -17,7 +17,21 @@ Ex: `./manage generate-spec models`
 
 ## Step 3. Update the service configs
 
-Increment the version number in the **services/config.json** file for each service you want to update
+Increment the version number in every **services/*/config.json** file. The version bump script supports `minor` and `patch` increments:
+
+```sh
+npm run bump-version -- patch
+npm run bump-version -- minor
+```
+
+The same operation is available through the lifecycle management CLI:
+
+```sh
+./manage bump-version typescript-sdk -a patch
+./manage bump-version typescript-sdk -a minor
+```
+
+A minor bump resets the patch component to zero. A patch bump increments only the patch component.
 
 ## Step 4. Run the spec sdk generation script
 

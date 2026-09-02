@@ -29,6 +29,35 @@
                 "Global"
               ]
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of Datasets to return. Values are capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_count",
+            "in": "query",
+            "description": "Include an estimated count of all persisted Datasets in response metadata.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
