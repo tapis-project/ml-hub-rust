@@ -14,7 +14,7 @@
   "scripts": {
     "bump-version": "node ./scripts/bump-version.js",
     "generate": "./generate_all",
-    "build-services": "./build-services.sh",
+    "build-services": "./build-services",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

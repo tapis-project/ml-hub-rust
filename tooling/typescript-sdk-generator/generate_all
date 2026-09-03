@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+
+for service_dir in /src/tooling/typescript-sdk-generator/services/* ; do
+    service=$(basename "$service_dir")
+    /src/tooling/typescript-sdk-generator/generate "$service"
+done

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "Missing parameter: service to be generated"
+  exit 1
+fi
+
+function transform() {
+  if [ ! -f "/src/tooling/typescript-sdk-generator/services/$1/transform.js" ]; then
+    echo "Missing required transform.js file for service '$1'"
+    exit 1
+  fi
+
+  node "/src/tooling/typescript-sdk-generator/services/$1/transform.js"
+}
+
+function postGen() {
+  if [ -f "/src/tooling/typescript-sdk-generator/services/$1/post-gen.js" ]; then
+    node "/src/tooling/typescript-sdk-generator/services/$1/post-gen.js"
+  fi
+}
+
+# Run the transform scripts
+transform "$1"
+
+# Remove the previously generated typescript 
+rm -rf "/src/sdks/$1-ts-sdk"
+
+# Generate the typescript bindings from the transformed open spec
+npx openapi-generator-cli generate \
+  --input-spec "/src/tooling/typescript-sdk-generator/services/$1/transformed_spec.yml" \
+  --generator-name typescript-fetch \
+  --output "/src/sdks/$1-ts-sdk" \
+  --config "/src/tooling/typescript-sdk-generator/services/$1/config.json" \
+  -t /src/tooling/typescript-sdk-generator/_templates
+
+cd "/src/sdks/$1-ts-sdk"
+
+postGen "$1"
+
+npm install
+
+npm run build

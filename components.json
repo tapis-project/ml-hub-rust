@@ -538,18 +538,21 @@
       }
     },
     {
-      "name": "typescript-sdk",
-      "url": "https://www.npmjs.com/package/@mlhub/ts-sdk",
+      "name": "typescript-sdk-generator",
       "lifecycle": "development",
-      "rootDir": "sdks/typescript-sdk",
-      "labels": ["sdk"],
+      "rootDir": "tooling/typescript-sdk-generator",
+      "labels": ["sdk", "tooling"],
       "commands": {
         "build": "./{{ self.rootDir }}/build",
         "bump": "node ./{{ self.rootDir }}/scripts/bump-version.js",
-        "generate-all": "./{{ self.rootDir }}/exec-generate-all {{ project-root }}",
+        "generate-agents": "./{{ self.rootDir }}/exec-generate {{ project-root }} agents",
+        "generate-models": "./{{ self.rootDir }}/exec-generate {{ project-root }} models",
+        "generate-deployments": "./{{ self.rootDir }}/exec-generate {{ project-root }} deployments",
+        "generate-datasets": "./{{ self.rootDir }}/exec-generate {{ project-root }} datasets",
+        "generate": "./{{ self.rootDir }}/exec-generate {{ project-root }}",
         "exec": "./{{ self.rootDir }}/exec {{ project-root }} $(realpath ~/.npmrc)",
-        "publish-models": "npm publish {{ self.rootDir }}/gen/models --access public",
-        "publish-sdk": "npm publish {{ self.rootDir }}/ts-sdk --access public",
+        "publish-models": "npm publish {{ sdks-dir }}/models-ts-sdk --access public",
+        "publish-sdk": "npm publish {{ sdks-dir }}/ts-sdk --access public",
         "add-npm-token": "[ -n \"$NPM_TOKEN\" ] && echo \"//registry.npmjs.org/:_authToken=$NPM_TOKEN\" >> ~/.npmrc"
       }
     },

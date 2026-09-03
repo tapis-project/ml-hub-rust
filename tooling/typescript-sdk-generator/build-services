@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for service in gen/*/ ; do
+for service in /src/sdks/*-ts-sdk/ ; do
     pushd .
     cd $service
     npm install

@@ -2,12 +2,12 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const { execSync } = require('child_process');
 
-console.log("MLHub Datasets API transform");
+console.log("MLHub Models API transform");
 
 try {
   // Convert json
-  const specPath = "/src/specs/datasets/openapi.json";
-  const sdkServiceDir = "/src/sdks/typescript-sdk/services/datasets"
+  const specPath = "/src/specs/models/openapi.json";
+  const sdkServiceDir = "/src/tooling/typescript-sdk-generator/services/models"
   const sdkYamlSpecPath = `${sdkServiceDir}/spec.yml`
   fs.writeFileSync(
     sdkYamlSpecPath,
@@ -19,7 +19,7 @@ try {
   execSync(`npx openapi-down-convert --allOf --input ${sdkYamlSpecPath} --output ${sdkDowngradedJsonSpecPath}`, { encoding: 'utf-8' });
   
   const sdkTransformedJsonSpecPath = `${sdkServiceDir}/transformed_spec.json`
-  const sdkScriptsDir = "/src/sdks/typescript-sdk/scripts"
+  const sdkScriptsDir = "/src/tooling/typescript-sdk-generator/scripts"
   const fixNullPropScript = `${sdkScriptsDir}/fix_null_properties.py`
   execSync(`python3 ${fixNullPropScript} ${sdkDowngradedJsonSpecPath} ${sdkTransformedJsonSpecPath}`, { encoding: 'utf-8' });
 

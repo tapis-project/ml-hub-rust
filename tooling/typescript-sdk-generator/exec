@@ -12,12 +12,12 @@ if [[ -z $npmrcPath ]]; then
     exit 1
 fi
 
-# --mount type=bind,source="$projectRoot/sdks/typescript-sdk/gen,target=/src/sdks/typescript-sdk/gen" \
-
 docker run \
     -it \
     --rm \
-    --mount type=bind,source="$projectRoot/sdks/typescript-sdk/,target=/src/sdks/typescript-sdk/" \
+    --mount type=bind,source="$projectRoot/tooling/typescript-sdk-generator",target=/src/tooling/typescript-sdk-generator \
+    --mount type=volume,target=/src/tooling/typescript-sdk-generator/node_modules \
     --mount type=bind,source="$projectRoot/specs",target=/src/specs \
+    --mount type=bind,source="$projectRoot/sdks",target=/src/sdks \
     --mount type=bind,source="$npmrcPath",target=/root/.npmrc \
-    tapis/mlhub-typescript-sdk:local
+    tapis/mlhub-typescript-sdk-generator:local
