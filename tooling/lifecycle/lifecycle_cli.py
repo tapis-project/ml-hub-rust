@@ -1,8 +1,7 @@
-import argparse, sys, json, os, subprocess
+import argparse, sys, json, os
 
 
 CONFIG_FILE_NAME = "components.json"
-CONFIG_LOCK_FILE_NAME = "components-lock.json"
 
 def prompt(message, affirmations=[], negations=[]):
     if len(affirmations) == 0 or len(negations) == 0:
@@ -29,12 +28,6 @@ def get_config_path():
     return os.path.join(
         get_project_root(),
         CONFIG_FILE_NAME
-    )
-
-def get_lockfile_path():
-    return os.path.join(
-        get_project_root(),
-        CONFIG_LOCK_FILE_NAME
     )
 
 # Component reference vars
@@ -78,64 +71,6 @@ def load(path, default=None):
         sys.exit(1)
 
     return obj
-
-def save(obj: dict, path):
-    # Serialize the config
-    try:
-        with open(path, "w") as file:
-            file.write(json.dumps(obj, indent=2))
-    except Exception as e:
-        print(f"❌ An error has occurred updating the config file: {e}")
-        sys.exit(1)
-
-    return obj
-
-def initialize_component(component, template_vars, skip_initialization=False):
-    # Skip the initialization
-    if skip_initialization:
-        return True
-    
-    # Load the lock config. If one does not exist, create it
-    lock_config = load(get_lockfile_path(), default={})
-    
-    # The initialization command in the config file
-    init_command = component.get("commands", {}).get("initialize")
-
-    if init_command == None:
-        return True
-    
-    init_command = replace_template_vars(
-        replace_ref_vars(
-            replace_command_refs(init_command, component),
-            component
-        ),
-        template_vars
-    )
-
-    print(f"🔧 Initializing component '{component.get('name')}'. Running command: {init_command}")
-    result = subprocess.run(
-        replace_ref_vars(init_command, component),
-        check=False,
-        capture_output=True,
-        shell=True
-    )
-    
-    if result.stdout:
-        print(result.stdout.decode("utf8"))
-
-    # If the code provided is non-zero, there was an error during component
-    # initialization.
-    if result.returncode > 0:
-        print(f"❌ There was an error initializing component '{component.get('name')}': {result.stderr.decode('utf8')}")
-        return False
-    
-    # Add the initialized component name to the config file
-    initialized_components = lock_config.get("initialized", [])
-    initialized_components.append(component["name"])
-    lock_config["initialized"] = list(set(initialized_components))
-    save(lock_config, get_lockfile_path())
-
-    return True
 
 def all_in_list(needles: list, haystack: list):
     for needle in needles:
@@ -269,24 +204,6 @@ def main():
         help="Prompts the user to confirm the command to be run for each component"
     )
     
-    # Forces a run the 'initialize' script for each component
-    group.add_argument(
-        "-i",
-        "--initialize",
-        default=False,
-        action='store_true',
-        help="Forces a run the 'initialize' script for each component"
-    )
-
-    # Skips the 'initialize' script for each component even if the component is uninitialized
-    group.add_argument(
-        "-s",
-        "--skip-initialization",
-        default=False,
-        action='store_true',
-        help="Skips the 'initialize' script for each component even if the component is uninitialized"
-    )
-
     # Arguments to be added to the end of the command
     parser.add_argument(
         "-a",
@@ -377,24 +294,6 @@ def main():
         # Continue the loop if the user specifies a dry run
         if args.dry_run:
             continue
-        
-        # Default the initialization flag to True
-        initialized_success = True
-
-        # Initialize the component if not already initialized
-        lock_config = load(get_lockfile_path(), default={})
-        if (
-            component.get("name") not in lock_config.get("initialized", [])
-            or args.initialize
-        ):
-            initialized_success = initialize_component(
-                component,
-                template_vars,
-                skip_initialization=args.skip_initialization
-            )
-        
-        if not initialized_success:
-            sys.exit(1)
         
         # Add command to cd into the components root directory
         command_to_run = f"set -e; {command}"

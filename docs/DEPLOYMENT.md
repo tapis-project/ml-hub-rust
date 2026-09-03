@@ -58,19 +58,19 @@ From the project's root directory, run the following commands to initalize the p
 
 ### Models API
 
-0. `./manage buildl models -s` - Builds the Models API image and loads it into minikube
+0. `./manage buildl models` - Builds the Models API image and loads it into minikube
 
 0. `./manage start models` - Starts the Models API pod(s)
 
 ### Deployments API
 
-0. `./manage buildl deployments -s` - Builds the Deployments API image and loads it into Minikube.
+0. `./manage buildl deployments` - Builds the Deployments API image and loads it into Minikube.
 
 0. `./manage start deployments` - Starts the Deployments API pod(s).
 
 ### Agents API
 
-0. `./manage buildl agents -s` - Builds the Agents API image and loads it into Minikube.
+0. `./manage buildl agents` - Builds the Agents API image and loads it into Minikube.
 
 0. `./manage start agents` - Starts the Agents API pod(s).
 
@@ -135,7 +135,7 @@ The request returns matching model metadata in the standard MLHub response envel
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a Python tool that can be invoked through `./manage` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`. This is the same tool invoked previously to initialize the MLHub project locally.
+The Lifecycle Management CLI is a Python tool that can be invoked through `./manage` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`.
 
 ### The Components File
 

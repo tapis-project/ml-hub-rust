@@ -201,6 +201,35 @@ class ComponentAliasTests(unittest.TestCase):
         self.assertNotIn("echo models", output)
         self.assertIn("echo deployments", output)
 
+    def test_cli_rejects_removed_initialization_flags(self):
+        for initialization_flag in [
+            "-i",
+            "--initialize",
+            "-s",
+            "--skip-initialization",
+        ]:
+            with self.subTest(initialization_flag=initialization_flag):
+                with self.assertRaises(SystemExit) as error:
+                    self.run_cli("test", "models", initialization_flag)
+
+                self.assertEqual(error.exception.code, 2)
+
+    def test_cli_executes_command_without_initialization_state(self):
+        config = {"components": self.components}
+
+        with tempfile.TemporaryDirectory() as directory:
+            config_path = Path(directory) / "components.json"
+            config_path.write_text(json.dumps(config))
+
+            with (
+                patch.object(lifecycle_cli, "get_config_path", return_value=str(config_path)),
+                patch.object(sys, "argv", ["lifecycle_cli.py", "test", "models"]),
+                patch("os.system") as system_mock,
+            ):
+                lifecycle_cli.main()
+
+        system_mock.assert_called_once_with("set -e; echo models")
+
     def run_cli(self, *arguments):
         config = {"components": self.components}
 
@@ -221,16 +250,12 @@ class ComponentAliasTests(unittest.TestCase):
 
         return "\n".join(str(call.args[0]) for call in print_mock.call_args_list)
 
-    def test_configuration_paths_resolve_from_repository_root(self):
+    def test_configuration_path_resolves_from_repository_root(self):
         repository_root = Path(lifecycle_cli.__file__).resolve().parents[2]
 
         self.assertEqual(
             Path(lifecycle_cli.get_config_path()),
             repository_root / "components.json",
-        )
-        self.assertEqual(
-            Path(lifecycle_cli.get_lockfile_path()),
-            repository_root / "components-lock.json",
         )
 
 
