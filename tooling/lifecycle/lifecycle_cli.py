@@ -209,7 +209,17 @@ def main():
     parser.add_argument(
         "components",
         nargs="*",
-        help="The name of one or more components upon which to run the command. If no value provided, the provided command will be run for all components"
+        help="The name or alias of one or more components upon which to run the command"
+    )
+
+    # Selects all components
+    parser.add_argument(
+        "-A",
+        "--all",
+        dest="all_components",
+        default=False,
+        action="store_true",
+        help="Runs the provided command for all components"
     )
 
     # Replaces all instances of the provided key (first argument) in a command
@@ -308,6 +318,16 @@ def main():
     if (len(all_components) == 0 or type(all_components) != list):
         print("❌ Invalid configuration file. The components property of the components.json file must be a non-empty array of 'component' objects")
         sys.exit(1)
+
+    if args.all_components and len(args.components) > 0:
+        parser.error("--all cannot be combined with explicit components")
+
+    if (
+        not args.all_components
+        and len(args.components) == 0
+        and not args.labels
+    ):
+        parser.error("provide one or more components, --all, or --labels")
 
     # The user provided command to be run on the selected components
     command_name = args.command[0]

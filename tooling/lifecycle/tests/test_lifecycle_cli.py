@@ -14,15 +14,18 @@ class ComponentAliasTests(unittest.TestCase):
             {
                 "name": "models",
                 "aliases": ["model", "mdl"],
+                "labels": ["api"],
                 "commands": {"test": "echo {{ self.name }}"},
             },
             {
                 "name": "deployments",
                 "aliases": ["deploy", "deps"],
+                "labels": ["api", "local"],
                 "commands": {"test": "echo {{ self.name }}"},
             },
             {
                 "name": "agents",
+                "labels": ["local"],
                 "commands": {"test": "echo {{ self.name }}"},
             },
         ]
@@ -106,6 +109,99 @@ class ComponentAliasTests(unittest.TestCase):
             lifecycle_cli.build_component_identifier_map(self.components)
 
     def test_cli_dry_run_accepts_an_alias(self):
+        output = self.run_cli("test", "deploy", "--dry-run", "--verbose")
+
+        self.assertIn("echo deployments", output)
+
+    def test_cli_requires_an_explicit_selection(self):
+        with self.assertRaises(SystemExit) as error:
+            self.run_cli("test", "--dry-run")
+
+        self.assertEqual(error.exception.code, 2)
+
+    def test_cli_accepts_long_and_short_all_flags(self):
+        for all_flag in ["--all", "-A"]:
+            with self.subTest(all_flag=all_flag):
+                output = self.run_cli(
+                    "test",
+                    all_flag,
+                    "--dry-run",
+                    "--verbose",
+                )
+
+                self.assertIn("echo models", output)
+                self.assertIn("echo deployments", output)
+                self.assertIn("echo agents", output)
+
+    def test_cli_rejects_all_with_a_component_name_or_alias(self):
+        for component_identifier in ["models", "model"]:
+            with self.subTest(component_identifier=component_identifier):
+                with self.assertRaises(SystemExit) as error:
+                    self.run_cli(
+                        "test",
+                        component_identifier,
+                        "--all",
+                        "--dry-run",
+                    )
+
+                self.assertEqual(error.exception.code, 2)
+
+    def test_cli_labels_without_components_select_matching_components(self):
+        output = self.run_cli(
+            "test",
+            "--labels",
+            "api",
+            "--dry-run",
+            "--verbose",
+        )
+
+        self.assertIn("echo models", output)
+        self.assertIn("echo deployments", output)
+        self.assertNotIn("echo agents", output)
+
+    def test_cli_multiple_labels_require_every_label(self):
+        output = self.run_cli(
+            "test",
+            "--labels",
+            "api",
+            "local",
+            "--dry-run",
+            "--verbose",
+        )
+
+        self.assertNotIn("echo models", output)
+        self.assertIn("echo deployments", output)
+        self.assertNotIn("echo agents", output)
+
+    def test_cli_all_with_labels_selects_matching_components(self):
+        output = self.run_cli(
+            "test",
+            "--all",
+            "--labels",
+            "api",
+            "--dry-run",
+            "--verbose",
+        )
+
+        self.assertIn("echo models", output)
+        self.assertIn("echo deployments", output)
+        self.assertNotIn("echo agents", output)
+
+    def test_cli_explicit_components_are_filtered_by_labels(self):
+        output = self.run_cli(
+            "test",
+            "models",
+            "deployments",
+            "--labels",
+            "local",
+            "--dry-run",
+            "--verbose",
+        )
+
+        self.assertNotIn("echo models", output)
+        self.assertIn("echo deployments", output)
+
+    def run_cli(self, *arguments):
         config = {"components": self.components}
 
         with tempfile.TemporaryDirectory() as directory:
@@ -117,14 +213,13 @@ class ComponentAliasTests(unittest.TestCase):
                 patch.object(
                     sys,
                     "argv",
-                    ["lifecycle_cli.py", "test", "deploy", "--dry-run", "--verbose"],
+                    ["lifecycle_cli.py", *arguments],
                 ),
                 patch("builtins.print") as print_mock,
             ):
                 lifecycle_cli.main()
 
-        output = "\n".join(str(call.args[0]) for call in print_mock.call_args_list)
-        self.assertIn("echo deployments", output)
+        return "\n".join(str(call.args[0]) for call in print_mock.call_args_list)
 
     def test_configuration_paths_resolve_from_repository_root(self):
         repository_root = Path(lifecycle_cli.__file__).resolve().parents[2]

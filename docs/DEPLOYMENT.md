@@ -152,6 +152,17 @@ A component may define an optional `aliases` array containing alternate names fo
 
 The canonical name and each alias select the same component. For example, `./manage start deployments`, `./manage start deploy`, and `./manage start deps` are equivalent. Aliases are case-sensitive and must be unique across all component names and aliases.
 
+A lifecycle command must select at least one component explicitly. Provide component names or aliases, use `-A` or `--all` to select every component, or use `--labels` to select only components containing every requested label:
+
+```shell
+./manage test models deployments
+./manage test --all
+./manage test --labels api
+./manage test --all --labels api
+```
+
+The `--all` flag cannot be combined with explicit component names or aliases. A label filter may be applied either to explicitly selected components or to all components.
+
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI
 2. Run `kubectl port-forward pod/mlhub-mongo-stateful-set-0 27017:27017`
