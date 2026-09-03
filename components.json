@@ -34,7 +34,8 @@
     "hf-dataset-etl-extract-image": "tapis/mlhub-hf-dataset-etl-extract",
     "model-deployment-controller-deployment": "mlhub-model-deployment-controller-deployment",
     "model-deployment-controller-image": "tapis/mlhub-model-deployment-controller",
-    "project-root": "$(pwd)"
+    "project-root": "$(pwd)",
+    "specs-dir": "specs"
   },
   "components": [
     {
@@ -42,7 +43,6 @@
       "rootDir": "services/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "services/models/spec/v1",
       "commands": {
         "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
@@ -64,8 +64,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -c models-api -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin models-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -135,7 +134,6 @@
     {
       "name": "datasets",
       "rootDir": "services/datasets",
-      "specPath": "services/datasets/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -159,8 +157,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin datasets-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -170,7 +167,6 @@
     {
       "name": "deployments",
       "rootDir": "services/deployments",
-      "specPath": "services/deployments/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -194,8 +190,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin deployments-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -205,7 +200,6 @@
     {
       "name": "agents",
       "rootDir": "services/agents",
-      "specPath": "services/agents/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
@@ -229,13 +223,26 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin agents-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
         "nfs"
       ]
+    },
+    {
+      "name": "specs",
+      "rootDir": "specs",
+      "labels": ["workflow"],
+      "lifecycle": "development",
+      "commands": {
+        "initialize": "",
+        "generate-agents": "mkdir -p {{ specs-dir }}/agents && cargo run --bin agents-openapi | jq > {{ specs-dir }}/agents/openapi.json",
+        "generate-models": "mkdir -p {{ specs-dir }}/models && cargo run --bin models-openapi | jq > {{ specs-dir }}/models/openapi.json",
+        "generate-deployments": "mkdir -p {{ specs-dir }}/deployments && cargo run --bin deployments-openapi | jq > {{ specs-dir }}/deployments/openapi.json",
+        "generate-datasets": "mkdir -p {{ specs-dir }}/datasets && cargo run --bin datasets-openapi | jq > {{ specs-dir }}/datasets/openapi.json",
+        "generate": "{{ self.commands.generate-agents }} && {{ self.commands.generate-models }} && {{ self.commands.generate-deployments }} && {{ self.commands.generate-datasets }}"
+      }
     },
     {
       "name": "nfs",

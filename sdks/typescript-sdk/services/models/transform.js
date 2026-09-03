@@ -6,7 +6,7 @@ console.log("MLHub Models API transform");
 
 try {
   // Convert json
-  const specPath = "/src/services/models/spec/v1/openapi.json";
+  const specPath = "/src/specs/models/openapi.json";
   const sdkServiceDir = "/src/sdks/typescript-sdk/services/models"
   const sdkYamlSpecPath = `${sdkServiceDir}/spec.yml`
   fs.writeFileSync(

@@ -6,7 +6,7 @@ console.log("MLHub Datasets API transform");
 
 try {
   // Convert json
-  const specPath = "/src/services/datasets/spec/v1/openapi.json";
+  const specPath = "/src/specs/datasets/openapi.json";
   const sdkServiceDir = "/src/sdks/typescript-sdk/services/datasets"
   const sdkYamlSpecPath = `${sdkServiceDir}/spec.yml`
   fs.writeFileSync(

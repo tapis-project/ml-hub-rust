@@ -6,7 +6,7 @@ console.log("MLHub Deployments API transform");
 
 try {
   // Convert json
-  const specPath = "/src/services/deployments/spec/v1/openapi.json";
+  const specPath = "/src/specs/deployments/openapi.json";
   const sdkServiceDir = "/src/sdks/typescript-sdk/services/deployments"
   const sdkYamlSpecPath = `${sdkServiceDir}/spec.yml`
   fs.writeFileSync(

@@ -1,0 +1,463 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MLHub Datasets API",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/datasets-api/datasets": {
+      "get": {
+        "tags": [
+          "Datasets"
+        ],
+        "summary": "List datasets with at most the first 50 items from each",
+        "operationId": "list_datasets",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Owned",
+                "Shared",
+                "Global"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of Datasets to return. Values are capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_count",
+            "in": "query",
+            "description": "Include an estimated count of all persisted Datasets in response metadata.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datasets listed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDatasetsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to list datasets"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Datasets"
+        ],
+        "summary": "Register a dataset",
+        "operationId": "register_dataset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDatasetBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dataset registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterDatasetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid dataset registration"
+          },
+          "500": {
+            "description": "Unable to register dataset"
+          }
+        }
+      }
+    },
+    "/datasets-api/datasets/{dataset_id}": {
+      "get": {
+        "tags": [
+          "Datasets"
+        ],
+        "summary": "Get a dataset with at most its first 50 items",
+        "operationId": "get_dataset",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dataset found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetDatasetResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dataset not found"
+          },
+          "500": {
+            "description": "Unable to get dataset"
+          }
+        }
+      }
+    },
+    "/datasets-api/healthcheck": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Check service health",
+        "operationId": "healthcheck",
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Dataset": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "owner",
+          "tags",
+          "provider",
+          "huggingface_repo_locator",
+          "tapis_system_locator",
+          "items",
+          "item_count",
+          "size",
+          "visibility"
+        ],
+        "properties": {
+          "huggingface_repo_locator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HuggingFaceRepoLocator"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "item_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total number of items in the complete Dataset before retrieval projection.",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetItem"
+            },
+            "description": "Dataset items. Retrieval operations return at most the first 50 items in persisted order;\nregistration returns every registered item."
+          },
+          "owner": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DatasetProvider"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tapis_system_locator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TapisSystemLocator"
+              }
+            ]
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        }
+      },
+      "DatasetItem": {
+        "type": "object",
+        "required": [
+          "path",
+          "size"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "DatasetProvider": {
+        "type": "string",
+        "enum": [
+          "HuggingFace",
+          "Tapis"
+        ]
+      },
+      "GetDatasetResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "HuggingFaceRepoLocator": {
+        "type": "object",
+        "required": [
+          "id",
+          "sha"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sha": {
+            "type": "string"
+          }
+        }
+      },
+      "ListDatasetsResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dataset"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterDatasetBody": {
+        "type": "object",
+        "required": [
+          "provider",
+          "items",
+          "size"
+        ],
+        "properties": {
+          "huggingface_repo_locator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HuggingFaceRepoLocator"
+              }
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetItem"
+            }
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DatasetProvider"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tapis_system_locator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TapisSystemLocator"
+              }
+            ]
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterDatasetResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "TapisSystemLocator": {
+        "type": "object",
+        "required": [
+          "site_id",
+          "tenant_id",
+          "system_id",
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "site_id": {
+            "type": "string"
+          },
+          "system_id": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          }
+        }
+      },
+      "Visibility": {
+        "type": "string",
+        "enum": [
+          "Public",
+          "Private"
+        ]
+      }
+    }
+  }
+}

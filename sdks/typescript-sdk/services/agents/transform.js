@@ -6,7 +6,7 @@ console.log("MLHub Agents API transform");
 
 try {
   // Convert json
-  const specPath = "/src/services/agents/spec/v1/openapi.json";
+  const specPath = "/src/specs/agents/openapi.json";
   const sdkServiceDir = "/src/sdks/typescript-sdk/services/agents"
   const sdkYamlSpecPath = `${sdkServiceDir}/spec.yml`
   fs.writeFileSync(
