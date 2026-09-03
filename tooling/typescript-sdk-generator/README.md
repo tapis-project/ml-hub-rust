@@ -9,14 +9,14 @@ This tooling generates the service-specific TypeScript SDK packages under `sdks/
 From the root of the project, generate every OpenAPI specification or one service specification:
 
 ```sh
-./manage generate specs
-./manage generate-models specs
+./dev generate specs
+./dev generate-models specs
 ```
 
 ## Step 2. Build, then run and exec into the SDK bulider container
 
-1. `./manage build typescript-sdk-generator`
-2. `./manage exec typescript-sdk-generator`
+1. `./dev build typescript-sdk-generator`
+2. `./dev exec typescript-sdk-generator`
 
 ## Step 3. Update the service configs
 
@@ -30,8 +30,8 @@ npm run bump-version -- minor
 The same operation is available through the lifecycle management CLI:
 
 ```sh
-./manage bump typescript-sdk-generator -a patch
-./manage bump typescript-sdk-generator -a minor
+./dev bump typescript-sdk-generator -a patch
+./dev bump typescript-sdk-generator -a minor
 ```
 
 A minor bump resets the patch component to zero. A patch bump increments only the patch component.
@@ -41,10 +41,10 @@ A minor bump resets the patch component to zero. A patch bump increments only th
 Use the lifecycle component to generate all SDKs or an individual service SDK:
 
 ```sh
-./manage generate sdks
-./manage typescript-generate sdks
-./manage generate typescript-sdk-generator
-./manage generate-models typescript-sdk-generator
+./dev generate sdks
+./dev typescript-generate sdks
+./dev generate typescript-sdk-generator
+./dev generate-models typescript-sdk-generator
 ```
 
 The `sdks` component is the cross-language generation workflow. It currently delegates to the TypeScript generator and can incorporate additional language generators later.

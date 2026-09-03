@@ -42,43 +42,43 @@ From the project's root directory, run the following commands to initalize the p
 
 0. `chmod +x manage` - Makes the lifecycle script executable
 
-0. `./manage start nfs` - Starts the shared file system
+0. `./dev start nfs` - Starts the shared file system
 
-0. `./manage start rabbit` - Starts the message broker
+0. `./dev start rabbit` - Starts the message broker
 
-0. `./manage start mongo` - Starts the database
+0. `./dev start mongo` - Starts the database
 
-0. `./manage start traefik` - Starts the reverse proxy that routes traffic to the APIs
+0. `./dev start traefik` - Starts the reverse proxy that routes traffic to the APIs
 
 ### Migrations (Required)
 
-0. `./manage buildl-all migrations` - Builds all migration images and loads them into Minikube.
+0. `./dev buildl-all migrations` - Builds all migration images and loads them into Minikube.
 
-0. `./manage run-all migrations` - Runs the Models, Federated Identities, and Principals migrations in order. The command stops if any migration fails.
+0. `./dev run-all migrations` - Runs the Models, Federated Identities, and Principals migrations in order. The command stops if any migration fails.
 
 ### Models API
 
-0. `./manage buildl models` - Builds the Models API image and loads it into minikube
+0. `./dev buildl models` - Builds the Models API image and loads it into minikube
 
-0. `./manage start models` - Starts the Models API pod(s)
+0. `./dev start models` - Starts the Models API pod(s)
 
 ### Deployments API
 
-0. `./manage buildl deployments` - Builds the Deployments API image and loads it into Minikube.
+0. `./dev buildl deployments` - Builds the Deployments API image and loads it into Minikube.
 
-0. `./manage start deployments` - Starts the Deployments API pod(s).
+0. `./dev start deployments` - Starts the Deployments API pod(s).
 
 ### Agents API
 
-0. `./manage buildl agents` - Builds the Agents API image and loads it into Minikube.
+0. `./dev buildl agents` - Builds the Agents API image and loads it into Minikube.
 
-0. `./manage start agents` - Starts the Agents API pod(s).
+0. `./dev start agents` - Starts the Agents API pod(s).
 
 ### Artifacts Suite (Optional)
 
-0. `./manage buildl artifact-ingester && ./manage start artifact-ingester` - Start up the artifact ingestion workers
+0. `./dev buildl artifact-ingester && ./dev start artifact-ingester` - Start up the artifact ingestion workers
 
-0. `./manage buildl artifact-publisher && ./manage start artifact-publisher` - Start up the artifact publisher workers
+0. `./dev buildl artifact-publisher && ./dev start artifact-publisher` - Start up the artifact publisher workers
 
 ### Networking
 
@@ -97,7 +97,7 @@ From the project's root directory, run the following commands to initalize the p
 
 Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
-`./manage expose traefik`
+`./dev expose traefik`
 
 You can now make request to the IP address and port output by the last command. The section below will provide detailed instructions on how to make request to each service.
 
@@ -107,11 +107,11 @@ You can now make request to the IP address and port output by the last command. 
 
 Build and load both images used by the Hugging Face model ETL job, then run the job in Minikube:
 
-0. `./manage buildl-extract hf-model-etl` - Builds and loads the Hugging Face metadata extraction image.
+0. `./dev buildl-extract hf-model-etl` - Builds and loads the Hugging Face metadata extraction image.
 
-0. `./manage buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
+0. `./dev buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
 
-0. `./manage run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load model metadata into MLHub.
+0. `./dev run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load model metadata into MLHub.
 
 ## 4. Making requests
 
@@ -135,7 +135,7 @@ The request returns matching model metadata in the standard MLHub response envel
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a Python tool that can be invoked through `./manage` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`.
+The Lifecycle Management CLI is a Python tool that can be invoked through `./dev` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`.
 
 ### The Components File
 
@@ -150,15 +150,15 @@ A component may define an optional `aliases` array containing alternate names fo
 }
 ```
 
-The canonical name and each alias select the same component. For example, `./manage start deployments`, `./manage start deploy`, and `./manage start deps` are equivalent. Aliases are case-sensitive and must be unique across all component names and aliases.
+The canonical name and each alias select the same component. For example, `./dev start deployments`, `./dev start deploy`, and `./dev start deps` are equivalent. Aliases are case-sensitive and must be unique across all component names and aliases.
 
 A lifecycle command must select at least one component explicitly. Provide component names or aliases, use `-A` or `--all` to select every component, or use `--labels` to select only components containing every requested label:
 
 ```shell
-./manage test models deployments
-./manage test --all
-./manage test --labels api
-./manage test --all --labels api
+./dev test models deployments
+./dev test --all
+./dev test --labels api
+./dev test --all --labels api
 ```
 
 The `--all` flag cannot be combined with explicit component names or aliases. A label filter may be applied either to explicitly selected components or to all components.
