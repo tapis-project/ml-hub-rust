@@ -137,6 +137,55 @@ def all_in_list(needles: list, haystack: list):
         
     return True
 
+def build_component_identifier_map(components: list):
+    identifier_map = {}
+
+    for component in components:
+        component_name = component.get("name")
+        if not isinstance(component_name, str) or not component_name.strip():
+            raise ValueError("Each component must have a non-empty string name")
+
+        aliases = component.get("aliases", [])
+        if not isinstance(aliases, list):
+            raise ValueError(f"Aliases for component '{component_name}' must be an array")
+
+        for identifier in [component_name, *aliases]:
+            if not isinstance(identifier, str) or not identifier.strip():
+                raise ValueError(f"Aliases for component '{component_name}' must be non-empty strings")
+
+            if identifier in identifier_map:
+                existing_component_name = identifier_map[identifier]["name"]
+                raise ValueError(
+                    f"Component identifier '{identifier}' is duplicated by components "
+                    f"'{existing_component_name}' and '{component_name}'"
+                )
+
+            identifier_map[identifier] = component
+
+    return identifier_map
+
+def resolve_components(components: list, requested_identifiers: list):
+    identifier_map = build_component_identifier_map(components)
+
+    if len(requested_identifiers) == 0:
+        return components
+
+    selected_component_names = set()
+    for requested_identifier in requested_identifiers:
+        component = identifier_map.get(requested_identifier)
+        if component == None:
+            raise ValueError(
+                f"Invalid component. Expected one of: {list(identifier_map.keys())}. "
+                f"Received: '{requested_identifier}'"
+            )
+
+        selected_component_names.add(component["name"])
+
+    return [
+        component for component in components
+        if component["name"] in selected_component_names
+    ]
+
 def main():
     # Initialize the argument parser
     parser = argparse.ArgumentParser(description="A command line tool for managing the lifecycle of microservice components. Components are defined in a file at the root directory of the project (components.json) that enumerate a set of commands to be run against them. These commands can call scripts (ex. ./burnup) or run a one-line bash command. This tool offers functionality akin to the `npm run` command of Node Package manager (npm)")
@@ -253,32 +302,18 @@ def main():
         print("❌ Invalid configuration file. The components property of the components.json file must be a non-empty array of 'component' objects")
         sys.exit(1)
 
-    # Validate the provided components
-    all_component_names = [c.get("name") for c in all_components]
-    selected_component_names = set(args.components)
-    for selected_component_name in selected_component_names:
-        if selected_component_name not in all_component_names:
-            print(f"❌ Invalid component. Expected one of: {all_component_names}. Received: '{selected_component_name}'")
-            sys.exit(1)
-    
     # The user provided command to be run on the selected components
     command_name = args.command[0]
 
-    # The components against which the user wants to run the commands
-    components = [
-        component for component in all_components
-        if component.get("name") in args.components
-    ]
+    # Resolve component names and aliases to the components against which the
+    # user wants to run commands.
+    components = resolve_components(all_components, args.components)
 
     # The template variable(s) to replace in the provided command
     template_vars = { **config.get("defaultTemplateVars", {}) }
     if args.template_vars:
         for key, value in args.template_vars:
             template_vars[key] = value
-
-    # Run the command over all components if none provided
-    if len(components) == 0:
-        components = all_components
 
     # Filter the components based on labels provided. Must match all labels
     if args.labels:

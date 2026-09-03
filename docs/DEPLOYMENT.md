@@ -141,6 +141,17 @@ The Lifecycle Management CLI is a python tool that can be invoked from the comma
 
 The `components.json` file contains and exhaustive list of every component in the MLHub suite and every command you can run against those components using the CLI.
 
+A component may define an optional `aliases` array containing alternate names for use with the lifecycle CLI:
+
+```json
+{
+  "name": "deployments",
+  "aliases": ["deploy", "deps"]
+}
+```
+
+The canonical name and each alias select the same component. For example, `./manage start deployments`, `./manage start deploy`, and `./manage start deps` are equivalent. Aliases are case-sensitive and must be unique across all component names and aliases.
+
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI
 2. Run `kubectl port-forward pod/mlhub-mongo-stateful-set-0 27017:27017`
