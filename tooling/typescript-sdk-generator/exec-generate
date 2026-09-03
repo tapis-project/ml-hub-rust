@@ -10,13 +10,14 @@ fi
 
 service=$2
 
-generationCommand=(./generate_all)
+generationCommand=(/src/tooling/typescript-sdk-generator/generate_all)
 if [[ -n $service ]]; then
-    generationCommand=(./generate "$service")
+    generationCommand=(/src/tooling/typescript-sdk-generator/generate "$service")
 fi
 
 docker run \
     --rm \
+    --workdir /src/tooling/typescript-sdk-generator \
     --mount type=bind,source="$projectRoot/tooling/typescript-sdk-generator",target=/src/tooling/typescript-sdk-generator \
     --mount type=volume,target=/src/tooling/typescript-sdk-generator/node_modules \
     --mount type=bind,source="$projectRoot/specs",target=/src/specs \

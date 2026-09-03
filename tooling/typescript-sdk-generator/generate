@@ -22,13 +22,12 @@ function postGen() {
   fi
 }
 
-# Run the transform scripts
+echo "Transforming $1 OpenAPI specification"
 transform "$1"
 
-# Remove the previously generated typescript 
+echo "Generating $1 TypeScript SDK"
 rm -rf "/src/sdks/$1-ts-sdk"
 
-# Generate the typescript bindings from the transformed open spec
 npx openapi-generator-cli generate \
   --input-spec "/src/tooling/typescript-sdk-generator/services/$1/transformed_spec.yml" \
   --generator-name typescript-fetch \
@@ -40,6 +39,10 @@ cd "/src/sdks/$1-ts-sdk"
 
 postGen "$1"
 
-npm install
+echo "Installing $1 TypeScript SDK dependencies"
+npm install --ignore-scripts --no-audit --no-fund
 
+echo "Building $1 TypeScript SDK"
 npm run build
+
+echo "Generated $1 TypeScript SDK"

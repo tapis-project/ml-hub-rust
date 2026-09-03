@@ -4,5 +4,6 @@ set -e
 
 for service_dir in /src/tooling/typescript-sdk-generator/services/* ; do
     service=$(basename "$service_dir")
+    echo "Generating TypeScript SDK for $service"
     /src/tooling/typescript-sdk-generator/generate "$service"
 done

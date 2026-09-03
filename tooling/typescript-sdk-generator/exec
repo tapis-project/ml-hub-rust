@@ -15,6 +15,7 @@ fi
 docker run \
     -it \
     --rm \
+    --workdir /src/tooling/typescript-sdk-generator \
     --mount type=bind,source="$projectRoot/tooling/typescript-sdk-generator",target=/src/tooling/typescript-sdk-generator \
     --mount type=volume,target=/src/tooling/typescript-sdk-generator/node_modules \
     --mount type=bind,source="$projectRoot/specs",target=/src/specs \
