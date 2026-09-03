@@ -507,6 +507,16 @@
       }
     },
     {
+      "name": "sdks",
+      "rootDir": "sdks",
+      "labels": ["workflow"],
+      "lifecycle": "development",
+      "commands": {
+        "typescript-generate": "./manage generate typescript-sdk-generator",
+        "generate": "{{ self.commands.typescript-generate }}"
+      }
+    },
+    {
       "name": "agntcy-sdk",
       "rootDir": "services/sdks/agntcy-sdk",
       "labels": ["sdk"],

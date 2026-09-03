@@ -41,9 +41,13 @@ A minor bump resets the patch component to zero. A patch bump increments only th
 Use the lifecycle component to generate all SDKs or an individual service SDK:
 
 ```sh
+./manage generate sdks
+./manage typescript-generate sdks
 ./manage generate typescript-sdk-generator
 ./manage generate-models typescript-sdk-generator
 ```
+
+The `sdks` component is the cross-language generation workflow. It currently delegates to the TypeScript generator and can incorporate additional language generators later.
 
 ## Step 5. Testing the new SDKs
 
