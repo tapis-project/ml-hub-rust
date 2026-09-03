@@ -61,7 +61,7 @@ pub async fn list_datasets(
     )
 }
 
-pub(super) fn list_metadata(cursor: Option<String>, count: Option<u64>) -> Value {
+pub fn list_metadata(cursor: Option<String>, count: Option<u64>) -> Value {
     let mut metadata = Map::new();
 
     if let Some(cursor) = cursor {

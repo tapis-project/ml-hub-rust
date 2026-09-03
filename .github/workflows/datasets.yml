@@ -1,0 +1,74 @@
+name: Datasets API
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  build-push-api-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build Image
+        run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/datasets/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=datasets --build-arg SERVICE_DIR="services/datasets" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
+      - name: Push Image
+        run: docker push --all-tags ${{ inputs.image_name }}
+
+  compile-run-openapi-binary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Compile/Run binary
+        run: cargo run --bin datasets-openapi > datasets-openapi.json
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: datasets-openapi
+          path: datasets-openapi.json
+          retention-days: 1
+
+  run-openapi-downgrader:
+    runs-on: ubuntu-latest
+    needs: compile-run-openapi-binary
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: datasets-openapi
+      - name: Echo openapi spec test
+        run: cat datasets-openapi.json
+
+  generate-publish-sdk:
+    needs:
+      - run-openapi-downgrader
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    container:
+      image: node:20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update and Install Java Runtime Environment
+        run: apt-get update && apt-get install -y default-jre
+      - name: Install OpenAPI Generator CLI
+        run: npm install -g @openapitools/openapi-generator-cli
+      - name: NPM install
+        working-directory: ./sdks/typescript-sdk
+        run: npm install
