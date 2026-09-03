@@ -13,6 +13,8 @@ use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentError,
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::domain::entities::deployment_strategy::strategy::StrategyError;
 
+pub mod endpoint_issuance_service;
+
 #[derive(Debug, Error)]
 pub enum ArtifactServiceError {
     #[error("{0}")]

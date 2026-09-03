@@ -4,12 +4,16 @@ use serde::Serialize;
 use serde_json::Value;
 
 pub mod models;
+pub mod agent_records;
+pub mod agents;
+pub mod endpoints;
 pub mod deployment;
 pub mod operators;
 pub mod visibility;
 pub mod tasks;
 pub mod artifacts;
 pub mod platform_details;
+pub mod datasets;
 
 
 #[derive(Serialize)]

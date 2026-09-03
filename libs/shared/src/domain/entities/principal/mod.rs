@@ -1,4 +1,4 @@
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 use crate::domain::entities::identity::FederatedIdentity;
 
 use thiserror::Error;

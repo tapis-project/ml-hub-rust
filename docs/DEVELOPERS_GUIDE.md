@@ -1,5 +1,10 @@
 # MLHub Developer Guide
 
+For the repository-wide process for adding APIs and extending their features, see the
+[API Development Playbook](./API_DEVELOPMENT_PLAYBOOK.md). AI-assisted contributors should also
+follow the root [AGENTS.md](../AGENTS.md) and the [AI Agent Development Guide](./AI_AGENT_DEVELOPMENT_GUIDE.md).
+Repository-wide deferred work is tracked in [TODOs](./TODO.md).
+
 ## Development Environement Setup
 
 You may use whichever IDE you please! But it is recommended to use VSCode. This project
@@ -69,69 +74,126 @@ Libraries are reusable codes that are shared between apis, binaries, and other l
 
 - [patra-client](./libs/patra-client/README.md) - Handles model metadata listing, discovery, and publishing to the Patra platform
 
-- [s3-client](./libs/s3-client/README.md) - Client for publishing and ingesting artifacts from s3-compatible storage
-
 - [tacc-tapis-client](./libs/tapis-client/README.md) - Client for publishing and ingesting artifacts from Tapis Systems defined in the TACC Tapis deployment
 
-- [mlhub-rust-sdk](./libs/mlhub-tust-sdk/README.md) - MLHub's software development kit (SDK) generated from the API's OpenAPI specifications
+### Infrastructure (`deploy/k8s`)
 
-### Infra (services)
-
-This directory (`services`) contains the deployment files for the infrastructural components that support MLHub operations such as databases, message brokers, remote file systems, and reverse proxies.
+The `deploy/k8s` directory contains the Kubernetes resources for the infrastructure that supports
+MLHub APIs, workers, and deployments. Each component has a base configuration and environment
+overlays where applicable.
 
 **Infrastructure catalog**
 
-- [Artifact DB](./services/mongo/README.md) - 
+- [MongoDB](../deploy/k8s/mongo/) - Persistent document storage for MLHub resource metadata, identities, and other API-managed records. It is deployed as a StatefulSet with replica-set configuration and environment-specific storage.
 
-- [Artifact MQ](./services/artifact-mq/README.md) - 
+- [RabbitMQ](../deploy/k8s/rabbit/) - Message broker for asynchronous MLHub workflows and service-to-service event delivery, with persistent storage and management access.
 
-- [Inference DB](./services/inference-db/README.md) - 
+- [NFS Server](../deploy/k8s/nfs/) - Shared network file storage for components that require common, persistent filesystem access.
 
-- [NFS Server](./services/nfs/README.md) - 
-
-- [Traefik Reverse Proxy](./services/traefik/README.md) - 
+- [Traefik Reverse Proxy](../deploy/k8s/traefik/) - Edge reverse proxy that routes external HTTP requests to MLHub services using environment-specific dynamic configuration.
 
 
 ## Software Architecture 📐
 
-This project takes a Domain Driven Design (DDD)-styled architectural approach. Each API and service in this project are composed of four structural layers (presentation, application, domain, and infrastructure) and a fifth bootstrap layer. Their purposes will be described in detail below and explained from outermost (upper) to the innermost (lower), with the bootstrap layer explained last. Each layer is connected by a set of "input" and "output" DTOs (data transfer objects) and translation logic that will convert one layer's DTOs into another's. These DTOs will be described in detail in each section.
+MLHub combines Domain-Driven Design, Clean Architecture, and Hexagonal Architecture. Every API is
+organized into presentation, application, domain, infrastructure, and bootstrap layers. The first
+four separate responsibilities; bootstrap composes them into a running service.
 
-### 1. The Presentation Layer
+```text
+HTTP request
+    │
+    ▼
+Presentation ──► Application ──► Domain
+                     │
+                     ▼
+                   Port ◄──── Infrastructure adapter
 
-The presentation layer the outermost layer responsible receiving and validating the user's requests, serving the responses, and calling out to the application layer to perform the operations related to the request. The inputs to this layer are called **requests** and the outputs are called **responses**. Requests represent data sent by a user to one of the APIs or services. Responses represent the data sent back to those users.
+Bootstrap creates the infrastructure adapter, injects it into the application service,
+and registers the resulting service with the presentation server.
+```
 
-### 2. The Application Layer
+The application layer depends on ports, not concrete databases, brokers, or external clients.
+Infrastructure implements those ports. Request, application-input, domain, persistence-document,
+and response types are translated explicitly at their respective boundaries so no single type
+becomes the contract for every layer.
 
-The application layer is responsible for orchestrating business logic. Service's in this layer are invoked by handlers in the presentation layer to perform the work for a given request. This layer is comprises 4 components: **inputs**, **outputs**, **ports**, and **services**,
+### Shared Layer Conventions
 
-#### 2.1 Inputs
+Reusable layer code belongs in `libs/shared`; services re-export the modules they consume instead
+of duplicating domain, application, or presentation types. HTTP handlers, server registration,
+bootstrap factories, and deployment wiring are generally service-local. See the
+[API Development Playbook](./API_DEVELOPMENT_PLAYBOOK.md) for the required implementation,
+testing, deployment, and review workflow.
 
-**Inputs** are the values that are passed into the **Application Layer** from the **Presentation Layer**.
+### Rust Readability Conventions
 
-#### 2.2 Outputs
+Separate logical statements and code blocks with blank lines. In particular, after a fallible
+operation such as a `map_err` or `?` expression, leave a blank line before beginning the next
+operation. For long method chains outside closures and iterator adapters, put each chained call
+on its own continuation line. Follow nearby code when a more specific local pattern exists.
 
-**Outputs** are the values that are returned from the **Application Layer** back to the **Presentation Layer**.
+### 1. Presentation
 
-#### 2.3 Ports
+Presentation is the HTTP boundary. Actix handlers receive requests, use shared request DTOs to
+deserialize and validate untrusted input, map into application inputs, invoke an application
+service, and map results into shared response DTOs and standard response envelopes. It also owns
+Utoipa documentation and the service-local middleware/server composition.
 
-**Ports** are the interfaces that the **Infrastructure Layer** implements. These interfaces allow the **Application Layer** to call into the **Infrastructure Layer** in a way that decouples the **Appliaction Layer** from the concrete implementations of the **Infrastructure Layer**.
+### 2. Application
 
-#### 2.4 Services
+Application code implements use cases. Its services orchestrate domain behavior and interactions
+with ports; they do not contain HTTP or database details. Application inputs and outputs define
+the boundary around a use case. Service methods receive `RequestContext` first, so tenancy and
+principal information comes from trusted middleware rather than client-supplied fields.
 
-**Services** and their methods encapsulate the logic for every use case/operation and are the entrypoints to the presentation layer for calling into the application layer.
+Ports are async interfaces owned by the application layer. Repository, messaging, and external
+service adapters implement them in infrastructure. Workflows hold reusable orchestration that is
+shared by more than one application service.
 
-#### 2.5 Workflows
+### 3. Domain
 
-**Workflows** are encapsulations of commonly repeated logic througout the application layer. They should be invoked inside of application services.
+Domain code models MLHub business concepts, value objects, invariants, and domain-specific
+operations. Entities keep state private, create new records through constructors (often just named `new`, but where appropriate, named after the action occuring in the domin), and rebuild persisted
+records through props-based `reconstitute` constructors. Domain rules must hold regardless of whether a caller
+is HTTP, a background worker, or a persistence adapter.
 
-### 3. The Domain Layer
+The canonical shared domain implementation is in `libs/shared/src/domain`; APIs re-export the
+domain modules they use rather than defining service-specific copies.
 
-The domain layer represents all business concepts and their relationships in the problem space. This layer is separated into two parts: Entities and Services. Entities are discrete representations of core business concepts, their data, and invariants. Services enforce the rules between entities and encapsulate domain specific operations. The domain layer is only known by the application layer. 
+### 4. Infrastructure
 
-### 4. The Infrastructure Layer
+Infrastructure contains technology-specific implementations: Mongo documents and repositories,
+message-broker integrations, and external clients. It maps between persistence or transport
+representations and domain values, and implements application ports. It must not leak database
+documents or provider-specific types into application-service interfaces.
 
-This layer encapsulates the implementation details of the technologies used in this project such as databases, message brokers, and external service calls.
+### 5. Bootstrap
 
-### 5. The Bootstrap Layer
+Bootstrap is the composition root. It loads configuration, creates concrete infrastructure clients
+and adapters, injects those adapters into application services, and registers the resulting
+services as presentation app data. Bootstrap makes dependencies explicit without placing runtime
+wiring in domain or application code.
 
-The bootstrap layer is the composition root for a service. This is where the concrete infrastructure-layer implementations are instantiated and injected into application layer services. These implementations conform to some **port** in the application layer.
+## Approved Design Patterns 🖼️
+
+Use the following patterns when they fit the responsibility at hand. Follow the implementation
+style already present in Models, Deployments, and `libs/shared`; do not introduce a new pattern or
+variation without discussion and documentation.
+
+| Pattern | Use in MLHub |
+| --- | --- |
+| **Domain-Driven Design** | Model business concepts as entities and value objects in the domain layer. Keep invariants and domain-specific errors with those concepts. |
+| **Clean Architecture** | Organize code by presentation, application, domain, infrastructure, and bootstrap responsibilities. Keep technology and delivery details outside the domain. |
+| **Hexagonal Architecture (Ports and Adapters)** | Define application-owned ports for persistence, messaging, and external capabilities; implement them with infrastructure adapters. |
+| **Repository** | Encapsulate persistence access behind an application port. Repository adapters map between domain entities and infrastructure document DTOs. |
+| **Application Service** | Implement one or more use cases by coordinating domain behavior and ports. Services receive `RequestContext` first and do not own HTTP or database details. |
+| **Factory and Composition Root** | Build concrete clients, adapters, and application services in bootstrap factories, then inject them into the server. Keep construction logic out of handlers and domain code. |
+| **DTO and Mapper** | Keep request, application-input, domain, persistence-document, and response shapes separate. Translate explicitly with dedicated `From` or `TryFrom` mapper implementations. |
+| **Entity Reconstitution** | Create new entities through constructors and rebuild persisted entities through props-based `reconstitute` constructors, distinguishing invalid new input from corrupt persisted data. |
+| **Workflow** | Extract repeated application-service orchestration into a workflow only when it serves more than one use case. |
+| **Builder (test fixtures)** | Use optional-field builders to construct focused, readable domain test fixtures without duplicating setup. |
+| **Singleton** | Use an application-scoped configuration or client instance only when a single shared instance is required; prefer explicit bootstrap injection over global mutable state. |
+
+Related rules reinforce these patterns: preserve the Law of Demeter by exposing semantic domain
+queries instead of navigable internals, validate untrusted input at the presentation boundary, and
+keep domain validation authoritative for every caller.

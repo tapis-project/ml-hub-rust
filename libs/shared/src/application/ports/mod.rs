@@ -1,4 +1,7 @@
 pub mod artifacts;
+pub mod agent_record;
+pub mod agent;
+pub mod endpoint;
 pub mod commands;
 pub mod events;
 pub mod deployment;
@@ -10,3 +13,4 @@ pub mod deployment_strategy;
 pub mod cipher;
 pub mod errors;
 pub mod deployment_argument;
+pub mod dataset;

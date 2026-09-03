@@ -18,7 +18,7 @@ macro_rules! impl_urn_generator {
                 ].join("/");
 
                 $crate::shared_kernel::identifiers::urn::Urn::new(format!(
-                    "urn:mlhub:{}:{}:{}",
+                    "urn:mlhub:v1:{}:{}:{}",
                     self.$tenant_field, $resource, resource_identifier
                 ))
             }

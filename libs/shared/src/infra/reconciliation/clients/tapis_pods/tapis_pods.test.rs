@@ -5,9 +5,9 @@ mod tapis_pods_test {
     use crate::domain::entities::deployment::{
         DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelReference, ReconstituteModelDeploymentProps, ReplicaGroup, State
     };
-    use crate::domain::entities::visibility::Visibility;
+    use crate::shared_kernel::enums::Visibility;
     use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
-    use crate::domain::entities::timestamp::TimeStamp;
+    use crate::shared_kernel::value_objects::TimeStamp;
     use crate::shared_kernel::enums::DeploymentModality;
     use platforms::Platform;
     use uuid::Uuid;

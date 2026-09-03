@@ -53,7 +53,7 @@ runs:
           principals-migrator
           federated-identities-migrator
           hf-model-etl
-          # datasets
+          datasets
         )
 
         JSON=$(jq -n '{services: []}')

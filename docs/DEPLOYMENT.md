@@ -32,11 +32,13 @@ You will need to start Minikube with at least 2 nodes. Run the following command
 
 Now that you have all the necessary tools installed, we can start up the MLHub Models suite. 
 
-> **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
+> **Note**: Before running the next scripts, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
 
 This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
 
-From the project's root directory, run the following commands to initalize the project and launch the services in Minikube. For all `./manage start` steps, ensure that each component pod is in the "Running" state before moving onto the next step.
+From the project's root directory, run the following commands to initalize the project and launch the services in Minikube. For all ` ...` steps, ensure that each component pod is in the "Running" state before moving onto the next step.
+
+### Infrastructure (Required)
 
 0. `chmod +x manage` - Makes the lifecycle script executable
 
@@ -46,27 +48,52 @@ From the project's root directory, run the following commands to initalize the p
 
 0. `./manage start mongo` - Starts the database
 
-0. `./manage start artifact-ingester` - Start up the artifact ingestion workers
-
-0. `./manage start artifact-publisher` - Start up the artifact publisher workers
-
 0. `./manage start traefik` - Starts the reverse proxy that routes traffic to the APIs
 
-0. `./manage buildl models-migrator -s` - Builds the Models API migrator image and loads it into minikube.
+### Migrations (Required)
+
+0. `./manage buildl-all migrations` - Builds all migration images and loads them into Minikube.
+
+0. `./manage run-all migrations` - Runs the Models, Federated Identities, and Principals migrations in order. The command stops if any migration fails.
+
+### Models API
 
 0. `./manage buildl models -s` - Builds the Models API image and loads it into minikube
 
-0. `./manage start models` - Starts the Models API pod
+0. `./manage start models` - Starts the Models API pod(s)
+
+### Deployments API
+
+0. `./manage buildl deployments -s` - Builds the Deployments API image and loads it into Minikube.
+
+0. `./manage start deployments` - Starts the Deployments API pod(s).
+
+### Agents API
+
+0. `./manage buildl agents -s` - Builds the Agents API image and loads it into Minikube.
+
+0. `./manage start agents` - Starts the Agents API pod(s).
+
+### Artifacts Suite (Optional)
+
+0. `./manage buildl artifact-ingester && ./manage start artifact-ingester` - Start up the artifact ingestion workers
+
+0. `./manage buildl artifact-publisher && ./manage start artifact-publisher` - Start up the artifact publisher workers
+
+### Networking
 
 0. Add this entry to your `/etc/hosts` file:
     
-    `127.0.0.1       dev.local.tapis.io`
+    # MLHub local devleopment
+    127.0.0.1       dev.local.develop.tapis.io tacc.local.develop.tapis.io
     
     Then run one of the following OS-specific commands for the changes to take effect.
 
-    A. **MAC:** `sudo killall -HUP mDNSResponder`
+    A. **MAC:** `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`
     
-    B. **Linux:** ...
+    B. **Linux (Modern Ubuntu, Fedora, Debian):** `sudo resolvectl flush-caches`
+
+    C. **Windows:** 🤷‍♂️
 
 Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
@@ -76,17 +103,33 @@ You can now make request to the IP address and port output by the last command. 
 
 > **Note**: If you are using a Docker driver on darwin, the terminal will need to remain open in order to make requests to MLHub services
 
-## 3. Making requests
+## 3. Seed the database with some huggingface models
+
+Build and load both images used by the Hugging Face model ETL job, then run the job in Minikube:
+
+0. `./manage buildl-extract hf-model-etl` - Builds and loads the Hugging Face metadata extraction image.
+
+0. `./manage buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
+
+0. `./manage run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load model metadata into MLHub.
+
+## 4. Making requests
 
 You can use the IP address and port produced by the last command to make API calls to any service in the MLHub suite. Your url will need to be structured as follows:
 
 `http://<ipAddress>:<port>/<serviceName>`
 
-In the example below, we will use `curl` to list models from the HuggingFace Models API:
+The example below discovers models registered in MLHub. Replace `<access-token>` with a valid
+Tapis access token.
 
-Example (Returns a list of machine learning models from the Models API):
+```bash
+curl --request POST 'http://127.0.0.1:<YOUR EXPOSED PORT>/models-api/models/search?limit=10' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Tapis-Token: <access-token>' \
+  --data '{"criteria": []}'
+```
 
-`curl http://127.0.0.1:57783/models-api/platforms/huggingface/models`
+The request returns matching model metadata in the standard MLHub response envelope.
 
 ---
 

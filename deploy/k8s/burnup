@@ -64,5 +64,8 @@ echo "Starting ETL Pipelines"
 cd "$here/model-metadata-etl-pipelines/hf-model-etl"
 ./run.sh "$overlay"
 
+cd "$here/dataset-etl-pipelines/hf-dataset-etl"
+./run.sh "$overlay"
+
 # cd $here/datasets
 # ./burnup.sh

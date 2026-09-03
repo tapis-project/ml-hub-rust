@@ -12,6 +12,7 @@
     "js-yaml": "^4.1.0"
   },
   "scripts": {
+    "bump-version": "node ./scripts/bump-version.js",
     "generate": "./generate_all",
     "build-services": "./build-services.sh",
     "test": "echo \"Error: no test specified\" && exit 1"

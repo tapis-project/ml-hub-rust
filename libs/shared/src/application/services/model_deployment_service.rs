@@ -28,7 +28,7 @@ use crate::domain::entities::deployment::{
     ModelReference,
     ReplicaGroup,
 };
-use crate::domain::entities::visibility::Visibility;
+use crate::shared_kernel::enums::Visibility;
 use crate::domain::services::{
     ModelDeploymentDomainServiceError, ModelDeploymentService as ModelDeploymentDomainService
 };

@@ -34,6 +34,10 @@ impl RequestContext {
         &self.actor.principal_id()
     }
 
+    pub fn actor(&self) -> &Actor {
+        &self.actor
+    }
+
     pub fn actor_tenant_id(&self) -> &String {
         &self.actor.tenant_id()
     }

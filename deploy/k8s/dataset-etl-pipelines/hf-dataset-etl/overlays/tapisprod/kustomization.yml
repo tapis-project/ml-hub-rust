@@ -1,0 +1,37 @@
+resources:
+  - ../../base
+
+secretGenerator:
+  - name: mlhub-huggingface-secrets
+    literals:
+      - token={{ mlhub_etl_hf_token }}
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-hf-dataset-etl
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-hf-dataset-etl
+      spec:
+        template:
+          metadata:
+            name: mlhub-hf-dataset-etl
+          spec:
+            initContainers:
+              - name: extract
+                env:
+                  - name: MAX_RECORDS
+                    value: "5000000"
+                image: tapis/mlhub-hf-dataset-etl-extract:26Q2.1
+            containers:
+              - name: hf-dataset-etl
+                env:
+                  - name: MAX_PROCESSABLE_ENTRIES
+                    value: "5000000"
+                  - name: MONGO_HOST
+                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisprod.svc.cluster.local
+                image: tapis/mlhub-hf-dataset-etl-transform-load:26Q2.1
+                imagePullPolicy: Always

@@ -3,11 +3,12 @@ resolver = "2"
 
 members = [
     "services/agents",
-    # "services/apis/datasets",
+    "services/datasets",
     "services/deployments",
     "services/models",
     "services/artifact-ingester",
     "services/artifact-publisher",
+    "services/hf-dataset-etl",
     "services/hf-model-etl",
     "services/models-migrator",
     "services/principals-migrator",
@@ -32,5 +33,6 @@ members = [
 validator = { version = "0.21.0", features = ["derive"] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.135"
+semver = "1.0.26"
 strum = "0.28.0"
 strum_macros = "0.28.0"

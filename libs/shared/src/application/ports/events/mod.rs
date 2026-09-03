@@ -1,7 +1,7 @@
 pub mod payloads;
 
 use uuid::Uuid;
-use crate::domain::entities::timestamp::TimeStamp;
+use crate::shared_kernel::value_objects::TimeStamp;
 use async_trait::async_trait;
 use thiserror::Error;
 

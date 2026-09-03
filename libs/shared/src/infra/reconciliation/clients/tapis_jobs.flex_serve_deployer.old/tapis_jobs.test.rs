@@ -11,8 +11,8 @@ mod tapis_jobs_test {
     };
     use crate::shared_kernel::enums::DeploymentModality;
     use crate::domain::entities::model_metadata::{fixtures::full_model_metadata, ModelMetadata};
-    use crate::domain::entities::timestamp::TimeStamp;
-    use crate::domain::entities::visibility::Visibility;
+    use crate::shared_kernel::value_objects::TimeStamp;
+    use crate::shared_kernel::enums::Visibility;
     use platforms::Platform;
     use serde_json::json;
     use uuid::Uuid;

@@ -13,16 +13,14 @@ use huggingface_client::client::HuggingFaceClient;
 use patra_client::client::PatraClient;
 use serde_json::Value;
 use shared::presentation::http::v1::requests::{
+    get_dataset_by_platform::GetDatasetByPlatformRequest,
     get_model_by_platform::GetModelByPlatformRequest,
     ingest_model::IngestModelRequest,
+    list_datasets_by_platform::ListDatasetsByPlatformRequest,
     list_models_by_platform::ListModelsByPlatformRequest,
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::presentation::http::v1::requests::datasets::{
-    ListDatasetsByPlatformRequest,
-    GetDatasetByPlatformRequest
-};
 use shared::domain::entities::artifact::Artifact;
 use shared::domain::entities::model_metadata::ModelMetadata;
 use std::path::PathBuf;

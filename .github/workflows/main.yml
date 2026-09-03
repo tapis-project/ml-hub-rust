@@ -69,8 +69,22 @@ jobs:
     with:
       image_name: tapis/mlhub-models-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
-  
-  
+
+  datasets:
+    if: |
+      contains(fromJson(needs.diffs.outputs.services || '[]'), 'datasets') ||
+      needs.diffs.outputs.has_lib_diff == 'true' ||
+      github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+      - tests
+    secrets: inherit
+    uses: ./.github/workflows/datasets.yml
+    with:
+      image_name: tapis/mlhub-datasets-api
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
   deployments:
     if: contains(fromJson(needs.diffs.outputs.services), 'deployments') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
     needs:
