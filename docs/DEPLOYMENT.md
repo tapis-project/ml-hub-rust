@@ -135,7 +135,7 @@ The request returns matching model metadata in the standard MLHub response envel
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a python tool that can be invoked from the command line in the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. This is the same script invoked previously to initialize the MLHub project locally.
+The Lifecycle Management CLI is a Python tool that can be invoked through `./manage` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`. This is the same tool invoked previously to initialize the MLHub project locally.
 
 ### The Components File
 

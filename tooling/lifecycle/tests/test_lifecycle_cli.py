@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import lifecycle_cli
+from tooling.lifecycle import lifecycle_cli
 
 
 class ComponentAliasTests(unittest.TestCase):
@@ -125,6 +125,18 @@ class ComponentAliasTests(unittest.TestCase):
 
         output = "\n".join(str(call.args[0]) for call in print_mock.call_args_list)
         self.assertIn("echo deployments", output)
+
+    def test_configuration_paths_resolve_from_repository_root(self):
+        repository_root = Path(lifecycle_cli.__file__).resolve().parents[2]
+
+        self.assertEqual(
+            Path(lifecycle_cli.get_config_path()),
+            repository_root / "components.json",
+        )
+        self.assertEqual(
+            Path(lifecycle_cli.get_lockfile_path()),
+            repository_root / "components-lock.json",
+        )
 
 
 if __name__ == "__main__":

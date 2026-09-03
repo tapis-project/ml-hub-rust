@@ -18,15 +18,22 @@ def prompt(message, affirmations=[], negations=[]):
     print(f"Invalid option. Must provide one of the following: {affirmations + negations}")
     return prompt(message, affirmations=affirmations, negations=negations)
 
+def get_project_root():
+    return os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(os.path.realpath(__file__))
+        )
+    )
+
 def get_config_path():
     return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
+        get_project_root(),
         CONFIG_FILE_NAME
     )
 
 def get_lockfile_path():
     return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
+        get_project_root(),
         CONFIG_LOCK_FILE_NAME
     )
 

@@ -2,4 +2,6 @@
 
 set -e
 
-python3 lifecycle_cli.py "${@}"
+manage_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+python3 "${manage_dir}/tooling/lifecycle/lifecycle_cli.py" "${@}"
