@@ -30,6 +30,8 @@ impl From<entities::Dataset> for responses::Dataset {
             id: *value.id(),
             tenant_id: value.tenant_id().into(),
             owner: value.owner().into(),
+            name: value.name().into(),
+            description: value.description().map(Into::into),
             tags: value.tags().iter().map(|v| v.as_str().to_owned()).collect(),
             provider,
             huggingface_repo_locator,
@@ -76,6 +78,8 @@ impl From<DatasetQueryOutput> for responses::Dataset {
             id: value.id,
             tenant_id: value.tenant_id,
             owner: value.owner,
+            name: value.name,
+            description: value.description,
             tags: value
                 .tags
                 .iter()

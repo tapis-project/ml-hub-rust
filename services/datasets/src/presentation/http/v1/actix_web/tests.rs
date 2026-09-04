@@ -30,6 +30,42 @@ fn openapi_does_not_document_provider_authorization() -> Result<(), Box<dyn std:
 }
 
 #[test]
+fn openapi_requires_dataset_names() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    for schema in ["Dataset", "RegisterDatasetBody"] {
+        assert!(document
+            .pointer(&format!("/components/schemas/{schema}/properties/name"))
+            .is_some());
+        assert!(document
+            .pointer(&format!("/components/schemas/{schema}/required"))
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| required.contains(&serde_json::json!("name"))));
+    }
+
+    Ok(())
+}
+
+#[test]
+fn openapi_exposes_optional_dataset_descriptions() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    for schema in ["Dataset", "RegisterDatasetBody"] {
+        assert!(document
+            .pointer(&format!(
+                "/components/schemas/{schema}/properties/description"
+            ))
+            .is_some());
+        assert!(!document
+            .pointer(&format!("/components/schemas/{schema}/required"))
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| required.contains(&serde_json::json!("description"))));
+    }
+
+    Ok(())
+}
+
+#[test]
 fn openapi_documents_dataset_item_count_and_retrieval_limit(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;

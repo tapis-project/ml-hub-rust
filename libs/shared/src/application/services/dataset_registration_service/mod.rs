@@ -52,6 +52,8 @@ impl DatasetRegistrationService {
         let dataset = Dataset::register(
             ctx.actor_tenant_id().clone(),
             ctx.actor_principal_id().clone(),
+            input.name,
+            input.description,
             input.tags,
             input.provider.try_into()?,
             input

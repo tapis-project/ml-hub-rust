@@ -37,6 +37,8 @@ impl ListDatasetsInput {
 
 #[derive(Clone, Debug)]
 pub struct RegisterDatasetInput {
+    pub name: String,
+    pub description: Option<String>,
     pub tags: Vec<String>,
     pub provider: DatasetProviderInput,
     pub items: Vec<DatasetItemInput>,

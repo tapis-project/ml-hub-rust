@@ -32,6 +32,9 @@ pub struct HuggingFaceRepoSibling {
 
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum TransformDatasetError {
+    #[error("Hugging Face dataset ID does not include a repository name: {0}")]
+    MalformedDatasetId(String),
+
     #[error("Private Hugging Face datasets are not eligible for the global catalog")]
     Private,
 
@@ -57,6 +60,14 @@ impl TryFrom<HuggingFaceDatasetRecord> for RegisterDatasetInput {
             return Err(TransformDatasetError::Gated);
         }
 
+        let name = value
+            .id
+            .rsplit_once('/')
+            .map(|(_, name)| name)
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| TransformDatasetError::MalformedDatasetId(value.id.clone()))?
+            .to_owned();
+
         let mut size = 0_u64;
         let mut items = Vec::with_capacity(value.siblings.len());
 
@@ -76,6 +87,8 @@ impl TryFrom<HuggingFaceDatasetRecord> for RegisterDatasetInput {
         }
 
         Ok(Self {
+            name,
+            description: None,
             tags: sanitize_tags(value.tags),
             provider: DatasetProviderInput::HuggingFace(HuggingFaceRepoLocatorInput {
                 id: value.id,

@@ -1,10 +1,10 @@
 use super::{DatasetProvider, ListDatasetsQueryParams, RegisterDatasetBody, Scope};
-use crate::application::inputs::dataset::ListDatasetsInput;
+use crate::application::inputs::dataset::{ListDatasetsInput, RegisterDatasetInput};
 use validator::Validate;
 
 fn body_json(provider: &str, locators: &str) -> String {
     format!(
-        r#"{{"provider":"{provider}",{locators}"items":[{{"path":"data.json","size":10}}],"size":10}}"#
+        r#"{{"name":"dataset","description":"Description","provider":"{provider}",{locators}"items":[{{"path":"data.json","size":10}}],"size":10}}"#
     )
 }
 
@@ -18,6 +18,11 @@ fn request_accepts_matching_huggingface_locator() -> Result<(), Box<dyn std::err
     body.validate()?;
 
     assert!(matches!(body.provider, DatasetProvider::HuggingFace));
+
+    let input = RegisterDatasetInput::try_from(body)?;
+
+    assert_eq!(input.name, "dataset");
+    assert_eq!(input.description.as_deref(), Some("Description"));
 
     Ok(())
 }
@@ -37,7 +42,24 @@ fn request_rejects_provider_locator_mismatch() -> Result<(), Box<dyn std::error:
 #[test]
 fn request_rejects_duplicate_item_paths() -> Result<(), Box<dyn std::error::Error>> {
     let body: RegisterDatasetBody = serde_json::from_str(
-        r#"{"provider":"HuggingFace","huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"items":[{"path":"a","size":1},{"path":"a","size":1}],"size":2}"#,
+        r#"{"name":"dataset","provider":"HuggingFace","huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"items":[{"path":"a","size":1},{"path":"a","size":1}],"size":2}"#,
+    )?;
+
+    assert!(body.validate().is_err());
+
+    Ok(())
+}
+
+#[test]
+fn request_requires_a_nonempty_name() -> Result<(), Box<dyn std::error::Error>> {
+    let missing = serde_json::from_str::<RegisterDatasetBody>(
+        r#"{"provider":"HuggingFace","huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"items":[],"size":0}"#,
+    );
+
+    assert!(missing.is_err());
+
+    let body: RegisterDatasetBody = serde_json::from_str(
+        r#"{"name":"","provider":"HuggingFace","huggingface_repo_locator":{"id":"owner/repo","sha":"abc"},"items":[],"size":0}"#,
     )?;
 
     assert!(body.validate().is_err());

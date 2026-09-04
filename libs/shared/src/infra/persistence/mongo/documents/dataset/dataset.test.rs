@@ -1,7 +1,8 @@
 use crate::{
     application::outputs::dataset::DatasetQueryOutput,
     domain::entities::dataset::{
-        Dataset as DomainDataset, DatasetProvider as DomainProvider, HuggingFaceRepoLocator,
+        Dataset as DomainDataset, DatasetError, DatasetProvider as DomainProvider,
+        HuggingFaceRepoLocator,
     },
     infra::persistence::mongo::documents::dataset::{
         Dataset, DatasetProvider, DatasetQuery,
@@ -16,6 +17,8 @@ fn document_round_trip_preserves_provider_locator() -> Result<(), Box<dyn std::e
     let domain = DomainDataset::register(
         "tenant".into(),
         "owner".into(),
+        "dataset".into(),
+        Some("Description".into()),
         Vec::new(),
         DomainProvider::HuggingFace(HuggingFaceRepoLocator::new(
             "owner/repo".into(),
@@ -33,6 +36,8 @@ fn document_round_trip_preserves_provider_locator() -> Result<(), Box<dyn std::e
         restored.provider(),
         DomainProvider::HuggingFace(_)
     ));
+    assert_eq!(restored.name(), "dataset");
+    assert_eq!(restored.description(), Some("Description"));
 
     Ok(())
 }
@@ -42,6 +47,8 @@ fn document_rejects_mismatched_provider_locator() -> Result<(), Box<dyn std::err
     let domain = DomainDataset::register(
         "tenant".into(),
         "owner".into(),
+        "dataset".into(),
+        None,
         Vec::new(),
         DomainProvider::HuggingFace(HuggingFaceRepoLocator::new(
             "owner/repo".into(),
@@ -81,6 +88,8 @@ fn query_document_rejects_mismatched_provider_locator() {
         id: mongodb::bson::Uuid::from_bytes(*uuid::Uuid::now_v7().as_bytes()),
         tenant_id: "tenant".into(),
         owner: "owner".into(),
+        name: "dataset".into(),
+        description: None,
         tags: Vec::new(),
         provider: DatasetProvider::Tapis,
         huggingface_repo_locator: Some(DocumentHuggingFaceLocator {
@@ -95,4 +104,32 @@ fn query_document_rejects_mismatched_provider_locator() {
     };
 
     assert!(DatasetQueryOutput::try_from(document).is_err());
+}
+
+#[test]
+fn query_document_rejects_an_empty_name() {
+    let document = DatasetQuery {
+        _id: None,
+        id: mongodb::bson::Uuid::from_bytes(*uuid::Uuid::now_v7().as_bytes()),
+        tenant_id: "tenant".into(),
+        owner: "owner".into(),
+        name: String::new(),
+        description: None,
+        tags: Vec::new(),
+        provider: DatasetProvider::HuggingFace,
+        huggingface_repo_locator: Some(DocumentHuggingFaceLocator {
+            id: "owner/repo".into(),
+            sha: "abc".into(),
+        }),
+        tapis_system_locator: None,
+        items: Vec::new(),
+        item_count: 0,
+        size: 0,
+        visibility: DocumentVisibility::Private,
+    };
+
+    assert!(matches!(
+        DatasetQueryOutput::try_from(document),
+        Err(DatasetError::DataIntegrityError(_))
+    ));
 }

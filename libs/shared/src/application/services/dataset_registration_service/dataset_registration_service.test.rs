@@ -191,6 +191,8 @@ async fn repository_failures_are_retried_and_returned() {
 
 fn huggingface_input() -> RegisterDatasetInput {
     RegisterDatasetInput {
+        name: "dataset".into(),
+        description: None,
         tags: Vec::new(),
         provider: DatasetProviderInput::HuggingFace(HuggingFaceRepoLocatorInput {
             id: "owner/repo".into(),
@@ -204,6 +206,8 @@ fn huggingface_input() -> RegisterDatasetInput {
 
 fn tapis_input(site_id: &str, tenant_id: &str) -> RegisterDatasetInput {
     RegisterDatasetInput {
+        name: "dataset".into(),
+        description: None,
         tags: Vec::new(),
         provider: DatasetProviderInput::Tapis(TapisSystemLocatorInput {
             site_id: site_id.into(),

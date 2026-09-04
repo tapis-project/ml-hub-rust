@@ -35,6 +35,8 @@ fn dataset_query_pipeline_limits_items_and_counts_the_complete_array(
             "$toLong": { "$size": "$items" }
         }))
     );
+    assert_eq!(projection.get("name"), Some(&Bson::Int32(1)));
+    assert_eq!(projection.get("description"), Some(&Bson::Int32(1)));
 
     Ok(())
 }
@@ -122,6 +124,8 @@ fn query_document(id: ObjectId) -> DatasetQuery {
         id: mongodb::bson::Uuid::from_bytes(*uuid::Uuid::now_v7().as_bytes()),
         tenant_id: "tenant".into(),
         owner: "owner".into(),
+        name: "dataset".into(),
+        description: None,
         tags: Vec::new(),
         provider: DatasetProvider::HuggingFace,
         huggingface_repo_locator: Some(DocumentHuggingFaceLocator {

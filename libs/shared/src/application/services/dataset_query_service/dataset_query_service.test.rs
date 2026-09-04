@@ -213,6 +213,8 @@ fn dataset_output(
         id: Uuid::now_v7(),
         tenant_id: GLOBAL_TENANT.into(),
         owner: owner.into(),
+        name: "dataset".into(),
+        description: None,
         tags: Tags::new(Vec::new())?,
         provider: DatasetProvider::HuggingFace(HuggingFaceRepoLocator::new(
             "owner/repo".into(),

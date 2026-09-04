@@ -12,6 +12,8 @@ pub struct Dataset {
     id: Uuid,
     tenant_id: String,
     owner: String,
+    name: String,
+    description: Option<String>,
     tags: Tags,
     provider: DatasetProvider,
     items: Vec<DatasetItem>,
@@ -25,12 +27,16 @@ impl Dataset {
     pub fn register(
         tenant_id: String,
         owner: String,
+        name: String,
+        description: Option<String>,
         tags: Vec<String>,
         provider: DatasetProvider,
         items: Vec<DatasetItem>,
         size: u64,
         visibility: Visibility,
     ) -> Result<Self, DatasetError> {
+        Self::validate_name(&name)?;
+
         Self::validate_unique_item_paths(&items)?;
 
         let tags = Tags::new(tags).map_err(DatasetError::InvalidTags)?;
@@ -39,6 +45,8 @@ impl Dataset {
             id: Uuid::now_v7(),
             tenant_id,
             owner,
+            name,
+            description,
             tags,
             provider,
             items,
@@ -48,6 +56,10 @@ impl Dataset {
     }
 
     pub fn reconstitute(props: ReconstituteDatasetProps) -> Result<Self, DatasetError> {
+        Self::validate_name(&props.name).map_err(|error| {
+            DatasetError::DataIntegrityError(format!("Dataset contains an invalid name: {error}"))
+        })?;
+
         Self::validate_unique_item_paths(&props.items).map_err(|error| {
             DatasetError::DataIntegrityError(format!("Dataset contains invalid items: {error}"))
         })?;
@@ -60,6 +72,8 @@ impl Dataset {
             id: props.id,
             tenant_id: props.tenant_id,
             owner: props.owner,
+            name: props.name,
+            description: props.description,
             tags,
             provider: props.provider,
             items: props.items,
@@ -78,6 +92,14 @@ impl Dataset {
 
     pub fn owner(&self) -> &str {
         &self.owner
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_deref()
     }
 
     pub fn tags(&self) -> &Tags {
@@ -100,6 +122,14 @@ impl Dataset {
         &self.visibility
     }
 
+    fn validate_name(name: &str) -> Result<(), DatasetError> {
+        if name.is_empty() {
+            return Err(DatasetError::EmptyName);
+        }
+
+        Ok(())
+    }
+
     fn validate_unique_item_paths(items: &[DatasetItem]) -> Result<(), DatasetError> {
         let mut paths = HashSet::new();
 
@@ -118,6 +148,8 @@ pub struct ReconstituteDatasetProps {
     pub id: Uuid,
     pub tenant_id: String,
     pub owner: String,
+    pub name: String,
+    pub description: Option<String>,
     pub tags: Vec<String>,
     pub provider: DatasetProvider,
     pub items: Vec<DatasetItem>,
@@ -254,6 +286,9 @@ fn ensure_not_empty(field: &'static str, value: &str) -> Result<(), DatasetLocat
 
 #[derive(Clone, Debug, Error)]
 pub enum DatasetError {
+    #[error("Dataset name MUST not be empty")]
+    EmptyName,
+
     #[error("Dataset contains duplicate item path: {0}")]
     DuplicateItemPath(String),
 

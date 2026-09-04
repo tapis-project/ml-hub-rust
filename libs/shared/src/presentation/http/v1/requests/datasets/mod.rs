@@ -8,6 +8,9 @@ use validator::{Validate, ValidationError};
 #[serde(deny_unknown_fields)]
 #[validate(schema(function = "validate_register_dataset"))]
 pub struct RegisterDatasetBody {
+    #[validate(length(min = 1))]
+    pub name: String,
+    pub description: Option<String>,
     #[serde(default)]
     #[validate(custom(function = "validate_tags"))]
     pub tags: Vec<String>,

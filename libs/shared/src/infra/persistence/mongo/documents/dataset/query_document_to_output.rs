@@ -7,6 +7,12 @@ impl TryFrom<documents::DatasetQuery> for DatasetQueryOutput {
     type Error = entities::DatasetError;
 
     fn try_from(value: documents::DatasetQuery) -> Result<Self, Self::Error> {
+        if value.name.is_empty() {
+            return Err(entities::DatasetError::DataIntegrityError(
+                "Dataset contains an empty name".into(),
+            ));
+        }
+
         let provider = match (
             value.provider,
             value.huggingface_repo_locator,
@@ -63,6 +69,8 @@ impl TryFrom<documents::DatasetQuery> for DatasetQueryOutput {
             id: uuid::Uuid::from_bytes(value.id.bytes()),
             tenant_id: value.tenant_id,
             owner: value.owner,
+            name: value.name,
+            description: value.description,
             tags,
             provider,
             items,

@@ -47,6 +47,8 @@ impl TryFrom<documents::Dataset> for entities::Dataset {
             id: uuid::Uuid::from_bytes(value.id.bytes()),
             tenant_id: value.tenant_id,
             owner: value.owner,
+            name: value.name,
+            description: value.description,
             tags: value.tags,
             provider,
             items,

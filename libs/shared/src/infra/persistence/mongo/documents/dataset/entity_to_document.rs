@@ -31,6 +31,8 @@ impl From<&entities::Dataset> for documents::Dataset {
             id: mongodb::bson::Uuid::from_bytes(*value.id().as_bytes()),
             tenant_id: value.tenant_id().into(),
             owner: value.owner().into(),
+            name: value.name().into(),
+            description: value.description().map(Into::into),
             tags: value.tags().iter().map(|v| v.as_str().to_owned()).collect(),
             provider,
             huggingface_repo_locator,
