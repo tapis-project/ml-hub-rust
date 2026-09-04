@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+
+manage_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+python3 "${manage_dir}/tooling/lifecycle/lifecycle_cli.py" "${@}"

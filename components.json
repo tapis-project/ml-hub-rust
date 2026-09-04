@@ -34,7 +34,8 @@
     "hf-dataset-etl-extract-image": "tapis/mlhub-hf-dataset-etl-extract",
     "model-deployment-controller-deployment": "mlhub-model-deployment-controller-deployment",
     "model-deployment-controller-image": "tapis/mlhub-model-deployment-controller",
-    "project-root": "$(pwd)"
+    "project-root": "$(pwd)",
+    "specs-dir": "specs"
   },
   "components": [
     {
@@ -42,20 +43,18 @@
       "rootDir": "services/models",
       "labels": ["api"],
       "lifecycle": "production",
-      "specPath": "services/models/spec/v1",
       "commands": {
-        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "restart": "./manage stop models; ./manage start models",
+        "restart": "./dev stop models; ./dev start models",
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t tapis/mlhub-models-api:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -64,8 +63,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -c models-api -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin models-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -78,7 +76,6 @@
       "rootDir": "services/models-migrator",
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "install": "cargo install --path {{ self.rootDir }}",
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
@@ -98,7 +95,6 @@
       "rootDir": "services/principals-migrator",
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "install": "cargo install --path {{ self.rootDir }}",
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
@@ -118,7 +114,6 @@
       "rootDir": "services/federated-identities-migrator",
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "install": "cargo install --path {{ self.rootDir }}",
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
@@ -135,11 +130,9 @@
     {
       "name": "datasets",
       "rootDir": "services/datasets",
-      "specPath": "services/datasets/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -150,7 +143,7 @@
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -159,8 +152,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin datasets-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -170,11 +162,9 @@
     {
       "name": "deployments",
       "rootDir": "services/deployments",
-      "specPath": "services/deployments/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -185,7 +175,7 @@
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -194,8 +184,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin deployments-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -205,11 +194,9 @@
     {
       "name": "agents",
       "rootDir": "services/agents",
-      "specPath": "services/agents/spec/v1",
       "labels": ["api"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -220,7 +207,7 @@
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -229,8 +216,7 @@
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "generate-spec": "mkdir -p {{ self.specPath }} && cargo run --bin agents-openapi | jq > {{ self.specPath }}/openapi.json"
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
       },
       "dependencies": [
         "traefik",
@@ -238,12 +224,24 @@
       ]
     },
     {
+      "name": "specs",
+      "rootDir": "specs",
+      "labels": ["workflow"],
+      "lifecycle": "development",
+      "commands": {
+        "generate-agents": "mkdir -p {{ specs-dir }}/agents && cargo run --bin agents-openapi | jq > {{ specs-dir }}/agents/openapi.json",
+        "generate-models": "mkdir -p {{ specs-dir }}/models && cargo run --bin models-openapi | jq > {{ specs-dir }}/models/openapi.json",
+        "generate-deployments": "mkdir -p {{ specs-dir }}/deployments && cargo run --bin deployments-openapi | jq > {{ specs-dir }}/deployments/openapi.json",
+        "generate-datasets": "mkdir -p {{ specs-dir }}/datasets && cargo run --bin datasets-openapi | jq > {{ specs-dir }}/datasets/openapi.json",
+        "generate": "{{ self.commands.generate-agents }} && {{ self.commands.generate-models }} && {{ self.commands.generate-deployments }} && {{ self.commands.generate-datasets }}"
+      }
+    },
+    {
       "name": "nfs",
       "rootDir": "services/nfs",
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
@@ -259,7 +257,6 @@
       "labels": ["component"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh {{ project-root }}; {{ self.rootDir }}/scripts/burnup.sh {{ project-root }}",
@@ -277,7 +274,6 @@
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
-        "initialize": " && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -288,7 +284,7 @@
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -306,7 +302,6 @@
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -317,7 +312,7 @@
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -335,7 +330,6 @@
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
         "restart": "{{ self.rootDir }}/scripts/burndown.sh $(pwd); {{ self.rootDir }}/scripts/burnup.sh $(pwd)",
@@ -353,7 +347,6 @@
       "labels": ["infra"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "debug": "{{ self.rootDir }}/scripts/debug.sh {{ project-root }}",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -373,7 +366,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -387,7 +379,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "RUST_LOG=DEBUG cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -402,7 +393,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path {{ self.rootDir }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "RUST_LOG=DEBUG cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -417,7 +407,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -432,7 +421,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -446,7 +434,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -460,7 +447,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -474,7 +460,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -488,7 +473,6 @@
       "labels": ["lib"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -502,7 +486,6 @@
       "labels": ["lib"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -516,7 +499,6 @@
       "labels": ["lib"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path libs/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -525,12 +507,23 @@
       }
     },
     {
+      "name": "sdks",
+      "rootDir": "sdks",
+      "labels": ["workflow", "sdkgen"],
+      "lifecycle": "development",
+      "commands": {
+        "generate-ts": "./dev generate typescript-sdk-generator",
+        "generate": "{{ self.commands.generate-ts }}",
+        "publish-ts": "./dev publish typescript-sdk-generator",
+        "publish": "{{ self.commands.publish-ts }}"
+      }
+    },
+    {
       "name": "agntcy-sdk",
       "rootDir": "services/sdks/agntcy-sdk",
       "labels": ["sdk"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "compile": "cargo +nightly build --manifest-path services/sdks/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -549,7 +542,6 @@
       "labels": ["sdk"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "compile": "cargo build --manifest-path {{ sdks-dir }}/{{ self.name }}/Cargo.toml",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
@@ -558,19 +550,27 @@
       }
     },
     {
-      "name": "typescript-sdk",
-      "url": "https://www.npmjs.com/package/@mlhub/ts-sdk",
+      "name": "typescript-sdk-generator",
+      "aliases": ["tsgen"],
       "lifecycle": "development",
-      "rootDir": "sdks/typescript-sdk",
-      "labels": ["sdk"],
+      "rootDir": "tooling/typescript-sdk-generator",
+      "labels": ["sdkgen", "tooling"],
       "commands": {
         "build": "./{{ self.rootDir }}/build",
         "bump": "node ./{{ self.rootDir }}/scripts/bump-version.js",
-        "generate-all": "./{{ self.rootDir }}/exec-generate-all {{ project-root }}",
+        "generate-agents": "./{{ self.rootDir }}/exec-generate {{ project-root }} agents",
+        "generate-models": "./{{ self.rootDir }}/exec-generate {{ project-root }} models",
+        "generate-deployments": "./{{ self.rootDir }}/exec-generate {{ project-root }} deployments",
+        "generate-datasets": "./{{ self.rootDir }}/exec-generate {{ project-root }} datasets",
+        "generate": "./{{ self.rootDir }}/exec-generate {{ project-root }}",
         "exec": "./{{ self.rootDir }}/exec {{ project-root }} $(realpath ~/.npmrc)",
-        "publish-models": "npm publish {{ self.rootDir }}/gen/models --access public",
-        "publish-sdk": "npm publish {{ self.rootDir }}/ts-sdk --access public",
-        "add-npm-token": "[ -n \"$NPM_TOKEN\" ] && echo \"//registry.npmjs.org/:_authToken=$NPM_TOKEN\" >> ~/.npmrc"
+        "publish-agents": "npm publish ./{{ sdks-dir }}/agents-ts-sdk --access public",
+        "publish-models": "npm publish ./{{ sdks-dir }}/models-ts-sdk --access public",
+        "publish-deployments": "npm publish ./{{ sdks-dir }}/deployments-ts-sdk --access public",
+        "publish-datasets": "npm publish ./{{ sdks-dir }}/datasets-ts-sdk --access public",
+        "publish": "{{ self.commands.publish-agents }} && {{ self.commands.publish-models }} && {{ self.commands.publish-deployments }} && {{ self.commands.publish-datasets }}",
+        "publish-sdk": "npm publish ./{{ sdks-dir }}/ts-sdk --access public",
+        "update-npm-token": "[ -n \"$NPM_TOKEN\" ] && echo \"//registry.npmjs.org/:_authToken=$NPM_TOKEN\" >> ~/.npmrc"
       }
     },
     {
@@ -579,7 +579,6 @@
       "labels": ["lib"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
         "code": "code libs/{{ self.name }}",
         "gen": "./{{ self.rootDir }}/run `pwd`/services/assets",
         "exec-gen": "./{{ self.rootDir }}/exec-gen `pwd`/services/assets",
@@ -594,7 +593,6 @@
       "labels": ["bin"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "buildl-extract": "docker build -f {{ self.rootDir }}/Dockerfile.python -t {{ hf-model-etl-extract-image }}:{{ local }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" . && minikube image load {{ hf-model-etl-extract-image }}:{{ local }} --overwrite",
@@ -613,7 +611,6 @@
       "labels": ["bin"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "remove": "cargo remove --manifest-path {{ self.rootDir }}/Cargo.toml",
         "buildl-extract": "docker build -f {{ self.rootDir }}/Dockerfile.python -t {{ hf-dataset-etl-extract-image }}:{{ local }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" . && minikube image load {{ hf-dataset-etl-extract-image }}:{{ local }} --overwrite",
@@ -631,7 +628,6 @@
       "labels": ["bin", "worker"],
       "lifecycle": "production",
       "commands": {
-        "initialize": "",
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
@@ -642,7 +638,7 @@
         "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" .",
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
-        "cycle": "./manage stop {{ self.name }} && ./manage buildp {{ self.name }} && ./manage start {{ self.name }}",
+        "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
         "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
@@ -655,14 +651,31 @@
       }
     },
     {
+      "name": "stack",
+      "rootDir": "tooling/deployer",
+      "labels": ["workflow", "tooling"],
+      "lifecycle": "development",
+      "commands": {
+        "build-migrations": "./{{ self.rootDir }}/deployer build-migrations \"{{ project-root }}\" {{ overlay }}",
+        "build-services": "./{{ self.rootDir }}/deployer build-services \"{{ project-root }}\" {{ overlay }}",
+        "build-jobs": "./{{ self.rootDir }}/deployer build-jobs \"{{ project-root }}\" {{ overlay }}",
+        "build": "./{{ self.rootDir }}/deployer build \"{{ project-root }}\" {{ overlay }}",
+        "start-infra": "./{{ self.rootDir }}/deployer start-infra \"{{ project-root }}\" {{ overlay }}",
+        "start-migrations": "./{{ self.rootDir }}/deployer start-migrations \"{{ project-root }}\" {{ overlay }}",
+        "start-services": "./{{ self.rootDir }}/deployer start-services \"{{ project-root }}\" {{ overlay }}",
+        "start-jobs": "./{{ self.rootDir }}/deployer start-jobs \"{{ project-root }}\" {{ overlay }}",
+        "start": "./{{ self.rootDir }}/deployer start \"{{ project-root }}\" {{ overlay }}",
+        "deploy": "./{{ self.rootDir }}/deployer deploy \"{{ project-root }}\" {{ overlay }}"
+      }
+    },
+    {
       "name": "migrations",
       "rootDir": "deploy/k8s/minikube/migrations",
       "labels": ["workflow"],
       "lifecycle": "experimental",
       "commands": {
-        "initialize": "",
-        "buildl-all": "./manage buildl models-migrator federated-identities-migrator principals-migrator -s",
-        "run-all": "./manage run-models migrations -t overlay {{ overlay }} && ./manage run-federated-identities migrations -t overlay {{ overlay }} && ./manage run-principals migrations -t overlay {{ overlay }}",
+        "buildl-all": "./dev buildl models-migrator federated-identities-migrator principals-migrator",
+        "run-all": "./dev run-models migrations -t overlay {{ overlay }} && ./dev run-federated-identities migrations -t overlay {{ overlay }} && ./dev run-principals migrations -t overlay {{ overlay }}",
         "run-models": "cd {{ k8s-dir }}/{{ self.name }}/models-migrator && ./burnup.sh {{ overlay }}",
         "run-federated-identities": "cd {{ k8s-dir }}/{{ self.name }}/federated-identities-migrator && ./burnup.sh {{ overlay }}",
         "run-principals": "cd {{ k8s-dir }}/{{ self.name }}/principals-migrator && ./burnup.sh {{ overlay }}"

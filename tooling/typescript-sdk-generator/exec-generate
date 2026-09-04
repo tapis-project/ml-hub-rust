@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+
+projectRoot=$1
+if [[ -z $projectRoot ]]; then
+    echo ❌ Must provide the path to the project root
+    exit 1
+fi
+
+service=$2
+
+generationCommand=(/src/tooling/typescript-sdk-generator/generate_all)
+if [[ -n $service ]]; then
+    generationCommand=(/src/tooling/typescript-sdk-generator/generate "$service")
+fi
+
+docker run \
+    --rm \
+    --workdir /src/tooling/typescript-sdk-generator \
+    --mount type=bind,source="$projectRoot/tooling/typescript-sdk-generator",target=/src/tooling/typescript-sdk-generator \
+    --mount type=volume,target=/src/tooling/typescript-sdk-generator/node_modules \
+    --mount type=bind,source="$projectRoot/specs",target=/src/specs \
+    --mount type=bind,source="$projectRoot/sdks",target=/src/sdks \
+    tapis/mlhub-typescript-sdk-generator:local \
+    "${generationCommand[@]}"

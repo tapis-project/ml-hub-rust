@@ -94,7 +94,7 @@ Verify the appropriate scope of work:
 - Mongo document/entity mappings and repository filters;
 - service checks/tests, rendered Kustomize overlays, and `git diff --check`.
 
-Use focused commands first, such as `cargo test -p shared --lib`, `cargo test -p <service> --lib`, and `cargo check -p <service>`. Run `./manage test <component>` or broader checks when the change warrants them. Avoid formatters that rewrite unrelated files; use formatting checks or a targeted formatter invocation.
+Use focused commands first, such as `cargo test -p shared --lib`, `cargo test -p <service> --lib`, and `cargo check -p <service>`. Run `./dev test <component>` or broader checks when the change warrants them. Avoid formatters that rewrite unrelated files; use formatting checks or a targeted formatter invocation.
 
 For runtime verification, use the deployed route through the intended proxy. Confirm health first, then invoke protected endpoints with the header format expected by shared authentication. Supply secrets only through secure local execution, never source control or documentation, and never repeat tokens in a handoff. Report the HTTP status and non-sensitive resource identifiers only.
 

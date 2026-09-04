@@ -30,7 +30,42 @@ You will need to start Minikube with at least 2 nodes. Run the following command
 
 ## 2. Start your Engines! 🏎️
 
-Now that you have all the necessary tools installed, we can start up the MLHub Models suite. 
+### Deploy the complete local stack
+
+Now that the development environment and Minikube are ready, open a terminal at the repository
+root and run:
+
+```shell
+bash dev deploy stack
+```
+
+This builds every deployable image, loads it into Minikube, and starts the complete MLHub stack in
+dependency order. Invoking `dev` through Bash makes the first run work even when the file is not
+yet executable; the stack deployment makes it executable for subsequent `./dev` commands.
+
+The deployment waits for infrastructure and services to become ready and for each migration and ETL
+job to complete before continuing. It stops on the first failure and does not roll back resources
+that have already started.
+
+Migration and ETL Jobs are never deleted or reused automatically. If one of their Kubernetes Job
+resources already exists, remove it explicitly before retrying the failed stage.
+
+This complete deployment is intended primarily to bootstrap a new local environment and should
+normally be run only once. After the stack is available, use lifecycle commands on individual
+components for routine development, for example:
+
+```shell
+./dev buildl models
+./dev start models
+./dev stop models
+```
+
+The `stack` component also provides grouped build and start commands for recovering or completing a
+partial initial deployment. Grouped start commands assume the preceding infrastructure and
+migration stages have already completed. Stack deployment targets Minikube and uses the `minikube`
+overlay by default.
+
+### Deploy individual components
 
 > **Note**: Before running the next scripts, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
 
@@ -40,45 +75,45 @@ From the project's root directory, run the following commands to initalize the p
 
 ### Infrastructure (Required)
 
-0. `chmod +x manage` - Makes the lifecycle script executable
+0. `chmod +x dev` - Makes the lifecycle script executable
 
-0. `./manage start nfs` - Starts the shared file system
+0. `./dev start nfs` - Starts the shared file system
 
-0. `./manage start rabbit` - Starts the message broker
+0. `./dev start rabbit` - Starts the message broker
 
-0. `./manage start mongo` - Starts the database
+0. `./dev start mongo` - Starts the database
 
-0. `./manage start traefik` - Starts the reverse proxy that routes traffic to the APIs
+0. `./dev start traefik` - Starts the reverse proxy that routes traffic to the APIs
 
 ### Migrations (Required)
 
-0. `./manage buildl-all migrations` - Builds all migration images and loads them into Minikube.
+0. `./dev buildl-all migrations` - Builds all migration images and loads them into Minikube.
 
-0. `./manage run-all migrations` - Runs the Models, Federated Identities, and Principals migrations in order. The command stops if any migration fails.
+0. `./dev run-all migrations` - Runs the Models, Federated Identities, and Principals migrations in order. The command stops if any migration fails.
 
 ### Models API
 
-0. `./manage buildl models -s` - Builds the Models API image and loads it into minikube
+0. `./dev buildl models` - Builds the Models API image and loads it into minikube
 
-0. `./manage start models` - Starts the Models API pod(s)
+0. `./dev start models` - Starts the Models API pod(s)
 
 ### Deployments API
 
-0. `./manage buildl deployments -s` - Builds the Deployments API image and loads it into Minikube.
+0. `./dev buildl deployments` - Builds the Deployments API image and loads it into Minikube.
 
-0. `./manage start deployments` - Starts the Deployments API pod(s).
+0. `./dev start deployments` - Starts the Deployments API pod(s).
 
 ### Agents API
 
-0. `./manage buildl agents -s` - Builds the Agents API image and loads it into Minikube.
+0. `./dev buildl agents` - Builds the Agents API image and loads it into Minikube.
 
-0. `./manage start agents` - Starts the Agents API pod(s).
+0. `./dev start agents` - Starts the Agents API pod(s).
 
 ### Artifacts Suite (Optional)
 
-0. `./manage buildl artifact-ingester && ./manage start artifact-ingester` - Start up the artifact ingestion workers
+0. `./dev buildl artifact-ingester && ./dev start artifact-ingester` - Start up the artifact ingestion workers
 
-0. `./manage buildl artifact-publisher && ./manage start artifact-publisher` - Start up the artifact publisher workers
+0. `./dev buildl artifact-publisher && ./dev start artifact-publisher` - Start up the artifact publisher workers
 
 ### Networking
 
@@ -97,7 +132,7 @@ From the project's root directory, run the following commands to initalize the p
 
 Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
 
-`./manage expose traefik`
+`./dev expose traefik`
 
 You can now make request to the IP address and port output by the last command. The section below will provide detailed instructions on how to make request to each service.
 
@@ -107,11 +142,11 @@ You can now make request to the IP address and port output by the last command. 
 
 Build and load both images used by the Hugging Face model ETL job, then run the job in Minikube:
 
-0. `./manage buildl-extract hf-model-etl` - Builds and loads the Hugging Face metadata extraction image.
+0. `./dev buildl-extract hf-model-etl` - Builds and loads the Hugging Face metadata extraction image.
 
-0. `./manage buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
+0. `./dev buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
 
-0. `./manage run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load model metadata into MLHub.
+0. `./dev run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load model metadata into MLHub.
 
 ## 4. Making requests
 
@@ -135,11 +170,33 @@ The request returns matching model metadata in the standard MLHub response envel
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a python tool that can be invoked from the command line in the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. This is the same script invoked previously to initialize the MLHub project locally.
+The Lifecycle Management CLI is a Python tool that can be invoked through `./dev` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`.
 
 ### The Components File
 
 The `components.json` file contains and exhaustive list of every component in the MLHub suite and every command you can run against those components using the CLI.
+
+A component may define an optional `aliases` array containing alternate names for use with the lifecycle CLI:
+
+```json
+{
+  "name": "deployments",
+  "aliases": ["deploy", "deps"]
+}
+```
+
+The canonical name and each alias select the same component. For example, `./dev start deployments`, `./dev start deploy`, and `./dev start deps` are equivalent. Aliases are case-sensitive and must be unique across all component names and aliases.
+
+A lifecycle command must select at least one component explicitly. Provide component names or aliases, use `-A` or `--all` to select every component, or use `--labels` to select only components containing every requested label:
+
+```shell
+./dev test models deployments
+./dev test --all
+./dev test --labels api
+./dev test --all --labels api
+```
+
+The `--all` flag cannot be combined with explicit component names or aliases. A label filter may be applied either to explicitly selected components or to all components.
 
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI
