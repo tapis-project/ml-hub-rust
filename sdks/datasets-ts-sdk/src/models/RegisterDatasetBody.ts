@@ -44,6 +44,12 @@ import {
 export interface RegisterDatasetBody {
     /**
      * 
+     * @type {string}
+     * @memberof RegisterDatasetBody
+     */
+    description?: string | null;
+    /**
+     * 
      * @type {HuggingFaceRepoLocator}
      * @memberof RegisterDatasetBody
      */
@@ -54,6 +60,12 @@ export interface RegisterDatasetBody {
      * @memberof RegisterDatasetBody
      */
     items: Array<DatasetItem>;
+    /**
+     * 
+     * @type {string}
+     * @memberof RegisterDatasetBody
+     */
+    name: string;
     /**
      * 
      * @type {DatasetProvider}
@@ -96,8 +108,10 @@ export function RegisterDatasetBodyFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'huggingface_repo_locator': !exists(json, 'huggingface_repo_locator') ? undefined : HuggingFaceRepoLocatorFromJSON(json['huggingface_repo_locator']),
         'items': ((json['items'] as Array<any>).map(DatasetItemFromJSON)),
+        'name': json['name'],
         'provider': DatasetProviderFromJSON(json['provider']),
         'size': json['size'],
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
@@ -115,8 +129,10 @@ export function RegisterDatasetBodyToJSON(value?: RegisterDatasetBody | null): a
     }
     return {
         
+        'description': value.description,
         'huggingface_repo_locator': HuggingFaceRepoLocatorToJSON(value.huggingface_repo_locator),
         'items': ((value.items as Array<any>).map(DatasetItemToJSON)),
+        'name': value.name,
         'provider': DatasetProviderToJSON(value.provider),
         'size': value.size,
         'tags': value.tags,

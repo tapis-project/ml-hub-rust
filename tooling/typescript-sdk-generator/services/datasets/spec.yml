@@ -116,6 +116,7 @@ components:
         - id
         - tenant_id
         - owner
+        - name
         - tags
         - provider
         - huggingface_repo_locator
@@ -125,6 +126,10 @@ components:
         - size
         - visibility
       properties:
+        description:
+          type:
+            - string
+            - 'null'
         huggingface_repo_locator:
           oneOf:
             - type: 'null'
@@ -148,6 +153,8 @@ components:
             items in persisted order;
 
             registration returns every registered item.
+        name:
+          type: string
         owner:
           type: string
         provider:
@@ -242,10 +249,15 @@ components:
     RegisterDatasetBody:
       type: object
       required:
+        - name
         - provider
         - items
         - size
       properties:
+        description:
+          type:
+            - string
+            - 'null'
         huggingface_repo_locator:
           oneOf:
             - type: 'null'
@@ -254,6 +266,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DatasetItem'
+        name:
+          type: string
         provider:
           $ref: '#/components/schemas/DatasetProvider'
         size:

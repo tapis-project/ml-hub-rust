@@ -44,6 +44,12 @@ import {
 export interface Dataset {
     /**
      * 
+     * @type {string}
+     * @memberof Dataset
+     */
+    description?: string | null;
+    /**
+     * 
      * @type {HuggingFaceRepoLocator}
      * @memberof Dataset
      */
@@ -67,6 +73,12 @@ export interface Dataset {
      * @memberof Dataset
      */
     items: Array<DatasetItem>;
+    /**
+     * 
+     * @type {string}
+     * @memberof Dataset
+     */
+    name: string;
     /**
      * 
      * @type {string}
@@ -121,10 +133,12 @@ export function DatasetFromJSONTyped(json: any, ignoreDiscriminator: boolean): D
     }
     return {
         
+        'description': !exists(json, 'description') ? undefined : json['description'],
         'huggingface_repo_locator': HuggingFaceRepoLocatorFromJSON(json['huggingface_repo_locator']),
         'id': json['id'],
         'item_count': json['item_count'],
         'items': ((json['items'] as Array<any>).map(DatasetItemFromJSON)),
+        'name': json['name'],
         'owner': json['owner'],
         'provider': DatasetProviderFromJSON(json['provider']),
         'size': json['size'],
@@ -144,10 +158,12 @@ export function DatasetToJSON(value?: Dataset | null): any {
     }
     return {
         
+        'description': value.description,
         'huggingface_repo_locator': HuggingFaceRepoLocatorToJSON(value.huggingface_repo_locator),
         'id': value.id,
         'item_count': value.item_count,
         'items': ((value.items as Array<any>).map(DatasetItemToJSON)),
+        'name': value.name,
         'owner': value.owner,
         'provider': DatasetProviderToJSON(value.provider),
         'size': value.size,
