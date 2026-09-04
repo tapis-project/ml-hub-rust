@@ -513,7 +513,9 @@
       "lifecycle": "development",
       "commands": {
         "generate-ts": "./dev generate typescript-sdk-generator",
-        "generate": "{{ self.commands.generate-ts }}"
+        "generate": "{{ self.commands.generate-ts }}",
+        "publish-ts": "./dev publish typescript-sdk-generator",
+        "publish": "{{ self.commands.publish-ts }}"
       }
     },
     {
@@ -562,8 +564,12 @@
         "generate-datasets": "./{{ self.rootDir }}/exec-generate {{ project-root }} datasets",
         "generate": "./{{ self.rootDir }}/exec-generate {{ project-root }}",
         "exec": "./{{ self.rootDir }}/exec {{ project-root }} $(realpath ~/.npmrc)",
-        "publish-models": "npm publish {{ sdks-dir }}/models-ts-sdk --access public",
-        "publish-sdk": "npm publish {{ sdks-dir }}/ts-sdk --access public",
+        "publish-agents": "npm publish ./{{ sdks-dir }}/agents-ts-sdk --access public",
+        "publish-models": "npm publish ./{{ sdks-dir }}/models-ts-sdk --access public",
+        "publish-deployments": "npm publish ./{{ sdks-dir }}/deployments-ts-sdk --access public",
+        "publish-datasets": "npm publish ./{{ sdks-dir }}/datasets-ts-sdk --access public",
+        "publish": "{{ self.commands.publish-agents }} && {{ self.commands.publish-models }} && {{ self.commands.publish-deployments }} && {{ self.commands.publish-datasets }}",
+        "publish-sdk": "npm publish ./{{ sdks-dir }}/ts-sdk --access public",
         "update-npm-token": "[ -n \"$NPM_TOKEN\" ] && echo \"//registry.npmjs.org/:_authToken=$NPM_TOKEN\" >> ~/.npmrc"
       }
     },
@@ -642,6 +648,24 @@
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open"
+      }
+    },
+    {
+      "name": "stack",
+      "rootDir": "tooling/deployer",
+      "labels": ["workflow", "tooling"],
+      "lifecycle": "development",
+      "commands": {
+        "build-migrations": "./{{ self.rootDir }}/deployer build-migrations \"{{ project-root }}\" {{ overlay }}",
+        "build-services": "./{{ self.rootDir }}/deployer build-services \"{{ project-root }}\" {{ overlay }}",
+        "build-jobs": "./{{ self.rootDir }}/deployer build-jobs \"{{ project-root }}\" {{ overlay }}",
+        "build": "./{{ self.rootDir }}/deployer build \"{{ project-root }}\" {{ overlay }}",
+        "start-infra": "./{{ self.rootDir }}/deployer start-infra \"{{ project-root }}\" {{ overlay }}",
+        "start-migrations": "./{{ self.rootDir }}/deployer start-migrations \"{{ project-root }}\" {{ overlay }}",
+        "start-services": "./{{ self.rootDir }}/deployer start-services \"{{ project-root }}\" {{ overlay }}",
+        "start-jobs": "./{{ self.rootDir }}/deployer start-jobs \"{{ project-root }}\" {{ overlay }}",
+        "start": "./{{ self.rootDir }}/deployer start \"{{ project-root }}\" {{ overlay }}",
+        "deploy": "./{{ self.rootDir }}/deployer deploy \"{{ project-root }}\" {{ overlay }}"
       }
     },
     {

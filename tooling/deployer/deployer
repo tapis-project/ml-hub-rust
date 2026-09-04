@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+stage=${1:-}
+project_root=${2:-}
+overlay=${3:-minikube}
+poll_interval_seconds=${DEPLOYER_POLL_INTERVAL_SECONDS:-2}
+
+if [[ -z $stage || -z $project_root ]]; then
+    echo "Usage: deployer <stage> <project-root> [overlay]" >&2
+    exit 2
+fi
+
+chmod +x "$project_root/dev"
+
+migration_jobs=(
+    mlhub-models-migrator
+    mlhub-federated-identities-migrator
+    mlhub-principals-migrator
+)
+
+etl_jobs=(
+    mlhub-hf-model-etl
+    mlhub-hf-dataset-etl
+)
+
+run_dev() {
+    "$project_root/dev" "$@"
+}
+
+announce() {
+    echo
+    echo "==> $1"
+}
+
+build_migrations() {
+    announce "Building migration images"
+    run_dev buildl models-migrator
+    run_dev buildl federated-identities-migrator
+    run_dev buildl principals-migrator
+}
+
+build_services() {
+    announce "Building API images"
+    run_dev buildl models
+    run_dev buildl datasets
+    run_dev buildl deployments
+    run_dev buildl agents
+
+    announce "Building worker images"
+    run_dev buildl artifact-ingester
+    run_dev buildl artifact-publisher
+    run_dev buildl model-deployment-controller
+}
+
+build_jobs() {
+    announce "Building Hugging Face model ETL images"
+    run_dev buildl-extract hf-model-etl
+    run_dev buildl-transform-load hf-model-etl
+
+    announce "Building Hugging Face dataset ETL images"
+    run_dev buildl-extract hf-dataset-etl
+    run_dev buildl-transform-load hf-dataset-etl
+}
+
+build_all() {
+    build_migrations
+    build_services
+    build_jobs
+}
+
+wait_for_rollout() {
+    local resource=$1
+
+    kubectl rollout status "$resource" --timeout=0s
+}
+
+start_infra() {
+    announce "Starting NFS"
+    run_dev start nfs -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-nfs-server-deployment
+
+    announce "Starting RabbitMQ"
+    run_dev start rabbit -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-rabbit-deployment
+
+    announce "Starting MongoDB"
+    run_dev start mongo -t overlay "$overlay"
+    wait_for_rollout statefulset/mlhub-mongo-stateful-set
+
+    announce "Starting Traefik"
+    run_dev start traefik -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-traefik-deployment
+}
+
+preflight_jobs() {
+    local job
+    local existing
+
+    for job in "$@"; do
+        existing=$(kubectl get job "$job" --ignore-not-found -o name)
+        if [[ -n $existing ]]; then
+            echo "Job '$job' already exists. Remove it explicitly before rerunning this stage." >&2
+            return 1
+        fi
+    done
+}
+
+wait_for_job() {
+    local job=$1
+    local completed
+    local failed
+
+    while true; do
+        completed=$(kubectl get job "$job" -o 'jsonpath={.status.conditions[?(@.type=="Complete")].status}')
+        failed=$(kubectl get job "$job" -o 'jsonpath={.status.conditions[?(@.type=="Failed")].status}')
+
+        if [[ $completed == "True" ]]; then
+            echo "Job '$job' completed"
+            return 0
+        fi
+
+        if [[ $failed == "True" ]]; then
+            echo "Job '$job' failed" >&2
+            return 1
+        fi
+
+        sleep "$poll_interval_seconds"
+    done
+}
+
+run_migrations() {
+    announce "Running models migration"
+    run_dev run-models migrations -t overlay "$overlay"
+    wait_for_job mlhub-models-migrator
+
+    announce "Running federated identities migration"
+    run_dev run-federated-identities migrations -t overlay "$overlay"
+    wait_for_job mlhub-federated-identities-migrator
+
+    announce "Running principals migration"
+    run_dev run-principals migrations -t overlay "$overlay"
+    wait_for_job mlhub-principals-migrator
+}
+
+start_migrations() {
+    preflight_jobs "${migration_jobs[@]}"
+    run_migrations
+}
+
+start_services() {
+    announce "Starting Models API"
+    run_dev start models -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-models-api-deployment
+
+    announce "Starting Datasets API"
+    run_dev start datasets -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-datasets-api-deployment
+
+    announce "Starting Deployments API"
+    run_dev start deployments -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-deployments-api-deployment
+
+    announce "Starting Agents API"
+    run_dev start agents -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-agents-api-deployment
+
+    announce "Starting artifact ingester"
+    run_dev start artifact-ingester -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-artifact-ingester-deployment
+
+    announce "Starting artifact publisher"
+    run_dev start artifact-publisher -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-artifact-publisher-deployment
+
+    announce "Starting model deployment controller"
+    run_dev start model-deployment-controller -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-model-deployment-controller-deployment
+}
+
+run_jobs() {
+    announce "Running Hugging Face model ETL"
+    run_dev run hf-model-etl -t overlay "$overlay"
+    wait_for_job mlhub-hf-model-etl
+
+    announce "Running Hugging Face dataset ETL"
+    run_dev run hf-dataset-etl -t overlay "$overlay"
+    wait_for_job mlhub-hf-dataset-etl
+}
+
+start_jobs() {
+    preflight_jobs "${etl_jobs[@]}"
+    run_jobs
+}
+
+start_all() {
+    preflight_jobs "${migration_jobs[@]}" "${etl_jobs[@]}"
+    start_infra
+    run_migrations
+    start_services
+    run_jobs
+}
+
+case "$stage" in
+    build-migrations) build_migrations ;;
+    build-services) build_services ;;
+    build-jobs) build_jobs ;;
+    build) build_all ;;
+    start-infra) start_infra ;;
+    start-migrations) start_migrations ;;
+    start-services) start_services ;;
+    start-jobs) start_jobs ;;
+    start) start_all ;;
+    deploy)
+        build_all
+        start_all
+        ;;
+    *)
+        echo "Unknown deployer stage '$stage'" >&2
+        exit 2
+        ;;
+esac
