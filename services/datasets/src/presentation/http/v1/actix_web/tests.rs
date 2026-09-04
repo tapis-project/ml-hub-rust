@@ -19,6 +19,17 @@ fn openapi_contains_dataset_routes_and_schemas() {
 }
 
 #[test]
+fn openapi_does_not_document_provider_authorization() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert!(document
+        .pointer("/paths/~1datasets-api~1datasets/post/responses/403")
+        .is_none());
+
+    Ok(())
+}
+
+#[test]
 fn openapi_documents_dataset_item_count_and_retrieval_limit(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;

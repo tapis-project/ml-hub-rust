@@ -7,14 +7,20 @@ use std::{
 };
 
 use hf_dataset_etl::{
-    bootstrap::dataset_service_factory,
+    bootstrap::{
+        dataset_query_service_factory, dataset_registration_service_factory,
+        dataset_repository_factory,
+    },
     database::{initialize_client, ClientParams},
     transform::HuggingFaceDatasetRecord,
 };
 use shared::{
     application::{
         inputs::dataset::{DatasetProviderInput, RegisterDatasetInput},
-        services::dataset_service::DatasetService,
+        services::{
+            dataset_query_service::DatasetQueryService,
+            dataset_registration_service::DatasetRegistrationService,
+        },
     },
     shared_kernel::context::RequestContext,
 };
@@ -43,13 +49,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let inbox_path = required_env("INBOX")?;
     let max_entries = parse_max_entries(&required_env("MAX_PROCESSABLE_ENTRIES")?)?;
 
-    let dataset_service = dataset_service_factory(&client, db_name);
+    let dataset_repository = dataset_repository_factory(&client, db_name);
+    let dataset_registration_service =
+        dataset_registration_service_factory(dataset_repository.clone());
+    let dataset_query_service = dataset_query_service_factory(dataset_repository);
+
     let context = RequestContext::system(None);
 
     let summary = process_inbox(
         Path::new(&inbox_path),
         max_entries,
-        &dataset_service,
+        &dataset_registration_service,
+        &dataset_query_service,
         &context,
     )
     .await?;
@@ -65,7 +76,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 async fn process_inbox(
     inbox: &Path,
     max_entries: Option<usize>,
-    dataset_service: &DatasetService,
+    dataset_registration_service: &DatasetRegistrationService,
+    dataset_query_service: &DatasetQueryService,
     context: &RequestContext,
 ) -> Result<ProcessingSummary, Box<dyn Error>> {
     if !inbox.is_dir() {
@@ -125,7 +137,7 @@ async fn process_inbox(
                 }
             };
 
-            if dataset_service
+            if dataset_query_service
                 .find_by_huggingface_repo_locator(context, repo_id, sha)
                 .await?
                 .is_some()
@@ -135,7 +147,10 @@ async fn process_inbox(
                 continue;
             }
 
-            match dataset_service.register_dataset(context, input).await {
+            match dataset_registration_service
+                .register_dataset(context, input)
+                .await
+            {
                 Ok(_) => summary.registered += 1,
                 Err(error) => {
                     summary.rejected += 1;

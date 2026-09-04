@@ -1,6 +1,12 @@
 use super::handlers;
 use crate::{
-    bootstrap::{factories::dataset_service_factory, state::AppState},
+    bootstrap::{
+        factories::{
+            dataset_query_service_factory, dataset_registration_service_factory,
+            dataset_repository_factory,
+        },
+        state::AppState,
+    },
     config::{DEFAULT_HOST, DEFAULT_PORT},
 };
 use actix_web::{
@@ -67,10 +73,11 @@ pub async fn run_server() -> std::io::Result<()> {
 
     let state = AppState { client, db_name };
 
-    let dataset_service = web::Data::new(dataset_service_factory(
-        &state.client,
-        state.db_name.clone(),
+    let dataset_repository = dataset_repository_factory(&state.client, state.db_name.clone());
+    let dataset_registration_service = web::Data::new(dataset_registration_service_factory(
+        dataset_repository.clone(),
     ));
+    let dataset_query_service = web::Data::new(dataset_query_service_factory(dataset_repository));
 
     HttpServer::new(move || {
         App::new()
@@ -78,7 +85,8 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
-            .app_data(dataset_service.clone())
+            .app_data(dataset_registration_service.clone())
+            .app_data(dataset_query_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(preflight_short_circuit))
             .wrap(Logger::default().exclude("/datasets-api/healthcheck"))
