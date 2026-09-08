@@ -7,7 +7,9 @@ use crate::presentation::http::v1::{
 use actix_web::{get, web, Responder};
 use serde_json::{to_value, Map, Value};
 use shared::{
-    application::{inputs::dataset::ListDatasetsInput, services::dataset_service::DatasetService},
+    application::{
+        inputs::dataset::ListDatasetsInput, services::dataset_query_service::DatasetQueryService,
+    },
     shared_kernel::context::RequestContext,
 };
 
@@ -26,7 +28,7 @@ use shared::{
 pub async fn list_datasets(
     query: web::Query<ListDatasetsQueryParams>,
     ctx: RequestContext,
-    service: web::Data<DatasetService>,
+    service: web::Data<DatasetQueryService>,
 ) -> impl Responder {
     let input = ListDatasetsInput::from(&*query);
 

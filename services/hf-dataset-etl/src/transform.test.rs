@@ -25,6 +25,8 @@ fn record() -> HuggingFaceDatasetRecord {
 fn transforms_open_dataset_snapshot() -> Result<(), TransformDatasetError> {
     let input = RegisterDatasetInput::try_from(record())?;
 
+    assert_eq!(input.name, "dataset");
+    assert!(input.description.is_none());
     assert_eq!(input.size, 12);
     assert_eq!(input.items.len(), 2);
     assert!(matches!(input.visibility, VisibilityInput::Public));
@@ -35,6 +37,19 @@ fn transforms_open_dataset_snapshot() -> Result<(), TransformDatasetError> {
     ));
 
     Ok(())
+}
+
+#[test]
+fn rejects_an_id_without_a_repository_name() {
+    for id in ["dataset", "owner/"] {
+        let mut value = record();
+        value.id = id.into();
+
+        assert_eq!(
+            RegisterDatasetInput::try_from(value).err(),
+            Some(TransformDatasetError::MalformedDatasetId(id.into()))
+        );
+    }
 }
 
 #[test]

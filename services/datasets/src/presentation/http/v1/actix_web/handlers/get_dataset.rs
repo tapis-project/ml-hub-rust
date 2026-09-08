@@ -7,7 +7,7 @@ use crate::presentation::http::v1::{
 use actix_web::{get, web, Responder};
 use serde_json::to_value;
 use shared::{
-    application::services::dataset_service::{DatasetService, DatasetServiceError},
+    application::services::dataset_query_service::{DatasetQueryService, DatasetQueryServiceError},
     shared_kernel::context::RequestContext,
 };
 
@@ -27,11 +27,11 @@ use shared::{
 pub async fn get_dataset(
     path: web::Path<GetDatasetPath>,
     ctx: RequestContext,
-    service: web::Data<DatasetService>,
+    service: web::Data<DatasetQueryService>,
 ) -> impl Responder {
     let dataset = match service.get_dataset(&ctx, path.dataset_id).await {
         Ok(v) => v,
-        Err(DatasetServiceError::NotFound) => {
+        Err(DatasetQueryServiceError::NotFound) => {
             return build_error_response(404, "Dataset not found".into())
         }
         Err(e) => return build_error_response(500, e.to_string()),

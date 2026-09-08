@@ -257,6 +257,8 @@ fn dataset_query_projection() -> Document {
             "id": 1,
             "tenant_id": 1,
             "owner": 1,
+            "name": 1,
+            "description": 1,
             "tags": 1,
             "provider": 1,
             "huggingface_repo_locator": 1,

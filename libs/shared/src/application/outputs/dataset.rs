@@ -16,6 +16,8 @@ pub struct DatasetQueryOutput {
     pub id: Uuid,
     pub tenant_id: String,
     pub owner: String,
+    pub name: String,
+    pub description: Option<String>,
     pub tags: Tags,
     pub provider: DatasetProvider,
     pub items: Vec<DatasetItem>,

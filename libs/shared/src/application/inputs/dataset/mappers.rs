@@ -37,6 +37,8 @@ impl TryFrom<requests::RegisterDatasetBody> for inputs::RegisterDatasetInput {
         };
 
         Ok(Self {
+            name: value.name,
+            description: value.description,
             tags: value.tags,
             provider,
             items: value

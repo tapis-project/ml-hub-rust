@@ -11,6 +11,8 @@ pub struct Dataset {
     pub id: Uuid,
     pub tenant_id: String,
     pub owner: String,
+    pub name: String,
+    pub description: Option<String>,
     pub tags: Vec<String>,
     pub provider: DatasetProvider,
     #[schema(required = true, nullable)]

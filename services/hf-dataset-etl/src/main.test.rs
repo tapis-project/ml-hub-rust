@@ -110,10 +110,18 @@ async fn skips_an_existing_sha_and_registers_a_changed_sha(
     write(directory.path().join("datasets_00000.jsonl"), records)?;
 
     let repository = Arc::new(TestDatasetRepository::default());
-    let service = DatasetService::new(repository.clone());
+    let registration_service = DatasetRegistrationService::new(repository.clone());
+    let query_service = DatasetQueryService::new(repository.clone());
     let context = RequestContext::system(None);
 
-    let summary = process_inbox(directory.path(), None, &service, &context).await?;
+    let summary = process_inbox(
+        directory.path(),
+        None,
+        &registration_service,
+        &query_service,
+        &context,
+    )
+    .await?;
 
     assert_eq!(summary.processed, 3);
     assert_eq!(summary.registered, 2);

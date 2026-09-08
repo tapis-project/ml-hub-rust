@@ -8,7 +8,10 @@ use actix_web::{post, web, Responder};
 use serde_json::to_value;
 use shared::{
     application::{
-        inputs::dataset::RegisterDatasetInput, services::dataset_service::DatasetService,
+        inputs::dataset::RegisterDatasetInput,
+        services::dataset_registration_service::{
+            DatasetRegistrationService, DatasetRegistrationServiceError,
+        },
     },
     shared_kernel::context::RequestContext,
 };
@@ -30,7 +33,7 @@ use validator::Validate;
 pub async fn register_dataset(
     body: web::Json<RegisterDatasetBody>,
     ctx: RequestContext,
-    service: web::Data<DatasetService>,
+    service: web::Data<DatasetRegistrationService>,
 ) -> impl Responder {
     let body = body.into_inner();
 
@@ -45,7 +48,7 @@ pub async fn register_dataset(
 
     let dataset = match service.register_dataset(&ctx, input).await {
         Ok(v) => v,
-        Err(shared::application::services::dataset_service::DatasetServiceError::Repository(e)) => {
+        Err(DatasetRegistrationServiceError::Repository(e)) => {
             return build_error_response(500, e.to_string())
         }
         Err(e) => return build_error_response(400, e.to_string()),

@@ -173,6 +173,7 @@
           "id",
           "tenant_id",
           "owner",
+          "name",
           "tags",
           "provider",
           "huggingface_repo_locator",
@@ -183,6 +184,10 @@
           "visibility"
         ],
         "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "huggingface_repo_locator": {
             "oneOf": [
               {
@@ -209,6 +214,9 @@
               "$ref": "#/components/schemas/DatasetItem"
             },
             "description": "Dataset items. Retrieval operations return at most the first 50 items in persisted order;\nregistration returns every registered item."
+          },
+          "name": {
+            "type": "string"
           },
           "owner": {
             "type": "string"
@@ -348,11 +356,16 @@
       "RegisterDatasetBody": {
         "type": "object",
         "required": [
+          "name",
           "provider",
           "items",
           "size"
         ],
         "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "huggingface_repo_locator": {
             "oneOf": [
               {
@@ -368,6 +381,9 @@
             "items": {
               "$ref": "#/components/schemas/DatasetItem"
             }
+          },
+          "name": {
+            "type": "string"
           },
           "provider": {
             "$ref": "#/components/schemas/DatasetProvider"

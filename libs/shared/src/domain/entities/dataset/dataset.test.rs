@@ -17,6 +17,8 @@ fn register_dataset_generates_v7_identity_and_urn() -> Result<(), Box<dyn std::e
     let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
+        "dataset-a".into(),
+        Some("Description".into()),
         vec!["training".into()],
         provider()?,
         vec![DatasetItem::new("data.json".into(), 10)?],
@@ -25,6 +27,8 @@ fn register_dataset_generates_v7_identity_and_urn() -> Result<(), Box<dyn std::e
     )?;
 
     assert_eq!(dataset.id().get_version_num(), 7);
+    assert_eq!(dataset.name(), "dataset-a");
+    assert_eq!(dataset.description(), Some("Description"));
 
     assert_eq!(
         dataset.urn().as_str(),
@@ -40,6 +44,8 @@ fn register_dataset_preserves_a_declared_size_that_differs_from_item_sizes(
     let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
+        "dataset-a".into(),
+        None,
         Vec::new(),
         provider()?,
         vec![DatasetItem::new("data.json".into(), 10)?],
@@ -58,6 +64,8 @@ fn register_dataset_allows_an_empty_dataset_with_a_nonzero_size(
     let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
+        "dataset-a".into(),
+        None,
         Vec::new(),
         provider()?,
         Vec::new(),
@@ -76,6 +84,8 @@ fn register_dataset_rejects_duplicate_item_paths() -> Result<(), Box<dyn std::er
     let result = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
+        "dataset-a".into(),
+        None,
         Vec::new(),
         provider()?,
         vec![
@@ -96,6 +106,8 @@ fn register_dataset_does_not_sum_item_sizes() -> Result<(), Box<dyn std::error::
     let dataset = Dataset::register(
         "tenant-a".into(),
         "owner-a".into(),
+        "dataset-a".into(),
+        None,
         Vec::new(),
         provider()?,
         vec![
@@ -119,6 +131,8 @@ fn reconstitute_preserves_a_declared_size_that_differs_from_item_sizes(
         id: uuid::Uuid::now_v7(),
         tenant_id: "tenant-a".into(),
         owner: "owner-a".into(),
+        name: "dataset-a".into(),
+        description: None,
         tags: Vec::new(),
         provider: provider()?,
         items: vec![DatasetItem::reconstitute("data.json".into(), 10)?],
@@ -127,6 +141,46 @@ fn reconstitute_preserves_a_declared_size_that_differs_from_item_sizes(
     })?;
 
     assert_eq!(dataset.size(), 11);
+
+    Ok(())
+}
+
+#[test]
+fn register_dataset_rejects_an_empty_name() -> Result<(), Box<dyn std::error::Error>> {
+    let result = Dataset::register(
+        "tenant-a".into(),
+        "owner-a".into(),
+        String::new(),
+        None,
+        Vec::new(),
+        provider()?,
+        Vec::new(),
+        0,
+        Visibility::Private,
+    );
+
+    assert!(matches!(result, Err(DatasetError::EmptyName)));
+
+    Ok(())
+}
+
+#[test]
+fn reconstitute_rejects_an_empty_name_as_a_data_integrity_error(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let result = Dataset::reconstitute(ReconstituteDatasetProps {
+        id: uuid::Uuid::now_v7(),
+        tenant_id: "tenant-a".into(),
+        owner: "owner-a".into(),
+        name: String::new(),
+        description: None,
+        tags: Vec::new(),
+        provider: provider()?,
+        items: Vec::new(),
+        size: 0,
+        visibility: Visibility::Private,
+    });
+
+    assert!(matches!(result, Err(DatasetError::DataIntegrityError(_))));
 
     Ok(())
 }
