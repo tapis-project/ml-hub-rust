@@ -122,13 +122,13 @@
         }
       }
     },
-    "/models-api/artifacts/{artifact_id}/metadata": {
+    "/models-api/artifacts/{artifact_id}/model": {
       "post": {
         "tags": [
           "Artifacts"
         ],
-        "description": "Associate existing model metadata to a model artifact",
-        "operationId": "associate_model_metadata_with_artifact",
+        "description": "Associate existing model to a model artifact",
+        "operationId": "associate_model_with_artifact",
         "parameters": [
           {
             "name": "artifact_id",
@@ -144,7 +144,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AssociateModelMetadataBody"
+                "$ref": "#/components/schemas/AssociateModelBody"
               }
             }
           },
@@ -152,11 +152,11 @@
         },
         "responses": {
           "200": {
-            "description": "Successfully associated metadata with artifact",
+            "description": "Successfully associated model with artifact",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AssociateModelMetadataResponse"
+                  "$ref": "#/components/schemas/AssociateModelResponse"
                 }
               }
             }
@@ -444,13 +444,13 @@
         "tags": [
           "Models"
         ],
-        "description": "Create a model metadata",
-        "operationId": "create_model_metadata",
+        "description": "Create a model",
+        "operationId": "create_model",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateModelMetadataBody"
+                "$ref": "#/components/schemas/CreateModelBody"
               }
             }
           },
@@ -462,7 +462,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateModelMetadataResponse"
+                  "$ref": "#/components/schemas/CreateModelResponse"
                 }
               }
             }
@@ -505,7 +505,7 @@
         "tags": [
           "Models"
         ],
-        "description": "Fork model metadata from a platform",
+        "description": "Fork a model from a platform",
         "operationId": "fork_model",
         "parameters": [
           {
@@ -1541,8 +1541,8 @@
           "Pending",
           "Extracting",
           "Extracted",
-          "PublishingMetadata",
-          "PublishedMetadata",
+          "PublishingModel",
+          "PublishedModel",
           "PublishingArtifact",
           "PublishedArtifact",
           "Finished",
@@ -1556,7 +1556,7 @@
           "Dataset"
         ]
       },
-      "AssociateModelMetadataBody": {
+      "AssociateModelBody": {
         "type": "object",
         "required": [
           "name",
@@ -1571,7 +1571,7 @@
           }
         }
       },
-      "AssociateModelMetadataResponse": {
+      "AssociateModelResponse": {
         "type": "object",
         "required": [
           "result",
@@ -1673,7 +1673,7 @@
           }
         }
       },
-      "CreateModelMetadataBody": {
+      "CreateModelBody": {
         "type": "object",
         "required": [
           "name"
@@ -1725,7 +1725,7 @@
         },
         "additionalProperties": false
       },
-      "CreateModelMetadataResponse": {
+      "CreateModelResponse": {
         "type": "object",
         "required": [
           "result",
@@ -1822,7 +1822,7 @@
           "result": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ModelMetadata"
+              "$ref": "#/components/schemas/Model"
             }
           },
           "status": {
@@ -2063,7 +2063,7 @@
             "type": "object"
           },
           "result": {
-            "$ref": "#/components/schemas/ModelMetadata"
+            "$ref": "#/components/schemas/Model"
           },
           "status": {
             "type": "integer",
@@ -2310,7 +2310,7 @@
           "result": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ModelMetadata"
+              "$ref": "#/components/schemas/Model"
             }
           },
           "status": {
@@ -2398,26 +2398,7 @@
           }
         }
       },
-      "ModelArtifact": {
-        "type": "object",
-        "required": [
-          "id",
-          "created_at",
-          "last_modified"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "last_modified": {
-            "type": "string"
-          }
-        }
-      },
-      "ModelMetadata": {
+      "Model": {
         "type": "object",
         "required": [
           "name",
@@ -2490,6 +2471,25 @@
             "nullable": true
           },
           "tenant_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelArtifact": {
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "last_modified"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "last_modified": {
             "type": "string"
           }
         }

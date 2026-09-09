@@ -16,46 +16,46 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface AssociateModelMetadataResponse
+ * @interface AssociateModelResponse
  */
-export interface AssociateModelMetadataResponse {
+export interface AssociateModelResponse {
     /**
      * 
      * @type {string}
-     * @memberof AssociateModelMetadataResponse
+     * @memberof AssociateModelResponse
      */
     message: string;
     /**
      * 
      * @type {object}
-     * @memberof AssociateModelMetadataResponse
+     * @memberof AssociateModelResponse
      */
     metadata: object;
     /**
      * 
      * @type {object}
-     * @memberof AssociateModelMetadataResponse
+     * @memberof AssociateModelResponse
      */
     result: object;
     /**
      * 
      * @type {number}
-     * @memberof AssociateModelMetadataResponse
+     * @memberof AssociateModelResponse
      */
     status: number;
     /**
      * 
      * @type {string}
-     * @memberof AssociateModelMetadataResponse
+     * @memberof AssociateModelResponse
      */
     version: string;
 }
 
-export function AssociateModelMetadataResponseFromJSON(json: any): AssociateModelMetadataResponse {
-    return AssociateModelMetadataResponseFromJSONTyped(json, false);
+export function AssociateModelResponseFromJSON(json: any): AssociateModelResponse {
+    return AssociateModelResponseFromJSONTyped(json, false);
 }
 
-export function AssociateModelMetadataResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssociateModelMetadataResponse {
+export function AssociateModelResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssociateModelResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -69,7 +69,7 @@ export function AssociateModelMetadataResponseFromJSONTyped(json: any, ignoreDis
     };
 }
 
-export function AssociateModelMetadataResponseToJSON(value?: AssociateModelMetadataResponse | null): any {
+export function AssociateModelResponseToJSON(value?: AssociateModelResponse | null): any {
     if (value === undefined) {
         return undefined;
     }

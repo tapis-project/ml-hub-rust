@@ -14,10 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    ModelMetadata,
-    ModelMetadataFromJSON,
-    ModelMetadataFromJSONTyped,
-    ModelMetadataToJSON,
+    Model,
+    ModelFromJSON,
+    ModelFromJSONTyped,
+    ModelToJSON,
 } from './';
 
 /**
@@ -40,10 +40,10 @@ export interface GetModelResponse {
     metadata: object;
     /**
      * 
-     * @type {ModelMetadata}
+     * @type {Model}
      * @memberof GetModelResponse
      */
-    result: ModelMetadata;
+    result: Model;
     /**
      * 
      * @type {number}
@@ -70,7 +70,7 @@ export function GetModelResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': ModelMetadataFromJSON(json['result']),
+        'result': ModelFromJSON(json['result']),
         'status': json['status'],
         'version': json['version'],
     };
@@ -87,7 +87,7 @@ export function GetModelResponseToJSON(value?: GetModelResponse | null): any {
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': ModelMetadataToJSON(value.result),
+        'result': ModelToJSON(value.result),
         'status': value.status,
         'version': value.version,
     };

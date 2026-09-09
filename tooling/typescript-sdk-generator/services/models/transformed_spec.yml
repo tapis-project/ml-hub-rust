@@ -75,12 +75,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
-  /models-api/artifacts/{artifact_id}/metadata:
+  /models-api/artifacts/{artifact_id}/model:
     post:
       tags:
         - Artifacts
-      description: Associate existing model metadata to a model artifact
-      operationId: associate_model_metadata_with_artifact
+      description: Associate existing model to a model artifact
+      operationId: associate_model_with_artifact
       parameters:
         - name: artifact_id
           in: path
@@ -92,15 +92,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AssociateModelMetadataBody'
+              $ref: '#/components/schemas/AssociateModelBody'
         required: true
       responses:
         '200':
-          description: Successfully associated metadata with artifact
+          description: Successfully associated model with artifact
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AssociateModelMetadataResponse'
+                $ref: '#/components/schemas/AssociateModelResponse'
         '400':
           description: Not found
           content:
@@ -273,13 +273,13 @@ paths:
     post:
       tags:
         - Models
-      description: Create a model metadata
-      operationId: create_model_metadata
+      description: Create a model
+      operationId: create_model
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateModelMetadataBody'
+              $ref: '#/components/schemas/CreateModelBody'
         required: true
       responses:
         '200':
@@ -287,7 +287,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateModelMetadataResponse'
+                $ref: '#/components/schemas/CreateModelResponse'
         '400':
           description: Not found
           content:
@@ -310,7 +310,7 @@ paths:
     post:
       tags:
         - Models
-      description: Fork model metadata from a platform
+      description: Fork a model from a platform
       operationId: fork_model
       parameters:
         - name: author
@@ -968,8 +968,8 @@ components:
         - Pending
         - Extracting
         - Extracted
-        - PublishingMetadata
-        - PublishedMetadata
+        - PublishingModel
+        - PublishedModel
         - PublishingArtifact
         - PublishedArtifact
         - Finished
@@ -979,7 +979,7 @@ components:
       enum:
         - Model
         - Dataset
-    AssociateModelMetadataBody:
+    AssociateModelBody:
       type: object
       required:
         - name
@@ -989,7 +989,7 @@ components:
           type: string
         name:
           type: string
-    AssociateModelMetadataResponse:
+    AssociateModelResponse:
       type: object
       required:
         - result
@@ -1064,7 +1064,7 @@ components:
         sha:
           type: string
           nullable: true
-    CreateModelMetadataBody:
+    CreateModelBody:
       type: object
       required:
         - name
@@ -1101,7 +1101,7 @@ components:
             $ref: '#/components/schemas/Task'
           nullable: true
       additionalProperties: false
-    CreateModelMetadataResponse:
+    CreateModelResponse:
       type: object
       required:
         - result
@@ -1173,7 +1173,7 @@ components:
         result:
           type: array
           items:
-            $ref: '#/components/schemas/ModelMetadata'
+            $ref: '#/components/schemas/Model'
         status:
           type: integer
           format: int32
@@ -1346,7 +1346,7 @@ components:
         metadata:
           type: object
         result:
-          $ref: '#/components/schemas/ModelMetadata'
+          $ref: '#/components/schemas/Model'
         status:
           type: integer
           format: int32
@@ -1524,7 +1524,7 @@ components:
         result:
           type: array
           items:
-            $ref: '#/components/schemas/ModelMetadata'
+            $ref: '#/components/schemas/Model'
         status:
           type: integer
           format: int32
@@ -1584,20 +1584,7 @@ components:
       properties:
         url:
           type: string
-    ModelArtifact:
-      type: object
-      required:
-        - id
-        - created_at
-        - last_modified
-      properties:
-        created_at:
-          type: string
-        id:
-          type: string
-        last_modified:
-          type: string
-    ModelMetadata:
+    Model:
       type: object
       required:
         - name
@@ -1647,6 +1634,19 @@ components:
             $ref: '#/components/schemas/Task'
           nullable: true
         tenant_id:
+          type: string
+    ModelArtifact:
+      type: object
+      required:
+        - id
+        - created_at
+        - last_modified
+      properties:
+        created_at:
+          type: string
+        id:
+          type: string
+        last_modified:
           type: string
     NotFoundResponse:
       type: object

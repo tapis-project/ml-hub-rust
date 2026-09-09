@@ -14,10 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    ModelMetadata,
-    ModelMetadataFromJSON,
-    ModelMetadataFromJSONTyped,
-    ModelMetadataToJSON,
+    Model,
+    ModelFromJSON,
+    ModelFromJSONTyped,
+    ModelToJSON,
 } from './';
 
 /**
@@ -40,10 +40,10 @@ export interface ListModelsResponse {
     metadata: object;
     /**
      * 
-     * @type {Array<ModelMetadata>}
+     * @type {Array<Model>}
      * @memberof ListModelsResponse
      */
-    result: Array<ModelMetadata>;
+    result: Array<Model>;
     /**
      * 
      * @type {number}
@@ -70,7 +70,7 @@ export function ListModelsResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': ((json['result'] as Array<any>).map(ModelMetadataFromJSON)),
+        'result': ((json['result'] as Array<any>).map(ModelFromJSON)),
         'status': json['status'],
         'version': json['version'],
     };
@@ -87,7 +87,7 @@ export function ListModelsResponseToJSON(value?: ListModelsResponse | null): any
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': ((value.result as Array<any>).map(ModelMetadataToJSON)),
+        'result': ((value.result as Array<any>).map(ModelToJSON)),
         'status': value.status,
         'version': value.version,
     };

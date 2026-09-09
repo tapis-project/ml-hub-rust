@@ -18,12 +18,12 @@ import {
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
-    CreateModelMetadataBody,
-    CreateModelMetadataBodyFromJSON,
-    CreateModelMetadataBodyToJSON,
-    CreateModelMetadataResponse,
-    CreateModelMetadataResponseFromJSON,
-    CreateModelMetadataResponseToJSON,
+    CreateModelBody,
+    CreateModelBodyFromJSON,
+    CreateModelBodyToJSON,
+    CreateModelResponse,
+    CreateModelResponseFromJSON,
+    CreateModelResponseToJSON,
     DiscoverModelsResponse,
     DiscoverModelsResponseFromJSON,
     DiscoverModelsResponseToJSON,
@@ -53,8 +53,8 @@ import {
     ServerErrorResponseToJSON,
 } from '../models';
 
-export interface CreateModelMetadataRequest {
-    createModelMetadataBody: CreateModelMetadataBody;
+export interface CreateModelRequest {
+    createModelBody: CreateModelBody;
 }
 
 export interface DiscoverModelsRequest {
@@ -92,11 +92,11 @@ export interface ListModelsByAuthorRequest {
 export class ModelsApi extends runtime.BaseAPI {
 
     /**
-     * Create a model metadata
+     * Create a model
      */
-    async createModelMetadataRaw(requestParameters: CreateModelMetadataRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<CreateModelMetadataResponse>> {
-        if (requestParameters.createModelMetadataBody === null || requestParameters.createModelMetadataBody === undefined) {
-            throw new runtime.RequiredError('createModelMetadataBody','Required parameter requestParameters.createModelMetadataBody was null or undefined when calling createModelMetadata.');
+    async createModelRaw(requestParameters: CreateModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<CreateModelResponse>> {
+        if (requestParameters.createModelBody === null || requestParameters.createModelBody === undefined) {
+            throw new runtime.RequiredError('createModelBody','Required parameter requestParameters.createModelBody was null or undefined when calling createModel.');
         }
 
         const queryParameters: any = {};
@@ -110,17 +110,17 @@ export class ModelsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: CreateModelMetadataBodyToJSON(requestParameters.createModelMetadataBody),
+            body: CreateModelBodyToJSON(requestParameters.createModelBody),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CreateModelMetadataResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => CreateModelResponseFromJSON(jsonValue));
     }
 
     /**
-     * Create a model metadata
+     * Create a model
      */
-    async createModelMetadata(requestParameters: CreateModelMetadataRequest, initOverrides?: RequestInit): Promise<CreateModelMetadataResponse> {
-        const response = await this.createModelMetadataRaw(requestParameters, initOverrides);
+    async createModel(requestParameters: CreateModelRequest, initOverrides?: RequestInit): Promise<CreateModelResponse> {
+        const response = await this.createModelRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -174,7 +174,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Fork model metadata from a platform
+     * Fork a model from a platform
      */
     async forkModelRaw(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ForkModelResponse>> {
         if (requestParameters.author === null || requestParameters.author === undefined) {
@@ -200,7 +200,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Fork model metadata from a platform
+     * Fork a model from a platform
      */
     async forkModel(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<ForkModelResponse> {
         const response = await this.forkModelRaw(requestParameters, initOverrides);

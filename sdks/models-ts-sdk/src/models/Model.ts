@@ -14,6 +14,14 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    Canonical,
+    CanonicalFromJSON,
+    CanonicalFromJSONTyped,
+    CanonicalToJSON,
+    DeploymentStrategyReference,
+    DeploymentStrategyReferenceFromJSON,
+    DeploymentStrategyReferenceFromJSONTyped,
+    DeploymentStrategyReferenceToJSON,
     Task,
     TaskFromJSON,
     TaskFromJSONTyped,
@@ -23,69 +31,96 @@ import {
 /**
  * 
  * @export
- * @interface CreateModelMetadataBody
+ * @interface Model
  */
-export interface CreateModelMetadataBody {
+export interface Model {
     /**
      * 
      * @type {string}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
+     */
+    author: string;
+    /**
+     * 
+     * @type {Canonical}
+     * @memberof Model
+     */
+    canonical?: Canonical;
+    /**
+     * Deployment strategy references
+     * @type {Array<DeploymentStrategyReference>}
+     * @memberof Model
+     */
+    deployment_strategy_refs: Array<DeploymentStrategyReference>;
+    /**
+     * 
+     * @type {string}
+     * @memberof Model
      */
     description?: string | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     libraries?: Array<string> | null;
     /**
      * 
      * @type {string}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     license?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     model_type?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     name: string;
     /**
      * 
      * @type {Array<string>}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     regulatory?: Array<string> | null;
     /**
      * 
      * @type {Array<string>}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     tags?: Array<string> | null;
     /**
      * 
      * @type {Array<Task>}
-     * @memberof CreateModelMetadataBody
+     * @memberof Model
      */
     task_types?: Array<Task> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof Model
+     */
+    tenant_id: string;
 }
 
-export function CreateModelMetadataBodyFromJSON(json: any): CreateModelMetadataBody {
-    return CreateModelMetadataBodyFromJSONTyped(json, false);
+export function ModelFromJSON(json: any): Model {
+    return ModelFromJSONTyped(json, false);
 }
 
-export function CreateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): CreateModelMetadataBody {
+export function ModelFromJSONTyped(json: any, ignoreDiscriminator: boolean): Model {
     if ((json === undefined) || (json === null)) {
         return json;
     }
     return {
         
+        'author': json['author'],
+        'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
+        'deployment_strategy_refs': ((json['deployment_strategy_refs'] as Array<any>).map(DeploymentStrategyReferenceFromJSON)),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
         'license': !exists(json, 'license') ? undefined : json['license'],
@@ -94,10 +129,11 @@ export function CreateModelMetadataBodyFromJSONTyped(json: any, ignoreDiscrimina
         'regulatory': !exists(json, 'regulatory') ? undefined : json['regulatory'],
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
         'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
+        'tenant_id': json['tenant_id'],
     };
 }
 
-export function CreateModelMetadataBodyToJSON(value?: CreateModelMetadataBody | null): any {
+export function ModelToJSON(value?: Model | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -106,6 +142,9 @@ export function CreateModelMetadataBodyToJSON(value?: CreateModelMetadataBody | 
     }
     return {
         
+        'author': value.author,
+        'canonical': CanonicalToJSON(value.canonical),
+        'deployment_strategy_refs': ((value.deployment_strategy_refs as Array<any>).map(DeploymentStrategyReferenceToJSON)),
         'description': value.description,
         'libraries': value.libraries,
         'license': value.license,
@@ -114,6 +153,7 @@ export function CreateModelMetadataBodyToJSON(value?: CreateModelMetadataBody | 
         'regulatory': value.regulatory,
         'tags': value.tags,
         'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
+        'tenant_id': value.tenant_id,
     };
 }
 

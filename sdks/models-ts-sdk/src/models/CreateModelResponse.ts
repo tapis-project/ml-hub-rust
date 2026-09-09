@@ -16,46 +16,46 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface CreateModelMetadataResponse
+ * @interface CreateModelResponse
  */
-export interface CreateModelMetadataResponse {
+export interface CreateModelResponse {
     /**
      * 
      * @type {string}
-     * @memberof CreateModelMetadataResponse
+     * @memberof CreateModelResponse
      */
     message: string;
     /**
      * 
      * @type {object}
-     * @memberof CreateModelMetadataResponse
+     * @memberof CreateModelResponse
      */
     metadata: object;
     /**
      * 
      * @type {object}
-     * @memberof CreateModelMetadataResponse
+     * @memberof CreateModelResponse
      */
     result: object;
     /**
      * 
      * @type {number}
-     * @memberof CreateModelMetadataResponse
+     * @memberof CreateModelResponse
      */
     status: number;
     /**
      * 
      * @type {string}
-     * @memberof CreateModelMetadataResponse
+     * @memberof CreateModelResponse
      */
     version: string;
 }
 
-export function CreateModelMetadataResponseFromJSON(json: any): CreateModelMetadataResponse {
-    return CreateModelMetadataResponseFromJSONTyped(json, false);
+export function CreateModelResponseFromJSON(json: any): CreateModelResponse {
+    return CreateModelResponseFromJSONTyped(json, false);
 }
 
-export function CreateModelMetadataResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): CreateModelMetadataResponse {
+export function CreateModelResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): CreateModelResponse {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -69,7 +69,7 @@ export function CreateModelMetadataResponseFromJSONTyped(json: any, ignoreDiscri
     };
 }
 
-export function CreateModelMetadataResponseToJSON(value?: CreateModelMetadataResponse | null): any {
+export function CreateModelResponseToJSON(value?: CreateModelResponse | null): any {
     if (value === undefined) {
         return undefined;
     }
