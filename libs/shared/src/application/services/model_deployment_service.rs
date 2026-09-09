@@ -11,7 +11,7 @@ use crate::application::ports::artifacts::ArtifactRepository;
 use crate::application::ports::events::{Event, Payload, EventPublisher};
 use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
 use crate::application::ports::deployment::{ModelDeploymentRepository, ModelDeploymentRepositoryError};
-use crate::application::ports::model_metadata::{ModelMetadataRepository, ModelMetadataRepositoryError};
+use crate::application::ports::model::{ModelRepository, ModelRepositoryError};
 use retry_utils::{
     retry_async,
     ExponentialBackoff,
@@ -53,8 +53,8 @@ pub enum ModelDeploymentServiceError {
     #[error("Desired state mismatch: Expected to find desired state `{0}` but found `{1}`")]
     DesiredStateMismatch(String, String),
 
-    #[error("Model Metadata repository error: {0}")]
-    ModelDMetadataRepoError(#[from] ModelMetadataRepositoryError),
+    #[error("Model repository error: {0}")]
+    ModelDMetadataRepoError(#[from] ModelRepositoryError),
 
     #[error("Model Deployment repository error: {0}")]
     ModelDeploymentRepoError(#[from] ModelDeploymentRepositoryError),
@@ -81,13 +81,13 @@ pub enum ModelDeploymentServiceError {
     ArgumentEncryptionError(#[from] CipherError),
 
     #[error("Model not found for author '{0}' with name '{1}'")]
-    MissingModelMetadata(String, String),
+    MissingModel(String, String),
 }
 
 pub struct ModelDeploymentService {
     deployment_argument_service: DeploymentArgumentService,
     model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
-    model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+    model_repo: Arc<dyn ModelRepository>,
     // TODO Leave _artifact_repo unused for now. See the link below 
     // https://github.com/tapis-project/ml-hub-rust/issues/73
     _artifact_repo: Arc<dyn ArtifactRepository>,
@@ -117,7 +117,7 @@ impl ModelDeploymentService {
     pub fn new(
         deployment_argument_service: DeploymentArgumentService,
         model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
-        model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+        model_repo: Arc<dyn ModelRepository>,
         artifact_repo: Arc<dyn ArtifactRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
@@ -126,7 +126,7 @@ impl ModelDeploymentService {
         Self {
             deployment_argument_service,
             model_deployment_repo,
-            model_metadata_repo,
+            model_repo,
             _artifact_repo: artifact_repo,
             event_publisher,
             deployment_strategy_provider,
@@ -207,21 +207,21 @@ impl ModelDeploymentService {
         // Resolve the tenant
         let model_tenant_id = TenancyResolver::resolve_from_scope(&input.model_scope, ctx.actor_tenant_id());
         
-        // Find model metadata closure
-        let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
+        // Find the model.
+        let find_model = || self.model_repo.find_by_author_and_name(
             &input.model_author,
             &input.model_name,
             &model_tenant_id,
         );
 
-        // Fetch the metadata for the model of this deployment
-        let maybe_model_metadata = retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None)
+        // Fetch the model for this deployment.
+        let maybe_model = retry_async(find_model, &Self::REPO_RETRY_POLICY, None)
             .await?;
         
-        let model_metadata = match maybe_model_metadata {
+        let model = match maybe_model {
             Some(mm) => mm,
             None => {
-                return Err(ModelDeploymentServiceError::MissingModelMetadata(
+                return Err(ModelDeploymentServiceError::MissingModel(
                     input.model_author,
                     input.model_name,
                 ))
@@ -230,8 +230,8 @@ impl ModelDeploymentService {
 
         // TODO Uncomment when ready. Details found in the issue below 
         // https://github.com/tapis-project/ml-hub-rust/issues/73
-        // let artifact_id = model_metadata.artifact_id
-        //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model's metadata for this deployment is missing the artifact id.")))?;
+        // let artifact_id = model.artifact_id
+        //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model for this deployment is missing the artifact id.")))?;
         
         // let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY, None)
         //     .await?
@@ -266,7 +266,7 @@ impl ModelDeploymentService {
         
         // Validate invariants for domain deployment
         let deployment = ModelDeploymentDomainService::new(self.cipher.clone())
-            .deploy_model_with_strategy(&model_metadata, props, &strategy).await?;
+            .deploy_model_with_strategy(&model, props, &strategy).await?;
         
         // Save the deployment
         retry_async(|| self.model_deployment_repo.save(&deployment), &Self::REPO_RETRY_POLICY, None)

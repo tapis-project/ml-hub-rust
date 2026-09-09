@@ -13,7 +13,7 @@ pub struct SearchCriterion {
     pub license: Option<String>,
 }
 
-/// Each field in the ModelMetadata will be ANDed and each individual SearchCriteron
+/// Each field in the Model will be ANDed and each individual SearchCriteron
 /// themselves will be ORed
 #[derive(Debug, Clone)]
 pub struct SearchModelsInput {

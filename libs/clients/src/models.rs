@@ -55,15 +55,15 @@ pub trait DiscoverModelsClient: Client {
 }
 
 #[async_trait::async_trait]
-pub trait PublishModelClient: Client {
+pub trait PublishModelArtifactClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn publish_model(
+    async fn publish_model_artifact(
         &self,
         _extracted_artifact_path: &PathBuf,
         _artifact: &entities::artifact::Artifact,
-        _metadata: Option<&entities::model_metadata::ModelMetadata>,
+        _metadata: Option<&entities::model::Model>,
         _request: &artifacts::PublishArtifactServiceRequest
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
@@ -71,24 +71,24 @@ pub trait PublishModelClient: Client {
 }
 
 #[async_trait::async_trait]
-pub trait PublishModelMetadataClient: Client {
+pub trait PublishModelClient: Client {
     type Data: Serialize;
     type Metadata: Serialize;
 
-    async fn publish_model_metadata(&self, _metadata: &entities::model_metadata::ModelMetadata, _request: &artifacts::PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _model: &entities::model::Model, _request: &artifacts::PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Err(ClientError::Unimplemented);
     }
 }
 
-/// Converts platform specific metadata into MLHub model metadata
-pub trait ModelMetadataConversionClient: Client {
-    fn from_platform_metadata<T>(&self, _metadata: T, author: String, tenant_id: String) -> Result<entities::model_metadata::ModelMetadata, ClientError>
+/// Converts platform-specific metadata into an MLHub model.
+pub trait ModelConversionClient: Client {
+    fn from_platform_metadata<T>(&self, _metadata: T, author: String, tenant_id: String) -> Result<entities::model::Model, ClientError>
         where T: Serialize
     {
         return Err(ClientError::Unimplemented);
     }
 
-    fn to_platform_metadata<T>(&self, _metadata: entities::model_metadata::ModelMetadata) -> Result<T, ClientError>
+    fn to_platform_metadata<T>(&self, _metadata: entities::model::Model) -> Result<T, ClientError>
         where T: Serialize
     {
         return Err(ClientError::Unimplemented);

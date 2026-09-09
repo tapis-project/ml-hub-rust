@@ -40,12 +40,12 @@ async fn list_model_deployments(
 
     let mut values: Vec<Value> = Vec::with_capacity(model_deployments.len());
     for deployment in model_deployments{
-        let model_metadata_resp = match responses::ModelDeployment::try_from(deployment) {
+        let model_resp = match responses::ModelDeployment::try_from(deployment) {
             Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string())
         };
 
-        match to_value(model_metadata_resp) {
+        match to_value(model_resp) {
             Ok(v) => values.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         };

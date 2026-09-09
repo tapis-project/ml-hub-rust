@@ -1,7 +1,7 @@
 use crate::constants;
 use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
 use crate::utils::build_client_response;
-use crate::model_metadata::{HFModelMetadata, CompoundTag};
+use crate::model::{HFModel, CompoundTag};
 use async_trait;
 use clients::{
     Capability,
@@ -16,9 +16,9 @@ use clients::{
     ListDatasetsClient, 
     ListModelsClient,
     PublishDatasetClient, 
-    PublishModelClient, 
-    PublishModelMetadataClient,
-    ModelMetadataConversionClient
+    PublishModelArtifactClient,
+    PublishModelClient,
+    ModelConversionClient
 };
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use reqwest::{Client as ReqwestClient, StatusCode};
@@ -33,7 +33,7 @@ use shared::presentation::http::v1::requests::common::headers::{AuthorizationHea
 use shared::domain::entities::{
     artifact::Artifact,
 };
-use shared::domain::entities::model_metadata::ModelMetadata;
+use shared::domain::entities::model::Model;
 use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::{
     get_dataset_by_platform::GetDatasetByPlatformRequest,
@@ -86,11 +86,11 @@ impl Client for HuggingFaceClient {
             Capability::ListModels,
             Capability::GetModel,
             Capability::IngestModel,
-            Capability::PublishModel,
+            Capability::PublishModelArtifact,
             Capability::ListDatasets,
             Capability::GetDataset,
             // Capability::IngestDataset,
-            Capability::ConvertModelMetadata,
+            Capability::ConvertModel,
         ])
     }
 }
@@ -349,17 +349,17 @@ impl IngestDatasetClient for HuggingFaceClient {
 }
 
 #[async_trait::async_trait]
-impl PublishModelClient for HuggingFaceClient {
+impl PublishModelArtifactClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, maybe_metadata: Option<&ModelMetadata>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        let metadata = match maybe_metadata {
+    async fn publish_model_artifact(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, maybe_model: Option<&Model>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let model = match maybe_model {
             Some(m) => m,
-            None => return Err(ClientError::BadRequest { msg: "A model metadata entry must exist for this artifact in order to publish to huggingface".into(), scope: ClientErrorScope::Client })
+            None => return Err(ClientError::BadRequest { msg: "A model must exist for this artifact in order to publish to Hugging Face".into(), scope: ClientErrorScope::Client })
         };
         
-        let model_name = metadata.name.clone();
+        let model_name = model.name.clone();
 
         // Get the access token from the headers
         let access_token = match request.headers.get_first_value("Authorization") {
@@ -483,7 +483,7 @@ impl PublishModelClient for HuggingFaceClient {
                 ClientError::Internal { msg: format!("Failed to push artifact: {}", err.to_string()), scope: ClientErrorScope::Client }
             })?;
 
-        // TODO check metadata for a version number. If provided, create a tag
+        // TODO check the model for a version number. If provided, create a tag.
         // and push it up
 
         // Check that the push was successful
@@ -515,11 +515,11 @@ impl PublishModelClient for HuggingFaceClient {
 }
 
 #[async_trait::async_trait]
-impl PublishModelMetadataClient for HuggingFaceClient {
+impl PublishModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model_metadata(&self, _metadata: &ModelMetadata, _result: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, _metadata: &Model, _result: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Ok(
             ClientJsonResponse::new(
                 None,
@@ -544,14 +544,14 @@ impl PublishDatasetClient for HuggingFaceClient {
     }
 }
 
-impl ModelMetadataConversionClient for HuggingFaceClient {
-    fn from_platform_metadata<T>(&self, client_metadata: T, author: String, tenant_id: String) -> Result<entities::model_metadata::ModelMetadata, ClientError>
+impl ModelConversionClient for HuggingFaceClient {
+    fn from_platform_metadata<T>(&self, client_metadata: T, author: String, tenant_id: String) -> Result<entities::model::Model, ClientError>
         where T: serde::Serialize
     {
         let value = serde_json::to_value(client_metadata)
             .map_err(|err| ClientError::Internal { msg: format!("Failed to convert serializable client metadata into Value: {}", err.to_string()), scope: ClientErrorScope::Server })?;
 
-        if let Ok(hf_model) = serde_json::from_value::<HFModelMetadata>(value) {
+        if let Ok(hf_model) = serde_json::from_value::<HFModel>(value) {
             let tags: Vec<String> = hf_model.tags.clone();
     
             // Task types derived from the tags. The "pipeline_tag"
@@ -613,19 +613,19 @@ impl ModelMetadataConversionClient for HuggingFaceClient {
                 }
             };
             
-            return Ok(entities::model_metadata::ModelMetadata {
+            return Ok(entities::model::Model {
                 name,
                 artifact_id: None,
                 description: None,
                 author,
                 tenant_id,
                 model_type: None,
-                canonical: Some(entities::model_metadata::Canonical {
+                canonical: Some(entities::model::Canonical {
                     platform: Platform::HuggingFace,
                     author: Some(hf_model.author.clone()),
                     model_id: hf_model.id.clone(),
                     downloads: Some(hf_model.downloads),
-                    locator: entities::model_metadata::Locator {
+                    locator: entities::model::Locator {
                         url: format!("https://huggingface.co/{}", &hf_model.id.clone())
                     },
                     likes: Some(hf_model.likes),

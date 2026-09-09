@@ -15,7 +15,7 @@ pub struct ModelArtifact {
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct ModelMetadata {
+pub struct Model {
     // General fields
     pub name: String,
     pub author: String,
@@ -91,6 +91,6 @@ pub struct DeploymentStrategyReference {
 // // TODO Future
 // #[derive(Serialize, Debug, Clone, ToSchema)]
 // pub struct Model {
-//     pub metadata: ModelMetadata,
+//     pub metadata: Model,
 //     pub artifact: Option<ModelArtifact>,
 // }

@@ -1,7 +1,7 @@
 use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
-    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient, ListModelsClient, PublishModelMetadataClient
+    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient, ListModelsClient, PublishModelClient
 };
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
@@ -12,7 +12,7 @@ use shared::presentation::http::v1::requests::{
 };
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::domain::entities:: model_metadata::ModelMetadata;
+use shared::domain::entities:: model::Model;
 use std::collections::hash_map::HashMap;
 use platforms::Platform;
 
@@ -183,13 +183,13 @@ impl DiscoverModelsClient for PatraClient {
 }
 
 #[async_trait::async_trait]
-impl PublishModelMetadataClient for PatraClient {
+impl PublishModelClient for PatraClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model_metadata(
+    async fn publish_model(
         &self,
-        _metadata: &ModelMetadata,
+        _metadata: &Model,
         _request: &PublishArtifactServiceRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         return Ok(

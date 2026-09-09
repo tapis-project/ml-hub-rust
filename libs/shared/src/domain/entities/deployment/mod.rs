@@ -41,7 +41,7 @@ pub struct ModelDeployment {
     pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
-    /// A reference to the model metadata
+    /// A reference to the model.
     pub model: ModelReference,
     /// The curent state of the delpoyment
     pub state: State,

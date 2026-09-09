@@ -1,5 +1,5 @@
-pub mod model_metadata;
-pub mod model_metadata_filter;
+pub mod model;
+pub mod model_filter;
 pub mod artifact_ingestion;
 pub mod artifact_publication;
 // pub mod skills;

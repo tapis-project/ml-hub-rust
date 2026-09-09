@@ -5,10 +5,10 @@ use crate::presentation::http::v1::actix_web::response_helpers::{
 use crate::presentation::http::v1::requests::{DiscoveryCriteria, DiscoverModelsQueryParams};
 use actix_web::{post, web, Responder};
 use shared::shared_kernel::context::RequestContext;
-use shared::application::services::model_metadata_service::ModelMetadataService;
+use shared::application::services::model_service::ModelService;
 use crate::application::discover_model_inputs as inputs;
 use crate::presentation::http::v1::contracts;
-use crate::presentation::http::v1::responses::ModelMetadata;
+use crate::presentation::http::v1::responses::Model;
 use serde_json::{to_value, Value, Map};
 
 #[utoipa::path(
@@ -35,7 +35,7 @@ async fn discover_models(
     body: web::Json<DiscoveryCriteria>,
     query: web::Query<DiscoverModelsQueryParams>,
     identity_context: RequestContext,
-    model_metadata_service: web::Data<ModelMetadataService>,
+    model_service: web::Data<ModelService>,
 ) -> impl Responder {
     let discovery_criteria = match DiscoveryCriteria::try_from(body.into_inner()) {
         Ok(c) => c,
@@ -64,21 +64,21 @@ async fn discover_models(
         options
     };
 
-    let output = match model_metadata_service.discover_models(input, &identity_context).await {
+    let output = match model_service.discover_models(input, &identity_context).await {
         Ok(e) => e,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let metadata_entries = output.models;
+    let models = output.models;
 
-    let mut values: Vec<Value> = Vec::with_capacity(metadata_entries.len());
-    for metadata_entity in metadata_entries {
-        let model_metadata = match ModelMetadata::try_from(&metadata_entity) {
+    let mut values: Vec<Value> = Vec::with_capacity(models.len());
+    for model_entity in models {
+        let model = match Model::try_from(&model_entity) {
             Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string())
         };
 
-        match to_value(model_metadata) {
+        match to_value(model) {
             Ok(v) => values.push(v),
             Err(err) => return build_error_response(500, err.to_string())
         }

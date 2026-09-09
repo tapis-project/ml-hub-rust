@@ -6,9 +6,9 @@ pub mod artifacts;
 pub mod artifact_ingestions;
 pub mod artifact_publications;
 
-pub mod associate_model_metadata;
+pub mod associate_model;
 pub mod fork_model;
-pub mod create_model_metadata;
+pub mod create_model;
 pub mod create_agent_record;
 pub mod list_agent_records;
 pub mod create_agent;

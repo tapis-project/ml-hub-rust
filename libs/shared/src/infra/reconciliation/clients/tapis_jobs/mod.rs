@@ -18,7 +18,7 @@ use crate::domain::entities::deployment::{
     ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, State,
 };
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
-use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::model::Model;
 use crate::domain::entities::site::SiteContext;
 
 use std::collections::HashMap;
@@ -87,7 +87,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
     async fn handle_start(
         &self,
         deployment: &ModelDeployment,
-        model: &ModelMetadata,
+        model: &Model,
         strategy: Option<Strategy>,
         arguments: &[DecryptedArgument],
     ) -> Result<ReconciliationOutcome, ReconciliationError> {
@@ -465,7 +465,7 @@ impl ModelDeploymentPlatformReconciliationClient for TapisJobsModelDeploymentRec
         let outcome = match input.action { 
             ReconciliationAction::Start { payload } => self.handle_start(
                 &input.deployment,
-                &input.model_metadata,
+                &input.model,
                 input.strategy,
                 &payload,
             ).await,

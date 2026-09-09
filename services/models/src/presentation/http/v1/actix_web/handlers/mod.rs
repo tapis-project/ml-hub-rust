@@ -1,5 +1,5 @@
-pub mod associate_model_metadata_with_artifact;
-pub mod create_model_metadata;
+pub mod associate_model_with_artifact;
+pub mod create_model;
 pub mod discover_models;
 pub mod discover_models_by_platform;
 pub mod download_artifact;

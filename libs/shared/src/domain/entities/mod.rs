@@ -10,7 +10,7 @@ pub mod deployment_strategy;
 pub mod domain;
 pub mod endpoint;
 pub mod identity;
-pub mod model_metadata;
+pub mod model;
 pub mod operator;
 pub mod principal;
 pub mod site;

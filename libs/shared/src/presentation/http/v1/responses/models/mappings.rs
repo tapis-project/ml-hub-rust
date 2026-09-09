@@ -1,12 +1,12 @@
-use crate::application::outputs::model_metadata as output;
+use crate::application::outputs::model as output;
 use crate::presentation::http::v1::responses::models as responses;
 use crate::presentation::http::v1::responses::tasks::Task;
 use crate::errors::Error;
 
-impl TryFrom<&output::ModelMetadata> for responses::ModelMetadata {
+impl TryFrom<&output::Model> for responses::Model {
     type Error = Error;
     
-    fn try_from(value: &output::ModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: &output::Model) -> Result<Self, Self::Error> {
         let mut task_types: Vec<Task> = Vec::new();
         for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
             task_types.push(Task::from(task_type))

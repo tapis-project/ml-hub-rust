@@ -72,7 +72,7 @@ Libraries are reusable codes that are shared between apis, binaries, and other l
 
 - [github-lfs-client](./libs/github-lfs-client/README.md) - Client from ingesting and publishing model and dataset artifacts to Github and LFS. Essentially a specialized version of the **git-lfs-client**
 
-- [patra-client](./libs/patra-client/README.md) - Handles model metadata listing, discovery, and publishing to the Patra platform
+- [patra-client](./libs/patra-client/README.md) - Handles model listing, discovery, and publishing to the Patra platform
 
 - [tacc-tapis-client](./libs/tapis-client/README.md) - Client for publishing and ingesting artifacts from Tapis Systems defined in the TACC Tapis deployment
 

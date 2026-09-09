@@ -1,7 +1,7 @@
 use platforms::Platform;
 use uuid::Uuid;
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
-use crate::domain::entities::{model_metadata::ModelMetadata, deployment_strategy::client_strategy::ClientStrategy};
+use crate::domain::entities::{model::Model, deployment_strategy::client_strategy::ClientStrategy};
 use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ParallelismStrategy, State};
 use crate::application::workflows::reconciliation::ReconciliationAction;
 
@@ -10,7 +10,7 @@ use crate::shared_kernel::enums::DeploymentModality;
 
 pub struct ClientModelDeploymentRequest {
     pub deployment: ModelDeployment,
-    pub metadata: ModelMetadata,
+    pub model: Model,
     pub strategy: Option<ClientStrategy>
 }
 
@@ -70,7 +70,7 @@ pub struct UndeployModelDeploymentInput {
 pub struct ReconcileModelDeploymentInput {
     pub action: ReconciliationAction,
     pub deployment: ModelDeployment,
-    pub model_metadata: ModelMetadata,
+    pub model: Model,
     pub strategy: Option<Strategy>,
 }
 

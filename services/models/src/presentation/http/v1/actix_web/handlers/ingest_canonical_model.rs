@@ -1,5 +1,5 @@
 use crate::application::artifact_inputs::IngestArtifactInput;
-use crate::bootstrap::factories::{artifact_service_factory, model_metadata_repo_factory, model_metadata_service_factory};
+use crate::bootstrap::factories::{artifact_service_factory, model_repo_factory, model_service_factory};
 use crate::bootstrap::state::AppState;
 use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response, build_success_response,
@@ -13,7 +13,7 @@ use client_provider::ClientProvider;
 use serde_json::to_value;
 use shared::shared_kernel::context::RequestContext;
 use shared::application::inputs::common::Scope;
-use shared::application::inputs::model_metadata::{GetModelMetadataByAuthorAndNameInput, UpdateModelMetadataArtifactId};
+use shared::application::inputs::model::{GetModelByAuthorAndNameInput, UpdateModelArtifactId};
 use shared::presentation::http::v1::contracts;
 use std::collections::HashMap;
 
@@ -43,7 +43,7 @@ async fn ingest_canonical_model(
     data: web::Data<AppState>,
     identity_context: RequestContext,
 ) -> impl Responder {
-    let model_metadata_service = match model_metadata_service_factory(
+    let model_service = match model_service_factory(
         &data.client,
         data.db_name.clone(),
         data.client_strategy_sets.clone()
@@ -52,7 +52,7 @@ async fn ingest_canonical_model(
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let input = GetModelMetadataByAuthorAndNameInput {
+    let input = GetModelByAuthorAndNameInput {
         author: path.author.clone(),
         name: path.name.clone(),
         tenant_id: identity_context.actor_tenant_id().clone(),
@@ -60,17 +60,17 @@ async fn ingest_canonical_model(
         scope: Scope::Global,
     };
 
-    let output = match model_metadata_service.get_by_author_and_name(input).await {
+    let output = match model_service.get_by_author_and_name(input).await {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let metadata = match output.model {
+    let model = match output.model {
         Some(m) => m,
-        None => return build_error_response(404, format!("No model metadata found for author {} and name {}", &path.author, &path.name))
+        None => return build_error_response(404, format!("No model found for author {} and name {}", &path.author, &path.name))
     };
 
-    let canonical = match metadata.canonical {
+    let canonical = match model.canonical {
         Some(c) => c,
         None => return build_error_response(404, format!("No canonical model for model {}/{}", &path.author, &path.name)),
     };
@@ -114,18 +114,18 @@ async fn ingest_canonical_model(
         Err(err) => return build_error_response(500, err.to_string()),
     };
 
-    let update_input = UpdateModelMetadataArtifactId {
+    let update_input = UpdateModelArtifactId {
         artifact_id: ingestion.artifact_id,
         name: path.name.clone(),
         author: path.author.clone()
     };
 
     // TODO Refactor! No repos called directly in the presentation layer.
-    // Put this in the model metadata service.
-    let metadata_repo = model_metadata_repo_factory(&data.client, data.db_name.clone());
+    // Put this in the model service.
+    let model_repo = model_repo_factory(&data.client, data.db_name.clone());
 
-    // Update model metadata with the artifact id
-    match metadata_repo.update_artifact_id(&update_input).await {
+    // Update the model with the artifact id.
+    match model_repo.update_artifact_id(&update_input).await {
         Ok(_) => {},
         Err(err) => return build_error_response(500, err.to_string())
     };

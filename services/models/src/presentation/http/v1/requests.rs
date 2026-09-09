@@ -1,4 +1,4 @@
-pub use shared::presentation::http::v1::requests::create_model_metadata;
+pub use shared::presentation::http::v1::requests::create_model;
 pub use shared::presentation::http::v1::requests::{
     list_models_by_platform::path::ListModelsByPlatformPath,
     list_models_by_platform::ListModelsByPlatformRequest,
@@ -9,8 +9,8 @@ pub use shared::presentation::http::v1::requests::{
     download_model::path::DownloadModelPath,
     download_model::DownloadModelRequest,
     upload_model::UploadModelRequest,
-    associate_model_metadata::path::AssociateModelMetadataPath,
-    associate_model_metadata::body::AssociateModelMetadataBody,
+    associate_model::path::AssociateModelPath,
+    associate_model::body::AssociateModelBody,
     get_model_by_author_and_name::path::GetModelByAuthorAndNamePath,
     get_model_by_author_and_name::query::GetModelByAuthorAndNameQueryParams,
     list_models_by_author::path::ListModelsByAuthorPath,

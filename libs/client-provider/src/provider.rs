@@ -10,11 +10,11 @@ use crate::clients::{
     ListModelsClient,
     GetModelClient,
     DiscoverModelsClient,
-    PublishModelClient,
+    PublishModelArtifactClient,
     IngestModelClient,
     IngestDatasetClient,
-    PublishModelMetadataClient,
-    ModelMetadataConversionClient,
+    PublishModelClient,
+    ModelConversionClient,
     ListDatasetsClient,
     GetDatasetClient
 };
@@ -91,16 +91,16 @@ impl ClientProvider {
         }
     }
 
-    pub fn provide_publish_model_client(platform_name: &str) -> Result<PublishModelClient, ClientProviderError> {
+    pub fn provide_publish_model_artifact_client(platform_name: &str) -> Result<PublishModelArtifactClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
-            Platform::HuggingFace => Ok(PublishModelClient::HuggingFace(HuggingFaceClient::new())),
+            Platform::HuggingFace => Ok(PublishModelArtifactClient::HuggingFace(HuggingFaceClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model publishing")))
         }
     }
 
-    pub fn provide_publish_metadata_client(platform_name: &str) -> Result<PublishModelMetadataClient, ClientProviderError> {
+    pub fn provide_publish_model_client(platform_name: &str) -> Result<PublishModelClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
-            Platform::Patra => Ok(PublishModelMetadataClient::Patra(PatraClient::new())),
+            Platform::Patra => Ok(PublishModelClient::Patra(PatraClient::new())),
             _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model publishing")))
         }
     }
@@ -111,10 +111,10 @@ impl ClientProvider {
         }
     }
 
-    pub fn provide_model_metadata_conversion_client(platform_name: &str) -> Result<ModelMetadataConversionClient, ClientProviderError> {
+    pub fn provide_model_conversion_client(platform_name: &str) -> Result<ModelConversionClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
-            Platform::HuggingFace => Ok(ModelMetadataConversionClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model metadata")))
+            Platform::HuggingFace => Ok(ModelConversionClient::HuggingFace(HuggingFaceClient::new())),
+            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model")))
         }
     }
 

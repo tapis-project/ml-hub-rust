@@ -1,6 +1,6 @@
 use serde_json::to_vec;
 use crate::presentation::http::v1::requests::models as requests;
-use crate::application::inputs::model_metadata as inputs;
+use crate::application::inputs::model as inputs;
 use crate::application::inputs::artifacts as artifact_inputs;
 use crate::application::inputs::task as input_task;
 use crate::errors::Error;
@@ -65,11 +65,11 @@ impl TryFrom<requests::ModelIO> for inputs::ModelIO {
     }
 }
 
-impl TryFrom<requests::CreateModelMetadata> for inputs::UpsertModelMetadata {
+impl TryFrom<requests::CreateModel> for inputs::UpsertModel {
     type Error = Error;
 
-    fn try_from(value: requests::CreateModelMetadata) -> Result<Self, Self::Error> {
-        let metadata = inputs::ModelMetadata::try_from(value.metadata)?;
+    fn try_from(value: requests::CreateModel) -> Result<Self, Self::Error> {
+        let metadata = inputs::Model::try_from(value.metadata)?;
         
         return Ok(Self {
             metadata
@@ -77,10 +77,10 @@ impl TryFrom<requests::CreateModelMetadata> for inputs::UpsertModelMetadata {
     }
 }
 
-impl TryFrom<(&String, requests::AssociateModelMetadata)> for inputs::AssociateModelMetadata {
+impl TryFrom<(&String, requests::AssociateModel)> for inputs::AssociateModel {
     type Error = Error;
 
-    fn try_from(value: (&String, requests::AssociateModelMetadata)) -> Result<Self, Self::Error> {  
+    fn try_from(value: (&String, requests::AssociateModel)) -> Result<Self, Self::Error> {
         let artifact_id= match Uuid::parse_str(&value.0) {
             Ok(uuid) => uuid,
             Err(_) => return Err(Error::new("Value provided for artifact_id is not a UUID".into()))
@@ -96,10 +96,10 @@ impl TryFrom<(&String, requests::AssociateModelMetadata)> for inputs::AssociateM
     }
 }
 
-impl TryFrom<requests::ModelMetadata> for inputs::ModelMetadata {
+impl TryFrom<requests::Model> for inputs::Model {
     type Error = Error;
     
-    fn try_from(value: requests::ModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: requests::Model) -> Result<Self, Self::Error> {
         let mut task_types: Vec<input_task::Task> = Vec::new();
         for task_type in value.task_types.clone().unwrap_or(Vec::with_capacity(0)) {
             task_types.push(input_task::Task::from(task_type))

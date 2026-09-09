@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput};
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, Payload};
 use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
-use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::ports::model::ModelRepository;
 use crate::application::services::deployment_argument_service::{DeploymentArgumentService, DeploymentArgumentServiceError};
 use crate::application::services::deployment_strategy_service::{DeploymentStrategyService, GetStrategyByPlatformAndNameInput};
 use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
@@ -48,8 +48,8 @@ pub enum ReconciliationDispatchError {
     #[error("Failed to retrieve deployment: {0}")]
     ModelDeploymentRetrievalFailed(#[from] ModelDeploymentServiceError),
 
-    #[error("Failed to find model metadata associated with deployment: {0}")]
-    ModelMetadataRetrievalFailed(String),
+    #[error("Failed to find model associated with deployment: {0}")]
+    ModelRetrievalFailed(String),
 
     #[error("Model deployment domain invariant violation: {0}")]
     ModelDeploymentDomainInvariantViolation(#[from] ModelDeploymentError),
@@ -101,7 +101,7 @@ pub struct ModelDeploymentController {
     deployment_strategy_service: DeploymentStrategyService,
     deployment_argument_service: DeploymentArgumentService,
     model_deployment_service: ModelDeploymentService,
-    model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+    model_repo: Arc<dyn ModelRepository>,
     event_publisher: Arc<dyn EventPublisher>,
     client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
 }
@@ -119,7 +119,7 @@ impl ModelDeploymentController {
         deployment_strategy_service: DeploymentStrategyService,
         deployment_argument_service: DeploymentArgumentService,
         model_deployment_service: ModelDeploymentService,
-        model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+        model_repo: Arc<dyn ModelRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
     ) -> Self {
@@ -128,7 +128,7 @@ impl ModelDeploymentController {
             deployment_strategy_service,
             deployment_argument_service,
             model_deployment_service,
-            model_metadata_repo,
+            model_repo,
             event_publisher,
             client_provider,
         }
@@ -182,26 +182,26 @@ impl ModelDeploymentController {
             }
         };
 
-        // Fetch model metadata
-        let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
+        // Fetch the model.
+        let find_model = || self.model_repo.find_by_author_and_name(
             &deployment.model.author,
             &deployment.model.name,
             &deployment.model.tenant_id,
         );
 
-        let maybe_model_metadata = match retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None).await {
+        let maybe_model = match retry_async(find_model, &Self::REPO_RETRY_POLICY, None).await {
             Ok(r) => r,
             Err(e) => {
                 self.handle_deployment_failure(&mut deployment, "Internal Error: Failed to fetch metadata").await;
-                return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(e.to_string()))
+                return Err(ReconciliationDispatchError::ModelRetrievalFailed(e.to_string()))
             }
         };
 
-        let model_metadata = match maybe_model_metadata {
+        let model = match maybe_model {
             Some(mm) => mm,
             None => {
                 self.handle_deployment_failure(&mut deployment, "The model for this deployment cannot be found").await;
-                return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(format!("Model {}/{} not found", &deployment.model.author, &deployment.model.name)))
+                return Err(ReconciliationDispatchError::ModelRetrievalFailed(format!("Model {}/{} not found", &deployment.model.author, &deployment.model.name)))
             }
         };
         
@@ -222,7 +222,7 @@ impl ModelDeploymentController {
             ReconcileModelDeploymentInput {
                 action,
                 deployment: deployment.clone(),
-                model_metadata,
+                model,
                 strategy: maybe_strategy,
             }
         ).await;

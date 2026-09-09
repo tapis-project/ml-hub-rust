@@ -26,7 +26,7 @@ https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fbinary
 You will need to start Minikube with at least 2 nodes. Run the following command:
 `minikube start --nodes 2 --disk-space=50g --memory=4g`
 
-**Note** You may need to tune the disk space and memory for you machine. If you want to run the Huggingface Model ETL Pipeline (recommended), you will need more disk space than is allocated by default to the Minikube VM. Provision Minikube with at least 50gb to be safe. As the HuggingFace model metadata collection grows in size over time, you may need to allocate additional disk space to accomodate it.
+**Note** You may need to tune the disk space and memory for you machine. If you want to run the Huggingface Model ETL Pipeline (recommended), you will need more disk space than is allocated by default to the Minikube VM. Provision Minikube with at least 50gb to be safe. As the HuggingFace model collection grows in size over time, you may need to allocate additional disk space to accomodate it.
 
 ## 2. Start your Engines! 🏎️
 
@@ -146,7 +146,7 @@ Build and load both images used by the Hugging Face model ETL job, then run the 
 
 0. `./dev buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
 
-0. `./dev run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load model metadata into MLHub.
+0. `./dev run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load models into MLHub.
 
 ## 4. Making requests
 
@@ -164,7 +164,7 @@ curl --request POST 'http://127.0.0.1:<YOUR EXPOSED PORT>/models-api/models/sear
   --data '{"criteria": []}'
 ```
 
-The request returns matching model metadata in the standard MLHub response envelope.
+The request returns matching models in the standard MLHub response envelope.
 
 ---
 

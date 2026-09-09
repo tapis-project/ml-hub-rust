@@ -1,4 +1,4 @@
-mod model_metadata_repository;
+mod model_repository;
 mod artifact_ingestion_repository;
 mod artifact_publication_repository;
 mod deployment_repository;
@@ -7,7 +7,7 @@ mod agent_repository;
 mod endpoint_repository;
 mod dataset_repository;
 
-pub use model_metadata_repository::ModelMetadataRepository;
+pub use model_repository::ModelRepository;
 pub use artifact_ingestion_repository::ArtifactIngestionRepository;
 pub use artifact_publication_repository::ArtifactPublicationRepository;
 pub use deployment_repository::ModelDeploymentRepository;

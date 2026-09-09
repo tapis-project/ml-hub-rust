@@ -272,9 +272,9 @@ impl TapisJobsModelDeploymentReconciliationClient {
         &self,
         input: &ReconcileModelDeploymentInput,
     ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        let canonical_model = match input.model_metadata.canonical {
+        let canonical_model = match input.model.canonical {
             Some(c) => Ok(c.model_id),
-            None => Err(ReconciliationError::MissingCanonicalModel(input.model_metadata.name.clone(), input.model_metadata.author.clone()))
+            None => Err(ReconciliationError::MissingCanonicalModel(input.model.name.clone(), input.model.author.clone()))
         }?;
         
         // TODO handle exsiting job with jobuuid from deployment metadata

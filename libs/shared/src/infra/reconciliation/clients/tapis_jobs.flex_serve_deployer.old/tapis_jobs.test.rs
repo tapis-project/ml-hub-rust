@@ -10,7 +10,7 @@ mod tapis_jobs_test {
         DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, ModelReference, ReconstituteModelDeploymentProps, ReplicaGroup, State
     };
     use crate::shared_kernel::enums::DeploymentModality;
-    use crate::domain::entities::model_metadata::{fixtures::full_model_metadata, ModelMetadata};
+    use crate::domain::entities::model::{fixtures::full_model, Model};
     use crate::shared_kernel::value_objects::TimeStamp;
     use crate::shared_kernel::enums::Visibility;
     use platforms::Platform;
@@ -81,8 +81,8 @@ mod tapis_jobs_test {
         })
     }
 
-    fn minimal_model_metadata() -> ModelMetadata {
-        let mut m = full_model_metadata();
+    fn minimal_model() -> Model {
+        let mut m = full_model();
         m.name = "Qwen3.5-0.8B".into();
         m.author = "Qwen".into();
         m
@@ -349,7 +349,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Start { payload: StartPayload::new(vec![]) },
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -363,7 +363,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Start { payload: StartPayload::new(vec![]) },
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -380,7 +380,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Stop,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -393,7 +393,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Undeploy,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -406,7 +406,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Observe,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -581,7 +581,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Start,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile submit");
         match &outcome {
@@ -627,7 +627,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Observe,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile observe");
         match &outcome {
@@ -673,7 +673,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Stop,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile stop");
         match &outcome {
@@ -718,7 +718,7 @@ mod tapis_jobs_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Undeploy,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile undeploy");
         match &outcome {

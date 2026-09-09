@@ -4,7 +4,7 @@ use actix_web::{
     Responder
 };
 use serde_json::to_value;
-use shared::application::services::model_metadata_service::ModelMetadataService;
+use shared::application::services::model_service::ModelService;
 
 use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response,
@@ -17,9 +17,9 @@ use crate::presentation::http::v1::requests::{
 
 use shared::shared_kernel::context::RequestContext;
 use shared::application::inputs::common::Scope as ScopeInput;
-use shared::application::inputs::model_metadata::GetModelMetadataByAuthorAndNameInput;
+use shared::application::inputs::model::GetModelByAuthorAndNameInput;
 use shared::presentation::http::v1::contracts::responses;
-use shared::presentation::http::v1::responses::models::ModelMetadata;
+use shared::presentation::http::v1::responses::models::Model;
 
 
 #[utoipa::path(
@@ -42,10 +42,10 @@ use shared::presentation::http::v1::responses::models::ModelMetadata;
 async fn get_model_by_author_and_name(
     path: web::Path<GetModelByAuthorAndNamePath>,
     params: web::Query<GetModelByAuthorAndNameQueryParams>,
-    model_metadata_service: web::Data<ModelMetadataService>,
+    model_service: web::Data<ModelService>,
     identity_context: RequestContext,
 ) -> impl Responder {
-    let input = GetModelMetadataByAuthorAndNameInput {
+    let input = GetModelByAuthorAndNameInput {
         author: path.author.clone(),
         name: path.name.clone(),
         tenant_id: identity_context.actor_tenant_id().clone(),
@@ -53,22 +53,22 @@ async fn get_model_by_author_and_name(
         scope: ScopeInput::from(params.into_inner().scope.clone()),
     };
 
-    let output = match model_metadata_service.get_by_author_and_name(input).await {
+    let output = match model_service.get_by_author_and_name(input).await {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
     let output_model = match output.model {
         Some(m) => m,
-        None => return build_error_response(404, format!("No model metadata found for author {} and name {}", &path.author, &path.name))
+        None => return build_error_response(404, format!("No model found for author {} and name {}", &path.author, &path.name))
     };
 
-    let metadata_resp = match ModelMetadata::try_from(&output_model) {
+    let model_resp = match Model::try_from(&output_model) {
         Ok(m) => m,
         Err(err) => return build_error_response(500, err.to_string())
     };
 
-    let value = match to_value(metadata_resp) {
+    let value = match to_value(model_resp) {
         Ok(v) => v,
         Err(err) => return build_error_response(500, err.to_string())
     };

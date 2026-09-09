@@ -7,13 +7,13 @@ use shared::application::ports::artifacts::{
     ArtifactIngestionRepository,
     ArtifactPublicationRepository,
 };
-use shared::application::ports::model_metadata::ModelMetadataRepository;
+use shared::application::ports::model::ModelRepository;
 use shared::application::services::artifact_service::ArtifactService;
 use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use shared::infra::persistence::mongo::repositories::{
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
-    ModelMetadataRepository as MongoModelMetadataRepository,
+    ModelRepository as MongoModelRepository,
 };
 use shared::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQArtifactOpMessagePublisher;
 use std::sync::Arc;
@@ -30,8 +30,8 @@ pub fn artifact_publication_repo_factory(client: &Client, db_name: String) -> Ar
     Arc::new(MongoArtifactPublicationRepository::new(client, db_name.clone()))
 }
 
-pub fn model_metadata_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelMetadataRepository> {
-    Arc::new(MongoModelMetadataRepository::new(client, db_name.clone()))
+pub fn model_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelRepository> {
+    Arc::new(MongoModelRepository::new(client, db_name.clone()))
 }
 
 pub fn artifact_service_factory(client: &Client, db_name: String, channel: Arc<Channel>) -> ArtifactService {    
@@ -39,7 +39,7 @@ pub fn artifact_service_factory(client: &Client, db_name: String, channel: Arc<C
         artifact_repo_factory(client, db_name.clone()),
         artifact_ingestion_repo_factory(client, db_name.clone()),
         artifact_publication_repo_factory(client, db_name.clone()),
-        model_metadata_repo_factory(client, db_name.clone()),
+        model_repo_factory(client, db_name.clone()),
         Arc::new(RabbitMQArtifactOpMessagePublisher::new(channel.clone()))
     )
 }

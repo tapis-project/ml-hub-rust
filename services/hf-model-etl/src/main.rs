@@ -4,8 +4,8 @@ use std::path::Path;
 use std::env;
 use serde_json::Value;
 use hf_model_etl::database::{initialize_client, ClientParams};
-use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_metadata_service_factory};
-use shared::application::inputs::model_metadata::RegisterModelMetadataInput;
+use hf_model_etl::bootstrap::{build_deployment_strategy_provider, model_service_factory};
+use shared::application::inputs::model::RegisterModelInput;
 use client_provider::ClientProvider;
 use clients::ClientError;
 use shared::shared_kernel::context::{RequestContext, MLHUB_SERVICE_PRINCIPAL_ID};
@@ -67,13 +67,13 @@ async fn main() {
         Err(e) => panic!("Error reading dir: {}", e.to_string())
     };
 
-    let model_metadata_service = model_metadata_service_factory(&client, db_name, client_strategy_sets)
+    let model_service = model_service_factory(&client, db_name, client_strategy_sets)
         .await
-        .expect("failed to initialize model metadata service");
+        .expect("failed to initialize model service");
 
-    // Fetch the huggingface model metadata conversion client from the client provider
+    // Fetch the Hugging Face model conversion client from the client provider.
     let huggingface_client = ClientProvider
-        ::provide_model_metadata_conversion_client("hugging-face")
+        ::provide_model_conversion_client("hugging-face")
         .expect("HuggingfaceClient provided");
 
     let mut entries_processed = 0;
@@ -94,7 +94,7 @@ async fn main() {
             match maybe_line {
                 Ok(line) => {
                     if let Ok(hf_model) = serde_json::from_str::<Value>(line.as_str()) {
-                        let metadata = match huggingface_client.from_platform_metadata(
+                        let model = match huggingface_client.from_platform_metadata(
                             hf_model,
                             MLHUB_SERVICE_PRINCIPAL_ID.into(),
                             GLOBAL_TENANT.into(),
@@ -103,11 +103,11 @@ async fn main() {
                             Err(e) => {
                                 match e {
                                     ClientError::Unimplemented => {
-                                        eprintln!("Metadata client not implemented");
+                                        eprintln!("Model conversion client not implemented");
                                         return 
                                     },
                                     _ => {
-                                        eprintln!("Error converting metadata: {}", e.to_string());
+                                        eprintln!("Error converting model: {}", e.to_string());
                                         continue
                                     }
                                 }
@@ -116,17 +116,17 @@ async fn main() {
 
                         // TODO Converting back into an application layer input here is just wrong. This is
                         // an indication that this whole thing needs refactorings
-                        let input = match RegisterModelMetadataInput::try_from(metadata) {
+                        let input = match RegisterModelInput::try_from(model) {
                             Ok(i) => i,                            Err(e) => {
-                                eprintln!("Error saving metadata to the database: {}", e.to_string());
+                                eprintln!("Error saving model to the database: {}", e.to_string());
                                 continue
                             }
                         };
 
-                        match model_metadata_service.register_model_metadata(input, &RequestContext::system(None)).await {
+                        match model_service.register_model(input, &RequestContext::system(None)).await {
                             Ok(_) => (),
                             Err(e) => {
-                                eprintln!("Error saving metadata to the database: {}", e.to_string());
+                                eprintln!("Error saving model to the database: {}", e.to_string());
                                 continue
                             }
                         }

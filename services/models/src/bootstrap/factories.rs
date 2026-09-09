@@ -11,13 +11,13 @@ use crate::application::ports::artifacts::{
     ArtifactIngestionRepository,
     ArtifactPublicationRepository,
 };
-use crate::application::ports::model_metadata::ModelMetadataRepository;
+use crate::application::ports::model::ModelRepository;
 use crate::application::services::artifact_service::ArtifactService;
-use crate::application::services::model_metadata_service::ModelMetadataService;
+use crate::application::services::model_service::ModelService;
 use shared::infra::artifacts::mongo::artifact_repository::ArtifactRepository as MongoArtifactRepository;
 use crate::infra::persistence::mongo::repositories::{
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
-    ModelMetadataRepository as MongoModelMetadataRepository,
+    ModelRepository as MongoModelRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
 };
 use crate::infra::deployment::fs::deployment_strategy_provider::DeploymentStrategyProviderFs;
@@ -35,8 +35,8 @@ pub fn artifact_ingestion_repo_factory(client: &Client, db_name: String) -> Arc<
 }
 
 #[cfg(feature = "mongo")]
-pub fn model_metadata_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelMetadataRepository> {
-    Arc::new(MongoModelMetadataRepository::new(client, db_name.clone()))
+pub fn model_repo_factory(client: &Client, db_name: String) -> Arc<dyn ModelRepository> {
+    Arc::new(MongoModelRepository::new(client, db_name.clone()))
 }
 
 #[cfg(feature = "mongo")]
@@ -49,7 +49,7 @@ pub fn artifact_service_factory(client: &Client, db_name: String, channel: Arc<C
         artifact_repo_factory(client, db_name.clone()),
         artifact_ingestion_repo_factory(client, db_name.clone()),
         artifact_publication_repo_factory(client, db_name.clone()),
-        model_metadata_repo_factory(client, db_name.clone()),
+        model_repo_factory(client, db_name.clone()),
         Arc::new(RabbitMQArtifactOpMessagePublisher::new(channel.clone()))
     )
 }
@@ -62,13 +62,13 @@ pub fn build_deployment_strategy_provider() -> Result<Arc<dyn DeploymentStrategy
     }
 }
 
-pub async fn model_metadata_service_factory(
+pub async fn model_service_factory(
     client: &Client,
     db_name: String,
     client_strategy_sets: Arc<Vec<ClientStrategySet>>
-) -> Result<ModelMetadataService, ApplicationError> {    
-    Ok(ModelMetadataService::new(
-        model_metadata_repo_factory(client, db_name.clone()),
+) -> Result<ModelService, ApplicationError> {
+    Ok(ModelService::new(
+        model_repo_factory(client, db_name.clone()),
         artifact_repo_factory(client, db_name.clone()),
         client_strategy_sets,
     ))

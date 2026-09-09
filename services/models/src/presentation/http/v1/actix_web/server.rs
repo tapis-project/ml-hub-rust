@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::bootstrap::{factories::model_metadata_service_factory, state::AppState};
+use crate::bootstrap::{factories::model_service_factory, state::AppState};
 use crate::bootstrap::factories::build_deployment_strategy_provider;
 pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
@@ -109,17 +109,17 @@ pub async fn run_server() -> std::io::Result<()> {
     let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
     let principal_service = web::Data::new(shared_app_context.principal_service);
 
-    let model_metadata_service = model_metadata_service_factory(
+    let model_service = model_service_factory(
         &mongo_client,
         db_name.clone(),
         client_strategy_sets.clone()
     ).await
         .map_err(|e| {
-            error!("Failed to initialize ModelMetadataService: {}", e.to_string());
+            error!("Failed to initialize ModelService: {}", e.to_string());
             e
         })
         .map(|s| Arc::new(s))
-        .expect("ModelMetadataService to be initialized");
+        .expect("ModelService to be initialized");
 
     // Initialize AppState
     let state = AppState {
@@ -136,7 +136,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(idp_registrar.clone())
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
-            .app_data(web::Data::from(model_metadata_service.clone()))
+            .app_data(web::Data::from(model_service.clone()))
             .app_data(web::Data::new(state.clone()))
             
             // Globally-scoped middlewares
@@ -168,8 +168,8 @@ pub async fn run_server() -> std::io::Result<()> {
                     .service(handlers::list_platforms::list_platforms)
                     .service(handlers::download_artifact::download_artifact)
                     .service(handlers::upload_model_artifact::upload_model_artifact)
-                    .service(handlers::associate_model_metadata_with_artifact::associate_model_metadata_with_artifact)
-                    .service(handlers::create_model_metadata::create_model_metadata)
+                    .service(handlers::associate_model_with_artifact::associate_model_with_artifact)
+                    .service(handlers::create_model::create_model)
                     .service(handlers::publish_model_artifact::publish_model_artifact)
                     .service(handlers::list_model_artifacts::list_model_artifacts)
                     .service(handlers::list_model_publications::list_model_publications)

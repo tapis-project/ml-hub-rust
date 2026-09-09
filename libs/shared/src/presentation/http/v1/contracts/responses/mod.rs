@@ -4,7 +4,7 @@ use crate::presentation::http::v1::responses::{
     artifacts::{ingestions::ArtifactIngestion, publications::ArtifactPublication, Artifact},
     datasets::Dataset,
     deployment::{strategy::Strategy, ModelDeployment},
-    models::{ModelArtifact, ModelMetadata},
+    models::{ModelArtifact, Model},
     platform_details::PlatformDetails,
     tasks::Task,
 };
@@ -172,9 +172,9 @@ pub struct ListModelIngestionsResponse {
 }
 
 #[derive(ToSchema)]
-pub struct AssociateModelMetadataResponse {
+pub struct AssociateModelResponse {
     #[schema(value_type = Object)]
-    pub result: ModelMetadata,
+    pub result: Model,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -183,9 +183,9 @@ pub struct AssociateModelMetadataResponse {
 }
 
 #[derive(ToSchema)]
-pub struct CreateModelMetadataResponse {
+pub struct CreateModelResponse {
     #[schema(value_type = Object)]
-    pub result: ModelMetadata,
+    pub result: Model,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -205,7 +205,7 @@ pub struct DiscoverModelsByPlatformResponse {
 
 #[derive(ToSchema)]
 pub struct DiscoverModelsResponse {
-    pub result: Vec<ModelMetadata>,
+    pub result: Vec<Model>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -215,7 +215,7 @@ pub struct DiscoverModelsResponse {
 
 #[derive(ToSchema)]
 pub struct GetModelResponse {
-    pub result: ModelMetadata,
+    pub result: Model,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -225,7 +225,7 @@ pub struct GetModelResponse {
 
 #[derive(ToSchema)]
 pub struct ListModelsResponse {
-    pub result: Vec<ModelMetadata>,
+    pub result: Vec<Model>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

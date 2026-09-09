@@ -5,7 +5,7 @@ use clients::{
     ClientError, 
     ClientJsonResponse, 
     IngestModelClient as _,
-    ModelMetadataConversionClient as _,
+    ModelConversionClient as _,
 };
 use git_lfs_client::client::GitLfsClient;
 use github_lfs_client::client::GithubLfsClient;
@@ -22,7 +22,7 @@ use shared::presentation::http::v1::requests::{
 use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
 use shared::domain::entities::artifact::Artifact;
-use shared::domain::entities::model_metadata::ModelMetadata;
+use shared::domain::entities::model::Model;
 use std::path::PathBuf;
 
 pub enum ListModelsClient {
@@ -201,8 +201,41 @@ impl clients::DiscoverModelsClient for DiscoverModelsClient {
     }
 }
 
-pub enum PublishModelClient {
+pub enum PublishModelArtifactClient {
     HuggingFace(HuggingFaceClient),
+}
+
+impl PublishModelArtifactClient {
+    const CAPABILITY: Capability = Capability::PublishModelArtifact;
+}
+
+// This impl for the enum is merely to satisfy the compiler
+impl Client for PublishModelArtifactClient {
+    fn platform(&self) -> Option<platforms::Platform> { None }
+    fn capabilities(&self) -> Option<Vec<Capability>> { None }
+}
+
+#[async_trait::async_trait]
+impl clients::PublishModelArtifactClient for PublishModelArtifactClient {
+    type Data = Value;
+    type Metadata = Value;
+    async fn publish_model_artifact(&self, extracted_artifact_path: &PathBuf, artifact: &Artifact, model: Option<&Model>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+        let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
+            PublishModelArtifactClient::HuggingFace(c) => {
+                if !c.has_capability(&Self::CAPABILITY) {
+                    return Err(ClientError::Unimplemented)
+                }
+                
+                c.publish_model_artifact(extracted_artifact_path, artifact, model, request).await
+            }
+        };
+        
+        resp
+    }
+}
+
+pub enum PublishModelClient {
+    Patra(PatraClient)
 }
 
 impl PublishModelClient {
@@ -219,48 +252,15 @@ impl Client for PublishModelClient {
 impl clients::PublishModelClient for PublishModelClient {
     type Data = Value;
     type Metadata = Value;
-    async fn publish_model(&self, extracted_artifact_path: &PathBuf, artifact: &Artifact, metadata: Option<&ModelMetadata>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
-            PublishModelClient::HuggingFace(c) => {
-                if !c.has_capability(&Self::CAPABILITY) {
-                    return Err(ClientError::Unimplemented)
-                }
-                
-                c.publish_model(extracted_artifact_path, artifact, metadata, request).await
-            }
-        };
-        
-        resp
-    }
-}
-
-pub enum PublishModelMetadataClient {
-    Patra(PatraClient)
-}
-
-impl PublishModelMetadataClient {
-    const CAPABILITY: Capability = Capability::PublishModelMetadata;
-}
-
-// This impl for the enum is merely to satisfy the compiler
-impl Client for PublishModelMetadataClient {
-    fn platform(&self) -> Option<platforms::Platform> { None }
-    fn capabilities(&self) -> Option<Vec<Capability>> { None }
-}
-
-#[async_trait::async_trait]
-impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
-    type Data = Value;
-    type Metadata = Value;
     
-    async fn publish_model_metadata(&self, metadata: &ModelMetadata, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model(&self, model: &Model, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
         let resp: Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> = match self {
-            PublishModelMetadataClient::Patra(c) => {
+            PublishModelClient::Patra(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
                 
-                c.publish_model_metadata(metadata, request).await
+                c.publish_model(model, request).await
             }
         };
         
@@ -268,26 +268,26 @@ impl clients::PublishModelMetadataClient for PublishModelMetadataClient {
     }
 }
 
-pub enum ModelMetadataConversionClient {
+pub enum ModelConversionClient {
     HuggingFace(HuggingFaceClient)
 }
 
-impl ModelMetadataConversionClient {
-    const CAPABILITY: Capability = Capability::ConvertModelMetadata;
+impl ModelConversionClient {
+    const CAPABILITY: Capability = Capability::ConvertModel;
 }
 
 // This impl for the enum is merely to satisfy the compiler
-impl Client for ModelMetadataConversionClient {
+impl Client for ModelConversionClient {
     fn platform(&self) -> Option<platforms::Platform> { None }
     fn capabilities(&self) -> Option<Vec<Capability>> { None }
 }
 
-impl ModelMetadataConversionClient {
-    pub fn from_platform_metadata<T>(&self, metadata: T, author: String, tenant_id: String) -> Result<shared::domain::entities::model_metadata::ModelMetadata, ClientError>
+impl ModelConversionClient {
+    pub fn from_platform_metadata<T>(&self, metadata: T, author: String, tenant_id: String) -> Result<shared::domain::entities::model::Model, ClientError>
     where T: serde::Serialize
     {
         let resp = match self {
-            ModelMetadataConversionClient::HuggingFace(c) => {
+            ModelConversionClient::HuggingFace(c) => {
                 if !c.has_capability(&Self::CAPABILITY) {
                     return Err(ClientError::Unimplemented)
                 }
@@ -300,7 +300,7 @@ impl ModelMetadataConversionClient {
         resp
     }
     
-    pub fn to_platform_metadata<T>(&self, _metadata: shared::domain::entities::model_metadata::ModelMetadata) -> Result<T, ClientError>
+    pub fn to_platform_metadata<T>(&self, _metadata: shared::domain::entities::model::Model) -> Result<T, ClientError>
     where T: serde::Serialize 
     {
         Err(ClientError::Unimplemented)
