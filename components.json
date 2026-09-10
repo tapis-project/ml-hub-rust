@@ -624,6 +624,7 @@
     },
     {
       "name": "model-deployment-controller",
+      "aliases": ["mdc"],
       "rootDir": "services/model-deployment-controller",
       "labels": ["bin", "worker"],
       "lifecycle": "production",
