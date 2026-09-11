@@ -1,18 +1,28 @@
 use clients::{ClientError, ClientErrorScope};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct HFModel {
-    pub author: String,
+    pub author: Option<String>,
     pub id: String,
-    pub library_name: String,
-    pub pipeline_tag: String,
+    pub library_name: Option<String>,
+    pub pipeline_tag: Option<String>,
+    #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
     pub gated: bool,
+    #[serde(default)]
     pub private: bool,
-    pub likes: u128,
-    pub downloads: u128,
+    pub likes: Option<u128>,
+    pub downloads: Option<u128>,
     pub sha: String,
+    #[serde(default)]
+    pub siblings: Vec<HFModelFile>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+pub struct HFModelFile {
+    pub size: Option<u64>,
 }
 
 pub struct CompoundTag {
@@ -33,6 +43,7 @@ impl HFModel {
                 } else {
                     continue;
                 };
+
                 let value = parts[1..].to_vec().join(":");
 
                 hf_tags.push(CompoundTag { name, value })
@@ -41,6 +52,7 @@ impl HFModel {
 
         hf_tags
     }
+
     pub fn get_model_name(&self) -> Result<String, ClientError> {
         let parts: Vec<String> = self
             .id

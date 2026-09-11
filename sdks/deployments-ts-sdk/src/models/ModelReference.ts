@@ -24,13 +24,7 @@ export interface ModelReference {
      * @type {string}
      * @memberof ModelReference
      */
-    author: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelReference
-     */
-    name: string;
+    model_id: string;
 }
 
 export function ModelReferenceFromJSON(json: any): ModelReference {
@@ -43,8 +37,7 @@ export function ModelReferenceFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'author': json['author'],
-        'name': json['name'],
+        'model_id': json['model_id'],
     };
 }
 
@@ -57,8 +50,7 @@ export function ModelReferenceToJSON(value?: ModelReference | null): any {
     }
     return {
         
-        'author': value.author,
-        'name': value.name,
+        'model_id': value.model_id,
     };
 }
 

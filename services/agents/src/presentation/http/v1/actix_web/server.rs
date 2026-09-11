@@ -20,7 +20,7 @@ use super::handlers;
 use crate::{
     bootstrap::{
         factories::{
-            agent_record_service_factory, agent_service_factory, endpoint_catalog_service_factory,
+            agent_record_service_factory, agent_service_factory, endpoint_query_service_factory,
         },
         state::AppState,
     },
@@ -83,7 +83,7 @@ pub async fn run_server() -> std::io::Result<()> {
         state.db_name.clone(),
     ));
     let agent_service = web::Data::new(agent_service_factory(&state.client, state.db_name.clone()));
-    let endpoint_catalog_service = web::Data::new(endpoint_catalog_service_factory(
+    let endpoint_query_service = web::Data::new(endpoint_query_service_factory(
         &state.client,
         state.db_name.clone(),
     ));
@@ -96,7 +96,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(principal_service.clone())
             .app_data(agent_record_service.clone())
             .app_data(agent_service.clone())
-            .app_data(endpoint_catalog_service.clone())
+            .app_data(endpoint_query_service.clone())
             .app_data(web::Data::new(state.clone()))
             .wrap(from_fn(preflight_short_circuit))
             .wrap(Logger::default().exclude("/agents-api/healthcheck"))

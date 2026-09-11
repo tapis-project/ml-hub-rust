@@ -14,10 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    Task,
-    TaskFromJSON,
-    TaskFromJSONTyped,
-    TaskToJSON,
+    Visibility,
+    VisibilityFromJSON,
+    VisibilityFromJSONTyped,
+    VisibilityToJSON,
 } from './';
 
 /**
@@ -34,22 +34,10 @@ export interface CreateModelBody {
     description?: string | null;
     /**
      * 
-     * @type {Array<string>}
-     * @memberof CreateModelBody
-     */
-    libraries?: Array<string> | null;
-    /**
-     * 
      * @type {string}
      * @memberof CreateModelBody
      */
-    license?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateModelBody
-     */
-    model_type?: string | null;
+    external_model_id: string;
     /**
      * 
      * @type {string}
@@ -58,22 +46,10 @@ export interface CreateModelBody {
     name: string;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Visibility}
      * @memberof CreateModelBody
      */
-    regulatory?: Array<string> | null;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof CreateModelBody
-     */
-    tags?: Array<string> | null;
-    /**
-     * 
-     * @type {Array<Task>}
-     * @memberof CreateModelBody
-     */
-    task_types?: Array<Task> | null;
+    visibility?: Visibility;
 }
 
 export function CreateModelBodyFromJSON(json: any): CreateModelBody {
@@ -87,13 +63,9 @@ export function CreateModelBodyFromJSONTyped(json: any, ignoreDiscriminator: boo
     return {
         
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
-        'license': !exists(json, 'license') ? undefined : json['license'],
-        'model_type': !exists(json, 'model_type') ? undefined : json['model_type'],
+        'external_model_id': json['external_model_id'],
         'name': json['name'],
-        'regulatory': !exists(json, 'regulatory') ? undefined : json['regulatory'],
-        'tags': !exists(json, 'tags') ? undefined : json['tags'],
-        'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
+        'visibility': !exists(json, 'visibility') ? undefined : VisibilityFromJSON(json['visibility']),
     };
 }
 
@@ -107,13 +79,9 @@ export function CreateModelBodyToJSON(value?: CreateModelBody | null): any {
     return {
         
         'description': value.description,
-        'libraries': value.libraries,
-        'license': value.license,
-        'model_type': value.model_type,
+        'external_model_id': value.external_model_id,
         'name': value.name,
-        'regulatory': value.regulatory,
-        'tags': value.tags,
-        'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
+        'visibility': VisibilityToJSON(value.visibility),
     };
 }
 

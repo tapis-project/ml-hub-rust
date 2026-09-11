@@ -14,18 +14,14 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    Canonical,
-    CanonicalFromJSON,
-    CanonicalFromJSONTyped,
-    CanonicalToJSON,
-    DeploymentStrategyReference,
-    DeploymentStrategyReferenceFromJSON,
-    DeploymentStrategyReferenceFromJSONTyped,
-    DeploymentStrategyReferenceToJSON,
-    Task,
-    TaskFromJSON,
-    TaskFromJSONTyped,
-    TaskToJSON,
+    ExternalModel,
+    ExternalModelFromJSON,
+    ExternalModelFromJSONTyped,
+    ExternalModelToJSON,
+    Visibility,
+    VisibilityFromJSON,
+    VisibilityFromJSONTyped,
+    VisibilityToJSON,
 } from './';
 
 /**
@@ -39,19 +35,13 @@ export interface Model {
      * @type {string}
      * @memberof Model
      */
-    author: string;
+    artifact_id?: string | null;
     /**
      * 
-     * @type {Canonical}
+     * @type {string}
      * @memberof Model
      */
-    canonical?: Canonical;
-    /**
-     * Deployment strategy references
-     * @type {Array<DeploymentStrategyReference>}
-     * @memberof Model
-     */
-    deployment_strategy_refs: Array<DeploymentStrategyReference>;
+    created_at: string;
     /**
      * 
      * @type {string}
@@ -60,22 +50,22 @@ export interface Model {
     description?: string | null;
     /**
      * 
-     * @type {Array<string>}
+     * @type {ExternalModel}
      * @memberof Model
      */
-    libraries?: Array<string> | null;
+    external_model: ExternalModel;
     /**
      * 
      * @type {string}
      * @memberof Model
      */
-    license?: string | null;
+    external_model_id: string;
     /**
      * 
      * @type {string}
      * @memberof Model
      */
-    model_type?: string | null;
+    id: string;
     /**
      * 
      * @type {string}
@@ -84,28 +74,28 @@ export interface Model {
     name: string;
     /**
      * 
-     * @type {Array<string>}
+     * @type {string}
      * @memberof Model
      */
-    regulatory?: Array<string> | null;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof Model
-     */
-    tags?: Array<string> | null;
-    /**
-     * 
-     * @type {Array<Task>}
-     * @memberof Model
-     */
-    task_types?: Array<Task> | null;
+    owner: string;
     /**
      * 
      * @type {string}
      * @memberof Model
      */
     tenant_id: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Model
+     */
+    updated_at: string;
+    /**
+     * 
+     * @type {Visibility}
+     * @memberof Model
+     */
+    visibility: Visibility;
 }
 
 export function ModelFromJSON(json: any): Model {
@@ -118,18 +108,17 @@ export function ModelFromJSONTyped(json: any, ignoreDiscriminator: boolean): Mod
     }
     return {
         
-        'author': json['author'],
-        'canonical': !exists(json, 'canonical') ? undefined : CanonicalFromJSON(json['canonical']),
-        'deployment_strategy_refs': ((json['deployment_strategy_refs'] as Array<any>).map(DeploymentStrategyReferenceFromJSON)),
+        'artifact_id': !exists(json, 'artifact_id') ? undefined : json['artifact_id'],
+        'created_at': json['created_at'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
-        'license': !exists(json, 'license') ? undefined : json['license'],
-        'model_type': !exists(json, 'model_type') ? undefined : json['model_type'],
+        'external_model': ExternalModelFromJSON(json['external_model']),
+        'external_model_id': json['external_model_id'],
+        'id': json['id'],
         'name': json['name'],
-        'regulatory': !exists(json, 'regulatory') ? undefined : json['regulatory'],
-        'tags': !exists(json, 'tags') ? undefined : json['tags'],
-        'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
+        'owner': json['owner'],
         'tenant_id': json['tenant_id'],
+        'updated_at': json['updated_at'],
+        'visibility': VisibilityFromJSON(json['visibility']),
     };
 }
 
@@ -142,18 +131,17 @@ export function ModelToJSON(value?: Model | null): any {
     }
     return {
         
-        'author': value.author,
-        'canonical': CanonicalToJSON(value.canonical),
-        'deployment_strategy_refs': ((value.deployment_strategy_refs as Array<any>).map(DeploymentStrategyReferenceToJSON)),
+        'artifact_id': value.artifact_id,
+        'created_at': value.created_at,
         'description': value.description,
-        'libraries': value.libraries,
-        'license': value.license,
-        'model_type': value.model_type,
+        'external_model': ExternalModelToJSON(value.external_model),
+        'external_model_id': value.external_model_id,
+        'id': value.id,
         'name': value.name,
-        'regulatory': value.regulatory,
-        'tags': value.tags,
-        'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
+        'owner': value.owner,
         'tenant_id': value.tenant_id,
+        'updated_at': value.updated_at,
+        'visibility': VisibilityToJSON(value.visibility),
     };
 }
 

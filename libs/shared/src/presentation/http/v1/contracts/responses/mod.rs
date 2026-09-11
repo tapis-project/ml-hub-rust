@@ -4,7 +4,7 @@ use crate::presentation::http::v1::responses::{
     artifacts::{ingestions::ArtifactIngestion, publications::ArtifactPublication, Artifact},
     datasets::Dataset,
     deployment::{strategy::Strategy, ModelDeployment},
-    models::{ModelArtifact, Model},
+    models::{ExternalModel, Model, ModelArtifact},
     platform_details::PlatformDetails,
     tasks::Task,
 };
@@ -173,7 +173,6 @@ pub struct ListModelIngestionsResponse {
 
 #[derive(ToSchema)]
 pub struct AssociateModelResponse {
-    #[schema(value_type = Object)]
     pub result: Model,
     pub status: u16,
     pub message: String,
@@ -184,7 +183,6 @@ pub struct AssociateModelResponse {
 
 #[derive(ToSchema)]
 pub struct CreateModelResponse {
-    #[schema(value_type = Object)]
     pub result: Model,
     pub status: u16,
     pub message: String,
@@ -194,8 +192,8 @@ pub struct CreateModelResponse {
 }
 
 #[derive(ToSchema)]
-pub struct DiscoverModelsByPlatformResponse {
-    pub result: Vec<Value>,
+pub struct DiscoverExternalModelsResponse {
+    pub result: Vec<ExternalModel>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -204,8 +202,8 @@ pub struct DiscoverModelsByPlatformResponse {
 }
 
 #[derive(ToSchema)]
-pub struct DiscoverModelsResponse {
-    pub result: Vec<Model>,
+pub struct GetExternalModelResponse {
+    pub result: ExternalModel,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -226,27 +224,6 @@ pub struct GetModelResponse {
 #[derive(ToSchema)]
 pub struct ListModelsResponse {
     pub result: Vec<Model>,
-    pub status: u16,
-    pub message: String,
-    #[schema(value_type = Object)]
-    pub metadata: Value,
-    pub version: String,
-}
-
-#[derive(ToSchema)]
-pub struct GetModelByPlatformResponse {
-    #[schema(value_type = Object)]
-    pub result: Value,
-    pub status: u16,
-    pub message: String,
-    #[schema(value_type = Object)]
-    pub metadata: Value,
-    pub version: String,
-}
-
-#[derive(ToSchema)]
-pub struct ListModelsByPlatformResponse {
-    pub result: Vec<Value>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]
@@ -319,6 +296,18 @@ pub struct NotFoundResponse {
 }
 
 #[derive(ToSchema)]
+pub struct ConflictResponse {
+    #[schema(default = null)]
+    pub result: Value,
+    #[schema(default = 409)]
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
 pub struct ServerErrorResponse {
     #[schema(default = null)]
     pub result: Value,
@@ -333,18 +322,6 @@ pub struct ServerErrorResponse {
 #[derive(ToSchema)]
 pub struct ListModelDeploymentsResponse {
     pub result: Vec<ModelDeployment>,
-    pub status: u16,
-    pub message: String,
-    #[schema(value_type = Object)]
-    pub metadata: Value,
-    pub version: String,
-}
-
-#[derive(ToSchema)]
-pub struct ForkModelResponse {
-    #[schema(default = null)]
-    pub result: Value,
-    #[schema(default = 404)]
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

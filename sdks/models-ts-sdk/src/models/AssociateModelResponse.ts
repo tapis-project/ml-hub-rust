@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+    Model,
+    ModelFromJSON,
+    ModelFromJSONTyped,
+    ModelToJSON,
+} from './';
+
 /**
  * 
  * @export
@@ -33,10 +40,10 @@ export interface AssociateModelResponse {
     metadata: object;
     /**
      * 
-     * @type {object}
+     * @type {Model}
      * @memberof AssociateModelResponse
      */
-    result: object;
+    result: Model;
     /**
      * 
      * @type {number}
@@ -63,7 +70,7 @@ export function AssociateModelResponseFromJSONTyped(json: any, ignoreDiscriminat
         
         'message': json['message'],
         'metadata': json['metadata'],
-        'result': json['result'],
+        'result': ModelFromJSON(json['result']),
         'status': json['status'],
         'version': json['version'],
     };
@@ -80,7 +87,7 @@ export function AssociateModelResponseToJSON(value?: AssociateModelResponse | nu
         
         'message': value.message,
         'metadata': value.metadata,
-        'result': value.result,
+        'result': ModelToJSON(value.result),
         'status': value.status,
         'version': value.version,
     };

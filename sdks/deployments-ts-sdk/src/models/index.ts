@@ -20,7 +20,6 @@ export * from './ParameterType';
 export * from './Platform';
 export * from './ReplicaGroup';
 export * from './RestApi';
-export * from './Scope';
 export * from './ServerErrorResponse';
 export * from './State';
 export * from './Strategy';

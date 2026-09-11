@@ -1,353 +1,218 @@
-use crate::application::ports::errors::InfrastructureError;
-use crate::application::ports::model::ModelRepositoryError;
-use crate::domain::entities;
-use crate::shared_kernel::context::RequestContext;
-use crate::{application, domain};
-use async_trait::async_trait;
-use bson::oid::ObjectId;
-use futures::stream::TryStreamExt;
-use mongodb::{
-    bson::{doc, from_document, to_bson, Bson, Document, Uuid},
-    Client, Collection,
-};
 use std::time::Duration;
 
-use super::super::database::MODEL_COLLECTION;
-use super::super::documents::model::Model;
-use super::super::documents::model_filter::ModelFilter;
+use async_trait::async_trait;
+use futures::TryStreamExt;
+use mongodb::{
+    bson::{doc, from_document, oid::ObjectId, Document, Uuid},
+    Client, Collection,
+};
+
+use crate::{
+    application::{
+        inputs::model::ListModelsInput,
+        ports::{
+            errors::InfrastructureError,
+            model::{ModelPage, ModelRepository as ModelRepositoryPort, ModelRepositoryError},
+        },
+    },
+    domain::entities::model::Model as DomainModel,
+    infra::{
+        _common::mongo::is_duplicate_key_error,
+        persistence::mongo::{database::MODEL_COLLECTION, documents::model::Model},
+    },
+    shared_kernel::identifiers::ExternalModelId,
+};
 
 pub struct ModelRepository {
-    read_collection: Collection<Model>,
-    write_collection: Collection<Model>,
+    collection: Collection<Model>,
 }
 
 impl ModelRepository {
     pub fn new(client: &Client, db_name: String) -> Self {
-        let db = client.database(&db_name);
-
         Self {
-            write_collection: db.collection(MODEL_COLLECTION),
-            read_collection: db.collection(MODEL_COLLECTION),
+            collection: client.database(&db_name).collection(MODEL_COLLECTION),
         }
+    }
+
+    async fn find_one(
+        &self,
+        filter: Document,
+    ) -> Result<Option<DomainModel>, ModelRepositoryError> {
+        self.collection
+            .find_one(filter)
+            .await
+            .map_err(map_error)?
+            .map(TryInto::try_into)
+            .transpose()
+            .map_err(map_conversion_error)
+    }
+
+    async fn list(
+        &self,
+        mut filter: Document,
+        input: &ListModelsInput,
+    ) -> Result<ModelPage, ModelRepositoryError> {
+        if let Some(cursor) = input.cursor() {
+            filter
+                .extend(doc! { "_id": { "$gt": ObjectId::parse_str(cursor).map_err(map_error)? } });
+        }
+
+        let count_filter = filter.clone();
+
+        let pipeline = vec![
+            doc! { "$match": filter },
+            doc! { "$sort": { "_id": 1 } },
+            doc! { "$limit": i64::from(input.limit()) + 1 },
+        ];
+        let mut cursor = self
+            .collection
+            .aggregate(pipeline)
+            .await
+            .map_err(map_error)?;
+
+        let mut documents = Vec::new();
+
+        while let Some(document) = cursor.try_next().await.map_err(map_error)? {
+            documents.push(from_document::<Model>(document).map_err(map_error)?);
+        }
+
+        let next_cursor = if documents.len() > usize::from(input.limit()) {
+            documents.pop();
+            documents
+                .last()
+                .and_then(|document| document._id.map(|id| id.to_hex()))
+        } else {
+            None
+        };
+
+        let models = documents
+            .into_iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(map_conversion_error)?;
+
+        let count = if input.include_count() {
+            Some(
+                self.collection
+                    .count_documents(count_filter)
+                    .max_time(Duration::from_secs(2))
+                    .await
+                    .map_err(map_error)?,
+            )
+        } else {
+            None
+        };
+
+        Ok(ModelPage {
+            models,
+            count,
+            cursor: next_cursor,
+        })
     }
 }
 
 #[async_trait]
-impl application::ports::model::ModelRepository for ModelRepository {
-    async fn upsert(
-        &self,
-        model: &entities::model::Model,
-        ctx: &RequestContext,
-    ) -> Result<(), ModelRepositoryError> {
-        let document = Model::try_from((model, ctx)).map_err(|e| {
-            let error = InfrastructureError::new_internal();
-            log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-            error
-        })?;
+impl ModelRepositoryPort for ModelRepository {
+    async fn save(&self, model: &DomainModel) -> Result<(), ModelRepositoryError> {
+        let document = Model::from(model);
 
-        let filter = doc! {
-            "name": &document.name,
-            "author": &document.author,
-        };
-
-        self.write_collection
-            .replace_one(filter, &document)
-            .upsert(true)
+        self.collection
+            .insert_one(document)
             .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!(
-                    "[{}] Persistence error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
+            .map_err(|error| {
+                if is_duplicate_key_error(&error) {
+                    ModelRepositoryError::ModelAlreadyInCollection
+                } else {
+                    map_error(error)
+                }
             })?;
 
         Ok(())
     }
 
-    async fn find_by_author_and_name(
-        &self,
-        author: &String,
-        name: &String,
-        tenant_id: &String,
-    ) -> Result<Option<entities::model::Model>, ModelRepositoryError> {
-        let result = self
-            .read_collection
-            .find_one(doc! { "tenant_id": tenant_id, "author": author, "name": name })
+    async fn update(&self, model: &DomainModel) -> Result<(), ModelRepositoryError> {
+        let document = Model::from(model);
+
+        self.collection
+            .replace_one(doc! { "id": &document.id }, document)
             .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!(
-                    "[{}] Persistence error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?
-            .map(entities::model::Model::try_from)
-            .transpose()
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-                error
-            })?;
-
-        Ok(result)
-    }
-
-    async fn find_all_by_author(
-        &self,
-        author: &String,
-        tenant_id: &String,
-    ) -> Result<Vec<entities::model::Model>, ModelRepositoryError> {
-        let filter = doc! { "tenant_id": tenant_id, "author": author };
-
-        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
-            let error = InfrastructureError::new_internal();
-            log::error!(
-                "[{}] Persistence error: {}",
-                error.error_id(),
-                e.to_string()
-            );
-            error
-        })?;
-
-        let mut results: Vec<entities::model::Model> = vec![];
-        while let Some(entry) = cursor.try_next().await.map_err(|e| {
-            let error = InfrastructureError::new_internal();
-            log::error!(
-                "[{}] Persistence error: {}",
-                error.error_id(),
-                e.to_string()
-            );
-            error
-        })? {
-            let entity = domain::entities::model::Model::try_from(entry).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-                error
-            })?;
-
-            results.push(entity);
-        }
-
-        Ok(results)
-    }
-
-    async fn update_artifact_id(
-        &self,
-        input: &application::inputs::model::UpdateModelArtifactId,
-    ) -> Result<(), ModelRepositoryError> {
-        let filter = doc! {
-            "name": input.name.clone(),
-            "author": input.author.clone(),
-        };
-
-        let document = doc! {
-            "$set": {
-                "artifact_id": Uuid::from_bytes(*input.artifact_id.as_bytes())
-            }
-        };
-
-        self.write_collection
-            .update_one(filter, document)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!(
-                    "[{}] Persistence error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
+            .map_err(|error| {
+                if is_duplicate_key_error(&error) {
+                    if model.artifact_id().is_some() {
+                        ModelRepositoryError::ArtifactAlreadyAssociated
+                    } else {
+                        ModelRepositoryError::ModelAlreadyInCollection
+                    }
+                } else {
+                    map_error(error)
+                }
             })?;
 
         Ok(())
+    }
+
+    async fn find_by_id(
+        &self,
+        tenant_id: &str,
+        id: uuid::Uuid,
+    ) -> Result<Option<DomainModel>, ModelRepositoryError> {
+        self.find_one(doc! { "tenant_id": tenant_id, "id": Uuid::from_bytes(*id.as_bytes()) })
+            .await
+    }
+
+    async fn find_by_external_model_id(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+        id: &ExternalModelId,
+    ) -> Result<Option<DomainModel>, ModelRepositoryError> {
+        self.find_one(doc! { "tenant_id": tenant_id, "owner": owner, "external_model_id": Uuid::from_bytes(*id.as_uuid().as_bytes()) }).await
     }
 
     async fn find_by_artifact_id(
         &self,
         artifact_id: &uuid::Uuid,
-    ) -> Result<Option<entities::model::Model>, ModelRepositoryError> {
-        let filter = doc! {
-            "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
-        };
-
-        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
-            let error = InfrastructureError::new_internal();
-            log::error!(
-                "[{}] Persistence error: {}",
-                error.error_id(),
-                e.to_string()
-            );
-            error
-        })?;
-
-        let maybe_model = match cursor.try_next().await.map_err(|e| {
-            let error = InfrastructureError::new_internal();
-            log::error!(
-                "[{}] Persistence error: {}",
-                error.error_id(),
-                e.to_string()
-            );
-            error
-        })? {
-            Some(m) => Some(domain::entities::model::Model::try_from(m).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-                error
-            })?),
-            None => None,
-        };
-
-        Ok(maybe_model)
-    }
-
-    async fn search(
-        &self,
-        input: &application::inputs::discover_models::SearchModelsInput,
-        tenant_ids: &Vec<String>,
-    ) -> Result<application::ports::model::ModelSearchResult, ModelRepositoryError> {
-        let mut filters: Vec<Bson> = Vec::new();
-        for criterion in input.criteria.clone() {
-            let filter = ModelFilter::try_from((&criterion, tenant_ids)).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-                error
-            })?;
-
-            let serialized_filter = to_bson(&filter).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!(
-                    "[{}] Serialization error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?;
-
-            filters.push(serialized_filter);
-        }
-
-        let mut aggregate: Vec<Document> = vec![];
-
-        // Return documents the meet the criteria and sort by _id
-        let mut match_document_value = doc! { "$or": filters };
-
-        // Find all documents after the cursor
-        if let Some(pagination_cursor) = input.options.cursor() {
-            let oid = ObjectId::parse_str(pagination_cursor).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!(
-                    "[{}] Persistence error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?;
-
-            match_document_value.extend(doc! { "_id": { "$gt": oid }});
-        }
-
-        let match_document = doc! {
-            "$match": match_document_value,
-        };
-
-        aggregate.push(match_document);
-
-        // Sort by _id by default
-        aggregate.push(doc! {
-            "$sort": { "_id": 1 }
-        });
-
-        // Return a limited number of documents + 1 to help use determine
-        // if we should return a pagination cursor
-        let limit = input.options.limit().unwrap_or_else(|| 0);
-        aggregate.push(doc! {
-            "$limit": (limit + 1) as i64
-        });
-
-        let mut cursor = self
-            .read_collection
-            .aggregate(aggregate)
-            .allow_disk_use(true)
-            .batch_size(100)
-            .comment(String::from("Model Discovery Search"))
-            .max_time(Duration::from_secs(2))
+    ) -> Result<Option<DomainModel>, ModelRepositoryError> {
+        self.find_one(doc! { "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()) })
             .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!(
-                    "[{}] Persistence error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?;
-
-        let mut models: Vec<entities::model::Model> = Vec::with_capacity(limit as usize);
-        let mut pagination_cursor: Option<String> = None;
-        let mut returned_model_count = 0;
-        while let Some(entry) = cursor.try_next().await.map_err(|e| {
-            let error = InfrastructureError::new_internal();
-            log::error!(
-                "[{}] Persistence error: {}",
-                error.error_id(),
-                e.to_string()
-            );
-            error
-        })? {
-            returned_model_count += 1;
-            let doc: Model = from_document(entry).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-                error
-            })?;
-
-            if returned_model_count <= limit {
-                pagination_cursor = doc._id.and_then(|oid| Some(oid.to_string()));
-                let model = entities::model::Model::try_from(doc).map_err(|e| {
-                    let error = InfrastructureError::new_internal();
-                    log::error!("[{}] Conversion error: {}", error.error_id(), e.to_string());
-                    error
-                })?;
-
-                models.push(model);
-            }
-        }
-
-        // Determine whether a pagination cursor should be sent back
-        if returned_model_count <= limit {
-            pagination_cursor = None;
-        }
-
-        // Return the count if requested
-        let mut count: Option<i64> = None;
-        if input.options.include_count().unwrap_or_else(|| false) {
-            let returned_count = self
-                .read_collection
-                .estimated_document_count()
-                .max_time(Duration::from_millis(100))
-                .await
-                .map_err(|e| {
-                    let error = InfrastructureError::new_internal();
-                    log::error!(
-                        "[{}] Persistence error: {}",
-                        error.error_id(),
-                        e.to_string()
-                    );
-                    error
-                })?;
-
-            count = Some(returned_count as i64)
-        }
-
-        return Ok(application::ports::model::ModelSearchResult {
-            models,
-            count,
-            cursor: pagination_cursor,
-        });
     }
+
+    async fn list_by_owner(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+        input: &ListModelsInput,
+    ) -> Result<ModelPage, ModelRepositoryError> {
+        self.list(doc! { "tenant_id": tenant_id, "owner": owner }, input)
+            .await
+    }
+
+    async fn list_shared(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+        input: &ListModelsInput,
+    ) -> Result<ModelPage, ModelRepositoryError> {
+        self.list(
+            doc! { "tenant_id": tenant_id, "owner": { "$ne": owner }, "visibility": "Public" },
+            input,
+        )
+        .await
+    }
+}
+
+fn map_error(error: impl std::fmt::Display) -> ModelRepositoryError {
+    let infrastructure_error = InfrastructureError::new_internal();
+
+    log::error!(
+        "[{}] Model persistence error: {}",
+        infrastructure_error.error_id(),
+        error
+    );
+
+    infrastructure_error.into()
+}
+
+fn map_conversion_error(error: impl std::fmt::Display) -> ModelRepositoryError {
+    map_error(error)
 }

@@ -24,6 +24,9 @@ import {
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
+    ConflictResponse,
+    ConflictResponseFromJSON,
+    ConflictResponseToJSON,
     GetModelArtifactResponse,
     GetModelArtifactResponseFromJSON,
     GetModelArtifactResponseToJSON,
@@ -53,7 +56,7 @@ export interface GetModelArtifactRequest {
 export class ArtifactsApi extends runtime.BaseAPI {
 
     /**
-     * Associate existing model to a model artifact
+     * Associate an owned model with an artifact
      */
     async associateModelWithArtifactRaw(requestParameters: AssociateModelWithArtifactRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<AssociateModelResponse>> {
         if (requestParameters.artifactId === null || requestParameters.artifactId === undefined) {
@@ -82,7 +85,7 @@ export class ArtifactsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Associate existing model to a model artifact
+     * Associate an owned model with an artifact
      */
     async associateModelWithArtifact(requestParameters: AssociateModelWithArtifactRequest, initOverrides?: RequestInit): Promise<AssociateModelResponse> {
         const response = await this.associateModelWithArtifactRaw(requestParameters, initOverrides);

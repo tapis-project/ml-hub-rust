@@ -51,6 +51,7 @@ k8s-openapi = { version = "0.28.0", features = ["latest"] }
 nanoid = { version = "0.5.0" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+regex = "1"
 semver = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }

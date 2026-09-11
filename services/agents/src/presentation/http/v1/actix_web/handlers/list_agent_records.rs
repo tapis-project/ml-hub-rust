@@ -20,9 +20,16 @@ use crate::presentation::http::v1::{
     summary = "List agent records",
     params(ListAgentRecordsQueryParams),
     responses(
-        (status = 200, description = "A list of agent records", body = ListAgentRecordsResponse),
-        (status = 500, description = "Unable to list agent records")
-    )
+        (
+            status = 200,
+            description = "A list of agent records",
+            body = ListAgentRecordsResponse
+        ),
+        (
+            status = 500,
+            description = "Unable to list agent records"
+        ),
+    ),
 )]
 #[get("agents-api/agent-records")]
 pub async fn list_agent_records(

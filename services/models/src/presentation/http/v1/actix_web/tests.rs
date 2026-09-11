@@ -6,18 +6,38 @@ fn openapi_exposes_model_contracts_and_association_route() -> Result<(), Box<dyn
 {
     let document = serde_json::to_value(ApiDoc::openapi())?;
 
-    assert!(document
-        .pointer("/paths/~1models-api~1artifacts~1{artifact_id}~1model/post")
-        .is_some());
-    assert!(document
-        .pointer("/paths/~1models-api~1artifacts~1{artifact_id}~1metadata")
-        .is_none());
+    for path in [
+        "/paths/~1models-api~1artifacts~1{artifact_id}~1model/post",
+        "/paths/~1models-api~1external-models~1search/post",
+        "/paths/~1models-api~1external-models~1{external_model_id}/get",
+        "/paths/~1models-api~1models/post",
+        "/paths/~1models-api~1models/get",
+        "/paths/~1models-api~1models~1{model_id}/get",
+    ] {
+        assert!(document.pointer(path).is_some(), "missing path {path}");
+    }
+
+    for path in [
+        "/paths/~1models-api~1models~1fork~1{author}~1{name}",
+        "/paths/~1models-api~1models~1search",
+        "/paths/~1models-api~1models~1{author}",
+        "/paths/~1models-api~1models~1{author}~1{name}",
+        "/paths/~1models-api~1platforms~1{platform}~1models",
+        "/paths/~1models-api~1platforms~1{platform}~1models~1{model_id}",
+    ] {
+        assert!(
+            document.pointer(path).is_none(),
+            "legacy path remains: {path}"
+        );
+    }
 
     for schema in [
         "Model",
         "CreateModelBody",
         "CreateModelResponse",
         "AssociateModelBody",
+        "ExternalModel",
+        "DerivedModelMetadata",
     ] {
         assert!(document
             .pointer(&format!("/components/schemas/{schema}"))
@@ -29,6 +49,7 @@ fn openapi_exposes_model_contracts_and_association_route() -> Result<(), Box<dyn
         "CreateModelMetadataBody",
         "CreateModelMetadataResponse",
         "AssociateModelMetadataBody",
+        "ForkModelResponse",
     ] {
         assert!(document
             .pointer(&format!("/components/schemas/{legacy_schema}"))
@@ -40,6 +61,13 @@ fn openapi_exposes_model_contracts_and_association_route() -> Result<(), Box<dyn
         Some(&serde_json::json!("create_model"))
     );
     assert_eq!(
+        document.pointer("/paths/~1models-api~1models/post/responses/201/description"),
+        Some(&serde_json::json!("Model created"))
+    );
+    assert!(document
+        .pointer("/components/schemas/ExternalModel/properties/metadata/properties/canonical")
+        .is_none());
+    assert_eq!(
         document.pointer("/paths/~1models-api~1artifacts~1{artifact_id}~1model/post/operationId"),
         Some(&serde_json::json!("associate_model_with_artifact"))
     );
@@ -50,6 +78,7 @@ fn openapi_exposes_model_contracts_and_association_route() -> Result<(), Box<dyn
 #[test]
 fn openapi_uses_model_publication_status_names() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
+
     let statuses = document
         .pointer("/components/schemas/ArtifactPublicationStatus/enum")
         .and_then(serde_json::Value::as_array)

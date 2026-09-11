@@ -1,66 +1,115 @@
-use crate::application::model_inputs::AssociateModel as AssociateModelInput;
-use crate::bootstrap::factories::model_service_factory;
-use crate::bootstrap::state::AppState;
+use actix_web::{post, web, Responder};
+use serde_json::to_value;
+use shared::{
+    application::{
+        inputs::model::AssociateModelWithArtifactInput,
+        services::{
+            model_artifact_association_service::{
+                ModelArtifactAssociationService, ModelArtifactAssociationServiceError,
+            },
+            model_query_service::ModelQueryService,
+        },
+    },
+    presentation::http::v1::{
+        contracts::responses,
+        requests::associate_model::{body::AssociateModelBody, path::AssociateModelPath},
+        responses::models::Model,
+    },
+    shared_kernel::context::RequestContext,
+};
+use uuid::Uuid;
+
 use crate::presentation::http::v1::actix_web::response_helpers::{
     build_error_response, build_success_response,
 };
-use crate::presentation::http::v1::requests::{AssociateModelBody, AssociateModelPath};
-use actix_web::{post, web, Responder};
-use shared::presentation::http::v1::contracts::responses;
 
 #[utoipa::path(
     post,
-    path="/models-api/artifacts/{artifact_id}/model",
-    tag="Artifacts",
-    description="Associate existing model to a model artifact",
+    path = "/models-api/artifacts/{artifact_id}/model",
+    tag = "Artifacts",
+    summary = "Associate an owned model with an artifact",
     params(
-        ("artifact_id" = String, Path, description = "The ID of the model artifact")
+        (
+            "artifact_id" = String,
+            Path,
+            format = "uuid"
+        ),
     ),
-    request_body=AssociateModelBody,
+    request_body = AssociateModelBody,
     responses(
-        (status=200, description="Successfully associated model with artifact", body=responses::AssociateModelResponse),
-        (status=400, description="Not found", body=responses::BadRequestResponse),
-        (status=404, description="Not found", body=responses::NotFoundResponse),
-        (status=500, description="Not found", body=responses::ServerErrorResponse),
-    )
+        (
+            status = 200,
+            description = "Model associated",
+            body = responses::AssociateModelResponse
+        ),
+        (
+            status = 400,
+            description = "Invalid identifier",
+            body = responses::BadRequestResponse
+        ),
+        (
+            status = 404,
+            description = "Model or artifact not found",
+            body = responses::NotFoundResponse
+        ),
+        (
+            status = 409,
+            description = "Artifact already associated",
+            body = responses::ConflictResponse
+        ),
+        (
+            status = 500,
+            description = "Unable to associate model",
+            body = responses::ServerErrorResponse
+        ),
+    ),
 )]
 #[post("models-api/artifacts/{artifact_id}/model")]
-async fn associate_model_with_artifact(
-    // req: HttpRequest,
+pub async fn associate_model_with_artifact(
     path: web::Path<AssociateModelPath>,
-    // query: web::Query<HashMap<String, String>>,
     body: web::Json<AssociateModelBody>,
-    data: web::Data<AppState>,
+    ctx: RequestContext,
+    association_service: web::Data<ModelArtifactAssociationService>,
+    query_service: web::Data<ModelQueryService>,
 ) -> impl Responder {
-    let artifact_id = path.into_inner().artifact_id;
-
-    let input = match AssociateModelInput::try_from((&artifact_id, body.into_inner())) {
-        Ok(i) => i,
-        Err(err) => return build_error_response(500, err.to_string()),
+    let artifact_id = match Uuid::parse_str(&path.artifact_id) {
+        Ok(id) => id,
+        Err(_) => return build_error_response(400, "artifact_id must be a UUID".into()),
     };
 
-    let model_service = match model_service_factory(
-        &data.client,
-        data.db_name.clone(),
-        data.client_strategy_sets.clone(),
-    )
-    .await
-    {
-        Ok(s) => s,
-        Err(err) => return build_error_response(500, err.to_string()),
+    let model_id = body.model_id;
+    let input = AssociateModelWithArtifactInput {
+        artifact_id,
+        model_id,
     };
 
-    match model_service.associate_model_with_artifact(input).await {
-        Ok(_) => (),
-        Err(err) => return build_error_response(500, err.to_string()),
+    match association_service.associate(&ctx, input).await {
+        Ok(()) => {}
+        Err(ModelArtifactAssociationServiceError::ArtifactNotFound)
+        | Err(ModelArtifactAssociationServiceError::ModelNotFound) => {
+            return build_error_response(404, "Model or artifact not found".into())
+        }
+        Err(ModelArtifactAssociationServiceError::ModelRepository(
+            shared::application::ports::model::ModelRepositoryError::ArtifactAlreadyAssociated,
+        )) => {
+            return build_error_response(409, "Artifact is already associated with a Model".into())
+        }
+        Err(error) => return build_error_response(500, error.to_string()),
+    }
+
+    let output = match query_service.get_model(&ctx, model_id).await {
+        Ok(output) => output,
+        Err(error) => return build_error_response(500, error.to_string()),
+    };
+
+    let result = match to_value(Model::from(output)) {
+        Ok(result) => result,
+        Err(error) => return build_error_response(500, error.to_string()),
     };
 
     build_success_response(
-        None,
-        Some(format!(
-            "Successfully associated model with artifact {}",
-            artifact_id
-        )),
+        Some(result),
+        Some("Successfully associated model with artifact".into()),
         None,
     )
 }

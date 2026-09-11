@@ -22,13 +22,24 @@
             "rules": [
                 {
                     "field_path": [
-                        "libraries"
+                        "provider"
+                    ],
+                    "operator": "Eq",
+                    "value": "HuggingFace"
+                },
+                {
+                    "field_path": [
+                        "metadata",
+                        "derived",
+                        "inference_runtimes"
                     ],
                     "operator": "Contains",
                     "value": "transformers"
                 },
                 {
                     "field_path": [
+                        "metadata",
+                        "derived",
                         "task_types"
                     ],
                     "operator": "AnyIn",
@@ -43,19 +54,21 @@
             "rules": [
                 {
                     "field_path": [
-                        "canonical",
+                        "metadata",
+                        "derived",
                         "gated"
                     ],
-                    "operator": "In",
-                    "value": [false, null]
+                    "operator": "Eq",
+                    "value": false
                 },
                 {
                     "field_path": [
-                        "canonical",
+                        "metadata",
+                        "derived",
                         "private"
                     ],
-                    "operator": "In",
-                    "value": [false, null]
+                    "operator": "Eq",
+                    "value": false
                 }
             ]
         }

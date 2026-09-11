@@ -6,8 +6,6 @@ members = [
     "services/datasets",
     "services/deployments",
     "services/models",
-    "services/artifact-ingester",
-    "services/artifact-publisher",
     "services/hf-dataset-etl",
     "services/hf-model-etl",
     "services/models-migrator",
@@ -27,6 +25,11 @@ members = [
     "libs/huggingface-tasks",
     "libs/tapis-client",
     "libs/retry-utils",
+]
+
+exclude = [
+    "services/artifact-ingester",
+    "services/artifact-publisher",
 ]
 
 [workspace.dependencies]

@@ -154,17 +154,17 @@ You can use the IP address and port produced by the last command to make API cal
 
 `http://<ipAddress>:<port>/<serviceName>`
 
-The example below discovers models registered in MLHub. Replace `<access-token>` with a valid
-Tapis access token.
+The example below discovers models in MLHub's global external-model catalog. Replace
+`<access-token>` with a valid Tapis access token.
 
 ```bash
-curl --request POST 'http://127.0.0.1:<YOUR EXPOSED PORT>/models-api/models/search?limit=10' \
+curl --request POST 'http://127.0.0.1:<YOUR EXPOSED PORT>/models-api/external-models/search?limit=10' \
   --header 'Content-Type: application/json' \
   --header 'X-Tapis-Token: <access-token>' \
   --data '{"criteria": []}'
 ```
 
-The request returns matching models in the standard MLHub response envelope.
+The request returns matching external models in the standard MLHub response envelope.
 
 ---
 

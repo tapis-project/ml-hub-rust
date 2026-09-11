@@ -1,30 +1,67 @@
-#[cfg(test)]
-mod model_test {
-    use crate::domain::entities::model::fixtures::full_model;
-    use serde_json::Value;
+use uuid::Uuid;
 
-    #[test]
-    fn test_get_field_value_at_valid_field_path() {
-        let model = full_model();
-        let gated: Value = model
-            .get_field_value_at_field_path(&vec!["canonical".into(), "gated".into()])
-            .unwrap()
-            .into();
+use super::{Model, ModelError, ReconstituteModelProps};
+use crate::shared_kernel::{
+    enums::Visibility,
+    identifiers::{traits::UrnGenerator, ExternalModelId},
+    value_objects::TimeStamp,
+};
 
-        let private: Value = model
-            .get_field_value_at_field_path(&vec!["canonical".into(), "private".into()])
-            .unwrap()
-            .into();
+#[test]
+fn creates_owned_model_with_dormant_artifact() {
+    let external_model_id = ExternalModelId::new();
 
-        assert!(gated.as_bool().unwrap() == false);
-        assert!(private.as_bool().unwrap() == true);
-    }
+    let model = match Model::create(
+        "tenant-a".into(),
+        "user-a".into(),
+        "My model".into(),
+        None,
+        external_model_id,
+        Visibility::Private,
+    ) {
+        Ok(model) => model,
+        Err(error) => panic!("model should be valid: {error}"),
+    };
 
-    #[test]
-    fn test_get_field_value_at_invalid_field_path() {
-        let model = full_model();
-        let maybe_field_value = model.get_field_value_at_field_path(&vec!["nonexistent".into()]);
+    assert_eq!(model.external_model_id(), &external_model_id);
+    assert!(model.artifact_id().is_none());
+    assert_eq!(model.updated_at(), model.created_at());
+    assert_eq!(
+        model.urn().to_string(),
+        format!("urn:mlhub:v1:tenant-a:model:{}", model.id())
+    );
+}
 
-        assert!(maybe_field_value.is_err());
-    }
+#[test]
+fn rejects_empty_name_during_creation() {
+    let result = Model::create(
+        "tenant-a".into(),
+        "user-a".into(),
+        String::new(),
+        None,
+        ExternalModelId::new(),
+        Visibility::Private,
+    );
+
+    assert!(matches!(result, Err(ModelError::EmptyName)));
+}
+
+#[test]
+fn reports_invalid_persisted_name_as_data_integrity_error() {
+    let now = TimeStamp::now();
+
+    let result = Model::reconstitute(ReconstituteModelProps {
+        id: Uuid::now_v7(),
+        name: String::new(),
+        description: None,
+        tenant_id: "tenant-a".into(),
+        owner: "user-a".into(),
+        artifact_id: None,
+        external_model_id: ExternalModelId::new(),
+        visibility: Visibility::Private,
+        updated_at: now.clone(),
+        created_at: now,
+    });
+
+    assert!(matches!(result, Err(ModelError::DataIntegrityError(_))));
 }

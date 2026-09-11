@@ -24,13 +24,7 @@ export interface AssociateModelBody {
      * @type {string}
      * @memberof AssociateModelBody
      */
-    author: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AssociateModelBody
-     */
-    name: string;
+    model_id: string;
 }
 
 export function AssociateModelBodyFromJSON(json: any): AssociateModelBody {
@@ -43,8 +37,7 @@ export function AssociateModelBodyFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'author': json['author'],
-        'name': json['name'],
+        'model_id': json['model_id'],
     };
 }
 
@@ -57,8 +50,7 @@ export function AssociateModelBodyToJSON(value?: AssociateModelBody | null): any
     }
     return {
         
-        'author': value.author,
-        'name': value.name,
+        'model_id': value.model_id,
     };
 }
 

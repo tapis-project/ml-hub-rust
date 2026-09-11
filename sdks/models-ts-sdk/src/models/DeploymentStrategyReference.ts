@@ -31,12 +31,6 @@ export interface DeploymentStrategyReference {
      * @type {string}
      * @memberof DeploymentStrategyReference
      */
-    description?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof DeploymentStrategyReference
-     */
     name: string;
     /**
      * 
@@ -56,7 +50,6 @@ export function DeploymentStrategyReferenceFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'description': !exists(json, 'description') ? undefined : json['description'],
         'name': json['name'],
         'platform': PlatformFromJSON(json['platform']),
     };
@@ -71,7 +64,6 @@ export function DeploymentStrategyReferenceToJSON(value?: DeploymentStrategyRefe
     }
     return {
         
-        'description': value.description,
         'name': value.name,
         'platform': PlatformToJSON(value.platform),
     };

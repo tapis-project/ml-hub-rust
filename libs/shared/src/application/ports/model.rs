@@ -1,52 +1,103 @@
-use crate::application::inputs::discover_models::SearchModelsInput;
-use crate::application::inputs::model::UpdateModelArtifactId;
-use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::model::Model;
-use crate::shared_kernel::context::RequestContext;
-
 use async_trait::async_trait;
 use thiserror::Error;
 use uuid::Uuid;
 
+use crate::{
+    application::{
+        inputs::{discover_models::SearchExternalModelsInput, model::ListModelsInput},
+        ports::errors::InfrastructureError,
+    },
+    domain::entities::model::{
+        external_model::{ExternalModel, ModelLocator, ModelProvider},
+        Model,
+    },
+    shared_kernel::identifiers::ExternalModelId,
+};
+
 #[derive(Debug, Error)]
 pub enum ModelRepositoryError {
+    #[error("Model already in your collection")]
+    ModelAlreadyInCollection,
+
+    #[error("Artifact is already associated with a Model")]
+    ArtifactAlreadyAssociated,
+
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),
 }
 
+#[derive(Debug, Error)]
+pub enum ExternalModelRepositoryError {
+    #[error(transparent)]
+    Persistence(#[from] InfrastructureError),
+}
+
+#[derive(Debug)]
+pub struct ModelPage {
+    pub models: Vec<Model>,
+    pub count: Option<u64>,
+    pub cursor: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct ExternalModelPage {
+    pub external_models: Vec<ExternalModel>,
+    pub count: Option<u64>,
+    pub cursor: Option<String>,
+}
+
 #[async_trait]
 pub trait ModelRepository: Send + Sync {
-    // async fn save(&self, input: &CreateModel, ctx: &RequestContext) -> Result<(), ApplicationError>;
-    async fn upsert(&self, model: &Model, ctx: &RequestContext)
-        -> Result<(), ModelRepositoryError>;
-    async fn find_by_author_and_name(
+    async fn save(&self, model: &Model) -> Result<(), ModelRepositoryError>;
+    async fn update(&self, model: &Model) -> Result<(), ModelRepositoryError>;
+    async fn find_by_id(
         &self,
-        author: &String,
-        name: &String,
-        tenant_id: &String,
+        tenant_id: &str,
+        id: Uuid,
     ) -> Result<Option<Model>, ModelRepositoryError>;
-    async fn find_all_by_author(
+    async fn find_by_external_model_id(
         &self,
-        author: &String,
-        tenant_id: &String,
-    ) -> Result<Vec<Model>, ModelRepositoryError>;
+        tenant_id: &str,
+        owner: &str,
+        external_model_id: &ExternalModelId,
+    ) -> Result<Option<Model>, ModelRepositoryError>;
     async fn find_by_artifact_id(
         &self,
         artifact_id: &Uuid,
     ) -> Result<Option<Model>, ModelRepositoryError>;
-    async fn search(
+    async fn list_by_owner(
         &self,
-        input: &SearchModelsInput,
-        tenant_ids: &Vec<String>,
-    ) -> Result<ModelSearchResult, ModelRepositoryError>;
-    async fn update_artifact_id(
+        tenant_id: &str,
+        owner: &str,
+        input: &ListModelsInput,
+    ) -> Result<ModelPage, ModelRepositoryError>;
+    async fn list_shared(
         &self,
-        input: &UpdateModelArtifactId,
-    ) -> Result<(), ModelRepositoryError>;
+        tenant_id: &str,
+        owner: &str,
+        input: &ListModelsInput,
+    ) -> Result<ModelPage, ModelRepositoryError>;
 }
 
-pub struct ModelSearchResult {
-    pub models: Vec<Model>,
-    pub count: Option<i64>,
-    pub cursor: Option<String>,
+#[async_trait]
+pub trait ExternalModelRepository: Send + Sync {
+    async fn save(&self, model: &ExternalModel) -> Result<(), ExternalModelRepositoryError>;
+    async fn update(&self, model: &ExternalModel) -> Result<(), ExternalModelRepositoryError>;
+    async fn find_by_id(
+        &self,
+        id: &ExternalModelId,
+    ) -> Result<Option<ExternalModel>, ExternalModelRepositoryError>;
+    async fn find_by_ids(
+        &self,
+        ids: &[ExternalModelId],
+    ) -> Result<Vec<ExternalModel>, ExternalModelRepositoryError>;
+    async fn find_by_provider_and_locator(
+        &self,
+        provider: &ModelProvider,
+        locator: &ModelLocator,
+    ) -> Result<Option<ExternalModel>, ExternalModelRepositoryError>;
+    async fn search(
+        &self,
+        input: &SearchExternalModelsInput,
+    ) -> Result<ExternalModelPage, ExternalModelRepositoryError>;
 }

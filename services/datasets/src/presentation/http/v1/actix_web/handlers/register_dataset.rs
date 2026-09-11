@@ -24,10 +24,20 @@ use validator::Validate;
     summary = "Register a dataset",
     request_body = RegisterDatasetBody,
     responses(
-        (status = 200, description = "Dataset registered", body = RegisterDatasetResponse),
-        (status = 400, description = "Invalid dataset registration"),
-        (status = 500, description = "Unable to register dataset"),
-    )
+        (
+            status = 200,
+            description = "Dataset registered",
+            body = RegisterDatasetResponse
+        ),
+        (
+            status = 400,
+            description = "Invalid dataset registration"
+        ),
+        (
+            status = 500,
+            description = "Unable to register dataset"
+        ),
+    ),
 )]
 #[post("datasets-api/datasets")]
 pub async fn register_dataset(

@@ -2,7 +2,7 @@ use actix_web::{get, web, Responder};
 use serde_json::to_value;
 use shared::{
     application::services::agent_service::AgentService,
-    application::services::endpoint_catalog_service::EndpointCatalogService,
+    application::services::endpoint_query_service::EndpointQueryService,
     presentation::http::v1::requests::list_agents::query::Scope,
     presentation::http::v1::responses::endpoints::Endpoint, shared_kernel::context::RequestContext,
 };
@@ -14,14 +14,30 @@ use crate::presentation::http::v1::{
     responses::Agent,
 };
 
-#[utoipa::path(get, path = "/agents-api/agents", tag = "Agents", summary = "List agents", params(ListAgentsQueryParams),
-    responses((status = 200, description = "A list of agents", body = ListAgentsResponse), (status = 500, description = "Unable to list agents")))]
+#[utoipa::path(
+    get,
+    path = "/agents-api/agents",
+    tag = "Agents",
+    summary = "List agents",
+    params(ListAgentsQueryParams),
+    responses(
+        (
+            status = 200,
+            description = "A list of agents",
+            body = ListAgentsResponse
+        ),
+        (
+            status = 500,
+            description = "Unable to list agents"
+        ),
+    ),
+)]
 #[get("agents-api/agents")]
 pub async fn list_agents(
     query: web::Query<ListAgentsQueryParams>,
     ctx: RequestContext,
     agent_service: web::Data<AgentService>,
-    endpoint_catalog_service: web::Data<EndpointCatalogService>,
+    endpoint_query_service: web::Data<EndpointQueryService>,
 ) -> impl Responder {
     let agents = match query.scope {
         Scope::Owned => agent_service.list_for_user(&ctx).await,
@@ -35,7 +51,7 @@ pub async fn list_agents(
         let mut response_agents = Vec::with_capacity(agents.len());
 
         for agent in agents {
-            let endpoints = match endpoint_catalog_service
+            let endpoints = match endpoint_query_service
                 .find_by_network_addressable_resource(&ctx, &agent)
                 .await
             {

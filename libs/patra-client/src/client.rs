@@ -1,20 +1,21 @@
 use crate::utils::deserialize_response_body;
 use async_trait;
 use clients::{
-    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient, GetModelClient, ListModelsClient, PublishModelClient
+    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse, DiscoverModelsClient,
+    GetModelClient, ListModelsClient, PublishModelClient,
 };
+use platforms::Platform;
 use reqwest::blocking::Client as ReqwestClient;
 use serde_json::Value;
+use shared::domain::entities::model::Model;
 use shared::logging::SharedLogger;
+use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
+use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
 use shared::presentation::http::v1::requests::{
     get_model_by_platform::GetModelByPlatformRequest,
     list_models_by_platform::ListModelsByPlatformRequest,
 };
-use shared::presentation::http::v1::requests::discover_models::DiscoverModelsByPlatformRequest;
-use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::domain::entities:: model::Model;
 use std::collections::hash_map::HashMap;
-use platforms::Platform;
 
 #[derive(Debug)]
 pub struct PatraClient {
@@ -27,12 +28,12 @@ impl Client for PatraClient {
     fn platform(&self) -> Option<Platform> {
         Some(Platform::Patra)
     }
-    
+
     fn capabilities(&self) -> Option<Vec<Capability>> {
         Some(vec![
             Capability::ListModels,
             Capability::GetModel,
-            Capability::DiscoverModels
+            Capability::DiscoverModels,
         ])
     }
 }
@@ -135,50 +136,9 @@ impl DiscoverModelsClient for PatraClient {
 
     async fn discover_models(
         &self,
-        request: &DiscoverModelsByPlatformRequest,
+        _request: &DiscoverModelsByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        self.logger.debug("Discover models");
-        let mut query_params = HashMap::new();
-
-        let prompt = match request.body.prompt.clone() {
-            Some(p) => p,
-            None => return Err(ClientError::BadRequest { msg: "Missing field 'prompt': Model discovery with Patra requires a natural language prompt support via the 'prompt' field of the DiscoverModelsRequest".into(), scope: ClientErrorScope::Client })
-        };
-        
-        query_params.insert("q", prompt);
-
-        let resp = self
-            .client
-            .get(PatraClient::SEARCH_MODEL_ENDPOINT)
-            .query(&query_params)
-            .send()
-            .map_err(|err| {
-                let msg = err.to_string();
-                if err.is_body() {
-                    ClientError::BadRequest {
-                        msg,
-                        scope: ClientErrorScope::Client,
-                    }
-                } else if err.is_connect() {
-                    ClientError::Unavailable(err.to_string())
-                } else {
-                    ClientError::Internal {
-                        msg: "An unknown error occurred".into(),
-                        scope: ClientErrorScope::Client,
-                    }
-                }
-            })?;
-
-        let status_code = resp.status().as_u16();
-
-        let deserialized_resp = deserialize_response_body(resp)?;
-
-        return Ok(ClientJsonResponse::new(
-            Some(status_code),
-            Some(String::from("success")),
-            Some(deserialized_resp),
-            None,
-        ));
+        Err(ClientError::Unimplemented)
     }
 }
 
@@ -192,14 +152,7 @@ impl PublishModelClient for PatraClient {
         _metadata: &Model,
         _request: &PublishArtifactServiceRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Ok(
-            ClientJsonResponse::new(
-                None,
-                None,
-                None,
-                None
-            )
-        )
+        return Ok(ClientJsonResponse::new(None, None, None, None));
     }
 }
 

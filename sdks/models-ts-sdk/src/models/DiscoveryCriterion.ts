@@ -14,6 +14,14 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    DeploymentStrategyCriterion,
+    DeploymentStrategyCriterionFromJSON,
+    DeploymentStrategyCriterionFromJSONTyped,
+    DeploymentStrategyCriterionToJSON,
+    ModelProvider,
+    ModelProviderFromJSON,
+    ModelProviderFromJSONTyped,
+    ModelProviderToJSON,
     Task,
     TaskFromJSON,
     TaskFromJSONTyped,
@@ -34,10 +42,22 @@ export interface DiscoveryCriterion {
     author?: string | null;
     /**
      * 
+     * @type {Array<DeploymentStrategyCriterion>}
+     * @memberof DiscoveryCriterion
+     */
+    deployment_strategies?: Array<DeploymentStrategyCriterion>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DiscoveryCriterion
+     */
+    has_deployment_strategies?: boolean | null;
+    /**
+     * 
      * @type {Array<string>}
      * @memberof DiscoveryCriterion
      */
-    libraries?: Array<string> | null;
+    inference_runtimes?: Array<string>;
     /**
      * 
      * @type {string}
@@ -46,10 +66,40 @@ export interface DiscoveryCriterion {
     license?: string | null;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof DiscoveryCriterion
      */
-    model_type?: string | null;
+    max_downloads?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DiscoveryCriterion
+     */
+    max_likes?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DiscoveryCriterion
+     */
+    max_size?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DiscoveryCriterion
+     */
+    min_downloads?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DiscoveryCriterion
+     */
+    min_likes?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DiscoveryCriterion
+     */
+    min_size?: number | null;
     /**
      * 
      * @type {string}
@@ -58,22 +108,22 @@ export interface DiscoveryCriterion {
     name?: string | null;
     /**
      * 
-     * @type {Array<string>}
+     * @type {ModelProvider}
      * @memberof DiscoveryCriterion
      */
-    regulatory?: Array<string> | null;
+    provider?: ModelProvider;
     /**
      * 
      * @type {Array<string>}
      * @memberof DiscoveryCriterion
      */
-    tags?: Array<string> | null;
+    tags?: Array<string>;
     /**
      * 
      * @type {Array<Task>}
      * @memberof DiscoveryCriterion
      */
-    task_types?: Array<Task> | null;
+    task_types?: Array<Task>;
 }
 
 export function DiscoveryCriterionFromJSON(json: any): DiscoveryCriterion {
@@ -87,13 +137,20 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'author': !exists(json, 'author') ? undefined : json['author'],
-        'libraries': !exists(json, 'libraries') ? undefined : json['libraries'],
+        'deployment_strategies': !exists(json, 'deployment_strategies') ? undefined : ((json['deployment_strategies'] as Array<any>).map(DeploymentStrategyCriterionFromJSON)),
+        'has_deployment_strategies': !exists(json, 'has_deployment_strategies') ? undefined : json['has_deployment_strategies'],
+        'inference_runtimes': !exists(json, 'inference_runtimes') ? undefined : json['inference_runtimes'],
         'license': !exists(json, 'license') ? undefined : json['license'],
-        'model_type': !exists(json, 'model_type') ? undefined : json['model_type'],
+        'max_downloads': !exists(json, 'max_downloads') ? undefined : json['max_downloads'],
+        'max_likes': !exists(json, 'max_likes') ? undefined : json['max_likes'],
+        'max_size': !exists(json, 'max_size') ? undefined : json['max_size'],
+        'min_downloads': !exists(json, 'min_downloads') ? undefined : json['min_downloads'],
+        'min_likes': !exists(json, 'min_likes') ? undefined : json['min_likes'],
+        'min_size': !exists(json, 'min_size') ? undefined : json['min_size'],
         'name': !exists(json, 'name') ? undefined : json['name'],
-        'regulatory': !exists(json, 'regulatory') ? undefined : json['regulatory'],
+        'provider': !exists(json, 'provider') ? undefined : ModelProviderFromJSON(json['provider']),
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
-        'task_types': !exists(json, 'task_types') ? undefined : (json['task_types'] === null ? null : (json['task_types'] as Array<any>).map(TaskFromJSON)),
+        'task_types': !exists(json, 'task_types') ? undefined : ((json['task_types'] as Array<any>).map(TaskFromJSON)),
     };
 }
 
@@ -107,13 +164,20 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
     return {
         
         'author': value.author,
-        'libraries': value.libraries,
+        'deployment_strategies': value.deployment_strategies === undefined ? undefined : ((value.deployment_strategies as Array<any>).map(DeploymentStrategyCriterionToJSON)),
+        'has_deployment_strategies': value.has_deployment_strategies,
+        'inference_runtimes': value.inference_runtimes,
         'license': value.license,
-        'model_type': value.model_type,
+        'max_downloads': value.max_downloads,
+        'max_likes': value.max_likes,
+        'max_size': value.max_size,
+        'min_downloads': value.min_downloads,
+        'min_likes': value.min_likes,
+        'min_size': value.min_size,
         'name': value.name,
-        'regulatory': value.regulatory,
+        'provider': ModelProviderToJSON(value.provider),
         'tags': value.tags,
-        'task_types': value.task_types === undefined ? undefined : (value.task_types === null ? null : (value.task_types as Array<any>).map(TaskToJSON)),
+        'task_types': value.task_types === undefined ? undefined : ((value.task_types as Array<any>).map(TaskToJSON)),
     };
 }
 

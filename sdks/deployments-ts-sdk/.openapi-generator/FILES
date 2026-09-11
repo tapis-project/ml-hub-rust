@@ -27,7 +27,6 @@ src/models/ParameterType.ts
 src/models/Platform.ts
 src/models/ReplicaGroup.ts
 src/models/RestApi.ts
-src/models/Scope.ts
 src/models/ServerErrorResponse.ts
 src/models/State.ts
 src/models/Strategy.ts

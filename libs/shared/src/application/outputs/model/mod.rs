@@ -1,60 +1,21 @@
-pub mod domain_to_output;
-pub mod output_to_domain;
+use crate::domain::entities::model::{external_model::ExternalModel, Model};
 
-use crate::shared_kernel::enums::Task;
-use platforms::Platform;
-use uuid::Uuid;
-
-/// Model output
 #[derive(Debug, Clone)]
-pub struct Model {
-    // General fields
-    pub name: String,
-    pub author: String,
-    pub description: Option<String>,
-    pub tenant_id: String,
-    pub model_type: Option<String>,
-    pub libraries: Option<Vec<String>>,
-    pub artifact_id: Option<Uuid>,
-    pub canonical: Option<Canonical>,
-    pub tags: Option<Vec<String>>,
-    pub task_types: Option<Vec<Task>>,
-    pub regulatory: Option<Vec<String>>,
-    pub license: Option<String>,
-    pub deployment_strategy_refs: Vec<DeploymentStrategyReference>,
+pub struct ModelWithExternalModel {
+    pub model: Model,
+    pub external_model: ExternalModel,
 }
 
 #[derive(Debug, Clone)]
-pub struct Canonical {
-    pub platform: Platform,
-    pub model_id: String,
-    pub locator: Locator,
-    pub author: Option<String>,
-    pub likes: Option<u128>,
-    pub downloads: Option<u128>,
-    pub gated: Option<bool>,
-    pub private: Option<bool>,
-    pub sha: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Locator {
-    pub url: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct DeploymentStrategyReference {
-    pub name: String,
-    pub platform: Platform,
-    pub description: Option<String>,
-}
-
 pub struct ModelListOutput {
-    pub models: Vec<Model>,
-    pub count: Option<i64>,
+    pub models: Vec<ModelWithExternalModel>,
+    pub count: Option<u64>,
     pub cursor: Option<String>,
 }
 
-pub struct ModelOutput {
-    pub model: Option<Model>,
+#[derive(Debug, Clone)]
+pub struct ExternalModelListOutput {
+    pub external_models: Vec<ExternalModel>,
+    pub count: Option<u64>,
+    pub cursor: Option<String>,
 }

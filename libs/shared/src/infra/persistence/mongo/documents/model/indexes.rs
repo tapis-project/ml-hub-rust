@@ -1,64 +1,63 @@
-use crate::infra::_common::mongo::Index;
-use crate::infra::persistence::mongo::database::MODEL_COLLECTION;
-use crate::infra::persistence::mongo::documents::model::Model;
 use mongodb::{bson::doc, options::IndexOptions, IndexModel};
 
-pub struct ModelAuthorNameIndexUnique;
+use crate::{
+    infra::_common::mongo::Index,
+    infra::persistence::mongo::{database::MODEL_COLLECTION, documents::model::Model},
+};
 
-impl Index for ModelAuthorNameIndexUnique {
-    type Collection = Model;
-    const INDEX_NAME: &'static str = "model_author_name_index_unique";
-    fn index() -> IndexModel {
-        IndexModel::builder()
-            .keys(doc! { "author": 1, "name": 1 })
-            .options(Some(
-                IndexOptions::builder()
-                    .name(Self::INDEX_NAME.to_string())
-                    .unique(true)
-                    .build(),
-            ))
-            .build()
-    }
-
-    fn collection_name() -> &'static str {
-        MODEL_COLLECTION
-    }
+macro_rules! model_index {
+    ($name:ident, $index_name:literal, $keys:expr, $unique:expr) => {
+        pub struct $name;
+        impl Index for $name {
+            type Collection = Model;
+            const INDEX_NAME: &'static str = $index_name;
+            fn index() -> IndexModel {
+                IndexModel::builder()
+                    .keys($keys)
+                    .options(
+                        IndexOptions::builder()
+                            .name(Self::INDEX_NAME.to_string())
+                            .unique($unique)
+                            .build(),
+                    )
+                    .build()
+            }
+            fn collection_name() -> &'static str {
+                MODEL_COLLECTION
+            }
+        }
+    };
 }
 
-pub struct TaskTypesIndex;
+model_index!(
+    ModelIdIndexUnique,
+    "model_id_index_unique",
+    doc! { "id": 1 },
+    true
+);
+model_index!(
+    ModelOwnerExternalModelIndexUnique,
+    "model_owner_external_model_index_unique",
+    doc! { "tenant_id": 1, "owner": 1, "external_model_id": 1 },
+    true
+);
 
-impl Index for TaskTypesIndex {
+pub struct ModelArtifactIdIndexUnique;
+
+impl Index for ModelArtifactIdIndexUnique {
     type Collection = Model;
-    const INDEX_NAME: &'static str = "task_types_index";
-    fn index() -> IndexModel {
-        IndexModel::builder()
-            .keys(doc! { "task_types": 1 })
-            .options(Some(
-                IndexOptions::builder()
-                    .name(Self::INDEX_NAME.to_string())
-                    .build(),
-            ))
-            .build()
-    }
+    const INDEX_NAME: &'static str = "model_artifact_id_index_unique";
 
-    fn collection_name() -> &'static str {
-        MODEL_COLLECTION
-    }
-}
-
-pub struct ArtifactIdIndex;
-
-impl Index for ArtifactIdIndex {
-    type Collection = Model;
-    const INDEX_NAME: &'static str = "artifact_id_index";
     fn index() -> IndexModel {
         IndexModel::builder()
             .keys(doc! { "artifact_id": 1 })
-            .options(Some(
+            .options(
                 IndexOptions::builder()
                     .name(Self::INDEX_NAME.to_string())
+                    .unique(true)
+                    .partial_filter_expression(doc! { "artifact_id": { "$type": "binData" } })
                     .build(),
-            ))
+            )
             .build()
     }
 

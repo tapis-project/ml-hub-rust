@@ -18,30 +18,18 @@ import {
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
+    ConflictResponse,
+    ConflictResponseFromJSON,
+    ConflictResponseToJSON,
     CreateModelBody,
     CreateModelBodyFromJSON,
     CreateModelBodyToJSON,
     CreateModelResponse,
     CreateModelResponseFromJSON,
     CreateModelResponseToJSON,
-    DiscoverModelsResponse,
-    DiscoverModelsResponseFromJSON,
-    DiscoverModelsResponseToJSON,
-    DiscoveryCriteria,
-    DiscoveryCriteriaFromJSON,
-    DiscoveryCriteriaToJSON,
-    ForkModelResponse,
-    ForkModelResponseFromJSON,
-    ForkModelResponseToJSON,
     GetModelResponse,
     GetModelResponseFromJSON,
     GetModelResponseToJSON,
-    IngestArtifactRequest,
-    IngestArtifactRequestFromJSON,
-    IngestArtifactRequestToJSON,
-    IngestModelArtifactResponse,
-    IngestModelArtifactResponseFromJSON,
-    IngestModelArtifactResponseToJSON,
     ListModelsResponse,
     ListModelsResponseFromJSON,
     ListModelsResponseToJSON,
@@ -57,33 +45,15 @@ export interface CreateModelRequest {
     createModelBody: CreateModelBody;
 }
 
-export interface DiscoverModelsRequest {
-    discoveryCriteria: DiscoveryCriteria;
+export interface GetModelRequest {
+    modelId: string;
+}
+
+export interface ListModelsRequest {
+    scope?: ListModelsScopeEnum;
     limit?: number;
     cursor?: string;
     includeCount?: boolean;
-    includeGlobalModels?: boolean;
-}
-
-export interface ForkModelRequest {
-    author: string;
-    name: string;
-}
-
-export interface GetModelByAuthorAndNameRequest {
-    name: string;
-    author: string;
-    scope?: GetModelByAuthorAndNameScopeEnum;
-}
-
-export interface IngestCanonicalModelRequest {
-    author: string;
-    name: string;
-    ingestArtifactRequest: IngestArtifactRequest;
-}
-
-export interface ListModelsByAuthorRequest {
-    author: string;
 }
 
 /**
@@ -92,7 +62,7 @@ export interface ListModelsByAuthorRequest {
 export class ModelsApi extends runtime.BaseAPI {
 
     /**
-     * Create a model
+     * Add an external model to the user\'s collection
      */
     async createModelRaw(requestParameters: CreateModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<CreateModelResponse>> {
         if (requestParameters.createModelBody === null || requestParameters.createModelBody === undefined) {
@@ -117,7 +87,7 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a model
+     * Add an external model to the user\'s collection
      */
     async createModel(requestParameters: CreateModelRequest, initOverrides?: RequestInit): Promise<CreateModelResponse> {
         const response = await this.createModelRaw(requestParameters, initOverrides);
@@ -125,14 +95,44 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Discover models on MLHub
+     * Get a model from a tenant collection
      */
-    async discoverModelsRaw(requestParameters: DiscoverModelsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<DiscoverModelsResponse>> {
-        if (requestParameters.discoveryCriteria === null || requestParameters.discoveryCriteria === undefined) {
-            throw new runtime.RequiredError('discoveryCriteria','Required parameter requestParameters.discoveryCriteria was null or undefined when calling discoverModels.');
+    async getModelRaw(requestParameters: GetModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<GetModelResponse>> {
+        if (requestParameters.modelId === null || requestParameters.modelId === undefined) {
+            throw new runtime.RequiredError('modelId','Required parameter requestParameters.modelId was null or undefined when calling getModel.');
         }
 
         const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/models-api/models/{model_id}`.replace(`{${"model_id"}}`, encodeURIComponent(String(requestParameters.modelId))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetModelResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a model from a tenant collection
+     */
+    async getModel(requestParameters: GetModelRequest, initOverrides?: RequestInit): Promise<GetModelResponse> {
+        const response = await this.getModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * List owned or shared models
+     */
+    async listModelsRaw(requestParameters: ListModelsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters.scope !== undefined) {
+            queryParameters['scope'] = requestParameters.scope;
+        }
 
         if (requestParameters.limit !== undefined) {
             queryParameters['limit'] = requestParameters.limit;
@@ -146,160 +146,10 @@ export class ModelsApi extends runtime.BaseAPI {
             queryParameters['include_count'] = requestParameters.includeCount;
         }
 
-        if (requestParameters.includeGlobalModels !== undefined) {
-            queryParameters['include_global_models'] = requestParameters.includeGlobalModels;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        const response = await this.request({
-            path: `/models-api/models/search`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: DiscoveryCriteriaToJSON(requestParameters.discoveryCriteria),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => DiscoverModelsResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Discover models on MLHub
-     */
-    async discoverModels(requestParameters: DiscoverModelsRequest, initOverrides?: RequestInit): Promise<DiscoverModelsResponse> {
-        const response = await this.discoverModelsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Fork a model from a platform
-     */
-    async forkModelRaw(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ForkModelResponse>> {
-        if (requestParameters.author === null || requestParameters.author === undefined) {
-            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling forkModel.');
-        }
-
-        if (requestParameters.name === null || requestParameters.name === undefined) {
-            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling forkModel.');
-        }
-
-        const queryParameters: any = {};
-
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/models-api/models/fork/{author}/{name}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))).replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ForkModelResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Fork a model from a platform
-     */
-    async forkModel(requestParameters: ForkModelRequest, initOverrides?: RequestInit): Promise<ForkModelResponse> {
-        const response = await this.forkModelRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Get model by the author and name
-     */
-    async getModelByAuthorAndNameRaw(requestParameters: GetModelByAuthorAndNameRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<GetModelResponse>> {
-        if (requestParameters.name === null || requestParameters.name === undefined) {
-            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling getModelByAuthorAndName.');
-        }
-
-        if (requestParameters.author === null || requestParameters.author === undefined) {
-            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling getModelByAuthorAndName.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.scope !== undefined) {
-            queryParameters['scope'] = requestParameters.scope;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/models-api/models/{author}/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))).replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetModelResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Get model by the author and name
-     */
-    async getModelByAuthorAndName(requestParameters: GetModelByAuthorAndNameRequest, initOverrides?: RequestInit): Promise<GetModelResponse> {
-        const response = await this.getModelByAuthorAndNameRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Ingest canonical model artifact
-     */
-    async ingestCanonicalModelRaw(requestParameters: IngestCanonicalModelRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<IngestModelArtifactResponse>> {
-        if (requestParameters.author === null || requestParameters.author === undefined) {
-            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling ingestCanonicalModel.');
-        }
-
-        if (requestParameters.name === null || requestParameters.name === undefined) {
-            throw new runtime.RequiredError('name','Required parameter requestParameters.name was null or undefined when calling ingestCanonicalModel.');
-        }
-
-        if (requestParameters.ingestArtifactRequest === null || requestParameters.ingestArtifactRequest === undefined) {
-            throw new runtime.RequiredError('ingestArtifactRequest','Required parameter requestParameters.ingestArtifactRequest was null or undefined when calling ingestCanonicalModel.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        const response = await this.request({
-            path: `/models-api/models/{author}/{name}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))).replace(`{${"name"}}`, encodeURIComponent(String(requestParameters.name))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: IngestArtifactRequestToJSON(requestParameters.ingestArtifactRequest),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => IngestModelArtifactResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Ingest canonical model artifact
-     */
-    async ingestCanonicalModel(requestParameters: IngestCanonicalModelRequest, initOverrides?: RequestInit): Promise<IngestModelArtifactResponse> {
-        const response = await this.ingestCanonicalModelRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * List models by author in the current tenant
-     */
-    async listModelsByAuthorRaw(requestParameters: ListModelsByAuthorRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListModelsResponse>> {
-        if (requestParameters.author === null || requestParameters.author === undefined) {
-            throw new runtime.RequiredError('author','Required parameter requestParameters.author was null or undefined when calling listModelsByAuthor.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/models-api/models/{author}`.replace(`{${"author"}}`, encodeURIComponent(String(requestParameters.author))),
+            path: `/models-api/models`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -309,10 +159,10 @@ export class ModelsApi extends runtime.BaseAPI {
     }
 
     /**
-     * List models by author in the current tenant
+     * List owned or shared models
      */
-    async listModelsByAuthor(requestParameters: ListModelsByAuthorRequest, initOverrides?: RequestInit): Promise<ListModelsResponse> {
-        const response = await this.listModelsByAuthorRaw(requestParameters, initOverrides);
+    async listModels(requestParameters: ListModelsRequest, initOverrides?: RequestInit): Promise<ListModelsResponse> {
+        const response = await this.listModelsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -322,7 +172,7 @@ export class ModelsApi extends runtime.BaseAPI {
     * @export
     * @enum {string}
     */
-export enum GetModelByAuthorAndNameScopeEnum {
-    Tenant = 'tenant',
-    Global = 'global'
+export enum ListModelsScopeEnum {
+    Owned = 'Owned',
+    Shared = 'Shared'
 }

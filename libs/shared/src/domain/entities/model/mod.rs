@@ -1,144 +1,155 @@
-/// Defines and manages the lifecycle of the Model entity and all of its
-/// sub-components.
+/// Defines the user-owned Model aggregate and the global ExternalModel aggregate.
+pub mod external_model;
 
 #[cfg(test)]
 pub mod fixtures;
 
-use crate::shared_kernel::enums::Task;
-use platforms::Platform;
-use serde_json::Value;
 use thiserror::Error;
 use uuid::Uuid;
 
-/// Model entity
+use crate::impl_urn_generator;
+use crate::shared_kernel::{
+    enums::Visibility, identifiers::ExternalModelId, value_objects::TimeStamp,
+};
+
 #[derive(Debug, Clone)]
 pub struct Model {
-    // General fields
-    pub name: String,
-    pub author: String,
-    pub description: Option<String>,
-    pub tenant_id: String,
-    pub model_type: Option<String>,
-    pub libraries: Option<Vec<String>>,
-    pub artifact_id: Option<Uuid>,
-    pub canonical: Option<Canonical>,
-    pub tags: Option<Vec<String>>,
-    pub task_types: Option<Vec<Task>>,
-
-    /// Regulatory and Compliance Fields
-    /// A vector or strings that represent regulatory standards. Ex HIPPA
-    pub regulatory: Option<Vec<String>>,
-    pub license: Option<String>,
-
-    // Viable deployment strategy references
-    pub deployment_strategy_refs: Vec<DeploymentStrategyReference>,
+    id: Uuid,
+    name: String,
+    description: Option<String>,
+    tenant_id: String,
+    owner: String,
+    artifact_id: Option<Uuid>,
+    external_model_id: ExternalModelId,
+    visibility: Visibility,
+    updated_at: TimeStamp,
+    created_at: TimeStamp,
 }
+
+impl_urn_generator!(Model, tenant_id, "model", id);
 
 impl Model {
-    /// Fetches the value for a select number of field paths on the model.
-    pub fn get_field_value_at_field_path(
-        &self,
-        field_path: &Vec<String>,
-    ) -> Result<FieldValue, ModelError> {
-        let fp: Vec<&str> = field_path.iter().map(|v| v.as_str()).collect();
-        match fp.as_slice() {
-            ["name"] => Ok(FieldValue::Name(Some(self.name.clone()))),
-            ["author"] => Ok(FieldValue::Author(Some(self.author.clone()))),
-            ["libraries"] => Ok(FieldValue::Libraries(self.libraries.clone())),
-            ["tags"] => Ok(FieldValue::Tags(self.tags.clone())),
-            ["task_types"] => Ok(FieldValue::TaskTypes(self.task_types.clone())),
-            ["canonical", "gated"] => Ok(FieldValue::CanonicalGated(
-                self.canonical.as_ref().and_then(|c| c.gated),
-            )),
-            ["canonical", "private"] => Ok(FieldValue::CanonicalPrivate(
-                self.canonical.as_ref().and_then(|c| c.private),
-            )),
-            other => {
-                return Err(ModelError::InvalidFieldPath(
-                    other.to_vec().iter().map(|s| s.to_string()).collect(),
-                ))
-            }
+    pub fn create(
+        tenant_id: String,
+        owner: String,
+        name: String,
+        description: Option<String>,
+        external_model_id: ExternalModelId,
+        visibility: Visibility,
+    ) -> Result<Self, ModelError> {
+        Self::validate_name(&name)?;
+
+        let now = TimeStamp::now();
+
+        Ok(Self {
+            id: Uuid::now_v7(),
+            name,
+            description,
+            tenant_id,
+            owner,
+            artifact_id: None,
+            external_model_id,
+            visibility,
+            updated_at: now.clone(),
+            created_at: now,
+        })
+    }
+
+    pub fn reconstitute(props: ReconstituteModelProps) -> Result<Self, ModelError> {
+        Self::validate_name(&props.name).map_err(|error| {
+            ModelError::DataIntegrityError(format!("Model contains an invalid name: {error}"))
+        })?;
+
+        Ok(Self {
+            id: props.id,
+            name: props.name,
+            description: props.description,
+            tenant_id: props.tenant_id,
+            owner: props.owner,
+            artifact_id: props.artifact_id,
+            external_model_id: props.external_model_id,
+            visibility: props.visibility,
+            updated_at: props.updated_at,
+            created_at: props.created_at,
+        })
+    }
+
+    pub fn associate_artifact(&mut self, artifact_id: Uuid) {
+        self.artifact_id = Some(artifact_id);
+
+        self.updated_at = TimeStamp::now();
+    }
+
+    pub fn id(&self) -> &Uuid {
+        &self.id
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    pub fn tenant_id(&self) -> &str {
+        &self.tenant_id
+    }
+
+    pub fn owner(&self) -> &str {
+        &self.owner
+    }
+
+    pub fn artifact_id(&self) -> Option<&Uuid> {
+        self.artifact_id.as_ref()
+    }
+
+    pub fn external_model_id(&self) -> &ExternalModelId {
+        &self.external_model_id
+    }
+
+    pub fn visibility(&self) -> &Visibility {
+        &self.visibility
+    }
+
+    pub fn updated_at(&self) -> &TimeStamp {
+        &self.updated_at
+    }
+
+    pub fn created_at(&self) -> &TimeStamp {
+        &self.created_at
+    }
+
+    fn validate_name(name: &str) -> Result<(), ModelError> {
+        if name.is_empty() {
+            return Err(ModelError::EmptyName);
         }
+
+        Ok(())
     }
 }
 
-#[derive(Error, Debug)]
-pub enum ModelError {
-    #[error("Invalid or disallowed field path: {0:?}")]
-    InvalidFieldPath(Vec<String>),
-}
-
 #[derive(Debug, Clone)]
-pub struct Canonical {
-    pub platform: Platform,
-    pub model_id: String,
-    pub locator: Locator,
-    pub author: Option<String>,
-    pub likes: Option<u128>,
-    pub downloads: Option<u128>,
-    pub gated: Option<bool>,
-    pub private: Option<bool>,
-    pub sha: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Locator {
-    pub url: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct DeploymentStrategyReference {
+pub struct ReconstituteModelProps {
+    pub id: Uuid,
     pub name: String,
-    pub platform: Platform,
+    pub description: Option<String>,
+    pub tenant_id: String,
+    pub owner: String,
+    pub artifact_id: Option<Uuid>,
+    pub external_model_id: ExternalModelId,
+    pub visibility: Visibility,
+    pub updated_at: TimeStamp,
+    pub created_at: TimeStamp,
 }
 
-#[derive(Clone, Debug)]
-pub enum FieldValue {
-    Name(Option<String>),
-    Author(Option<String>),
-    Libraries(Option<Vec<String>>),
-    Tags(Option<Vec<String>>),
-    TaskTypes(Option<Vec<Task>>),
-    CanonicalPrivate(Option<bool>),
-    CanonicalGated(Option<bool>),
-}
+#[derive(Debug, Error)]
+pub enum ModelError {
+    #[error("Model name MUST not be empty")]
+    EmptyName,
 
-impl Into<Value> for FieldValue {
-    fn into(self) -> Value {
-        match self {
-            FieldValue::Name(name) => match name {
-                Some(n) => Value::String(n),
-                None => Value::Null,
-            },
-            FieldValue::Author(author) => match author {
-                Some(a) => Value::String(a),
-                None => Value::Null,
-            },
-            FieldValue::Libraries(libraries) => match libraries {
-                Some(fws) => fws.iter().map(|fw| Value::String(fw.clone())).collect(),
-                None => Value::Null,
-            },
-            FieldValue::Tags(tags) => match tags {
-                Some(kws) => kws.iter().map(|kw| Value::String(kw.clone())).collect(),
-                None => Value::Null,
-            },
-            FieldValue::TaskTypes(tasks) => match tasks {
-                Some(ts) => ts
-                    .iter()
-                    .map(|t| Value::String(String::from(t.clone())))
-                    .collect(),
-                None => Value::Null,
-            },
-            FieldValue::CanonicalGated(gated) => match gated {
-                Some(g) => Value::Bool(g),
-                None => Value::Null,
-            },
-            FieldValue::CanonicalPrivate(private) => match private {
-                Some(p) => Value::Bool(p),
-                None => Value::Null,
-            },
-        }
-    }
+    #[error("Data integrity error: {0}")]
+    DataIntegrityError(String),
 }
 
 #[cfg(test)]

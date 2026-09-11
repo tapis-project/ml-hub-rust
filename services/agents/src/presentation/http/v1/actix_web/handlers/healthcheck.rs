@@ -5,7 +5,12 @@ use actix_web::{get, HttpResponse, Responder};
     path = "/agents-api/healthcheck",
     tag = "Health",
     summary = "Check service health",
-    responses((status = 200, description = "Service is healthy"))
+    responses(
+        (
+            status = 200,
+            description = "Service is healthy"
+        ),
+    ),
 )]
 #[get("agents-api/healthcheck")]
 pub async fn healthcheck() -> impl Responder {

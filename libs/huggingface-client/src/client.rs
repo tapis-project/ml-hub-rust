@@ -1,53 +1,46 @@
 use crate::constants;
+use crate::model::HFModel;
 use crate::requests::{ListDatasetsQueryParameters, ListModelsQueryParameters};
 use crate::utils::build_client_response;
-use crate::model::{HFModel, CompoundTag};
 use async_trait;
 use clients::{
-    Capability,
-    Client, 
-    ClientError, 
-    ClientErrorScope, 
-    ClientJsonResponse, 
-    GetDatasetClient, 
-    GetModelClient, 
-    IngestDatasetClient, 
-    IngestModelClient, 
-    ListDatasetsClient, 
-    ListModelsClient,
-    PublishDatasetClient, 
-    PublishModelArtifactClient,
-    PublishModelClient,
-    ModelConversionClient
+    Capability, Client, ClientError, ClientErrorScope, ClientJsonResponse,
+    GetDatasetClient, GetModelClient, IngestDatasetClient, IngestModelClient,
+    ListDatasetsClient, ListModelsClient, ModelConversionClient,
+    PublishDatasetClient, PublishModelArtifactClient, PublishModelClient,
 };
-use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
+use heck::ToPascalCase;
+use platforms::Platform;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client as ReqwestClient, StatusCode};
 use serde_json::Value;
-use shared::domain::entities;
+use shared::domain::entities::artifact::Artifact;
+use shared::domain::entities::model::{
+    external_model::{
+        DerivedMetadata, ExternalModel, HuggingFaceRepoLocator, ModelLocator,
+        ModelMetadata, ModelProvider,
+    },
+    Model,
+};
 use shared::infra::fs::git::{
     SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
 };
+use shared::logging::SharedLogger;
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::presentation::http::v1::requests::artifacts::PublishArtifactServiceRequest;
-use shared::presentation::http::v1::requests::common::headers::{AuthorizationHeaderError, Headers};
-use shared::domain::entities::{
-    artifact::Artifact,
+use shared::presentation::http::v1::requests::common::headers::{
+    AuthorizationHeaderError, Headers,
 };
-use shared::domain::entities::model::Model;
-use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::{
     get_dataset_by_platform::GetDatasetByPlatformRequest,
     get_model_by_platform::GetModelByPlatformRequest,
-    ingest_dataset::IngestDatasetRequest,
-    ingest_model::IngestModelRequest,
+    ingest_dataset::IngestDatasetRequest, ingest_model::IngestModelRequest,
     list_datasets_by_platform::ListDatasetsByPlatformRequest,
     list_models_by_platform::ListModelsByPlatformRequest,
     publish_dataset::PublishDatasetRequest,
 };
 use std::path::PathBuf;
 use std::process::Command;
-use platforms::Platform;
-use heck::ToPascalCase;
 
 struct HuggingFaceHeaders(Headers);
 
@@ -57,12 +50,16 @@ impl TryFrom<&HuggingFaceHeaders> for reqwest::header::HeaderMap {
     fn try_from(value: &HuggingFaceHeaders) -> Result<Self, Self::Error> {
         let mut header_map = HeaderMap::new();
         for (key, value) in value.0.into_inner().iter() {
-            let header_name = HeaderName::try_from(key.as_str())
-                .map_err(|err| AuthorizationHeaderError::HeaderNameError(err.to_string()))?;
+            let header_name =
+                HeaderName::try_from(key.as_str()).map_err(|err| {
+                    AuthorizationHeaderError::HeaderNameError(err.to_string())
+                })?;
 
-            let header_value = HeaderValue::from_str(value.as_str())
-                .map_err(|err| AuthorizationHeaderError::HeaderNameError(err.to_string()))?;
-            
+            let header_value =
+                HeaderValue::from_str(value.as_str()).map_err(|err| {
+                    AuthorizationHeaderError::HeaderNameError(err.to_string())
+                })?;
+
             header_map.insert(header_name, header_value);
         }
         Ok(header_map)
@@ -127,15 +124,14 @@ impl ListModelsClient for HuggingFaceClient {
         let url = Self::format_url("models");
 
         self.logger.debug(format!("Request url: {}", url).as_str());
-        self.logger.debug(format!("Query Params: {:#?}", &query_params).as_str());
+        self.logger
+            .debug(format!("Query Params: {:#?}", &query_params).as_str());
 
         // Make a GET request to Hugging Face to fetch the models
         let result = self.client.get(url).query(&query_params).send().await;
 
         match result {
-            Ok(response) => {
-                build_client_response(response).await
-            }
+            Ok(response) => build_client_response(response).await,
 
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
@@ -158,12 +154,14 @@ impl GetModelClient for HuggingFaceClient {
         request: &GetModelByPlatformRequest,
     ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
     {
-        let headers = match HeaderMap::try_from(&HuggingFaceHeaders(request.headers.clone())) {
+        let headers = match HeaderMap::try_from(&HuggingFaceHeaders(
+            request.headers.clone(),
+        )) {
             Ok(_header_map) => {
                 // TODO Add the authorization header and value if one exists
                 let map = HeaderMap::new();
                 map
-            },
+            }
             Err(_) => {
                 return Err(ClientError::Internal {
                     msg: "failed to convert to header map".into(),
@@ -182,9 +180,7 @@ impl GetModelClient for HuggingFaceClient {
             .await;
 
         match result {
-            Ok(response) => {
-                build_client_response(response).await
-            }
+            Ok(response) => build_client_response(response).await,
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
                 return Err(ClientError::Internal {
@@ -204,7 +200,9 @@ impl IngestModelClient for HuggingFaceClient {
         target_path: PathBuf,
     ) -> Result<(), ClientError> {
         // Get the authorization token from the request
-        let access_token = request.headers.get_first_value("Authorization")
+        let access_token = request
+            .headers
+            .get_first_value("Authorization")
             .map(|t| t.replace("Bearer ", ""));
 
         let branch = param_to_string(request.body.params.clone(), "branch")
@@ -267,9 +265,7 @@ impl ListDatasetsClient for HuggingFaceClient {
             .await;
 
         match result {
-            Ok(response) => {
-                build_client_response(response).await
-            }
+            Ok(response) => build_client_response(response).await,
 
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
@@ -302,9 +298,7 @@ impl GetDatasetClient for HuggingFaceClient {
             .await;
 
         match result {
-            Ok(response) => {
-                build_client_response(response).await
-            }
+            Ok(response) => build_client_response(response).await,
             Err(err) => {
                 self.logger.error(format!("{:#?}", err).as_str());
                 return Err(
@@ -325,7 +319,9 @@ impl IngestDatasetClient for HuggingFaceClient {
         target_path: PathBuf,
     ) -> Result<(), ClientError> {
         // Get the authorization token from the request
-        let access_token = request.headers.get_first_value("authorization")
+        let access_token = request
+            .headers
+            .get_first_value("authorization")
             .map(|t| t.replace("Bearer ", ""));
 
         let branch = param_to_string(request.body.params.clone(), "branch")
@@ -353,34 +349,52 @@ impl PublishModelArtifactClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model_artifact(&self, extracted_artifact_path: &PathBuf, _artifact: &Artifact, maybe_model: Option<&Model>, request: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    async fn publish_model_artifact(
+        &self,
+        extracted_artifact_path: &PathBuf,
+        _artifact: &Artifact,
+        maybe_model: Option<&Model>,
+        request: &PublishArtifactServiceRequest,
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
+    {
         let model = match maybe_model {
             Some(m) => m,
             None => return Err(ClientError::BadRequest { msg: "A model must exist for this artifact in order to publish to Hugging Face".into(), scope: ClientErrorScope::Client })
         };
-        
-        let model_name = model.name.clone();
+
+        let model_name = model.name().to_owned();
 
         // Get the access token from the headers
-        let access_token = match request.headers.get_first_value("Authorization") {
-            Some(t) => t.replace("Bearer ", ""),
-            None => return Err(ClientError::BadRequest { msg: "Missing Authorization header".into(), scope: ClientErrorScope::Client })
-        };
-        
+        let access_token =
+            match request.headers.get_first_value("Authorization") {
+                Some(t) => t.replace("Bearer ", ""),
+                None => {
+                    return Err(ClientError::BadRequest {
+                        msg: "Missing Authorization header".into(),
+                        scope: ClientErrorScope::Client,
+                    })
+                }
+            };
+
         // Check that the repo on huggingface exists
         let base_url = Self::format_url("models");
-        let maybe_response = self.client.get(format!("{}/{}", &base_url, &model_name))
+        let maybe_response = self
+            .client
+            .get(format!("{}/{}", &base_url, &model_name))
             .header("Authorization", format!("Bearer {}", &access_token))
             .send()
             .await;
-        
+
         let response = match maybe_response {
             Ok(r) => r,
             Err(err) => {
-                return Err(ClientError::Internal { msg: err.to_string(), scope: ClientErrorScope::Client })
+                return Err(ClientError::Internal {
+                    msg: err.to_string(),
+                    scope: ClientErrorScope::Client,
+                })
             }
         };
-        
+
         // Return an error if the repo doesn't exist or there is some remote
         // internal error
         match response.status() {
@@ -389,23 +403,35 @@ impl PublishModelArtifactClient for HuggingFaceClient {
             | StatusCode::SERVICE_UNAVAILABLE => return Err(ClientError::Internal { msg: format!("Internal error with remote server when attempting to very if repo already exists for model {}", &model_name), scope: ClientErrorScope::Server }),
             _ => {}
         };
-        
+
         // Pull the large files wil git lfs then remove the existing .git directory
         if extracted_artifact_path.join(".git").is_dir() {
             std::fs::remove_dir_all(extracted_artifact_path.join(".git"))
-                .map_err(|err| ClientError::Internal { msg: format!("Error removing .git directory: {}", err.to_string()), scope: ClientErrorScope::Client })?;
+                .map_err(|err| ClientError::Internal {
+                    msg: format!(
+                        "Error removing .git directory: {}",
+                        err.to_string()
+                    ),
+                    scope: ClientErrorScope::Client,
+                })?;
         }
 
         // Get the huggingface username from the model name
         let hf_username = model_name.split("/").collect::<Vec<&str>>()[0];
-        
+
         // Construct remote name. Contains the auth token
         let origin = PathBuf::new()
-            .join(constants::HUGGING_FACE_BASE_URL.replace("//huggingface", format!("//{}:{}@huggingface", &hf_username, &access_token).as_str()))
+            .join(
+                constants::HUGGING_FACE_BASE_URL.replace(
+                    "//huggingface",
+                    format!("//{}:{}@huggingface", &hf_username, &access_token)
+                        .as_str(),
+                ),
+            )
             .join(&model_name)
             .to_string_lossy()
             .to_string();
-        
+
         // Initialize git repo, add all changes, commit, then add remote
         let init_output = Command::new("sh")
             .current_dir(&extracted_artifact_path)
@@ -424,24 +450,31 @@ impl PublishModelArtifactClient for HuggingFaceClient {
                                 .unwrap_or("git init operation failed. Additionally, stderr from the git rev-parse process could not be decoded".into()),
                             scope: ClientErrorScope::Client
                         }
-                    )
+                    );
                 }
-            },
-            None => {
-                return Err(ClientError::Internal { msg: "The git init operation was terminated by an unknown signal".into(), scope: ClientErrorScope::Client })
-            } 
+            }
+            None => return Err(ClientError::Internal {
+                msg:
+                    "The git init operation was terminated by an unknown signal"
+                        .into(),
+                scope: ClientErrorScope::Client,
+            }),
         };
-        
+
         // Get the current branch
         let mut cmd = Command::new("git");
 
-        let branch_name_output = cmd.current_dir(&extracted_artifact_path)
+        let branch_name_output = cmd
+            .current_dir(&extracted_artifact_path)
             .arg("rev-parse")
             .arg("--abbrev-ref")
             .arg("HEAD")
             .output()
-            .map_err(|err| ClientError::Internal { msg: format!("Failed to get branch name: {}", err.to_string()), scope: ClientErrorScope::Client })?;
-        
+            .map_err(|err| ClientError::Internal {
+                msg: format!("Failed to get branch name: {}", err.to_string()),
+                scope: ClientErrorScope::Client,
+            })?;
+
         // Check that the branch name was output successfully
         let branch_name = match branch_name_output.status.code() {
             Some(code) => {
@@ -452,7 +485,7 @@ impl PublishModelArtifactClient for HuggingFaceClient {
                                 .unwrap_or("git rev-parse operation failed. Additionally, stderr from the git rev-parse process could not be decoded".into()),
                             scope: ClientErrorScope::Client }
                     )
-                    
+
                 }
                 // NOTE We a trimming at the end because we are getting the newline from stdout!
                 String::from_utf8(branch_name_output.stdout)
@@ -462,15 +495,16 @@ impl PublishModelArtifactClient for HuggingFaceClient {
             },
             None => {
                 return Err(ClientError::Internal { msg: "The git rev-parse operation was terminated by an unknown signal".into(), scope: ClientErrorScope::Client })
-            } 
+            }
         };
-        
+
         // Start the git push command
         let mut cmd = Command::new("git");
 
         // Extend the headers on the push command with the provided access token
         // and push to the branch according
-        let push_output = cmd.current_dir(&extracted_artifact_path)
+        let push_output = cmd
+            .current_dir(&extracted_artifact_path)
             .env("GIT_CURL_VERBOSE", "1")
             .env("GIT_TRACE", "1")
             .env("GIT_TRANSFER_TRACE", "1")
@@ -479,8 +513,9 @@ impl PublishModelArtifactClient for HuggingFaceClient {
             .arg("origin")
             .arg(&branch_name)
             .output()
-            .map_err(|err| {
-                ClientError::Internal { msg: format!("Failed to push artifact: {}", err.to_string()), scope: ClientErrorScope::Client }
+            .map_err(|err| ClientError::Internal {
+                msg: format!("Failed to push artifact: {}", err.to_string()),
+                scope: ClientErrorScope::Client,
             })?;
 
         // TODO check the model for a version number. If provided, create a tag.
@@ -495,22 +530,18 @@ impl PublishModelArtifactClient for HuggingFaceClient {
                             msg: String::from_utf8(push_output.stderr)
                                     .unwrap_or(format!("`git push origin {}` operation failed. Additionally, stderr from the git rev-parse process could not be decoded", &branch_name)),
                             scope: ClientErrorScope::Client }
-                    )
+                    );
                 }
-            },
-            None => {
-                return Err(ClientError::Internal { msg: "The git push operation was terminated by an unknown signal".into(), scope: ClientErrorScope::Client })
-            } 
+            }
+            None => return Err(ClientError::Internal {
+                msg:
+                    "The git push operation was terminated by an unknown signal"
+                        .into(),
+                scope: ClientErrorScope::Client,
+            }),
         };
-        
-        return Ok(
-            ClientJsonResponse::new(
-                None,
-                None,
-                None,
-                None
-            )
-        )
+
+        return Ok(ClientJsonResponse::new(None, None, None, None));
     }
 }
 
@@ -519,15 +550,13 @@ impl PublishModelClient for HuggingFaceClient {
     type Data = Value;
     type Metadata = Value;
 
-    async fn publish_model(&self, _metadata: &Model, _result: &PublishArtifactServiceRequest) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
-        return Ok(
-            ClientJsonResponse::new(
-                None,
-                None,
-                None,
-                None
-            )
-        )
+    async fn publish_model(
+        &self,
+        _metadata: &Model,
+        _result: &PublishArtifactServiceRequest,
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
+    {
+        return Ok(ClientJsonResponse::new(None, None, None, None));
     }
 }
 
@@ -539,110 +568,154 @@ impl PublishDatasetClient for HuggingFaceClient {
     async fn publish_dataset(
         &self,
         _result: &PublishDatasetRequest,
-    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError> {
+    ) -> Result<ClientJsonResponse<Self::Data, Self::Metadata>, ClientError>
+    {
         Err(ClientError::Unimplemented)
     }
 }
 
 impl ModelConversionClient for HuggingFaceClient {
-    fn from_platform_metadata<T>(&self, client_metadata: T, author: String, tenant_id: String) -> Result<entities::model::Model, ClientError>
-        where T: serde::Serialize
+    fn from_platform_metadata<T>(
+        &self,
+        client_metadata: T,
+    ) -> Result<ExternalModel, ClientError>
+    where
+        T: serde::Serialize,
     {
         let value = serde_json::to_value(client_metadata)
             .map_err(|err| ClientError::Internal { msg: format!("Failed to convert serializable client metadata into Value: {}", err.to_string()), scope: ClientErrorScope::Server })?;
 
-        if let Ok(hf_model) = serde_json::from_value::<HFModel>(value) {
-            let tags: Vec<String> = hf_model.tags.clone();
-    
-            // Task types derived from the tags. The "pipeline_tag"
-            // property will be the authroitative soure for the task type 
-            // if none are found
-            let mut derived_task_types: Vec<shared::shared_kernel::enums::Task> = Vec::new();
-            for tag in tags.clone() {
-                match shared::shared_kernel::enums::Task::try_from(Self::normalize_string(tag).as_str()) {
-                    Ok(t) => derived_task_types.push(t),
-                    Err(_) => continue // Ignore as they tag cannot be interpreted as a task type
-                }
+        let canonical = value.as_object().cloned().ok_or_else(|| {
+            ClientError::BadRequest {
+                msg: "Hugging Face model metadata must be a JSON object".into(),
+                scope: ClientErrorScope::Client,
             }
-            
-            // Compound tags are huggingface tags whose value contains the ":" char.
-            // From these compund tags we can derive properties we are interested in like
-            // license and task type
-            let compound_tags = hf_model.parse_compound_tags();
-    
-            // Derive the license
-            let license = compound_tags.iter()
-                .filter(|ct| ct.name == "license")
-                .collect::<Vec<&CompoundTag>>()
-                .first()
-                .and_then(|ct| Some(ct.value.clone()));
-    
-            // Convert pipeline tag to a variant of the task type enum.
-            let mut task_types: Vec<shared::shared_kernel::enums::Task> = derived_task_types;
-            match shared::shared_kernel::enums::Task::try_from(Self::normalize_string(hf_model.pipeline_tag.clone()).as_str()) {
-                Ok(t) => {
-                    if !task_types.contains(&t) {
-                        task_types.push(t)
-                    }
-                },
-                Err(err) => {
-                    return Err(ClientError::Internal {
-                        msg: format!("Failed to convert pipeline tag '{}' to Task for model {}: {}", &hf_model.pipeline_tag, &hf_model.id, err.to_string()),
-                        scope: ClientErrorScope::Server
-                    })
+        })?;
+
+        let hf_model =
+            serde_json::from_value::<HFModel>(value).map_err(|error| {
+                ClientError::BadRequest {
+                    msg: format!(
+                        "Invalid Hugging Face model metadata: {error}"
+                    ),
+                    scope: ClientErrorScope::Client,
                 }
-            };
-    
-            // Determine which python libraries this model can be used with
-            let mut libraries: Vec<String> = Vec::new();
-            let known_libs: &[String] = &["transformers".into(), "diffusers".into(), "tensorflow".into(), "pytorch".into()];
-            for lib in known_libs {
-                if tags.contains(lib) && !libraries.contains(lib) {
-                    libraries.push(lib.clone())
-                }
-            }
-    
-            // Parse the model name from the model's id
-            let name = match hf_model.get_model_name() {
-                Ok(n) => n,
-                Err(err) => {
-                    return Err(ClientError::Internal {
-                        msg: err.to_string(),
-                        scope: ClientErrorScope::Client
-                    })
-                }
-            };
-            
-            return Ok(entities::model::Model {
-                name,
-                artifact_id: None,
-                description: None,
-                author,
-                tenant_id,
-                model_type: None,
-                canonical: Some(entities::model::Canonical {
-                    platform: Platform::HuggingFace,
-                    author: Some(hf_model.author.clone()),
-                    model_id: hf_model.id.clone(),
-                    downloads: Some(hf_model.downloads),
-                    locator: entities::model::Locator {
-                        url: format!("https://huggingface.co/{}", &hf_model.id.clone())
-                    },
-                    likes: Some(hf_model.likes),
-                    gated: Some(hf_model.gated),
-                    private: Some(hf_model.private),
-                    sha: Some(hf_model.sha),
-                }),
-                libraries: Some(libraries),
-                tags: Some(tags),
-                task_types: Some(task_types),
-                regulatory: None,
-                license,
-                deployment_strategy_refs: vec![],
+            })?;
+
+        if hf_model.gated || hf_model.private {
+            return Err(ClientError::Forbidden {
+                msg: "Gated and private Hugging Face models are not ingested"
+                    .into(),
+                scope: ClientErrorScope::Client,
             });
         }
 
-        Err(ClientError::Internal { msg: "Failed to convert ".into(), scope: ClientErrorScope::Server })
+        let size =
+            hf_model.siblings.iter().try_fold(0_u64, |total, file| {
+                let size =
+                    file.size.ok_or_else(|| ClientError::BadRequest {
+                        msg: format!(
+                            "Complete file size metadata is unavailable for {}",
+                            hf_model.id
+                        ),
+                        scope: ClientErrorScope::Client,
+                    })?;
+
+                total
+                    .checked_add(size)
+                    .ok_or_else(|| ClientError::BadRequest {
+                        msg: format!(
+                            "File size metadata overflows for {}",
+                            hf_model.id
+                        ),
+                        scope: ClientErrorScope::Client,
+                    })
+            })?;
+
+        let mut task_types = Vec::new();
+        for candidate in hf_model
+            .tags
+            .iter()
+            .cloned()
+            .chain(hf_model.pipeline_tag.clone())
+        {
+            if let Ok(task) = shared::shared_kernel::enums::Task::try_from(
+                Self::normalize_string(candidate).as_str(),
+            ) {
+                if !task_types.contains(&task) {
+                    task_types.push(task);
+                }
+            }
+        }
+
+        let license = hf_model
+            .parse_compound_tags()
+            .into_iter()
+            .find(|tag| tag.name.eq_ignore_ascii_case("license"))
+            .map(|tag| tag.value);
+
+        let recognized_runtimes = [
+            "transformers",
+            "diffusers",
+            "tensorflow",
+            "pytorch",
+            "onnx",
+            "gguf",
+            "mlx",
+            "safetensors",
+        ];
+
+        let mut inference_runtimes = Vec::new();
+
+        for candidate in hf_model
+            .library_name
+            .iter()
+            .cloned()
+            .chain(hf_model.tags.iter().cloned())
+        {
+            let normalized =
+                candidate.trim().to_ascii_lowercase().replace('_', "-");
+
+            if recognized_runtimes.contains(&normalized.as_str())
+                && !inference_runtimes.contains(&normalized)
+            {
+                inference_runtimes.push(normalized);
+            }
+        }
+
+        let derived = DerivedMetadata::new(
+            hf_model.get_model_name().ok(),
+            hf_model.author,
+            inference_runtimes,
+            hf_model.tags,
+            task_types,
+            license,
+            size,
+            hf_model.gated,
+            hf_model.private,
+            hf_model.likes,
+            hf_model.downloads,
+        )
+        .map_err(|error| ClientError::BadRequest {
+            msg: error.to_string(),
+            scope: ClientErrorScope::Client,
+        })?;
+
+        let locator = HuggingFaceRepoLocator::new(hf_model.id, hf_model.sha)
+            .map_err(|error| ClientError::BadRequest {
+                msg: error.to_string(),
+                scope: ClientErrorScope::Client,
+            })?;
+
+        ExternalModel::ingest(
+            ModelProvider::HuggingFace,
+            ModelLocator::HuggingFace(locator),
+            ModelMetadata::new(derived, canonical),
+        )
+        .map_err(|error| ClientError::BadRequest {
+            msg: error.to_string(),
+            scope: ClientErrorScope::Client,
+        })
     }
 }
 
@@ -665,10 +738,15 @@ impl HuggingFaceClient {
     }
 
     pub fn normalize_string(string: String) -> String {
-        string.split("/")
+        string
+            .split("/")
             .into_iter()
             .map(|p| p.to_pascal_case())
             .collect::<Vec<String>>()
             .join("")
     }
 }
+
+#[cfg(test)]
+#[path = "client.test.rs"]
+mod client_test;

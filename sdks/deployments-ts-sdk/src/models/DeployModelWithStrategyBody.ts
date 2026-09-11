@@ -26,10 +26,6 @@ import {
     ParallelismStrategyFromJSON,
     ParallelismStrategyFromJSONTyped,
     ParallelismStrategyToJSON,
-    Scope,
-    ScopeFromJSON,
-    ScopeFromJSONTyped,
-    ScopeToJSON,
 } from './';
 
 /**
@@ -61,13 +57,7 @@ export interface DeployModelWithStrategyBody {
      * @type {string}
      * @memberof DeployModelWithStrategyBody
      */
-    model_author: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DeployModelWithStrategyBody
-     */
-    model_name: string;
+    model_id: string;
     /**
      * 
      * @type {string}
@@ -86,12 +76,6 @@ export interface DeployModelWithStrategyBody {
      * @memberof DeployModelWithStrategyBody
      */
     replicas?: number | null;
-    /**
-     * Selector for global vs tenant-scoped models
-     * @type {Scope}
-     * @memberof DeployModelWithStrategyBody
-     */
-    scope?: Scope | null;
 }
 
 export function DeployModelWithStrategyBodyFromJSON(json: any): DeployModelWithStrategyBody {
@@ -107,12 +91,10 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
         'arguments': !exists(json, 'arguments') ? undefined : (json['arguments'] === null ? null : (json['arguments'] as Array<any>).map(ArgumentFromJSON)),
         'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'model_author': json['model_author'],
-        'model_name': json['model_name'],
+        'model_id': json['model_id'],
         'name': json['name'],
         'parallelism_strategies': !exists(json, 'parallelism_strategies') ? undefined : (json['parallelism_strategies'] === null ? null : (json['parallelism_strategies'] as Array<any>).map(ParallelismStrategyFromJSON)),
         'replicas': !exists(json, 'replicas') ? undefined : json['replicas'],
-        'scope': !exists(json, 'scope') ? undefined : ScopeFromJSON(json['scope']),
     };
 }
 
@@ -128,12 +110,10 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
         'arguments': value.arguments === undefined ? undefined : (value.arguments === null ? null : (value.arguments as Array<any>).map(ArgumentToJSON)),
         'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
         'description': value.description,
-        'model_author': value.model_author,
-        'model_name': value.model_name,
+        'model_id': value.model_id,
         'name': value.name,
         'parallelism_strategies': value.parallelism_strategies === undefined ? undefined : (value.parallelism_strategies === null ? null : (value.parallelism_strategies as Array<any>).map(ParallelismStrategyToJSON)),
         'replicas': value.replicas,
-        'scope': ScopeToJSON(value.scope),
     };
 }
 

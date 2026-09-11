@@ -51,6 +51,26 @@ for info in api.list_models(full=True, cardData=True, fetch_config=True, limit=N
     if MAX_RECORDS != -1 and i >= MAX_RECORDS:
         break
 
+    if info.private or info.gated:
+        continue
+
+    try:
+        info = api.model_info(
+            info.id,
+            revision=info.sha,
+            files_metadata=True,
+        )
+    except Exception as error:
+        print(f"Skipping {info.id}: unable to fetch file metadata: {error}")
+        continue
+
+    if info.private or info.gated:
+        continue
+
+    if not info.siblings or any(sibling.size is None for sibling in info.siblings):
+        print(f"Skipping {info.id}: complete file size metadata is unavailable")
+        continue
+
     rec = dataclasses.asdict(info)
     buffer.append(rec)
     i += 1
