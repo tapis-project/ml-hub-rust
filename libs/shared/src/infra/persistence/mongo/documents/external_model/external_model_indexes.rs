@@ -3,7 +3,8 @@ use mongodb::{bson::doc, options::IndexOptions, IndexModel};
 use crate::{
     infra::_common::mongo::Index,
     infra::persistence::mongo::{
-        database::EXTERNAL_MODEL_COLLECTION, documents::external_model::ExternalModel,
+        database::EXTERNAL_MODEL_COLLECTION,
+        documents::external_model::ExternalModel,
     },
 };
 

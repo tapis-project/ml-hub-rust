@@ -23,6 +23,14 @@ spec:
                   key: token
             - name: MAX_RECORDS
               value: '5000'
+            - name: PROGRESS_INTERVAL
+              value: "100"
+            - name: HF_RATE_LIMIT_MAX_RETRIES
+              value: "5"
+            - name: HF_RATE_LIMIT_FALLBACK_SECONDS
+              value: "60"
+            - name: HF_RATE_LIMIT_MAX_WAIT_SECONDS
+              value: "300"
           image: mlhub/hf-model-etl-extract:local
           command: ["sh", "-c", "python3 src/extract.py"]
           volumeMounts:

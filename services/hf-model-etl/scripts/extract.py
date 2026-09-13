@@ -1,88 +1,187 @@
-from huggingface_hub import HfApi
-import os, json, dataclasses, time, gzip
-from datetime import datetime, date
+import dataclasses
+import gzip
+import json
+import os
+from datetime import date, datetime
 from pathlib import Path
 
-HF_TOKEN = os.environ.get("HF_TOKEN") 
+from huggingface_hub import HfApi
+
+from rate_limit import retry_rate_limited
+
+
+HF_TOKEN = os.environ.get("HF_TOKEN")
 INBOX = os.environ.get("INBOX", "inbox")
 MAX_RECORDS = int(os.environ.get("MAX_RECORDS", -1))
+PROGRESS_INTERVAL = int(os.environ.get("PROGRESS_INTERVAL", 100))
+RATE_LIMIT_MAX_RETRIES = int(os.environ.get("HF_RATE_LIMIT_MAX_RETRIES", 5))
+RATE_LIMIT_FALLBACK_SECONDS = int(
+    os.environ.get("HF_RATE_LIMIT_FALLBACK_SECONDS", 60)
+)
+RATE_LIMIT_MAX_WAIT_SECONDS = int(
+    os.environ.get("HF_RATE_LIMIT_MAX_WAIT_SECONDS", 300)
+)
+BATCH_SIZE = 5000
+
+if PROGRESS_INTERVAL <= 0:
+    raise ValueError("PROGRESS_INTERVAL must be greater than zero")
+
+
 os.makedirs(INBOX, exist_ok=True)
 
 api = HfApi(token=HF_TOKEN)
 
-BATCH = 5000          # records per shard file
-PAGE_SLEEP = 0.5      # small pause every ~page (1000 items)
-page_counter = 0
-buffer, shard = [], 0
+
+def json_default(value):
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, (set, frozenset)):
+        return list(value)
+    if isinstance(value, Path):
+        return str(value)
+    if dataclasses.is_dataclass(value):
+        return dataclasses.asdict(value)
+    if isinstance(value, (bytes, bytearray)):
+        return value.decode("utf-8", errors="replace")
+
+    return str(value)
 
 
-def json_default(o):
-    # Make common non-JSON types serializable
-    if isinstance(o, (datetime, date)):
-        return o.isoformat()
-    if isinstance(o, (set, frozenset)):
-        return list(o)
-    if isinstance(o, Path):
-        return str(o)
-    # dataclasses nested somewhere
-    if dataclasses.is_dataclass(o):
-        return dataclasses.asdict(o)
-    
-    if isinstance(o, (bytes, bytearray)):
-        return o.decode("utf-8", errors="replace")
-    # fall back
-    return str(o)
+def save_jsonl(records, shard_index, compress=False):
+    filename = f"models_{shard_index:05d}.jsonl"
+    path = os.path.join(INBOX, filename if not compress else filename + ".gz")
+    opener = gzip.open if compress else open
 
-def save_jsonl(records, shard_idx, compress=False):
-    fname = f"models_{shard_idx:05d}.jsonl"
-    path = os.path.join(INBOX, fname if not compress else fname + ".gz")
-    if compress:
-        with gzip.open(path, "wt", encoding="utf-8") as f:
-            for r in records:
-                f.write(json.dumps(r, ensure_ascii=False, default=json_default) + "\n")
-    else:
-        with open(path, "w", encoding="utf-8") as f:
-            for r in records:
-                f.write(json.dumps(r, ensure_ascii=False, default=json_default) + "\n")
+    with opener(path, "wt", encoding="utf-8") as output:
+        for record in records:
+            output.write(
+                json.dumps(record, ensure_ascii=False, default=json_default) + "\n"
+            )
+
     return path
 
-i = 0
-for info in api.list_models(full=True, cardData=True, fetch_config=True, limit=None, sort='likes'):
-    if MAX_RECORDS != -1 and i >= MAX_RECORDS:
+
+def print_progress(examined, emitted, skipped, metadata_errors, current_model):
+    target = "unlimited" if MAX_RECORDS == -1 else str(MAX_RECORDS)
+
+    print(
+        "Hugging Face model extraction progress: "
+        f"examined={examined}, "
+        f"emitted={emitted}/{target}, "
+        f"skipped={skipped}, "
+        f"metadata_errors={metadata_errors}, "
+        f"current_model={current_model}",
+        flush=True,
+    )
+
+
+buffer = []
+shard = 0
+examined = 0
+emitted = 0
+skipped = 0
+metadata_errors = 0
+
+print(
+    "Starting Hugging Face model extraction: "
+    f"max_records={MAX_RECORDS}, progress_interval={PROGRESS_INTERVAL}",
+    flush=True,
+)
+
+models = api.list_models(
+    full=True,
+    cardData=True,
+    fetch_config=True,
+    limit=None,
+    sort="likes",
+)
+
+for summary in models:
+    if MAX_RECORDS != -1 and emitted >= MAX_RECORDS:
         break
 
-    if info.private or info.gated:
+    examined += 1
+
+    if examined == 1 or examined % PROGRESS_INTERVAL == 0:
+        print_progress(
+            examined,
+            emitted,
+            skipped,
+            metadata_errors,
+            summary.id,
+        )
+
+    if summary.private or summary.gated:
+        skipped += 1
+
         continue
+
+    model_id = summary.id
+    revision = summary.sha
 
     try:
-        info = api.model_info(
-            info.id,
-            revision=info.sha,
-            files_metadata=True,
+        details = retry_rate_limited(
+            lambda: api.model_info(
+                model_id,
+                revision=revision,
+            ),
+            description=f"fetching metadata for {model_id}",
+            max_retries=RATE_LIMIT_MAX_RETRIES,
+            fallback_seconds=RATE_LIMIT_FALLBACK_SECONDS,
+            max_wait_seconds=RATE_LIMIT_MAX_WAIT_SECONDS,
         )
     except Exception as error:
-        print(f"Skipping {info.id}: unable to fetch file metadata: {error}")
+        metadata_errors += 1
+
+        print(
+            f"Skipping {model_id}: unable to fetch metadata: {error}",
+            flush=True,
+        )
+
         continue
 
-    if info.private or info.gated:
+    if details.private or details.gated:
+        skipped += 1
+
         continue
 
-    if not info.siblings or any(sibling.size is None for sibling in info.siblings):
-        print(f"Skipping {info.id}: complete file size metadata is unavailable")
+    if details.used_storage is None:
+        skipped += 1
+
+        print(
+            f"Skipping {model_id}: storage size metadata is unavailable",
+            flush=True,
+        )
+
         continue
 
-    rec = dataclasses.asdict(info)
-    buffer.append(rec)
-    i += 1
+    buffer.append(dataclasses.asdict(details))
+    emitted += 1
 
+    if len(buffer) >= BATCH_SIZE:
+        shard_path = save_jsonl(buffer, shard)
 
-    if i % 1000 == 0:
-        time.sleep(PAGE_SLEEP) 
+        print(
+            f"Saved Hugging Face model shard: path={shard_path}, records={len(buffer)}",
+            flush=True,
+        )
 
-    if len(buffer) >= BATCH:
-        save_jsonl(buffer, shard)
         shard += 1
         buffer = []
 
 if buffer:
-    save_jsonl(buffer, shard)
+    shard_path = save_jsonl(buffer, shard)
+
+    print(
+        f"Saved Hugging Face model shard: path={shard_path}, records={len(buffer)}",
+        flush=True,
+    )
+
+print(
+    "Hugging Face model extraction complete: "
+    f"examined={examined}, "
+    f"emitted={emitted}, "
+    f"skipped={skipped}, "
+    f"metadata_errors={metadata_errors}",
+    flush=True,
+)

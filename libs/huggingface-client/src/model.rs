@@ -16,13 +16,7 @@ pub struct HFModel {
     pub likes: Option<u128>,
     pub downloads: Option<u128>,
     pub sha: String,
-    #[serde(default)]
-    pub siblings: Vec<HFModelFile>,
-}
-
-#[derive(Clone, Deserialize, Serialize)]
-pub struct HFModelFile {
-    pub size: Option<u64>,
+    pub used_storage: Option<u64>,
 }
 
 pub struct CompoundTag {

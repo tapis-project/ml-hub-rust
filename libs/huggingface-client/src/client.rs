@@ -611,26 +611,15 @@ impl ModelConversionClient for HuggingFaceClient {
         }
 
         let size =
-            hf_model.siblings.iter().try_fold(0_u64, |total, file| {
-                let size =
-                    file.size.ok_or_else(|| ClientError::BadRequest {
-                        msg: format!(
-                            "Complete file size metadata is unavailable for {}",
-                            hf_model.id
-                        ),
-                        scope: ClientErrorScope::Client,
-                    })?;
-
-                total
-                    .checked_add(size)
-                    .ok_or_else(|| ClientError::BadRequest {
-                        msg: format!(
-                            "File size metadata overflows for {}",
-                            hf_model.id
-                        ),
-                        scope: ClientErrorScope::Client,
-                    })
-            })?;
+            hf_model
+                .used_storage
+                .ok_or_else(|| ClientError::BadRequest {
+                    msg: format!(
+                        "Storage size metadata is unavailable for {}",
+                        hf_model.id
+                    ),
+                    scope: ClientErrorScope::Client,
+                })?;
 
         let mut task_types = Vec::new();
         for candidate in hf_model
@@ -660,9 +649,8 @@ impl ModelConversionClient for HuggingFaceClient {
             "tensorflow",
             "pytorch",
             "onnx",
-            "gguf",
             "mlx",
-            "safetensors",
+            "llm",
         ];
 
         let mut inference_runtimes = Vec::new();

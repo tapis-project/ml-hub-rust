@@ -1,3 +1,5 @@
+pub mod external_model_indexes;
+
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 use platforms::Platform;
 use serde::{Deserialize, Serialize};

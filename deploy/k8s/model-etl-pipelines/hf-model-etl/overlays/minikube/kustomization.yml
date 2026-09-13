@@ -25,7 +25,7 @@ patches:
                   - name: RUST_BACKTRACE
                     value: '1'
                   - name: MAX_RECORDS
-                    value: '5000'
+                    value: '1000'
                 image: tapis/mlhub-hf-model-etl-extract:local
             containers:
               - name: hf-model-etl

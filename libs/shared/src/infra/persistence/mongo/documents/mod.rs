@@ -1,7 +1,5 @@
 pub mod artifact_ingestion;
 pub mod artifact_publication;
-pub mod external_model;
-pub mod external_model_indexes;
 pub mod model;
 // pub mod skills;
 // pub mod domains;
@@ -12,3 +10,4 @@ pub mod deployment;
 pub mod endpoint;
 pub mod task;
 pub mod visibility;
+pub mod external_model;

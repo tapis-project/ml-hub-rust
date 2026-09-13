@@ -18,7 +18,7 @@ fn source_model() -> serde_json::Value {
         "likes": 12,
         "downloads": 34,
         "sha": "abc123",
-        "siblings": [{"rfilename": "a", "size": 10}, {"rfilename": "b", "size": 20}],
+        "used_storage": 30,
         "source_only": {"preserved": true}
     })
 }
@@ -70,9 +70,9 @@ fn skips_restricted_models() {
 }
 
 #[test]
-fn skips_models_without_complete_size() {
+fn skips_models_without_storage_size() {
     let mut source = source_model();
-    source["siblings"][0]["size"] = serde_json::Value::Null;
+    source["used_storage"] = serde_json::Value::Null;
 
     let result = HuggingFaceClient::new().from_platform_metadata(source);
 

@@ -589,6 +589,7 @@
     {
       "name": "hf-model-etl",
       "description": "Runs an ETL pipeline that pulls models from Hugging Face Hub and converts them to MLHub Models",
+      "aliases": ["hfmetl"],
       "rootDir": "services/hf-model-etl",
       "labels": ["bin"],
       "lifecycle": "production",

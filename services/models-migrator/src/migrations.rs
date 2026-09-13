@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use mongodb::{bson::doc, Database};
 use shared::infra::_common::mongo::Index;
 use shared::infra::persistence::mongo::database::MODEL_COLLECTION;
-use shared::infra::persistence::mongo::documents::external_model_indexes::{
+use shared::infra::persistence::mongo::documents::external_model::external_model_indexes::{
     ExternalModelHuggingFaceLocatorIndexUnique, ExternalModelIdIndexUnique,
     ExternalModelInferenceRuntimesIndex, ExternalModelProviderIndex,
     ExternalModelTapisLocatorIndexUnique, ExternalModelTaskTypesIndex,
