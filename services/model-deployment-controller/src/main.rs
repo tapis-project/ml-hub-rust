@@ -131,8 +131,8 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
         
                         return
                     },
-                    ReconciliationDispatchError::ModelMetadataRetrievalFailed(e) => {
-                        error!("ModelMetadataRetrievalFailed: {}", e.to_string());
+                    ReconciliationDispatchError::ModelRetrievalFailed(e) => {
+                        error!("ModelRetrievalFailed: {}", e.to_string());
                         self.nack(&channel, &deliver, true, message_id).await;
         
                         return

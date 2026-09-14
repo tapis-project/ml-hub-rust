@@ -6,7 +6,7 @@ mod tapis_pods_test {
         DesiredState, ModelDeployment, ModelDeploymentMetadata, ModelReference, ReconstituteModelDeploymentProps, ReplicaGroup, State
     };
     use crate::shared_kernel::enums::Visibility;
-    use crate::domain::entities::model_metadata::{ModelMetadata, fixtures::full_model_metadata};
+    use crate::domain::entities::model::{Model, fixtures::full_model};
     use crate::shared_kernel::value_objects::TimeStamp;
     use crate::shared_kernel::enums::DeploymentModality;
     use platforms::Platform;
@@ -77,8 +77,8 @@ mod tapis_pods_test {
         })
     }
 
-    fn minimal_model_metadata() -> ModelMetadata {
-        let mut m = full_model_metadata();
+    fn minimal_model() -> Model {
+        let mut m = full_model();
         m.name = "gpt2".into();
         m.author ="openai-community".into();
         m
@@ -264,7 +264,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -278,7 +278,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Stop,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -291,7 +291,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Undeploy,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -304,7 +304,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Observe,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let result = client.reconcile(input).await;
         assert!(result.is_err());
@@ -421,7 +421,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile create");
         match &outcome {
@@ -462,7 +462,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Start { strategy_arguments: None },
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile start");
         match &outcome {
@@ -502,7 +502,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Stop,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile stop");
         match &outcome {
@@ -542,7 +542,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Undeploy,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile terminate");
         match &outcome {
@@ -580,7 +580,7 @@ mod tapis_pods_test {
         let input = ReconcileModelDeploymentInput {
             action: ReconciliationAction::Observe,
             deployment,
-            model_metadata: minimal_model_metadata(),
+            model: minimal_model(),
         };
         let outcome = client.reconcile(input).await.expect("reconcile monitor");
         match &outcome {

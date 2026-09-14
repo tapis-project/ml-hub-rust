@@ -8,15 +8,15 @@ pub enum Capability {
     GetModel,
     IngestModel,
     DiscoverModels,
+    PublishModelArtifact,
     PublishModel,
-    PublishModelMetadata,
     ListDatasets,
     GetDataset,
     IngestDataset,
     DiscoverDatasets,
     PublishDataset,
     PublishDatasetMetadata,
-    ConvertModelMetadata
+    ConvertModel
 }
 
 #[async_trait::async_trait]

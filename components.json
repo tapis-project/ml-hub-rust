@@ -588,7 +588,8 @@
     },
     {
       "name": "hf-model-etl",
-      "description": "Runs and ETL pipeline that pulls in model metadata from Huggingface Hub and converts it to MLHub Model Metadata",
+      "description": "Runs an ETL pipeline that pulls models from Hugging Face Hub and converts them to MLHub Models",
+      "aliases": ["hfmetl"],
       "rootDir": "services/hf-model-etl",
       "labels": ["bin"],
       "lifecycle": "production",
@@ -599,7 +600,7 @@
         "buildl-transform-load": "docker build -f {{ self.rootDir }}/Dockerfile.rust -t {{ hf-model-etl-transform-load-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ hf-model-etl-transform-load-image }}:{{ local }} --overwrite",
         "build-extract": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.python -t {{ extract-img }}:{{ tag }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" .",
         "build-transform-load": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.rust.{{ env }} -t {{ transform-load-img }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" .",
-        "run": "cd {{ k8s-dir }}/model-metadata-etl-pipelines/{{ self.name }} && ./run.sh {{ overlay }}",
+        "run": "cd {{ k8s-dir }}/model-etl-pipelines/{{ self.name }} && ./run.sh {{ overlay }}",
         "install": "cargo install --path {{ self.rootDir }}",
         "pusht": "docker push --all-tags {{ extract-img }} && docker push --all-tags {{ transform-load-img }}"
       }
@@ -624,6 +625,7 @@
     },
     {
       "name": "model-deployment-controller",
+      "aliases": ["mdc"],
       "rootDir": "services/model-deployment-controller",
       "labels": ["bin", "worker"],
       "lifecycle": "production",

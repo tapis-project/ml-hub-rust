@@ -9,11 +9,11 @@ use crate::application::inputs::artifact_ingestion::{GetModelIngestionInput, Lis
 use crate::application::outputs::artifacts::ModelArtifactOutput;
 use crate::application::ports::commands::{Command, CommandPublisher, CommandPublisherError, IngestArtifactCommandPayload, PublishArtifactCommandPayload};
 use crate::application::ports::artifacts::{ArtifactIngestionRepository, ArtifactIngestionRepositoryError, ArtifactPublicationRepository, ArtifactPublicationRepositoryError, ArtifactRepository, ArtifactRepositoryError};
-use crate::application::ports::model_metadata::{ModelMetadataRepository, ModelMetadataRepositoryError};
+use crate::application::ports::model::{ModelRepository, ModelRepositoryError};
 use crate::domain::entities::artifact::{Artifact, ArtifactType as ArtifactTypeEntity};
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionError, ArtifactIngestionStatus};
 use crate::domain::entities::artifact_publication::{ArtifactPublication, ArtifactPublicationStatus, ArtifactPublicationError};
-use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::model::Model;
 use crate::domain::services::{
     ArtifactService as DomainArtifactService,
     ArtifactServiceError as DomainArtifactServiceError};
@@ -32,7 +32,7 @@ pub enum ArtifactServiceError {
     PubisherError(#[from] CommandPublisherError),
 
     #[error("Artifact repository error: {0}")]
-    ModelMetadataRepoError(#[from] ModelMetadataRepositoryError),
+    ModelRepoError(#[from] ModelRepositoryError),
 
     #[error("Artifact repository error: {0}")]
     ArtifactRepoError(#[from] ArtifactRepositoryError),
@@ -61,8 +61,8 @@ pub enum ArtifactServiceError {
     #[error("Missing artifact: {0}")]
     MissingArtifact(String),
 
-    #[error("Missing metadata: {0}")]
-    MissingMetadata(String),
+    #[error("Missing model: {0}")]
+    MissingModel(String),
 
     #[error("Artifact not ingested: {0}")]
     AritfactNotIngested(String),
@@ -83,7 +83,7 @@ pub struct ArtifactService {
     artifact_repo: Arc<dyn ArtifactRepository>,
     ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
     publication_repo: Arc<dyn ArtifactPublicationRepository>,
-    metadata_repo: Arc<dyn ModelMetadataRepository>,
+    model_repo: Arc<dyn ModelRepository>,
     command_publisher: Arc<dyn CommandPublisher>,
 }
 
@@ -109,14 +109,14 @@ impl ArtifactService {
         artifact_repo: Arc<dyn ArtifactRepository>,
         ingestion_repo: Arc<dyn ArtifactIngestionRepository>,
         publication_repo: Arc<dyn ArtifactPublicationRepository>,
-        metadata_repo: Arc<dyn ModelMetadataRepository>,
+        model_repo: Arc<dyn ModelRepository>,
         command_publisher: Arc<dyn CommandPublisher>,
     ) -> Self {
         Self {
             artifact_repo,
             ingestion_repo,
             publication_repo,
-            metadata_repo,
+            model_repo,
             command_publisher,
         }
     }
@@ -135,9 +135,9 @@ impl ArtifactService {
             None => return Err(ArtifactServiceError::MissingArtifact("Artifact must exist in order to publish it".into()))
         };
 
-        // Fetch artifact metadata
-        if let None = self.find_metadata_by_artifact_id(&input.artifact_id).await? {
-            return Err(ArtifactServiceError::MissingMetadata("Artifact must have an associated metadata entry in order to be published. Create a metadata entry for this artifact and try again".into()))
+        // Fetch the model associated with the artifact.
+        if let None = self.find_model_by_artifact_id(&input.artifact_id).await? {
+            return Err(ArtifactServiceError::MissingModel("Artifact must have an associated model in order to be published. Create a model for this artifact and try again".into()))
         };
 
         // Instantiate the ArtifactPublication
@@ -188,16 +188,16 @@ impl ArtifactService {
         return Ok(publication)
     }
 
-    pub async fn find_metadata_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<ModelMetadata>, ArtifactServiceError> {
-        // Closure for fetching the metadata for this artifact
-        let find_metadata = || self.metadata_repo.find_by_artifact_id(&artifact_id);
+    pub async fn find_model_by_artifact_id(&self, artifact_id: &Uuid) -> Result<Option<Model>, ArtifactServiceError> {
+        // Closure for fetching the model for this artifact.
+        let find_model = || self.model_repo.find_by_artifact_id(&artifact_id);
 
-        // Find the metadata with retries
-        let maybe_metadata = retry_async(find_metadata, &Self::REPO_RETRY_POLICY, None).await?;
+        // Find the model with retries.
+        let maybe_model = retry_async(find_model, &Self::REPO_RETRY_POLICY, None).await?;
 
         
         // Check that the artifact exists
-        match maybe_metadata {
+        match maybe_model {
             Some(m) => 
             {
                 Ok(Some(m))
@@ -511,7 +511,7 @@ impl ArtifactService {
 
         Ok(ModelArtifactOutput {
             artifact,
-            metadata: self.find_metadata_by_artifact_id(&input.artifact_id).await?
+            model: self.find_model_by_artifact_id(&input.artifact_id).await?
         })
     }
 

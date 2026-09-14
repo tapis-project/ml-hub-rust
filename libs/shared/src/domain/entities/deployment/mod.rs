@@ -1,17 +1,17 @@
 pub mod argument;
 
-use std::collections::HashMap;
+use crate::domain::entities::deployment_strategy::strategy::Strategy;
+use crate::impl_urn_generator;
+use crate::shared_kernel::enums::DeploymentModality;
+use crate::shared_kernel::enums::Visibility;
+use crate::shared_kernel::value_objects::TimeStamp;
 use openapiv3::OpenAPI;
 use platforms::Platform;
 use serde::Serialize;
-use uuid::Uuid;
-use thiserror::Error;
-use crate::shared_kernel::value_objects::TimeStamp;
-use crate::shared_kernel::enums::Visibility;
-use crate::impl_urn_generator;
-use crate::shared_kernel::enums::DeploymentModality;
-use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use serde_json::Value;
+use std::collections::HashMap;
+use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentError {
@@ -41,7 +41,7 @@ pub struct ModelDeployment {
     pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
-    /// A reference to the model metadata
+    /// A reference to the model.
     pub model: ModelReference,
     /// The curent state of the delpoyment
     pub state: State,
@@ -62,19 +62,28 @@ pub struct ModelDeployment {
     pub metadata: Option<ModelDeploymentMetadata>,
     /// Indicates changes to desired state over time. This field is incremented
     /// every time desired state changes.
-    revision: u32, 
+    revision: u32,
 }
 
 impl_urn_generator!(ModelDeployment, tenant_id, "deployment", id);
 
 impl ModelDeployment {
     /// Create the model deployment from props
-    pub fn deploy_with_srategy(props: DeployWithStrategyProps, strategy: &Strategy) -> Result<Self, ModelDeploymentError> {
+    pub fn deploy_with_srategy(
+        props: DeployWithStrategyProps,
+        strategy: &Strategy,
+    ) -> Result<Self, ModelDeploymentError> {
         // Invariant: The selected deployment strategy must support the selected deployment modality.
-        if !strategy.config().supported_deployment_modalities.contains(&props.deployment_modality) {
-            return Err(ModelDeploymentError::UnsupportedDeploymentModality(props.deployment_modality))
+        if !strategy
+            .config()
+            .supported_deployment_modalities
+            .contains(&props.deployment_modality)
+        {
+            return Err(ModelDeploymentError::UnsupportedDeploymentModality(
+                props.deployment_modality,
+            ));
         }
-        
+
         let now = TimeStamp::now();
 
         Ok(Self {
@@ -142,8 +151,11 @@ impl ModelDeployment {
 
     pub fn revise(&mut self) -> ModelDeploymentDraft<'_> {
         let revision = self.revision + 1;
-        let draft = ModelDeploymentDraft { deployment: self, revision };
-        
+        let draft = ModelDeploymentDraft {
+            deployment: self,
+            revision,
+        };
+
         draft
     }
 
@@ -158,9 +170,7 @@ impl ModelDeployment {
 
 #[derive(Clone, Debug)]
 pub struct ModelReference {
-    pub name: String,
-    pub author: String,
-    pub tenant_id: String,
+    pub model_id: Uuid,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -232,14 +242,14 @@ impl ModelDeploymentMetadata {
 pub enum ModelDeploymentMetadataDelta {
     NoChange,
     Delete,
-    Merge(ModelDeploymentMetadata)
+    Merge(ModelDeploymentMetadata),
 }
 
 #[derive(Clone, Debug)]
 pub struct ReplicaGroup {
     /// Number of replicas
     pub count: u8,
-    
+
     /// Sharding / parallelism strategies actually employed by the deployment runtime.
     pub parallelism_strategies: Vec<ParallelismStrategy>,
 }
@@ -248,7 +258,7 @@ impl Default for ReplicaGroup {
     fn default() -> Self {
         Self {
             count: 1,
-            parallelism_strategies: vec![]
+            parallelism_strategies: vec![],
         }
     }
 }
@@ -266,12 +276,12 @@ pub enum ParallelismStrategy {
 pub enum ReplicaGroupDelta {
     NoChange,
     Delete,
-    Replace(ReplicaGroup)
+    Replace(ReplicaGroup),
 }
 
 #[derive(Clone, Debug)]
 pub enum ModelDeploymentInterface {
-    RestApi(RestApi)
+    RestApi(RestApi),
 }
 
 #[derive(Clone, Debug)]
@@ -283,16 +293,16 @@ pub struct RestApi {
 pub enum ModelDeploymentInterfaceDelta {
     NoChange,
     Delete,
-    Replace(ModelDeploymentInterface)
+    Replace(ModelDeploymentInterface),
 }
 
 #[derive(Debug)]
 pub struct ModelDeploymentDraft<'a> {
     deployment: &'a mut ModelDeployment,
-    revision: u32
+    revision: u32,
 }
 
-impl <'a>ModelDeploymentDraft<'a> {
+impl<'a> ModelDeploymentDraft<'a> {
     /// Updates last modified to the UTC timestamp
     fn touch(&mut self) -> &mut Self {
         let now = TimeStamp::now();
@@ -303,19 +313,31 @@ impl <'a>ModelDeploymentDraft<'a> {
 
     fn valid_state_transitions() -> HashMap<State, Vec<State>> {
         let mut transitions = HashMap::new();
-        transitions.insert(State::NotDeployed, vec![State::Blocked, State::Running, State::Failed]);
-        transitions.insert(State::Running, vec![State::Blocked, State::Stopped, State::Failed]);
-        transitions.insert(State::Stopped, vec![State::Blocked, State::Running, State::Failed]);
+        transitions.insert(
+            State::NotDeployed,
+            vec![State::Blocked, State::Running, State::Failed],
+        );
+        transitions.insert(
+            State::Running,
+            vec![State::Blocked, State::Stopped, State::Failed],
+        );
+        transitions.insert(
+            State::Stopped,
+            vec![State::Blocked, State::Running, State::Failed],
+        );
         transitions.insert(State::Failed, vec![State::Blocked, State::Running]);
-        transitions.insert(State::Blocked, vec![State::Running, State::Stopped, State::Failed]);
+        transitions.insert(
+            State::Blocked,
+            vec![State::Running, State::Stopped, State::Failed],
+        );
         transitions
     }
 
     /// Returns whether a transition from one state to another is valid
     fn is_valid_state_transition(from: &State, to: &State) -> bool {
-        // Unknown can transition to any state 
+        // Unknown can transition to any state
         if from == &State::Unknown {
-            return true
+            return true;
         }
 
         Self::valid_state_transitions()
@@ -324,9 +346,16 @@ impl <'a>ModelDeploymentDraft<'a> {
     }
 
     /// Changes the state. Returns an error if invalid state transition is detected
-    pub fn transition_to_state(&mut self, new_state: State, message: Option<String>) -> Result<&mut Self, ModelDeploymentError> {
+    pub fn transition_to_state(
+        &mut self,
+        new_state: State,
+        message: Option<String>,
+    ) -> Result<&mut Self, ModelDeploymentError> {
         if !Self::is_valid_state_transition(&self.deployment.state, &new_state) {
-            return Err(ModelDeploymentError::InvalidStateTransition(self.deployment.state.clone().into(), new_state.into()))
+            return Err(ModelDeploymentError::InvalidStateTransition(
+                self.deployment.state.clone().into(),
+                new_state.into(),
+            ));
         }
 
         // Changes the state
@@ -359,9 +388,16 @@ impl <'a>ModelDeploymentDraft<'a> {
     }
 
     /// Changes the state. Returns an error if invalid state transition is detected
-    pub fn transition_to_desired(&mut self, new_state: DesiredState, message: Option<String>) -> Result<&mut Self, ModelDeploymentError> {
+    pub fn transition_to_desired(
+        &mut self,
+        new_state: DesiredState,
+        message: Option<String>,
+    ) -> Result<&mut Self, ModelDeploymentError> {
         if !Self::is_valid_desired_state_transition(&self.deployment.desired_state, &new_state) {
-            return Err(ModelDeploymentError::InvalidDesiredStateTransition(self.deployment.state.clone().into(), new_state.into()))
+            return Err(ModelDeploymentError::InvalidDesiredStateTransition(
+                self.deployment.state.clone().into(),
+                new_state.into(),
+            ));
         }
 
         self.deployment.desired_state = new_state;
@@ -378,9 +414,11 @@ impl <'a>ModelDeploymentDraft<'a> {
 
     pub fn apply_interface_delta(&mut self, delta: ModelDeploymentInterfaceDelta) -> &mut Self {
         match delta {
-            ModelDeploymentInterfaceDelta::Delete => { self.deployment.metadata = None },
-            ModelDeploymentInterfaceDelta::Replace(i) => { self.deployment.deployment_interface = Some(i); },
-            ModelDeploymentInterfaceDelta::NoChange => {},
+            ModelDeploymentInterfaceDelta::Delete => self.deployment.metadata = None,
+            ModelDeploymentInterfaceDelta::Replace(i) => {
+                self.deployment.deployment_interface = Some(i);
+            }
+            ModelDeploymentInterfaceDelta::NoChange => {}
         };
 
         self
@@ -388,9 +426,11 @@ impl <'a>ModelDeploymentDraft<'a> {
 
     pub fn apply_replica_group_delta(&mut self, delta: ReplicaGroupDelta) -> &mut Self {
         match delta {
-            ReplicaGroupDelta::Delete => { self.deployment.metadata = None },
-            ReplicaGroupDelta::Replace(r) => { self.deployment.replicas = r; },
-            ReplicaGroupDelta::NoChange => {},
+            ReplicaGroupDelta::Delete => self.deployment.metadata = None,
+            ReplicaGroupDelta::Replace(r) => {
+                self.deployment.replicas = r;
+            }
+            ReplicaGroupDelta::NoChange => {}
         };
 
         self
@@ -398,9 +438,11 @@ impl <'a>ModelDeploymentDraft<'a> {
 
     pub fn apply_metadata_delta(&mut self, delta: ModelDeploymentMetadataDelta) -> &mut Self {
         match delta {
-            ModelDeploymentMetadataDelta::Delete => { self.deployment.metadata = None },
-            ModelDeploymentMetadataDelta::Merge(m) => { self.merge_metadata(m); },
-            ModelDeploymentMetadataDelta::NoChange => {},
+            ModelDeploymentMetadataDelta::Delete => self.deployment.metadata = None,
+            ModelDeploymentMetadataDelta::Merge(m) => {
+                self.merge_metadata(m);
+            }
+            ModelDeploymentMetadataDelta::NoChange => {}
         };
 
         self
@@ -410,14 +452,19 @@ impl <'a>ModelDeploymentDraft<'a> {
         for (k, v) in metadata.into_inner() {
             self.add_metadata(k.clone(), v.clone());
         }
-        
+
         self
     }
 
     fn add_metadata(&mut self, k: String, v: Value) -> &mut Self {
-        if let Some(ref mut m) = self.deployment.metadata.as_mut().and_then(|m| Some(m.into_inner().clone())) {
+        if let Some(ref mut m) = self
+            .deployment
+            .metadata
+            .as_mut()
+            .and_then(|m| Some(m.into_inner().clone()))
+        {
             m.insert(k, v);
-            return self
+            return self;
         }
 
         let mut metadata = HashMap::with_capacity(1);

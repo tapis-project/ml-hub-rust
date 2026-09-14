@@ -2,22 +2,31 @@
 use std::sync::Arc;
 
 // Application
-use crate::application::inputs::deployment::{FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput};
+use crate::application::inputs::deployment::{
+    FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput,
+};
+use crate::application::ports::deployment::{
+    ModelDeploymentPlatformReconcilerProvider, ModelDeploymentPlatformReconcilerProviderError,
+};
+use crate::application::ports::events::payloads::{
+    ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload,
+    ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload,
+};
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, Payload};
-use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
-use crate::application::ports::model_metadata::ModelMetadataRepository;
-use crate::application::services::deployment_argument_service::{DeploymentArgumentService, DeploymentArgumentServiceError};
-use crate::application::services::deployment_strategy_service::{DeploymentStrategyService, GetStrategyByPlatformAndNameInput};
-use crate::application::services::model_deployment_service::{ModelDeploymentService, ModelDeploymentServiceError};
+use crate::application::ports::model::{ExternalModelRepository, ModelRepository};
+use crate::application::services::deployment_argument_service::{
+    DeploymentArgumentService, DeploymentArgumentServiceError,
+};
+use crate::application::services::deployment_strategy_service::{
+    DeploymentStrategyService, GetStrategyByPlatformAndNameInput,
+};
+use crate::application::services::model_deployment_service::{
+    ModelDeploymentService, ModelDeploymentServiceError,
+};
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationOutcome};
-use crate::application::ports::deployment::{ModelDeploymentPlatformReconcilerProvider, ModelDeploymentPlatformReconcilerProviderError};
-use crate::domain::entities::deployment::{DesiredState,
-    ModelDeployment,
-    ModelDeploymentError,
-    State,
-    ModelDeploymentInterfaceDelta,
-    ModelDeploymentMetadataDelta,
-    ReplicaGroupDelta,
+use crate::domain::entities::deployment::{
+    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentInterfaceDelta,
+    ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
 };
 
 // Domain
@@ -28,17 +37,12 @@ use crate::domain::entities::site::SiteContext;
 use crate::shared_kernel::context::RequestContext;
 
 // Project libs
-use retry_utils::{
-    retry_async,
-    FixedBackoff,
-    Retry,
-    RetryPolicy,
-};
+use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
 
 // External
 use log::error;
-use thiserror::Error;
 use once_cell::sync::Lazy;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ReconciliationDispatchError {
@@ -48,8 +52,8 @@ pub enum ReconciliationDispatchError {
     #[error("Failed to retrieve deployment: {0}")]
     ModelDeploymentRetrievalFailed(#[from] ModelDeploymentServiceError),
 
-    #[error("Failed to find model metadata associated with deployment: {0}")]
-    ModelMetadataRetrievalFailed(String),
+    #[error("Failed to find model associated with deployment: {0}")]
+    ModelRetrievalFailed(String),
 
     #[error("Model deployment domain invariant violation: {0}")]
     ModelDeploymentDomainInvariantViolation(#[from] ModelDeploymentError),
@@ -64,7 +68,7 @@ pub enum ReconciliationDispatchError {
     InvalidActorKind(String),
 
     #[error("Argument service error: {0}")]
-    DeploymentArgumentServiceError(#[from] DeploymentArgumentServiceError)
+    DeploymentArgumentServiceError(#[from] DeploymentArgumentServiceError),
 }
 
 #[derive(Debug, Error)]
@@ -90,7 +94,7 @@ impl DispatchReconcilerResult {
             caused_by_event: None,
         }
     }
-    
+
     pub fn correlate_event(&mut self, event: Event) {
         self.caused_by_event = Some(event);
     }
@@ -101,7 +105,8 @@ pub struct ModelDeploymentController {
     deployment_strategy_service: DeploymentStrategyService,
     deployment_argument_service: DeploymentArgumentService,
     model_deployment_service: ModelDeploymentService,
-    model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+    model_repo: Arc<dyn ModelRepository>,
+    external_model_repo: Arc<dyn ExternalModelRepository>,
     event_publisher: Arc<dyn EventPublisher>,
     client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
 }
@@ -119,7 +124,8 @@ impl ModelDeploymentController {
         deployment_strategy_service: DeploymentStrategyService,
         deployment_argument_service: DeploymentArgumentService,
         model_deployment_service: ModelDeploymentService,
-        model_metadata_repo: Arc<dyn ModelMetadataRepository>,
+        model_repo: Arc<dyn ModelRepository>,
+        external_model_repo: Arc<dyn ExternalModelRepository>,
         event_publisher: Arc<dyn EventPublisher>,
         client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
     ) -> Self {
@@ -128,18 +134,25 @@ impl ModelDeploymentController {
             deployment_strategy_service,
             deployment_argument_service,
             model_deployment_service,
-            model_metadata_repo,
+            model_repo,
+            external_model_repo,
             event_publisher,
             client_provider,
         }
     }
 
-    pub async fn dispatch_reconciler(&self, ctx: &RequestContext, payload: &ModelDeploymentStateDriftDetectedPayload) -> Result<DispatchReconcilerResult, ReconciliationDispatchError> {
+    pub async fn dispatch_reconciler(
+        &self,
+        ctx: &RequestContext,
+        payload: &ModelDeploymentStateDriftDetectedPayload,
+    ) -> Result<DispatchReconcilerResult, ReconciliationDispatchError> {
         // Ensure only system-type actors can take this action
         if ctx.actor_kind() != &Kind::System {
-            return Err(ReconciliationDispatchError::InvalidActorKind("Only System actors can dispatch model deployment reconcilers".into()))
+            return Err(ReconciliationDispatchError::InvalidActorKind(
+                "Only System actors can dispatch model deployment reconcilers".into(),
+            ));
         }
-        
+
         // Fetch deployment
         let input = FindForReconciliationInput {
             deployment_id: payload.deployment_id.clone(),
@@ -148,158 +161,260 @@ impl ModelDeploymentController {
             desired_state: payload.desired_state.clone(),
         };
 
-        let maybe_deployment = self.model_deployment_service
+        let maybe_deployment = self
+            .model_deployment_service
             .find_for_reconciliation(input)
             .await;
 
         let mut deployment = match maybe_deployment {
             Ok(d) => Ok(d),
-            Err(e) => {
-                match e {
-                    ModelDeploymentServiceError::DeploymentNotFound(_) => Err(ReconciliationDispatchError::StaleEvent("Deployment not found".into())),
-                    ModelDeploymentServiceError::RevisionMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("Revision mismatch: Expected revision {0}. Actual revision: {1}", expected, actual))),
-                    ModelDeploymentServiceError::StateMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("State mismatch: Expected state {0}. Actual state: {1}", expected, actual))),
-                    ModelDeploymentServiceError::DesiredStateMismatch(expected, actual) => Err(ReconciliationDispatchError::StaleEvent(format!("Desired State mismatch: Expected state {0}. Actual state: {1}", expected, actual))),
-                    other => Err(ReconciliationDispatchError::from(other)) 
+            Err(e) => match e {
+                ModelDeploymentServiceError::DeploymentNotFound(_) => Err(
+                    ReconciliationDispatchError::StaleEvent("Deployment not found".into()),
+                ),
+                ModelDeploymentServiceError::RevisionMismatch(expected, actual) => {
+                    Err(ReconciliationDispatchError::StaleEvent(format!(
+                        "Revision mismatch: Expected revision {0}. Actual revision: {1}",
+                        expected, actual
+                    )))
                 }
-            }
+                ModelDeploymentServiceError::StateMismatch(expected, actual) => {
+                    Err(ReconciliationDispatchError::StaleEvent(format!(
+                        "State mismatch: Expected state {0}. Actual state: {1}",
+                        expected, actual
+                    )))
+                }
+                ModelDeploymentServiceError::DesiredStateMismatch(expected, actual) => {
+                    Err(ReconciliationDispatchError::StaleEvent(format!(
+                        "Desired State mismatch: Expected state {0}. Actual state: {1}",
+                        expected, actual
+                    )))
+                }
+                other => Err(ReconciliationDispatchError::from(other)),
+            },
         }?;
-        
+
         // Resolve reconciliation action
         let maybe_action = self.resolve_reconciliation_action(&deployment).await?;
 
         let action = match maybe_action {
             Some(a) => a,
-            None => return Ok(DispatchReconcilerResult::new(None, vec![] ))
+            None => return Ok(DispatchReconcilerResult::new(None, vec![])),
         };
-        
+
         // Initialize reconciliation client
-        let client = match self.client_provider.provide(&deployment.platform, &self.site_context).await {
+        let client = match self
+            .client_provider
+            .provide(&deployment.platform, &self.site_context)
+            .await
+        {
             Ok(c) => c,
             Err(e) => {
-                self.handle_deployment_failure(&mut deployment, "Internal Error: Failed to initialize deployment client").await;
-                return Err(e)?
+                self.handle_deployment_failure(
+                    &mut deployment,
+                    "Internal Error: Failed to initialize deployment client",
+                )
+                .await;
+
+                return Err(e)?;
             }
         };
 
-        // Fetch model metadata
-        let find_model_metadata = || self.model_metadata_repo.find_by_author_and_name(
-            &deployment.model.author,
-            &deployment.model.name,
-            &deployment.model.tenant_id,
-        );
+        // Closure to call that fetches the model
+        let find_model = || {
+            self.model_repo
+                .find_by_id(&deployment.tenant_id, deployment.model.model_id)
+        };
 
-        let maybe_model_metadata = match retry_async(find_model_metadata, &Self::REPO_RETRY_POLICY, None).await {
+        // Fetch model
+        let maybe_model = match retry_async(find_model, &Self::REPO_RETRY_POLICY, None).await {
             Ok(r) => r,
             Err(e) => {
-                self.handle_deployment_failure(&mut deployment, "Internal Error: Failed to fetch metadata").await;
-                return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(e.to_string()))
+                self.handle_deployment_failure(
+                    &mut deployment,
+                    "Internal Error: Failed to fetch metadata",
+                )
+                .await;
+
+                return Err(ReconciliationDispatchError::ModelRetrievalFailed(
+                    e.to_string(),
+                ));
             }
         };
 
-        let model_metadata = match maybe_model_metadata {
+        let model = match maybe_model {
             Some(mm) => mm,
             None => {
-                self.handle_deployment_failure(&mut deployment, "The model for this deployment cannot be found").await;
-                return Err(ReconciliationDispatchError::ModelMetadataRetrievalFailed(format!("Model {}/{} not found", &deployment.model.author, &deployment.model.name)))
+                self.handle_deployment_failure(
+                    &mut deployment,
+                    "The model for this deployment cannot be found",
+                )
+                .await;
+
+                return Err(ReconciliationDispatchError::ModelRetrievalFailed(format!(
+                    "Model {} not found",
+                    deployment.model.model_id
+                )));
             }
         };
-        
+
+        let maybe_external_model = retry_async(
+            || {
+                self.external_model_repo
+                    .find_by_id(model.external_model_id())
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        ).await;
+
+        // Fetch the external model for this model
+        let external_model = match maybe_external_model {
+            Ok(Some(external_model)) => external_model,
+            Ok(None) => {
+                self.handle_deployment_failure(
+                    &mut deployment,
+                    "The ExternalModel for this deployment cannot be found",
+                )
+                .await;
+
+                return Err(ReconciliationDispatchError::ModelRetrievalFailed(format!(
+                    "ExternalModel {} not found",
+                    model.external_model_id()
+                )));
+            }
+            Err(error) => {
+                self.handle_deployment_failure(
+                    &mut deployment,
+                    "Internal Error: Failed to fetch ExternalModel",
+                )
+                .await;
+
+                return Err(ReconciliationDispatchError::ModelRetrievalFailed(
+                    error.to_string(),
+                ));
+            }
+        };
+
         // Fetch associated deployment strategy
         let maybe_strategy = match &deployment.deployment_strategy {
             Some(name) => {
-                self.deployment_strategy_service.get_strategy_by_platform_and_name(
-                GetStrategyByPlatformAndNameInput {
-                    platform: deployment.platform.clone(),
-                    name: name.clone()
-                }).await
-            }, 
-            None => None
+                self.deployment_strategy_service
+                    .get_strategy_by_platform_and_name(GetStrategyByPlatformAndNameInput {
+                        platform: deployment.platform.clone(),
+                        name: name.clone(),
+                    })
+                    .await
+            }
+            None => None,
         };
 
         // Reconcile
-        let outcome = client.reconcile(
-            ReconcileModelDeploymentInput {
+        let outcome = client
+            .reconcile(ReconcileModelDeploymentInput {
                 action,
                 deployment: deployment.clone(),
-                model_metadata,
+                external_model,
                 strategy: maybe_strategy,
-            }
-        ).await;
+            })
+            .await;
 
         // Determine which event to publish based on the reconciliation outcome
         let mut events: Vec<Payload> = Vec::with_capacity(1);
+
         let maybe_modified_deployment = match outcome {
             ReconciliationOutcome::Observed(payload) => {
                 let revised = deployment
                     .revise()
                     .transition_to_state(payload.state.clone(), payload.message.clone())?
-                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
-                    .apply_interface_delta(payload.interface.unwrap_or(ModelDeploymentInterfaceDelta::NoChange))
-                    .apply_replica_group_delta(payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange))
+                    .apply_metadata_delta(
+                        payload
+                            .metadata
+                            .unwrap_or(ModelDeploymentMetadataDelta::NoChange),
+                    )
+                    .apply_interface_delta(
+                        payload
+                            .interface
+                            .unwrap_or(ModelDeploymentInterfaceDelta::NoChange),
+                    )
+                    .apply_replica_group_delta(
+                        payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange),
+                    )
                     .finish();
 
-                events.push(
-                    Payload::ModelDeploymentStateDriftDetectedPayload(
-                        ModelDeploymentStateDriftDetectedPayload {
-                            deployment_id: deployment.id.clone(),
-                            deployment_revision: deployment.revision().clone(),
-                            actual_state: payload.state.clone(),
-                            desired_state: deployment.desired_state.clone(),
-                            message: payload.message,
-                        }
-                    )
-                );
+                events.push(Payload::ModelDeploymentStateDriftDetectedPayload(
+                    ModelDeploymentStateDriftDetectedPayload {
+                        deployment_id: deployment.id.clone(),
+                        deployment_revision: deployment.revision().clone(),
+                        actual_state: payload.state.clone(),
+                        desired_state: deployment.desired_state.clone(),
+                        message: payload.message,
+                    },
+                ));
 
                 Some(revised)
-            },
+            }
             ReconciliationOutcome::Started(payload) => {
                 let revised = deployment
                     .revise()
                     .transition_to_state(State::Running, payload.message.clone())?
-                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
-                    .apply_interface_delta(payload.interface.unwrap_or(ModelDeploymentInterfaceDelta::NoChange))
-                    .apply_replica_group_delta(payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange))
+                    .apply_metadata_delta(
+                        payload
+                            .metadata
+                            .unwrap_or(ModelDeploymentMetadataDelta::NoChange),
+                    )
+                    .apply_interface_delta(
+                        payload
+                            .interface
+                            .unwrap_or(ModelDeploymentInterfaceDelta::NoChange),
+                    )
+                    .apply_replica_group_delta(
+                        payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange),
+                    )
                     .finish();
 
-                events.push(
-                    Payload::ModelDeploymentStartedPayload(
-                        ModelDeploymentStartedPayload {
-                            deployment_id: deployment.id.clone(),
-                            deployment_revision: deployment.revision().clone(),
-                            message: payload.message,
-                        }
-                    )
-                );
+                events.push(Payload::ModelDeploymentStartedPayload(
+                    ModelDeploymentStartedPayload {
+                        deployment_id: deployment.id.clone(),
+                        deployment_revision: deployment.revision().clone(),
+                        message: payload.message,
+                    },
+                ));
 
                 Some(revised)
-            },
+            }
             ReconciliationOutcome::Stopped(payload) => {
                 let revised = deployment
                     .revise()
                     .transition_to_state(State::Stopped, payload.message.clone())?
-                    .apply_metadata_delta(payload.metadata.unwrap_or(ModelDeploymentMetadataDelta::NoChange))
-                    .apply_interface_delta(payload.interface.unwrap_or(ModelDeploymentInterfaceDelta::NoChange))
-                    .apply_replica_group_delta(payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange))
+                    .apply_metadata_delta(
+                        payload
+                            .metadata
+                            .unwrap_or(ModelDeploymentMetadataDelta::NoChange),
+                    )
+                    .apply_interface_delta(
+                        payload
+                            .interface
+                            .unwrap_or(ModelDeploymentInterfaceDelta::NoChange),
+                    )
+                    .apply_replica_group_delta(
+                        payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange),
+                    )
                     .finish();
 
-                events.push(
-                    Payload::ModelDeploymentStoppedPayload(
-                        ModelDeploymentStoppedPayload {
-                            deployment_id: deployment.id.clone(),
-                            deployment_revision: deployment.revision().clone(),
-                            message: payload.message,
-                        }
-                    )
-                );
+                events.push(Payload::ModelDeploymentStoppedPayload(
+                    ModelDeploymentStoppedPayload {
+                        deployment_id: deployment.id.clone(),
+                        deployment_revision: deployment.revision().clone(),
+                        message: payload.message,
+                    },
+                ));
 
                 Some(revised)
-            },
+            }
             ReconciliationOutcome::Undeployed(payload) => {
                 let mut revised = deployment.revise();
 
-                revised
-                    .transition_to_state(State::NotDeployed, payload.message.clone())?;
+                revised.transition_to_state(State::NotDeployed, payload.message.clone())?;
 
                 if let Some(metadata_delta) = payload.metadata {
                     revised.apply_metadata_delta(metadata_delta);
@@ -307,23 +422,20 @@ impl ModelDeploymentController {
 
                 let revised = revised.finish();
 
-                events.push(
-                    Payload::ModelDeploymentDeletedPayload(
-                        ModelDeploymentDeletedPayload {
-                            deployment_id: deployment.id.clone(),
-                            deployment_revision: deployment.revision().clone(),
-                            message: payload.message,
-                        }
-                    )
-                );
+                events.push(Payload::ModelDeploymentDeletedPayload(
+                    ModelDeploymentDeletedPayload {
+                        deployment_id: deployment.id.clone(),
+                        deployment_revision: deployment.revision().clone(),
+                        message: payload.message,
+                    },
+                ));
 
                 Some(revised)
-            },
+            }
             ReconciliationOutcome::Failed(payload) => {
                 let mut revised = deployment.revise();
 
-                revised
-                    .transition_to_state(State::Failed, payload.message.clone())?;
+                revised.transition_to_state(State::Failed, payload.message.clone())?;
 
                 if let Some(metadata_delta) = payload.metadata {
                     revised.apply_metadata_delta(metadata_delta);
@@ -332,12 +444,11 @@ impl ModelDeploymentController {
                 let revised = revised.finish();
 
                 Some(revised)
-            },
+            }
             ReconciliationOutcome::Unknown(payload) => {
                 let mut revised = deployment.revise();
 
-                revised
-                    .transition_to_state(State::Unknown, payload.message.clone())?;
+                revised.transition_to_state(State::Unknown, payload.message.clone())?;
 
                 if let Some(metadata_delta) = payload.metadata {
                     revised.apply_metadata_delta(metadata_delta);
@@ -345,44 +456,52 @@ impl ModelDeploymentController {
 
                 let revised = revised.finish();
 
-                events.push(
-                    Payload::ModelDeploymentStateDriftDetectedPayload(
-                        ModelDeploymentStateDriftDetectedPayload {
-                            deployment_id: deployment.id.clone(),
-                            deployment_revision: deployment.revision().clone(),
-                            desired_state: payload.desired_state.clone(),
-                            actual_state: deployment.state.clone(),
-                            message: payload.message.clone()
-                        }
-                    )
-                );
+                events.push(Payload::ModelDeploymentStateDriftDetectedPayload(
+                    ModelDeploymentStateDriftDetectedPayload {
+                        deployment_id: deployment.id.clone(),
+                        deployment_revision: deployment.revision().clone(),
+                        desired_state: payload.desired_state.clone(),
+                        actual_state: deployment.state.clone(),
+                        message: payload.message.clone(),
+                    },
+                ));
 
                 Some(revised)
-            },
-            ReconciliationOutcome::NoOp => { None },
+            }
+            ReconciliationOutcome::NoOp => None,
         };
 
-        Ok(DispatchReconcilerResult::new(maybe_modified_deployment, events))
+        Ok(DispatchReconcilerResult::new(
+            maybe_modified_deployment,
+            events,
+        ))
     }
 
-    pub async fn finish_reconiliation(&self, result: DispatchReconcilerResult) -> Result<(), FinishReconciliationError> {
+    pub async fn finish_reconiliation(
+        &self,
+        result: DispatchReconcilerResult,
+    ) -> Result<(), FinishReconciliationError> {
         if let Some(deployment) = result.deployment {
             let update = UpdateModelDeploymentInput { deployment };
-    
-            let _ = retry_async(|| self.model_deployment_service.update(update.clone()), &Self::REPO_RETRY_POLICY, None) 
-                .await
-                .map_err(|e| FinishReconciliationError::ModelDeploymentUpdateFailed(e.to_string()))?;
+
+            let _ = retry_async(
+                || self.model_deployment_service.update(update.clone()),
+                &Self::REPO_RETRY_POLICY,
+                None,
+            )
+            .await
+            .map_err(|e| FinishReconciliationError::ModelDeploymentUpdateFailed(e.to_string()))?;
         }
 
         // Publish any events returned by the controller
         for payload in result.events {
             let caused_by = match result.caused_by_event {
                 Some(ref e) => Some(e),
-                None => None
+                None => None,
             };
-            
+
             let new_event = &Event::from_payload(&payload, caused_by);
-            
+
             let _ = self.event_publisher.publish(new_event)
                 .await
                 .map_err(|e| {
@@ -395,37 +514,43 @@ impl ModelDeploymentController {
     }
 
     /// Dermine what reconciliation action must be take to synchronize the actual state with the desired state
-    async fn resolve_reconciliation_action(&self, deployment: &ModelDeployment) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
+    async fn resolve_reconciliation_action(
+        &self,
+        deployment: &ModelDeployment,
+    ) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
         if deployment.is_state_syncronized() {
-            return Ok(None)
+            return Ok(None);
         }
 
         let maybe_strategy = match &deployment.deployment_strategy {
             Some(strat_name) => {
-                self.deployment_strategy_service.get_strategy_by_platform_and_name(
-                GetStrategyByPlatformAndNameInput {
-                    platform: deployment.platform.clone(),
-                    name: strat_name.clone()
-                }).await
-            }, 
-            None => None
+                self.deployment_strategy_service
+                    .get_strategy_by_platform_and_name(GetStrategyByPlatformAndNameInput {
+                        platform: deployment.platform.clone(),
+                        name: strat_name.clone(),
+                    })
+                    .await
+            }
+            None => None,
         };
 
         if deployment.deployment_strategy.is_some() && maybe_strategy.is_none() {
-            return Err(ReconciliationDispatchError::MissingDeploymentStrategy(format!("During reconciliation action resolution, the referenced deployment strategy '{}' was not found", deployment.deployment_strategy.clone().unwrap_or("No name found".into()))))
+            return Err(ReconciliationDispatchError::MissingDeploymentStrategy(format!("During reconciliation action resolution, the referenced deployment strategy '{}' was not found", deployment.deployment_strategy.clone().unwrap_or("No name found".into()))));
         }
 
         // Fetch the arguments for this deployment
-        let decrypted_args = self.deployment_argument_service.get_decrypted_arguments_for_deployment(&deployment.id)
+        let decrypted_args = self
+            .deployment_argument_service
+            .get_decrypted_arguments_for_deployment(&deployment.id)
             .await?;
 
         Ok(match (&deployment.state, &deployment.desired_state) {
-            (State::NotDeployed, DesiredState::Running) |
-            (State::Stopped, DesiredState::Running) |
-            (State::Failed, DesiredState::Running) |
-            (State::Blocked, DesiredState::Running) => Some(
-                ReconciliationAction::Start { payload: decrypted_args }
-            ),
+            (State::NotDeployed, DesiredState::Running)
+            | (State::Stopped, DesiredState::Running)
+            | (State::Failed, DesiredState::Running)
+            | (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start {
+                payload: decrypted_args,
+            }),
             (State::Unknown, _) => Some(ReconciliationAction::Observe),
             (_, DesiredState::NotDeployed) => Some(ReconciliationAction::Undeploy),
             (State::Running, DesiredState::Stopped) => Some(ReconciliationAction::Stop),
@@ -434,14 +559,32 @@ impl ModelDeploymentController {
     }
 
     /// Handles deployment updates on failure.
-    async fn handle_deployment_failure(&self, deployment: &mut ModelDeployment, reason: &str) -> (){
+    async fn handle_deployment_failure(
+        &self,
+        deployment: &mut ModelDeployment,
+        reason: &str,
+    ) -> () {
         if let Err(e) = deployment.mark_as_failed(Some(reason.into())) {
-            error!("Domain Error: Failed to mark deployment '{}' as failed: {}", deployment.id, e.to_string());
-            return
+            error!(
+                "Domain Error: Failed to mark deployment '{}' as failed: {}",
+                deployment.id,
+                e.to_string()
+            );
+            return;
         };
 
-        if let Err(e) = self.model_deployment_service.update(UpdateModelDeploymentInput { deployment: deployment.clone() }).await {
-            error!("Infrastructure Error: Failed to update status for model deployment '{}': {}", deployment.id, e.to_string());
+        if let Err(e) = self
+            .model_deployment_service
+            .update(UpdateModelDeploymentInput {
+                deployment: deployment.clone(),
+            })
+            .await
+        {
+            error!(
+                "Infrastructure Error: Failed to update status for model deployment '{}': {}",
+                deployment.id,
+                e.to_string()
+            );
         };
     }
 }

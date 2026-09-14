@@ -122,21 +122,21 @@
         }
       }
     },
-    "/models-api/artifacts/{artifact_id}/metadata": {
+    "/models-api/artifacts/{artifact_id}/model": {
       "post": {
         "tags": [
           "Artifacts"
         ],
-        "description": "Associate existing model metadata to a model artifact",
-        "operationId": "associate_model_metadata_with_artifact",
+        "summary": "Associate an owned model with an artifact",
+        "operationId": "associate_model_with_artifact",
         "parameters": [
           {
             "name": "artifact_id",
             "in": "path",
-            "description": "The ID of the model artifact",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -144,7 +144,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AssociateModelMetadataBody"
+                "$ref": "#/components/schemas/AssociateModelBody"
               }
             }
           },
@@ -152,17 +152,17 @@
         },
         "responses": {
           "200": {
-            "description": "Successfully associated metadata with artifact",
+            "description": "Model associated",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AssociateModelMetadataResponse"
+                  "$ref": "#/components/schemas/AssociateModelResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Not found",
+            "description": "Invalid identifier",
             "content": {
               "application/json": {
                 "schema": {
@@ -172,7 +172,7 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "Model or artifact not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -181,8 +181,18 @@
               }
             }
           },
+          "409": {
+            "description": "Artifact already associated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
           "500": {
-            "description": "Not found",
+            "description": "Unable to associate model",
             "content": {
               "application/json": {
                 "schema": {
@@ -326,6 +336,109 @@
         }
       }
     },
+    "/models-api/external-models/search": {
+      "post": {
+        "tags": [
+          "ExternalModels"
+        ],
+        "summary": "Search the external model catalog",
+        "operationId": "discover_external_models",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoverExternalModelsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "ExternalModels found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverExternalModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search"
+          },
+          "500": {
+            "description": "Unable to search ExternalModels"
+          }
+        }
+      }
+    },
+    "/models-api/external-models/{external_model_id}": {
+      "get": {
+        "tags": [
+          "ExternalModels"
+        ],
+        "summary": "Get an external model",
+        "operationId": "get_external_model",
+        "parameters": [
+          {
+            "name": "external_model_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ExternalModel found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetExternalModelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ExternalModel not found"
+          },
+          "500": {
+            "description": "Unable to get ExternalModel"
+          }
+        }
+      }
+    },
     "/models-api/ingestions": {
       "get": {
         "tags": [
@@ -440,147 +553,28 @@
       }
     },
     "/models-api/models": {
-      "post": {
+      "get": {
         "tags": [
           "Models"
         ],
-        "description": "Create a model metadata",
-        "operationId": "create_model_metadata",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateModelMetadataBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Model created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateModelMetadataResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/models-api/models/fork/{author}/{name}": {
-      "post": {
-        "tags": [
-          "Models"
-        ],
-        "description": "Fork model metadata from a platform",
-        "operationId": "fork_model",
+        "summary": "List owned or shared models",
+        "operationId": "list_models",
         "parameters": [
           {
-            "name": "author",
-            "in": "path",
-            "required": true,
+            "name": "scope",
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "Owned",
+                "Shared"
+              ]
             }
           },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Forked model",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForkModelResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/models-api/models/search": {
-      "post": {
-        "tags": [
-          "Models"
-        ],
-        "description": "Discover models on MLHub",
-        "operationId": "discover_models",
-        "parameters": [
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of models to return",
             "required": false,
             "schema": {
               "type": "integer",
@@ -591,7 +585,6 @@
           {
             "name": "cursor",
             "in": "query",
-            "description": "The pagination cursor for fetching the next batch of models",
             "required": false,
             "schema": {
               "type": "string"
@@ -600,97 +593,15 @@
           {
             "name": "include_count",
             "in": "query",
-            "description": "A flag for including the total count of available models",
-            "required": false,
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "include_global_models",
-            "in": "query",
-            "description": "A flag for including global models in the response",
             "required": false,
             "schema": {
               "type": "boolean"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DiscoveryCriteria"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
-            "description": "Discovered models",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscoverModelsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/models-api/models/{author}": {
-      "get": {
-        "tags": [
-          "Models"
-        ],
-        "description": "List models by author in the current tenant",
-        "operationId": "list_models_by_author",
-        "parameters": [
-          {
-            "name": "author",
-            "in": "path",
-            "description": "The author of the model",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully fetched models",
+            "description": "Models listed",
             "content": {
               "application/json": {
                 "schema": {
@@ -699,8 +610,40 @@
               }
             }
           },
+          "500": {
+            "description": "Unable to list models"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Models"
+        ],
+        "summary": "Add an external model to the user's collection",
+        "operationId": "create_model",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModelBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Model created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateModelResponse"
+                }
+              }
+            }
+          },
           "400": {
-            "description": "Not found",
+            "description": "Invalid model",
             "content": {
               "application/json": {
                 "schema": {
@@ -710,7 +653,7 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "description": "ExternalModel not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -719,8 +662,18 @@
               }
             }
           },
+          "409": {
+            "description": "Model already in your collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
           "500": {
-            "description": "Not found",
+            "description": "Unable to create model",
             "content": {
               "application/json": {
                 "schema": {
@@ -732,49 +685,27 @@
         }
       }
     },
-    "/models-api/models/{author}/{name}": {
+    "/models-api/models/{model_id}": {
       "get": {
         "tags": [
           "Models"
         ],
-        "description": "Get model by the author and name",
-        "operationId": "get_model_by_author_and_name",
+        "summary": "Get a model from a tenant collection",
+        "operationId": "get_model",
         "parameters": [
           {
-            "name": "name",
+            "name": "model_id",
             "in": "path",
-            "description": "The name of the model",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "author",
-            "in": "path",
-            "description": "The author of the model",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "scope",
-            "in": "query",
-            "description": "Selector for global vs tenant-scoped models",
-            "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "tenant",
-                "global"
-              ]
+              "format": "uuid"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Successfully fetched model",
+            "description": "Model found",
             "content": {
               "application/json": {
                 "schema": {
@@ -783,114 +714,11 @@
               }
             }
           },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
           "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
+            "description": "Model not found"
           },
           "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Models"
-        ],
-        "description": "Ingest canonical model artifact",
-        "operationId": "ingest_canonical_model",
-        "parameters": [
-          {
-            "name": "author",
-            "in": "path",
-            "description": "The author of the model",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "description": "The name of the model",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IngestArtifactRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Ingest canonical models",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IngestModelArtifactResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
+            "description": "Unable to get model"
           }
         }
       }
@@ -909,310 +737,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListPlatformsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/models-api/platforms/{platform}/models": {
-      "get": {
-        "tags": [
-          "Platforms"
-        ],
-        "description": "List models from an external platform",
-        "operationId": "list_models_by_platform",
-        "parameters": [
-          {
-            "name": "platform",
-            "in": "path",
-            "description": "The platform for which you want to list the models",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Platform"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Maximum number of items to return",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 0
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Number of items to skip",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Listed models",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListModelsByPlatformResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Platforms"
-        ],
-        "description": "Discover models from external platforms",
-        "operationId": "discover_models_by_platform",
-        "parameters": [
-          {
-            "name": "platform",
-            "in": "path",
-            "description": "The platform on which you want to discover models",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Platform"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DiscoveryCriteria"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Discovered models",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiscoverModelsByPlatformResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/models-api/platforms/{platform}/models/{model_id}": {
-      "get": {
-        "tags": [
-          "Platforms"
-        ],
-        "description": "Fetch a model from an external platform by id",
-        "operationId": "get_model_by_platform",
-        "parameters": [
-          {
-            "name": "platform",
-            "in": "path",
-            "description": "Name of the platform from which to fetch the model",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Platform"
-            }
-          },
-          {
-            "name": "model_id",
-            "in": "path",
-            "description": "Id of the model the fetch from the source platform",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Model fetched successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetModelByPlatformResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BadRequestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFoundResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServerErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Platforms"
-        ],
-        "description": "Ingest a model from an external platform",
-        "operationId": "ingest_external_model",
-        "parameters": [
-          {
-            "name": "platform",
-            "in": "path",
-            "description": "The platform from which the model will be ingested from",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Platform"
-            }
-          },
-          {
-            "name": "model_id",
-            "in": "path",
-            "description": "The platform-specific ID of the external model you want to ingest",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IngestArtifactRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Discovered models",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IngestModelArtifactResponse"
                 }
               }
             }
@@ -1541,8 +1065,8 @@
           "Pending",
           "Extracting",
           "Extracted",
-          "PublishingMetadata",
-          "PublishedMetadata",
+          "PublishingModel",
+          "PublishedModel",
           "PublishingArtifact",
           "PublishedArtifact",
           "Finished",
@@ -1556,22 +1080,20 @@
           "Dataset"
         ]
       },
-      "AssociateModelMetadataBody": {
+      "AssociateModelBody": {
         "type": "object",
         "required": [
-          "name",
-          "author"
+          "model_id"
         ],
         "properties": {
-          "author": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
+          "model_id": {
+            "type": "string",
+            "format": "uuid"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "AssociateModelMetadataResponse": {
+      "AssociateModelResponse": {
         "type": "object",
         "required": [
           "result",
@@ -1588,7 +1110,7 @@
             "type": "object"
           },
           "result": {
-            "type": "object"
+            "$ref": "#/components/schemas/Model"
           },
           "status": {
             "type": "integer",
@@ -1628,281 +1150,7 @@
           }
         }
       },
-      "Canonical": {
-        "type": "object",
-        "required": [
-          "platform",
-          "model_id",
-          "locator"
-        ],
-        "properties": {
-          "author": {
-            "type": "string",
-            "nullable": true
-          },
-          "downloads": {
-            "type": "integer",
-            "minimum": 0,
-            "nullable": true
-          },
-          "gated": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "likes": {
-            "type": "integer",
-            "minimum": 0,
-            "nullable": true
-          },
-          "locator": {
-            "$ref": "#/components/schemas/Locator"
-          },
-          "model_id": {
-            "type": "string"
-          },
-          "platform": {
-            "$ref": "#/components/schemas/Platform"
-          },
-          "private": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "sha": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "CreateModelMetadataBody": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "libraries": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "license": {
-            "type": "string",
-            "nullable": true
-          },
-          "model_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string"
-          },
-          "regulatory": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "task_types": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Task"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "CreateModelMetadataResponse": {
-        "type": "object",
-        "required": [
-          "result",
-          "status",
-          "message",
-          "metadata",
-          "version"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object"
-          },
-          "result": {
-            "type": "object"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "version": {
-            "type": "string"
-          }
-        }
-      },
-      "DeploymentStrategyReference": {
-        "type": "object",
-        "required": [
-          "name",
-          "platform"
-        ],
-        "properties": {
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string"
-          },
-          "platform": {
-            "$ref": "#/components/schemas/Platform"
-          }
-        }
-      },
-      "DiscoverModelsByPlatformResponse": {
-        "type": "object",
-        "required": [
-          "result",
-          "status",
-          "message",
-          "metadata",
-          "version"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object"
-          },
-          "result": {
-            "type": "array",
-            "items": {}
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "version": {
-            "type": "string"
-          }
-        }
-      },
-      "DiscoverModelsResponse": {
-        "type": "object",
-        "required": [
-          "result",
-          "status",
-          "message",
-          "metadata",
-          "version"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object"
-          },
-          "result": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ModelMetadata"
-            }
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "version": {
-            "type": "string"
-          }
-        }
-      },
-      "DiscoveryCriteria": {
-        "type": "object",
-        "required": [
-          "criteria"
-        ],
-        "properties": {
-          "criteria": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DiscoveryCriterion"
-            }
-          },
-          "prompt": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "DiscoveryCriterion": {
-        "type": "object",
-        "properties": {
-          "author": {
-            "type": "string",
-            "nullable": true
-          },
-          "libraries": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "license": {
-            "type": "string",
-            "nullable": true
-          },
-          "model_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "regulatory": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "task_types": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Task"
-            },
-            "nullable": true
-          }
-        }
-      },
-      "ForkModelResponse": {
+      "ConflictResponse": {
         "type": "object",
         "required": [
           "result",
@@ -1922,7 +1170,381 @@
           "status": {
             "type": "integer",
             "format": "int32",
-            "default": 404,
+            "default": 409,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateModelBody": {
+        "type": "object",
+        "required": [
+          "name",
+          "external_model_id"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "external_model_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateModelResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "$ref": "#/components/schemas/Model"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "DeploymentStrategyCriterion": {
+        "type": "object",
+        "required": [
+          "name",
+          "platform"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          }
+        }
+      },
+      "DeploymentStrategyReference": {
+        "type": "object",
+        "required": [
+          "name",
+          "platform"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          }
+        }
+      },
+      "DerivedModelMetadata": {
+        "type": "object",
+        "required": [
+          "deployment_strategies",
+          "inference_runtimes",
+          "tags",
+          "task_types",
+          "size",
+          "gated",
+          "private"
+        ],
+        "properties": {
+          "author": {
+            "type": "string",
+            "nullable": true
+          },
+          "deployment_strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentStrategyReference"
+            }
+          },
+          "downloads": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "gated": {
+            "type": "boolean"
+          },
+          "inference_runtimes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "license": {
+            "type": "string",
+            "nullable": true
+          },
+          "likes": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "private": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "task_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          }
+        }
+      },
+      "DiscoverExternalModelsBody": {
+        "type": "object",
+        "properties": {
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryCriterion"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DiscoverExternalModelsResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalModel"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "DiscoveryCriterion": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "string",
+            "nullable": true
+          },
+          "deployment_strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentStrategyCriterion"
+            }
+          },
+          "has_deployment_strategies": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "inference_runtimes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "license": {
+            "type": "string",
+            "nullable": true
+          },
+          "max_downloads": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "max_likes": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "max_size": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "min_downloads": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "min_likes": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "min_size": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelProvider"
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "task_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExternalModel": {
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "metadata",
+          "updated_at",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "huggingface_repo_locator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HuggingFaceRepoLocator"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ExternalModelMetadata"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ModelProvider"
+          },
+          "tapis_system_locator": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TapisSystemLocator"
+              }
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "ExternalModelMetadata": {
+        "type": "object",
+        "required": [
+          "derived"
+        ],
+        "properties": {
+          "derived": {
+            "$ref": "#/components/schemas/DerivedModelMetadata"
+          }
+        }
+      },
+      "GetExternalModelResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ExternalModel"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
             "minimum": 0
           },
           "version": {
@@ -1948,35 +1570,6 @@
           },
           "result": {
             "$ref": "#/components/schemas/ModelArtifact"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "version": {
-            "type": "string"
-          }
-        }
-      },
-      "GetModelByPlatformResponse": {
-        "type": "object",
-        "required": [
-          "result",
-          "status",
-          "message",
-          "metadata",
-          "version"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object"
-          },
-          "result": {
-            "type": "object"
           },
           "status": {
             "type": "integer",
@@ -2063,7 +1656,7 @@
             "type": "object"
           },
           "result": {
-            "$ref": "#/components/schemas/ModelMetadata"
+            "$ref": "#/components/schemas/Model"
           },
           "status": {
             "type": "integer",
@@ -2075,60 +1668,17 @@
           }
         }
       },
-      "IngestArtifactRequest": {
+      "HuggingFaceRepoLocator": {
         "type": "object",
         "required": [
-          "params"
+          "id",
+          "sha"
         ],
         "properties": {
-          "exclude_paths": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "include_paths": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "params": {
-            "type": "object"
-          },
-          "webhook_url": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "IngestModelArtifactResponse": {
-        "type": "object",
-        "required": [
-          "result",
-          "status",
-          "message",
-          "metadata",
-          "version"
-        ],
-        "properties": {
-          "message": {
+          "id": {
             "type": "string"
           },
-          "metadata": {
-            "type": "object"
-          },
-          "result": {
-            "$ref": "#/components/schemas/ArtifactIngestion"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "version": {
+          "sha": {
             "type": "string"
           }
         }
@@ -2261,36 +1811,6 @@
           }
         }
       },
-      "ListModelsByPlatformResponse": {
-        "type": "object",
-        "required": [
-          "result",
-          "status",
-          "message",
-          "metadata",
-          "version"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object"
-          },
-          "result": {
-            "type": "array",
-            "items": {}
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "version": {
-            "type": "string"
-          }
-        }
-      },
       "ListModelsResponse": {
         "type": "object",
         "required": [
@@ -2310,7 +1830,7 @@
           "result": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ModelMetadata"
+              "$ref": "#/components/schemas/Model"
             }
           },
           "status": {
@@ -2387,14 +1907,57 @@
           }
         }
       },
-      "Locator": {
+      "Model": {
         "type": "object",
         "required": [
-          "url"
+          "id",
+          "name",
+          "tenant_id",
+          "owner",
+          "external_model_id",
+          "external_model",
+          "visibility",
+          "updated_at",
+          "created_at"
         ],
         "properties": {
-          "url": {
+          "artifact_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "created_at": {
             "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "external_model": {
+            "$ref": "#/components/schemas/ExternalModel"
+          },
+          "external_model_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
           }
         }
       },
@@ -2417,82 +1980,12 @@
           }
         }
       },
-      "ModelMetadata": {
-        "type": "object",
-        "required": [
-          "name",
-          "author",
-          "tenant_id",
-          "deployment_strategy_refs"
-        ],
-        "properties": {
-          "author": {
-            "type": "string"
-          },
-          "canonical": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/Canonical"
-              }
-            ]
-          },
-          "deployment_strategy_refs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DeploymentStrategyReference"
-            },
-            "description": "Deployment strategy references"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "libraries": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "license": {
-            "type": "string",
-            "nullable": true
-          },
-          "model_type": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string"
-          },
-          "regulatory": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          },
-          "task_types": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Task"
-            },
-            "nullable": true
-          },
-          "tenant_id": {
-            "type": "string"
-          }
-        }
+      "ModelProvider": {
+        "type": "string",
+        "enum": [
+          "HuggingFace",
+          "Tapis"
+        ]
       },
       "NotFoundResponse": {
         "type": "object",
@@ -2625,6 +2118,29 @@
           }
         }
       },
+      "TapisSystemLocator": {
+        "type": "object",
+        "required": [
+          "site_id",
+          "tenant_id",
+          "system_id",
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "site_id": {
+            "type": "string"
+          },
+          "system_id": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          }
+        }
+      },
       "Task": {
         "type": "string",
         "description": "An enum of all task types available on Huggingface",
@@ -2674,6 +2190,13 @@
           "ZeroShotObjectDetection",
           "TextTo3d",
           "ImageTo3d"
+        ]
+      },
+      "Visibility": {
+        "type": "string",
+        "enum": [
+          "Public",
+          "Private"
         ]
       }
     }

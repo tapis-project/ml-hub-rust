@@ -77,12 +77,12 @@ mod artifact_publication_test {
                 publication
             })
             .and_then(|p| {
-                let publication = p.change_status(&ArtifactPublicationStatus::PublishingMetadata);
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishingModel);
                 assert!(!publication.is_err());
                 publication
             })
             .and_then(|p| {
-                let publication = p.change_status(&ArtifactPublicationStatus::PublishedMetadata);
+                let publication = p.change_status(&ArtifactPublicationStatus::PublishedModel);
                 assert!(!publication.is_err());
                 publication
             })

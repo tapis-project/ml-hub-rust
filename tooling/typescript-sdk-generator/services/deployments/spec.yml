@@ -286,8 +286,7 @@ components:
       type: object
       required:
         - name
-        - model_name
-        - model_author
+        - model_id
         - deployment_modality
       properties:
         arguments:
@@ -302,10 +301,9 @@ components:
           type:
             - string
             - 'null'
-        model_author:
+        model_id:
           type: string
-        model_name:
-          type: string
+          format: uuid
         name:
           type: string
         parallelism_strategies:
@@ -320,9 +318,6 @@ components:
             - 'null'
           format: int32
           minimum: 0
-        scope:
-          $ref: '#/components/schemas/Scope'
-          description: Selector for global vs tenant-scoped models
     DeploymentModality:
       type: string
       enum:
@@ -484,13 +479,11 @@ components:
     ModelReference:
       type: object
       required:
-        - name
-        - author
+        - model_id
       properties:
-        author:
+        model_id:
           type: string
-        name:
-          type: string
+          format: uuid
     NotFoundResponse:
       type: object
       required:
@@ -598,11 +591,6 @@ components:
         - spec
       properties:
         spec: {}
-    Scope:
-      type: string
-      enum:
-        - tenant
-        - global
     ServerErrorResponse:
       type: object
       required:

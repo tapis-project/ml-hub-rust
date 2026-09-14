@@ -1,85 +1,71 @@
-use crate::shared_kernel::enums::Task;
+use platforms::Platform;
 
-#[derive(Debug, Clone)]
+use crate::{domain::entities::model::external_model::ModelProvider, shared_kernel::enums::Task};
+
+#[derive(Debug, Clone, Default)]
 pub struct SearchCriterion {
-    // General fields
+    pub provider: Option<ModelProvider>,
     pub name: Option<String>,
     pub author: Option<String>,
-    pub tags: Option<Vec<String>>,
-    pub model_type: Option<String>,
-    pub libraries: Option<Vec<String>>,
-    pub task_types: Option<Vec<Task>>,
-    pub regulatory: Option<Vec<String>>,
+    pub inference_runtimes: Vec<String>,
+    pub tags: Vec<String>,
+    pub task_types: Vec<Task>,
     pub license: Option<String>,
+    pub size: NumericRange<u64>,
+    pub likes: NumericRange<u128>,
+    pub downloads: NumericRange<u128>,
+    pub deployment_strategies: Vec<DeploymentStrategyCriterion>,
+    pub has_deployment_strategies: Option<bool>,
 }
 
-/// Each field in the ModelMetadata will be ANDed and each individual SearchCriteron
-/// themselves will be ORed
+#[derive(Debug, Clone, Default)]
+pub struct NumericRange<T> {
+    pub min: Option<T>,
+    pub max: Option<T>,
+}
+
 #[derive(Debug, Clone)]
-pub struct SearchModelsInput {
+pub struct DeploymentStrategyCriterion {
+    pub name: String,
+    pub platform: Platform,
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchExternalModelsInput {
     pub criteria: Vec<SearchCriterion>,
-    pub options: SearchOptions
+    pub options: SearchOptions,
 }
 
 #[derive(Debug, Clone)]
 pub struct SearchOptions {
-    limit: Option<u16>,
+    limit: u16,
     cursor: Option<String>,
-    include_count: Option<bool>,
-    include_global_models: Option<bool>,
+    include_count: bool,
 }
 
 impl SearchOptions {
     pub const MAX_LIMIT: u16 = 1000;
     pub const DEFAULT_LIMIT: u16 = 100;
-    pub const DEFAULT_INCLUDE_COUNT: bool = false;
-    pub const DEFAULT_INCLUDE_GLOBAL_MODELS: bool = true;
 
-    pub fn new(
-        limit: Option<u16>, 
-        cursor: Option<String>, 
-        include_count: Option<bool>, 
-        include_global_models: Option<bool>,
-    ) -> Self {
-        let limit_final = if let Some(l) = limit {
-            l.min(Self::MAX_LIMIT)
-        } else {
-            Self::DEFAULT_LIMIT
-        };
-
-        let include_count_final = if let Some(ic) = include_count {
-            ic
-        } else {
-            Self::DEFAULT_INCLUDE_COUNT
-        };
-
-        let include_global_models_final = if let Some(igm) = include_global_models {
-            igm
-        } else {
-            Self::DEFAULT_INCLUDE_GLOBAL_MODELS
-        };
-
+    pub fn new(limit: Option<u16>, cursor: Option<String>, include_count: Option<bool>) -> Self {
         Self {
-            limit: Some(limit_final),
+            limit: limit
+                .unwrap_or(Self::DEFAULT_LIMIT)
+                .clamp(1, Self::MAX_LIMIT),
             cursor,
-            include_count: Some(include_count_final),
-            include_global_models: Some(include_global_models_final),
+            include_count: include_count.unwrap_or(false),
         }
     }
 
-    pub fn limit(&self) -> Option<u16> {
-        return self.limit.clone()
+    pub fn limit(&self) -> u16 {
+        self.limit
     }
 
-    pub fn cursor(&self) -> Option<String> {
-        return self.cursor.clone()
+    pub fn cursor(&self) -> Option<&str> {
+        self.cursor.as_deref()
     }
 
-    pub fn include_count(&self) -> Option<bool> {
-        return self.include_count.clone()
-    }
-
-    pub fn include_global_models(&self) -> Option<bool> {
-        return self.include_global_models.clone()
+    pub fn include_count(&self) -> bool {
+        self.include_count
     }
 }

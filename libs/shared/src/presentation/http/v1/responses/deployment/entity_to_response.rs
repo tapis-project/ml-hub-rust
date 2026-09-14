@@ -28,8 +28,7 @@ impl From<entities::DesiredState> for responses::DesiredState {
 impl From<entities::ModelReference> for responses::ModelReference {
     fn from(value: entities::ModelReference) -> Self {
         Self {
-            name: value.name,
-            author: value.author,
+            model_id: value.model_id,
         }
     }
 }
@@ -37,11 +36,21 @@ impl From<entities::ModelReference> for responses::ModelReference {
 impl From<&entities::ParallelismStrategy> for responses::ParallelismStrategy {
     fn from(value: &entities::ParallelismStrategy) -> Self {
         match value {
-            entities::ParallelismStrategy::PipelineParallelism => responses::ParallelismStrategy::PipelineParallelism,
-            entities::ParallelismStrategy::TensorParallelism => responses::ParallelismStrategy::TensorParallelism,
-            entities::ParallelismStrategy::SequenceParallelism => responses::ParallelismStrategy::SequenceParallelism,
-            entities::ParallelismStrategy::ContextParallelism => responses::ParallelismStrategy::ContextParallelism,
-            entities::ParallelismStrategy::ExpertParallelism => responses::ParallelismStrategy::ExpertParallelism,
+            entities::ParallelismStrategy::PipelineParallelism => {
+                responses::ParallelismStrategy::PipelineParallelism
+            }
+            entities::ParallelismStrategy::TensorParallelism => {
+                responses::ParallelismStrategy::TensorParallelism
+            }
+            entities::ParallelismStrategy::SequenceParallelism => {
+                responses::ParallelismStrategy::SequenceParallelism
+            }
+            entities::ParallelismStrategy::ContextParallelism => {
+                responses::ParallelismStrategy::ContextParallelism
+            }
+            entities::ParallelismStrategy::ExpertParallelism => {
+                responses::ParallelismStrategy::ExpertParallelism
+            }
         }
     }
 }
@@ -50,7 +59,8 @@ impl From<entities::ReplicaGroup> for responses::ReplicaGroup {
     fn from(value: entities::ReplicaGroup) -> Self {
         Self {
             count: value.count,
-            parallelism_strategies: value.parallelism_strategies
+            parallelism_strategies: value
+                .parallelism_strategies
                 .iter()
                 .map(|s| responses::ParallelismStrategy::from(s))
                 .collect(),
@@ -60,16 +70,16 @@ impl From<entities::ReplicaGroup> for responses::ReplicaGroup {
 
 impl From<entities::RestApi> for responses::RestApi {
     fn from(value: entities::RestApi) -> Self {
-        Self {
-            spec: value.spec,
-        }
+        Self { spec: value.spec }
     }
 }
 
 impl From<entities::ModelDeploymentInterface> for responses::ModelDeploymentInterface {
     fn from(value: entities::ModelDeploymentInterface) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(r) => responses::ModelDeploymentInterface::RestApi(responses::RestApi::from(r))
+            entities::ModelDeploymentInterface::RestApi(r) => {
+                responses::ModelDeploymentInterface::RestApi(responses::RestApi::from(r))
+            }
         }
     }
 }
@@ -94,13 +104,14 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             visibility: Visibility::from(value.visibility.clone()),
             revision: value.revision().clone(),
             deployment_strategy: value.deployment_strategy.clone(),
-            deployment_interface: value.deployment_interface
+            deployment_interface: value
+                .deployment_interface
                 .clone()
                 .and_then(|mdi| Some(responses::ModelDeploymentInterface::from(mdi))),
-            metadata: value.metadata
+            metadata: value
+                .metadata
                 .clone()
                 .and_then(|m| Some(m.into_inner().clone())),
         }
     }
 }
-

@@ -1,7 +1,7 @@
-use crate::domain::entities::model_metadata::{ModelMetadata, ModelMetadataError};
-use crate::domain::entities::deployment_strategy::strategy::{Strategy, ViableStrategy};
 use crate::domain::entities::deployment_strategy::rule_set::Rule;
-use crate::domain::entities::operator::{Operator, OperandError};
+use crate::domain::entities::deployment_strategy::strategy::{Strategy, ViableStrategy};
+use crate::domain::entities::model::external_model::{ExternalModel, ExternalModelError};
+use crate::domain::entities::operator::{OperandError, Operator};
 use serde_json::Value;
 use thiserror::Error;
 
@@ -9,30 +9,34 @@ use thiserror::Error;
 pub enum StrategyEvaluationError {
     #[error("Error evaluating strategy rule: {0}")]
     RuleError(#[from] OperandError),
-    
-    #[error("Model Metadata Error: {0}")]
-    MetadataError(#[from] ModelMetadataError),
+
+    #[error("Model error: {0}")]
+    ModelError(#[from] ExternalModelError),
 }
 
 /// Iterates over the provided strategies and determines whether a strategy is viable
-/// for the provided metadata. If any of the rules in the rule sets of the strategy
+/// for the provided model. If any of the rules in the rule sets of the strategy
 /// are false, then the strategy is not valid.
-pub fn resolve_viable_strategies(model_metadata: &ModelMetadata, strategies: &Vec<Strategy>) -> Result<Vec<ViableStrategy>, StrategyEvaluationError> {
+pub fn resolve_viable_strategies(
+    model: &ExternalModel,
+    strategies: &[Strategy],
+) -> Result<Vec<ViableStrategy>, StrategyEvaluationError> {
     let mut viable_strategies: Vec<ViableStrategy> = Vec::new();
-    
+
     for strat in strategies {
         let mut is_viable_strat = true;
 
         for rule_set in strat.rule_sets() {
             for rule in rule_set.rules.clone() {
-                is_viable_strat = is_viable_strat && evaluate_rule(model_metadata, &rule)?;
+                is_viable_strat = is_viable_strat && evaluate_rule(model, &rule)?;
+
                 if !is_viable_strat {
-                    break
+                    break;
                 }
             }
 
             if !is_viable_strat {
-                break
+                break;
             }
         }
 
@@ -44,9 +48,14 @@ pub fn resolve_viable_strategies(model_metadata: &ModelMetadata, strategies: &Ve
     Ok(viable_strategies)
 }
 
-pub(super) fn evaluate_rule(model_metadata: &ModelMetadata, rule: &Rule) -> Result<bool, StrategyEvaluationError> {
-    let value: Value = model_metadata.get_field_value_at_field_path(&rule.field_path)?.into();
-    
+pub(super) fn evaluate_rule(
+    model: &ExternalModel,
+    rule: &Rule,
+) -> Result<bool, StrategyEvaluationError> {
+    let value: Value = model
+        .get_field_value_at_field_path(&rule.field_path)?
+        .into();
+
     match rule.operator {
         Operator::Eq => Ok(Operator::Eq.evaluate(&value, &rule.value)?),
         Operator::Neq => Ok(Operator::Neq.evaluate(&value, &rule.value)?),

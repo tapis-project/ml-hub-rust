@@ -435,44 +435,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d902e3d592a523def97af8f317b08ce16b7ab854c1985a0c671e6f15cebc236"
 
 [[package]]
-name = "artifact-ingester"
-version = "0.1.0"
-dependencies = [
- "amqprs",
- "async-trait",
- "client-provider",
- "clients",
- "env_logger",
- "futures-util",
- "log",
- "mongodb",
- "serde",
- "serde_json",
- "shared",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "artifact-publisher"
-version = "0.1.0"
-dependencies = [
- "amqprs",
- "async-trait",
- "client-provider",
- "clients",
- "env_logger",
- "futures-util",
- "log",
- "mongodb",
- "serde",
- "serde_json",
- "shared",
- "tokio",
- "uuid",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4228,6 +4190,7 @@ dependencies = [
  "partially",
  "platforms",
  "rand 0.9.2",
+ "regex",
  "reqwest 0.12.28",
  "retry-utils",
  "semver",

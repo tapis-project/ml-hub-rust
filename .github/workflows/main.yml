@@ -176,7 +176,7 @@ jobs:
       - diffs
       - tests
     secrets: inherit
-    uses: ./.github/workflows/huggingface-model-metadata-etl.yml
+    uses: ./.github/workflows/huggingface-model-etl.yml
     with:
       extract_stage_image_name: tapis/mlhub-hf-model-etl-extract
       extract_stage_image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}

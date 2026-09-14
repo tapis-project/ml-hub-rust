@@ -4,6 +4,6 @@ pub use shared::presentation::http::v1::responses::artifacts::{
     publications::ArtifactPublication,
 };
 pub use shared::presentation::http::v1::responses::models::{
-    ModelMetadata,
+    Model,
     ModelArtifact,
 };

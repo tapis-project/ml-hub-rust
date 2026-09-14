@@ -1,4 +1,4 @@
-FROM node:19.0
+FROM node:22-bookworm
 
 RUN apt-get update
 

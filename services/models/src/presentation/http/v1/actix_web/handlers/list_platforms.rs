@@ -1,23 +1,39 @@
-use crate::presentation::http::v1::actix_web::response_helpers::{build_error_response, build_success_response};
-use client_provider::ClientProvider;
-use actix_web::{
-    get, Responder
+use crate::presentation::http::v1::actix_web::response_helpers::{
+    build_error_response, build_success_response,
 };
+use actix_web::{get, Responder};
+use client_provider::ClientProvider;
 use serde_json::to_value;
 use shared::presentation::http::v1::contracts;
 use shared::presentation::http::v1::responses::platform_details::PlatformDetails;
 
 #[utoipa::path(
     get,
-    path="/models-api/platforms",
-    tag="Platforms",
-    description="List all external platforms integrated with this deployment of MLHub",
+    path = "/models-api/platforms",
+    tag = "Platforms",
+    description = "List all external platforms integrated with this deployment of MLHub",
     responses(
-        (status=200, description="Listed platforms", body=contracts::responses::ListPlatformsResponse),
-        (status=400, description="Not found", body=contracts::responses::BadRequestResponse),
-        (status=404, description="Not found", body=contracts::responses::NotFoundResponse),
-        (status=500, description="Not found", body=contracts::responses::ServerErrorResponse),
-    )
+        (
+            status = 200,
+            description = "Listed platforms",
+            body = contracts::responses::ListPlatformsResponse
+        ),
+        (
+            status = 400,
+            description = "Not found",
+            body = contracts::responses::BadRequestResponse
+        ),
+        (
+            status = 404,
+            description = "Not found",
+            body = contracts::responses::NotFoundResponse
+        ),
+        (
+            status = 500,
+            description = "Not found",
+            body = contracts::responses::ServerErrorResponse
+        ),
+    ),
 )]
 #[get("models-api/platforms")]
 async fn list_platforms() -> impl Responder {
@@ -30,12 +46,12 @@ async fn list_platforms() -> impl Responder {
         }
         response.push(PlatformDetails {
             name: platform,
-            capabilities: capabilities_resp
+            capabilities: capabilities_resp,
         });
     }
 
     match to_value(response) {
         Ok(v) => build_success_response(Some(v), Some("Success".into()), None),
-        Err(err) => build_error_response(500, err.to_string())
+        Err(err) => build_error_response(500, err.to_string()),
     }
 }

@@ -8,10 +8,12 @@ use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIng
 use thiserror::Error;
 
 use crate::domain::entities::artifact::ArtifactType;
-use crate::domain::entities::model_metadata::ModelMetadata;
-use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentError, DeployWithStrategyProps};
+use crate::domain::entities::deployment::{
+    DeployWithStrategyProps, ModelDeployment, ModelDeploymentError,
+};
 use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::domain::entities::deployment_strategy::strategy::StrategyError;
+use crate::domain::entities::model::{external_model::ExternalModel, Model};
 
 pub mod endpoint_issuance_service;
 
@@ -25,9 +27,12 @@ pub struct ArtifactService {}
 
 impl ArtifactService {
     /// Adds the final path of the ingestion to the artifact
-    pub fn finish_artifact_ingestion<'a>(artifact: &'a mut Artifact, ingestion: &ArtifactIngestion) -> Result<&'a mut Artifact, ArtifactServiceError> {
+    pub fn finish_artifact_ingestion<'a>(
+        artifact: &'a mut Artifact,
+        ingestion: &ArtifactIngestion,
+    ) -> Result<&'a mut Artifact, ArtifactServiceError> {
         if ingestion.status != ArtifactIngestionStatus::Finished {
-            return Err(ArtifactServiceError::InvalidIngestionState("Artifact ingestion must be Finished before setting the download url of an artifact".into()))
+            return Err(ArtifactServiceError::InvalidIngestionState("Artifact ingestion must be Finished before setting the download url of an artifact".into()));
         }
 
         match &ingestion.artifact_path {
@@ -43,26 +48,29 @@ impl ArtifactService {
 }
 
 #[derive(Debug, Error)]
-pub enum ModelMetadataServiceError {
-    #[error("Cannot create metadata for an artifact that is not fully ingested")]
+pub enum ModelServiceError {
+    #[error("Cannot associate a model with an artifact that is not fully ingested")]
     ArtifactNotReady,
 
     #[error("Invalid artifact type. Artifact must be of type 'Model'")]
-    InvalidArtifactType
+    InvalidArtifactType,
 }
 
-pub struct ModelMetadataService {}
+pub struct ModelService {}
 
-impl ModelMetadataService {
+impl ModelService {
     /// Verifies the the artifact exists and that the artifact has is fully
     /// ingested or uploaded
-    pub fn associate_metadata_with_artifact<'a>(artifact: &Artifact, _metadata: ModelMetadata) -> Result<(), ModelMetadataServiceError> {
+    pub fn associate_model_with_artifact(
+        artifact: &Artifact,
+        _model: &Model,
+    ) -> Result<(), ModelServiceError> {
         if !artifact.is_fully_ingested() {
-            return Err(ModelMetadataServiceError::ArtifactNotReady);
+            return Err(ModelServiceError::ArtifactNotReady);
         }
 
         if artifact.artifact_type != ArtifactType::Model {
-            return Err(ModelMetadataServiceError::InvalidArtifactType);
+            return Err(ModelServiceError::InvalidArtifactType);
         }
 
         return Ok(());
@@ -74,10 +82,12 @@ pub enum ModelDeploymentDomainServiceError {
     #[error("Cannot create model deployment for model {0}/{1}. Artifact for the selected model must be fully ingested")]
     ArtifactIngestionRequired(String, String),
 
-    #[error("Provided ModelMetadata and Artifact have different ids: Model metadata artifact id: {0}. Artifact id {1}")]
+    #[error(
+        "Provided Model and Artifact have different ids: Model artifact id: {0}. Artifact id {1}"
+    )]
     MismatchedArtifactIds(String, String),
 
-    #[error("The artifact associated with this deployment's model metadata is not a Model artifact")]
+    #[error("The artifact associated with this deployment's model is not a Model artifact")]
     InvalidArtifactType,
 
     #[error(transparent)]
@@ -87,11 +97,11 @@ pub enum ModelDeploymentDomainServiceError {
     ArgumentEncryptionError(#[from] CipherError),
 
     #[error(transparent)]
-    StrategyError(#[from] StrategyError)
+    StrategyError(#[from] StrategyError),
 }
 
 pub struct ModelDeploymentService {
-    cipher: Arc<dyn Cipher>
+    cipher: Arc<dyn Cipher>,
 }
 
 impl ModelDeploymentService {
@@ -101,29 +111,27 @@ impl ModelDeploymentService {
 
     pub async fn deploy_model_with_strategy(
         &self,
-        _model_metadata: &ModelMetadata,
-        // TODO Uncomment the line below when ready. Details found in the issue below 
+        _model: &ExternalModel,
+        // TODO Uncomment the line below when ready. Details found in the issue below
         // https://github.com/tapis-project/ml-hub-rust/issues/73
         // artifact: &Artifact,
         props: DeployWithStrategyProps,
         strategy: &Strategy,
     ) -> Result<ModelDeployment, ModelDeploymentDomainServiceError> {
-        // TODO Uncomment all lines below when ready. Details found in the issue below 
+        // TODO Uncomment all lines below when ready. Details found in the issue below
         // https://github.com/tapis-project/ml-hub-rust/issues/73
-        // if model_metadata.artifact_id.is_none() {
-        //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
+        // if model.artifact_id.is_none() {
         // };
 
-        // if model_metadata.artifact_id != Some(artifact.id) {
-        //     return Err(ModelDeploymentServiceError::MismatchedArtifactIds(model_metadata.artifact_id.and_then(|id| Some(id.to_string())).unwrap_or(String::from("NULL")), artifact.id.to_string()))
+        // if model.artifact_id != Some(artifact.id) {
+        //     return Err(ModelDeploymentServiceError::MismatchedArtifactIds(model.artifact_id.and_then(|id| Some(id.to_string())).unwrap_or(String::from("NULL")), artifact.id.to_string()))
         // };
 
         // if artifact.artifact_type != ArtifactType::Model {
         //     return Err(ModelDeploymentServiceError::InvalidArtifactType)
         // };
-        
+
         // if !artifact.is_fully_ingested() {
-        //     return Err(ModelDeploymentServiceError::ArtifactIngestionRequired(props.model.author, props.model.name))
         // };
 
         Ok(ModelDeployment::deploy_with_srategy(props, strategy)?)

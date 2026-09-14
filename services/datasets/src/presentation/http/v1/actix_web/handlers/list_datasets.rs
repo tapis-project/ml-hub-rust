@@ -20,9 +20,16 @@ use shared::{
     summary = "List datasets with at most the first 50 items from each",
     params(ListDatasetsQueryParams),
     responses(
-        (status = 200, description = "Datasets listed", body = ListDatasetsResponse),
-        (status = 500, description = "Unable to list datasets"),
-    )
+        (
+            status = 200,
+            description = "Datasets listed",
+            body = ListDatasetsResponse
+        ),
+        (
+            status = 500,
+            description = "Unable to list datasets"
+        ),
+    ),
 )]
 #[get("datasets-api/datasets")]
 pub async fn list_datasets(

@@ -61,7 +61,7 @@ cd "$here/deployments"
 
 echo "Starting ETL Pipelines"
 
-cd "$here/model-metadata-etl-pipelines/hf-model-etl"
+cd "$here/model-etl-pipelines/hf-model-etl"
 ./run.sh "$overlay"
 
 cd "$here/dataset-etl-pipelines/hf-dataset-etl"

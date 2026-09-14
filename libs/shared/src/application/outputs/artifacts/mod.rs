@@ -1,7 +1,7 @@
 use crate::domain::entities::artifact::Artifact;
-use crate::domain::entities::model_metadata::ModelMetadata;
+use crate::domain::entities::model::Model;
 
 pub struct ModelArtifactOutput {
     pub artifact: Artifact,
-    pub metadata: Option<ModelMetadata>
+    pub model: Option<Model>
 }

@@ -72,7 +72,7 @@ impl ArtifactPublication {
             Status::Pending => {
                 match to {
                     Status::Extracting
-                    | Status::PublishingMetadata
+                    | Status::PublishingModel
                     | Status::Failed => true,
                     _ => false
                 }
@@ -99,19 +99,19 @@ impl ArtifactPublication {
             Status::PublishedArtifact => {
                 match to {
                     Status::Finished
-                    | Status::PublishingMetadata
+                    | Status::PublishingModel
                     | Status::Failed => true,
                     _ => false
                 }
             },
-            Status::PublishingMetadata => {
+            Status::PublishingModel => {
                 match to {
-                    Status::PublishedMetadata
+                    Status::PublishedModel
                     | Status::Failed => true,
                     _ => false
                 }
             },
-            Status::PublishedMetadata => {
+            Status::PublishedModel => {
                 match to {
                     Status::Finished
                     | Status::Failed => true,
@@ -135,8 +135,8 @@ pub enum ArtifactPublicationStatus {
     Pending,
     Extracting,
     Extracted,
-    PublishingMetadata,
-    PublishedMetadata,
+    PublishingModel,
+    PublishedModel,
     PublishingArtifact,
     PublishedArtifact,
     Finished,
@@ -152,8 +152,8 @@ impl ArtifactPublicationStatus {
             Self::Pending => "Pending",
             Self::Extracting => "Extracting",
             Self::Extracted => "Extracted",
-            Self::PublishingMetadata => "PublishingMetadata",
-            Self::PublishedMetadata => "PublishedMetadata",
+            Self::PublishingModel => "PublishingModel",
+            Self::PublishedModel => "PublishedModel",
             Self::PublishingArtifact => "PublishingArtifact",
             Self::PublishedArtifact => "PublishedArtifact",
             Self::Finished => "Finished",

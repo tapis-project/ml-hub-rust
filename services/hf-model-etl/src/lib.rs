@@ -6,13 +6,13 @@ pub mod database;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum HFModelMetadataError {
+pub enum HFModelError {
     #[error("Failed to parse model id from huggingface model: {0}")]
     MalformedModelId(String)
 }
 
 #[derive(Deserialize)]
-pub struct HFModelMetadata {
+pub struct HFModel {
     pub author: String,
     pub id: String,
     pub library_name: String,
@@ -30,7 +30,7 @@ pub struct CompoundTag {
     pub value: String
 }
 
-impl HFModelMetadata {
+impl HFModel {
     pub fn parse_compound_tags(&self) -> Vec<CompoundTag> {
         let mut hf_tags:Vec<CompoundTag> = Vec::new();
         for tag in self.tags.clone() {
@@ -54,7 +54,7 @@ impl HFModelMetadata {
         hf_tags
     }
     
-    pub fn get_model_name(&self) -> Result<String, HFModelMetadataError> {
+    pub fn get_model_name(&self) -> Result<String, HFModelError> {
         let parts: Vec<String> = self.id.clone()
             .split("/")
             .into_iter()
@@ -63,7 +63,7 @@ impl HFModelMetadata {
 
         match parts.get(1) {
             Some(p) => Ok(String::from(p)),
-            None => Err(HFModelMetadataError::MalformedModelId(format!("Expected there to be a '/' in the model's id but none found. Found '{}'", &self.id)))
+            None => Err(HFModelError::MalformedModelId(format!("Expected there to be a '/' in the model's id but none found. Found '{}'", &self.id)))
         }
     }
 }

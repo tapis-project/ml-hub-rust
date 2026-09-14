@@ -1,12 +1,12 @@
-pub mod entity_to_document;
 pub mod document_to_entity;
+pub mod entity_to_document;
 
-use std::collections::HashMap;
-use openapiv3::OpenAPI;
-use serde::{Deserialize, Serialize};
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
+use openapiv3::OpenAPI;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelDeployment {
@@ -32,14 +32,12 @@ pub struct ModelDeployment {
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,
     pub metadata: Option<HashMap<String, Value>>,
-    pub revision: u32, 
+    pub revision: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelReference {
-    pub name: String,
-    pub author: String,
-    pub tenant_id: String,
+    pub model_id: Uuid,
 }
 
 // #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -98,7 +96,7 @@ impl From<DesiredState> for String {
 #[serde(rename_all = "lowercase")]
 pub enum DeploymentModality {
     Batch,
-    Service
+    Service,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -134,7 +132,7 @@ pub enum ParallelismStrategy {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ModelDeploymentInterface {
-    RestApi(RestApi)
+    RestApi(RestApi),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

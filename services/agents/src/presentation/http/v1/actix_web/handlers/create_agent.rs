@@ -12,8 +12,24 @@ use crate::presentation::http::v1::{
     responses::Agent,
 };
 
-#[utoipa::path(post, path = "/agents-api/agents", tag = "Agents", summary = "Register an agent", request_body = CreateAgentBody,
-    responses((status = 200, description = "Agent registered", body = CreateAgentResponse), (status = 500, description = "Unable to register agent")))]
+#[utoipa::path(
+    post,
+    path = "/agents-api/agents",
+    tag = "Agents",
+    summary = "Register an agent",
+    request_body = CreateAgentBody,
+    responses(
+        (
+            status = 200,
+            description = "Agent registered",
+            body = CreateAgentResponse
+        ),
+        (
+            status = 500,
+            description = "Unable to register agent"
+        ),
+    ),
+)]
 #[post("agents-api/agents")]
 pub async fn create_agent(
     body: web::Json<CreateAgentBody>,

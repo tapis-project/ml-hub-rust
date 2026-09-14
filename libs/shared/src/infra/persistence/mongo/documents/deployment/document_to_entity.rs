@@ -1,8 +1,8 @@
 use crate::domain::entities::deployment::{self as entities, ModelDeploymentMetadata};
-use crate::shared_kernel::value_objects::TimeStamp;
-use crate::shared_kernel::enums::Visibility;
-use crate::shared_kernel::enums::DeploymentModality;
 use crate::infra::persistence::mongo::documents::deployment as documents;
+use crate::shared_kernel::enums::DeploymentModality;
+use crate::shared_kernel::enums::Visibility;
+use crate::shared_kernel::value_objects::TimeStamp;
 use uuid::Uuid;
 
 impl From<&documents::ModelDeployment> for entities::ModelDeployment {
@@ -21,7 +21,8 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
             desired_state: entities::DesiredState::from(value.desired_state.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
-            deployment_interface: value.deployment_interface
+            deployment_interface: value
+                .deployment_interface
                 .clone()
                 .and_then(|di| Some(entities::ModelDeploymentInterface::from(di))),
             deployment_strategy: value.deployment_strategy.clone(),
@@ -30,11 +31,12 @@ impl From<&documents::ModelDeployment> for entities::ModelDeployment {
             last_desired_state_change: TimeStamp::from(value.last_desired_state_change.to_chrono()),
             last_state_change: TimeStamp::from(value.last_state_change.to_chrono()),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
-            metadata: value.metadata
+            metadata: value
+                .metadata
                 .clone()
                 .and_then(|m| Some(ModelDeploymentMetadata(m))),
         };
-        
+
         entities::ModelDeployment::reconstitute(props)
     }
 }
@@ -43,10 +45,11 @@ impl From<documents::ReplicaGroup> for entities::ReplicaGroup {
     fn from(value: documents::ReplicaGroup) -> Self {
         Self {
             count: value.count,
-            parallelism_strategies: value.parallelism_strategies
+            parallelism_strategies: value
+                .parallelism_strategies
                 .iter()
                 .map(|ps| entities::ParallelismStrategy::from(ps.clone()))
-                .collect()
+                .collect(),
         }
     }
 }
@@ -55,7 +58,7 @@ impl From<documents::DeploymentModality> for DeploymentModality {
     fn from(value: documents::DeploymentModality) -> Self {
         match value {
             documents::DeploymentModality::Batch => DeploymentModality::Batch,
-            documents::DeploymentModality::Service => DeploymentModality::Service
+            documents::DeploymentModality::Service => DeploymentModality::Service,
         }
     }
 }
@@ -63,11 +66,21 @@ impl From<documents::DeploymentModality> for DeploymentModality {
 impl From<documents::ParallelismStrategy> for entities::ParallelismStrategy {
     fn from(value: documents::ParallelismStrategy) -> Self {
         match value {
-            documents::ParallelismStrategy::PipelineParallelism => entities::ParallelismStrategy::PipelineParallelism,
-            documents::ParallelismStrategy::TensorParallelism => entities::ParallelismStrategy::TensorParallelism,
-            documents::ParallelismStrategy::SequenceParallelism => entities::ParallelismStrategy::SequenceParallelism,
-            documents::ParallelismStrategy::ContextParallelism => entities::ParallelismStrategy::ContextParallelism,
-            documents::ParallelismStrategy::ExpertParallelism => entities::ParallelismStrategy::ExpertParallelism,
+            documents::ParallelismStrategy::PipelineParallelism => {
+                entities::ParallelismStrategy::PipelineParallelism
+            }
+            documents::ParallelismStrategy::TensorParallelism => {
+                entities::ParallelismStrategy::TensorParallelism
+            }
+            documents::ParallelismStrategy::SequenceParallelism => {
+                entities::ParallelismStrategy::SequenceParallelism
+            }
+            documents::ParallelismStrategy::ContextParallelism => {
+                entities::ParallelismStrategy::ContextParallelism
+            }
+            documents::ParallelismStrategy::ExpertParallelism => {
+                entities::ParallelismStrategy::ExpertParallelism
+            }
         }
     }
 }
@@ -98,25 +111,23 @@ impl From<documents::DesiredState> for entities::DesiredState {
 impl From<documents::ModelReference> for entities::ModelReference {
     fn from(value: documents::ModelReference) -> Self {
         Self {
-            name: value.name,
-            author: value.author,
-            tenant_id: value.tenant_id,
+            model_id: uuid::Uuid::from_bytes(value.model_id.bytes()),
         }
     }
 }
 
 impl From<documents::RestApi> for entities::RestApi {
     fn from(value: documents::RestApi) -> Self {
-        Self {
-            spec: value.spec
-        }
+        Self { spec: value.spec }
     }
 }
 
 impl From<documents::ModelDeploymentInterface> for entities::ModelDeploymentInterface {
     fn from(value: documents::ModelDeploymentInterface) -> Self {
         match value {
-            documents::ModelDeploymentInterface::RestApi(i) => entities::ModelDeploymentInterface::RestApi(entities::RestApi::from(i))
+            documents::ModelDeploymentInterface::RestApi(i) => {
+                entities::ModelDeploymentInterface::RestApi(entities::RestApi::from(i))
+            }
         }
     }
 }
