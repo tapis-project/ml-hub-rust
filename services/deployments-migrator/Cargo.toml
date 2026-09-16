@@ -1,0 +1,12 @@
+[package]
+name = "deployments-migrator"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+async-trait = "0.1.89"
+mongodb = "3.4.1"
+shared = { version = "0.1.0", path = "../../libs/shared" }
+tfiala-mongodb-migrator = "0.2.6"
+tokio = { version = "1", features = ["full"] }

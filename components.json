@@ -13,6 +13,7 @@
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/mlhub-models-api",
     "models-migrator-image": "tapis/mlhub-models-migrator",
+    "deployments-migrator-image": "tapis/mlhub-deployments-migrator",
     "principals-migrator-image": "tapis/mlhub-principals-migrator",
     "federated-identities-migrator-image": "tapis/mlhub-federated-identities-migrator",
     "datasets-deployment": "mlhub-datasets-api-deployment",
@@ -103,6 +104,22 @@
         "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
         "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
         "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
+        "code": "code {{ self.rootDir }}",
+        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
+        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
+      }
+    },
+    {
+      "name": "deployments-migrator",
+      "description": "Standalone MongoDB schema migrator for the Deployments API",
+      "rootDir": "services/deployments-migrator",
+      "lifecycle": "experimental",
+      "commands": {
+        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "install": "cargo install --path {{ self.rootDir }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} . && minikube image rm {{ {{ self.name }}-image }}:{{ local }} && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
         "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
@@ -676,9 +693,10 @@
       "labels": ["workflow"],
       "lifecycle": "experimental",
       "commands": {
-        "buildl-all": "./dev buildl models-migrator federated-identities-migrator principals-migrator",
-        "run-all": "./dev run-models migrations -t overlay {{ overlay }} && ./dev run-federated-identities migrations -t overlay {{ overlay }} && ./dev run-principals migrations -t overlay {{ overlay }}",
+        "buildl-all": "./dev buildl models-migrator deployments-migrator federated-identities-migrator principals-migrator",
+        "run-all": "./dev run-models migrations -t overlay {{ overlay }} && ./dev run-deployments migrations -t overlay {{ overlay }} && ./dev run-federated-identities migrations -t overlay {{ overlay }} && ./dev run-principals migrations -t overlay {{ overlay }}",
         "run-models": "cd {{ k8s-dir }}/{{ self.name }}/models-migrator && ./burnup.sh {{ overlay }}",
+        "run-deployments": "cd {{ k8s-dir }}/{{ self.name }}/deployments-migrator && ./burnup.sh {{ overlay }}",
         "run-federated-identities": "cd {{ k8s-dir }}/{{ self.name }}/federated-identities-migrator && ./burnup.sh {{ overlay }}",
         "run-principals": "cd {{ k8s-dir }}/{{ self.name }}/principals-migrator && ./burnup.sh {{ overlay }}"
       }

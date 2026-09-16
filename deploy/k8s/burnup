@@ -42,6 +42,9 @@ echo "Starting Migrations"
 cd "$here/migrations/models-migrator"
 ./burnup.sh "$overlay"
 
+cd "$here/migrations/deployments-migrator"
+./burnup.sh "$overlay"
+
 cd "$here/migrations/principals-migrator"
 ./burnup.sh "$overlay"
 

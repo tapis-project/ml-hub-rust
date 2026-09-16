@@ -645,12 +645,13 @@ impl ModelConversionClient for HuggingFaceClient {
 
         let recognized_runtimes = [
             "transformers",
+            "vllm",
+            "sglang",
+            "pytorch",
             "diffusers",
             "tensorflow",
-            "pytorch",
             "onnx",
             "mlx",
-            "llm",
         ];
 
         let mut inference_runtimes = Vec::new();

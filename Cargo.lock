@@ -1090,6 +1090,19 @@ dependencies = [
  "shared",
  "utoipa",
  "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "deployments-migrator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "mongodb",
+ "shared",
+ "tfiala-mongodb-migrator",
+ "tokio",
 ]
 
 [[package]]

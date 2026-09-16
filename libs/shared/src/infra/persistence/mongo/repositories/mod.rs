@@ -6,6 +6,7 @@ mod dataset_repository;
 mod deployment_repository;
 mod endpoint_repository;
 mod external_model_repository;
+mod hpc_cluster_repository;
 mod model_repository;
 
 pub use agent_record_repository::AgentRecordRepository;
@@ -16,4 +17,5 @@ pub use dataset_repository::DatasetRepository;
 pub use deployment_repository::ModelDeploymentRepository;
 pub use endpoint_repository::EndpointRepository;
 pub use external_model_repository::ExternalModelRepository;
+pub use hpc_cluster_repository::HpcClusterRepository;
 pub use model_repository::ModelRepository;

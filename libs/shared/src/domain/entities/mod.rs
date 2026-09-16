@@ -9,6 +9,7 @@ pub mod deployment;
 pub mod deployment_strategy;
 pub mod domain;
 pub mod endpoint;
+pub mod hpc_cluster;
 pub mod identity;
 pub mod model;
 pub mod operator;

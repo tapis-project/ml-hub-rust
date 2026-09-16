@@ -2,6 +2,7 @@ pub mod common;
 pub mod artifacts;
 pub mod artifact_ingestion;
 pub mod artifact_publication;
+pub mod hpc_cluster;
 pub mod model;
 // pub mod skills;
 // pub mod domains;

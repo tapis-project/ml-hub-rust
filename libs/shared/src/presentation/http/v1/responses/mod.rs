@@ -8,6 +8,7 @@ pub mod agent_records;
 pub mod agents;
 pub mod endpoints;
 pub mod deployment;
+pub mod hpc_clusters;
 pub mod operators;
 pub mod visibility;
 pub mod tasks;

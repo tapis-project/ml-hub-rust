@@ -14,3 +14,4 @@ pub mod cipher;
 pub mod errors;
 pub mod deployment_argument;
 pub mod dataset;
+pub mod hpc_cluster;

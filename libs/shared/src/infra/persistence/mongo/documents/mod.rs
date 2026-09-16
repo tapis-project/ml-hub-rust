@@ -8,6 +8,7 @@ pub mod agent_record;
 pub mod dataset;
 pub mod deployment;
 pub mod endpoint;
+pub mod hpc_cluster;
 pub mod task;
 pub mod visibility;
 pub mod external_model;

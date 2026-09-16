@@ -1,6 +1,7 @@
+pub mod errors;
 pub mod inputs;
 pub mod outputs;
-pub mod services;
 pub mod ports;
-pub mod errors;
+pub mod rbac;
+pub mod services;
 pub mod workflows;

@@ -11,6 +11,7 @@ pub mod external_model_discovery_service;
 pub mod external_model_ingestion_service;
 pub mod federated_identity_service;
 pub mod federated_idp_registrar;
+pub mod hpc_cluster_query_service;
 pub mod model_artifact_association_service;
 pub mod model_creation_service;
 pub mod model_deployment_controller;

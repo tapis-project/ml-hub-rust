@@ -50,6 +50,7 @@ runs:
           artifact-ingester
           artifact-publisher
           models-migrator
+          deployments-migrator
           principals-migrator
           federated-identities-migrator
           hf-model-etl

@@ -1,0 +1,20 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-deployments-migrator
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-deployments-migrator
+      spec:
+        template:
+          spec:
+            containers:
+              - name: deployments-migrator
+                image: tapis/mlhub-deployments-migrator:local
+                imagePullPolicy: Never
+                resources: {}

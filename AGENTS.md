@@ -13,7 +13,7 @@ These instructions apply throughout this repository.
 - MLHub uses presentation, application, domain, infrastructure, and bootstrap layers. Reusable implementations belong in `libs/shared`; services re-export the shared modules they consume rather than duplicating them.
 - Keep HTTP handlers and route registration service-local. Give every handler its own file and register handlers following the Models and Deployments pattern; do not introduce a route-configuration function where those services do not use one.
 - Put each mapper in its own file. Prefer `From` for infallible conversion and `TryFrom` for fallible conversion over named mapping functions.
-- Use a directory with `mod.rs` when a component has adjacent tests or supporting files. A component with no tests or support files may remain in a same-named file.
+- Across every architectural layer and every kind of Rust code—including entities, services, repositories, handlers, DTOs, mappers, clients, and utilities—a component with any adjacent test or supporting file must live in its own same-named directory with the implementation in `mod.rs`. Keep the test and every supporting file inside that directory; never place `component.rs` and `component.test.rs` as siblings in their parent module. A component with no tests or support files may remain in a same-named file.
 
 ## Domain and application rules
 
@@ -22,11 +22,13 @@ These instructions apply throughout this repository.
 - Prefer semantic domain queries over exposing nested value objects. When a new value object needs an access interface and the desired encapsulation is unclear, ask before choosing it.
 - Application-service methods take `&RequestContext` as their first argument. Derive tenancy and principal information from that context, not HTTP input.
 - Infrastructure uses its own persistence document DTOs and conversions. Do not query or persist enum/string storage literals directly when a document DTO exists.
+- Persistence and presentation DTOs must not use polymorphic enum payloads for concepts that can grow by adding explicitly named fields. Model each supported variant as its own optional field, following the Dataset provider/locator pattern, and add a new field when support expands. Include a separate enum discriminator when serialization or deserialization must select one of those fields, and validate that the discriminator and populated field agree. Domain enums may still enforce the internal invariant; map them explicitly at the DTO boundary.
 
 ## Presentation and API rules
 
 - Put request/response DTOs and OpenAPI contracts in shared presentation modules; use validation at the request boundary to fail fast while retaining domain validation as authoritative.
 - Use lower_snake_case for field names. Preserve Rust enum variant casing on the wire unless the API explicitly requires a transformation.
+- Do not expose tagged or untagged polymorphic unions in response DTOs when the contract can use one field per supported type. For example, hardware profiles expose `gpu`, and future accelerator support adds sibling fields rather than changing the shape behind a generic `accelerator` field.
 - Document handlers with Utoipa. Generated OpenAPI is source-derived: do not manually edit checked-in generated specifications unless explicitly requested.
 - Write `#[utoipa::path(...)]` attributes across multiple lines. Every comma-separated argument gets its own properly indented line: put the HTTP method, path, tag, summary or description, parameters, request body, and response block on separate lines; within parameter and response tuples, put each comma-separated field on its own nested line; and put each response entry in its own indented block. Never use a one-line Utoipa path attribute.
 - Utoipa does not reliably expose an enum's variants when an `IntoParams` query or path field is emitted as a component reference. Add `#[param(inline)]` to enum-valued parameter fields and test the generated operation parameter for its inline `schema.enum` values; follow the Agents scope-query example.
