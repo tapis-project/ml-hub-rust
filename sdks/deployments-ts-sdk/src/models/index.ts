@@ -1,12 +1,23 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AcceleratorType';
 export * from './Argument';
 export * from './BadRequestResponse';
+export * from './BatchSchedulerQueue';
+export * from './BillingMetric';
+export * from './BillingPolicy';
 export * from './Choice';
+export * from './DataCenter';
 export * from './DeployModelWithStrategyBody';
 export * from './DeploymentModality';
 export * from './DesiredState';
+export * from './GetHpcClusterResponse';
+export * from './GpuProfile';
+export * from './HardwareProfile';
+export * from './HpcCluster';
+export * from './HpcClusterSummary';
 export * from './ListDeploymentStrategiesResponse';
+export * from './ListHpcClustersResponse';
 export * from './ListModelDeploymentsResponse';
 export * from './ModelDeployment';
 export * from './ModelDeploymentInterface';
@@ -20,6 +31,8 @@ export * from './ParameterType';
 export * from './Platform';
 export * from './ReplicaGroup';
 export * from './RestApi';
+export * from './SchedulerType';
+export * from './SchedulingPolicy';
 export * from './ServerErrorResponse';
 export * from './State';
 export * from './Strategy';
