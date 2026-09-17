@@ -1,16 +1,10 @@
 use crate::application::ports::events::payloads::{
-    ModelDeploymentStateDriftDetectedPayload,
-    ModelDeploymentDeletedPayload,
-    ModelDeploymentStartedPayload,
-    ModelDeploymentStoppedPayload,
+    ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload,
+    ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload,
 };
-use crate::application::ports::events::{
-    EventMetadata,
-    Payload,
-    Event,
-};
-use crate::infra::messaging::messages;
+use crate::application::ports::events::{Event, EventMetadata, Payload};
 use crate::infra::messaging::errors::SerializationError;
+use crate::infra::messaging::messages;
 use serde_json::{to_value, Value};
 
 impl TryFrom<&Event> for messages::EventEnvelope {
@@ -18,10 +12,18 @@ impl TryFrom<&Event> for messages::EventEnvelope {
 
     fn try_from(value: &Event) -> Result<Self, Self::Error> {
         let kind = match value {
-            Event::ModelDeploymentDeleted { payload, .. } => &Payload::ModelDeploymentDeletedPayload(payload.clone()).kind(),
-            Event::ModelDeploymentStarted { payload, .. } => &Payload::ModelDeploymentStartedPayload(payload.clone()).kind(),
-            Event::ModelDeploymentStopped { payload, .. } => &Payload::ModelDeploymentStoppedPayload(payload.clone()).kind(),
-            Event::ModelDeploymentStateDriftDetected { payload, .. } => &Payload::ModelDeploymentStateDriftDetectedPayload(payload.clone()).kind(),
+            Event::ModelDeploymentDeleted { payload, .. } => {
+                &Payload::ModelDeploymentDeletedPayload(payload.clone()).kind()
+            }
+            Event::ModelDeploymentStarted { payload, .. } => {
+                &Payload::ModelDeploymentStartedPayload(payload.clone()).kind()
+            }
+            Event::ModelDeploymentStopped { payload, .. } => {
+                &Payload::ModelDeploymentStoppedPayload(payload.clone()).kind()
+            }
+            Event::ModelDeploymentStateDriftDetected { payload, .. } => {
+                &Payload::ModelDeploymentStateDriftDetectedPayload(payload.clone()).kind()
+            }
         };
 
         Ok(messages::EventEnvelope {
@@ -29,7 +31,7 @@ impl TryFrom<&Event> for messages::EventEnvelope {
             event: messages::Event {
                 payload: Value::try_from(&value.payload())?,
                 metadata: messages::EventMetadata::from(value.metadata()),
-            }
+            },
         })
     }
 }
@@ -39,14 +41,22 @@ impl TryFrom<&Payload> for Value {
 
     fn try_from(value: &Payload) -> Result<Self, Self::Error> {
         let payload = match value {
-            Payload::ModelDeploymentDeletedPayload(p) => to_value(messages::ModelDeploymentDeletedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
-            Payload::ModelDeploymentStartedPayload(p) => to_value(messages::ModelDeploymentStartedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
-            Payload::ModelDeploymentStateDriftDetectedPayload(p) => to_value(messages::ModelDeploymentStateDriftDetectedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
-            Payload::ModelDeploymentStoppedPayload(p) => to_value(messages::ModelDeploymentStoppedPayload::from(p))
-                .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?,
+            Payload::ModelDeploymentDeletedPayload(p) => {
+                to_value(messages::ModelDeploymentDeletedPayload::from(p))
+                    .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
+            }
+            Payload::ModelDeploymentStartedPayload(p) => {
+                to_value(messages::ModelDeploymentStartedPayload::from(p))
+                    .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
+            }
+            Payload::ModelDeploymentStateDriftDetectedPayload(p) => {
+                to_value(messages::ModelDeploymentStateDriftDetectedPayload::from(p))
+                    .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
+            }
+            Payload::ModelDeploymentStoppedPayload(p) => {
+                to_value(messages::ModelDeploymentStoppedPayload::from(p))
+                    .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
+            }
         };
 
         Ok(payload)
@@ -64,7 +74,9 @@ impl From<&EventMetadata> for messages::EventMetadata {
     }
 }
 
-impl From<&ModelDeploymentStateDriftDetectedPayload> for messages::ModelDeploymentStateDriftDetectedPayload {
+impl From<&ModelDeploymentStateDriftDetectedPayload>
+    for messages::ModelDeploymentStateDriftDetectedPayload
+{
     fn from(value: &ModelDeploymentStateDriftDetectedPayload) -> Self {
         Self {
             deployment_id: String::from(value.deployment_id),

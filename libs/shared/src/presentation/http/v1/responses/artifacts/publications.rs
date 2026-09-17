@@ -14,11 +14,11 @@ pub enum ArtifactPublicationStatus {
     PublishingArtifact,
     PublishedArtifact,
     Finished,
-    Failed
+    Failed,
 }
 
 #[derive(Serialize, ToSchema)]
-pub struct ArtifactPublication  {
+pub struct ArtifactPublication {
     pub id: String,
     pub status: ArtifactPublicationStatus,
     pub artifact_id: String,
@@ -32,16 +32,36 @@ pub struct ArtifactPublication  {
 impl From<entities::artifact_publication::ArtifactPublicationStatus> for ArtifactPublicationStatus {
     fn from(value: entities::artifact_publication::ArtifactPublicationStatus) -> Self {
         match value {
-            entities::artifact_publication::ArtifactPublicationStatus::Submitted => ArtifactPublicationStatus::Submitted,
-            entities::artifact_publication::ArtifactPublicationStatus::Pending => ArtifactPublicationStatus::Pending,
-            entities::artifact_publication::ArtifactPublicationStatus::Extracted => ArtifactPublicationStatus::Extracted,
-            entities::artifact_publication::ArtifactPublicationStatus::Extracting => ArtifactPublicationStatus::Extracting,
-            entities::artifact_publication::ArtifactPublicationStatus::PublishingArtifact => ArtifactPublicationStatus::PublishingArtifact,
-            entities::artifact_publication::ArtifactPublicationStatus::PublishedArtifact => ArtifactPublicationStatus::PublishedArtifact,
-            entities::artifact_publication::ArtifactPublicationStatus::PublishingModel => ArtifactPublicationStatus::PublishingModel,
-            entities::artifact_publication::ArtifactPublicationStatus::PublishedModel => ArtifactPublicationStatus::PublishedModel,
-            entities::artifact_publication::ArtifactPublicationStatus::Finished => ArtifactPublicationStatus::Finished,
-            entities::artifact_publication::ArtifactPublicationStatus::Failed => ArtifactPublicationStatus::Failed,
+            entities::artifact_publication::ArtifactPublicationStatus::Submitted => {
+                ArtifactPublicationStatus::Submitted
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::Pending => {
+                ArtifactPublicationStatus::Pending
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::Extracted => {
+                ArtifactPublicationStatus::Extracted
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::Extracting => {
+                ArtifactPublicationStatus::Extracting
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::PublishingArtifact => {
+                ArtifactPublicationStatus::PublishingArtifact
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::PublishedArtifact => {
+                ArtifactPublicationStatus::PublishedArtifact
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::PublishingModel => {
+                ArtifactPublicationStatus::PublishingModel
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::PublishedModel => {
+                ArtifactPublicationStatus::PublishedModel
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::Finished => {
+                ArtifactPublicationStatus::Finished
+            }
+            entities::artifact_publication::ArtifactPublicationStatus::Failed => {
+                ArtifactPublicationStatus::Failed
+            }
         }
     }
 }

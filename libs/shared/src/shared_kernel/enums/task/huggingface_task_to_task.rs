@@ -1,6 +1,5 @@
-
-use crate::shared_kernel::enums::task::Task;
 use crate::domain::external::huggingface::task;
+use crate::shared_kernel::enums::task::Task;
 
 impl From<task::Task> for Task {
     fn from(value: task::Task) -> Self {

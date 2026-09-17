@@ -1,10 +1,10 @@
 use std::time::Duration;
 
+use base64::prelude::*;
 use chrono::{DateTime, ParseError, Utc};
 use semver::Version;
 use serde::Serialize;
 use thiserror::Error;
-use base64::prelude::*;
 
 pub const MAX_TAGS: usize = 16;
 pub const MAX_TAG_LENGTH_BYTES: usize = 64;
@@ -166,7 +166,7 @@ impl Ttl {
 #[derive(Debug, Clone, Error)]
 pub enum Base64EncodedStringError {
     #[error("{0}")]
-    InvalidBase64Encoding(String)
+    InvalidBase64Encoding(String),
 }
 
 #[derive(Debug, Clone)]
@@ -178,13 +178,16 @@ impl Base64EncodedString {
     }
 
     pub fn decode(&self) -> Result<Vec<u8>, Base64EncodedStringError> {
-        BASE64_STANDARD.decode(&self.0)
+        BASE64_STANDARD
+            .decode(&self.0)
             .map_err(|e| Base64EncodedStringError::InvalidBase64Encoding(e.to_string()))
     }
 
     pub fn new_from_base64(payload: String) -> Result<Self, Base64EncodedStringError> {
         if BASE64_STANDARD.decode(&payload).is_err() {
-            return Err(Base64EncodedStringError::InvalidBase64Encoding("Expected base64".into()));
+            return Err(Base64EncodedStringError::InvalidBase64Encoding(
+                "Expected base64".into(),
+            ));
         }
 
         Ok(Self(payload))

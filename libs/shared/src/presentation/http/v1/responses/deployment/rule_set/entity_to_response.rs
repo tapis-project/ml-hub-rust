@@ -16,10 +16,11 @@ impl From<entities::RuleSet> for dtos::RuleSet {
     fn from(value: entities::RuleSet) -> Self {
         Self {
             name: value.name,
-            rules: value.rules
+            rules: value
+                .rules
                 .iter()
                 .map(|r| dtos::Rule::from(r.clone()))
-                .collect()
+                .collect(),
         }
     }
 }

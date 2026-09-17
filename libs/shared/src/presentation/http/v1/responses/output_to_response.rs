@@ -1,6 +1,6 @@
 use crate::application::outputs::artifacts::ModelArtifactOutput;
-use crate::presentation::http::v1::responses;
 use crate::errors::Error;
+use crate::presentation::http::v1::responses;
 
 impl TryFrom<ModelArtifactOutput> for responses::models::ModelArtifact {
     type Error = Error;

@@ -88,7 +88,7 @@ impl ExternalModelIngestionService {
         }
 
         external_model.replace_deployment_strategies(references);
-        
+
         // Update and return external model
         if updating {
             retry_async(
@@ -98,7 +98,7 @@ impl ExternalModelIngestionService {
             )
             .await?;
 
-            return Ok(external_model)
+            return Ok(external_model);
         }
 
         // Nothing to update. Save and return external model

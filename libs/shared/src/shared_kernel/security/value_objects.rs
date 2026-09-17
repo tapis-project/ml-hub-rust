@@ -1,5 +1,5 @@
-use thiserror::Error;
 use nonempty::NonEmpty;
+use thiserror::Error;
 
 use std::fmt;
 
@@ -8,7 +8,7 @@ use crate::shared_kernel::value_objects::{Base64EncodedString, Base64EncodedStri
 #[derive(Debug, Clone, Error)]
 pub enum KeyIdError {
     #[error("Key Id MUST not be an empty string")]
-    EmptyKeyId
+    EmptyKeyId,
 }
 
 #[derive(Debug, Clone)]
@@ -17,7 +17,7 @@ pub struct KeyId(String);
 impl KeyId {
     pub fn new(id: &str) -> Result<Self, KeyIdError> {
         if id.len() == 0 {
-            return Err(KeyIdError::EmptyKeyId)
+            return Err(KeyIdError::EmptyKeyId);
         }
 
         Ok(Self(id.to_string()))
@@ -33,7 +33,7 @@ impl fmt::Display for KeyId {
 #[derive(Debug, Clone, Error)]
 pub enum NonceError {
     #[error("Nonce must not be empty")]
-    EmptyNonce
+    EmptyNonce,
 }
 
 #[derive(Debug, Clone)]
@@ -44,7 +44,7 @@ impl Nonce {
         let maybe_nonce = NonEmpty::from_vec(nonce);
         match maybe_nonce {
             Some(n) => Ok(Self(n)),
-            None => Err(NonceError::EmptyNonce)
+            None => Err(NonceError::EmptyNonce),
         }
     }
 }
@@ -56,7 +56,7 @@ impl TryFrom<Nonce> for Base64EncodedString {
 
     fn try_from(value: Nonce) -> Result<Self, Self::Error> {
         let bytes_vec: Vec<u8> = value.0.into_iter().collect();
-        
+
         Ok(Self::encode(&bytes_vec))
     }
 }
@@ -69,11 +69,11 @@ impl TryFrom<Base64EncodedString> for Nonce {
     fn try_from(value: Base64EncodedString) -> Result<Self, Self::Error> {
         // 1. Decode the base64 string using your existing implementation
         let raw_bytes = value.decode()?;
-        
+
         // 2. Map the constructor's empty check error into your expected return type
         Self::new(raw_bytes).map_err(|_empty_err| {
             Base64EncodedStringError::InvalidBase64Encoding(
-                "Decoded nonce byte sequence cannot be empty".into()
+                "Decoded nonce byte sequence cannot be empty".into(),
             )
         })
     }

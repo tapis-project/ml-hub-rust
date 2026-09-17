@@ -1,10 +1,10 @@
-use thiserror::Error;
 use shared::infra::fs::git::GitError;
+use thiserror::Error;
 
 #[derive(Debug)]
 pub enum ClientErrorScope {
     Client,
-    Server
+    Server,
 }
 
 #[derive(Debug, Error)]
@@ -12,31 +12,31 @@ pub enum ClientError {
     #[error("{scope:?} error (Internal Error): {msg}")]
     Internal {
         msg: String,
-        scope: ClientErrorScope
+        scope: ClientErrorScope,
     },
-    
+
     #[error("{scope:?} error (Unauthorized): {msg}")]
     Unauthorized {
         msg: String,
-        scope: ClientErrorScope
+        scope: ClientErrorScope,
     },
-    
+
     #[error("{scope:?} error (Forbidden): {msg}")]
     Forbidden {
         msg: String,
-        scope: ClientErrorScope
+        scope: ClientErrorScope,
     },
-    
+
     #[error("{scope:?} error (Not Found): {msg}")]
     NotFound {
         msg: String,
-        scope: ClientErrorScope
+        scope: ClientErrorScope,
     },
-    
+
     #[error("{scope:?} error (Bad Request): {msg}")]
     BadRequest {
         msg: String,
-        scope: ClientErrorScope
+        scope: ClientErrorScope,
     },
 
     #[error("Unimplemented")]
@@ -70,8 +70,14 @@ impl ClientError {
 impl From<GitError> for ClientError {
     fn from(value: GitError) -> Self {
         match value {
-            GitError::SystemError(err) => ClientError::Internal { msg: err.to_string(), scope: ClientErrorScope::Client },
-            err => ClientError::Internal { msg: err.to_string(), scope: ClientErrorScope::Server },
+            GitError::SystemError(err) => ClientError::Internal {
+                msg: err.to_string(),
+                scope: ClientErrorScope::Client,
+            },
+            err => ClientError::Internal {
+                msg: err.to_string(),
+                scope: ClientErrorScope::Server,
+            },
         }
     }
 }
@@ -79,13 +85,31 @@ impl From<GitError> for ClientError {
 impl From<&u16> for ClientError {
     fn from(value: &u16) -> Self {
         match value {
-            400 => ClientError::BadRequest { msg: value.to_string(), scope: ClientErrorScope::Server },
-            401 => ClientError::Unauthorized { msg: value.to_string(), scope: ClientErrorScope::Server },
-            403 => ClientError::Forbidden { msg: value.to_string(), scope: ClientErrorScope::Server },
-            404 => ClientError::NotFound { msg: value.to_string(), scope: ClientErrorScope::Server },
-            500 => ClientError::Internal { msg: value.to_string(), scope: ClientErrorScope::Server },
+            400 => ClientError::BadRequest {
+                msg: value.to_string(),
+                scope: ClientErrorScope::Server,
+            },
+            401 => ClientError::Unauthorized {
+                msg: value.to_string(),
+                scope: ClientErrorScope::Server,
+            },
+            403 => ClientError::Forbidden {
+                msg: value.to_string(),
+                scope: ClientErrorScope::Server,
+            },
+            404 => ClientError::NotFound {
+                msg: value.to_string(),
+                scope: ClientErrorScope::Server,
+            },
+            500 => ClientError::Internal {
+                msg: value.to_string(),
+                scope: ClientErrorScope::Server,
+            },
             503 => ClientError::Unavailable(value.to_string()),
-            _ => ClientError::Internal { msg: format!("Invalid http status used in client: {}", value), scope: ClientErrorScope::Client }
+            _ => ClientError::Internal {
+                msg: format!("Invalid http status used in client: {}", value),
+                scope: ClientErrorScope::Client,
+            },
         }
     }
 }

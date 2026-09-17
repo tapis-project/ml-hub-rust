@@ -1,14 +1,14 @@
 mod dto_to_input;
 
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use crate::presentation::http::v1::requests::common::headers::Headers;
 use crate::presentation::http::v1::requests::common::Parameters;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize)]
 pub struct GetArtifactPath {
-    pub artifact_id: String
+    pub artifact_id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -28,23 +28,23 @@ pub struct DownloadArtifactBody {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PublishArtifactPath {
-    pub artifact_id: String
+    pub artifact_id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListArtifactPublicationsPath {
-    pub artifact_id: String
+    pub artifact_id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ListArtifactIngestionsPath {
-    pub artifact_id: String
+    pub artifact_id: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, ToSchema)]
 pub struct PublishArtifactRequest {
     pub target_platform: String,
-    pub webhook_url: Option<String>
+    pub webhook_url: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

@@ -124,6 +124,7 @@ fn list_pipeline(
             "$project": {
                 "_id": 1,
                 "id": 1,
+                "enabled": 1,
                 "name": 1,
                 "data_center": 1,
             }
@@ -147,6 +148,7 @@ fn summaries_to_page(
 
             HpcClusterSummaryOutput {
                 id: uuid::Uuid::from_bytes(document.id.bytes()),
+                enabled: document.enabled,
                 name: document.name,
                 data_center: document.data_center.into(),
             }

@@ -1,15 +1,16 @@
 #[cfg(test)]
 mod artifact_ingestion_test {
-    use uuid::Uuid;
     use crate::domain::entities::artifact::ArtifactType;
     use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
+    use uuid::Uuid;
 
     #[test]
     fn test_touch() {
-        let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
-            .expect("Failed to parse UUID");
+        let test_id =
+            Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8").expect("Failed to parse UUID");
 
-        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
+        let mut ingestion =
+            ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
         let initial_last_modified = ingestion.last_modified.clone();
         // Call touch to update last_modified
         ingestion.touch();
@@ -19,12 +20,16 @@ mod artifact_ingestion_test {
 
     #[test]
     fn positive_test_status_transition() {
-        let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
-            .expect("Failed to parse UUID");
+        let test_id =
+            Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8").expect("Failed to parse UUID");
 
         // Create a new ArtifactIngestion instance with initial status which is Submitted
-        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
-        assert!(matches!(ingestion.status, ArtifactIngestionStatus::Submitted));
+        let mut ingestion =
+            ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
+        assert!(matches!(
+            ingestion.status,
+            ArtifactIngestionStatus::Submitted
+        ));
 
         // Try to change status to Pending
         // This should succeed
@@ -35,30 +40,39 @@ mod artifact_ingestion_test {
 
     #[test]
     fn negative_test_status_transition() {
-        let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
-            .expect("Failed to parse UUID");
+        let test_id =
+            Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8").expect("Failed to parse UUID");
 
         // Create a new ArtifactIngestion instance with initial status which is Submitted
-        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
-        assert!(matches!(ingestion.status, ArtifactIngestionStatus::Submitted));
+        let mut ingestion =
+            ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
+        assert!(matches!(
+            ingestion.status,
+            ArtifactIngestionStatus::Submitted
+        ));
 
         // Try to change status to Downloaded directly
         // This should fail because we cannot transition from Submitted to Downloaded directly
         // The status stays as Submitted
         let result = ingestion.change_status(ArtifactIngestionStatus::Downloaded);
         assert!(result.is_err());
-        assert!(matches!(ingestion.status, ArtifactIngestionStatus::Submitted));
+        assert!(matches!(
+            ingestion.status,
+            ArtifactIngestionStatus::Submitted
+        ));
     }
 
     #[test]
     fn positive_test_set_artifact_path() {
-        let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
-            .expect("Failed to parse UUID");
+        let test_id =
+            Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8").expect("Failed to parse UUID");
 
-        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
+        let mut ingestion =
+            ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
 
         // Set the status to a valid state before setting the artifact path
-        ingestion.change_status(ArtifactIngestionStatus::Pending)
+        ingestion
+            .change_status(ArtifactIngestionStatus::Pending)
             .and_then(|_| ingestion.change_status(ArtifactIngestionStatus::Downloading))
             .and_then(|_| ingestion.change_status(ArtifactIngestionStatus::Downloaded))
             .expect("Failed during status transitions");
@@ -70,10 +84,11 @@ mod artifact_ingestion_test {
 
     #[test]
     fn negative_test_set_artifact_path() {
-        let test_id = Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8")
-            .expect("Failed to parse UUID");
+        let test_id =
+            Uuid::parse_str("a1a2a3a4b1b2c1c2d1d2d3d4d5d6d7d8").expect("Failed to parse UUID");
 
-        let mut ingestion = ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
+        let mut ingestion =
+            ArtifactIngestion::new(test_id, ArtifactType::Model, "test_path".into(), None);
 
         // Try to set the artifact path without a valid status
         let result = ingestion.set_artifact_path("new_artifact_path".into());

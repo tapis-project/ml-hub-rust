@@ -6,5 +6,5 @@ pub enum SerializationError {
     SerializationFailed(String),
 
     #[error("Deserialization Error: {0}")]
-    DeserializationFailed(String)
+    DeserializationFailed(String),
 }

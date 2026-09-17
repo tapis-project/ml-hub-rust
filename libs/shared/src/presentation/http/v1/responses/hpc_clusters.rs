@@ -10,6 +10,7 @@ use crate::{
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct HpcClusterSummary {
     pub id: Uuid,
+    pub enabled: bool,
     pub name: String,
     pub data_center: DataCenter,
 }
@@ -17,6 +18,7 @@ pub struct HpcClusterSummary {
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct HpcCluster {
     pub id: Uuid,
+    pub enabled: bool,
     pub name: String,
     pub description: Option<String>,
     pub host: String,
@@ -35,6 +37,7 @@ pub enum DataCenter {
 pub struct BatchSchedulerQueue {
     pub id: Uuid,
     pub cluster_id: Uuid,
+    pub enabled: bool,
     pub name: String,
     pub scheduler_type: SchedulerType,
     pub hardware_profile: HardwareProfile,
@@ -102,6 +105,7 @@ impl From<HpcClusterSummaryOutput> for HpcClusterSummary {
     fn from(value: HpcClusterSummaryOutput) -> Self {
         Self {
             id: value.id,
+            enabled: value.enabled,
             name: value.name,
             data_center: (&value.data_center).into(),
         }
@@ -112,6 +116,7 @@ impl From<domain::HpcCluster> for HpcCluster {
     fn from(value: domain::HpcCluster) -> Self {
         Self {
             id: *value.id().as_uuid(),
+            enabled: value.enabled(),
             name: value.name().into(),
             description: value.description().map(Into::into),
             host: value.host().into(),
@@ -136,6 +141,7 @@ impl From<&domain::BatchSchedulerQueue> for BatchSchedulerQueue {
         Self {
             id: *value.id().as_uuid(),
             cluster_id: *value.cluster_id().as_uuid(),
+            enabled: value.enabled(),
             name: value.name().into(),
             scheduler_type: value.scheduler_type().into(),
             hardware_profile: value.hardware_profile().into(),

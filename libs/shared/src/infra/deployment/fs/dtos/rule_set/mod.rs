@@ -1,8 +1,8 @@
 pub mod dto_to_entity;
 
-use serde_json::Value;
-use serde::{Serialize, Deserialize};
 use crate::infra::operators::dtos::Operator;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Rule {
@@ -14,5 +14,5 @@ pub struct Rule {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RuleSet {
     pub name: String,
-    pub rules: Vec<Rule>
+    pub rules: Vec<Rule>,
 }

@@ -19,7 +19,6 @@ pub enum Module {
     Agentspec,
     #[doc = "Describes MCP servers required to run and interact with the agent."]
     Mcp,
-
 }
 
 #[cfg(all(feature = "module", feature = "identify"))]
@@ -41,7 +40,6 @@ impl Identify for Module {
             Module::Acp => 201,
             Module::Agentspec => 204,
             Module::Mcp => 202,
-
         }
     }
     fn name(&self) -> String {
@@ -55,8 +53,8 @@ impl Identify for Module {
             Module::Acp => "acp",
             Module::Agentspec => "agentspec",
             Module::Mcp => "mcp",
-
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -73,8 +71,8 @@ impl From<Module> for String {
             Module::Acp => "acp",
             Module::Agentspec => "agentspec",
             Module::Mcp => "mcp",
-
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -91,7 +89,6 @@ impl From<Module> for u32 {
             Module::Acp => 201,
             Module::Agentspec => 204,
             Module::Mcp => 202,
-
         }
     }
 }

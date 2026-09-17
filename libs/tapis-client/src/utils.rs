@@ -1,33 +1,17 @@
 use shared::presentation::http::v1::requests::common::headers::Headers;
 
 pub fn build_tenant_base_url(tenant: String) -> String {
-    format!(
-        "https://{}.tapis.io/v3",
-        tenant
-    )
+    format!("https://{}.tapis.io/v3", tenant)
 }
 
-pub fn build_operation_url(
-    tenant: String,
-    api: String,
-    path: Option<String>
-) -> String {
-    let mut url = format!(
-        "{}/{}",
-        build_tenant_base_url(tenant),
-        api
-    );
+pub fn build_operation_url(tenant: String, api: String, path: Option<String>) -> String {
+    let mut url = format!("{}/{}", build_tenant_base_url(tenant), api);
 
     if let Some(value) = path {
-        url = format!(
-            "{}/{}",
-            url,
-            value.strip_prefix("/")
-                .unwrap_or(&value)
-        );
+        url = format!("{}/{}", url, value.strip_prefix("/").unwrap_or(&value));
     }
 
-    return url
+    return url;
 }
 
 pub fn token_from_headers(headers: &Headers) -> Option<String> {
@@ -39,5 +23,5 @@ pub fn token_from_headers(headers: &Headers) -> Option<String> {
         return headers.get_first_value("X-Tapis-Token");
     }
 
-    return tapis_token
+    return tapis_token;
 }

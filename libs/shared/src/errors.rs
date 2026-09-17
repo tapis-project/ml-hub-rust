@@ -3,14 +3,12 @@ use std::fmt::{Display, Formatter, Result as FormatResult};
 
 #[derive(Debug)]
 pub struct Error {
-    message: String
+    message: String,
 }
 
 impl Error {
     pub fn new(message: String) -> Self {
-        Error {
-            message,
-        }
+        Error { message }
     }
 
     pub fn from_str(message: &str) -> Self {

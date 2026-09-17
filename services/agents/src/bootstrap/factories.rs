@@ -8,8 +8,8 @@ use shared::application::ports::agent_record::AgentRecordRepository;
 use shared::application::ports::endpoint::EndpointRepository;
 use shared::application::services::agent_record_service::AgentRecordService;
 use shared::application::services::agent_service::AgentService;
-use shared::application::services::endpoint_query_service::EndpointQueryService;
 use shared::application::services::endpoint_issuance_service::EndpointIssuanceService;
+use shared::application::services::endpoint_query_service::EndpointQueryService;
 use shared::infra::persistence::mongo::repositories::AgentRecordRepository as MongoAgentRecordRepository;
 use shared::infra::persistence::mongo::repositories::AgentRepository as MongoAgentRepository;
 use shared::infra::persistence::mongo::repositories::EndpointRepository as MongoEndpointRepository;
@@ -40,10 +40,7 @@ pub fn endpoint_issuance_service_factory(
     EndpointIssuanceService::new(endpoint_repo_factory(client, db_name))
 }
 
-pub fn endpoint_query_service_factory(
-    client: &Client,
-    db_name: String,
-) -> EndpointQueryService {
+pub fn endpoint_query_service_factory(client: &Client, db_name: String) -> EndpointQueryService {
     EndpointQueryService::new(endpoint_repo_factory(client, db_name))
 }
 

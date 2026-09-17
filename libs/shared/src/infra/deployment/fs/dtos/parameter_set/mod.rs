@@ -30,12 +30,12 @@ pub enum ParameterType {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ParameterSet {
     pub name: String,
-    pub parameters: Vec<Parameter>
+    pub parameters: Vec<Parameter>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Choice {
     value: String,
     description: Option<String>,
-    enabled: Option<bool>
+    enabled: Option<bool>,
 }

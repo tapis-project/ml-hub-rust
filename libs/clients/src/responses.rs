@@ -9,16 +9,21 @@ pub struct ClientJsonResponse<Data: Serialize, Metadata: Serialize> {
     pub status: Option<u16>,
     pub message: Option<String>,
     pub result: Option<Data>,
-    pub metadata: Option<Metadata>
+    pub metadata: Option<Metadata>,
 }
 
-impl <Data: Serialize, Metadata: Serialize>ClientJsonResponse<Data, Metadata> {
-    pub fn new(status: Option<u16>, message: Option<String>, result: Option<Data>, metadata: Option<Metadata>) -> Self {
+impl<Data: Serialize, Metadata: Serialize> ClientJsonResponse<Data, Metadata> {
+    pub fn new(
+        status: Option<u16>,
+        message: Option<String>,
+        result: Option<Data>,
+        metadata: Option<Metadata>,
+    ) -> Self {
         return Self {
             status,
             message,
             result,
-            metadata
-        }
+            metadata,
+        };
     }
 }

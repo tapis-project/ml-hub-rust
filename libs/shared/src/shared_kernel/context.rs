@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::domain::entities::principal::{Principal, Kind};
+use crate::domain::entities::principal::{Kind, Principal};
 use crate::shared_kernel::constants::GLOBAL_TENANT;
 
 pub const MLHUB_SERVICE_PRINCIPAL_ID: &'static str = "mlhub";
@@ -17,7 +17,7 @@ impl RequestContext {
         Self {
             actor,
             token,
-            request_id: request_id.unwrap_or_else(|| Self::generate_request_id())
+            request_id: request_id.unwrap_or_else(|| Self::generate_request_id()),
         }
     }
 
@@ -26,7 +26,7 @@ impl RequestContext {
         Self {
             actor: Actor::system(),
             token: "".into(),
-            request_id: request_id.unwrap_or_else(|| Self::generate_request_id())
+            request_id: request_id.unwrap_or_else(|| Self::generate_request_id()),
         }
     }
 
@@ -93,7 +93,7 @@ impl From<Principal> for Actor {
         Self {
             principal_id: value.id.clone(),
             tenant_id: value.tenant_id.clone(),
-            kind: value.kind.clone()
+            kind: value.kind.clone(),
         }
     }
 }

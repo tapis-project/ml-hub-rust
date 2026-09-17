@@ -18,6 +18,7 @@ These instructions apply throughout this repository.
 ## Domain and application rules
 
 - Keep domain state private. Construct new entities with `new`, rehydrate persisted data with props-based `reconstitute`, and use UUID v7 for new identities where the established entity pattern does so.
+- New domain identities use UUID version 7 unless a requirement explicitly specifies another version. MongoDB's standard BSON UUID binary subtype is numbered `4`; that storage subtype does not mean UUID version 4. Seed and configuration inputs omit identities that the domain owns so constructors can generate UUIDv7 values.
 - Enforce invariants in the domain. New input should receive a specific domain error; invalid persisted data should receive a data-integrity error. Use structural types such as `NonEmpty` where the domain requires them.
 - Prefer semantic domain queries over exposing nested value objects. When a new value object needs an access interface and the desired encapsulation is unclear, ask before choosing it.
 - Application-service methods take `&RequestContext` as their first argument. Derive tenancy and principal information from that context, not HTTP input.

@@ -27,25 +27,24 @@ pub enum ParameterType {
 #[derive(Clone, Debug, Error)]
 pub enum ParameterSetError {
     #[error("Invalid argument: {0}")]
-    InvalidArgument(String)
+    InvalidArgument(String),
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ParameterSet {
     pub name: String,
-    pub parameters: Vec<Parameter>
+    pub parameters: Vec<Parameter>,
 }
 
 impl ParameterSet {
     pub fn validate_arguments(&self, args: &[Argument]) -> Result<(), ParameterSetError> {
-        let params_map:HashMap<&str, &Parameter> = self.parameters
+        let params_map: HashMap<&str, &Parameter> = self
+            .parameters
             .iter()
             .map(|p| (p.name.as_str(), p))
             .collect();
 
-        let args_hashset: HashSet<&str> = args.iter()
-            .map(|a| a.parameter_name.as_str())
-            .collect();
+        let args_hashset: HashSet<&str> = args.iter().map(|a| a.parameter_name.as_str()).collect();
 
         let extraneous_args: Vec<&str> = args_hashset
             .difference(&params_map.keys().copied().collect::<HashSet<&str>>())
@@ -54,35 +53,39 @@ impl ParameterSet {
 
         // Invairant: Extraneous arguments are NOT permitted
         if extraneous_args.len() > 0 {
-            return Err(ParameterSetError::InvalidArgument(format!("Extraneous args: {:?}", &extraneous_args)))
+            return Err(ParameterSetError::InvalidArgument(format!(
+                "Extraneous args: {:?}",
+                &extraneous_args
+            )));
         }
 
-        let missing_args: Vec<&str> = params_map.keys()
+        let missing_args: Vec<&str> = params_map
+            .keys()
             .copied()
             .collect::<HashSet<&str>>()
             .difference(&args_hashset)
             .copied()
             .collect();
 
-        let missing_required_args: Vec<&str> = missing_args.iter()
+        let missing_required_args: Vec<&str> = missing_args
+            .iter()
             .copied()
-            .filter(|name| {
-                params_map.get(name).map_or(false, |p| p.required)
-            })
+            .filter(|name| params_map.get(name).map_or(false, |p| p.required))
             .collect();
 
         // Invariant: All required parameters MUST have a corresponding argument.
         if missing_required_args.len() > 0 {
-            return Err(ParameterSetError::InvalidArgument(format!("Missing required arguments: {:?}", &missing_required_args)))
+            return Err(ParameterSetError::InvalidArgument(format!(
+                "Missing required arguments: {:?}",
+                &missing_required_args
+            )));
         }
 
         Ok(())
     }
 
     pub fn get_required_params(&self) -> Vec<&Parameter> {
-        self.parameters.iter()
-            .filter(|p| p.required)
-            .collect()
+        self.parameters.iter().filter(|p| p.required).collect()
     }
 }
 
@@ -90,5 +93,5 @@ impl ParameterSet {
 pub struct Choice {
     pub value: String,
     pub description: Option<String>,
-    pub enabled: bool
+    pub enabled: bool,
 }

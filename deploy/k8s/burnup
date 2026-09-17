@@ -19,6 +19,7 @@ sleep 5
 
 cd "$here/mongo"
 ./burnup.sh "$overlay"
+kubectl rollout status statefulset/mlhub-mongo-stateful-set --timeout=10m
 
 cd "$here/rabbit"
 ./burnup.sh "$overlay"
@@ -39,11 +40,15 @@ sleep 5
 
 echo "Starting Migrations"
 
+cd "$here/seeders/hpc-cluster-seeder"
+./burnup.sh "$overlay"
+
 cd "$here/migrations/models-migrator"
 ./burnup.sh "$overlay"
 
 cd "$here/migrations/deployments-migrator"
 ./burnup.sh "$overlay"
+kubectl wait --for=condition=complete job/mlhub-deployments-migrator --timeout=10m
 
 cd "$here/migrations/principals-migrator"
 ./burnup.sh "$overlay"

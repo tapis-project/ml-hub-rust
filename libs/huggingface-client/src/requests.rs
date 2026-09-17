@@ -35,7 +35,7 @@ pub struct ListDatasetsQueryParameters {
     pub sort: Option<String>,
     pub direction: Option<String>,
     pub limit: Option<u64>,
-    pub full: Option<bool>
+    pub full: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

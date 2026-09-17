@@ -10,6 +10,7 @@ members = [
     "services/hf-model-etl",
     "services/models-migrator",
     "services/deployments-migrator",
+    "services/hpc-cluster-seeder",
     "services/principals-migrator",
     "services/federated-identities-migrator",
     "services/model-deployment-controller",

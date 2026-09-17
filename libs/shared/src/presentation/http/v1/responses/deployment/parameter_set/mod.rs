@@ -25,12 +25,12 @@ pub struct Parameter {
 #[derive(Clone, Debug, ToSchema, Serialize)]
 pub struct ParameterSet {
     pub name: String,
-    pub parameters: Vec<Parameter>
+    pub parameters: Vec<Parameter>,
 }
 
 #[derive(Clone, Debug, ToSchema, Serialize)]
 pub struct Choice {
     value: String,
     description: Option<String>,
-    enabled: bool
+    enabled: bool,
 }

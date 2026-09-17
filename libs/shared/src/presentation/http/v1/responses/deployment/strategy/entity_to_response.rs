@@ -1,18 +1,18 @@
 use crate::domain::entities::deployment_strategy::strategy as entities;
-use crate::presentation::http::v1::responses::deployment:: parameter_set::Parameter;
+use crate::presentation::http::v1::responses::deployment::parameter_set::Parameter;
 use crate::presentation::http::v1::responses::deployment::strategy as dtos;
 use crate::shared_kernel::enums::DeploymentModality;
 
 impl From<entities::Strategy> for dtos::Strategy {
     fn from(value: entities::Strategy) -> Self {
         let parameters: Vec<Parameter> = value
-                .parameter_set()
-                .clone()
-                .map(|ps| ps.parameters )
-                .unwrap_or(vec![])
-                .into_iter()
-                .map(|p| Parameter::from(p))
-                .collect();
+            .parameter_set()
+            .clone()
+            .map(|ps| ps.parameters)
+            .unwrap_or(vec![])
+            .into_iter()
+            .map(|p| Parameter::from(p))
+            .collect();
 
         Self {
             name: value.name.clone(),
@@ -44,10 +44,11 @@ impl From<entities::StrategyConfig> for dtos::StrategyConfig {
                 .iter()
                 .map(|dm| dtos::DeploymentModality::from(dm.clone()))
                 .collect(),
-            supported_paralellism_strategies: value.supported_paralellism_strategies
+            supported_paralellism_strategies: value
+                .supported_paralellism_strategies
                 .iter()
                 .map(|ps| dtos::ParallelismStrategy::from(ps))
-                .collect()
+                .collect(),
         }
     }
 }

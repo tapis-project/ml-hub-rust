@@ -1,15 +1,15 @@
-use uuid::Uuid;
+use crate::domain::entities::artifact::ArtifactType;
 use crate::shared_kernel::value_objects::TimeStamp;
 use thiserror::Error;
-use crate::domain::entities::artifact::ArtifactType;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum ArtifactPublicationError {
     #[error("Invalid status transition: {0}")]
-    InvalidStatusTransition(String)
+    InvalidStatusTransition(String),
 }
 
-pub struct ArtifactPublication  {
+pub struct ArtifactPublication {
     pub id: Uuid,
     pub status: Status,
     pub artifact_id: Uuid,
@@ -42,9 +42,16 @@ impl ArtifactPublication {
     /// if the transition from the current status to the new status is valid.
     /// Additionally the the ArtifactPublications last_modified will be updated
     /// to "now"
-    pub fn change_status(&mut self, status: &Status) -> Result<&mut Self, ArtifactPublicationError> {
+    pub fn change_status(
+        &mut self,
+        status: &Status,
+    ) -> Result<&mut Self, ArtifactPublicationError> {
         if !self.is_valid_status_transition(&self.status, status) {
-            return Err(ArtifactPublicationError::InvalidStatusTransition(format!("ArtifactPublication cannot move from status {} to status {}", self.status.kind(), status.kind())))
+            return Err(ArtifactPublicationError::InvalidStatusTransition(format!(
+                "ArtifactPublication cannot move from status {} to status {}",
+                self.status.kind(),
+                status.kind()
+            )));
         }
 
         self.status = status.clone();
@@ -60,63 +67,39 @@ impl ArtifactPublication {
     }
 
     /// Checks if the transition from the current status to the new status is valid
-    fn is_valid_status_transition(&self, from: &Status,  to: &Status) -> bool {
+    fn is_valid_status_transition(&self, from: &Status, to: &Status) -> bool {
         let is_valid: bool = match from {
-            Status::Submitted => {
-                match to {
-                    Status::Pending
-                    | Status::Failed => true,
-                    _ => false
-                }
+            Status::Submitted => match to {
+                Status::Pending | Status::Failed => true,
+                _ => false,
             },
-            Status::Pending => {
-                match to {
-                    Status::Extracting
-                    | Status::PublishingModel
-                    | Status::Failed => true,
-                    _ => false
-                }
+            Status::Pending => match to {
+                Status::Extracting | Status::PublishingModel | Status::Failed => true,
+                _ => false,
             },
-            Status::Extracting => {
-                match to {
-                    Status::Extracted
-                    | Status::Failed => true,
-                    _ => false
-                }
+            Status::Extracting => match to {
+                Status::Extracted | Status::Failed => true,
+                _ => false,
             },
-            Status::Extracted => {
-                match to {
-                    Status::PublishingArtifact | Status::Failed => true,
-                    _ => false
-                }
+            Status::Extracted => match to {
+                Status::PublishingArtifact | Status::Failed => true,
+                _ => false,
             },
-            Status::PublishingArtifact => {
-                match to {
-                    Status::PublishedArtifact | Status::Failed => true,
-                    _ => false
-                }
+            Status::PublishingArtifact => match to {
+                Status::PublishedArtifact | Status::Failed => true,
+                _ => false,
             },
-            Status::PublishedArtifact => {
-                match to {
-                    Status::Finished
-                    | Status::PublishingModel
-                    | Status::Failed => true,
-                    _ => false
-                }
+            Status::PublishedArtifact => match to {
+                Status::Finished | Status::PublishingModel | Status::Failed => true,
+                _ => false,
             },
-            Status::PublishingModel => {
-                match to {
-                    Status::PublishedModel
-                    | Status::Failed => true,
-                    _ => false
-                }
+            Status::PublishingModel => match to {
+                Status::PublishedModel | Status::Failed => true,
+                _ => false,
             },
-            Status::PublishedModel => {
-                match to {
-                    Status::Finished
-                    | Status::Failed => true,
-                    _ => false
-                }
+            Status::PublishedModel => match to {
+                Status::Finished | Status::Failed => true,
+                _ => false,
             },
             // Cannot transition from finished to any other status
             Status::Finished => false,
@@ -140,7 +123,7 @@ pub enum ArtifactPublicationStatus {
     PublishingArtifact,
     PublishedArtifact,
     Finished,
-    Failed
+    Failed,
 }
 
 type Status = ArtifactPublicationStatus;
@@ -157,7 +140,7 @@ impl ArtifactPublicationStatus {
             Self::PublishingArtifact => "PublishingArtifact",
             Self::PublishedArtifact => "PublishedArtifact",
             Self::Finished => "Finished",
-            Self::Failed => "Failed"
+            Self::Failed => "Failed",
         }
     }
 }

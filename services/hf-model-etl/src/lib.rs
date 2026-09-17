@@ -8,7 +8,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum HFModelError {
     #[error("Failed to parse model id from huggingface model: {0}")]
-    MalformedModelId(String)
+    MalformedModelId(String),
 }
 
 #[derive(Deserialize)]
@@ -27,35 +27,34 @@ pub struct HFModel {
 
 pub struct CompoundTag {
     pub name: String,
-    pub value: String
+    pub value: String,
 }
 
 impl HFModel {
     pub fn parse_compound_tags(&self) -> Vec<CompoundTag> {
-        let mut hf_tags:Vec<CompoundTag> = Vec::new();
+        let mut hf_tags: Vec<CompoundTag> = Vec::new();
         for tag in self.tags.clone() {
-            let parts: Vec<String> = tag.clone()
-                .split(":")
-                .map(|s| String::from(s))
-                .collect();
-
+            let parts: Vec<String> = tag.clone().split(":").map(|s| String::from(s)).collect();
 
             if parts.len() >= 2 {
-                let name = if let Some(n) = parts.get(0) { n.clone() } else { continue };
+                let name = if let Some(n) = parts.get(0) {
+                    n.clone()
+                } else {
+                    continue;
+                };
                 let value = parts[1..].to_vec().join(":");
-                
-                hf_tags.push(CompoundTag {
-                    name,
-                    value
-                })
+
+                hf_tags.push(CompoundTag { name, value })
             }
         }
 
         hf_tags
     }
-    
+
     pub fn get_model_name(&self) -> Result<String, HFModelError> {
-        let parts: Vec<String> = self.id.clone()
+        let parts: Vec<String> = self
+            .id
+            .clone()
             .split("/")
             .into_iter()
             .map(|p| String::from(p))
@@ -63,7 +62,10 @@ impl HFModel {
 
         match parts.get(1) {
             Some(p) => Ok(String::from(p)),
-            None => Err(HFModelError::MalformedModelId(format!("Expected there to be a '/' in the model's id but none found. Found '{}'", &self.id)))
+            None => Err(HFModelError::MalformedModelId(format!(
+                "Expected there to be a '/' in the model's id but none found. Found '{}'",
+                &self.id
+            ))),
         }
     }
 }

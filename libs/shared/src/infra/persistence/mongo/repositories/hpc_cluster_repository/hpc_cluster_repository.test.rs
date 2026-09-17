@@ -43,12 +43,14 @@ fn summary_page_returns_cursor_only_when_more_results_exist() {
         HpcClusterSummary {
             _id: first_id,
             id: Uuid::new(),
+            enabled: true,
             name: "Vista".into(),
             data_center: DataCenter::Tacc,
         },
         HpcClusterSummary {
             _id: second_id,
             id: Uuid::new(),
+            enabled: false,
             name: "Frontera".into(),
             data_center: DataCenter::Tacc,
         },
@@ -57,5 +59,6 @@ fn summary_page_returns_cursor_only_when_more_results_exist() {
     let (summaries, cursor) = summaries_to_page(documents, 1);
 
     assert_eq!(summaries.len(), 1);
+    assert!(summaries[0].enabled);
     assert_eq!(cursor, Some(first_id.to_hex()));
 }

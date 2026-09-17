@@ -1,17 +1,19 @@
 use jsonwebtoken::Algorithm;
 use serde::Deserialize;
-use tapis_tenants::{TapisTenants, models::Tenant};
+use tapis_tenants::{models::Tenant, TapisTenants};
 
 // Application
-use crate::application::ports::identity::{FederatedIdentityProvider as Port, FederatedIdentityProviderError};
+use crate::application::ports::identity::{
+    FederatedIdentityProvider as Port, FederatedIdentityProviderError,
+};
 
 // Domain
 use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps};
 
 use crate::infra::configuration::SiteConfiguration;
 // Infra
-use crate::infra::identity::Idp;
 use crate::infra::identity::helpers::{token_from_string, validate_claims, Token as Jwt};
+use crate::infra::identity::Idp;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Header {
@@ -63,13 +65,13 @@ pub struct Token {
 impl Jwt for Token {
     type Header = Header;
     type Payload = Payload;
-    
+
     fn new(raw_token: String, header: Self::Header, payload: Self::Payload) -> Self {
         return Self {
             header,
             payload,
             raw_token,
-        }
+        };
     }
 
     fn get_raw(&self) -> String {
@@ -82,46 +84,61 @@ pub struct FederatedIdentityProvider {
 }
 
 impl FederatedIdentityProvider {
-    pub async fn new(site_configuration: SiteConfiguration) -> Result<Self, FederatedIdentityProviderError> {        
+    pub async fn new(
+        site_configuration: SiteConfiguration,
+    ) -> Result<Self, FederatedIdentityProviderError> {
         Ok(Self {
             tenants: TapisTenants::new(site_configuration.base_url.clone().as_str(), None)
-                .map_err(|err| FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string()))?
+                .map_err(|err| {
+                    FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string())
+                })?
                 .tenants
                 .list_tenants(None, None)
                 .await
-                .map_err(|err| FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string()))?
+                .map_err(|err| {
+                    FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string())
+                })?
                 .result
-                .ok_or_else(|| FederatedIdentityProviderError::InitializationError(Idp::Tapis, "Tenants data missing".into()))?,
+                .ok_or_else(|| {
+                    FederatedIdentityProviderError::InitializationError(
+                        Idp::Tapis,
+                        "Tenants data missing".into(),
+                    )
+                })?,
         })
     }
 }
 
 #[async_trait::async_trait]
-impl Port for FederatedIdentityProvider {    
-    async fn authenticate(&self, token_string: String) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError> {
+impl Port for FederatedIdentityProvider {
+    async fn authenticate(
+        &self,
+        token_string: String,
+    ) -> Result<Option<FederatedIdentity>, FederatedIdentityProviderError> {
         let token: Token = token_from_string(&token_string)?;
-        
-        let pubkey = self.tenants
+
+        let pubkey = self
+            .tenants
             .iter()
             .find(|t| t.tenant_id == token.payload.tapis_tenant_id)
             .map(|t| t.public_key.clone())
             .flatten()
-            .ok_or_else(|| FederatedIdentityProviderError::InternalIdpError("Tenant missing public key".to_owned()))?;
+            .ok_or_else(|| {
+                FederatedIdentityProviderError::InternalIdpError(
+                    "Tenant missing public key".to_owned(),
+                )
+            })?;
 
         let alg = token.header.alg;
-        
+
         let validated_claims = validate_claims(token, pubkey, alg)?;
 
-        return Ok(Some(
-            FederatedIdentity::new(
-                NewFederatedIdentityProps {
-                    issuer: validated_claims.iss,
-                    subject: validated_claims.sub,
-                    tenant_id: validated_claims.tapis_tenant_id,
-                    metadata: None,
-                }
-            )
-        ))
+        return Ok(Some(FederatedIdentity::new(NewFederatedIdentityProps {
+            issuer: validated_claims.iss,
+            subject: validated_claims.sub,
+            tenant_id: validated_claims.tapis_tenant_id,
+            metadata: None,
+        })));
     }
 
     fn authority(&self) -> Idp {

@@ -4,6 +4,7 @@ use uuid::Uuid;
 #[derive(Clone, Debug)]
 pub struct HpcClusterSummaryOutput {
     pub id: Uuid,
+    pub enabled: bool,
     pub name: String,
     pub data_center: DataCenter,
 }

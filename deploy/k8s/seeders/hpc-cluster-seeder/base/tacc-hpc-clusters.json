@@ -1,0 +1,808 @@
+[
+  {
+    "name": "Frontera",
+    "description": "TACC leadership-class HPC system. Production queues are scheduled to close permanently on October 1, 2026.",
+    "host": "frontera.tacc.utexas.edu",
+    "port": 22,
+    "documentation_url": "https://docs.tacc.utexas.edu/hpc/frontera/",
+    "data_center": "Tacc",
+    "queues": [
+      {
+        "name": "flex",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 8368,
+          "cpu_cores_per_node": 56,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8280",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 128,
+          "max_jobs_per_user": 15,
+          "max_nodes_per_user": 6400,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 60
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 0.8
+        },
+        "enabled": true
+      },
+      {
+        "name": "development",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 8368,
+          "cpu_cores_per_node": 56,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8280",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 40,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 40,
+          "max_wall_time_per_job_hr": 2,
+          "max_job_submission": 2
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "normal",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 8368,
+          "cpu_cores_per_node": 56,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8280",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 3,
+          "max_nodes_per_job": 512,
+          "max_jobs_per_user": 75,
+          "max_nodes_per_user": 1024,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 200
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "large",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 8368,
+          "cpu_cores_per_node": 56,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8280",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 513,
+          "max_nodes_per_job": 2048,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 3072,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 8
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "rtx",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 90,
+          "cpu_cores_per_node": 16,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon E5-2620 v4",
+          "cpu_vendor": "Intel",
+          "memory_gb": 128,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 4,
+            "gpu_model": "NVIDIA Quadro RTX 5000",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 16,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 16,
+          "max_jobs_per_user": 12,
+          "max_nodes_per_user": 32,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 36
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 3.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "rtx-dev",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 90,
+          "cpu_cores_per_node": 16,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon E5-2620 v4",
+          "cpu_vendor": "Intel",
+          "memory_gb": 128,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 4,
+            "gpu_model": "NVIDIA Quadro RTX 5000",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 16,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 2,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 2,
+          "max_wall_time_per_job_hr": 2,
+          "max_job_submission": 2
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 3.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "nvdimm",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 16,
+          "cpu_cores_per_node": 112,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8280M",
+          "cpu_vendor": "Intel",
+          "memory_gb": 2100,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 4,
+          "max_jobs_per_user": 3,
+          "max_nodes_per_user": 6,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 8
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 2.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "small",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 8368,
+          "cpu_cores_per_node": 56,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8280",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 2,
+          "max_jobs_per_user": 15,
+          "max_nodes_per_user": 25,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 80
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      }
+    ],
+    "enabled": true
+  },
+  {
+    "name": "Lonestar6",
+    "description": "TACC HPC system for simulation, data analysis, visualization, and machine learning workloads.",
+    "host": "ls6.tacc.utexas.edu",
+    "port": 22,
+    "documentation_url": "https://docs.tacc.utexas.edu/hpc/lonestar6/",
+    "data_center": "Tacc",
+    "queues": [
+      {
+        "name": "development",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 24,
+          "cpu_cores_per_node": 128,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 256,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 8,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 8,
+          "max_wall_time_per_job_hr": 2,
+          "max_job_submission": 3
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "gpu-a100",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 84,
+          "cpu_cores_per_node": 128,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 256,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 3,
+            "gpu_model": "NVIDIA A100 PCIe",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 40,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 8,
+          "max_jobs_per_user": 8,
+          "max_nodes_per_user": 12,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 32
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 3.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "gpu-a100-dev",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 84,
+          "cpu_cores_per_node": 128,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 256,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 3,
+            "gpu_model": "NVIDIA A100 PCIe",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 40,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 2,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 2,
+          "max_wall_time_per_job_hr": 2,
+          "max_job_submission": 3
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 3.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "gpu-a100-small",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 84,
+          "cpu_cores_per_node": 128,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 256,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 3,
+            "gpu_model": "NVIDIA A100 PCIe",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 40,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 1,
+          "max_jobs_per_user": 3,
+          "max_nodes_per_user": 3,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 12
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.5
+        },
+        "enabled": true
+      },
+      {
+        "name": "gpu-h100",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 4,
+          "cpu_cores_per_node": 96,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 9454",
+          "cpu_vendor": "AMD",
+          "memory_gb": 384,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 2,
+            "gpu_model": "NVIDIA H100 PCIe",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 80,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 1,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 1,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 4
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 6.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "large",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 560,
+          "cpu_cores_per_node": 128,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 256,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 65,
+          "max_nodes_per_job": 256,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 256,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 4
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "normal",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 560,
+          "cpu_cores_per_node": 128,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 256,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 64,
+          "max_jobs_per_user": 20,
+          "max_nodes_per_user": 64,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 100
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "vm-small",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 28,
+          "cpu_cores_per_node": 16,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "AMD EPYC 7763",
+          "cpu_vendor": "AMD",
+          "memory_gb": 32,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 1,
+          "max_jobs_per_user": 4,
+          "max_nodes_per_user": 4,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 16
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 0.143
+        },
+        "enabled": true
+      }
+    ],
+    "enabled": true
+  },
+  {
+    "name": "Stampede3",
+    "description": "TACC NSF ACCESS HPC system with CPU, large-memory, NVIDIA H100, and Intel Data Center GPU Max nodes.",
+    "host": "stampede3.tacc.utexas.edu",
+    "port": 22,
+    "documentation_url": "https://docs.tacc.utexas.edu/hpc/stampede3/",
+    "data_center": "Tacc",
+    "queues": [
+      {
+        "name": "h100",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 24,
+          "cpu_cores_per_node": 96,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8468",
+          "cpu_vendor": "Intel",
+          "memory_gb": 1024,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 4,
+            "gpu_model": "NVIDIA H100 SXM5",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 96,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 4,
+          "max_jobs_per_user": 2,
+          "max_nodes_per_user": 4,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 4
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 4.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "icx",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 224,
+          "cpu_cores_per_node": 80,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8380",
+          "cpu_vendor": "Intel",
+          "memory_gb": 256,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 32,
+          "max_jobs_per_user": 12,
+          "max_nodes_per_user": 48,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 20
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.5
+        },
+        "enabled": true
+      },
+      {
+        "name": "nvdimm",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 3,
+          "cpu_cores_per_node": 80,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8380",
+          "cpu_vendor": "Intel",
+          "memory_gb": 4096,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 1,
+          "max_jobs_per_user": 2,
+          "max_nodes_per_user": 1,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 4
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 4.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "pvc",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 20,
+          "cpu_cores_per_node": 96,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8480",
+          "cpu_vendor": "Intel",
+          "memory_gb": 1024,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 4,
+            "gpu_model": "Intel Data Center GPU Max 1550",
+            "gpu_vendor": "Intel",
+            "gpu_memory_gb": 124,
+            "unified_memory": false
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 4,
+          "max_jobs_per_user": 2,
+          "max_nodes_per_user": 4,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 4
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 3.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "skx",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 1060,
+          "cpu_cores_per_node": 48,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8160",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 256,
+          "max_jobs_per_user": 40,
+          "max_nodes_per_user": 256,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 60
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "skx-dev",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 1060,
+          "cpu_cores_per_node": 48,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon Platinum 8160",
+          "cpu_vendor": "Intel",
+          "memory_gb": 192,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 16,
+          "max_jobs_per_user": 2,
+          "max_nodes_per_user": 16,
+          "max_wall_time_per_job_hr": 2,
+          "max_job_submission": 4
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "spr",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 560,
+          "cpu_cores_per_node": 112,
+          "cpu_architecture": "x86_64",
+          "cpu_model": "Intel Xeon CPU Max 9480",
+          "cpu_vendor": "Intel",
+          "memory_gb": 128,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 32,
+          "max_jobs_per_user": 24,
+          "max_nodes_per_user": 40,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 36
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 2.0
+        },
+        "enabled": true
+      }
+    ],
+    "enabled": true
+  },
+  {
+    "name": "Vista",
+    "description": "TACC AI-centric production HPC system with NVIDIA Grace Grace and Grace Hopper nodes.",
+    "host": "vista.tacc.utexas.edu",
+    "port": 22,
+    "documentation_url": "https://docs.tacc.utexas.edu/hpc/vista/",
+    "data_center": "Tacc",
+    "queues": [
+      {
+        "name": "gg",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 256,
+          "cpu_cores_per_node": 144,
+          "cpu_architecture": "aarch64",
+          "cpu_model": "NVIDIA Grace CPU Superchip",
+          "cpu_vendor": "NVIDIA",
+          "memory_gb": 237,
+          "accelerator_type": null,
+          "gpu": null
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 32,
+          "max_jobs_per_user": 20,
+          "max_nodes_per_user": 128,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 40
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 0.33
+        },
+        "enabled": true
+      },
+      {
+        "name": "gh",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 600,
+          "cpu_cores_per_node": 72,
+          "cpu_architecture": "aarch64",
+          "cpu_model": "NVIDIA Grace CPU",
+          "cpu_vendor": "NVIDIA",
+          "memory_gb": 116,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 1,
+            "gpu_model": "NVIDIA H200",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 96,
+            "unified_memory": true
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 64,
+          "max_jobs_per_user": 20,
+          "max_nodes_per_user": 192,
+          "max_wall_time_per_job_hr": 48,
+          "max_job_submission": 40
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      },
+      {
+        "name": "gh-dev",
+        "scheduler_type": "Slurm",
+        "hardware_profile": {
+          "total_nodes": 600,
+          "cpu_cores_per_node": 72,
+          "cpu_architecture": "aarch64",
+          "cpu_model": "NVIDIA Grace CPU",
+          "cpu_vendor": "NVIDIA",
+          "memory_gb": 116,
+          "accelerator_type": "Gpu",
+          "gpu": {
+            "count_per_node": 1,
+            "gpu_model": "NVIDIA H200",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 96,
+            "unified_memory": true
+          }
+        },
+        "scheduling_policy": {
+          "min_nodes_per_job": 1,
+          "max_nodes_per_job": 8,
+          "max_jobs_per_user": 1,
+          "max_nodes_per_user": 8,
+          "max_wall_time_per_job_hr": 2,
+          "max_job_submission": 3
+        },
+        "billing_policy": {
+          "metric": "PerNodeHour",
+          "queue_multiplier": 1.0
+        },
+        "enabled": true
+      }
+    ],
+    "enabled": true
+  }
+]

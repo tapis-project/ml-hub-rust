@@ -46,7 +46,7 @@ mod retries_test {
 
         mod no_backoff_test {
             use super::calculate_delay;
-            use super::{RetryPolicy, NoBackoff, Retry};
+            use super::{NoBackoff, Retry, RetryPolicy};
             #[test]
             fn test() {
                 let policy = RetryPolicy::NoBackoff(NoBackoff {
@@ -61,7 +61,7 @@ mod retries_test {
 
         mod fixed_backoff_test {
             use super::calculate_delay;
-            use super::{RetryPolicy, FixedBackoff, Retry};
+            use super::{FixedBackoff, Retry, RetryPolicy};
             #[test]
             fn test() {
                 let policy = RetryPolicy::FixedBackoff(FixedBackoff {
@@ -77,7 +77,7 @@ mod retries_test {
 
         mod linear_backoff_test {
             use super::calculate_delay;
-            use super::{RetryPolicy, LinearBackoff, Retry};
+            use super::{LinearBackoff, Retry, RetryPolicy};
             #[test]
             fn test() {
                 let policy = RetryPolicy::LinearBackoff(LinearBackoff {
@@ -130,7 +130,8 @@ mod retries_test {
                 },
                 &policy,
                 None,
-            ).await;
+            )
+            .await;
 
             assert_eq!(result, Ok("Success"));
             assert_eq!(attempts.get(), 4);
@@ -168,7 +169,7 @@ mod retries_test {
                 &policy,
                 None,
             )
-                .await;
+            .await;
 
             assert_eq!(result, Ok("Success"));
             assert_eq!(attempts.get(), 4);
@@ -191,9 +192,9 @@ mod retries_test {
                     timestamp.set(now);
                     match attempts.get() {
                         0 => assert_eq!(delay.as_millis(), 0),
-                        1 => assert_eq!(delay.as_millis()/100, 1),
-                        2 => assert_eq!(delay.as_millis()/100, 2),
-                        3 => assert_eq!(delay.as_millis()/100, 3),
+                        1 => assert_eq!(delay.as_millis() / 100, 1),
+                        2 => assert_eq!(delay.as_millis() / 100, 2),
+                        3 => assert_eq!(delay.as_millis() / 100, 3),
                         _ => {}
                     }
                     attempts.set(attempts.get() + 1);
@@ -204,8 +205,9 @@ mod retries_test {
                     }
                 },
                 &policy,
-                None
-            ).await;
+                None,
+            )
+            .await;
 
             assert_eq!(result, Ok("Success"));
             assert_eq!(attempts.get(), 4);
@@ -227,9 +229,9 @@ mod retries_test {
                     timestamp.set(now);
                     match attempts.get() {
                         0 => assert_eq!(delay.as_millis(), 0),
-                        1 => assert_eq!(delay.as_millis()/100, 0),
-                        2 => assert_eq!(delay.as_millis()/100, 0),
-                        3 => assert_eq!(delay.as_millis()/100, 0),
+                        1 => assert_eq!(delay.as_millis() / 100, 0),
+                        2 => assert_eq!(delay.as_millis() / 100, 0),
+                        3 => assert_eq!(delay.as_millis() / 100, 0),
                         _ => {}
                     }
                     attempts.set(attempts.get() + 1);
@@ -240,8 +242,9 @@ mod retries_test {
                     }
                 },
                 &policy,
-                None
-            ).await;
+                None,
+            )
+            .await;
 
             assert_eq!(result, Ok("Success"));
             assert_eq!(attempts.get(), 4);
@@ -252,7 +255,7 @@ mod retries_test {
             let number_of_retries = 5;
             use super::*;
             let policy = RetryPolicy::NoBackoff(NoBackoff {
-                retries: Retry::NTimes(number_of_retries -3),
+                retries: Retry::NTimes(number_of_retries - 3),
             });
 
             let attempts = Cell::new(0);
@@ -266,8 +269,9 @@ mod retries_test {
                     }
                 },
                 &policy,
-                None
-            ).await;
+                None,
+            )
+            .await;
 
             // The result should be an error since retries are less than the number of attempts
             assert_eq!(result, Err("Error"));
@@ -310,12 +314,12 @@ mod retries_test {
                 // Continue retries on the first 2 errors, then return result on
                 // the third error
                 if matches!(e, TestError::E1) || matches!(e, TestError::E2) {
-                    return RetryStrategyAction::ContinueRetries
+                    return RetryStrategyAction::ContinueRetries;
                 }
 
                 RetryStrategyAction::ReturnResult
             };
-            
+
             let result = retry_async(
                 || async {
                     attempts.set(attempts.get() + 1);
@@ -327,11 +331,12 @@ mod retries_test {
                         _ => Ok(()),
                     };
 
-                    return err
+                    return err;
                 },
                 &policy,
                 retry_strategy,
-            ).await;
+            )
+            .await;
 
             assert_eq!(attempts.get(), 3);
             assert_eq!(result, Err(TestError::E3));

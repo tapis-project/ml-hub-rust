@@ -1,5 +1,5 @@
-use thiserror::Error;
 use crate::application::ports::commands::CommandPublisherError;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {

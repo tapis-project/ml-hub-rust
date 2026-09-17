@@ -1,19 +1,12 @@
-use std::sync::Arc;
-use amqprs::channel::Channel;
-use thiserror::Error;
-use crate::application::ports::events::{
-    EventPublisherError,
-    EventPublisher,
-    Event
-};
+use crate::application::ports::events::{Event, EventPublisher, EventPublisherError};
 use crate::infra::messaging::codec::serialize_event;
 use crate::infra::messaging::rabbitmq::exchanges::get_exchange_for_event;
 use crate::infra::messaging::rabbitmq::routing::get_routing_key_for_event;
+use amqprs::channel::Channel;
+use std::sync::Arc;
+use thiserror::Error;
 
-use amqprs::{
-    channel::BasicPublishArguments,
-    BasicProperties
-};
+use amqprs::{channel::BasicPublishArguments, BasicProperties};
 use async_trait::async_trait;
 use log::error;
 use uuid::Uuid;
@@ -24,24 +17,22 @@ pub enum ArtifactOpMessagePublisherError {
     SerializationError(#[from] serde_json::Error),
 
     #[error("Message queue error: {0}")]
-    AmqpError(#[from] amqprs::error::Error)
+    AmqpError(#[from] amqprs::error::Error),
 }
 
 pub struct RabbitMQModelDeploymentMessagePublisher {
-    channel: Arc<Channel>
+    channel: Arc<Channel>,
 }
 
 impl RabbitMQModelDeploymentMessagePublisher {
     pub fn new(channel: Arc<Channel>) -> Self {
-        Self {
-            channel
-        }
+        Self { channel }
     }
 }
 
 #[async_trait]
 impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
-    async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {    
+    async fn publish(&self, event: &Event) -> Result<(), EventPublisherError> {
         let payload = serialize_event(&event)
             .map_err(|err| EventPublisherError::Serialization(err.to_string()))?;
 
@@ -50,17 +41,18 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
             get_exchange_for_event(event),
             get_routing_key_for_event(event),
         )
-            .mandatory(true)
-            .finish();
+        .mandatory(true)
+        .finish();
 
         let props = BasicProperties::default()
             .with_message_id(Uuid::now_v7().to_string().as_str())
             .finish();
 
-        self.channel.basic_publish(props, payload.as_bytes().to_vec(), args)
+        self.channel
+            .basic_publish(props, payload.as_bytes().to_vec(), args)
             .await
             .map_err(|err| EventPublisherError::Publishing(err.to_string()))?;
-       
+
         Ok(())
     }
 }

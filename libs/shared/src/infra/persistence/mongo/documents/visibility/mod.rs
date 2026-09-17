@@ -1,10 +1,10 @@
-mod entity_to_document;
 mod document_to_entity;
+mod entity_to_document;
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Visibility {
     Public,
-    Private
+    Private,
 }

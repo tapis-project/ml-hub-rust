@@ -1,5 +1,5 @@
-use serde::Serialize;
 use platforms::Platform;
+use serde::Serialize;
 use utoipa::ToSchema;
 
 #[derive(Serialize, ToSchema)]

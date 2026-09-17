@@ -5,7 +5,7 @@ use shared::logging::SharedLogger;
 #[derive(Debug)]
 pub struct S3Client {
     _client: ReqwestClient,
-    _logger: SharedLogger
+    _logger: SharedLogger,
 }
 
 impl S3Client {

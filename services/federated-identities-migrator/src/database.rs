@@ -1,1 +1,1 @@
-pub use shared::infra::_common::mongo::{initialize_client, ClientParams};
+pub use shared::infra::_common::mongo::{ClientParams, initialize_client};

@@ -8,7 +8,7 @@ use validator::{Validate, ValidationError};
 use crate::presentation::http::v1::requests::create_agent_record::body::{
     MessageBinding, RestHttpLivenessProbe, Visibility,
 };
-use crate::shared_kernel::value_objects::{MAX_TAG_LENGTH_BYTES, MAX_TAGS};
+use crate::shared_kernel::value_objects::{MAX_TAGS, MAX_TAG_LENGTH_BYTES};
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]
 #[serde(deny_unknown_fields)]

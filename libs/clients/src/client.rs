@@ -1,6 +1,6 @@
 use async_trait;
-use strum_macros::{EnumString, EnumIter, Display};
 use platforms::Platform;
+use strum_macros::{Display, EnumIter, EnumString};
 
 #[derive(Eq, PartialEq, EnumIter, EnumString, Display)]
 pub enum Capability {
@@ -16,7 +16,7 @@ pub enum Capability {
     DiscoverDatasets,
     PublishDataset,
     PublishDatasetMetadata,
-    ConvertModel
+    ConvertModel,
 }
 
 #[async_trait::async_trait]
@@ -30,9 +30,9 @@ pub trait Client: Send + Sync {
     /// Determines if a client as a capability
     fn has_capability(&self, capability: &Capability) -> bool {
         if let Some(capabilities) = self.capabilities() {
-            return capabilities.contains(capability)
+            return capabilities.contains(capability);
         }
 
-        return false
+        return false;
     }
 }

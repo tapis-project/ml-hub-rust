@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod value_objects_test {
     use crate::shared_kernel::value_objects::{
-        SemanticVersion, SemanticVersionError, Tag, TagError, Tags, TagsError,
-        MAX_TAG_LENGTH_BYTES, MAX_TAGS,
+        SemanticVersion, SemanticVersionError, Tag, TagError, Tags, TagsError, MAX_TAGS,
+        MAX_TAG_LENGTH_BYTES,
     };
 
     #[test]

@@ -1,14 +1,14 @@
 use async_trait;
-use clients::{Capability, Client, ClientError, ClientErrorScope, IngestDatasetClient, IngestModelClient};
-use shared::infra::fs::git::{
-    SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams,
+use clients::{
+    Capability, Client, ClientError, ClientErrorScope, IngestDatasetClient, IngestModelClient,
 };
+use platforms::Platform;
+use shared::infra::fs::git::{SyncGitRepository, SyncGitRepositoryImpl, SyncLfsRepositoryParams};
+use shared::logging::SharedLogger;
 use shared::presentation::http::v1::actix_web::helpers::param_to_string;
 use shared::presentation::http::v1::requests::ingest_dataset::IngestDatasetRequest;
-use shared::logging::SharedLogger;
 use shared::presentation::http::v1::requests::ingest_model::IngestModelRequest;
 use std::path::PathBuf;
-use platforms::Platform;
 
 #[derive(Debug)]
 pub struct GitLfsClient {
@@ -20,12 +20,9 @@ impl Client for GitLfsClient {
     fn platform(&self) -> Option<Platform> {
         Some(Platform::Git)
     }
-    
+
     fn capabilities(&self) -> Option<Vec<Capability>> {
-        Some(vec![
-            Capability::IngestModel,
-            Capability::IngestDataset
-        ])
+        Some(vec![Capability::IngestModel, Capability::IngestDataset])
     }
 }
 

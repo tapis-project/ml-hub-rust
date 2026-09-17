@@ -35,6 +35,7 @@ impl HpcClusterRepository for TestRepository {
 
 fn cluster() -> Result<HpcCluster, HpcClusterQueryServiceError> {
     HpcCluster::new(NewHpcClusterProps {
+        enabled: true,
         name: "Vista".into(),
         description: None,
         host: "vista.tacc.utexas.edu".into(),
@@ -95,6 +96,7 @@ async fn reports_missing_cluster() {
 async fn lists_paginated_summaries() -> Result<(), Box<dyn std::error::Error>> {
     let summary = HpcClusterSummaryOutput {
         id: uuid::Uuid::now_v7(),
+        enabled: false,
         name: "Vista".into(),
         data_center: DataCenter::Tacc,
     };
@@ -111,6 +113,7 @@ async fn lists_paginated_summaries() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     assert_eq!(output.hpc_clusters.len(), 1);
+    assert!(!output.hpc_clusters[0].enabled);
     assert_eq!(output.cursor.as_deref(), Some("next"));
     assert_eq!(output.count, Some(1));
 

@@ -77,7 +77,7 @@ impl AgentBuilder {
                     .deployment_modality
                     .clone()
                     .unwrap_or(AgentDeploymentModality::Persistent),
-            endpoints: self.endpoints.clone().unwrap_or_else(|| {
+                endpoints: self.endpoints.clone().unwrap_or_else(|| {
                     vec![AgentEndpoint::new(
                         Some("default".into()),
                         Protocol::RestHttp,
@@ -85,9 +85,9 @@ impl AgentBuilder {
                         Some("https://example.test".into()),
                         None,
                     )]
-            }),
-            tags: self.tags.clone().unwrap_or_default(),
-            visibility: self.visibility.clone().unwrap_or(Visibility::Private),
+                }),
+                tags: self.tags.clone().unwrap_or_default(),
+                visibility: self.visibility.clone().unwrap_or(Visibility::Private),
             },
             None,
         )

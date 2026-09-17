@@ -157,6 +157,18 @@ jobs:
       image_name: tapis/mlhub-deployments-migrator
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
+  hpc-cluster-seeder:
+    if: contains(fromJson(needs.diffs.outputs.services), 'hpc-cluster-seeder') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+      - tests
+    secrets: inherit
+    uses: ./.github/workflows/hpc-cluster-seeder.yml
+    with:
+      image_name: tapis/mlhub-hpc-cluster-seeder
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
   federated-identities-migrator:
     if: contains(fromJson(needs.diffs.outputs.services), 'federated-identities-migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
     needs:

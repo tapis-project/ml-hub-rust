@@ -37,7 +37,8 @@ async fn upload_model_artifact(
         }
 
         // Instantiate an artifact service
-        let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
+        let artifact_service =
+            artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
         // todo: write to a file * refactor this code to infra/app layer
         let input = match UploadArtifactInput::try_from(UploadModelRequest {}) {
@@ -49,7 +50,7 @@ async fn upload_model_artifact(
             Ok(tuple) => tuple,
             Err(err) => return build_error_response(500, err.to_string()),
         };
-        
+
         while let Ok(Some(chunk)) = field.try_next().await {
             // Convert the `bytes::Bytes` chunk into a `Vec<u8>` before passing it
             if let Err(err) = uploading(chunk.to_vec()).await {
@@ -57,8 +58,8 @@ async fn upload_model_artifact(
             }
         }
 
-        return build_success_response(Some(json!(artifact_id)), Some("success".into()), None)
+        return build_success_response(Some(json!(artifact_id)), Some("success".into()), None);
     }
-    
+
     build_error_response(400, "No file provided".to_string())
 }

@@ -6,4 +6,3 @@ pub struct Tenant {
 pub trait TenantScopedResource {
     fn tenant_id(&self) -> String;
 }
-

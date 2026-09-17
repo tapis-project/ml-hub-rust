@@ -1,13 +1,11 @@
 #[cfg(test)]
 mod test {
-    use actix_web::{test, App};
     use crate::presentation::http::v1::actix_web::handlers::health_check::health_check;
+    use actix_web::{test, App};
 
     #[actix_web::test]
     async fn test_health_check() {
-        let app = test::init_service(App::new()
-            .service(health_check)
-        ).await;
+        let app = test::init_service(App::new().service(health_check)).await;
         let req = test::TestRequest::get()
             .uri("/models-api/health-check")
             .to_request();

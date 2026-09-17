@@ -1,7 +1,9 @@
+use crate::application::ports::identity::{
+    FederatedIdentityProvider, FederatedIdentityProviderError,
+};
+use crate::infra::identity::Idp;
 use std::collections::HashSet;
 use std::sync::Arc;
-use crate::application::ports::identity::{FederatedIdentityProvider, FederatedIdentityProviderError};
-use crate::infra::identity::Idp;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Error)]
@@ -10,26 +12,34 @@ pub enum FederatedIdpRegistrarError {
     DuplicateAuthorityRegistration(String),
 
     #[error("IDP error: {0}")]
-    FederatedIdentityError(#[from] FederatedIdentityProviderError)
+    FederatedIdentityError(#[from] FederatedIdentityProviderError),
 }
 
 pub struct FederatedIdpRegistrar {
     authorities: HashSet<Idp>,
-    providers: Vec<Arc<dyn FederatedIdentityProvider>>
+    providers: Vec<Arc<dyn FederatedIdentityProvider>>,
 }
 
 impl FederatedIdpRegistrar {
     pub fn new() -> Self {
-        Self { authorities: HashSet::new(), providers: Vec::new() }
+        Self {
+            authorities: HashSet::new(),
+            providers: Vec::new(),
+        }
     }
 }
 
 impl FederatedIdpRegistrar {
-    pub fn register(&mut self, idp: Arc<dyn FederatedIdentityProvider>) -> Result<(), FederatedIdpRegistrarError> {
+    pub fn register(
+        &mut self,
+        idp: Arc<dyn FederatedIdentityProvider>,
+    ) -> Result<(), FederatedIdpRegistrarError> {
         // If false, an IDP was already registered with this Authority
         let authority = idp.authority();
         if !self.authorities.insert(authority.clone()) {
-            return Err(FederatedIdpRegistrarError::DuplicateAuthorityRegistration(authority.to_string()))
+            return Err(FederatedIdpRegistrarError::DuplicateAuthorityRegistration(
+                authority.to_string(),
+            ));
         }
 
         self.providers.push(idp);

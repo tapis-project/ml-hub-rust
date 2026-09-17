@@ -51,6 +51,7 @@ runs:
           artifact-publisher
           models-migrator
           deployments-migrator
+          hpc-cluster-seeder
           principals-migrator
           federated-identities-migrator
           hf-model-etl

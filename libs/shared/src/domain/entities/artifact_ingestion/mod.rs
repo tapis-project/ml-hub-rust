@@ -1,8 +1,8 @@
-use std::path::PathBuf;
-use uuid::Uuid;
-use thiserror::Error;
-use crate::shared_kernel::value_objects::TimeStamp;
 use crate::domain::entities::artifact::ArtifactType;
+use crate::shared_kernel::value_objects::TimeStamp;
+use std::path::PathBuf;
+use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum ArtifactIngestionError {
@@ -10,7 +10,7 @@ pub enum ArtifactIngestionError {
     InvalidStatusTransition(String, String),
 
     #[error("Artifact path error: {0}")]
-    ArtifactPath(String)
+    ArtifactPath(String),
 }
 
 // Private type alias to make things less verbose
@@ -20,7 +20,7 @@ type IngestionError = ArtifactIngestionError;
 pub struct ArtifactIngestion {
     pub id: Uuid,
     pub artifact_type: ArtifactType,
-    pub artifact_id: Uuid, 
+    pub artifact_id: Uuid,
     pub platform: String,
     pub status: ArtifactIngestionStatus,
     pub last_message: Option<String>,
@@ -31,7 +31,12 @@ pub struct ArtifactIngestion {
 }
 
 impl ArtifactIngestion {
-    pub fn new(artifact_id: Uuid, artifact_type: ArtifactType, platform: String, webhook_url: Option<String>) -> Self {
+    pub fn new(
+        artifact_id: Uuid,
+        artifact_type: ArtifactType,
+        platform: String,
+        webhook_url: Option<String>,
+    ) -> Self {
         let now = TimeStamp::now();
         Self {
             id: Uuid::new_v4(),
@@ -55,52 +60,40 @@ impl ArtifactIngestion {
     /// Returns whether a transition from one status to another is valid
     fn is_valid_status_transition(from: &Status, to: &Status) -> bool {
         match from {
-            Status::Submitted | Status::Resubmitted => {
-                match to {
-                    Status::Pending | Status::Failed  => true,
-                    _ => false
-                }
-            }
-            Status::Pending => {
-                match to {
-                    Status::Downloading | Status::Failed => true,
-                    _ => false
-                }
-            }
-            Status::Downloading => {
-                match to {
-                    Status::Downloaded | Status::Failed => true,
-                    _ => false
-                }
-            }, 
-            Status::Downloaded => {
-                match to {
-                    Status::Archiving | Status::Finished | Status::Failed => true,
-                    _ => false
-                }
+            Status::Submitted | Status::Resubmitted => match to {
+                Status::Pending | Status::Failed => true,
+                _ => false,
             },
-            Status::Archiving => {
-                match to {
-                    Status::Archived | Status::Failed => true,
-                    _ => false
-                }
+            Status::Pending => match to {
+                Status::Downloading | Status::Failed => true,
+                _ => false,
             },
-            Status::Archived => {
-                match to {
-                    Status::Finished | Status::Failed => true,
-                    _ => false
-                }
+            Status::Downloading => match to {
+                Status::Downloaded | Status::Failed => true,
+                _ => false,
             },
-            Status::Finished | Status::Failed=> match to {
+            Status::Downloaded => match to {
+                Status::Archiving | Status::Finished | Status::Failed => true,
+                _ => false,
+            },
+            Status::Archiving => match to {
+                Status::Archived | Status::Failed => true,
+                _ => false,
+            },
+            Status::Archived => match to {
+                Status::Finished | Status::Failed => true,
+                _ => false,
+            },
+            Status::Finished | Status::Failed => match to {
                 Status::Resubmitted => true,
-                _ => false
+                _ => false,
             },
         }
     }
 
     pub fn set_artifact_path(&mut self, path: PathBuf) -> Result<(), IngestionError> {
         if !(self.status == Status::Downloaded || self.status == Status::Archived) {
-            return Err(IngestionError::ArtifactPath("This ingestion's artifact_path can only be set while the ingestion has a status of Downloaded or Archived".into()))
+            return Err(IngestionError::ArtifactPath("This ingestion's artifact_path can only be set while the ingestion has a status of Downloaded or Archived".into()));
         }
 
         self.artifact_path = Some(path);
@@ -108,18 +101,24 @@ impl ArtifactIngestion {
         // Updates last modifified
         self.touch();
 
-        return Ok(())
+        return Ok(());
     }
 
     /// Changes the status. Returns an error if invalid status transition is detected
     pub fn change_status(&mut self, new_status: Status) -> Result<(), IngestionError> {
         if !Self::is_valid_status_transition(&self.status, &new_status) {
-            return Err(IngestionError::InvalidStatusTransition(self.status.clone().into(), new_status.into()))
+            return Err(IngestionError::InvalidStatusTransition(
+                self.status.clone().into(),
+                new_status.into(),
+            ));
         }
 
         // The artifact_path must be set before the ingestion is moved to a status of finished
         if new_status == Status::Finished && self.artifact_path == None {
-            return Err(IngestionError::ArtifactPath("The artifact_path must be set before moving the ingestion into a Finished state".into()));
+            return Err(IngestionError::ArtifactPath(
+                "The artifact_path must be set before moving the ingestion into a Finished state"
+                    .into(),
+            ));
         }
 
         // Changes the status

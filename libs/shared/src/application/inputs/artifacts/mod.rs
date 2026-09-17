@@ -5,7 +5,7 @@ pub mod inputs_to_domain;
 #[derive(Clone, Debug)]
 pub enum ArtifactType {
     Model,
-    Dataset
+    Dataset,
 }
 
 #[derive(Clone, Debug)]

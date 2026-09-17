@@ -2,6 +2,7 @@ use super::*;
 
 fn domain_cluster() -> Result<domain::HpcCluster, domain::HpcClusterError> {
     domain::HpcCluster::new(domain::NewHpcClusterProps {
+        enabled: false,
         name: "Vista".into(),
         description: Some("GPU cluster".into()),
         host: "vista.tacc.utexas.edu".into(),
@@ -9,6 +10,7 @@ fn domain_cluster() -> Result<domain::HpcCluster, domain::HpcClusterError> {
         documentation_url: None,
         data_center: domain::DataCenter::Tacc,
         queues: vec![domain::NewBatchSchedulerQueueProps {
+            enabled: false,
             name: "gh".into(),
             scheduler_type: domain::SchedulerType::Slurm,
             hardware_profile: domain::HardwareProfile::new(
@@ -61,14 +63,41 @@ fn document_round_trip_preserves_cluster_definition() -> Result<(), Box<dyn std:
     let restored = domain::HpcCluster::try_from(document)?;
 
     assert_eq!(restored.id(), original.id());
+    assert!(!restored.enabled());
     assert_eq!(restored.name(), original.name());
     assert_eq!(restored.queues().len(), 1);
     assert_eq!(restored.queues()[0].name(), "gh");
+    assert!(!restored.queues()[0].enabled());
     assert!(matches!(
         restored.queues()[0].hardware_profile().accelerator(),
         Some(accelerator)
             if matches!(accelerator.profile(), domain::AcceleratorProfile::Gpu(_))
     ));
+
+    Ok(())
+}
+
+#[test]
+fn missing_enabled_fields_default_to_enabled() -> Result<(), Box<dyn std::error::Error>> {
+    let original = domain_cluster()?;
+    let document = HpcCluster::from(&original);
+    let mut bson = mongodb::bson::to_document(&document)?;
+
+    bson.remove("enabled");
+
+    let queues = bson
+        .get_array_mut("queues")?
+        .first_mut()
+        .and_then(mongodb::bson::Bson::as_document_mut)
+        .ok_or_else(|| std::io::Error::other("queue document should exist"))?;
+
+    queues.remove("enabled");
+
+    let document = mongodb::bson::from_document::<HpcCluster>(bson)?;
+    let restored = domain::HpcCluster::try_from(document)?;
+
+    assert!(restored.enabled());
+    assert!(restored.queues()[0].enabled());
 
     Ok(())
 }

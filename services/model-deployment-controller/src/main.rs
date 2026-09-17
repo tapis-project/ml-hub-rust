@@ -1,43 +1,44 @@
-use std::sync::Arc;
 use amqprs::{
     channel::{
-        BasicConsumeArguments,
-        Channel,
-        ExchangeType,
-        QueueBindArguments,
-        QueueDeclareArguments
+        BasicConsumeArguments, Channel, ExchangeType, QueueBindArguments, QueueDeclareArguments,
     },
     connection::Connection,
     consumer::AsyncConsumer,
-    BasicProperties,
-    Deliver,
-    FieldTable,
-    FieldValue
+    BasicProperties, Deliver, FieldTable, FieldValue,
 };
-use tokio;
-use uuid::Uuid;
+use async_trait::async_trait;
+use log::{error, info, warn};
+use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
+use shared::infra::messaging::codec::deserialize_event_message;
+use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
+use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
+use shared::infra::messaging::rabbitmq::routing::{
+    DEAD_LETTER_ROUTING_KEY, MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
+};
+use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
 use shared::{
     application::{
         ports::events::Event,
         services::model_deployment_controller::{
-            FinishReconciliationError,
-            ModelDeploymentController,
-            ReconciliationDispatchError
+            FinishReconciliationError, ModelDeploymentController, ReconciliationDispatchError,
         },
-    }, domain::entities::site::SiteContext, infra::{_common::mongo::{initialize_client, ClientParams}, configuration::site_configuration_loader::SiteConfigurationLoader, messaging::rabbitmq::{connection::open_channel,
-        exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
-        queues::DEAD_LETTER_QUEUE
-    }}, shared_kernel::context::RequestContext
+    },
+    domain::entities::site::SiteContext,
+    infra::{
+        _common::mongo::{initialize_client, ClientParams},
+        configuration::site_configuration_loader::SiteConfigurationLoader,
+        messaging::rabbitmq::{
+            connection::open_channel,
+            exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
+            queues::DEAD_LETTER_QUEUE,
+        },
+    },
+    shared_kernel::context::RequestContext,
 };
-use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
-use shared::infra::messaging::rabbitmq::routing::{MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY, DEAD_LETTER_ROUTING_KEY};
-use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
-use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
-use shared::infra::messaging::codec::deserialize_event_message;
-use async_trait::async_trait;
 use std::env;
-use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
-use log::{error, info, warn};
+use std::sync::Arc;
+use tokio;
+use uuid::Uuid;
 
 struct MessagingContext {
     _connection: Connection,
@@ -52,7 +53,11 @@ impl ModelDeploymentControllerConsumer {
     // Acknowledges the message and kills the process if unable
     async fn ack(&self, channel: &Channel, deliver: &Deliver, message_id: &String) {
         if let Err(err) = ack(&channel, &deliver, None).await {
-            error!("Failed to ack message_id={}: Error: {}. Shutting down...", message_id, err.to_string());
+            error!(
+                "Failed to ack message_id={}: Error: {}. Shutting down...",
+                message_id,
+                err.to_string()
+            );
             std::process::exit(1);
         }
     }
@@ -60,7 +65,11 @@ impl ModelDeploymentControllerConsumer {
     // Negatively acknowledges the message and kills the process if unable
     async fn nack(&self, channel: &Channel, deliver: &Deliver, requeue: bool, message_id: &String) {
         if let Err(err) = nack(&channel, &deliver, Some(requeue), None).await {
-            error!("Failed to nack message_id={}: Error: {}. Shutting down...", message_id, err.to_string());
+            error!(
+                "Failed to nack message_id={}: Error: {}. Shutting down...",
+                message_id,
+                err.to_string()
+            );
             std::process::exit(1);
         }
     }
@@ -68,17 +77,27 @@ impl ModelDeploymentControllerConsumer {
 
 #[async_trait]
 impl AsyncConsumer for ModelDeploymentControllerConsumer {
-    async fn consume(&mut self, channel: &Channel, deliver: Deliver, properties: BasicProperties, content: Vec<u8>) {
+    async fn consume(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        properties: BasicProperties,
+        content: Vec<u8>,
+    ) {
         let default_message_id = String::from("unknown");
         let message_id = properties.message_id().unwrap_or(&default_message_id);
 
         let event = match deserialize_event_message(content) {
             Ok(e) => e,
             Err(err) => {
-                error!("Failed to desireialize message: Message id={}; Error: {}", message_id, err.to_string());
+                error!(
+                    "Failed to desireialize message: Message id={}; Error: {}",
+                    message_id,
+                    err.to_string()
+                );
                 self.nack(&channel, &deliver, false, message_id).await;
 
-                return
+                return;
             }
         };
 
@@ -90,10 +109,13 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                 self.controller.dispatch_reconciler(&ctx, payload).await
             }
             _ => {
-                error!("Invalid event type for this consumer: {}", String::from(event.metadata().kind()));
+                error!(
+                    "Invalid event type for this consumer: {}",
+                    String::from(event.metadata().kind())
+                );
                 self.nack(&channel, &deliver, false, message_id).await;
 
-                return
+                return;
             }
         };
 
@@ -104,53 +126,53 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                     ReconciliationDispatchError::InvalidActorKind(e) => {
                         error!("{}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
-                        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::ModelDeploymentDomainInvariantViolation(e) => {
                         error!("ModelDeploymentDomainInvariantViolation: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
-                        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::MissingDeploymentStrategy(e) => {
                         error!("MissingDeploymentStrategy: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
-        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::DeploymentArgumentServiceError(e) => {
                         error!("DeploymentArgumentServiceError: {}", e.to_string());
                         self.nack(&channel, &deliver, true, message_id).await;
-        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::ModelDeploymentRetrievalFailed(e) => {
                         error!("ModelDeploymentRetrievalFailed: {}", e.to_string());
                         self.nack(&channel, &deliver, true, message_id).await;
-        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::ModelRetrievalFailed(e) => {
                         error!("ModelRetrievalFailed: {}", e.to_string());
                         self.nack(&channel, &deliver, true, message_id).await;
-        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::StaleEvent(e) => {
                         warn!("StaleEvent: {}", e.to_string());
                         self.ack(&channel, &deliver, message_id).await;
-        
-                        return
-                    },
+
+                        return;
+                    }
                     ReconciliationDispatchError::ReconciliationClientInitilizationFailed(e) => {
                         // Event was processible but client was incorrectly configured. This is a long term
                         // failure so we will reject to prevent rapid attempts at reprocessing the message
                         error!("ReconciliationClientInitilizationFailed: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
-        
-                        return
-                    },
+
+                        return;
+                    }
                 };
             }
         };
@@ -165,23 +187,21 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
             Ok(_) => {
                 // Successfully processed. Acknowledge
                 self.ack(&channel, &deliver, message_id).await;
-            },
-            Err(err) => {
-                match err {
-                    FinishReconciliationError::ModelDeploymentUpdateFailed(e) => {
-                        error!("ModelDeploymentUpdateFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, false, message_id).await;
-        
-                        return
-                    }
-                    FinishReconciliationError::EventPublicationFailed(e) => {
-                        error!("EventPublicationFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, false, message_id).await;
-        
-                        return
-                    },
-                }
             }
+            Err(err) => match err {
+                FinishReconciliationError::ModelDeploymentUpdateFailed(e) => {
+                    error!("ModelDeploymentUpdateFailed: {}", e.to_string());
+                    self.nack(&channel, &deliver, false, message_id).await;
+
+                    return;
+                }
+                FinishReconciliationError::EventPublicationFailed(e) => {
+                    error!("EventPublicationFailed: {}", e.to_string());
+                    self.nack(&channel, &deliver, false, message_id).await;
+
+                    return;
+                }
+            },
         };
     }
 }
@@ -190,110 +210,150 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
 async fn main() -> () {
     env_logger::init();
 
-    let broker_host = std::env::var("RABBIT_HOST").expect("RABBIT_URL to be in environment variables");
-    let broker_port = std::env::var("RABBIT_PORT").expect("RABBIT_PORT to be in environment variables");
-    let broker_username = std::env::var("RABBIT_USER").expect("RABBIT_USER to be in environment variables");
-    let broker_password = std::env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD to be in environment variables");
-    
+    let broker_host =
+        std::env::var("RABBIT_HOST").expect("RABBIT_URL to be in environment variables");
+    let broker_port =
+        std::env::var("RABBIT_PORT").expect("RABBIT_PORT to be in environment variables");
+    let broker_username =
+        std::env::var("RABBIT_USER").expect("RABBIT_USER to be in environment variables");
+    let broker_password =
+        std::env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD to be in environment variables");
+
     let (_connection, channel) = open_channel(
         broker_host,
-        broker_port.parse::<u16>().expect("u16 parsed from 'port' String"),
+        broker_port
+            .parse::<u16>()
+            .expect("u16 parsed from 'port' String"),
         broker_username,
         broker_password,
     )
-        .await
-        .map_err(|err| { error!("{}", err.to_string()) })
-        .expect("Connection to message broker established and channel created");
-    
+    .await
+    .map_err(|err| error!("{}", err.to_string()))
+    .expect("Connection to message broker established and channel created");
+
     // We keep the connection in the MessageContext because even though we never
     // use it, if we drop it from memory, the connection will also drop.
     let context = MessagingContext {
         _connection,
-        channel: Arc::new(channel)
+        channel: Arc::new(channel),
     };
 
     // Declare dlx
-    declare_exchanges(&context.channel, vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct)])
-        .await
-        .expect("Exchanges to be declared");
+    declare_exchanges(
+        &context.channel,
+        vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct)],
+    )
+    .await
+    .expect("Exchanges to be declared");
 
     // Declare dlq
-    let _ = match context.channel.queue_declare(QueueDeclareArguments::new(DEAD_LETTER_QUEUE.into())).await {
+    let _ = match context
+        .channel
+        .queue_declare(QueueDeclareArguments::new(DEAD_LETTER_QUEUE.into()))
+        .await
+    {
         Ok(q) => q,
-        Err(err) => panic!("Failed to declare dead letter queue: {}", err.to_string())
+        Err(err) => panic!("Failed to declare dead letter queue: {}", err.to_string()),
     };
 
     // Bind dlq to dlx
-    context.channel.queue_bind(QueueBindArguments::new(DEAD_LETTER_QUEUE, DEAD_LETTER_EXCHANGE, DEAD_LETTER_ROUTING_KEY))
+    context
+        .channel
+        .queue_bind(QueueBindArguments::new(
+            DEAD_LETTER_QUEUE,
+            DEAD_LETTER_EXCHANGE,
+            DEAD_LETTER_ROUTING_KEY,
+        ))
         .await
-        .expect(format!("DLQ bound to DLX with routing key {}", DEAD_LETTER_ROUTING_KEY).as_str());
+        .expect(
+            format!(
+                "DLQ bound to DLX with routing key {}",
+                DEAD_LETTER_ROUTING_KEY
+            )
+            .as_str(),
+        );
 
     // Declare main queue
     let mut dl_args = FieldTable::new();
 
     // When message is rejected, send to DLX
     dl_args.insert(
-        String::from("x-dead-letter-exchange").try_into().expect("Should be ShortStr"),
-        FieldValue::from(DEAD_LETTER_EXCHANGE)
+        String::from("x-dead-letter-exchange")
+            .try_into()
+            .expect("Should be ShortStr"),
+        FieldValue::from(DEAD_LETTER_EXCHANGE),
     );
 
     // Routing key used when dead-lettering
     dl_args.insert(
-        String::from("x-dead-letter-routing-key").try_into().expect("Should be ShortStr"),
-        FieldValue::from(DEAD_LETTER_ROUTING_KEY)
+        String::from("x-dead-letter-routing-key")
+            .try_into()
+            .expect("Should be ShortStr"),
+        FieldValue::from(DEAD_LETTER_ROUTING_KEY),
     );
-    
-    let mut queue_declare_args = QueueDeclareArguments::new(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into());
-    
+
+    let mut queue_declare_args =
+        QueueDeclareArguments::new(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into());
+
     queue_declare_args.arguments(dl_args);
 
-    let _ = context.channel.queue_declare(queue_declare_args.clone())
+    let _ = context
+        .channel
+        .queue_declare(queue_declare_args.clone())
         .await
         .expect("Model deployment reconciliation queue to be declared");
 
     declare_exchanges(
         &context.channel,
         vec![
-            (MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic),
+            (
+                MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
+                ExchangeType::Topic,
+            ),
             (DEAD_LETTER_EXCHANGE, ExchangeType::Direct),
-        ]
+        ],
     )
-        .await
-        .expect("Model deployment reconciliation and dead leater exchanges to be declared");
-    
-    context.channel.queue_bind(
-        QueueBindArguments::new(
+    .await
+    .expect("Model deployment reconciliation and dead leater exchanges to be declared");
+
+    context
+        .channel
+        .queue_bind(QueueBindArguments::new(
             MODEL_DEPLOYMENT_RECONCILIATION_QUEUE,
             MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
             MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
-        )
-    )
+        ))
         .await
         .expect("Model deployment reconciliation queue bound to exchange with routing key");
 
-    // Unique consumer tag to identitfy the worker. 
+    // Unique consumer tag to identitfy the worker.
     let consumer_tag = Uuid::now_v7();
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
 
     // Database connection
-    let client = initialize_client(ClientParams{
+    let client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
         db: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
-        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
+        replica_set: Some(
+            env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set"),
+        ),
     })
-        .await
-        .map_err(|err| {
-            panic!("Database initialization error: {}", err.to_string().as_str()); 
-        })
-        .expect("Datbase initialization error");
+    .await
+    .map_err(|err| {
+        panic!(
+            "Database initialization error: {}",
+            err.to_string().as_str()
+        );
+    })
+    .expect("Datbase initialization error");
 
     // Build site context form site configuration
     let config_loader = SiteConfigurationLoader::new()
-        .map_err(|e| { error!("{}", e.to_string()) })
+        .map_err(|e| error!("{}", e.to_string()))
         .expect("Site configuration repository to be intialized");
 
     let config = config_loader.get_config();
@@ -303,24 +363,31 @@ async fn main() -> () {
         site_id: config.site_id.clone(),
     };
 
-    let controller = match model_deployment_conroller_builder(site_context, &client, db_name, context.channel.clone()) {
+    let controller = match model_deployment_conroller_builder(
+        site_context,
+        &client,
+        db_name,
+        context.channel.clone(),
+    ) {
         Ok(c) => c,
         Err(e) => {
             error!("{}", e.to_string());
             panic!("Failed to initialize ModelDeploymentController");
         }
     };
-    
+
     let consumer = ModelDeploymentControllerConsumer { controller };
-     
+
     let args = BasicConsumeArguments::default()
         .queue(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into())
         .consumer_tag(consumer_tag.to_string())
         .finish();
 
     match context.channel.basic_consume(consumer, args).await {
-        Ok(_) => { info!("Ready to recieve messages...") },
-        Err(err) => panic!("Failed to consume: {}", err.to_string())
+        Ok(_) => {
+            info!("Ready to recieve messages...")
+        }
+        Err(err) => panic!("Failed to consume: {}", err.to_string()),
     };
 
     // Block forever or until terminated

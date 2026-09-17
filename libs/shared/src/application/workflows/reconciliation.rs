@@ -1,13 +1,17 @@
-use crate::{application::{services::deployment_argument_service::DecryptedArgument}, domain::entities::deployment::{
-    DesiredState, ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta, ReplicaGroupDelta, State
-}};
+use crate::{
+    application::services::deployment_argument_service::DecryptedArgument,
+    domain::entities::deployment::{
+        DesiredState, ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta,
+        ReplicaGroupDelta, State,
+    },
+};
 
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
 pub enum ReconcilerError {
     #[error("{0}")]
-    InitializationFailed(String)
+    InitializationFailed(String),
 }
 
 #[derive(Clone, Debug)]

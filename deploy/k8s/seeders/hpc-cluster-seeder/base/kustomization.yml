@@ -1,0 +1,7 @@
+resources:
+  - job.yml
+
+configMapGenerator:
+  - name: mlhub-hpc-cluster-seed-data
+    files:
+      - tacc-hpc-clusters.json

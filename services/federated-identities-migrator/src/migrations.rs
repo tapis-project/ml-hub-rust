@@ -1,8 +1,10 @@
-use mongodb::Database;
-use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 use async_trait::async_trait;
-use shared::infra::_common::mongo::{Index};
-use shared::infra::identity::mongo::indexes::{IssuerSubjectIndexUnique, IssuerSubjectPrincipalIdIndexUnique};
+use mongodb::Database;
+use shared::infra::_common::mongo::Index;
+use shared::infra::identity::mongo::indexes::{
+    IssuerSubjectIndexUnique, IssuerSubjectPrincipalIdIndexUnique,
+};
+use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
     vec![
@@ -14,7 +16,7 @@ pub fn get_migrations() -> Vec<Box<dyn Migration>> {
 pub struct CreateIssuerSubjectIndexUniqueMigration;
 
 #[async_trait]
-impl Migration for CreateIssuerSubjectIndexUniqueMigration {  
+impl Migration for CreateIssuerSubjectIndexUniqueMigration {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
 
@@ -22,9 +24,11 @@ impl Migration for CreateIssuerSubjectIndexUniqueMigration {
             .await
             .expect("Collection to be created");
 
-        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection_name())
-            .create_index(IssuerSubjectIndexUnique::index())
-            .await?;
+        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(
+            IssuerSubjectIndexUnique::collection_name(),
+        )
+        .create_index(IssuerSubjectIndexUnique::index())
+        .await?;
         Ok(())
     }
 
@@ -35,8 +39,11 @@ impl Migration for CreateIssuerSubjectIndexUniqueMigration {
             .await
             .expect("Collection to be created");
 
-        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(IssuerSubjectIndexUnique::collection_name())
-            .drop_index(IssuerSubjectIndexUnique::INDEX_NAME).await?;
+        db.collection::<<IssuerSubjectIndexUnique as Index>::Collection>(
+            IssuerSubjectIndexUnique::collection_name(),
+        )
+        .drop_index(IssuerSubjectIndexUnique::INDEX_NAME)
+        .await?;
         Ok(())
     }
 }
@@ -44,7 +51,7 @@ impl Migration for CreateIssuerSubjectIndexUniqueMigration {
 pub struct CreateIssuerSubjectPrincipalIdIndexUniqueMigration;
 
 #[async_trait]
-impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {  
+impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
 
@@ -52,9 +59,11 @@ impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {
             .await
             .expect("Collection to be created");
 
-        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection_name())
-            .create_index(IssuerSubjectPrincipalIdIndexUnique::index())
-            .await?;
+        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(
+            IssuerSubjectPrincipalIdIndexUnique::collection_name(),
+        )
+        .create_index(IssuerSubjectPrincipalIdIndexUnique::index())
+        .await?;
         Ok(())
     }
 
@@ -65,8 +74,11 @@ impl Migration for CreateIssuerSubjectPrincipalIdIndexUniqueMigration {
             .await
             .expect("Collection to be created");
 
-        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(IssuerSubjectPrincipalIdIndexUnique::collection_name())
-            .drop_index(IssuerSubjectPrincipalIdIndexUnique::INDEX_NAME).await?;
+        db.collection::<<IssuerSubjectPrincipalIdIndexUnique as Index>::Collection>(
+            IssuerSubjectPrincipalIdIndexUnique::collection_name(),
+        )
+        .drop_index(IssuerSubjectPrincipalIdIndexUnique::INDEX_NAME)
+        .await?;
         Ok(())
     }
 }

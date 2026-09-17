@@ -1,14 +1,14 @@
 pub mod document_to_entity;
-pub mod entity_to_document;
 pub mod document_to_string;
+pub mod entity_to_document;
 
-use serde::{Deserialize, Serialize};
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ArtifactType {
     Model,
-    Dataset
+    Dataset,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

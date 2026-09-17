@@ -5,19 +5,22 @@ mod strategy_test {
 
         #[test]
         fn test_valid_strategy_config_reconsititution() {
-            assert!(ReconstitutedStrategyConfigBuilder::new().build_reconstituted().is_ok())
+            assert!(ReconstitutedStrategyConfigBuilder::new()
+                .build_reconstituted()
+                .is_ok())
         }
     }
-    
+
     mod config {
         use crate::domain::entities::deployment_strategy::{
-            strategy::StrategyConfigError,
-            test_fixtures::ReconstitutedStrategyConfigBuilder
+            strategy::StrategyConfigError, test_fixtures::ReconstitutedStrategyConfigBuilder,
         };
 
         #[test]
         fn test_valid_config_reconsititution() {
-            assert!(ReconstitutedStrategyConfigBuilder::new().build_reconstituted().is_ok())
+            assert!(ReconstitutedStrategyConfigBuilder::new()
+                .build_reconstituted()
+                .is_ok())
         }
 
         #[test]
@@ -36,7 +39,7 @@ mod strategy_test {
         fn test_reconstitution_fails_when_deployment_modalites_empty() {
             // Missing at least one deployment modality
             let err = ReconstitutedStrategyConfigBuilder::new()
-                .with_modalities(vec![]) 
+                .with_modalities(vec![])
                 .build_reconstituted()
                 .unwrap_err();
 
@@ -44,4 +47,3 @@ mod strategy_test {
         }
     }
 }
-

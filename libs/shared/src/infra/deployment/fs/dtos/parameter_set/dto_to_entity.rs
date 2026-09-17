@@ -4,14 +4,12 @@ use crate::infra::deployment::fs::dtos;
 impl From<dtos::parameter_set::Parameter> for entities::parameter_set::Parameter {
     fn from(value: dtos::parameter_set::Parameter) -> Self {
         let choices = match value.choices {
-            Some(cs) => {
-                Some(
-                    cs.iter()
-                        .map(|c| entities::parameter_set::Choice::from(c.clone()))
-                        .collect::<Vec<entities::parameter_set::Choice>>()
-                )
-            },
-            None => None
+            Some(cs) => Some(
+                cs.iter()
+                    .map(|c| entities::parameter_set::Choice::from(c.clone()))
+                    .collect::<Vec<entities::parameter_set::Choice>>(),
+            ),
+            None => None,
         };
 
         Self {
@@ -42,13 +40,14 @@ impl From<dtos::parameter_set::ParameterSet> for entities::parameter_set::Parame
     fn from(value: dtos::parameter_set::ParameterSet) -> Self {
         Self {
             name: value.name,
-            parameters: value.parameters.iter()
+            parameters: value
+                .parameters
+                .iter()
                 .map(|p| entities::parameter_set::Parameter::from(p.clone()))
-                .collect()
+                .collect(),
         }
     }
 }
-
 
 impl From<dtos::parameter_set::Choice> for entities::parameter_set::Choice {
     fn from(value: dtos::parameter_set::Choice) -> Self {

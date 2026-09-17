@@ -1,6 +1,5 @@
 use crate::application::ports::commands::{
-    IngestArtifactCommandPayload,
-    PublishArtifactCommandPayload,
+    IngestArtifactCommandPayload, PublishArtifactCommandPayload,
 };
 use crate::infra::messaging::messages;
 

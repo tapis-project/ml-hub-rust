@@ -35,6 +35,7 @@ impl fmt::Display for HpcClusterId {
 #[derive(Debug, Clone)]
 pub struct HpcCluster {
     id: HpcClusterId,
+    enabled: bool,
     name: String,
     description: Option<String>,
     host: String,
@@ -57,6 +58,7 @@ impl HpcCluster {
         Self::build(
             ReconstituteHpcClusterProps {
                 id,
+                enabled: props.enabled,
                 name: props.name,
                 description: props.description,
                 host: props.host,
@@ -84,6 +86,7 @@ impl HpcCluster {
 
         Ok(Self {
             id: props.id,
+            enabled: props.enabled,
             name: props.name,
             description: props.description,
             host: props.host,
@@ -131,6 +134,10 @@ impl HpcCluster {
         &self.id
     }
 
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -162,6 +169,7 @@ impl HpcCluster {
 
 #[derive(Debug, Clone)]
 pub struct NewHpcClusterProps {
+    pub enabled: bool,
     pub name: String,
     pub description: Option<String>,
     pub host: String,
@@ -174,6 +182,7 @@ pub struct NewHpcClusterProps {
 #[derive(Debug, Clone)]
 pub struct ReconstituteHpcClusterProps {
     pub id: HpcClusterId,
+    pub enabled: bool,
     pub name: String,
     pub description: Option<String>,
     pub host: String,
@@ -229,6 +238,7 @@ impl fmt::Display for BatchSchedulerQueueId {
 pub struct BatchSchedulerQueue {
     id: BatchSchedulerQueueId,
     cluster_id: HpcClusterId,
+    enabled: bool,
     name: String,
     scheduler_type: SchedulerType,
     hardware_profile: HardwareProfile,
@@ -245,6 +255,7 @@ impl BatchSchedulerQueue {
             ReconstituteBatchSchedulerQueueProps {
                 id: BatchSchedulerQueueId::new(),
                 cluster_id,
+                enabled: props.enabled,
                 name: props.name,
                 scheduler_type: props.scheduler_type,
                 hardware_profile: props.hardware_profile,
@@ -278,6 +289,7 @@ impl BatchSchedulerQueue {
         Ok(Self {
             id: props.id,
             cluster_id: props.cluster_id,
+            enabled: props.enabled,
             name: props.name,
             scheduler_type: props.scheduler_type,
             hardware_profile: props.hardware_profile,
@@ -292,6 +304,10 @@ impl BatchSchedulerQueue {
 
     pub fn cluster_id(&self) -> &HpcClusterId {
         &self.cluster_id
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
     }
 
     pub fn name(&self) -> &str {
@@ -317,6 +333,7 @@ impl BatchSchedulerQueue {
 
 #[derive(Debug, Clone)]
 pub struct NewBatchSchedulerQueueProps {
+    pub enabled: bool,
     pub name: String,
     pub scheduler_type: SchedulerType,
     pub hardware_profile: HardwareProfile,
@@ -328,6 +345,7 @@ pub struct NewBatchSchedulerQueueProps {
 pub struct ReconstituteBatchSchedulerQueueProps {
     pub id: BatchSchedulerQueueId,
     pub cluster_id: HpcClusterId,
+    pub enabled: bool,
     pub name: String,
     pub scheduler_type: SchedulerType,
     pub hardware_profile: HardwareProfile,

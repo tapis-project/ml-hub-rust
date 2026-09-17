@@ -1,8 +1,8 @@
-use uuid::Uuid;
 use super::PublishArtifactServiceRequest;
-use crate::application::inputs::artifact_publication::PublishArtifactInput;
 use crate::application::errors::ApplicationError;
+use crate::application::inputs::artifact_publication::PublishArtifactInput;
 use serde_json::to_vec;
+use uuid::Uuid;
 
 impl TryFrom<PublishArtifactServiceRequest> for PublishArtifactInput {
     type Error = ApplicationError;
@@ -11,14 +11,18 @@ impl TryFrom<PublishArtifactServiceRequest> for PublishArtifactInput {
         let artifact_id = Uuid::parse_str(&value.path.artifact_id)
             .map_err(|err| ApplicationError::ConversionError(err.to_string()))?;
 
-        let serialized_client_request = to_vec(&value)
-            .map_err(|err| ApplicationError::ConversionError(format!("Failed serialize the full client request: {}", err.to_string())))?;
-        
+        let serialized_client_request = to_vec(&value).map_err(|err| {
+            ApplicationError::ConversionError(format!(
+                "Failed serialize the full client request: {}",
+                err.to_string()
+            ))
+        })?;
+
         Ok(Self {
             artifact_id,
             webhook_url: value.body.webhook_url,
             target_platform: value.body.target_platform,
-            serialized_client_request
+            serialized_client_request,
         })
     }
 }

@@ -53,9 +53,13 @@ mod operator_test {
     fn test_contains() {
         assert!(Operator::Contains.evaluate(&[1], &1).unwrap());
         assert!(Operator::Contains.evaluate(&[[1]], &[1]).unwrap());
-        assert!(Operator::Contains.evaluate(&["foo"], &"foo".to_string()).unwrap());
+        assert!(Operator::Contains
+            .evaluate(&["foo"], &"foo".to_string())
+            .unwrap());
         assert!(!Operator::Contains.evaluate(&[1], &2).unwrap());
-        assert!(!Operator::Contains.evaluate(&["foo"], &"bar".to_string()).unwrap());
+        assert!(!Operator::Contains
+            .evaluate(&["foo"], &"bar".to_string())
+            .unwrap());
     }
 
     #[test]
@@ -63,9 +67,15 @@ mod operator_test {
         assert!(Operator::NotIn.evaluate(&1, &[2]).unwrap());
         assert!(Operator::NotIn.evaluate(&[1], &[[2]]).unwrap());
         assert!(!Operator::NotIn.evaluate(&[1], &[[1]]).unwrap());
-        assert!(!Operator::NotIn.evaluate(&"foo".to_string(), &["foo"]).unwrap());
-        assert!(Operator::NotIn.evaluate(&"foo".to_string(), &["bar"]).unwrap());
-        assert!(Operator::NotIn.evaluate(&"foo".to_string(), &"foo".to_string()).is_err());
+        assert!(!Operator::NotIn
+            .evaluate(&"foo".to_string(), &["foo"])
+            .unwrap());
+        assert!(Operator::NotIn
+            .evaluate(&"foo".to_string(), &["bar"])
+            .unwrap());
+        assert!(Operator::NotIn
+            .evaluate(&"foo".to_string(), &"foo".to_string())
+            .is_err());
     }
 
     #[test]
@@ -76,18 +86,30 @@ mod operator_test {
         assert!(Operator::AnyIn.evaluate(&["foo"], &["foo"]).unwrap());
         assert!(Operator::AnyIn.evaluate(&["foo"], &["foo", "bar"]).unwrap());
         assert!(!Operator::AnyIn.evaluate(&["foo"], &["bar"]).unwrap());
-        assert!(Operator::AnyIn.evaluate(&["foo"], &"foo".to_string()).is_err());
+        assert!(Operator::AnyIn
+            .evaluate(&["foo"], &"foo".to_string())
+            .is_err());
     }
 
     #[test]
     fn test_all_in() {
         assert!(Operator::AllIn.evaluate(&[1, 2, 3], &[1, 2, 3]).unwrap());
-        assert!(Operator::AllIn.evaluate(&[[1], [2], [3]], &[[1], [2], [3]]).unwrap());
-        assert!(Operator::AllIn.evaluate(&["a", "b", "c"], &["a", "b", "c"]).unwrap());
-        assert!(Operator::AllIn.evaluate(&["a", "b"], &["a", "b", "c"]).unwrap());
-        assert!(!Operator::AllIn.evaluate(&["a", "b", "c"], &["b", "c"]).unwrap());
+        assert!(Operator::AllIn
+            .evaluate(&[[1], [2], [3]], &[[1], [2], [3]])
+            .unwrap());
+        assert!(Operator::AllIn
+            .evaluate(&["a", "b", "c"], &["a", "b", "c"])
+            .unwrap());
+        assert!(Operator::AllIn
+            .evaluate(&["a", "b"], &["a", "b", "c"])
+            .unwrap());
+        assert!(!Operator::AllIn
+            .evaluate(&["a", "b", "c"], &["b", "c"])
+            .unwrap());
         assert!(!Operator::AllIn.evaluate(&["a", "b"], &["b", "c"]).unwrap());
-        assert!(Operator::AllIn.evaluate(&["foo"], &"foo".to_string()).is_err());
+        assert!(Operator::AllIn
+            .evaluate(&["foo"], &"foo".to_string())
+            .is_err());
     }
 
     #[test]
@@ -98,6 +120,8 @@ mod operator_test {
         assert!(!Operator::NoneIn.evaluate(&[1, 2, 3], &[1]).unwrap());
         assert!(Operator::NoneIn.evaluate(&["foo"], &["bar"]).unwrap());
         assert!(!Operator::NoneIn.evaluate(&["foo"], &["foo"]).unwrap());
-        assert!(Operator::NoneIn.evaluate(&["foo"], &"foo".to_string()).is_err());
+        assert!(Operator::NoneIn
+            .evaluate(&["foo"], &"foo".to_string())
+            .is_err());
     }
 }

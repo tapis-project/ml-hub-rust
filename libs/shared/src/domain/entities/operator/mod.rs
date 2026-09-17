@@ -43,116 +43,169 @@ impl Operator {
     pub fn evaluate<L, R>(&self, l_operand: &L, r_operand: &R) -> Result<bool, OperandError>
     where
         L: Serialize,
-        R: Serialize
+        R: Serialize,
     {
-        let left = serde_json::to_value(l_operand).map_err(|err| OperandError::InvalidOperand(err.to_string()))?;
-        let right = serde_json::to_value(r_operand).map_err(|err| OperandError::InvalidOperand(err.to_string()))?;
+        let left = serde_json::to_value(l_operand)
+            .map_err(|err| OperandError::InvalidOperand(err.to_string()))?;
+        let right = serde_json::to_value(r_operand)
+            .map_err(|err| OperandError::InvalidOperand(err.to_string()))?;
 
         match self {
-            Operator::Eq =>  Ok(left == right),
-            Operator::Neq =>  Ok(left != right),
-            Operator::Gte =>  {
-                let l = left.as_number()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("number".into(), get_type(&left)))?
+            Operator::Eq => Ok(left == right),
+            Operator::Neq => Ok(left != right),
+            Operator::Gte => {
+                let l = left
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("number".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_number()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&right)))?
+                let r = right
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("number".into(), get_type(&right))
+                    })?
                     .clone();
 
                 Ok(l.as_f64() >= r.as_f64())
-            },
+            }
             Operator::Lte => {
-                let l = left.as_number()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("number".into(), get_type(&left)))?
+                let l = left
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("number".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_number()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&right)))?
+                let r = right
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("number".into(), get_type(&right))
+                    })?
                     .clone();
 
                 Ok(l.as_f64() <= r.as_f64())
-            },
+            }
             Operator::Gt => {
-                let l = left.as_number()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("number".into(), get_type(&left)))?
+                let l = left
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("number".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_number()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&right)))?
+                let r = right
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("number".into(), get_type(&right))
+                    })?
                     .clone();
 
                 Ok(l.as_f64() > r.as_f64())
-            },
+            }
             Operator::Lt => {
-                let l = left.as_number()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("number".into(), get_type(&left)))?
+                let l = left
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("number".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_number()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("number".into(), get_type(&right)))?
+                let r = right
+                    .as_number()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("number".into(), get_type(&right))
+                    })?
                     .clone();
 
                 Ok(l.as_f64() < r.as_f64())
-            },
+            }
             Operator::In => {
-                let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
+                let r = right
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("array".into(), get_type(&right))
+                    })?
                     .clone();
 
                 Ok(r.contains(&left))
-            },
+            }
             Operator::Contains => {
-                let l = left.as_array()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
+                let l = left
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("array".into(), get_type(&left))
+                    })?
                     .clone();
                 Ok(l.contains(&right))
-            },
+            }
             Operator::NotIn => {
-                let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
+                let r = right
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("array".into(), get_type(&right))
+                    })?
                     .clone();
 
                 Ok(!r.contains(&left))
-            },
+            }
             Operator::AnyIn => {
-                let l = left.as_array()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
+                let l = left
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("array".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
+                let r = right
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("array".into(), get_type(&right))
+                    })?
                     .clone();
                 for item in l {
                     if r.contains(&item) {
-                        return Ok(true)
+                        return Ok(true);
                     }
                 }
 
                 Ok(false)
-            },
+            }
             Operator::AllIn => {
-                let l = left.as_array()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
+                let l = left
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("array".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
+                let r = right
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("array".into(), get_type(&right))
+                    })?
                     .clone();
 
                 for item in l {
                     if !r.contains(&item) {
-                        return Ok(false)
+                        return Ok(false);
                     }
                 }
 
                 Ok(true)
-            },
+            }
             Operator::NoneIn => {
-                let l = left.as_array()
-                    .ok_or_else(|| OperandError::InvalidLeftOperand("array".into(), get_type(&left)))?
+                let l = left
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidLeftOperand("array".into(), get_type(&left))
+                    })?
                     .clone();
-                let r = right.as_array()
-                    .ok_or_else(|| OperandError::InvalidRightOperand("array".into(), get_type(&right)))?
+                let r = right
+                    .as_array()
+                    .ok_or_else(|| {
+                        OperandError::InvalidRightOperand("array".into(), get_type(&right))
+                    })?
                     .clone();
 
                 for item in l {
                     if r.contains(&item) {
-                        return Ok(false)
+                        return Ok(false);
                     }
                 }
 

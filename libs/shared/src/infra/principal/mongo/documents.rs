@@ -18,7 +18,6 @@ pub enum Kind {
     System,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Principal {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -65,7 +64,7 @@ impl From<Kind> for entities::principal::Kind {
 
 impl TryFrom<(Principal, FederatedIdentity)> for entities::principal::Principal {
     type Error = PrincipalError;
-    
+
     fn try_from(value: (Principal, FederatedIdentity)) -> Result<Self, Self::Error> {
         let principal = value.0;
 

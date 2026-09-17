@@ -1,4 +1,7 @@
-use crate::{application::ports::events::Kind, domain::entities::deployment::{DesiredState, State}};
+use crate::{
+    application::ports::events::Kind,
+    domain::entities::deployment::{DesiredState, State},
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -18,13 +21,15 @@ impl From<&Kind> for String {
         match value {
             Kind::ModelDeploymentDeleted => "model_deployment.deleted".into(),
             Kind::ModelDeploymentStarted => "model_deployment.started".into(),
-            Kind::ModelDeploymentStateDriftDetected => "model_deployment.state_drift_detected".into(),
+            Kind::ModelDeploymentStateDriftDetected => {
+                "model_deployment.state_drift_detected".into()
+            }
             Kind::ModelDeploymentStopped => "model_deployment.stopped".into(),
         }
     }
 }
 
-impl <'a>TryFrom<&'a str> for Kind {
+impl<'a> TryFrom<&'a str> for Kind {
     type Error = ContractError<'a>;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
@@ -33,14 +38,14 @@ impl <'a>TryFrom<&'a str> for Kind {
             "model_deployment.started" => Kind::ModelDeploymentStarted,
             "model_deployment.state_drift_detected" => Kind::ModelDeploymentStateDriftDetected,
             "model_deployment.stopped" => Kind::ModelDeploymentStopped,
-            other => return Err(ContractError::UknownEventKind(other))
+            other => return Err(ContractError::UknownEventKind(other)),
         })
     }
 }
 
-impl <'a>TryFrom<&'a str> for State {
+impl<'a> TryFrom<&'a str> for State {
     type Error = ContractError<'a>;
-    
+
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         Ok(match value {
             "NotDeployed" => State::NotDeployed,
@@ -49,12 +54,12 @@ impl <'a>TryFrom<&'a str> for State {
             "Failed" => State::Failed,
             "Blocked" => State::Blocked,
             "Unknown" => State::Unknown,
-            other => return Err(ContractError::UknownState(other))
+            other => return Err(ContractError::UknownState(other)),
         })
     }
 }
 
-impl <'a>TryFrom<&'a str> for DesiredState {
+impl<'a> TryFrom<&'a str> for DesiredState {
     type Error = ContractError<'a>;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
@@ -62,7 +67,7 @@ impl <'a>TryFrom<&'a str> for DesiredState {
             "NotDeployed" => DesiredState::NotDeployed,
             "Running" => DesiredState::Running,
             "Stopped" => DesiredState::Stopped,
-            other => return Err(ContractError::UknownDesiredState(other))
+            other => return Err(ContractError::UknownDesiredState(other)),
         })
     }
 }

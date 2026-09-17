@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mlhub-hpc-cluster-seeder
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: mlhub-hpc-cluster-seeder
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: hpc-cluster-seeder
+          image: tapis/mlhub-hpc-cluster-seeder:local
+          imagePullPolicy: Never
+          resources: {}
+          env:
+            - name: HPC_CLUSTER_SEED_PATH
+              value: /etc/mlhub/hpc-clusters/tacc-hpc-clusters.json
+            - name: MONGO_HOST
+              value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_DBNAME
+              value: mlhub
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mlhub-mongo-secrets
+                  key: password
+            - name: MONGO_REPLICA_SET
+              value: rs0
+            - name: RUST_LOG
+              value: info
+          volumeMounts:
+            - name: hpc-cluster-seed-data
+              mountPath: /etc/mlhub/hpc-clusters
+              readOnly: true
+      volumes:
+        - name: hpc-cluster-seed-data
+          configMap:
+            name: mlhub-hpc-cluster-seed-data

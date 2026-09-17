@@ -1,7 +1,7 @@
 pub mod site_configuration_loader;
 
-use strum_macros::{EnumString, Display};
 use serde::Deserialize;
+use strum_macros::{Display, EnumString};
 
 // Infra
 use crate::infra::identity::Idp;
@@ -20,5 +20,5 @@ pub struct SiteConfiguration {
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum TenancyResolutionMode {
-    Subdomain
+    Subdomain,
 }

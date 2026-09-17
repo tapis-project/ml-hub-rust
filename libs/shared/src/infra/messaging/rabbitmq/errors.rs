@@ -13,7 +13,7 @@ pub enum BrokerError {
 
     #[error("Exchange declaration failed: {0}")]
     ExchangeDeclaration(String),
-    
+
     #[error("Ack error: {0}")]
     Ack(String),
 

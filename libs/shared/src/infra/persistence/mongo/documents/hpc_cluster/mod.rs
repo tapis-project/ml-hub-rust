@@ -10,6 +10,8 @@ pub struct HpcCluster {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>,
     pub id: Uuid,
+    #[serde(default = "enabled_by_default")]
+    pub enabled: bool,
     pub name: String,
     pub description: Option<String>,
     pub host: String,
@@ -23,6 +25,8 @@ pub struct HpcCluster {
 pub struct HpcClusterSummary {
     pub _id: ObjectId,
     pub id: Uuid,
+    #[serde(default = "enabled_by_default")]
+    pub enabled: bool,
     pub name: String,
     pub data_center: DataCenter,
 }
@@ -36,6 +40,8 @@ pub enum DataCenter {
 pub struct BatchSchedulerQueue {
     pub id: Uuid,
     pub cluster_id: Uuid,
+    #[serde(default = "enabled_by_default")]
+    pub enabled: bool,
     pub name: String,
     pub scheduler_type: SchedulerType,
     pub hardware_profile: HardwareProfile,
@@ -97,11 +103,16 @@ pub enum BillingMetric {
     PerCoreHour,
 }
 
+fn enabled_by_default() -> bool {
+    true
+}
+
 impl From<&domain::HpcCluster> for HpcCluster {
     fn from(value: &domain::HpcCluster) -> Self {
         Self {
             _id: None,
             id: Uuid::from_bytes(*value.id().as_uuid().as_bytes()),
+            enabled: value.enabled(),
             name: value.name().into(),
             description: value.description().map(Into::into),
             host: value.host().into(),
@@ -126,6 +137,7 @@ impl TryFrom<HpcCluster> for domain::HpcCluster {
 
         domain::HpcCluster::reconstitute(domain::ReconstituteHpcClusterProps {
             id: domain::HpcClusterId::reconstitute(uuid::Uuid::from_bytes(value.id.bytes())),
+            enabled: value.enabled,
             name: value.name,
             description: value.description,
             host: value.host,
@@ -158,6 +170,7 @@ impl From<&domain::BatchSchedulerQueue> for BatchSchedulerQueue {
         Self {
             id: Uuid::from_bytes(*value.id().as_uuid().as_bytes()),
             cluster_id: Uuid::from_bytes(*value.cluster_id().as_uuid().as_bytes()),
+            enabled: value.enabled(),
             name: value.name().into(),
             scheduler_type: value.scheduler_type().into(),
             hardware_profile: value.hardware_profile().into(),
@@ -180,6 +193,7 @@ impl TryFrom<BatchSchedulerQueue> for domain::BatchSchedulerQueue {
             cluster_id: domain::HpcClusterId::reconstitute(uuid::Uuid::from_bytes(
                 value.cluster_id.bytes(),
             )),
+            enabled: value.enabled,
             name: value.name,
             scheduler_type: value.scheduler_type.into(),
             hardware_profile,

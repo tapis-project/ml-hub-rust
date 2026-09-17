@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::domain::entities::deployment::{DesiredState, State};
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct ModelDeploymentStartedPayload {

@@ -9,14 +9,14 @@ impl Index for IssuerSubjectIndexUnique {
     const INDEX_NAME: &'static str = "create_issuer_subject_index_unique";
     fn index() -> IndexModel {
         IndexModel::builder()
-                    .keys(doc! { "issue": 1, "subject": 1 })
-                    .options(
-                        Some(IndexOptions::builder()
-                            .name(Self::INDEX_NAME.to_string())
-                            .unique(true)
-                            .build())
-                    )
-                    .build()
+            .keys(doc! { "issue": 1, "subject": 1 })
+            .options(Some(
+                IndexOptions::builder()
+                    .name(Self::INDEX_NAME.to_string())
+                    .unique(true)
+                    .build(),
+            ))
+            .build()
     }
 
     fn collection_name() -> &'static str {
@@ -31,14 +31,14 @@ impl Index for IssuerSubjectPrincipalIdIndexUnique {
     const INDEX_NAME: &'static str = "create_issuer_subject_principal_id_index_unique";
     fn index() -> IndexModel {
         IndexModel::builder()
-                    .keys(doc! { "issue": 1, "subject": 1, "principal_id": 1 })
-                    .options(
-                        Some(IndexOptions::builder()
-                            .name(Self::INDEX_NAME.to_string())
-                            .unique(true)
-                            .build())
-                    )
-                    .build()
+            .keys(doc! { "issue": 1, "subject": 1, "principal_id": 1 })
+            .options(Some(
+                IndexOptions::builder()
+                    .name(Self::INDEX_NAME.to_string())
+                    .unique(true)
+                    .build(),
+            ))
+            .build()
     }
 
     fn collection_name() -> &'static str {

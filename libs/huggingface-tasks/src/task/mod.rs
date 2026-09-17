@@ -90,5 +90,4 @@ pub enum Task {
     TextTo3d,
     #[doc = "Image-to-3D models take in image input and produce 3D output."]
     ImageTo3d,
-
 }

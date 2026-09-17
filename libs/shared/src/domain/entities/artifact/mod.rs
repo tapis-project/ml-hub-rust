@@ -1,6 +1,6 @@
+use crate::shared_kernel::value_objects::TimeStamp;
 use std::path::PathBuf;
 use uuid::Uuid;
-use crate::shared_kernel::value_objects::TimeStamp;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ArtifactType {
@@ -34,13 +34,13 @@ impl Artifact {
             path: None,
             artifact_type: r#type,
             created_at: now.clone(),
-            last_modified: now.clone()
+            last_modified: now.clone(),
         }
     }
 
     pub fn set_path(&mut self, path: PathBuf) {
         self.path = Some(path);
-        
+
         // Update last modified
         self.touch();
     }

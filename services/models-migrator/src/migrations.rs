@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use mongodb::{bson::doc, Database};
+use mongodb::{Database, bson::doc};
 use shared::infra::_common::mongo::Index;
 use shared::infra::persistence::mongo::database::MODEL_COLLECTION;
 use shared::infra::persistence::mongo::documents::external_model::external_model_indexes::{
@@ -7,10 +7,10 @@ use shared::infra::persistence::mongo::documents::external_model::external_model
     ExternalModelInferenceRuntimesIndex, ExternalModelProviderIndex,
     ExternalModelTapisLocatorIndexUnique, ExternalModelTaskTypesIndex,
 };
+use shared::infra::persistence::mongo::documents::model::Model;
 use shared::infra::persistence::mongo::documents::model::indexes::{
     ModelArtifactIdIndexUnique, ModelIdIndexUnique, ModelOwnerExternalModelIndexUnique,
 };
-use shared::infra::persistence::mongo::documents::model::Model;
 use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
