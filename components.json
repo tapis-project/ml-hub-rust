@@ -210,7 +210,7 @@
         "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
         "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
         "cycle": "./dev stop {{ self.name }} && ./dev buildp {{ self.name }} && ./dev start {{ self.name }}",
-        "cyclel": "{{ self.commands.start }} && {{ self.commands.stop }} && {{ self.commands.buildl }} && {{ self.commands.start }}",
+        "cyclel": "./dev stop {{ self.name }} -t overlay {{ overlay }} && ./dev buildl {{ self.name }} && ./dev start {{ self.name }} -t overlay {{ overlay }}",
         "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
