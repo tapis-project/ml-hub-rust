@@ -356,6 +356,7 @@ components:
       required:
         - id
         - cluster_id
+        - enabled
         - name
         - scheduler_type
         - hardware_profile
@@ -368,6 +369,8 @@ components:
         cluster_id:
           type: string
           format: uuid
+        enabled:
+          type: boolean
         hardware_profile:
           $ref: '#/components/schemas/HardwareProfile'
         id:
@@ -547,6 +550,7 @@ components:
       type: object
       required:
         - id
+        - enabled
         - name
         - host
         - port
@@ -563,6 +567,8 @@ components:
           type:
             - string
             - 'null'
+        enabled:
+          type: boolean
         host:
           type: string
         id:
@@ -582,11 +588,14 @@ components:
       type: object
       required:
         - id
+        - enabled
         - name
         - data_center
       properties:
         data_center:
           $ref: '#/components/schemas/DataCenter'
+        enabled:
+          type: boolean
         id:
           type: string
           format: uuid

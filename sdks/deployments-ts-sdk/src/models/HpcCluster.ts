@@ -50,6 +50,12 @@ export interface HpcCluster {
     documentation_url?: string | null;
     /**
      * 
+     * @type {boolean}
+     * @memberof HpcCluster
+     */
+    enabled: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof HpcCluster
      */
@@ -93,6 +99,7 @@ export function HpcClusterFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'data_center': DataCenterFromJSON(json['data_center']),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'documentation_url': !exists(json, 'documentation_url') ? undefined : json['documentation_url'],
+        'enabled': json['enabled'],
         'host': json['host'],
         'id': json['id'],
         'name': json['name'],
@@ -113,6 +120,7 @@ export function HpcClusterToJSON(value?: HpcCluster | null): any {
         'data_center': DataCenterToJSON(value.data_center),
         'description': value.description,
         'documentation_url': value.documentation_url,
+        'enabled': value.enabled,
         'host': value.host,
         'id': value.id,
         'name': value.name,

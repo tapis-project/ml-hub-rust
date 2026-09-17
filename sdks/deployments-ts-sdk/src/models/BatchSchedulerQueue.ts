@@ -52,6 +52,12 @@ export interface BatchSchedulerQueue {
     cluster_id: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof BatchSchedulerQueue
+     */
+    enabled: boolean;
+    /**
+     * 
      * @type {HardwareProfile}
      * @memberof BatchSchedulerQueue
      */
@@ -94,6 +100,7 @@ export function BatchSchedulerQueueFromJSONTyped(json: any, ignoreDiscriminator:
         
         'billing_policy': !exists(json, 'billing_policy') ? undefined : BillingPolicyFromJSON(json['billing_policy']),
         'cluster_id': json['cluster_id'],
+        'enabled': json['enabled'],
         'hardware_profile': HardwareProfileFromJSON(json['hardware_profile']),
         'id': json['id'],
         'name': json['name'],
@@ -113,6 +120,7 @@ export function BatchSchedulerQueueToJSON(value?: BatchSchedulerQueue | null): a
         
         'billing_policy': BillingPolicyToJSON(value.billing_policy),
         'cluster_id': value.cluster_id,
+        'enabled': value.enabled,
         'hardware_profile': HardwareProfileToJSON(value.hardware_profile),
         'id': value.id,
         'name': value.name,

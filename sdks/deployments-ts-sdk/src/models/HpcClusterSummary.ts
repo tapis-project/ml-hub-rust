@@ -34,6 +34,12 @@ export interface HpcClusterSummary {
     data_center: DataCenter;
     /**
      * 
+     * @type {boolean}
+     * @memberof HpcClusterSummary
+     */
+    enabled: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof HpcClusterSummary
      */
@@ -57,6 +63,7 @@ export function HpcClusterSummaryFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'data_center': DataCenterFromJSON(json['data_center']),
+        'enabled': json['enabled'],
         'id': json['id'],
         'name': json['name'],
     };
@@ -72,6 +79,7 @@ export function HpcClusterSummaryToJSON(value?: HpcClusterSummary | null): any {
     return {
         
         'data_center': DataCenterToJSON(value.data_center),
+        'enabled': value.enabled,
         'id': value.id,
         'name': value.name,
     };
