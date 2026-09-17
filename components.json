@@ -165,7 +165,7 @@
       "name": "datasets",
       "rootDir": "services/datasets",
       "labels": ["api"],
-      "lifecycle": "experimental",
+      "lifecycle": "production",
       "commands": {
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
@@ -197,7 +197,7 @@
       "name": "deployments",
       "rootDir": "services/deployments",
       "labels": ["api"],
-      "lifecycle": "experimental",
+      "lifecycle": "production",
       "commands": {
         "get-nfs-ip": "kubectl get service {{ nfs-server-service }} -o jsonpath='{.spec.clusterIP}'",
         "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
@@ -261,7 +261,7 @@
       "name": "specs",
       "rootDir": "specs",
       "labels": ["workflow"],
-      "lifecycle": "development",
+      "lifecycle": "production",
       "commands": {
         "generate-agents": "mkdir -p {{ specs-dir }}/agents && cargo run --bin agents-openapi | jq > {{ specs-dir }}/agents/openapi.json",
         "generate-models": "mkdir -p {{ specs-dir }}/models && cargo run --bin models-openapi | jq > {{ specs-dir }}/models/openapi.json",
