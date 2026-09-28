@@ -10,7 +10,7 @@
                     "Transformers compatible",
                     "Supports TextGeneration",
                     "Not quantized",
-                    "Trusted Authors",
+                    "FlexServ Trusted Authors",
                     "Public"
                 ]
             ]
@@ -22,13 +22,13 @@
             "evaluation_type": "ModelTrust",
             "expressions": [
                 [
-                    "Trusted Authors",
+                    "FlexServ Trusted Authors",
                     "Trusted Models"
                 ]
             ]
         },
         {
-            "name": "FlexServ Compatible Queue",
+            "name": "FlexServ Compatible Model Queue Combo",
             "evaluation_strategy": "DNF",
             "parameters": ["model", "queue"],
             "expressions": [
@@ -39,12 +39,12 @@
             ]
         },
         {
-            "name": "FlexServ Compatible Cluster",
+            "name": "FlexServ Runs On Cluster",
             "evaluation_strategy": "DNF",
             "parameters": ["cluster"],
             "expressions": [
                 [
-                    "Supports Apptainer"
+                    "Cluster Supports Apptainer"
                 ]
             ]
         }
@@ -280,7 +280,7 @@
             ]
         },
         {
-            "name": "Trusted Authors",
+            "name": "FlexServ Trusted Authors",
             "evaluation_strategy": "DNF",
             "parameters": ["model"],
             "conditions": [
@@ -382,6 +382,31 @@
                                         "multiply": [0.6]
                                     }
                                 ]
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Cluster Supports Apptainer",
+            "evaluation_strategy": "DNF",
+            "parameters": ["cluster"],
+            "conditions": [
+                [
+                    {
+                        "operator": "In",
+                        "operands": [
+                            {
+                                "type": "literal",
+                                "value": "Apptainer"
+                            },
+                            {
+                                "type": "parameter",
+                                "parameter": "cluster",
+                                "accessor": {
+                                    "field_path": ["container_runtimes"]
+                                }
                             }
                         ]
                     }
