@@ -1,11 +1,14 @@
 use super::*;
 use std::{
     collections::{HashMap, HashSet},
+    fs,
     path::PathBuf,
     rc::Rc,
 };
 
-use evaluations::{Arguments, Evaluator, FieldPath, ResolveValue};
+use evaluations::{
+    Arguments, Evaluator, FieldPath, FieldValue, ResolveValue, ValueResolutionError,
+};
 use serde_json::{Map, Value};
 
 use crate::domain::entities::model::external_model::{
@@ -255,7 +258,8 @@ fn rejects_queue_belonging_to_another_cluster() -> Result<(), Box<dyn std::error
 }
 
 #[test]
-fn resolves_gpu_memory_and_returns_null_for_cpu_queues() -> Result<(), Box<dyn std::error::Error>> {
+fn resolves_gpu_fields_and_returns_undefined_for_cpu_queues(
+) -> Result<(), Box<dyn std::error::Error>> {
     let cluster_id = HpcClusterId::new();
     let gpu_queue = BatchSchedulerQueue::new(cluster_id, queue_props("gpu"))?;
     let mut cpu_props = queue_props("cpu");
@@ -271,7 +275,13 @@ fn resolves_gpu_memory_and_returns_null_for_cpu_queues() -> Result<(), Box<dyn s
     );
 
     let cpu_queue = BatchSchedulerQueue::new(cluster_id, cpu_props)?;
-    let field_path = || {
+    let gpu_path = || {
+        Some(FieldPath::new(vec![
+            "hardware_profile".into(),
+            "gpu".into(),
+        ]))
+    };
+    let gpu_memory_path = || {
         Some(FieldPath::new(vec![
             "hardware_profile".into(),
             "gpu".into(),
@@ -280,13 +290,106 @@ fn resolves_gpu_memory_and_returns_null_for_cpu_queues() -> Result<(), Box<dyn s
     };
 
     assert_eq!(
-        Value::from(gpu_queue.resolve_value(field_path())?),
+        Value::from(gpu_queue.resolve_value(gpu_memory_path())?),
         Value::from(80_u64)
     );
     assert_eq!(
-        Value::from(cpu_queue.resolve_value(field_path())?),
-        Value::Null
+        Value::from(gpu_queue.resolve_value(gpu_path())?),
+        serde_json::json!({
+            "count_per_node": 4,
+            "gpu_model": "H100",
+            "gpu_vendor": "NVIDIA",
+            "gpu_memory_gb": 80,
+            "unified_memory": false,
+        })
     );
+
+    let missing_gpu = cpu_queue.resolve_value(gpu_path())?;
+    let missing_gpu_memory = cpu_queue.resolve_value(gpu_memory_path())?;
+
+    assert!(matches!(&missing_gpu, FieldValue::Undefined));
+    assert!(matches!(&missing_gpu_memory, FieldValue::Undefined));
+    assert_eq!(Value::from(missing_gpu), Value::Null);
+    assert_eq!(Value::from(missing_gpu_memory), Value::Null);
+
+    let invalid = cpu_queue.resolve_value(Some(FieldPath::new(vec!["unknown".into()])));
+
+    assert!(matches!(
+        invalid,
+        Err(ValueResolutionError::InvalidFieldPath(_))
+    ));
+
+    Ok(())
+}
+
+#[test]
+fn evaluates_has_gpus_for_gpu_and_cpu_queues() -> Result<(), Box<dyn std::error::Error>> {
+    let config = serde_json::json!({
+        "evaluations": [{
+            "name": "Queue Compatibility",
+            "evaluation_strategy": "DNF",
+            "parameters": ["queue"],
+            "expressions": [["Has Gpus"]]
+        }],
+        "statements": [{
+            "name": "Has Gpus",
+            "evaluation_strategy": "DNF",
+            "parameters": ["queue"],
+            "conditions": [[{
+                "operator": "Neq",
+                "operands": [
+                    {
+                        "type": "parameter",
+                        "parameter": "queue",
+                        "accessor": {
+                            "field_path": ["hardware_profile", "gpu"]
+                        }
+                    },
+                    {
+                        "type": "literal",
+                        "value": null
+                    }
+                ]
+            }]]
+        }]
+    });
+
+    let temp_dir = std::env::temp_dir();
+    let config_name = format!("hpc-cluster-has-gpus-{}.json", Uuid::now_v7());
+    let config_path = temp_dir.join(config_name);
+
+    fs::write(&config_path, serde_json::to_vec(&config)?)?;
+
+    let evaluator = Evaluator::load(&config_path)?;
+
+    let cluster_id = HpcClusterId::new();
+    let gpu_queue = BatchSchedulerQueue::new(cluster_id, queue_props("gpu"))?;
+
+    let mut cpu_props = queue_props("cpu");
+
+    cpu_props.hardware_profile = HardwareProfile::new(
+        100,
+        128,
+        "x86_64".into(),
+        "EPYC".into(),
+        "AMD".into(),
+        512,
+        None,
+    );
+
+    let cpu_queue = BatchSchedulerQueue::new(cluster_id, cpu_props)?;
+
+    let mut arguments: Arguments = HashMap::new();
+
+    arguments.insert("queue".into(), Rc::new(gpu_queue));
+
+    assert!(evaluator.evaluate("Queue Compatibility", &arguments)?);
+
+    arguments.insert("queue".into(), Rc::new(cpu_queue));
+
+    assert!(!evaluator.evaluate("Queue Compatibility", &arguments)?);
+
+    fs::remove_file(config_path)?;
 
     Ok(())
 }

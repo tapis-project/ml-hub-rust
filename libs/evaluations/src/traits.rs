@@ -12,6 +12,10 @@ pub enum ValueResolutionError {
 }
 
 pub trait ResolveValue {
+    /// Resolves a supported field path to its value.
+    ///
+    /// Implementations return [`FieldValue::Undefined`] when the path is valid but no value is
+    /// present. Unsupported or malformed paths return [`ValueResolutionError::InvalidFieldPath`].
     fn resolve_value(
         &self,
         field_path: Option<FieldPath>,

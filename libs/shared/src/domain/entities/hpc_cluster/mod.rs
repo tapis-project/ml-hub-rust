@@ -1,6 +1,7 @@
 use std::{collections::HashSet, fmt};
 
 use evaluations::{FieldPath, FieldValue, ResolveValue, ValueResolutionError};
+use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -389,16 +390,33 @@ impl ResolveValue for BatchSchedulerQueue {
             .collect::<Vec<_>>();
 
         match path.as_slice() {
-            ["hardware_profile", "gpu", "gpu_memory_gb"] => {
-                let gpu_memory_gb = self
-                    .hardware_profile
-                    .accelerator()
-                    .map(Accelerator::profile)
-                    .map(|profile| match profile {
-                        AcceleratorProfile::Gpu(profile) => profile.gpu_memory_gb() as u128,
-                    });
+            ["hardware_profile", "gpu"] => {
+                let Some(accelerator) = self.hardware_profile.accelerator() else {
+                    return Ok(FieldValue::Undefined);
+                };
 
-                Ok(FieldValue::OptionalUnsigned(gpu_memory_gb))
+                let gpu = match accelerator.profile() {
+                    AcceleratorProfile::Gpu(profile) => json!({
+                        "count_per_node": accelerator.count_per_node(),
+                        "gpu_model": profile.gpu_model(),
+                        "gpu_vendor": profile.gpu_vendor(),
+                        "gpu_memory_gb": profile.gpu_memory_gb(),
+                        "unified_memory": profile.unified_memory(),
+                    }),
+                };
+
+                Ok(FieldValue::Json(gpu))
+            }
+            ["hardware_profile", "gpu", "gpu_memory_gb"] => {
+                let Some(accelerator) = self.hardware_profile.accelerator() else {
+                    return Ok(FieldValue::Undefined);
+                };
+
+                let gpu_memory_gb = match accelerator.profile() {
+                    AcceleratorProfile::Gpu(profile) => profile.gpu_memory_gb() as u64,
+                };
+
+                Ok(FieldValue::Unsigned(gpu_memory_gb))
             }
             other => Err(ValueResolutionError::InvalidFieldPath(
                 other.iter().map(|part| (*part).to_owned()).collect(),

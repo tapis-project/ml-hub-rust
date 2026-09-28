@@ -10,7 +10,8 @@ use serde_json::{Value, json};
 
 use super::*;
 use crate::{
-    FieldPath, FieldValue, Operand, Operation, Operator, ResolveValue, ValueResolutionError,
+    ConditionEvaluationError, FieldPath, FieldValue, Operand, Operation, Operator, ResolveValue,
+    StatementEvaluationError, ValueResolutionError,
 };
 
 static FILE_COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -19,6 +20,9 @@ static FILE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 struct JsonValues {
     values: HashMap<String, Value>,
 }
+
+#[derive(Debug)]
+struct UndefinedValue;
 
 impl JsonValues {
     fn new(values: impl IntoIterator<Item = (&'static str, Value)>) -> Self {
@@ -49,6 +53,25 @@ impl ResolveValue for JsonValues {
             .ok_or_else(|| ValueResolutionError::InvalidFieldPath(path))?;
 
         Ok(FieldValue::Json(value))
+    }
+}
+
+impl ResolveValue for UndefinedValue {
+    fn resolve_value(
+        &self,
+        field_path: Option<FieldPath>,
+    ) -> Result<FieldValue, ValueResolutionError> {
+        let field_path = field_path.ok_or_else(|| {
+            ValueResolutionError::InvalidFieldPath("No field path provided".into())
+        })?;
+
+        if field_path.to_string() == "value" {
+            return Ok(FieldValue::Undefined);
+        }
+
+        Err(ValueResolutionError::InvalidFieldPath(
+            field_path.to_string(),
+        ))
     }
 }
 
@@ -97,6 +120,57 @@ fn valid_config() -> Value {
             }]]
         }]
     })
+}
+
+#[test]
+fn treats_undefined_values_as_null_without_hiding_invalid_paths()
+-> Result<(), Box<dyn std::error::Error>> {
+    assert_eq!(Value::from(FieldValue::Undefined), Value::Null);
+
+    let mut direct_null = valid_config();
+    direct_null["statements"][0]["conditions"][0][0]["operands"][1]["value"] = Value::Null;
+    let direct_null_path = temporary_config(&serde_json::to_string(&direct_null)?)?;
+
+    let evaluator = Evaluator::load(&direct_null_path)?;
+
+    let mut arguments = crate::Arguments::new();
+
+    arguments.insert("item".into(), Rc::new(UndefinedValue));
+
+    assert!(evaluator.evaluate("Check", &arguments)?);
+
+    fs::remove_file(direct_null_path)?;
+
+    let mut coalesced = valid_config();
+    coalesced["statements"][0]["conditions"][0][0]["operands"][0]["operations"] = json!([{
+        "operation": "coalesce",
+        "coalesce": {"from": null, "to": true}
+    }]);
+    let coalesced_path = temporary_config(&serde_json::to_string(&coalesced)?)?;
+
+    let evaluator = Evaluator::load(&coalesced_path)?;
+
+    assert!(evaluator.evaluate("Check", &arguments)?);
+
+    fs::remove_file(coalesced_path)?;
+
+    let invalid_arguments = crate::Arguments::from([(
+        "item".into(),
+        Rc::new(JsonValues::new(Vec::<(&'static str, Value)>::new())) as Rc<dyn ResolveValue>,
+    )]);
+    let result = evaluator.evaluate("Check", &invalid_arguments);
+
+    assert!(matches!(
+        result,
+        Err(EvaluatorError::Evaluation {
+            source: StatementEvaluationError::Condition(ConditionEvaluationError::ValueResolution(
+                ValueResolutionError::InvalidFieldPath(_)
+            )),
+            ..
+        })
+    ));
+
+    Ok(())
 }
 
 #[test]

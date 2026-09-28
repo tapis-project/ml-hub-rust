@@ -28,12 +28,23 @@
             ]
         },
         {
-            "name": "Compatible Deployment Target",
+            "name": "FlexServ Compatible Queue",
             "evaluation_strategy": "DNF",
             "parameters": ["model", "queue"],
             "expressions": [
                 [
+                    "Has Gpus",
                     "Lt Max Model Size"
+                ]
+            ]
+        },
+        {
+            "name": "FlexServ Compatible Cluster",
+            "evaluation_strategy": "DNF",
+            "parameters": ["cluster"],
+            "expressions": [
+                [
+                    "Supports Apptainer"
                 ]
             ]
         }
@@ -368,9 +379,34 @@
                                 "operations": [
                                     {
                                         "operation": "multiply",
-                                        "multiply": [1000000000, 0.6]
+                                        "multiply": [0.6]
                                     }
                                 ]
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Has Gpus",
+            "evaluation_strategy": "DNF",
+            "parameters": ["queue"],
+            "conditions": [
+                [
+                    {
+                        "operator": "Neq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "queue",
+                                "accessor": {
+                                    "field_path": ["hardware_profile", "gpu"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": null
                             }
                         ]
                     }

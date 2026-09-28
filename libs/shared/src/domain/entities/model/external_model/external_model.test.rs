@@ -1,4 +1,4 @@
-use evaluations::{FieldPath, ResolveValue};
+use evaluations::{FieldPath, FieldValue, ResolveValue};
 use serde_json::{json, Map, Value};
 
 use super::{
@@ -136,6 +136,7 @@ fn resolves_canonical_values_and_absent_values_as_null() -> Result<(), Box<dyn s
     assert_eq!(Value::from(id), json!("owner/repo"));
     assert_eq!(Value::from(quantization), json!({"bits": 4}));
     assert_eq!(Value::from(sibling_name), json!("weights.safetensors"));
+    assert!(matches!(&missing, FieldValue::Undefined));
     assert_eq!(Value::from(missing), Value::Null);
 
     Ok(())

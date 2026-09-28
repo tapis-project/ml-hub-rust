@@ -4,12 +4,12 @@ use platforms::Platform;
 use serde_json::{Map, Value};
 use thiserror::Error;
 
-use crate::{domain::entities::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId}, shared_kernel::{
+use crate::shared_kernel::{
     constants::GLOBAL_TENANT,
     enums::Task,
     identifiers::{traits::UrnGenerator, urn::Urn, ExternalModelId},
     value_objects::{Tags, TagsError, TimeStamp},
-}};
+};
 
 #[derive(Debug, Clone)]
 pub struct ExternalModel {
@@ -187,7 +187,10 @@ impl ResolveValue for ExternalModel {
                     });
                 }
 
-                Ok(FieldValue::Json(value.cloned().unwrap_or(Value::Null)))
+                match value {
+                    Some(value) => Ok(FieldValue::Json(value.clone())),
+                    None => Ok(FieldValue::Undefined),
+                }
             }
             other => Err(ValueResolutionError::InvalidFieldPath(
                 other.iter().map(|part| (*part).to_owned()).collect(),

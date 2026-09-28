@@ -32,6 +32,7 @@ impl std::fmt::Display for FieldPath {
 
 #[derive(Clone, Debug)]
 pub enum FieldValue {
+    Undefined,
     String(Option<String>),
     Strings(Vec<String>),
     Boolean(bool),
@@ -43,6 +44,7 @@ pub enum FieldValue {
 impl From<FieldValue> for Value {
     fn from(value: FieldValue) -> Self {
         match value {
+            FieldValue::Undefined => Value::Null,
             FieldValue::String(value) => serde_json::to_value(value).unwrap_or(Value::Null),
             FieldValue::Strings(value) => serde_json::to_value(value).unwrap_or(Value::Null),
             FieldValue::Boolean(value) => Value::Bool(value),
