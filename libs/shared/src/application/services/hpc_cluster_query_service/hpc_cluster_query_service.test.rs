@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use super::*;
 use crate::{
     application::outputs::hpc_cluster::HpcClusterSummaryOutput,
-    domain::entities::hpc_cluster::{HpcCluster, NewHpcClusterProps},
+    domain::entities::hpc_cluster::{ContainerRuntime, HpcCluster, NewHpcClusterProps},
 };
 
 struct TestRepository {
@@ -40,6 +40,7 @@ fn cluster() -> Result<HpcCluster, HpcClusterQueryServiceError> {
         description: None,
         host: "vista.tacc.utexas.edu".into(),
         port: 22,
+        container_runtimes: vec![ContainerRuntime::Apptainer],
         documentation_url: None,
         data_center: DataCenter::Tacc,
         queues: Vec::new(),

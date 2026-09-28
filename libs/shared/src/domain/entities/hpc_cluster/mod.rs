@@ -41,6 +41,7 @@ pub struct HpcCluster {
     description: Option<String>,
     host: String,
     port: u16,
+    container_runtimes: Vec<ContainerRuntime>,
     documentation_url: Option<String>,
     data_center: DataCenter,
     queues: Vec<BatchSchedulerQueue>,
@@ -64,6 +65,7 @@ impl HpcCluster {
                 description: props.description,
                 host: props.host,
                 port: props.port,
+                container_runtimes: props.container_runtimes,
                 documentation_url: props.documentation_url,
                 data_center: props.data_center,
                 queues,
@@ -92,6 +94,7 @@ impl HpcCluster {
             description: props.description,
             host: props.host,
             port: props.port,
+            container_runtimes: props.container_runtimes,
             documentation_url: props.documentation_url,
             data_center: props.data_center,
             queues: props.queues,
@@ -109,6 +112,16 @@ impl HpcCluster {
 
         if props.port == 0 {
             return Err(HpcClusterError::InvalidPort);
+        }
+
+        let mut container_runtimes = HashSet::new();
+
+        for container_runtime in &props.container_runtimes {
+            if !container_runtimes.insert(*container_runtime) {
+                return Err(HpcClusterError::DuplicateContainerRuntime(
+                    *container_runtime,
+                ));
+            }
         }
 
         let mut queue_ids = HashSet::new();
@@ -155,6 +168,10 @@ impl HpcCluster {
         self.port
     }
 
+    pub fn container_runtimes(&self) -> &[ContainerRuntime] {
+        &self.container_runtimes
+    }
+
     pub fn documentation_url(&self) -> Option<&str> {
         self.documentation_url.as_deref()
     }
@@ -166,6 +183,28 @@ impl HpcCluster {
     pub fn queues(&self) -> &[BatchSchedulerQueue] {
         &self.queues
     }
+
+    pub fn supported_batch_schedulers(&self) -> HashSet<SchedulerType> {
+        let mut schedulers = HashSet::new();
+
+        for queue in &self.queues {
+            schedulers.insert(*queue.scheduler_type());
+        }
+
+        schedulers
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+pub enum ContainerRuntime {
+    Apptainer,
+    SingularityCe,
+    Enroot,
+    Charliecloud,
+    Shifter,
+    Sarus,
+    Podman,
+    Docker,
 }
 
 #[derive(Debug, Clone)]
@@ -175,6 +214,7 @@ pub struct NewHpcClusterProps {
     pub description: Option<String>,
     pub host: String,
     pub port: u16,
+    pub container_runtimes: Vec<ContainerRuntime>,
     pub documentation_url: Option<String>,
     pub data_center: DataCenter,
     pub queues: Vec<NewBatchSchedulerQueueProps>,
@@ -188,6 +228,7 @@ pub struct ReconstituteHpcClusterProps {
     pub description: Option<String>,
     pub host: String,
     pub port: u16,
+    pub container_runtimes: Vec<ContainerRuntime>,
     pub documentation_url: Option<String>,
     pub data_center: DataCenter,
     pub queues: Vec<BatchSchedulerQueue>,
@@ -388,7 +429,7 @@ pub struct ReconstituteBatchSchedulerQueueProps {
     pub billing_policy: Option<BillingPolicy>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SchedulerType {
     Slurm,
 }
@@ -617,6 +658,9 @@ pub enum HpcClusterError {
 
     #[error("HPC cluster port MUST be greater than zero")]
     InvalidPort,
+
+    #[error("HPC cluster contains duplicate container runtime {0:?}")]
+    DuplicateContainerRuntime(ContainerRuntime),
 
     #[error("HPC cluster contains queue {0} belonging to another cluster")]
     QueueClusterMismatch(BatchSchedulerQueueId),

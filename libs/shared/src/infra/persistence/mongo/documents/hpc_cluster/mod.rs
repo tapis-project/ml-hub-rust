@@ -16,6 +16,8 @@ pub struct HpcCluster {
     pub description: Option<String>,
     pub host: String,
     pub port: u16,
+    #[serde(default)]
+    pub container_runtimes: Vec<ContainerRuntime>,
     pub documentation_url: Option<String>,
     pub data_center: DataCenter,
     pub queues: Vec<BatchSchedulerQueue>,
@@ -34,6 +36,18 @@ pub struct HpcClusterSummary {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DataCenter {
     Tacc,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ContainerRuntime {
+    Apptainer,
+    SingularityCe,
+    Enroot,
+    Charliecloud,
+    Shifter,
+    Sarus,
+    Podman,
+    Docker,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -109,6 +123,12 @@ fn enabled_by_default() -> bool {
 
 impl From<&domain::HpcCluster> for HpcCluster {
     fn from(value: &domain::HpcCluster) -> Self {
+        let mut container_runtimes = Vec::with_capacity(value.container_runtimes().len());
+
+        for container_runtime in value.container_runtimes() {
+            container_runtimes.push(container_runtime.into());
+        }
+
         Self {
             _id: None,
             id: Uuid::from_bytes(*value.id().as_uuid().as_bytes()),
@@ -117,6 +137,7 @@ impl From<&domain::HpcCluster> for HpcCluster {
             description: value.description().map(Into::into),
             host: value.host().into(),
             port: value.port(),
+            container_runtimes,
             documentation_url: value.documentation_url().map(Into::into),
             data_center: value.data_center().into(),
             queues: value.queues().iter().map(Into::into).collect(),
@@ -142,6 +163,11 @@ impl TryFrom<HpcCluster> for domain::HpcCluster {
             description: value.description,
             host: value.host,
             port: value.port,
+            container_runtimes: value
+                .container_runtimes
+                .into_iter()
+                .map(Into::into)
+                .collect(),
             documentation_url: value.documentation_url,
             data_center: value.data_center.into(),
             queues,
@@ -161,6 +187,36 @@ impl From<DataCenter> for domain::DataCenter {
     fn from(value: DataCenter) -> Self {
         match value {
             DataCenter::Tacc => Self::Tacc,
+        }
+    }
+}
+
+impl From<&domain::ContainerRuntime> for ContainerRuntime {
+    fn from(value: &domain::ContainerRuntime) -> Self {
+        match value {
+            domain::ContainerRuntime::Apptainer => Self::Apptainer,
+            domain::ContainerRuntime::SingularityCe => Self::SingularityCe,
+            domain::ContainerRuntime::Enroot => Self::Enroot,
+            domain::ContainerRuntime::Charliecloud => Self::Charliecloud,
+            domain::ContainerRuntime::Shifter => Self::Shifter,
+            domain::ContainerRuntime::Sarus => Self::Sarus,
+            domain::ContainerRuntime::Podman => Self::Podman,
+            domain::ContainerRuntime::Docker => Self::Docker,
+        }
+    }
+}
+
+impl From<ContainerRuntime> for domain::ContainerRuntime {
+    fn from(value: ContainerRuntime) -> Self {
+        match value {
+            ContainerRuntime::Apptainer => Self::Apptainer,
+            ContainerRuntime::SingularityCe => Self::SingularityCe,
+            ContainerRuntime::Enroot => Self::Enroot,
+            ContainerRuntime::Charliecloud => Self::Charliecloud,
+            ContainerRuntime::Shifter => Self::Shifter,
+            ContainerRuntime::Sarus => Self::Sarus,
+            ContainerRuntime::Podman => Self::Podman,
+            ContainerRuntime::Docker => Self::Docker,
         }
     }
 }

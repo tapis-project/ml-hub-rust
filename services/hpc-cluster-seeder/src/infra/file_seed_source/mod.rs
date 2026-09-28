@@ -43,6 +43,7 @@ struct HpcCluster {
     description: Option<String>,
     host: String,
     port: u16,
+    container_runtimes: Vec<ContainerRuntime>,
     documentation_url: Option<String>,
     data_center: DataCenter,
     queues: Vec<BatchSchedulerQueue>,
@@ -51,6 +52,18 @@ struct HpcCluster {
 #[derive(Debug, Deserialize)]
 enum DataCenter {
     Tacc,
+}
+
+#[derive(Debug, Deserialize)]
+enum ContainerRuntime {
+    Apptainer,
+    SingularityCe,
+    Enroot,
+    Charliecloud,
+    Shifter,
+    Sarus,
+    Podman,
+    Docker,
 }
 
 #[derive(Debug, Deserialize)]
@@ -138,6 +151,11 @@ impl TryFrom<HpcCluster> for domain::NewHpcClusterProps {
             description: value.description,
             host: value.host,
             port: value.port,
+            container_runtimes: value
+                .container_runtimes
+                .into_iter()
+                .map(Into::into)
+                .collect(),
             documentation_url: value.documentation_url,
             data_center: value.data_center.into(),
             queues,
@@ -149,6 +167,21 @@ impl From<DataCenter> for domain::DataCenter {
     fn from(value: DataCenter) -> Self {
         match value {
             DataCenter::Tacc => Self::Tacc,
+        }
+    }
+}
+
+impl From<ContainerRuntime> for domain::ContainerRuntime {
+    fn from(value: ContainerRuntime) -> Self {
+        match value {
+            ContainerRuntime::Apptainer => Self::Apptainer,
+            ContainerRuntime::SingularityCe => Self::SingularityCe,
+            ContainerRuntime::Enroot => Self::Enroot,
+            ContainerRuntime::Charliecloud => Self::Charliecloud,
+            ContainerRuntime::Shifter => Self::Shifter,
+            ContainerRuntime::Sarus => Self::Sarus,
+            ContainerRuntime::Podman => Self::Podman,
+            ContainerRuntime::Docker => Self::Docker,
         }
     }
 }

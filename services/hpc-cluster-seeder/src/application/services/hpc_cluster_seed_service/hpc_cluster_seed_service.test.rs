@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use shared::domain::entities::hpc_cluster::{DataCenter, HpcCluster, NewHpcClusterProps};
+use shared::domain::entities::hpc_cluster::{
+    ContainerRuntime, DataCenter, HpcCluster, NewHpcClusterProps,
+};
 
 use super::*;
 
@@ -53,6 +55,7 @@ fn cluster_props() -> NewHpcClusterProps {
         description: None,
         host: "vista.tacc.utexas.edu".into(),
         port: 22,
+        container_runtimes: vec![ContainerRuntime::Apptainer],
         documentation_url: None,
         data_center: DataCenter::Tacc,
         queues: Vec::new(),

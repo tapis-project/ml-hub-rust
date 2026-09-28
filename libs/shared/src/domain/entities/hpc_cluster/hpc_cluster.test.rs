@@ -1,5 +1,9 @@
 use super::*;
-use std::{collections::HashMap, path::PathBuf, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+    rc::Rc,
+};
 
 use evaluations::{Arguments, Evaluator, FieldPath, ResolveValue};
 use serde_json::{Map, Value};
@@ -46,6 +50,7 @@ fn cluster_props() -> NewHpcClusterProps {
         description: Some("TACC GPU cluster".into()),
         host: "vista.tacc.utexas.edu".into(),
         port: 22,
+        container_runtimes: vec![ContainerRuntime::Apptainer, ContainerRuntime::SingularityCe],
         documentation_url: Some("https://docs.tacc.utexas.edu/hpc/vista".into()),
         data_center: DataCenter::Tacc,
         queues: vec![queue_props("gh")],
@@ -59,12 +64,68 @@ fn creates_cluster_and_embedded_queues_with_uuid_v7_ids() -> Result<(), Box<dyn 
 
     assert_eq!(cluster.id().as_uuid().get_version_num(), 7);
     assert!(cluster.enabled());
+    assert_eq!(
+        cluster.container_runtimes(),
+        [ContainerRuntime::Apptainer, ContainerRuntime::SingularityCe]
+    );
     assert_eq!(cluster.queues().len(), 1);
     assert_eq!(cluster.queues()[0].id().as_uuid().get_version_num(), 7);
     assert_eq!(cluster.queues()[0].cluster_id(), cluster.id());
     assert!(cluster.queues()[0].enabled());
+    assert_eq!(
+        cluster.supported_batch_schedulers(),
+        HashSet::from([SchedulerType::Slurm])
+    );
 
     Ok(())
+}
+
+#[test]
+fn allows_an_empty_container_runtime_collection() -> Result<(), Box<dyn std::error::Error>> {
+    let mut props = cluster_props();
+    props.container_runtimes = Vec::new();
+
+    let cluster = HpcCluster::new(props)?;
+
+    assert!(cluster.container_runtimes().is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_container_runtimes() {
+    let mut props = cluster_props();
+    props.container_runtimes = vec![ContainerRuntime::Apptainer, ContainerRuntime::Apptainer];
+
+    let result = HpcCluster::new(props);
+
+    assert!(matches!(
+        result,
+        Err(HpcClusterError::DuplicateContainerRuntime(
+            ContainerRuntime::Apptainer
+        ))
+    ));
+}
+
+#[test]
+fn reports_persisted_duplicate_container_runtimes_as_data_integrity_error() {
+    let result = HpcCluster::reconstitute(ReconstituteHpcClusterProps {
+        id: HpcClusterId::new(),
+        enabled: true,
+        name: "Vista".into(),
+        description: None,
+        host: "vista.tacc.utexas.edu".into(),
+        port: 22,
+        container_runtimes: vec![ContainerRuntime::Apptainer, ContainerRuntime::Apptainer],
+        documentation_url: None,
+        data_center: DataCenter::Tacc,
+        queues: Vec::new(),
+    });
+
+    assert!(matches!(
+        result,
+        Err(HpcClusterError::DataIntegrityError(_))
+    ));
 }
 
 #[test]
@@ -107,6 +168,7 @@ fn rejects_duplicate_queue_names() -> Result<(), Box<dyn std::error::Error>> {
         description: None,
         host: "vista.tacc.utexas.edu".into(),
         port: 22,
+        container_runtimes: Vec::new(),
         documentation_url: None,
         data_center: DataCenter::Tacc,
         queues: vec![first, second],
@@ -152,6 +214,7 @@ fn rejects_duplicate_queue_ids() -> Result<(), Box<dyn std::error::Error>> {
         description: None,
         host: "vista.tacc.utexas.edu".into(),
         port: 22,
+        container_runtimes: Vec::new(),
         documentation_url: None,
         data_center: DataCenter::Tacc,
         queues: vec![first, second],
@@ -177,6 +240,7 @@ fn rejects_queue_belonging_to_another_cluster() -> Result<(), Box<dyn std::error
         description: None,
         host: "vista.tacc.utexas.edu".into(),
         port: 22,
+        container_runtimes: Vec::new(),
         documentation_url: None,
         data_center: DataCenter::Tacc,
         queues: vec![queue],

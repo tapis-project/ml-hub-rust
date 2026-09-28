@@ -23,6 +23,7 @@ pub struct HpcCluster {
     pub description: Option<String>,
     pub host: String,
     pub port: u16,
+    pub container_runtimes: Vec<ContainerRuntime>,
     pub documentation_url: Option<String>,
     pub data_center: DataCenter,
     pub queues: Vec<BatchSchedulerQueue>,
@@ -31,6 +32,18 @@ pub struct HpcCluster {
 #[derive(Clone, Debug, Serialize, ToSchema)]
 pub enum DataCenter {
     Tacc,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub enum ContainerRuntime {
+    Apptainer,
+    SingularityCe,
+    Enroot,
+    Charliecloud,
+    Shifter,
+    Sarus,
+    Podman,
+    Docker,
 }
 
 #[derive(Clone, Debug, Serialize, ToSchema)]
@@ -114,6 +127,12 @@ impl From<HpcClusterSummaryOutput> for HpcClusterSummary {
 
 impl From<domain::HpcCluster> for HpcCluster {
     fn from(value: domain::HpcCluster) -> Self {
+        let mut container_runtimes = Vec::with_capacity(value.container_runtimes().len());
+
+        for container_runtime in value.container_runtimes() {
+            container_runtimes.push(container_runtime.into());
+        }
+
         Self {
             id: *value.id().as_uuid(),
             enabled: value.enabled(),
@@ -121,6 +140,7 @@ impl From<domain::HpcCluster> for HpcCluster {
             description: value.description().map(Into::into),
             host: value.host().into(),
             port: value.port(),
+            container_runtimes,
             documentation_url: value.documentation_url().map(Into::into),
             data_center: value.data_center().into(),
             queues: value.queues().iter().map(Into::into).collect(),
@@ -132,6 +152,21 @@ impl From<&domain::DataCenter> for DataCenter {
     fn from(value: &domain::DataCenter) -> Self {
         match value {
             domain::DataCenter::Tacc => Self::Tacc,
+        }
+    }
+}
+
+impl From<&domain::ContainerRuntime> for ContainerRuntime {
+    fn from(value: &domain::ContainerRuntime) -> Self {
+        match value {
+            domain::ContainerRuntime::Apptainer => Self::Apptainer,
+            domain::ContainerRuntime::SingularityCe => Self::SingularityCe,
+            domain::ContainerRuntime::Enroot => Self::Enroot,
+            domain::ContainerRuntime::Charliecloud => Self::Charliecloud,
+            domain::ContainerRuntime::Shifter => Self::Shifter,
+            domain::ContainerRuntime::Sarus => Self::Sarus,
+            domain::ContainerRuntime::Podman => Self::Podman,
+            domain::ContainerRuntime::Docker => Self::Docker,
         }
     }
 }

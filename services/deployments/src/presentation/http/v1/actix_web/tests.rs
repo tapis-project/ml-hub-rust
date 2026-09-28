@@ -9,7 +9,10 @@ use shared::{
         ports::hpc_cluster::{HpcClusterRepository, HpcClusterRepositoryError},
         services::hpc_cluster_query_service::HpcClusterQueryService,
     },
-    domain::entities::hpc_cluster::{DataCenter, HpcCluster, HpcClusterId},
+    domain::entities::hpc_cluster::{
+        ContainerRuntime, DataCenter, HpcCluster, HpcClusterId, NewHpcClusterProps,
+    },
+    presentation::http::v1::responses::hpc_clusters::HpcCluster as HpcClusterResponse,
     shared_kernel::context::RequestContext,
 };
 use utoipa::OpenApi;
@@ -138,6 +141,62 @@ fn openapi_uses_explicit_accelerator_fields() -> Result<(), Box<dyn std::error::
     assert_eq!(
         document.pointer("/components/schemas/GpuProfile/properties/count_per_node/type"),
         Some(&serde_json::json!("integer"))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn openapi_exposes_container_runtimes_on_cluster_details_only(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert_eq!(
+        document.pointer("/components/schemas/ContainerRuntime/enum"),
+        Some(&serde_json::json!([
+            "Apptainer",
+            "SingularityCe",
+            "Enroot",
+            "Charliecloud",
+            "Shifter",
+            "Sarus",
+            "Podman",
+            "Docker"
+        ]))
+    );
+    assert!(document
+        .pointer("/components/schemas/HpcCluster/properties/container_runtimes")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/HpcCluster/required")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|required| required.contains(&serde_json::json!("container_runtimes"))));
+    assert!(document
+        .pointer("/components/schemas/HpcClusterSummary/properties/container_runtimes")
+        .is_none());
+
+    Ok(())
+}
+
+#[test]
+fn cluster_detail_response_contains_container_runtimes() -> Result<(), Box<dyn std::error::Error>> {
+    let hpc_cluster = HpcCluster::new(NewHpcClusterProps {
+        enabled: true,
+        name: "Vista".into(),
+        description: None,
+        host: "vista.tacc.utexas.edu".into(),
+        port: 22,
+        container_runtimes: vec![ContainerRuntime::Apptainer],
+        documentation_url: None,
+        data_center: DataCenter::Tacc,
+        queues: Vec::new(),
+    })?;
+
+    let response = serde_json::to_value(HpcClusterResponse::from(hpc_cluster))?;
+
+    assert_eq!(
+        response.pointer("/container_runtimes"),
+        Some(&serde_json::json!(["Apptainer"]))
     );
 
     Ok(())

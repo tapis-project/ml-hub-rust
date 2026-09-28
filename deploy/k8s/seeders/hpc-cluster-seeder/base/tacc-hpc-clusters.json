@@ -4,6 +4,7 @@
     "description": "TACC leadership-class HPC system. Production queues are scheduled to close permanently on October 1, 2026.",
     "host": "frontera.tacc.utexas.edu",
     "port": 22,
+    "container_runtimes": ["Apptainer"],
     "documentation_url": "https://docs.tacc.utexas.edu/hpc/frontera/",
     "data_center": "Tacc",
     "queues": [
@@ -243,6 +244,7 @@
     "description": "TACC HPC system for simulation, data analysis, visualization, and machine learning workloads.",
     "host": "ls6.tacc.utexas.edu",
     "port": 22,
+    "container_runtimes": ["Apptainer"],
     "documentation_url": "https://docs.tacc.utexas.edu/hpc/lonestar6/",
     "data_center": "Tacc",
     "queues": [
@@ -494,6 +496,7 @@
     "description": "TACC NSF ACCESS HPC system with CPU, large-memory, NVIDIA H100, and Intel Data Center GPU Max nodes.",
     "host": "stampede3.tacc.utexas.edu",
     "port": 22,
+    "container_runtimes": ["Apptainer"],
     "documentation_url": "https://docs.tacc.utexas.edu/hpc/stampede3/",
     "data_center": "Tacc",
     "queues": [
@@ -706,6 +709,7 @@
     "description": "TACC AI-centric production HPC system with NVIDIA Grace Grace and Grace Hopper nodes.",
     "host": "vista.tacc.utexas.edu",
     "port": 22,
+    "container_runtimes": ["Apptainer"],
     "documentation_url": "https://docs.tacc.utexas.edu/hpc/vista/",
     "data_center": "Tacc",
     "queues": [

@@ -4,12 +4,12 @@ use platforms::Platform;
 use serde_json::{Map, Value};
 use thiserror::Error;
 
-use crate::shared_kernel::{
+use crate::{domain::entities::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId}, shared_kernel::{
     constants::GLOBAL_TENANT,
     enums::Task,
     identifiers::{traits::UrnGenerator, urn::Urn, ExternalModelId},
     value_objects::{Tags, TagsError, TimeStamp},
-};
+}};
 
 #[derive(Debug, Clone)]
 pub struct ExternalModel {

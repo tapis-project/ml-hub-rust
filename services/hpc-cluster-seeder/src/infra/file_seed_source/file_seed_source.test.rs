@@ -18,6 +18,7 @@ fn seed_json(accelerator_type: &str, gpu: &str) -> String {
                 "description": null,
                 "host": "vista.tacc.utexas.edu",
                 "port": 22,
+                "container_runtimes": ["Apptainer"],
                 "documentation_url": null,
                 "data_center": "Tacc",
                 "queues": [
@@ -69,8 +70,77 @@ fn loads_seed_configuration_without_identity_fields() -> Result<(), Box<dyn std:
 
     assert_eq!(props.len(), 1);
     assert!(props[0].enabled);
+    assert_eq!(
+        props[0].container_runtimes,
+        vec![domain::ContainerRuntime::Apptainer]
+    );
     assert_eq!(props[0].queues.len(), 1);
     assert!(!props[0].queues[0].enabled);
+
+    std::fs::remove_file(path)?;
+
+    Ok(())
+}
+
+#[test]
+fn rejects_unknown_container_runtime() -> Result<(), Box<dyn std::error::Error>> {
+    let path = temporary_path("unknown-container-runtime");
+    let contents = seed_json("null", "null").replace(r#"["Apptainer"]"#, r#"["Unknown"]"#);
+
+    write(&path, contents)?;
+
+    let source = FileHpcClusterSeedSource::new(&path);
+    let result = source.load();
+
+    assert!(matches!(
+        result,
+        Err(HpcClusterSeedError::InvalidConfiguration(_))
+    ));
+
+    std::fs::remove_file(path)?;
+
+    Ok(())
+}
+
+#[test]
+fn requires_container_runtimes() -> Result<(), Box<dyn std::error::Error>> {
+    let path = temporary_path("missing-container-runtimes");
+    let contents = seed_json("null", "null").replace(r#""container_runtimes": ["Apptainer"],"#, "");
+
+    write(&path, contents)?;
+
+    let source = FileHpcClusterSeedSource::new(&path);
+    let result = source.load();
+
+    assert!(matches!(
+        result,
+        Err(HpcClusterSeedError::InvalidConfiguration(_))
+    ));
+
+    std::fs::remove_file(path)?;
+
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_container_runtime() -> Result<(), Box<dyn std::error::Error>> {
+    let path = temporary_path("duplicate-container-runtime");
+    let contents =
+        seed_json("null", "null").replace(r#"["Apptainer"]"#, r#"["Apptainer", "Apptainer"]"#);
+
+    write(&path, contents)?;
+
+    let source = FileHpcClusterSeedSource::new(&path);
+    let props = source.load()?;
+
+    let result = props.into_iter().next().map(domain::HpcCluster::new);
+
+    assert!(matches!(
+        result,
+        Some(Err(domain::HpcClusterError::DuplicateContainerRuntime(
+            domain::ContainerRuntime::Apptainer
+        )))
+    ));
 
     std::fs::remove_file(path)?;
 
@@ -142,6 +212,7 @@ fn deployment_seed_contains_expected_clusters_and_queues() -> Result<(), Box<dyn
     assert_eq!(queue_count, 26);
     assert!(hpc_clusters.iter().all(|hpc_cluster| {
         hpc_cluster.enabled()
+            && hpc_cluster.container_runtimes() == [domain::ContainerRuntime::Apptainer]
             && hpc_cluster.id().as_uuid().get_version_num() == 7
             && hpc_cluster.queues().iter().all(|queue| {
                 queue.enabled()

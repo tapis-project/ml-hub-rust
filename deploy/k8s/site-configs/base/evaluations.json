@@ -1,22 +1,7 @@
 {
     "evaluations": [
         {
-            "name": "FlexServ1.4 Compatibility",
-            "evaluation_strategy": "DNF",
-            "parameters": ["model"],
-            "expressions": [
-                [
-                    "From HuggingFace",
-                    "Transformers compatible",
-                    "Supports TextGeneration",
-                    "Not quantized",
-                    "Trusted Authors",
-                    "Public"
-                ]
-            ]
-        },
-        {
-            "name": "FlexServ1.5 Compatibility",
+            "name": "FlexServ Compatibility",
             "evaluation_strategy": "DNF",
             "parameters": ["model"],
             "expressions": [
