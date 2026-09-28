@@ -1,3 +1,5 @@
+pub mod actions;
+
 pub enum Role {
     // Can perform CRUD operations on globally-scoped objects
     SiteAdmin,
