@@ -1,4 +1,13 @@
 use super::*;
+use std::{collections::HashMap, path::PathBuf, rc::Rc};
+
+use evaluations::{Arguments, Evaluator, FieldPath, ResolveValue};
+use serde_json::{Map, Value};
+
+use crate::domain::entities::model::external_model::{
+    DerivedMetadata, ExternalModel, HuggingFaceRepoLocator, ModelLocator, ModelMetadata,
+    ModelProvider,
+};
 
 fn hardware_profile() -> HardwareProfile {
     HardwareProfile::new(
@@ -177,6 +186,78 @@ fn rejects_queue_belonging_to_another_cluster() -> Result<(), Box<dyn std::error
         result,
         Err(HpcClusterError::DataIntegrityError(_))
     ));
+
+    Ok(())
+}
+
+#[test]
+fn resolves_gpu_memory_and_returns_null_for_cpu_queues() -> Result<(), Box<dyn std::error::Error>> {
+    let cluster_id = HpcClusterId::new();
+    let gpu_queue = BatchSchedulerQueue::new(cluster_id, queue_props("gpu"))?;
+    let mut cpu_props = queue_props("cpu");
+
+    cpu_props.hardware_profile = HardwareProfile::new(
+        100,
+        128,
+        "x86_64".into(),
+        "EPYC".into(),
+        "AMD".into(),
+        512,
+        None,
+    );
+
+    let cpu_queue = BatchSchedulerQueue::new(cluster_id, cpu_props)?;
+    let field_path = || {
+        Some(FieldPath::new(vec![
+            "hardware_profile".into(),
+            "gpu".into(),
+            "gpu_memory_gb".into(),
+        ]))
+    };
+
+    assert_eq!(
+        Value::from(gpu_queue.resolve_value(field_path())?),
+        Value::from(80_u64)
+    );
+    assert_eq!(
+        Value::from(cpu_queue.resolve_value(field_path())?),
+        Value::Null
+    );
+
+    Ok(())
+}
+
+#[test]
+fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::error::Error>> {
+    let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../deploy/k8s/site-configs/base/evaluations.json");
+    let evaluator = Evaluator::load(config_path)?;
+    let metadata = DerivedMetadata::new(
+        Some("model".into()),
+        Some("author".into()),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        None,
+        40_000_000_000,
+        false,
+        false,
+        None,
+        None,
+    )?;
+    let locator = HuggingFaceRepoLocator::new("owner/repo".into(), "sha".into())?;
+    let model = ExternalModel::ingest(
+        ModelProvider::HuggingFace,
+        ModelLocator::HuggingFace(locator),
+        ModelMetadata::new(metadata, Map::new()),
+    )?;
+    let queue = BatchSchedulerQueue::new(HpcClusterId::new(), queue_props("gpu"))?;
+    let mut arguments: Arguments = HashMap::new();
+
+    arguments.insert("model".into(), Rc::new(model));
+    arguments.insert("queue".into(), Rc::new(queue));
+
+    assert!(evaluator.evaluate("Compatible Deployment Target", &arguments)?);
 
     Ok(())
 }

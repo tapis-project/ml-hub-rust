@@ -47,6 +47,7 @@ impl Operator {
     {
         let left = serde_json::to_value(l_operand)
             .map_err(|err| OperandError::InvalidOperand(err.to_string()))?;
+
         let right = serde_json::to_value(r_operand)
             .map_err(|err| OperandError::InvalidOperand(err.to_string()))?;
 

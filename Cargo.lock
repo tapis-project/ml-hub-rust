@@ -1359,6 +1359,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "evaluations"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4203,6 +4213,7 @@ dependencies = [
  "bytes",
  "chrono",
  "derive_more 2.1.1",
+ "evaluations",
  "futures",
  "futures-util",
  "huggingface-tasks",

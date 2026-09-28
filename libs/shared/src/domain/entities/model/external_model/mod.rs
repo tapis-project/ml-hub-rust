@@ -1,4 +1,6 @@
+use evaluations::{FieldPath, FieldValue, ResolveValue, ValueResolutionError};
 use platforms::Platform;
+
 use serde_json::{Map, Value};
 use thiserror::Error;
 
@@ -98,15 +100,43 @@ impl ExternalModel {
         &self.created_at
     }
 
-    pub fn get_field_value_at_field_path(
+    fn validate_provider_locator(
+        provider: &ModelProvider,
+        locator: &ModelLocator,
+    ) -> Result<(), ExternalModelError> {
+        if matches!(
+            (provider, locator),
+            (ModelProvider::HuggingFace, ModelLocator::HuggingFace(_))
+                | (ModelProvider::Tapis, ModelLocator::Tapis(_))
+        ) {
+            return Ok(());
+        }
+
+        Err(ExternalModelError::ProviderLocatorMismatch)
+    }
+}
+
+impl ResolveValue for ExternalModel {
+    fn resolve_value(
         &self,
-        field_path: &[String],
-    ) -> Result<FieldValue, ExternalModelError> {
-        let path = field_path.iter().map(String::as_str).collect::<Vec<_>>();
+        field_path: Option<FieldPath>,
+    ) -> Result<FieldValue, ValueResolutionError> {
+        let path = match field_path {
+            Some(ref fp) => fp
+                .into_inner()
+                .iter()
+                .map(String::as_str)
+                .collect::<Vec<_>>(),
+            None => {
+                return Err(ValueResolutionError::InvalidFieldPath(
+                    "No field path provided".into(),
+                ))
+            }
+        };
 
         let derived = self.metadata.derived();
 
-        match path.as_slice() {
+        let value = match path.as_slice() {
             ["provider"] => Ok(FieldValue::String(Some(self.provider.to_string()))),
             ["metadata", "derived", "name"] => Ok(FieldValue::String(derived.name.clone())),
             ["metadata", "derived", "author"] => Ok(FieldValue::String(derived.author.clone())),
@@ -136,25 +166,35 @@ impl ExternalModel {
             ["metadata", "derived", "downloads"] => {
                 Ok(FieldValue::OptionalUnsigned(derived.downloads))
             }
-            other => Err(ExternalModelError::InvalidFieldPath(
+            ["metadata", "canonical"] => Ok(FieldValue::Json(Value::Object(
+                self.metadata.canonical().clone(),
+            ))),
+            ["metadata", "canonical", canonical_path @ ..] => {
+                let (first, remaining) = canonical_path.split_first().ok_or_else(|| {
+                    ValueResolutionError::InvalidFieldPath("metadata/canonical".into())
+                })?;
+
+                let mut value = self.metadata.canonical().get(*first);
+
+                for part in remaining {
+                    value = value.and_then(|value| match value {
+                        Value::Object(values) => values.get(*part),
+                        Value::Array(values) => part
+                            .parse::<usize>()
+                            .ok()
+                            .and_then(|index| values.get(index)),
+                        _ => None,
+                    });
+                }
+
+                Ok(FieldValue::Json(value.cloned().unwrap_or(Value::Null)))
+            }
+            other => Err(ValueResolutionError::InvalidFieldPath(
                 other.iter().map(|part| (*part).to_owned()).collect(),
             )),
-        }
-    }
+        };
 
-    fn validate_provider_locator(
-        provider: &ModelProvider,
-        locator: &ModelLocator,
-    ) -> Result<(), ExternalModelError> {
-        if matches!(
-            (provider, locator),
-            (ModelProvider::HuggingFace, ModelLocator::HuggingFace(_))
-                | (ModelProvider::Tapis, ModelLocator::Tapis(_))
-        ) {
-            return Ok(());
-        }
-
-        Err(ExternalModelError::ProviderLocatorMismatch)
+        value
     }
 }
 
@@ -491,29 +531,6 @@ impl DeploymentStrategyReference {
 
     pub fn platform(&self) -> &Platform {
         &self.platform
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum FieldValue {
-    String(Option<String>),
-    Strings(Vec<String>),
-    Boolean(bool),
-    Unsigned(u64),
-    OptionalUnsigned(Option<u128>),
-}
-
-impl From<FieldValue> for Value {
-    fn from(value: FieldValue) -> Self {
-        match value {
-            FieldValue::String(value) => serde_json::to_value(value).unwrap_or(Value::Null),
-            FieldValue::Strings(value) => serde_json::to_value(value).unwrap_or(Value::Null),
-            FieldValue::Boolean(value) => Value::Bool(value),
-            FieldValue::Unsigned(value) => Value::Number(value.into()),
-            FieldValue::OptionalUnsigned(value) => {
-                serde_json::to_value(value).unwrap_or(Value::Null)
-            }
-        }
     }
 }
 

@@ -1,5 +1,6 @@
 use std::{collections::HashSet, fmt};
 
+use evaluations::{FieldPath, FieldValue, ResolveValue, ValueResolutionError};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -328,6 +329,40 @@ impl BatchSchedulerQueue {
 
     pub fn billing_policy(&self) -> Option<&BillingPolicy> {
         self.billing_policy.as_ref()
+    }
+}
+
+impl ResolveValue for BatchSchedulerQueue {
+    fn resolve_value(
+        &self,
+        field_path: Option<FieldPath>,
+    ) -> Result<FieldValue, ValueResolutionError> {
+        let field_path = field_path.ok_or_else(|| {
+            ValueResolutionError::InvalidFieldPath("No field path provided".into())
+        })?;
+
+        let path = field_path
+            .into_inner()
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>();
+
+        match path.as_slice() {
+            ["hardware_profile", "gpu", "gpu_memory_gb"] => {
+                let gpu_memory_gb = self
+                    .hardware_profile
+                    .accelerator()
+                    .map(Accelerator::profile)
+                    .map(|profile| match profile {
+                        AcceleratorProfile::Gpu(profile) => profile.gpu_memory_gb() as u128,
+                    });
+
+                Ok(FieldValue::OptionalUnsigned(gpu_memory_gb))
+            }
+            other => Err(ValueResolutionError::InvalidFieldPath(
+                other.iter().map(|part| (*part).to_owned()).collect(),
+            )),
+        }
     }
 }
 

@@ -1,0 +1,396 @@
+{
+    "evaluations": [
+        {
+            "name": "FlexServ1.4 Compatibility",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "expressions": [
+                [
+                    "From HuggingFace",
+                    "Transformers compatible",
+                    "Supports TextGeneration",
+                    "Not quantized",
+                    "Trusted Authors",
+                    "Public"
+                ]
+            ]
+        },
+        {
+            "name": "FlexServ1.5 Compatibility",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "expressions": [
+                [
+                    "From HuggingFace",
+                    "Transformers compatible",
+                    "Supports TextGeneration",
+                    "Not quantized",
+                    "Trusted Authors",
+                    "Public"
+                ]
+            ]
+        },
+        {
+            "name": "Trusted Model",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "evaluation_type": "ModelTrust",
+            "expressions": [
+                [
+                    "Trusted Authors",
+                    "Trusted Models"
+                ]
+            ]
+        },
+        {
+            "name": "Compatible Deployment Target",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model", "queue"],
+            "expressions": [
+                [
+                    "Lt Max Model Size"
+                ]
+            ]
+        }
+    ],
+    "statements": [
+        {
+            "name": "From HuggingFace",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "Eq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["provider"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": "HuggingFace"
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Transformers compatible",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "Contains",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "derived", "inference_runtimes"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": "transformers"
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Supports TextGeneration",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "AnyIn",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": [
+                                        "metadata",
+                                        "derived",
+                                        "task_types"
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": [
+                                    "TextGeneration"
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Not quantized",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "Pattern",
+                        "negate": true,
+                        "case_insensitive": true,
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": [
+                                        "metadata",
+                                        "canonical",
+                                        "id"
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": ["[-_.]*(((bf|fp|iq|int|q|exl|awq)[-_.]?[\\d]+)|gguf|hqq|gptq|awq|[\\d]+bit|iq[\\d]+[-._]{1}nl|bpw|q[\\d]+[-_.][\\d]+)$"]
+                            }
+                        ]
+                    },
+                    {
+                        "operator": "AnyIn",
+                        "negate": true,
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "canonical", "tags"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": ["quantization", "gguf", "autoawq", "awq", "auto_gptq", "gptq", "exl2", "bitsandbytes", "bnb", "hqq", "aqlm", "bnb", "fp4", "nf4", "int8", "quip", "quip_sharp"]
+                            }
+                        ]
+                    },
+                    {
+                        "operator": "Eq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": [
+                                        "metadata",
+                                        "canonical",
+                                        "config",
+                                        "quantization_config"
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": null
+                            }
+                        ]
+                    },
+                    {
+                        "operator": "Eq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": [
+                                        "metadata",
+                                        "canonical",
+                                        "gguf"
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": null
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Public",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "Eq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "derived", "gated"]
+                                },
+                                "operations": [
+                                    {
+                                        "operation": "coalesce",
+                                        "coalesce": {
+                                            "from": null,
+                                            "to": false
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "literal",
+                                "value": false
+                            }
+                        ]
+                    },
+                    {
+                        "operator": "Eq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "derived", "private"]
+                                },
+                                "operations": [
+                                    {
+                                        "operation": "coalesce",
+                                        "coalesce": {
+                                            "from": null,
+                                            "to": false
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "literal",
+                                "value": false
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Trusted Authors",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "AnyIn",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "canonical", "author"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": [
+                                    "Qwen",
+                                    "meta-llama",
+                                    "meta-models",
+                                    "mistralai",
+                                    "deepseek-ai",
+                                    "nvidia",
+                                    "ibm-granite",
+                                    "openai"
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Trusted Models",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model"],
+            "conditions": [
+                [
+                    {
+                        "operator": "AnyIn",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "canonical", "id"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": []
+                            }
+                        ]
+                    }
+                ]
+            ]
+        },
+        {
+            "name": "Lt Max Model Size",
+            "evaluation_strategy": "DNF",
+            "parameters": ["model", "queue"],
+            "conditions": [
+                [
+                    {
+                        "operator": "Neq",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "queue",
+                                "accessor": {
+                                    "field_path": ["hardware_profile", "gpu", "gpu_memory_gb"]
+                                }
+                            },
+                            {
+                                "type": "literal",
+                                "value": null
+                            }
+                        ]
+                    },
+                    {
+                        "operator": "Lt",
+                        "operands": [
+                            {
+                                "type": "parameter",
+                                "parameter": "model",
+                                "accessor": {
+                                    "field_path": ["metadata", "derived", "size"]
+                                }
+                            },
+                            {
+                                "type": "parameter",
+                                "parameter": "queue",
+                                "accessor": {
+                                    "field_path": ["hardware_profile", "gpu", "gpu_memory_gb"]
+                                },
+                                "operations": [
+                                    {
+                                        "operation": "multiply",
+                                        "multiply": [1000000000, 0.6]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            ]
+        }
+    ]
+}
