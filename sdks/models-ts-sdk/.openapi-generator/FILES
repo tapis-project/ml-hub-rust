@@ -24,6 +24,7 @@ src/models/BadRequestResponse.ts
 src/models/ConflictResponse.ts
 src/models/CreateModelBody.ts
 src/models/CreateModelResponse.ts
+src/models/DeploymentModality.ts
 src/models/DeploymentStrategyCriterion.ts
 src/models/DeploymentStrategyReference.ts
 src/models/DerivedModelMetadata.ts
@@ -54,6 +55,7 @@ src/models/PlatformDetails.ts
 src/models/PublishArtifactRequest.ts
 src/models/PublishModelArtifactResponse.ts
 src/models/ServerErrorResponse.ts
+src/models/ServingRuntime.ts
 src/models/TapisSystemLocator.ts
 src/models/Task.ts
 src/models/Visibility.ts

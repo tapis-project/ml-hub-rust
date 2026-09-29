@@ -15,6 +15,7 @@ src/models/BatchSchedulerQueue.ts
 src/models/BillingMetric.ts
 src/models/BillingPolicy.ts
 src/models/Choice.ts
+src/models/ContainerRuntime.ts
 src/models/DataCenter.ts
 src/models/DeployModelWithStrategyBody.ts
 src/models/DeploymentModality.ts

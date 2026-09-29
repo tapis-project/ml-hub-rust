@@ -18,6 +18,10 @@ import {
     BatchSchedulerQueueFromJSON,
     BatchSchedulerQueueFromJSONTyped,
     BatchSchedulerQueueToJSON,
+    ContainerRuntime,
+    ContainerRuntimeFromJSON,
+    ContainerRuntimeFromJSONTyped,
+    ContainerRuntimeToJSON,
     DataCenter,
     DataCenterFromJSON,
     DataCenterFromJSONTyped,
@@ -30,6 +34,12 @@ import {
  * @interface HpcCluster
  */
 export interface HpcCluster {
+    /**
+     * 
+     * @type {Array<ContainerRuntime>}
+     * @memberof HpcCluster
+     */
+    container_runtimes: Array<ContainerRuntime>;
     /**
      * 
      * @type {DataCenter}
@@ -96,6 +106,7 @@ export function HpcClusterFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
+        'container_runtimes': ((json['container_runtimes'] as Array<any>).map(ContainerRuntimeFromJSON)),
         'data_center': DataCenterFromJSON(json['data_center']),
         'description': !exists(json, 'description') ? undefined : json['description'],
         'documentation_url': !exists(json, 'documentation_url') ? undefined : json['documentation_url'],
@@ -117,6 +128,7 @@ export function HpcClusterToJSON(value?: HpcCluster | null): any {
     }
     return {
         
+        'container_runtimes': ((value.container_runtimes as Array<any>).map(ContainerRuntimeToJSON)),
         'data_center': DataCenterToJSON(value.data_center),
         'description': value.description,
         'documentation_url': value.documentation_url,

@@ -413,6 +413,17 @@ components:
           type: boolean
         value:
           type: string
+    ContainerRuntime:
+      type: string
+      enum:
+        - Apptainer
+        - SingularityCe
+        - Enroot
+        - Charliecloud
+        - Shifter
+        - Sarus
+        - Podman
+        - Docker
     DataCenter:
       type: string
       enum:
@@ -554,9 +565,14 @@ components:
         - name
         - host
         - port
+        - container_runtimes
         - data_center
         - queues
       properties:
+        container_runtimes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerRuntime'
         data_center:
           $ref: '#/components/schemas/DataCenter'
         description:

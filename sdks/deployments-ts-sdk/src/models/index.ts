@@ -7,6 +7,7 @@ export * from './BatchSchedulerQueue';
 export * from './BillingMetric';
 export * from './BillingPolicy';
 export * from './Choice';
+export * from './ContainerRuntime';
 export * from './DataCenter';
 export * from './DeployModelWithStrategyBody';
 export * from './DeploymentModality';
