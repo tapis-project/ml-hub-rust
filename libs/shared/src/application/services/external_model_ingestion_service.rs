@@ -101,7 +101,7 @@ impl ExternalModelIngestionService {
 
         let mut external_model = match existing {
             Some(mut model) => {
-                model.refresh(candidate.metadata().clone());
+                model.update_metadata(candidate.metadata().clone());
                 model
             }
             None => candidate,
@@ -209,7 +209,9 @@ impl ExternalModelIngestionService {
             };
 
             let mut option = existing.remove(index);
-            option.refresh(candidate.supported_deployment_modalities().clone())?;
+            option.replace_supported_deployment_modalities(
+                candidate.supported_deployment_modalities().clone(),
+            )?;
             reconciled.push(option);
         }
 

@@ -64,7 +64,7 @@ impl ExternalModel {
         })
     }
 
-    pub fn refresh(&mut self, metadata: ModelMetadata) {
+    pub fn update_metadata(&mut self, metadata: ModelMetadata) {
         self.metadata = metadata;
 
         self.updated_at = TimeStamp::now();

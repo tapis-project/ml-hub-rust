@@ -73,12 +73,13 @@ fn persisted_duplicate_modalities_are_data_integrity_errors(
 }
 
 #[test]
-fn refresh_preserves_identity_and_creation_time() -> Result<(), DeploymentOptionError> {
+fn replacing_supported_deployment_modalities_preserves_identity_and_creation_time(
+) -> Result<(), DeploymentOptionError> {
     let mut option = DeploymentOption::new(props())?;
     let id = *option.id();
     let created_at = option.created_at().clone();
 
-    option.refresh(nonempty![DeploymentModality::Batch])?;
+    option.replace_supported_deployment_modalities(nonempty![DeploymentModality::Batch])?;
 
     assert_eq!(option.id(), &id);
     assert_eq!(option.created_at(), &created_at);

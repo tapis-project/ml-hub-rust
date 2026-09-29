@@ -5,6 +5,11 @@ use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
 
+use super::deployment_option::{
+    traits::ProvideDeploymentParameters,
+    parameter_set::{Parameter, ParameterType},
+};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct HpcClusterId(Uuid);
 
@@ -287,6 +292,33 @@ pub struct BatchSchedulerQueue {
     hardware_profile: HardwareProfile,
     scheduling_policy: SchedulingPolicy,
     billing_policy: Option<BillingPolicy>,
+}
+
+impl ProvideDeploymentParameters for BatchSchedulerQueue {
+    fn provide_parameters(&self) -> Vec<Parameter> {
+        match self.scheduler_type {
+            SchedulerType::Slurm => vec![
+                Parameter {
+                    name: "Slurm Account (Project Allocation)".into(),
+                    description: Some("The Slurm account to be charged".into()),
+                    required: true,
+                    default: None,
+                    secret: false,
+                    r#type: ParameterType::String,
+                    choices: None,
+                },
+                Parameter {
+                    name: "Resource Reservation".into(),
+                    description: Some("The dedicated time-slot or event code assigned by the cluster administrator to give your group immediate access to specific nodes".into()),
+                    required: false,
+                    default: None,
+                    secret: false,
+                    r#type: ParameterType::String,
+                    choices: None,
+                }
+            ]
+        }
+    }
 }
 
 impl BatchSchedulerQueue {

@@ -1,7 +1,12 @@
+pub mod parameter_set;
+pub mod traits;
+
 use std::fmt;
 
 use nonempty::NonEmpty;
 use thiserror::Error;
+use traits::ProvideDeploymentParameters;
+use parameter_set::{Parameter, ParameterType, Choice};
 use uuid::Uuid;
 
 use crate::domain::entities::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId};
@@ -117,7 +122,7 @@ impl DeploymentOption {
         Ok(())
     }
 
-    pub fn refresh(
+    pub fn replace_supported_deployment_modalities(
         &mut self,
         supported_deployment_modalities: NonEmpty<DeploymentModality>,
     ) -> Result<(), DeploymentOptionError> {
@@ -227,6 +232,35 @@ impl HpcClusterQueueReference {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ServingRuntime {
     FlexServ,
+}
+
+impl ProvideDeploymentParameters for ServingRuntime {
+    fn provide_parameters(&self) -> Vec<Parameter> {
+        match self {
+            Self::FlexServ => vec![
+                Parameter {
+                    name: "FlexServ Version".into(),
+                    description: Some("The version of the FlexServ model serving software to deploy".into()),
+                    required: false,
+                    default: Some("1.5".into()),
+                    secret: false,
+                    r#type: ParameterType::String,
+                    choices: Some(vec![
+                        Choice {
+                            value: "1.4".into(),
+                            description: Some("FlexServ v1.4.0".into()),
+                            enabled: true,
+                        },
+                        Choice {
+                            value: "1.5".into(),
+                            description: Some("FlexServ v1.4.0".into()),
+                            enabled: true,
+                        },
+                    ])
+                }
+            ]
+        }
+    }
 }
 
 #[derive(Debug, Clone, Error)]
