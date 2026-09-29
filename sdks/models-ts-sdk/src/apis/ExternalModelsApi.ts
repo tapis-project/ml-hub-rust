@@ -15,6 +15,9 @@
 
 import * as runtime from '../runtime';
 import {
+    BadRequestResponse,
+    BadRequestResponseFromJSON,
+    BadRequestResponseToJSON,
     DiscoverExternalModelsBody,
     DiscoverExternalModelsBodyFromJSON,
     DiscoverExternalModelsBodyToJSON,
@@ -24,6 +27,15 @@ import {
     GetExternalModelResponse,
     GetExternalModelResponseFromJSON,
     GetExternalModelResponseToJSON,
+    ListExternalModelDeploymentOptionsResponse,
+    ListExternalModelDeploymentOptionsResponseFromJSON,
+    ListExternalModelDeploymentOptionsResponseToJSON,
+    NotFoundResponse,
+    NotFoundResponseFromJSON,
+    NotFoundResponseToJSON,
+    ServerErrorResponse,
+    ServerErrorResponseFromJSON,
+    ServerErrorResponseToJSON,
 } from '../models';
 
 export interface DiscoverExternalModelsRequest {
@@ -35,6 +47,13 @@ export interface DiscoverExternalModelsRequest {
 
 export interface GetExternalModelRequest {
     externalModelId: string;
+}
+
+export interface ListExternalModelDeploymentOptionsRequest {
+    externalModelId: string;
+    limit?: number;
+    cursor?: string;
+    includeCount?: boolean;
 }
 
 /**
@@ -114,6 +133,48 @@ export class ExternalModelsApi extends runtime.BaseAPI {
      */
     async getExternalModel(requestParameters: GetExternalModelRequest, initOverrides?: RequestInit): Promise<GetExternalModelResponse> {
         const response = await this.getExternalModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * List deployment options for an external model
+     */
+    async listExternalModelDeploymentOptionsRaw(requestParameters: ListExternalModelDeploymentOptionsRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ListExternalModelDeploymentOptionsResponse>> {
+        if (requestParameters.externalModelId === null || requestParameters.externalModelId === undefined) {
+            throw new runtime.RequiredError('externalModelId','Required parameter requestParameters.externalModelId was null or undefined when calling listExternalModelDeploymentOptions.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.limit !== undefined) {
+            queryParameters['limit'] = requestParameters.limit;
+        }
+
+        if (requestParameters.cursor !== undefined) {
+            queryParameters['cursor'] = requestParameters.cursor;
+        }
+
+        if (requestParameters.includeCount !== undefined) {
+            queryParameters['include_count'] = requestParameters.includeCount;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/models-api/external-models/{external_model_id}/deployment-options`.replace(`{${"external_model_id"}}`, encodeURIComponent(String(requestParameters.externalModelId))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ListExternalModelDeploymentOptionsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * List deployment options for an external model
+     */
+    async listExternalModelDeploymentOptions(requestParameters: ListExternalModelDeploymentOptionsRequest, initOverrides?: RequestInit): Promise<ListExternalModelDeploymentOptionsResponse> {
+        const response = await this.listExternalModelDeploymentOptionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
