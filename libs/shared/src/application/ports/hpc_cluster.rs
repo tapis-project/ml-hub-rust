@@ -17,6 +17,8 @@ pub enum HpcClusterRepositoryError {
 
 #[async_trait]
 pub trait HpcClusterRepository: Send + Sync {
+    async fn list_all(&self) -> Result<Vec<HpcCluster>, HpcClusterRepositoryError>;
+
     async fn find_by_id(
         &self,
         data_center: &DataCenter,

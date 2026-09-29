@@ -7,6 +7,7 @@ pub mod counts;
 pub mod dataset;
 pub mod deployment;
 pub mod deployment_argument;
+pub mod deployment_option;
 pub mod deployment_strategy;
 pub mod endpoint;
 pub mod errors;

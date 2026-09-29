@@ -1239,6 +1239,13 @@
           }
         }
       },
+      "DeploymentModality": {
+        "type": "string",
+        "enum": [
+          "Batch",
+          "Service"
+        ]
+      },
       "DeploymentStrategyCriterion": {
         "type": "object",
         "required": [
@@ -1403,17 +1410,37 @@
               "null"
             ]
           },
+          "batch_scheduler_queue_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "deployment_strategies": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DeploymentStrategyCriterion"
             }
           },
+          "has_deployment_options": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
           "has_deployment_strategies": {
             "type": [
               "boolean",
               "null"
             ]
+          },
+          "hpc_cluster_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           "inference_runtimes": {
             "type": "array",
@@ -1486,6 +1513,18 @@
                 "$ref": "#/components/schemas/ModelProvider"
               }
             ]
+          },
+          "serving_runtimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServingRuntime"
+            }
+          },
+          "supported_deployment_modalities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentModality"
+            }
           },
           "tags": {
             "type": "array",
@@ -2161,6 +2200,12 @@
             "type": "string"
           }
         }
+      },
+      "ServingRuntime": {
+        "type": "string",
+        "enum": [
+          "FlexServ"
+        ]
       },
       "TapisSystemLocator": {
         "type": "object",

@@ -1,6 +1,10 @@
 use platforms::Platform;
+use uuid::Uuid;
 
-use crate::{domain::entities::model::external_model::ModelProvider, shared_kernel::enums::Task};
+use crate::{
+    domain::entities::{deployment_option::ServingRuntime, model::external_model::ModelProvider},
+    shared_kernel::enums::{DeploymentModality, Task},
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct SearchCriterion {
@@ -16,6 +20,11 @@ pub struct SearchCriterion {
     pub downloads: NumericRange<u128>,
     pub deployment_strategies: Vec<DeploymentStrategyCriterion>,
     pub has_deployment_strategies: Option<bool>,
+    pub serving_runtimes: Vec<ServingRuntime>,
+    pub hpc_cluster_ids: Vec<Uuid>,
+    pub batch_scheduler_queue_ids: Vec<Uuid>,
+    pub supported_deployment_modalities: Vec<DeploymentModality>,
+    pub has_deployment_options: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default)]

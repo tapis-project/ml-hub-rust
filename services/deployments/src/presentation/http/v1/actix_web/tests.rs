@@ -26,6 +26,10 @@ struct EmptyHpcClusterRepository;
 
 #[async_trait]
 impl HpcClusterRepository for EmptyHpcClusterRepository {
+    async fn list_all(&self) -> Result<Vec<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(Vec::new())
+    }
+
     async fn find_by_id(
         &self,
         _data_center: &DataCenter,

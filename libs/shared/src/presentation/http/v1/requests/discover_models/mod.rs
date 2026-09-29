@@ -3,12 +3,16 @@ use std::collections::HashMap;
 use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
+use uuid::Uuid;
 
 use crate::{
     application::inputs::discover_models as inputs,
-    domain::entities::model::external_model::ModelProvider as DomainModelProvider,
+    domain::entities::{
+        deployment_option::ServingRuntime as DomainServingRuntime,
+        model::external_model::ModelProvider as DomainModelProvider,
+    },
     presentation::http::v1::requests::{common::headers::Headers, common::tasks::Task},
-    shared_kernel::enums::Task as DomainTask,
+    shared_kernel::enums::{DeploymentModality as DomainDeploymentModality, Task as DomainTask},
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -56,6 +60,15 @@ pub struct DiscoveryCriterion {
     #[serde(default)]
     pub deployment_strategies: Vec<DeploymentStrategyCriterion>,
     pub has_deployment_strategies: Option<bool>,
+    #[serde(default)]
+    pub serving_runtimes: Vec<ServingRuntime>,
+    #[serde(default)]
+    pub hpc_cluster_ids: Vec<Uuid>,
+    #[serde(default)]
+    pub batch_scheduler_queue_ids: Vec<Uuid>,
+    #[serde(default)]
+    pub supported_deployment_modalities: Vec<DeploymentModality>,
+    pub has_deployment_options: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
@@ -68,6 +81,17 @@ pub enum ModelProvider {
 pub struct DeploymentStrategyCriterion {
     pub name: String,
     pub platform: Platform,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum ServingRuntime {
+    FlexServ,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
+pub enum DeploymentModality {
+    Batch,
+    Service,
 }
 
 impl From<DiscoveryCriterion> for inputs::SearchCriterion {
@@ -104,6 +128,24 @@ impl From<DiscoveryCriterion> for inputs::SearchCriterion {
                 })
                 .collect(),
             has_deployment_strategies: value.has_deployment_strategies,
+            serving_runtimes: value
+                .serving_runtimes
+                .into_iter()
+                .map(|runtime| match runtime {
+                    ServingRuntime::FlexServ => DomainServingRuntime::FlexServ,
+                })
+                .collect(),
+            hpc_cluster_ids: value.hpc_cluster_ids,
+            batch_scheduler_queue_ids: value.batch_scheduler_queue_ids,
+            supported_deployment_modalities: value
+                .supported_deployment_modalities
+                .into_iter()
+                .map(|modality| match modality {
+                    DeploymentModality::Batch => DomainDeploymentModality::Batch,
+                    DeploymentModality::Service => DomainDeploymentModality::Service,
+                })
+                .collect(),
+            has_deployment_options: value.has_deployment_options,
         }
     }
 }

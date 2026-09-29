@@ -177,8 +177,8 @@ fn treats_undefined_values_as_null_without_hiding_invalid_paths()
 fn loads_the_complete_checked_in_configuration() -> Result<(), Box<dyn std::error::Error>> {
     let evaluator = Evaluator::load(real_config_path())?;
 
-    assert_eq!(evaluator.evaluations().len(), 4);
-    assert_eq!(evaluator.statements().len(), 8);
+    assert_eq!(evaluator.evaluations().len(), 2);
+    assert_eq!(evaluator.statements().len(), 9);
 
     let trusted_model = evaluator
         .evaluations()
@@ -193,8 +193,8 @@ fn loads_the_complete_checked_in_configuration() -> Result<(), Box<dyn std::erro
     let registered_trusted_authors = evaluator
         .statements()
         .iter()
-        .find(|statement| statement.name() == "Trusted Authors")
-        .ok_or("Trusted Authors statement not found")?;
+        .find(|statement| statement.name() == "FlexServ Trusted Authors")
+        .ok_or("FlexServ Trusted Authors statement not found")?;
 
     assert!(Rc::ptr_eq(
         &trusted_model.expressions()[0].statements()[0],
@@ -232,8 +232,8 @@ fn loads_the_complete_checked_in_configuration() -> Result<(), Box<dyn std::erro
     let max_size = evaluator
         .statements()
         .iter()
-        .find(|statement| statement.name() == "Lt Max Model Size")
-        .ok_or("Lt Max Model Size statement not found")?;
+        .find(|statement| statement.name() == "Model Lt Max Model Size")
+        .ok_or("Model Lt Max Model Size statement not found")?;
     let size_operations = max_size.conditions()[0][1].operands().right().operations();
 
     assert_eq!(
@@ -264,30 +264,25 @@ fn evaluates_by_name_and_evaluates_all_in_configuration_order()
         ("metadata/canonical/gguf", Value::Null),
         ("metadata/canonical/author", json!("Qwen")),
     ]));
-    let queue = Rc::new(JsonValues::new([(
-        "hardware_profile/gpu/gpu_memory_gb",
-        json!(80),
-    )]));
+    let queue = Rc::new(JsonValues::new([
+        ("hardware_profile/gpu", json!({ "gpu_memory_gb": 80 })),
+        ("hardware_profile/gpu/gpu_memory_gb", json!(80)),
+    ]));
     let mut arguments = crate::Arguments::new();
 
     arguments.insert("model".into(), model);
     arguments.insert("queue".into(), queue);
 
-    assert!(evaluator.evaluate("FlexServ1.4 Compatibility", &arguments)?);
-    assert!(evaluator.evaluate("Compatible Deployment Target", &arguments)?);
-    assert!(!evaluator.evaluate("Trusted Model", &arguments)?);
+    assert!(evaluator.evaluate("FlexServ Compatible Deployment Option", &arguments)?);
+    assert!(evaluator.evaluate("Trusted Model", &arguments)?);
 
     let result = evaluator.evaluate_all(&arguments)?;
 
     assert_eq!(
         result.passes(),
-        [
-            "FlexServ1.4 Compatibility",
-            "FlexServ1.5 Compatibility",
-            "Compatible Deployment Target"
-        ]
+        ["FlexServ Compatible Deployment Option", "Trusted Model"]
     );
-    assert_eq!(result.fails(), ["Trusted Model"]);
+    assert!(result.fails().is_empty());
 
     Ok(())
 }
@@ -296,20 +291,32 @@ fn evaluates_by_name_and_evaluates_all_in_configuration_order()
 fn cpu_queue_fails_compatibility_without_attempting_multiply()
 -> Result<(), Box<dyn std::error::Error>> {
     let evaluator = Evaluator::load(real_config_path())?;
-    let model = Rc::new(JsonValues::new([(
-        "metadata/derived/size",
-        json!(1_000_000_u64),
-    )]));
-    let queue = Rc::new(JsonValues::new([(
-        "hardware_profile/gpu/gpu_memory_gb",
-        Value::Null,
-    )]));
+    let model = Rc::new(JsonValues::new([
+        ("provider", json!("HuggingFace")),
+        (
+            "metadata/derived/inference_runtimes",
+            json!(["transformers"]),
+        ),
+        ("metadata/derived/task_types", json!(["TextGeneration"])),
+        ("metadata/derived/gated", json!(false)),
+        ("metadata/derived/private", json!(false)),
+        ("metadata/derived/size", json!(1_000_000_u64)),
+        ("metadata/canonical/id", json!("Qwen/model")),
+        ("metadata/canonical/tags", json!([])),
+        ("metadata/canonical/config/quantization_config", Value::Null),
+        ("metadata/canonical/gguf", Value::Null),
+        ("metadata/canonical/author", json!("Qwen")),
+    ]));
+    let queue = Rc::new(JsonValues::new([
+        ("hardware_profile/gpu", Value::Null),
+        ("hardware_profile/gpu/gpu_memory_gb", Value::Null),
+    ]));
     let mut arguments = crate::Arguments::new();
 
     arguments.insert("model".into(), model);
     arguments.insert("queue".into(), queue);
 
-    assert!(!evaluator.evaluate("Compatible Deployment Target", &arguments)?);
+    assert!(!evaluator.evaluate("FlexServ Compatible Deployment Option", &arguments)?);
 
     Ok(())
 }
@@ -324,7 +331,7 @@ fn reports_unknown_evaluations_and_missing_arguments() -> Result<(), Box<dyn std
         Err(EvaluatorError::EvaluationNotFound(_))
     ));
     assert!(matches!(
-        evaluator.evaluate("FlexServ1.4 Compatibility", &arguments),
+        evaluator.evaluate("FlexServ Compatible Deployment Option", &arguments),
         Err(EvaluatorError::MissingArgument { .. })
     ));
 

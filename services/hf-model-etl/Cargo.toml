@@ -13,3 +13,4 @@ serde = { version = "1.0.228", features = ["derive"] }
 clients = { version = "0.1.0", path = "../../libs/clients" }
 thiserror = "2.0.17"
 log = "0.4"
+evaluations = { path = "../../libs/evaluations" }

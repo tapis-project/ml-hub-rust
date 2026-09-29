@@ -1,9 +1,9 @@
 {
     "evaluations": [
         {
-            "name": "FlexServ Compatibility",
+            "name": "FlexServ Compatible Deployment Option",
             "evaluation_strategy": "DNF",
-            "parameters": ["model"],
+            "parameters": ["model", "queue"],
             "expressions": [
                 [
                     "From HuggingFace",
@@ -11,40 +11,21 @@
                     "Supports TextGeneration",
                     "Not quantized",
                     "FlexServ Trusted Authors",
-                    "Public"
+                    "Public",
+                    "Queue Has Gpus",
+                    "Model Lt Max Model Size"
                 ]
             ]
         },
         {
             "name": "Trusted Model",
-            "evaluation_strategy": "DNF",
+            "evaluation_strategy": "CNF",
             "parameters": ["model"],
             "evaluation_type": "ModelTrust",
             "expressions": [
                 [
                     "FlexServ Trusted Authors",
                     "Trusted Models"
-                ]
-            ]
-        },
-        {
-            "name": "FlexServ Compatible Model Queue Combo",
-            "evaluation_strategy": "DNF",
-            "parameters": ["model", "queue"],
-            "expressions": [
-                [
-                    "Has Gpus",
-                    "Lt Max Model Size"
-                ]
-            ]
-        },
-        {
-            "name": "FlexServ Runs On Cluster",
-            "evaluation_strategy": "DNF",
-            "parameters": ["cluster"],
-            "expressions": [
-                [
-                    "Cluster Supports Apptainer"
                 ]
             ]
         }
@@ -339,7 +320,7 @@
             ]
         },
         {
-            "name": "Lt Max Model Size",
+            "name": "Model Lt Max Model Size",
             "evaluation_strategy": "DNF",
             "parameters": ["model", "queue"],
             "conditions": [
@@ -379,7 +360,7 @@
                                 "operations": [
                                     {
                                         "operation": "multiply",
-                                        "multiply": [0.6]
+                                        "multiply": [1000000000, 0.6]
                                     }
                                 ]
                             }
@@ -389,32 +370,7 @@
             ]
         },
         {
-            "name": "Cluster Supports Apptainer",
-            "evaluation_strategy": "DNF",
-            "parameters": ["cluster"],
-            "conditions": [
-                [
-                    {
-                        "operator": "In",
-                        "operands": [
-                            {
-                                "type": "literal",
-                                "value": "Apptainer"
-                            },
-                            {
-                                "type": "parameter",
-                                "parameter": "cluster",
-                                "accessor": {
-                                    "field_path": ["container_runtimes"]
-                                }
-                            }
-                        ]
-                    }
-                ]
-            ]
-        },
-        {
-            "name": "Has Gpus",
+            "name": "Queue Has Gpus",
             "evaluation_strategy": "DNF",
             "parameters": ["queue"],
             "conditions": [

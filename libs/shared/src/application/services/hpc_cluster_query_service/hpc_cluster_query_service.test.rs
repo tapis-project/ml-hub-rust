@@ -13,6 +13,10 @@ struct TestRepository {
 
 #[async_trait]
 impl HpcClusterRepository for TestRepository {
+    async fn list_all(&self) -> Result<Vec<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(Vec::new())
+    }
+
     async fn find_by_id(
         &self,
         _data_center: &DataCenter,

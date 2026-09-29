@@ -41,6 +41,17 @@ impl HpcClusterRepository {
 
 #[async_trait]
 impl HpcClusterRepositoryPort for HpcClusterRepository {
+    async fn list_all(&self) -> Result<Vec<DomainHpcCluster>, HpcClusterRepositoryError> {
+        let mut cursor = self.collection.find(doc! {}).await.map_err(map_error)?;
+        let mut hpc_clusters = Vec::new();
+
+        while let Some(document) = cursor.try_next().await.map_err(map_error)? {
+            hpc_clusters.push(document.try_into().map_err(map_conversion_error)?);
+        }
+
+        Ok(hpc_clusters)
+    }
+
     async fn find_by_id(
         &self,
         data_center: &DomainDataCenter,

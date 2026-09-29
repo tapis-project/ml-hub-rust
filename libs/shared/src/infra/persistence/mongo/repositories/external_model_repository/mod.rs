@@ -24,6 +24,10 @@ use crate::{
     infra::persistence::mongo::{
         database::EXTERNAL_MODEL_COLLECTION,
         documents::external_model::{ExternalModel, ModelProvider as DocumentModelProvider},
+        documents::{
+            deployment::DeploymentModality as DocumentDeploymentModality,
+            deployment_option::ServingRuntime as DocumentServingRuntime,
+        },
     },
     shared_kernel::identifiers::ExternalModelId,
 };
@@ -155,11 +159,20 @@ impl ExternalModelRepositoryPort for ExternalModelRepository {
                 .extend(doc! { "_id": { "$gt": ObjectId::parse_str(cursor).map_err(map_error)? } });
         }
 
-        let pipeline = vec![
+        let use_deployment_options = input.criteria.iter().any(uses_deployment_options);
+        let mut pipeline = Vec::new();
+
+        if use_deployment_options {
+            pipeline.push(deployment_option_lookup());
+        }
+
+        pipeline.extend([
             doc! { "$match": filter },
             doc! { "$sort": { "_id": 1 } },
             doc! { "$limit": i64::from(input.options.limit()) + 1 },
-        ];
+            doc! { "$unset": "deployment_options" },
+        ]);
+
         let mut cursor = self
             .collection
             .aggregate(pipeline)
@@ -187,7 +200,32 @@ impl ExternalModelRepositoryPort for ExternalModelRepository {
             .collect::<Result<Vec<_>, _>>()
             .map_err(map_conversion_error)?;
 
-        let count = if input.options.include_count() {
+        let count = if input.options.include_count() && use_deployment_options {
+            let mut count_pipeline = vec![deployment_option_lookup()];
+            count_pipeline.extend([doc! { "$match": count_filter }, doc! { "$count": "count" }]);
+
+            let mut count_cursor = self
+                .collection
+                .aggregate(count_pipeline)
+                .max_time(Duration::from_secs(2))
+                .await
+                .map_err(map_error)?;
+
+            let count = count_cursor
+                .try_next()
+                .await
+                .map_err(map_error)?
+                .map(|document| match document.get("count") {
+                    Some(Bson::Int32(count)) => Ok(u64::from(*count as u32)),
+                    Some(Bson::Int64(count)) => Ok(*count as u64),
+                    value => Err(format!("Invalid deployment option count: {value:?}")),
+                })
+                .transpose()
+                .map_err(map_error)?
+                .unwrap_or(0);
+
+            Some(count)
+        } else if input.options.include_count() {
             Some(
                 self.collection
                     .count_documents(count_filter)
@@ -209,6 +247,7 @@ impl ExternalModelRepositoryPort for ExternalModelRepository {
 
 fn criterion_filter(criterion: &SearchCriterion) -> Result<Document, ExternalModelRepositoryError> {
     let mut filter = Document::new();
+
     if let Some(provider) = &criterion.provider {
         let provider = match provider {
             ModelProvider::HuggingFace => DocumentModelProvider::HuggingFace,
@@ -252,21 +291,119 @@ fn criterion_filter(criterion: &SearchCriterion) -> Result<Document, ExternalMod
         &criterion.downloads,
     )?;
 
-    let mut strategy_conditions = Vec::new();
+    let mut and_conditions = Vec::new();
 
     if !criterion.deployment_strategies.is_empty() {
-        strategy_conditions.push(doc! { "metadata.derived.deployment_strategies": { "$elemMatch": { "$or": criterion.deployment_strategies.iter().map(|strategy| doc! { "name": exact_regex(&strategy.name), "platform": to_bson(&strategy.platform).unwrap_or(Bson::Null) }).collect::<Vec<_>>() } } });
+        and_conditions.push(doc! { "metadata.derived.deployment_strategies": { "$elemMatch": { "$or": criterion.deployment_strategies.iter().map(|strategy| doc! { "name": exact_regex(&strategy.name), "platform": to_bson(&strategy.platform).unwrap_or(Bson::Null) }).collect::<Vec<_>>() } } });
     }
 
     if let Some(has_strategies) = criterion.has_deployment_strategies {
-        strategy_conditions.push(doc! { "metadata.derived.deployment_strategies": if has_strategies { doc! { "$ne": [] } } else { doc! { "$size": 0 } } });
+        and_conditions.push(doc! { "metadata.derived.deployment_strategies": if has_strategies { doc! { "$ne": [] } } else { doc! { "$size": 0 } } });
     }
 
-    if !strategy_conditions.is_empty() {
-        filter.insert("$and", strategy_conditions);
+    let deployment_option_filter = deployment_option_filter(criterion)?;
+
+    if !deployment_option_filter.is_empty() {
+        and_conditions
+            .push(doc! { "deployment_options": { "$elemMatch": deployment_option_filter } });
+    }
+
+    if let Some(has_deployment_options) = criterion.has_deployment_options {
+        and_conditions.push(doc! {
+            "deployment_options": if has_deployment_options {
+                doc! { "$ne": [] }
+            } else {
+                doc! { "$size": 0 }
+            },
+        });
+    }
+
+    if !and_conditions.is_empty() {
+        filter.insert("$and", and_conditions);
     }
 
     Ok(filter)
+}
+
+fn deployment_option_filter(
+    criterion: &SearchCriterion,
+) -> Result<Document, ExternalModelRepositoryError> {
+    let mut filter = Document::new();
+
+    if !criterion.serving_runtimes.is_empty() {
+        let runtimes = criterion
+            .serving_runtimes
+            .iter()
+            .map(|runtime| match runtime {
+                crate::domain::entities::deployment_option::ServingRuntime::FlexServ => {
+                    DocumentServingRuntime::FlexServ
+                }
+            })
+            .collect::<Vec<_>>();
+
+        filter.insert(
+            "serving_runtime",
+            doc! { "$in": to_bson(&runtimes).map_err(map_error)? },
+        );
+    }
+
+    if !criterion.hpc_cluster_ids.is_empty() {
+        let ids = criterion
+            .hpc_cluster_ids
+            .iter()
+            .map(|id| Uuid::from_bytes(*id.as_bytes()))
+            .collect::<Vec<_>>();
+
+        filter.insert("hpc_cluster_queue.hpc_cluster_id", doc! { "$in": ids });
+    }
+
+    if !criterion.batch_scheduler_queue_ids.is_empty() {
+        let ids = criterion
+            .batch_scheduler_queue_ids
+            .iter()
+            .map(|id| Uuid::from_bytes(*id.as_bytes()))
+            .collect::<Vec<_>>();
+
+        filter.insert(
+            "hpc_cluster_queue.batch_scheduler_queue_id",
+            doc! { "$in": ids },
+        );
+    }
+
+    if !criterion.supported_deployment_modalities.is_empty() {
+        let modalities = criterion
+            .supported_deployment_modalities
+            .iter()
+            .cloned()
+            .map(DocumentDeploymentModality::from)
+            .collect::<Vec<_>>();
+
+        filter.insert(
+            "supported_deployment_modalities",
+            doc! { "$in": to_bson(&modalities).map_err(map_error)? },
+        );
+    }
+
+    Ok(filter)
+}
+
+fn uses_deployment_options(criterion: &SearchCriterion) -> bool {
+    !criterion.serving_runtimes.is_empty()
+        || !criterion.hpc_cluster_ids.is_empty()
+        || !criterion.batch_scheduler_queue_ids.is_empty()
+        || !criterion.supported_deployment_modalities.is_empty()
+        || criterion.has_deployment_options.is_some()
+}
+
+fn deployment_option_lookup() -> Document {
+    doc! {
+        "$lookup": {
+            "from": crate::infra::persistence::mongo::database::DEPLOYMENT_OPTION_COLLECTION,
+            "localField": "id",
+            "foreignField": "external_model_id",
+            "as": "deployment_options",
+        },
+    }
 }
 
 fn insert_text(filter: &mut Document, path: &str, value: Option<&str>) {

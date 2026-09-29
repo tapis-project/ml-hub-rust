@@ -63,6 +63,8 @@ spec:
               value: "5000"
             - name: INBOX
               value: /srv/mlhub/hf-model-etl/inbox
+            - name: EVALUATION_CONFIG_PATH
+              value: /etc/mlhub/evaluations.json
           image: mlhub/hf-model-etl-transform-load:local
           imagePullPolicy: Never
           resources: {}
@@ -79,6 +81,9 @@ spec:
             - name: site-config
               mountPath: /etc/mlhub/site.json
               subPath: site.json
+            - name: site-config
+              mountPath: /etc/mlhub/evaluations.json
+              subPath: evaluations.json
       volumes:
         - name: nfs-server-mount
           nfs:

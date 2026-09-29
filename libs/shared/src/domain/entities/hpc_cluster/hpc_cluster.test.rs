@@ -15,6 +15,7 @@ use crate::domain::entities::model::external_model::{
     DerivedMetadata, ExternalModel, HuggingFaceRepoLocator, ModelLocator, ModelMetadata,
     ModelProvider,
 };
+use crate::shared_kernel::enums::Task;
 
 fn hardware_profile() -> HardwareProfile {
     HardwareProfile::new(
@@ -401,10 +402,10 @@ fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::err
     let evaluator = Evaluator::load(config_path)?;
     let metadata = DerivedMetadata::new(
         Some("model".into()),
-        Some("author".into()),
+        Some("Qwen".into()),
+        vec!["transformers".into()],
         Vec::new(),
-        Vec::new(),
-        Vec::new(),
+        vec![Task::TextGeneration],
         None,
         40_000_000_000,
         false,
@@ -413,10 +414,17 @@ fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::err
         None,
     )?;
     let locator = HuggingFaceRepoLocator::new("owner/repo".into(), "sha".into())?;
+    let mut canonical = Map::new();
+    canonical.insert("id".into(), Value::String("Qwen/model".into()));
+    canonical.insert("tags".into(), Value::Array(Vec::new()));
+    canonical.insert("author".into(), Value::String("Qwen".into()));
+    canonical.insert("config".into(), serde_json::json!({}));
+    canonical.insert("gguf".into(), Value::Null);
+
     let model = ExternalModel::ingest(
         ModelProvider::HuggingFace,
         ModelLocator::HuggingFace(locator),
-        ModelMetadata::new(metadata, Map::new()),
+        ModelMetadata::new(metadata, canonical),
     )?;
     let queue = BatchSchedulerQueue::new(HpcClusterId::new(), queue_props("gpu"))?;
     let mut arguments: Arguments = HashMap::new();
@@ -424,7 +432,7 @@ fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::err
     arguments.insert("model".into(), Rc::new(model));
     arguments.insert("queue".into(), Rc::new(queue));
 
-    assert!(evaluator.evaluate("Compatible Deployment Target", &arguments)?);
+    assert!(evaluator.evaluate("FlexServ Compatible Deployment Option", &arguments)?);
 
     Ok(())
 }

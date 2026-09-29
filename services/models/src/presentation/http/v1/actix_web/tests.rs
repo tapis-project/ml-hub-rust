@@ -91,3 +91,32 @@ fn openapi_uses_model_publication_status_names() -> Result<(), Box<dyn std::erro
 
     Ok(())
 }
+
+#[test]
+fn openapi_exposes_deployment_option_search_filters() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    for property in [
+        "serving_runtimes",
+        "hpc_cluster_ids",
+        "batch_scheduler_queue_ids",
+        "supported_deployment_modalities",
+        "has_deployment_options",
+    ] {
+        assert!(
+            document
+                .pointer(&format!(
+                    "/components/schemas/DiscoveryCriterion/properties/{property}"
+                ))
+                .is_some(),
+            "missing deployment option filter {property}"
+        );
+    }
+
+    assert_eq!(
+        document.pointer("/components/schemas/ServingRuntime/enum"),
+        Some(&serde_json::json!(["FlexServ"]))
+    );
+
+    Ok(())
+}
