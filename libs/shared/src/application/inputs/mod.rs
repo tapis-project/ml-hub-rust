@@ -10,5 +10,6 @@ pub mod agent;
 pub mod agent_record;
 pub mod dataset;
 pub mod deployment;
+pub mod deployment_option;
 pub mod discover_models;
 pub mod principal;

@@ -4,10 +4,13 @@ use amqprs::channel::Channel;
 use mongodb::Client;
 use shared::application::ports::{
     artifacts::{ArtifactIngestionRepository, ArtifactPublicationRepository, ArtifactRepository},
+    deployment_option::DeploymentOptionRepository,
+    hpc_cluster::HpcClusterRepository,
     model::{ExternalModelRepository, ModelRepository},
 };
 use shared::application::services::{
     artifact_service::ArtifactService,
+    deployment_option_query_service::DeploymentOptionQueryService,
     external_model_discovery_service::ExternalModelDiscoveryService,
     model_artifact_association_service::ModelArtifactAssociationService,
     model_creation_service::ModelCreationService, model_query_service::ModelQueryService,
@@ -17,8 +20,9 @@ use shared::infra::messaging::rabbitmq::artifact_op_message_publisher::RabbitMQA
 use shared::infra::persistence::mongo::repositories::{
     ArtifactIngestionRepository as MongoArtifactIngestionRepository,
     ArtifactPublicationRepository as MongoArtifactPublicationRepository,
+    DeploymentOptionRepository as MongoDeploymentOptionRepository,
     ExternalModelRepository as MongoExternalModelRepository,
-    ModelRepository as MongoModelRepository,
+    HpcClusterRepository as MongoHpcClusterRepository, ModelRepository as MongoModelRepository,
 };
 
 pub fn artifact_repo_factory(client: &Client, db_name: String) -> Arc<dyn ArtifactRepository> {
@@ -48,6 +52,17 @@ pub fn external_model_repo_factory(
     db_name: String,
 ) -> Arc<dyn ExternalModelRepository> {
     Arc::new(MongoExternalModelRepository::new(client, db_name))
+}
+
+pub fn deployment_option_repo_factory(
+    client: &Client,
+    db_name: String,
+) -> Arc<dyn DeploymentOptionRepository> {
+    Arc::new(MongoDeploymentOptionRepository::new(client, db_name))
+}
+
+pub fn hpc_cluster_repo_factory(client: &Client, db_name: String) -> Arc<dyn HpcClusterRepository> {
+    Arc::new(MongoHpcClusterRepository::new(client, db_name))
 }
 
 pub fn artifact_service_factory(
@@ -93,4 +108,15 @@ pub fn external_model_discovery_service_factory(
     db_name: String,
 ) -> ExternalModelDiscoveryService {
     ExternalModelDiscoveryService::new(external_model_repo_factory(client, db_name))
+}
+
+pub fn deployment_option_query_service_factory(
+    client: &Client,
+    db_name: String,
+) -> DeploymentOptionQueryService {
+    DeploymentOptionQueryService::new(
+        deployment_option_repo_factory(client, db_name.clone()),
+        external_model_repo_factory(client, db_name.clone()),
+        hpc_cluster_repo_factory(client, db_name),
+    )
 }

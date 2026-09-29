@@ -25,6 +25,11 @@ pub trait HpcClusterRepository: Send + Sync {
         id: &HpcClusterId,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError>;
 
+    async fn find_by_ids(
+        &self,
+        ids: &[HpcClusterId],
+    ) -> Result<Vec<HpcCluster>, HpcClusterRepositoryError>;
+
     async fn list(
         &self,
         input: &ListHpcClustersInput,

@@ -25,6 +25,13 @@ impl HpcClusterRepository for TestRepository {
         Ok(self.found.clone())
     }
 
+    async fn find_by_ids(
+        &self,
+        _ids: &[HpcClusterId],
+    ) -> Result<Vec<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(self.found.clone().into_iter().collect())
+    }
+
     async fn list(
         &self,
         _input: &ListHpcClustersInput,

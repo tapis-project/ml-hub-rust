@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use thiserror::Error;
 
 use crate::{
+    application::inputs::deployment_option::ListDeploymentOptionsInput,
     application::ports::errors::InfrastructureError,
     domain::entities::deployment_option::DeploymentOption,
     shared_kernel::identifiers::ExternalModelId,
@@ -9,8 +10,18 @@ use crate::{
 
 #[derive(Debug, Error)]
 pub enum DeploymentOptionRepositoryError {
+    #[error("Invalid deployment option cursor")]
+    InvalidCursor,
+
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),
+}
+
+#[derive(Debug)]
+pub struct DeploymentOptionPage {
+    pub deployment_options: Vec<DeploymentOption>,
+    pub count: Option<u64>,
+    pub cursor: Option<String>,
 }
 
 #[async_trait]
@@ -19,6 +30,12 @@ pub trait DeploymentOptionRepository: Send + Sync {
         &self,
         external_model_id: &ExternalModelId,
     ) -> Result<Vec<DeploymentOption>, DeploymentOptionRepositoryError>;
+
+    async fn list_by_external_model_id(
+        &self,
+        external_model_id: &ExternalModelId,
+        input: &ListDeploymentOptionsInput,
+    ) -> Result<DeploymentOptionPage, DeploymentOptionRepositoryError>;
 
     async fn replace_for_external_model(
         &self,

@@ -11,7 +11,10 @@ use crate::{
         deployment_option::ServingRuntime as DomainServingRuntime,
         model::external_model::ModelProvider as DomainModelProvider,
     },
-    presentation::http::v1::requests::{common::headers::Headers, common::tasks::Task},
+    presentation::http::v1::{
+        deployment_options::{DeploymentModality, ServingRuntime},
+        requests::{common::headers::Headers, common::tasks::Task},
+    },
     shared_kernel::enums::{DeploymentModality as DomainDeploymentModality, Task as DomainTask},
 };
 
@@ -81,17 +84,6 @@ pub enum ModelProvider {
 pub struct DeploymentStrategyCriterion {
     pub name: String,
     pub platform: Platform,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
-pub enum ServingRuntime {
-    FlexServ,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
-pub enum DeploymentModality {
-    Batch,
-    Service,
 }
 
 impl From<DiscoveryCriterion> for inputs::SearchCriterion {

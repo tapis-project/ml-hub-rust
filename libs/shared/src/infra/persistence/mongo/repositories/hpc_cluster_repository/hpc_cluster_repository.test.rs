@@ -3,6 +3,26 @@ use mongodb::bson::{doc, oid::ObjectId, Uuid};
 use super::*;
 
 #[test]
+fn bulk_lookup_filters_by_every_requested_cluster_id() {
+    let first = HpcClusterId::new();
+    let second = HpcClusterId::new();
+
+    let filter = find_by_ids_filter(&[first, second]);
+
+    assert_eq!(
+        filter,
+        doc! {
+            "id": {
+                "$in": [
+                    Uuid::from_bytes(*first.as_uuid().as_bytes()),
+                    Uuid::from_bytes(*second.as_uuid().as_bytes()),
+                ]
+            }
+        }
+    );
+}
+
+#[test]
 fn list_pipeline_scopes_to_data_center_and_projects_summary(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let input = ListHpcClustersInput::new(DomainDataCenter::Tacc, Some(25), None, None);

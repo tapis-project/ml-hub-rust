@@ -38,6 +38,13 @@ impl HpcClusterRepository for EmptyHpcClusterRepository {
         Ok(None)
     }
 
+    async fn find_by_ids(
+        &self,
+        _ids: &[HpcClusterId],
+    ) -> Result<Vec<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(Vec::new())
+    }
+
     async fn list(
         &self,
         _input: &ListHpcClustersInput,

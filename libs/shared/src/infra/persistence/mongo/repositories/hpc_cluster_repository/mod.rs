@@ -69,6 +69,29 @@ impl HpcClusterRepositoryPort for HpcClusterRepository {
             .map_err(map_conversion_error)
     }
 
+    async fn find_by_ids(
+        &self,
+        ids: &[HpcClusterId],
+    ) -> Result<Vec<DomainHpcCluster>, HpcClusterRepositoryError> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut cursor = self
+            .collection
+            .find(find_by_ids_filter(ids))
+            .await
+            .map_err(map_error)?;
+
+        let mut hpc_clusters = Vec::new();
+
+        while let Some(document) = cursor.try_next().await.map_err(map_error)? {
+            hpc_clusters.push(document.try_into().map_err(map_conversion_error)?);
+        }
+
+        Ok(hpc_clusters)
+    }
+
     async fn list(
         &self,
         input: &ListHpcClustersInput,
@@ -109,6 +132,15 @@ impl HpcClusterRepositoryPort for HpcClusterRepository {
             count,
         })
     }
+}
+
+fn find_by_ids_filter(ids: &[HpcClusterId]) -> Document {
+    let ids = ids
+        .iter()
+        .map(|id| Uuid::from_bytes(*id.as_uuid().as_bytes()))
+        .collect::<Vec<_>>();
+
+    doc! { "id": { "$in": ids } }
 }
 
 fn list_filter(input: &ListHpcClustersInput) -> Result<Document, HpcClusterRepositoryError> {

@@ -15,6 +15,7 @@ use super::handlers::get_model::__path_get_model;
 use super::handlers::get_model_artifact::__path_get_model_artifact;
 use super::handlers::get_model_ingestion::__path_get_model_ingestion;
 use super::handlers::get_model_publication::__path_get_model_publication;
+use super::handlers::list_external_model_deployment_options::__path_list_external_model_deployment_options;
 use super::handlers::list_model_artifacts::__path_list_model_artifacts;
 use super::handlers::list_model_ingestions::__path_list_model_ingestions;
 use super::handlers::list_model_publications::__path_list_model_publications;
@@ -32,6 +33,7 @@ use super::handlers::publish_model_artifact::__path_publish_model_artifact;
         list_models,
         get_external_model,
         discover_external_models,
+        list_external_model_deployment_options,
         get_model_artifact,
         associate_model_with_artifact,
         get_model_ingestion,
