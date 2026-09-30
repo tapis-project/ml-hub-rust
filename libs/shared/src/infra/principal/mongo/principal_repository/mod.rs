@@ -1,20 +1,19 @@
 use std::time::Duration;
 
 use crate::application::inputs::principal::FindByFederatedIdentity;
-use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
-use crate::infra::_common::mongo::is_duplicate_key_error;
-use crate::infra::principal::mongo::documents::{Principal, PRINCIPAL_COLLECTION};
 use crate::application::ports;
 use crate::application::ports::principal::PrincipalRepositoryError;
 use crate::domain::entities;
-use mongodb::{
-    bson::{doc, to_bson, to_document},
-    error::{TRANSIENT_TRANSACTION_ERROR, Error},
-    options::{UpdateModifications, ReadConcern, UpdateOneModel, WriteConcern, WriteModel},
-    Client,
-    Collection
-};
+use crate::infra::_common::mongo::is_duplicate_key_error;
+use crate::infra::identity::mongo::documents::{FEDERATED_IDENTITY_COLLECTION, FederatedIdentity};
+use crate::infra::principal::mongo::documents::{PRINCIPAL_COLLECTION, Principal};
 use futures::stream::TryStreamExt;
+use mongodb::{
+    Client, Collection,
+    bson::{Document, doc, to_bson, to_document},
+    error::{Error, TRANSIENT_TRANSACTION_ERROR},
+    options::{ReadConcern, UpdateModifications, UpdateOneModel, WriteConcern, WriteModel},
+};
 
 type FederatedIdentityReadCollection = Collection<FederatedIdentity>;
 type FederatedIdentityWriteCollection = Collection<FederatedIdentity>;
@@ -30,7 +29,7 @@ pub struct PrincipalRepository {
 }
 
 impl PrincipalRepository {
-    pub fn new(client: Client, db_name: String) -> Self { 
+    pub fn new(client: Client, db_name: String) -> Self {
         let db = client.database(&db_name);
 
         Self {
@@ -45,18 +44,22 @@ impl PrincipalRepository {
 
 #[async_trait::async_trait]
 impl ports::principal::PrincipalRepository for PrincipalRepository {
-    async fn save(&self, principal: &entities::principal::Principal) -> Result<(), PrincipalRepositoryError> {
+    async fn save(
+        &self,
+        principal: &entities::principal::Principal,
+    ) -> Result<(), PrincipalRepositoryError> {
         // Start a session
         let mut session = match self.client.start_session().await {
             Ok(s) => Ok(s),
             Err(err) => Err(PrincipalRepositoryError::PersistenceError {
                 retriable: true,
                 message: err.to_string(),
-            })
+            }),
         }?;
 
         // Start a transaction
-        session.start_transaction()
+        session
+            .start_transaction()
             .max_commit_time(Duration::from_millis(2000))
             .read_concern(ReadConcern::majority())
             .write_concern(WriteConcern::majority())
@@ -68,26 +71,28 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
 
         // Convert the Principal into MongoDB documents
         let principal_doc = Principal::from(principal.clone());
-        
+
         // Save the Principal
-        let _ = match self.principal_write_collection.insert_one(principal_doc).session(&mut session).await {
+        let _ = match self
+            .principal_write_collection
+            .insert_one(principal_doc)
+            .session(&mut session)
+            .await
+        {
             Ok(x) => x,
-            Err(err) => return Err(PrincipalRepositoryError::from(err))
+            Err(err) => return Err(PrincipalRepositoryError::from(err)),
         };
-        
+
         // Convert the Principal's federated identity into a MongoDB document
-        let identity_doc = FederatedIdentity::from((principal.active_identity().clone(), principal.id.clone()));
-        
-        let filter = doc! {
-            "issuer": &identity_doc.issuer,
-            "subject": &identity_doc.subject,
-            "principal_id": &identity_doc.principal_id.clone(),
-        };
+        let identity_doc =
+            FederatedIdentity::from((principal.active_identity().clone(), principal.id.clone()));
+
+        let filter = federated_identity_filter(&identity_doc);
 
         // Create an update or insert model for the identity
         let mut insert_doc = to_document(&identity_doc)
             .map_err(|err| PrincipalRepositoryError::ProgrammingError(err.to_string()))?;
-        
+
         insert_doc.remove("metadata");
         insert_doc.remove("last_seen");
 
@@ -111,40 +116,52 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
                 .hint(None)
                 .sort(None)
                 .upsert(true)
-                .build()
+                .build(),
         );
 
         // Run the bulk write with the session
-        let _ = match self.client.bulk_write(vec![identity_write_model]).session(&mut session).await {
+        let _ = match self
+            .client
+            .bulk_write(vec![identity_write_model])
+            .session(&mut session)
+            .await
+        {
             Ok(x) => x,
-            Err(err) => return Err(PrincipalRepositoryError::from(err))
+            Err(err) => return Err(PrincipalRepositoryError::from(err)),
         };
-        
+
         match session.commit_transaction().await {
             Ok(_) => Ok(()),
             Err(err) => {
                 if let Err(e) = session.abort_transaction().await {
-                    return Err(PrincipalRepositoryError::from(e))
+                    return Err(PrincipalRepositoryError::from(e));
                 }
 
-                return Err(PrincipalRepositoryError::from(err))
+                return Err(PrincipalRepositoryError::from(err));
             }
         }
     }
 
-    async fn find_by_identity(&self, input: &FindByFederatedIdentity) -> Result<Option<entities::principal::Principal>, PrincipalRepositoryError> {
+    async fn find_by_identity(
+        &self,
+        input: &FindByFederatedIdentity,
+    ) -> Result<Option<entities::principal::Principal>, PrincipalRepositoryError> {
         let ident_filter = doc! {
             "issuer": input.identity.issuer.clone(),
             "subject": input.identity.subject.clone(),
             "tenant_id": input.identity.tenant_id.clone(),
         };
-        
-        let mut identity_cursor = match self.federated_identity_read_collection.find(ident_filter).await{
+
+        let mut identity_cursor = match self
+            .federated_identity_read_collection
+            .find(ident_filter)
+            .await
+        {
             Ok(c) => Ok(c),
             Err(err) => Err(PrincipalRepositoryError::PersistenceError {
                 retriable: false,
                 message: err.to_string(),
-            })
+            }),
         }?;
 
         let maybe_federated_identity_doc = match identity_cursor.try_next().await {
@@ -152,24 +169,26 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
             Err(err) => Err(PrincipalRepositoryError::PersistenceError {
                 retriable: false,
                 message: err.to_string(),
-            })
+            }),
         }?;
 
         let federated_identity_doc = match maybe_federated_identity_doc {
             Some(f) => f,
-            None => return Ok(None)
+            None => return Ok(None),
         };
 
-        let principal_filter = doc! {
-            "id": &federated_identity_doc.principal_id
-        };
-        
-        let mut principal_cursor = match self.principal_read_collection.find(principal_filter).await{
+        let principal_filter = principal_filter(
+            &federated_identity_doc.principal_id,
+            &federated_identity_doc.tenant_id,
+        );
+
+        let mut principal_cursor = match self.principal_read_collection.find(principal_filter).await
+        {
             Ok(c) => Ok(c),
             Err(err) => Err(PrincipalRepositoryError::PersistenceError {
                 retriable: false,
                 message: err.to_string(),
-            })
+            }),
         }?;
 
         let maybe_principal_doc = match principal_cursor.try_next().await {
@@ -177,26 +196,55 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
             Err(err) => Err(PrincipalRepositoryError::PersistenceError {
                 retriable: false,
                 message: err.to_string(),
-            })
+            }),
         }?;
 
         Ok(match maybe_principal_doc {
-            Some(p) => Some(entities::principal::Principal::try_from((p, federated_identity_doc))?),
-            None => None
+            Some(p) => Some(entities::principal::Principal::try_from((
+                p,
+                federated_identity_doc,
+            ))?),
+            None => None,
         })
+    }
+}
+
+fn federated_identity_filter(identity: &FederatedIdentity) -> Document {
+    doc! {
+        "issuer": &identity.issuer,
+        "subject": &identity.subject,
+        "principal_id": &identity.principal_id,
+        "tenant_id": &identity.tenant_id,
+    }
+}
+
+fn principal_filter(principal_id: &str, tenant_id: &str) -> Document {
+    doc! {
+        "id": principal_id,
+        "tenant_id": tenant_id,
     }
 }
 
 impl From<Error> for PrincipalRepositoryError {
     fn from(value: Error) -> Self {
         if is_duplicate_key_error(&value) {
-            return PrincipalRepositoryError::PrincipalAlreadyExists
+            return PrincipalRepositoryError::PrincipalAlreadyExists;
         }
 
         if value.contains_label(TRANSIENT_TRANSACTION_ERROR) {
-            return PrincipalRepositoryError::PersistenceError { retriable: true, message: value.to_string() }
+            return PrincipalRepositoryError::PersistenceError {
+                retriable: true,
+                message: value.to_string(),
+            };
         }
 
-        PrincipalRepositoryError::PersistenceError { retriable: false, message: value.to_string() }
+        PrincipalRepositoryError::PersistenceError {
+            retriable: false,
+            message: value.to_string(),
+        }
     }
 }
+
+#[cfg(test)]
+#[path = "principal_repository.test.rs"]
+mod principal_repository_test;
