@@ -1,6 +1,5 @@
-
-use crate::shared_kernel::enums::Task;
 use crate::presentation::http::v1::requests::common::tasks as dto;
+use crate::shared_kernel::enums::Task;
 
 impl From<Task> for dto::Task {
     fn from(value: Task) -> Self {

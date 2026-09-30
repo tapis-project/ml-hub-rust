@@ -1,6 +1,6 @@
-use std::sync::Arc;
 use amqprs::channel::Channel;
 use mongodb::Client;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct MessagePublisherConnectionArgs {

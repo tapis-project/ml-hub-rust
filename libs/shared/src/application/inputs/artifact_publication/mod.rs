@@ -10,7 +10,7 @@ pub struct PublishArtifactInput {
 pub struct ListModelPublicationsInput {}
 
 pub struct GetModelPublicationInput {
-    pub publication_id: Uuid
+    pub publication_id: Uuid,
 }
 
 pub struct ListPublicationsByArtifactIdInput {

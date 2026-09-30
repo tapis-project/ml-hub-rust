@@ -1,5 +1,5 @@
-use crate::domain::external::agntcy::skill as agntcy;
 use crate::domain::entities::skill as entities;
+use crate::domain::external::agntcy::skill as agntcy;
 
 impl From<agntcy::Skill> for entities::Skill {
     fn from(value: agntcy::Skill) -> Self {
@@ -28,11 +28,15 @@ impl From<agntcy::Skill> for entities::Skill {
             agntcy::Skill::CreativeContent => entities::Skill::CreativeContent,
             agntcy::Skill::DataCleaning => entities::Skill::DataCleaning,
             agntcy::Skill::DataQualityAssessment => entities::Skill::DataQualityAssessment,
-            agntcy::Skill::DataTransformationPipeline => entities::Skill::DataTransformationPipeline,
+            agntcy::Skill::DataTransformationPipeline => {
+                entities::Skill::DataTransformationPipeline
+            }
             agntcy::Skill::DeploymentOrchestration => entities::Skill::DeploymentOrchestration,
             agntcy::Skill::DepthEstimation => entities::Skill::DepthEstimation,
             agntcy::Skill::DialogueGeneration => entities::Skill::DialogueGeneration,
-            agntcy::Skill::DocumentOrDatabaseQuestionAnswering => entities::Skill::DocumentOrDatabaseQuestionAnswering,
+            agntcy::Skill::DocumentOrDatabaseQuestionAnswering => {
+                entities::Skill::DocumentOrDatabaseQuestionAnswering
+            }
             agntcy::Skill::DocumentPassageRetrieval => entities::Skill::DocumentPassageRetrieval,
             agntcy::Skill::DocumentRetrieval => entities::Skill::DocumentRetrieval,
             agntcy::Skill::EntityRecognition => entities::Skill::EntityRecognition,
@@ -54,9 +58,15 @@ impl From<agntcy::Skill> for entities::Skill {
             agntcy::Skill::ImageToText => entities::Skill::ImageToText,
             agntcy::Skill::Indexing => entities::Skill::Indexing,
             agntcy::Skill::InferenceDeduction => entities::Skill::InferenceDeduction,
-            agntcy::Skill::InformationRetrievalSynthesis => entities::Skill::InformationRetrievalSynthesis,
-            agntcy::Skill::InformationRetrievalSynthesisSearch => entities::Skill::InformationRetrievalSynthesisSearch,
-            agntcy::Skill::InfrastructureProvisioning => entities::Skill::InfrastructureProvisioning,
+            agntcy::Skill::InformationRetrievalSynthesis => {
+                entities::Skill::InformationRetrievalSynthesis
+            }
+            agntcy::Skill::InformationRetrievalSynthesisSearch => {
+                entities::Skill::InformationRetrievalSynthesisSearch
+            }
+            agntcy::Skill::InfrastructureProvisioning => {
+                entities::Skill::InfrastructureProvisioning
+            }
             agntcy::Skill::KeypointDetection => entities::Skill::KeypointDetection,
             agntcy::Skill::KnowledgeSynthesis => entities::Skill::KnowledgeSynthesis,
             agntcy::Skill::LanguageTranslation => entities::Skill::LanguageTranslation,
@@ -72,7 +82,9 @@ impl From<agntcy::Skill> for entities::Skill {
             agntcy::Skill::NamedEntityRecognition => entities::Skill::NamedEntityRecognition,
             agntcy::Skill::NaturalLanguageGeneration => entities::Skill::NaturalLanguageGeneration,
             agntcy::Skill::NaturalLanguageInference => entities::Skill::NaturalLanguageInference,
-            agntcy::Skill::NaturalLanguageUnderstanding => entities::Skill::NaturalLanguageUnderstanding,
+            agntcy::Skill::NaturalLanguageUnderstanding => {
+                entities::Skill::NaturalLanguageUnderstanding
+            }
             agntcy::Skill::NegotiationResolution => entities::Skill::NegotiationResolution,
             agntcy::Skill::ObjectDetection => entities::Skill::ObjectDetection,
             agntcy::Skill::Paraphrasing => entities::Skill::Paraphrasing,
@@ -88,7 +100,9 @@ impl From<agntcy::Skill> for entities::Skill {
             agntcy::Skill::QuestionGeneration => entities::Skill::QuestionGeneration,
             agntcy::Skill::QuestionAnswering => entities::Skill::QuestionAnswering,
             agntcy::Skill::RetrievalOfInformation => entities::Skill::RetrievalOfInformation,
-            agntcy::Skill::RetrievalOfInformationSearch => entities::Skill::RetrievalOfInformationSearch,
+            agntcy::Skill::RetrievalOfInformationSearch => {
+                entities::Skill::RetrievalOfInformationSearch
+            }
             agntcy::Skill::RiskClassification => entities::Skill::RiskClassification,
             agntcy::Skill::RoleAssignment => entities::Skill::RoleAssignment,
             agntcy::Skill::SchemaInference => entities::Skill::SchemaInference,

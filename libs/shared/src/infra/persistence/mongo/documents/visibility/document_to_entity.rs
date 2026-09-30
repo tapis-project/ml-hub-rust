@@ -1,11 +1,11 @@
 use crate::infra::persistence::mongo::documents::visibility as documents;
-use crate::domain::entities::visibility as entities;
+use crate::shared_kernel::enums::Visibility as DomainVisibility;
 
-impl From<documents::Visibility> for entities::Visibility {
+impl From<documents::Visibility> for DomainVisibility {
     fn from(value: documents::Visibility) -> Self {
         match value {
-            documents::Visibility::Private => entities::Visibility::Private,
-            documents::Visibility::Public => entities::Visibility::Public,
+            documents::Visibility::Private => DomainVisibility::Private,
+            documents::Visibility::Public => DomainVisibility::Public,
         }
     }
 }

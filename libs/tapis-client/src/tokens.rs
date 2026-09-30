@@ -1,11 +1,11 @@
+use clients::{ClientError, ClientErrorScope};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-use clients::{ClientError, ClientErrorScope};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     #[serde(rename = "tapis/tenant_id")]
-    pub tapis_tenant_id: String
+    pub tapis_tenant_id: String,
 }
 
 pub fn decode_jwt(token: &str) -> Result<Claims, ClientError> {
@@ -18,7 +18,11 @@ pub fn decode_jwt(token: &str) -> Result<Claims, ClientError> {
         token,
         &DecodingKey::from_secret(&[]), // No secret key
         &validation,
-    ).map_err(|err| ClientError::BadRequest { msg: err.to_string(), scope: ClientErrorScope::Client })?;
+    )
+    .map_err(|err| ClientError::BadRequest {
+        msg: err.to_string(),
+        scope: ClientErrorScope::Client,
+    })?;
 
     Ok(data.claims)
 }

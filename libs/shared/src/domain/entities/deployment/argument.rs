@@ -10,14 +10,14 @@ impl Argument {
     pub fn new_plaintext(parameter_name: String, value: String) -> Self {
         Argument {
             parameter_name,
-            data: ArgumentData::PlainText(value)
+            data: ArgumentData::PlainText(value),
         }
     }
 
     pub fn new_encrypted(parameter_name: String, encryption_envelope: EncryptionEnvelope) -> Self {
         Argument {
             parameter_name,
-            data: ArgumentData::Encrypted(encryption_envelope)
+            data: ArgumentData::Encrypted(encryption_envelope),
         }
     }
 

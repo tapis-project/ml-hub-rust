@@ -1,27 +1,37 @@
-use std::sync::Arc;
-use crate::presentation;
+use crate::bootstrap::factories::{
+    build_deployment_strategy_provider, hpc_cluster_query_service_builder,
+    model_deployment_service_builder,
+};
 use crate::bootstrap::state::AppState;
-use crate::bootstrap::factories::{build_deployment_strategy_provider, model_deployment_service_builder};
-use shared::application::services::deployment_strategy_service::DeploymentStrategyService;
-pub use shared::infra::_common::mongo::{ClientParams, initialize_client};
-use shared::presentation::http::v1::actix_web::middleware::preflight::preflight_short_circuit;
+use crate::presentation;
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
-use actix_web::{App, HttpServer, web, middleware::{from_fn, Logger}};
+use actix_web::{
+    middleware::{from_fn, Logger},
+    web, App, HttpServer,
+};
 use amqprs::channel::ExchangeType;
-use shared::bootstrap::build_shared_app_context;
-use shared::infra::configuration::site_configuration_loader::SiteConfigurationLoader;
-use shared::presentation::http::v1::actix_web::middleware::{authentication::authenticate, tenancy::resolve_tenancy};
-use shared::infra::messaging::rabbitmq::connection::open_channel;
-use shared::infra::messaging::rabbitmq::exchanges::{declare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE};
-use std::env;
-use utoipa_swagger_ui::SwaggerUi;
-use utoipa::OpenApi;
 use log::error;
+use shared::application::services::deployment_strategy_service::DeploymentStrategyService;
+use shared::bootstrap::build_shared_app_context;
+pub use shared::infra::_common::mongo::{initialize_client, ClientParams};
+use shared::infra::configuration::site_configuration_loader::SiteConfigurationLoader;
+use shared::infra::messaging::rabbitmq::connection::open_channel;
+use shared::infra::messaging::rabbitmq::exchanges::{
+    declare_exchanges, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
+};
+use shared::presentation::http::v1::actix_web::middleware::preflight::preflight_short_circuit;
+use shared::presentation::http::v1::actix_web::middleware::{
+    authentication::authenticate, tenancy::resolve_tenancy,
+};
+use std::env;
+use std::sync::Arc;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 pub async fn run_server() -> std::io::Result<()> {
     pub const DEFAULT_PORT: u16 = 8000;
     pub const DEFAULT_HOST: &str = "0.0.0.0";
-    
+
     // Initialize the logger
     env_logger::init();
 
@@ -32,97 +42,125 @@ pub async fn run_server() -> std::io::Result<()> {
         env::var("PORT")
             .ok()
             .and_then(|port| port.parse::<u16>().ok())
-            .unwrap_or(DEFAULT_PORT)
+            .unwrap_or(DEFAULT_PORT),
     );
 
-    let broker_host = std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
-    let broker_port = std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
-    let broker_username = std::env::var("RABBIT_USER").expect("RABBIT_USER missing from environment variables");
-    let broker_password = std::env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD missing from environment variables");
-    
+    let broker_host =
+        std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
+    let broker_port =
+        std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
+    let broker_username =
+        std::env::var("RABBIT_USER").expect("RABBIT_USER missing from environment variables");
+    let broker_password = std::env::var("RABBIT_PASSWORD")
+        .expect("RABBIT_PASSWORD missing from environment variables");
+
     let (_connection, channel) = open_channel(
         broker_host,
-        broker_port.parse::<u16>().expect("u16 parsed from 'port' String"),
+        broker_port
+            .parse::<u16>()
+            .expect("u16 parsed from 'port' String"),
         broker_username,
         broker_password,
     )
-        .await
-        .map_err(|e| { error!("{}", e.to_string()) })
-        .expect("Connection to message broker established and channel created");
+    .await
+    .map_err(|e| error!("{}", e.to_string()))
+    .expect("Connection to message broker established and channel created");
 
-    declare_exchanges(&channel, vec![(MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE, ExchangeType::Topic)])
-        .await
-        .map_err(|e| { error!("{}", e.to_string())})
-        .expect(format!("Exchange {}to be declared", MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE).as_str());
+    declare_exchanges(
+        &channel,
+        vec![(
+            MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
+            ExchangeType::Topic,
+        )],
+    )
+    .await
+    .map_err(|e| error!("{}", e.to_string()))
+    .expect(
+        format!(
+            "Exchange {}to be declared",
+            MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE
+        )
+        .as_str(),
+    );
 
     let config_loader = SiteConfigurationLoader::new()
-        .map_err(|e| { error!("{}", e.to_string()) })
+        .map_err(|e| error!("{}", e.to_string()))
         .expect("Site configuration repository to be intialized");
 
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
 
-    let mongo_client = initialize_client(ClientParams{
+    let mongo_client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
         host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
         port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
         db: db_name.clone(),
-        replica_set: Some(env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set")),
+        replica_set: Some(
+            env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set"),
+        ),
     })
-        .await
-        .map_err(|e| {
-            panic!("Database initialization error: {}", e.to_string().as_str()); 
-        })
-        .expect("Datbase initialization error");
+    .await
+    .map_err(|e| {
+        panic!("Database initialization error: {}", e.to_string().as_str());
+    })
+    .expect("Datbase initialization error");
 
     let shared_app_context = build_shared_app_context(
         config_loader.get_config(),
         mongo_client.clone(),
-        db_name.clone()
+        db_name.clone(),
     )
-        .await
-        .map_err(|e| {
-            error!("Failed to initialize SharedState: {}", e.to_string());
-            e
-        })
-        .expect("SharedState to be initialzed");
-    
+    .await
+    .map_err(|e| {
+        error!("Failed to initialize SharedState: {}", e.to_string());
+        e
+    })
+    .expect("SharedState to be initialzed");
+
     let site_config = web::Data::from(Arc::new(shared_app_context.config));
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
-    let federated_identity_service = web::Data::from(Arc::new(shared_app_context.federated_identity_service));
+    let federated_identity_service =
+        web::Data::from(Arc::new(shared_app_context.federated_identity_service));
     let principal_service = web::Data::new(shared_app_context.principal_service);
-    
+
     // Initialize AppState
     let state = AppState {
         db_name: db_name.clone(),
         channel: Arc::new(channel),
-        client: mongo_client.clone()
+        client: mongo_client.clone(),
     };
 
     // Model Deployment Service
     let model_deployment_service = Arc::new(
-        model_deployment_service_builder(
-            &mongo_client,
-            db_name.clone(),
-            state.channel.clone(),
-        ).map_err(|e| {
-            error!("Failed to initialize model deployment service: {}", e.to_string());
-            e
-        })
-        .expect("ModelDeploymentService to be initialzed")
+        model_deployment_service_builder(&mongo_client, db_name.clone(), state.channel.clone())
+            .map_err(|e| {
+                error!(
+                    "Failed to initialize model deployment service: {}",
+                    e.to_string()
+                );
+                e
+            })
+            .expect("ModelDeploymentService to be initialzed"),
     );
 
     // Deployment Strategy Provider
     let deployment_strategy_provider = build_deployment_strategy_provider()
-    .map_err(|e| {
-        error!("Failed to initialize DeploymentStrategyProvider: {}", e.to_string());
-        e
-    })
-    .expect("DeploymentStrategyProvider to be initialized");
+        .map_err(|e| {
+            error!(
+                "Failed to initialize DeploymentStrategyProvider: {}",
+                e.to_string()
+            );
+            e
+        })
+        .expect("DeploymentStrategyProvider to be initialized");
 
     // Deployment Strategy Service
-    let deployment_strategy_service = Arc::new(DeploymentStrategyService::new(
-        deployment_strategy_provider
+    let deployment_strategy_service =
+        Arc::new(DeploymentStrategyService::new(deployment_strategy_provider));
+
+    let hpc_cluster_query_service = Arc::new(hpc_cluster_query_service_builder(
+        &mongo_client,
+        db_name.clone(),
     ));
 
     HttpServer::new(move || {
@@ -133,6 +171,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(principal_service.clone())
             .app_data(web::Data::from(model_deployment_service.clone()))
             .app_data(web::Data::from(deployment_strategy_service.clone()))
+            .app_data(web::Data::from(hpc_cluster_query_service.clone()))
             .app_data(web::Data::new(state.clone()))
 
             // Globally-scoped middlewares.
@@ -150,6 +189,8 @@ pub async fn run_server() -> std::io::Result<()> {
             .service(presentation::http::v1::actix_web::handlers::start_model_deployment::start_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::stop_model_deployment::stop_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::undeploy_model_deployment::undeploy_model_deployment)
+            .service(presentation::http::v1::actix_web::handlers::list_hpc_clusters::list_hpc_clusters)
+            .service(presentation::http::v1::actix_web::handlers::get_hpc_cluster::get_hpc_cluster)
             .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
             .service(
                 SwaggerUi::new("deployments-api/swagger-ui/{_:.*}")

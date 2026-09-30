@@ -9,7 +9,7 @@
                 {
                     "name": "IsNotDeepseek",
                     "rules": [
-                        {"field_path": "author", "operator": "Neq", "value": "_deepseek"}
+                        {"field_path": ["metadata", "derived", "author"], "operator": "Neq", "value": "_deepseek"}
                     ]
                 }
             ],
@@ -55,16 +55,17 @@
         {
             "name": "FlexServerDeployerCompatibleOnHPC",
             "rules": [
-                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
-                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration", "TextClassification", "ImageToText"]}
+                {"field_path": ["provider"], "operator": "Eq", "value": "HuggingFace"},
+                {"field_path": ["metadata", "derived", "inference_runtimes"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["metadata", "derived", "task_types"], "operator": "AnyIn", "value": ["TextGeneration", "TextClassification", "ImageToText"]}
             ]
         },
         {
             "name": "FlexServerDeployerCompatibleOnPods",
             "rules": [
-                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
-                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextClassification", "ImageToText"]},
-                {"field_path": ["inference_hardware", "memory_gb"], "operator": "lte", "value": "32"}
+                {"field_path": ["provider"], "operator": "Eq", "value": "HuggingFace"},
+                {"field_path": ["metadata", "derived", "inference_runtimes"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["metadata", "derived", "task_types"], "operator": "AnyIn", "value": ["ImageClassification", "TextClassification", "ImageToText"]}
             ]
         }
     ],

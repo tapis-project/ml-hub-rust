@@ -6,5 +6,5 @@ pub enum ClientProviderError {
     NotFound(String, String),
 
     #[error("Could not parse platform name: {0}")]
-    ParseError(String)
+    ParseError(String),
 }

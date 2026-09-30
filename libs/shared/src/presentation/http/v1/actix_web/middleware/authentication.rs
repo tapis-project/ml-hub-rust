@@ -1,25 +1,25 @@
 use actix_web::dev::ServiceResponse;
-use actix_web::middleware::Next;
-use actix_web::{HttpMessage, HttpResponse};
 use actix_web::http::Method;
+use actix_web::middleware::Next;
 use actix_web::{
-    web,
-    dev::ServiceRequest,
     body::{EitherBody, MessageBody},
+    dev::ServiceRequest,
+    web,
 };
+use actix_web::{HttpMessage, HttpResponse};
+use log::{error, info, warn};
 use serde_json::json;
-use log::{info, warn, error};
 
-use crate::shared_kernel::context::{RequestContext, Actor};
 use crate::application::inputs::principal::GetOrCreateFromFederatedIdentity;
 use crate::application::ports::identity::FederatedIdentityProviderError;
 use crate::application::services::federated_identity_service::FederatedIdentityService;
+use crate::application::services::federated_idp_registrar::FederatedIdpRegistrar;
 use crate::application::services::principal_service::{PrincipalService, PrincipalServiceError};
 use crate::domain::entities::tenancy::Tenant;
-use crate::presentation::http::v1::requests::common::headers::AuthToken;
-use crate::application::services::federated_idp_registrar::FederatedIdpRegistrar;
 use crate::presentation::http::v1::actix_web::helpers::get_header_value;
 use crate::presentation::http::v1::adapters::derive_header_keys_from_authorities;
+use crate::presentation::http::v1::requests::common::headers::AuthToken;
+use crate::shared_kernel::context::{Actor, RequestContext};
 
 pub async fn authenticate(
     req: ServiceRequest,
@@ -27,9 +27,7 @@ pub async fn authenticate(
 ) -> Result<ServiceResponse<EitherBody<impl MessageBody>>, actix_web::Error> {
     // First, we check that we are in the right tenant
     // Get the tenant from the requests extension data. May not be set
-    let maybe_tenant  = req.extensions()
-        .get::<Tenant>()
-        .map(|fid| fid.clone());
+    let maybe_tenant = req.extensions().get::<Tenant>().map(|fid| fid.clone());
 
     // Respond with error if no tenant is found
     let tenant = match maybe_tenant {
@@ -40,20 +38,24 @@ pub async fn authenticate(
                 req
                     .into_response(HttpResponse::Unauthorized().json(json!({"error": "No Tenant found when authenticating. Tenant is expected to have been resolved previously"})))
                     .map_into_right_body()
-            )
+            );
         }
     };
 
     // Get federated identity service
-    let federated_identity_service = match req.app_data::<web::Data<FederatedIdentityService>>().cloned() {
+    let federated_identity_service = match req
+        .app_data::<web::Data<FederatedIdentityService>>()
+        .cloned()
+    {
         Some(s) => s.into_inner(),
         None => {
             error!("Federated identity service not found in authentication middleware. This is very likely a bootstraping issue");
-            return Ok(
-                req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Federated identity service not found"})))
-                    .map_into_right_body()
-            )
+            return Ok(req
+                .into_response(
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "Federated identity service not found"})),
+                )
+                .map_into_right_body());
         }
     };
 
@@ -62,28 +64,28 @@ pub async fn authenticate(
         Some(r) => r.into_inner(),
         None => {
             error!("Federated Idp registrar not found in authentication middleware. This is very likely a bootstraping issue");
-            return Ok(
-                req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Federated idp registrar not found"})))
-                    .map_into_right_body()
-            )
+            return Ok(req
+                .into_response(
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "Federated idp registrar not found"})),
+                )
+                .map_into_right_body());
         }
     };
-    
+
     // Check for token in headers. May be missing.
     let mut maybe_token: Option<AuthToken> = None;
     for header_key in derive_header_keys_from_authorities() {
-        maybe_token = get_header_value(&header_key, req.request())
-            .map(|t| AuthToken(t));
-        
+        maybe_token = get_header_value(&header_key, req.request()).map(|t| AuthToken(t));
+
         if maybe_token.is_some() {
-            break
+            break;
         }
     }
 
     // Explicitly allow ONLY the OPTIONS method to bypass authentication
     if req.method() == Method::OPTIONS {
-        return Ok(next.call(req).await?.map_into_left_body())
+        return Ok(next.call(req).await?.map_into_left_body());
     }
 
     // Respond with error if no token exists
@@ -91,24 +93,25 @@ pub async fn authenticate(
         Some(t) => t,
         None => {
             error!("Auth token missing");
-            return Ok(
-                req
-                    .into_response(HttpResponse::Unauthorized().json(json!({"error": "Missing auth token"})))
-                    .map_into_right_body()
-            )
+            return Ok(req
+                .into_response(
+                    HttpResponse::Unauthorized().json(json!({"error": "Missing auth token"})),
+                )
+                .map_into_right_body());
         }
     };
-    
+
     // Determine IDP name from the token
     let authority = match federated_identity_service.resolve_idp_from_token(&token.into_inner()) {
         Some(a) => a,
         None => {
             error!("Failed to derive Authority from token");
-            return Ok(
-                req
-                    .into_response(HttpResponse::Unauthorized().json(json!({"error": "Failed to derive Authority"})))
-                    .map_into_right_body()
-            )
+            return Ok(req
+                .into_response(
+                    HttpResponse::Unauthorized()
+                        .json(json!({"error": "Failed to derive Authority"})),
+                )
+                .map_into_right_body());
         }
     };
 
@@ -116,12 +119,13 @@ pub async fn authenticate(
     let idp = match idp_registrar.get_by_authority(authority.clone()) {
         Some(i) => i,
         None => {
-            error!("Failed to find an IDP from the IDP registrar using authority {}", &authority);
-            return Ok(
-                req
-                    .into_response(HttpResponse::Unauthorized().finish())
-                    .map_into_right_body()
-            )
+            error!(
+                "Failed to find an IDP from the IDP registrar using authority {}",
+                &authority
+            );
+            return Ok(req
+                .into_response(HttpResponse::Unauthorized().finish())
+                .map_into_right_body());
         }
     };
 
@@ -133,21 +137,19 @@ pub async fn authenticate(
             return match err {
                 E::InvalidCredentials(msg) | E::MalformedCredentials(msg) => {
                     warn!("Malformed or invalid credentials found when attempting to authenticate with IDP {}. Error: {}", &authority, &msg);
-                    Ok(
-                        req
-                            .into_response(HttpResponse::Unauthorized().json(json!({"error": msg})))
-                            .map_into_right_body()
-                    )
-                },
+                    Ok(req
+                        .into_response(HttpResponse::Unauthorized().json(json!({"error": msg})))
+                        .map_into_right_body())
+                }
                 E::InternalIdpError(msg) | E::InitializationError(_, msg) => {
                     error!("Internal IDP error: {}", &msg);
-                    Ok(
-                        req
-                            .into_response(HttpResponse::InternalServerError().json(json!({"error": msg})))
-                            .map_into_right_body()
-                    )
+                    Ok(req
+                        .into_response(
+                            HttpResponse::InternalServerError().json(json!({"error": msg})),
+                        )
+                        .map_into_right_body())
                 }
-            }
+            };
         }
     };
 
@@ -161,11 +163,11 @@ pub async fn authenticate(
                     req
                         .into_response(HttpResponse::Forbidden().json(json!({"error": "Federated user's tenant_id does not match the resolved tenanat_id"})))
                         .map_into_right_body()
-                )
+                );
             }
 
             Some(i)
-        },
+        }
         None => None,
     };
 
@@ -175,11 +177,11 @@ pub async fn authenticate(
             Ok(id) => id,
             Err(err) => {
                 info!("Unable to resolve principal id: {}", &err);
-                return Ok(
-                    req
-                        .into_response(HttpResponse::Unauthorized().json(json!({"error": err.to_string()})))
-                        .map_into_right_body()
-                )
+                return Ok(req
+                    .into_response(
+                        HttpResponse::Unauthorized().json(json!({"error": err.to_string()})),
+                    )
+                    .map_into_right_body());
             }
         };
 
@@ -187,11 +189,12 @@ pub async fn authenticate(
             Some(s) => s.into_inner(),
             None => {
                 error!("Principal service not found in authentication middleware. This is very likely a bootstraping issue");
-                return Ok(
-                    req
-                        .into_response(HttpResponse::InternalServerError().json(json!({"error": "Principal service not found"})))
-                        .map_into_right_body()
-                )
+                return Ok(req
+                    .into_response(
+                        HttpResponse::InternalServerError()
+                            .json(json!({"error": "Principal service not found"})),
+                    )
+                    .map_into_right_body());
             }
         };
 
@@ -207,30 +210,29 @@ pub async fn authenticate(
                     PrincipalServiceError::FederatedIdentityConflict(..) => {
                         info!("Federated identity conflict: {}", err.to_string());
                         HttpResponse::Conflict().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())}))
-                    },
+                    }
                     PrincipalServiceError::PrincipalConflict => {
                         info!("Principal conflict: {}", err.to_string());
                         HttpResponse::Conflict().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())}))
-                    },
+                    }
                     PrincipalServiceError::InternalError(..) => {
-                        error!("Internal error creating principal from federated identity: {}", err.to_string());
+                        error!(
+                            "Internal error creating principal from federated identity: {}",
+                            err.to_string()
+                        );
                         HttpResponse::InternalServerError().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())}))
                     }
                 };
 
-                return Ok(req.into_response(resp).map_into_right_body())
+                return Ok(req.into_response(resp).map_into_right_body());
             }
         };
 
-        let identity_conext = RequestContext::new(
-            Actor::from(principal),
-            "".into(),
-            None
-        );
+        let identity_conext = RequestContext::new(Actor::from(principal), "".into(), None);
 
         req.extensions_mut().insert(identity_conext);
     }
-    
+
     // Call the next middleware
     Ok(next.call(req).await?.map_into_left_body())
 }

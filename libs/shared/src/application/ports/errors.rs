@@ -9,7 +9,7 @@ pub enum InfrastructureError {
     Transient {
         error_id: Uuid,
         reason: String,
-        retry_after: Option<Duration>
+        retry_after: Option<Duration>,
     },
 
     #[error("An an unexpected internal error occurred. Error ID: {error_id}")]
@@ -31,8 +31,7 @@ impl InfrastructureError {
 
     pub fn error_id(&self) -> uuid::Uuid {
         match self {
-            Self::InternalError { error_id } |
-            Self::Transient { error_id, .. } => *error_id,
+            Self::InternalError { error_id } | Self::Transient { error_id, .. } => *error_id,
         }
     }
 
@@ -40,4 +39,3 @@ impl InfrastructureError {
         uuid::Uuid::now_v7()
     }
 }
-

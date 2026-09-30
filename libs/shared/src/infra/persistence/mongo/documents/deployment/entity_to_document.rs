@@ -1,7 +1,7 @@
 use crate::domain::entities::deployment as entities;
+use crate::infra::_common::mongo::ToBsonDateTime;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
-use crate::infra::_common::mongo::ToBsonDateTime;
 use crate::shared_kernel::enums::DeploymentModality;
 use mongodb::bson::Uuid;
 
@@ -14,7 +14,9 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
             platform: value.platform.clone(),
-            deployment_modality: documents::DeploymentModality::from(value.deployment_modality.clone()),
+            deployment_modality: documents::DeploymentModality::from(
+                value.deployment_modality.clone(),
+            ),
             revision: value.revision().clone(),
             owner: value.owner.clone(),
             model: documents::ModelReference::from(value.model.clone()),
@@ -22,7 +24,8 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             desired_state: documents::DesiredState::from(value.desired_state.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
-            deployment_interface: value.deployment_interface
+            deployment_interface: value
+                .deployment_interface
                 .clone()
                 .and_then(|di| Some(documents::ModelDeploymentInterface::from(di))),
             deployment_strategy: value.deployment_strategy.clone(),
@@ -31,7 +34,8 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             last_state_change: value.last_state_change.to_bson(),
             created_at: value.created_at.to_bson(),
             last_modified: value.last_modified.to_bson(),
-            metadata: value.metadata
+            metadata: value
+                .metadata
                 .clone()
                 .and_then(|m| Some(m.into_inner().clone())),
         }
@@ -42,10 +46,11 @@ impl From<entities::ReplicaGroup> for documents::ReplicaGroup {
     fn from(value: entities::ReplicaGroup) -> Self {
         Self {
             count: value.count,
-            parallelism_strategies: value.parallelism_strategies
+            parallelism_strategies: value
+                .parallelism_strategies
                 .iter()
                 .map(|ps| documents::ParallelismStrategy::from(ps.clone()))
-                .collect()
+                .collect(),
         }
     }
 }
@@ -54,7 +59,7 @@ impl From<DeploymentModality> for documents::DeploymentModality {
     fn from(value: DeploymentModality) -> Self {
         match value {
             DeploymentModality::Batch => documents::DeploymentModality::Batch,
-            DeploymentModality::Service => documents::DeploymentModality::Service
+            DeploymentModality::Service => documents::DeploymentModality::Service,
         }
     }
 }
@@ -62,11 +67,21 @@ impl From<DeploymentModality> for documents::DeploymentModality {
 impl From<entities::ParallelismStrategy> for documents::ParallelismStrategy {
     fn from(value: entities::ParallelismStrategy) -> Self {
         match value {
-            entities::ParallelismStrategy::PipelineParallelism => documents::ParallelismStrategy::PipelineParallelism,
-            entities::ParallelismStrategy::TensorParallelism => documents::ParallelismStrategy::TensorParallelism,
-            entities::ParallelismStrategy::SequenceParallelism => documents::ParallelismStrategy::SequenceParallelism,
-            entities::ParallelismStrategy::ContextParallelism => documents::ParallelismStrategy::ContextParallelism,
-            entities::ParallelismStrategy::ExpertParallelism => documents::ParallelismStrategy::ExpertParallelism,
+            entities::ParallelismStrategy::PipelineParallelism => {
+                documents::ParallelismStrategy::PipelineParallelism
+            }
+            entities::ParallelismStrategy::TensorParallelism => {
+                documents::ParallelismStrategy::TensorParallelism
+            }
+            entities::ParallelismStrategy::SequenceParallelism => {
+                documents::ParallelismStrategy::SequenceParallelism
+            }
+            entities::ParallelismStrategy::ContextParallelism => {
+                documents::ParallelismStrategy::ContextParallelism
+            }
+            entities::ParallelismStrategy::ExpertParallelism => {
+                documents::ParallelismStrategy::ExpertParallelism
+            }
         }
     }
 }
@@ -97,25 +112,23 @@ impl From<entities::DesiredState> for documents::DesiredState {
 impl From<entities::ModelReference> for documents::ModelReference {
     fn from(value: entities::ModelReference) -> Self {
         Self {
-            name: value.name,
-            author: value.author,
-            tenant_id: value.tenant_id,
+            model_id: mongodb::bson::Uuid::from_bytes(*value.model_id.as_bytes()),
         }
     }
 }
 
 impl From<entities::RestApi> for documents::RestApi {
     fn from(value: entities::RestApi) -> Self {
-        Self {
-            spec: value.spec
-        }
+        Self { spec: value.spec }
     }
 }
 
 impl From<entities::ModelDeploymentInterface> for documents::ModelDeploymentInterface {
     fn from(value: entities::ModelDeploymentInterface) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(i) => documents::ModelDeploymentInterface::RestApi(documents::RestApi::from(i))
+            entities::ModelDeploymentInterface::RestApi(i) => {
+                documents::ModelDeploymentInterface::RestApi(documents::RestApi::from(i))
+            }
         }
     }
 }

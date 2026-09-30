@@ -2,11 +2,13 @@ pub mod dto_to_entity;
 
 use std::collections::HashMap;
 
-use crate::infra::deployment::fs::dtos::rule_set::RuleSet;
 use crate::infra::deployment::fs::dtos::parameter_set::ParameterSet;
-use crate::infra::persistence::mongo::documents::deployment::{DeploymentModality, ParallelismStrategy};
+use crate::infra::deployment::fs::dtos::rule_set::RuleSet;
+use crate::infra::persistence::mongo::documents::deployment::{
+    DeploymentModality, ParallelismStrategy,
+};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClientStrategy {

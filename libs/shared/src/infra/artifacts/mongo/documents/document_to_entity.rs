@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::domain::entities;
 use crate::infra::artifacts::mongo::documents;
+use crate::shared_kernel::value_objects::TimeStamp;
 use uuid::Uuid;
 
 impl From<documents::ArtifactType> for entities::artifact::ArtifactType {
@@ -16,16 +17,16 @@ impl From<documents::ArtifactType> for entities::artifact::ArtifactType {
 impl From<documents::Artifact> for entities::artifact::Artifact {
     fn from(value: documents::Artifact) -> Self {
         let path = match value.path {
-            Some(s) =>  Some(PathBuf::from(s)),
-            None => None
+            Some(s) => Some(PathBuf::from(s)),
+            None => None,
         };
 
         Self {
             id: Uuid::from_bytes(value.id.bytes()),
             artifact_type: entities::artifact::ArtifactType::from(value.artifact_type),
-            last_modified: entities::timestamp::TimeStamp::from(value.last_modified.to_chrono()),
-            created_at: entities::timestamp::TimeStamp::from(value.created_at.to_chrono()),
-            path
+            last_modified: TimeStamp::from(value.last_modified.to_chrono()),
+            created_at: TimeStamp::from(value.created_at.to_chrono()),
+            path,
         }
     }
 }

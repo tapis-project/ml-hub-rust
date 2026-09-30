@@ -10,12 +10,12 @@ impl Index for PrincipalIdTenantIdIndexUnique {
     fn index() -> IndexModel {
         IndexModel::builder()
             .keys(doc! { "id": 1, "tenant_id": 1 })
-            .options(
-                Some(IndexOptions::builder()
+            .options(Some(
+                IndexOptions::builder()
                     .name(Self::INDEX_NAME.to_string())
                     .unique(true)
-                    .build())
-            )
+                    .build(),
+            ))
             .build()
     }
 
@@ -23,5 +23,3 @@ impl Index for PrincipalIdTenantIdIndexUnique {
         PRINCIPAL_COLLECTION
     }
 }
-
-

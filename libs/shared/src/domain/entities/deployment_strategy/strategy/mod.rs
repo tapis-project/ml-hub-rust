@@ -1,12 +1,12 @@
-
-
 use std::collections::HashMap;
 use std::num::{NonZero, NonZeroU64};
 
 use crate::domain::entities::deployment::argument::Argument;
-use crate::domain::entities::deployment_strategy::rule_set::RuleSet;
-use crate::domain::entities::deployment_strategy::parameter_set::{ParameterSet, ParameterSetError};
 use crate::domain::entities::deployment::ParallelismStrategy;
+use crate::domain::entities::deployment_strategy::parameter_set::{
+    ParameterSet, ParameterSetError,
+};
+use crate::domain::entities::deployment_strategy::rule_set::RuleSet;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::shared_kernel::value_objects::Ttl;
 
@@ -53,17 +53,20 @@ impl Strategy {
         parameter_set: Option<ParameterSet>,
         config: StrategyConfig,
         enabled: Option<bool>,
-        data: Option<HashMap<String, String>>
+        data: Option<HashMap<String, String>>,
     ) -> Result<Self, StrategyError> {
         let mut rule_set_names: Vec<String> = Vec::new();
         for rule_set in &rule_sets {
             let rule_set_name = rule_set.name.clone();
             if rule_set_names.contains(&rule_set_name) {
-                return Err(StrategyError::DuplicateRuleSetName(format!("Strategy '{}' contains rulesets with duplicate names. Duplicate found: {}", &name, rule_set_name)))
+                return Err(StrategyError::DuplicateRuleSetName(format!(
+                    "Strategy '{}' contains rulesets with duplicate names. Duplicate found: {}",
+                    &name, rule_set_name
+                )));
             }
 
             rule_set_names.push(rule_set_name)
-        };
+        }
 
         Ok(Self {
             name,
@@ -104,10 +107,12 @@ impl Strategy {
             .as_ref()
             .map_or(vec![], |ps| ps.get_required_params());
 
-        parameters.iter()
+        parameters
+            .iter()
             .filter(|p| p.name == parameter_name && p.secret)
             .collect::<Vec<_>>()
-            .len() > 0
+            .len()
+            > 0
     }
 
     pub fn validate_arguments(&self, args: &[Argument]) -> Result<(), StrategyError> {
@@ -146,24 +151,31 @@ pub struct ReconstitueStrategyConfigProps {
 #[derive(Debug, Error, Clone)]
 pub enum StrategyConfigError {
     #[error("Data integrity error: {0}")]
-    DataIntegrityError(String)
-} 
+    DataIntegrityError(String),
+}
 
 impl StrategyConfig {
-    pub fn reconstitute(props: ReconstitueStrategyConfigProps) -> Result<Self, StrategyConfigError> {
-        let supported_deployment_modalities = match NonEmpty::from_vec(props.supported_deployment_modalities) {
-            Some(d) => d,
-            None => return Err(StrategyConfigError::DataIntegrityError("Strategy configuration MUST have at least one supported deployment modality".into()))
-        };
+    pub fn reconstitute(
+        props: ReconstitueStrategyConfigProps,
+    ) -> Result<Self, StrategyConfigError> {
+        let supported_deployment_modalities =
+            match NonEmpty::from_vec(props.supported_deployment_modalities) {
+                Some(d) => d,
+                None => return Err(StrategyConfigError::DataIntegrityError(
+                    "Strategy configuration MUST have at least one supported deployment modality"
+                        .into(),
+                )),
+            };
 
-        let min_replicas = NonZeroU64::new(props.min_replicas.unwrap_or(1))
-            .ok_or_else(|| StrategyConfigError::DataIntegrityError("Min replicas MUST be greater than 0".into()))?;
+        let min_replicas = NonZeroU64::new(props.min_replicas.unwrap_or(1)).ok_or_else(|| {
+            StrategyConfigError::DataIntegrityError("Min replicas MUST be greater than 0".into())
+        })?;
 
         let max_replicas = props.max_replicas.and_then(NonZeroU64::new);
 
         Self::validate_replica_bounds(min_replicas, max_replicas)
             .map_err(StrategyConfigError::DataIntegrityError)?;
-    
+
         Ok(Self {
             max_ttl: props.max_ttl,
             supported_deployment_modalities,
@@ -173,12 +185,15 @@ impl StrategyConfig {
         })
     }
 
-    fn validate_replica_bounds(min: NonZero<u64>, maybe_max: Option<NonZero<u64>>) -> Result<(), String> {
+    fn validate_replica_bounds(
+        min: NonZero<u64>,
+        maybe_max: Option<NonZero<u64>>,
+    ) -> Result<(), String> {
         if maybe_max.is_some_and(|max| min > max) {
             return Err("Min replicas MUST NOT be greater than max replicas".into());
         }
 
-        return Ok(())
+        return Ok(());
     }
 }
 
@@ -189,7 +204,7 @@ impl ViableStrategy {
     pub fn new(strategy: Strategy) -> ViableStrategy {
         ViableStrategy(strategy)
     }
-    
+
     pub fn into_inner(self) -> Strategy {
         self.0
     }

@@ -9,7 +9,7 @@ use crate::domain::entities;
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub enum ArtifactType {
     Model,
-    Dataset
+    Dataset,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -24,7 +24,7 @@ impl From<entities::artifact::ArtifactType> for ArtifactType {
     fn from(value: entities::artifact::ArtifactType) -> Self {
         match value {
             entities::artifact::ArtifactType::Dataset => ArtifactType::Dataset,
-            entities::artifact::ArtifactType::Model => ArtifactType::Model
+            entities::artifact::ArtifactType::Model => ArtifactType::Model,
         }
     }
 }

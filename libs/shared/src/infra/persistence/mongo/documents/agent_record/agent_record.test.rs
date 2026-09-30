@@ -1,0 +1,114 @@
+use crate::domain::entities::agent_record::{
+    test_fixtures::AgentRecordBuilder, AgentArtifactType, AgentInterface, AgentProvider,
+    AgentSkill, ArtifactLocator, Capabilities, LivenessProbeConfiguration, MessageBinding,
+    Protocol,
+};
+
+use super::AgentRecord as AgentRecordDocument;
+
+#[test]
+fn test_agent_record_document_round_trip() -> Result<(), Box<dyn std::error::Error>> {
+    let skill = AgentSkill::new(
+        "geospatial-search".into(),
+        "Geospatial search".into(),
+        "Searches geospatial data.".into(),
+        vec!["geospatial".into()],
+        vec!["Find flood zones in Travis County.".into()],
+    )?;
+    let agent_record = AgentRecordBuilder::new()
+        .with_interfaces(vec![AgentInterface::new(
+            "rest".into(),
+            Some("REST interface".into()),
+            Protocol::RestHttp,
+            Some(MessageBinding::HttpJson),
+            Some(LivenessProbeConfiguration::RestHttp {
+                route: "/healthcheck".into(),
+                interval_seconds: 30,
+                timeout_seconds: 10,
+                missed_heartbeat_threshold: 3,
+                initial_delay_seconds: 60,
+            }),
+        )])
+        .with_capabilities(Capabilities::new(true, true))
+        .with_provider(AgentProvider::new(
+            "Example Geo Services Inc.".into(),
+            "https://www.examplegeoservices.com".into(),
+        ))
+        .with_artifact_locators(vec![ArtifactLocator::new(
+            AgentArtifactType::DockerImage,
+            "tapis://example/agent:1.0.0".into(),
+        )])
+        .with_skills(vec![skill])
+        .with_tags(vec!["geospatial".into()])
+        .with_icon_url("https://example.com/icon.svg".into())
+        .with_documentation_url("https://example.com/docs".into())
+        .build_new()?;
+
+    let document = AgentRecordDocument::from(&agent_record);
+    let reconstituted = crate::domain::entities::agent_record::AgentRecord::try_from(document)?;
+
+    assert_eq!(reconstituted.id(), agent_record.id());
+    assert_eq!(reconstituted.name(), agent_record.name());
+    assert_eq!(reconstituted.tenant_id(), agent_record.tenant_id());
+    assert_eq!(reconstituted.owner(), agent_record.owner());
+    assert_eq!(reconstituted.description(), agent_record.description());
+    assert!(reconstituted.supports_streaming());
+    assert!(reconstituted.supports_push_notifications());
+    assert_eq!(
+        reconstituted.provider_organization(),
+        Some("Example Geo Services Inc.")
+    );
+    assert_eq!(
+        reconstituted
+            .artifact_locators()
+            .first()
+            .map(ArtifactLocator::url),
+        Some("tapis://example/agent:1.0.0")
+    );
+    assert_eq!(
+        reconstituted.skills().first().map(AgentSkill::id),
+        Some("geospatial-search")
+    );
+    assert!(reconstituted
+        .skills()
+        .first()
+        .and_then(AgentSkill::input_modes)
+        .is_none());
+    assert!(reconstituted
+        .skills()
+        .first()
+        .and_then(AgentSkill::output_modes)
+        .is_none());
+    assert_eq!(
+        reconstituted.default_input_modes().first().as_str(),
+        "application/json"
+    );
+    assert_eq!(
+        reconstituted.default_output_modes().first().as_str(),
+        "application/json"
+    );
+    assert_eq!(
+        reconstituted.tags().iter().next().map(|tag| tag.as_str()),
+        Some("geospatial")
+    );
+    assert_eq!(
+        reconstituted.icon_url(),
+        Some("https://example.com/icon.svg")
+    );
+    assert_eq!(
+        reconstituted.documentation_url(),
+        Some("https://example.com/docs")
+    );
+    assert!(matches!(
+        reconstituted.interfaces().first().liveness_probe_config(),
+        Some(LivenessProbeConfiguration::RestHttp {
+            route,
+            interval_seconds: 30,
+            timeout_seconds: 10,
+            missed_heartbeat_threshold: 3,
+            initial_delay_seconds: 60,
+        }) if route == "/healthcheck"
+    ));
+
+    Ok(())
+}

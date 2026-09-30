@@ -1,7 +1,7 @@
+use crate::application::inputs::artifacts::ArtifactType;
 use async_trait::async_trait;
 use thiserror::Error;
 use uuid::Uuid;
-use crate::application::inputs::artifacts::ArtifactType;
 
 // TODO Message borker related errors should be factored out of these ports
 #[derive(Debug, Error)]

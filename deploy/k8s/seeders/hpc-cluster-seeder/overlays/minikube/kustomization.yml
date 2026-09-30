@@ -1,0 +1,20 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-hpc-cluster-seeder
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-hpc-cluster-seeder
+      spec:
+        template:
+          spec:
+            containers:
+              - name: hpc-cluster-seeder
+                image: tapis/mlhub-hpc-cluster-seeder:local
+                imagePullPolicy: Never
+                resources: {}

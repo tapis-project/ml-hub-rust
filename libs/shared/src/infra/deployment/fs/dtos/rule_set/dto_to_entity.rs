@@ -7,14 +7,13 @@ impl From<dtos::rule_set::Rule> for entities::rule_set::Rule {
         Self {
             field_path: value.field_path,
             operator: Operator::from(value.operator),
-            value: value.value
+            value: value.value,
         }
     }
 }
 
 impl From<dtos::rule_set::RuleSet> for entities::rule_set::RuleSet {
     fn from(value: dtos::rule_set::RuleSet) -> Self {
-
         let mut rules: Vec<entities::rule_set::Rule> = Vec::with_capacity(value.rules.len());
         for rule in value.rules {
             rules.push(entities::rule_set::Rule::from(rule))

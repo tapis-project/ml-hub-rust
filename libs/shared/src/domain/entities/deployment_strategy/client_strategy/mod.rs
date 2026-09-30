@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use thiserror::Error;
 
-use super::rule_set::RuleSet;
 use super::parameter_set::ParameterSet;
+use super::rule_set::RuleSet;
 use super::strategy::{StrategyConfig, StrategyConfigError};
 
 #[derive(Error, Debug)]
@@ -56,7 +56,8 @@ impl ClientStrategy {
         // Invariant: Rule sets array must not be empty if provided
         if rule_sets.as_ref().is_some_and(|rs| rs.is_empty()) {
             return Err(ClientStrategyError::EmptyRuleSets(
-                "Invariant Violation: The inline rule_sets array MUST NOT be empty if provided.".into()
+                "Invariant Violation: The inline rule_sets array MUST NOT be empty if provided."
+                    .into(),
             ));
         }
 
@@ -66,7 +67,7 @@ impl ClientStrategy {
                 "Invariant Violation: The use_rule_sets reference array cannot be empty if provided.".into()
             ));
         }
-        
+
         Ok(Self {
             name,
             description,

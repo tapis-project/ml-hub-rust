@@ -10,9 +10,8 @@ pub struct Rule {
     pub value: Value,
 }
 
-
 #[derive(Clone, Debug, Serialize)]
 pub struct RuleSet {
     pub name: String,
-    pub rules: Vec<Rule>
+    pub rules: Vec<Rule>,
 }

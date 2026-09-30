@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+for service in /src/sdks/*-ts-sdk/ ; do
+    pushd .
+    cd $service
+    npm install
+    npm run build
+    popd
+done

@@ -1,7 +1,7 @@
-pub mod tasks;
-pub mod headers;
 pub mod archive;
 pub mod filtering;
+pub mod headers;
+pub mod tasks;
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -16,7 +16,7 @@ pub type Parameters = std::collections::hash_map::HashMap<String, Value>;
 #[serde(rename_all = "lowercase")]
 pub enum Scope {
     Tenant,
-    Global
+    Global,
 }
 
 impl From<Scope> for inputs::Scope {
