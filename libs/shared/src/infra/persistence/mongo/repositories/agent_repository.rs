@@ -48,7 +48,7 @@ impl AgentRepository {
                 infrastructure_error
             })?);
         }
-        
+
         Ok(agents)
     }
 }
@@ -86,7 +86,7 @@ impl crate::application::ports::agent::AgentRepository for AgentRepository {
             );
             infrastructure_error
         })?;
-        
+
         self.list(doc! { "tenant_id": tenant_id, "visibility": visibility })
             .await
     }

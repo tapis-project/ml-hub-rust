@@ -1,7 +1,10 @@
+use evaluations::{FieldPath, ResolveValue, ValueResolutionError};
+
 use crate::domain::entities::deployment_strategy::rule_set::Rule;
 use crate::domain::entities::deployment_strategy::strategy::{Strategy, ViableStrategy};
 use crate::domain::entities::model::external_model::{ExternalModel, ExternalModelError};
 use crate::domain::entities::operator::{OperandError, Operator};
+
 use serde_json::Value;
 use thiserror::Error;
 
@@ -9,6 +12,9 @@ use thiserror::Error;
 pub enum StrategyEvaluationError {
     #[error("Error evaluating strategy rule: {0}")]
     RuleError(#[from] OperandError),
+
+    #[error("Error evaluating strategy rule: {0}")]
+    FieldPath(#[from] ValueResolutionError),
 
     #[error("Model error: {0}")]
     ModelError(#[from] ExternalModelError),
@@ -49,11 +55,11 @@ pub fn resolve_viable_strategies(
 }
 
 pub(super) fn evaluate_rule(
-    model: &ExternalModel,
+    entity: &impl ResolveValue,
     rule: &Rule,
 ) -> Result<bool, StrategyEvaluationError> {
-    let value: Value = model
-        .get_field_value_at_field_path(&rule.field_path)?
+    let value: Value = entity
+        .resolve_value(Some(FieldPath::new(rule.field_path.clone())))?
         .into();
 
     match rule.operator {

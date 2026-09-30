@@ -24,8 +24,12 @@ src/models/BadRequestResponse.ts
 src/models/ConflictResponse.ts
 src/models/CreateModelBody.ts
 src/models/CreateModelResponse.ts
+src/models/DataCenter.ts
+src/models/DeploymentModality.ts
+src/models/DeploymentOption.ts
 src/models/DeploymentStrategyCriterion.ts
 src/models/DeploymentStrategyReference.ts
+src/models/DeploymentTargetType.ts
 src/models/DerivedModelMetadata.ts
 src/models/DiscoverExternalModelsBody.ts
 src/models/DiscoverExternalModelsResponse.ts
@@ -37,7 +41,9 @@ src/models/GetModelArtifactResponse.ts
 src/models/GetModelIngestionResponse.ts
 src/models/GetModelPublicationResponse.ts
 src/models/GetModelResponse.ts
+src/models/HpcClusterQueueTarget.ts
 src/models/HuggingFaceRepoLocator.ts
+src/models/ListExternalModelDeploymentOptionsResponse.ts
 src/models/ListModelArtifactResponse.ts
 src/models/ListModelIngestionsResponse.ts
 src/models/ListModelPublicationsForArtifactResponse.ts
@@ -54,6 +60,7 @@ src/models/PlatformDetails.ts
 src/models/PublishArtifactRequest.ts
 src/models/PublishModelArtifactResponse.ts
 src/models/ServerErrorResponse.ts
+src/models/ServingRuntime.ts
 src/models/TapisSystemLocator.ts
 src/models/Task.ts
 src/models/Visibility.ts

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use actix_web::{App, http::StatusCode, test};
+    use actix_web::{http::StatusCode, test, App};
     use utoipa::OpenApi;
 
     use crate::presentation::http::v1::actix_web::{handlers, openapi::ApiDoc};
@@ -73,7 +73,9 @@ mod tests {
         {
             Some(scope) => scope,
             None => {
-                return Err(std::io::Error::other("List agents operation should define scope").into())
+                return Err(
+                    std::io::Error::other("List agents operation should define scope").into(),
+                )
             }
         };
 
@@ -97,128 +99,104 @@ mod tests {
         );
 
         let document = ApiDoc::openapi();
-        assert!(
-            document
-                .paths
-                .paths
-                .contains_key("/agents-api/agent-records")
-        );
+        assert!(document
+            .paths
+            .paths
+            .contains_key("/agents-api/agent-records"));
         assert!(document.paths.paths.contains_key("/agents-api/healthcheck"));
         assert!(document.paths.paths.contains_key("/agents-api/agents"));
-        assert!(document.components.as_ref().is_some_and(|components| components.schemas.contains_key("Agent")));
-        assert!(document.components.as_ref().is_some_and(|components| components.schemas.contains_key("CreateAgentBody")));
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("AgentRecord")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("AgentSkill")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("Capabilities")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("AgentProvider")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("ArtifactLocator")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("Visibility")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("AgentArtifactType")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("CreateAgentRecordBody")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("RestHttpAgentInterface")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("RpcAgentInterface")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("StdioAgentInterface")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("RestHttpLivenessProbe")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("CreateAgentRecordResponse")
-        );
-        assert!(
-            document
-                .components
-                .as_ref()
-                .unwrap()
-                .schemas
-                .contains_key("ListAgentRecordsResponse")
-        );
+        assert!(document
+            .components
+            .as_ref()
+            .is_some_and(|components| components.schemas.contains_key("Agent")));
+        assert!(document
+            .components
+            .as_ref()
+            .is_some_and(|components| components.schemas.contains_key("CreateAgentBody")));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("AgentRecord"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("AgentSkill"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("Capabilities"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("AgentProvider"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("ArtifactLocator"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("Visibility"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("AgentArtifactType"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("CreateAgentRecordBody"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("RestHttpAgentInterface"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("RpcAgentInterface"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("StdioAgentInterface"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("RestHttpLivenessProbe"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("CreateAgentRecordResponse"));
+        assert!(document
+            .components
+            .as_ref()
+            .unwrap()
+            .schemas
+            .contains_key("ListAgentRecordsResponse"));
 
         let document = serde_json::to_value(ApiDoc::openapi())
             .expect("OpenAPI document should serialize to JSON");
@@ -233,36 +211,28 @@ mod tests {
             response_artifact_locators.get("nullable"),
             Some(&serde_json::Value::Bool(true))
         );
-        assert!(
-            document
-                .pointer("/components/schemas/AgentRecord/required")
-                .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| {
-                    required.iter().any(|field| field == "artifact_locators")
-                })
-        );
+        assert!(document
+            .pointer("/components/schemas/AgentRecord/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
 
         let request_artifact_locators = document
             .pointer("/components/schemas/CreateAgentRecordBody/properties/artifact_locators")
             .expect("create request artifact_locators schema should exist");
-        assert!(
-            request_artifact_locators
-                .get("type")
-                .and_then(serde_json::Value::as_array)
-                .is_some_and(|types| types.iter().any(|value| value == "null"))
-        );
-        assert!(
-            !document
-                .pointer("/components/schemas/CreateAgentRecordBody/required")
-                .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| {
-                    required.iter().any(|field| field == "artifact_locators")
-                })
-        );
+        assert!(request_artifact_locators
+            .get("type")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|types| types.iter().any(|value| value == "null")));
+        assert!(!document
+            .pointer("/components/schemas/CreateAgentRecordBody/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "artifact_locators") }));
 
         for request_schema in ["CreateAgentBody", "CreateAgentRecordBody"] {
             assert!(document
-                .pointer(&format!("/components/schemas/{request_schema}/properties/tags"))
+                .pointer(&format!(
+                    "/components/schemas/{request_schema}/properties/tags"
+                ))
                 .is_some());
             assert!(!document
                 .pointer(&format!("/components/schemas/{request_schema}/required"))
@@ -278,7 +248,10 @@ mod tests {
                 None => panic!("{response_schema} response tags schema should exist"),
             };
 
-            assert_eq!(tags.get("type"), Some(&serde_json::Value::String("array".into())));
+            assert_eq!(
+                tags.get("type"),
+                Some(&serde_json::Value::String("array".into()))
+            );
             assert_ne!(tags.get("nullable"), Some(&serde_json::Value::Bool(true)));
             assert!(document
                 .pointer(&format!("/components/schemas/{response_schema}/required"))
@@ -286,12 +259,11 @@ mod tests {
                 .is_some_and(|required| { required.iter().any(|field| field == "tags") }));
         }
 
-        let last_missed_heartbeat = match document
-            .pointer("/components/schemas/Agent/properties/last_missed_heartbeat")
-        {
-            Some(last_missed_heartbeat) => last_missed_heartbeat,
-            None => panic!("Agent last_missed_heartbeat schema should exist"),
-        };
+        let last_missed_heartbeat =
+            match document.pointer("/components/schemas/Agent/properties/last_missed_heartbeat") {
+                Some(last_missed_heartbeat) => last_missed_heartbeat,
+                None => panic!("Agent last_missed_heartbeat schema should exist"),
+            };
 
         assert!(last_missed_heartbeat
             .get("type")
@@ -309,11 +281,7 @@ mod tests {
                     .any(|field| field == "consecutive_missed_heartbeats")
             }));
 
-        for interface_collection in [
-            "rest_http_interfaces",
-            "rpc_interfaces",
-            "stdio_interfaces",
-        ] {
+        for interface_collection in ["rest_http_interfaces", "rpc_interfaces", "stdio_interfaces"] {
             assert!(document
                 .pointer(&format!(
                     "/components/schemas/CreateAgentRecordBody/properties/{interface_collection}"
@@ -322,17 +290,15 @@ mod tests {
             assert!(!document
                 .pointer("/components/schemas/CreateAgentRecordBody/required")
                 .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| { required.iter().any(|field| field == interface_collection) }));
+                .is_some_and(|required| {
+                    required.iter().any(|field| field == interface_collection)
+                }));
         }
         assert!(document
             .pointer("/components/schemas/CreateAgentRecordBody/properties/interfaces")
             .is_none());
 
-        for interface_collection in [
-            "rest_http_interfaces",
-            "rpc_interfaces",
-            "stdio_interfaces",
-        ] {
+        for interface_collection in ["rest_http_interfaces", "rpc_interfaces", "stdio_interfaces"] {
             assert!(document
                 .pointer(&format!(
                     "/components/schemas/AgentRecord/properties/{interface_collection}"
@@ -341,7 +307,9 @@ mod tests {
             assert!(document
                 .pointer("/components/schemas/AgentRecord/required")
                 .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| { required.iter().any(|field| field == interface_collection) }));
+                .is_some_and(|required| {
+                    required.iter().any(|field| field == interface_collection)
+                }));
         }
         assert!(document
             .pointer("/components/schemas/AgentRecord/properties/interfaces")
@@ -362,7 +330,9 @@ mod tests {
             assert!(document
                 .pointer("/components/schemas/RestHttpLivenessProbe/required")
                 .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| required.iter().any(|required_field| required_field == field)));
+                .is_some_and(|required| required
+                    .iter()
+                    .any(|required_field| required_field == field)));
         }
 
         let response_skills = document
@@ -372,17 +342,13 @@ mod tests {
             response_skills.get("type"),
             Some(&serde_json::Value::String("array".into()))
         );
-        assert!(
-            document
-                .pointer("/components/schemas/AgentRecord/required")
-                .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| { required.iter().any(|field| field == "skills") })
-        );
-        assert!(
-            !document
-                .pointer("/components/schemas/CreateAgentRecordBody/required")
-                .and_then(serde_json::Value::as_array)
-                .is_some_and(|required| { required.iter().any(|field| field == "skills") })
-        );
+        assert!(document
+            .pointer("/components/schemas/AgentRecord/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "skills") }));
+        assert!(!document
+            .pointer("/components/schemas/CreateAgentRecordBody/required")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|required| { required.iter().any(|field| field == "skills") }));
     }
 }

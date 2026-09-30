@@ -16,8 +16,13 @@ chmod +x "$project_root/dev"
 
 migration_jobs=(
     mlhub-models-migrator
+    mlhub-deployments-migrator
     mlhub-federated-identities-migrator
     mlhub-principals-migrator
+)
+
+seed_jobs=(
+    mlhub-hpc-cluster-seeder
 )
 
 etl_jobs=(
@@ -37,8 +42,12 @@ announce() {
 build_migrations() {
     announce "Building migration images"
     run_dev buildl models-migrator
+    run_dev buildl deployments-migrator
     run_dev buildl federated-identities-migrator
     run_dev buildl principals-migrator
+
+    announce "Building seed images"
+    run_dev buildl hpc-cluster-seeder
 }
 
 build_services() {
@@ -131,9 +140,17 @@ wait_for_job() {
 }
 
 run_migrations() {
+    announce "Seeding HPC clusters"
+    run_dev run hpc-cluster-seeder -t overlay "$overlay"
+    wait_for_job mlhub-hpc-cluster-seeder
+
     announce "Running models migration"
     run_dev run-models migrations -t overlay "$overlay"
     wait_for_job mlhub-models-migrator
+
+    announce "Running deployments migration"
+    run_dev run-deployments migrations -t overlay "$overlay"
+    wait_for_job mlhub-deployments-migrator
 
     announce "Running federated identities migration"
     run_dev run-federated-identities migrations -t overlay "$overlay"
@@ -145,7 +162,7 @@ run_migrations() {
 }
 
 start_migrations() {
-    preflight_jobs "${migration_jobs[@]}"
+    preflight_jobs "${seed_jobs[@]}" "${migration_jobs[@]}"
     run_migrations
 }
 
@@ -195,7 +212,7 @@ start_jobs() {
 }
 
 start_all() {
-    preflight_jobs "${migration_jobs[@]}" "${etl_jobs[@]}"
+    preflight_jobs "${seed_jobs[@]}" "${migration_jobs[@]}" "${etl_jobs[@]}"
     start_infra
     run_migrations
     start_services

@@ -1,10 +1,10 @@
 pub mod dto_to_entity;
 
-use platforms::Platform;
-use serde::{Serialize, Deserialize};
-use crate::infra::deployment::fs::dtos::rule_set::RuleSet;
 use crate::infra::deployment::fs::dtos::client_strategy::ClientStrategy;
 use crate::infra::deployment::fs::dtos::parameter_set::ParameterSet;
+use crate::infra::deployment::fs::dtos::rule_set::RuleSet;
+use platforms::Platform;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClientStrategySet {

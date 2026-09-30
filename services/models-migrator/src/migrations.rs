@@ -1,16 +1,20 @@
 use async_trait::async_trait;
-use mongodb::{bson::doc, Database};
+use mongodb::{Database, bson::doc};
 use shared::infra::_common::mongo::Index;
 use shared::infra::persistence::mongo::database::MODEL_COLLECTION;
+use shared::infra::persistence::mongo::documents::deployment_option::indexes::{
+    DeploymentOptionExternalModelIdIndex, DeploymentOptionIdIndexUnique,
+    DeploymentOptionSearchIndex, DeploymentOptionSemanticIdentityIndexUnique,
+};
 use shared::infra::persistence::mongo::documents::external_model::external_model_indexes::{
     ExternalModelHuggingFaceLocatorIndexUnique, ExternalModelIdIndexUnique,
     ExternalModelInferenceRuntimesIndex, ExternalModelProviderIndex,
     ExternalModelTapisLocatorIndexUnique, ExternalModelTaskTypesIndex,
 };
+use shared::infra::persistence::mongo::documents::model::Model;
 use shared::infra::persistence::mongo::documents::model::indexes::{
     ModelArtifactIdIndexUnique, ModelIdIndexUnique, ModelOwnerExternalModelIndexUnique,
 };
-use shared::infra::persistence::mongo::documents::model::Model;
 use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
@@ -21,7 +25,35 @@ pub fn get_migrations() -> Vec<Box<dyn Migration>> {
         Box::new(RenameModelMetadataKeywordsToTagsMigration),
         Box::new(CreateModelAggregateIndexesMigration),
         Box::new(CreateExternalModelAggregateIndexesMigration),
+        Box::new(CreateDeploymentOptionIndexesMigration),
     ]
+}
+
+pub struct CreateDeploymentOptionIndexesMigration;
+
+#[async_trait]
+impl Migration for CreateDeploymentOptionIndexesMigration {
+    async fn up(&self, env: Env) -> anyhow::Result<()> {
+        let db = env.db.as_ref().expect("migration database");
+
+        create_index::<DeploymentOptionIdIndexUnique>(db).await?;
+        create_index::<DeploymentOptionSemanticIdentityIndexUnique>(db).await?;
+        create_index::<DeploymentOptionExternalModelIdIndex>(db).await?;
+        create_index::<DeploymentOptionSearchIndex>(db).await?;
+
+        Ok(())
+    }
+
+    async fn down(&self, env: Env) -> anyhow::Result<()> {
+        let db = env.db.as_ref().expect("migration database");
+
+        drop_index::<DeploymentOptionSearchIndex>(db).await?;
+        drop_index::<DeploymentOptionExternalModelIdIndex>(db).await?;
+        drop_index::<DeploymentOptionSemanticIdentityIndexUnique>(db).await?;
+        drop_index::<DeploymentOptionIdIndexUnique>(db).await?;
+
+        Ok(())
+    }
 }
 
 // These identities are historical and must remain stable for already-migrated databases.

@@ -1,5 +1,5 @@
-use serde_json::Value;
 use crate::shared_kernel::value_objects::TimeStamp;
+use serde_json::Value;
 
 #[derive(Clone, Debug)]
 pub struct FederatedIdentity {
@@ -9,12 +9,12 @@ pub struct FederatedIdentity {
     pub tenant_id: String,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
-    pub last_seen: TimeStamp
+    pub last_seen: TimeStamp,
 }
 
 #[derive(Clone, Debug)]
 pub struct NewFederatedIdentityProps {
-    pub issuer: String, 
+    pub issuer: String,
     pub subject: String,
     pub tenant_id: String,
     pub metadata: Option<Value>,
@@ -23,7 +23,7 @@ pub struct NewFederatedIdentityProps {
 impl FederatedIdentity {
     pub fn new(props: NewFederatedIdentityProps) -> Self {
         let now = TimeStamp::now();
-        
+
         Self {
             issuer: props.issuer,
             subject: props.subject,

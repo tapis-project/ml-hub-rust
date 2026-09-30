@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::domain::entities::annotations::Annotation;
 
 pub struct Taxonomy {
-    nodes: Vec<Node>
+    nodes: Vec<Node>,
 }
 
 #[derive(AsRef)]
@@ -15,7 +15,7 @@ pub struct Node {
     node_path: NodePath,
     schmea_id: Option<SchemaId>,
     children: Vec<NodePath>,
-    annotations: Vec<Annotation>
+    annotations: Vec<Annotation>,
 }
 
 pub struct Schema {

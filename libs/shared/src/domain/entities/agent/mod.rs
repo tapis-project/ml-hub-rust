@@ -203,9 +203,7 @@ impl Agent {
                 && !matches!(endpoint.protocol(), Protocol::RestHttp)
             {
                 return Err(AgentError::IncompatibleLivenessProbeConfiguration(
-                    endpoint.name()
-                        .unwrap_or("<unnamed>")
-                        .into(),
+                    endpoint.name().unwrap_or("<unnamed>").into(),
                 ));
             }
         }
@@ -246,9 +244,7 @@ impl Agent {
     }
 
     pub fn modify(&mut self) -> AgentDraft<'_> {
-        AgentDraft {
-            agent: self
-        }
+        AgentDraft { agent: self }
     }
 }
 
@@ -422,16 +418,16 @@ pub enum AgentError {
 }
 
 pub struct AgentDraft<'a> {
-    agent: &'a mut Agent
+    agent: &'a mut Agent,
 }
 
-impl <'a>AgentDraft<'a> {
+impl<'a> AgentDraft<'a> {
     /// Marks a hearbeat as missed and iterates
     pub fn missed_heartbeat(&mut self) -> &mut Self {
         self.touch();
         self.agent.last_missed_heartbeat = Some(self.agent.last_modified.clone());
         self.agent.consecutive_missed_heartbeats += 1;
-        
+
         self
     }
 

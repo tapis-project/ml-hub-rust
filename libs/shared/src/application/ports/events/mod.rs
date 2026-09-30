@@ -1,9 +1,9 @@
 pub mod payloads;
 
-use uuid::Uuid;
 use crate::shared_kernel::value_objects::TimeStamp;
 use async_trait::async_trait;
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub enum Kind {
@@ -26,7 +26,9 @@ impl Payload {
         match self {
             Payload::ModelDeploymentDeletedPayload(_) => Kind::ModelDeploymentDeleted,
             Payload::ModelDeploymentStartedPayload(_) => Kind::ModelDeploymentStarted,
-            Payload::ModelDeploymentStateDriftDetectedPayload(_) => Kind::ModelDeploymentStateDriftDetected,
+            Payload::ModelDeploymentStateDriftDetectedPayload(_) => {
+                Kind::ModelDeploymentStateDriftDetected
+            }
             Payload::ModelDeploymentStoppedPayload(_) => Kind::ModelDeploymentStopped,
         }
     }
@@ -49,25 +51,47 @@ pub enum Event {
     ModelDeploymentStateDriftDetected {
         metadata: EventMetadata,
         payload: payloads::ModelDeploymentStateDriftDetectedPayload,
-    }
+    },
 }
 
 impl Event {
     pub fn from_payload(payload: &Payload, caused_by: Option<&Event>) -> Self {
         match payload {
-            Payload::ModelDeploymentDeletedPayload(p) => Self::ModelDeploymentDeleted { metadata: EventMetadata::from_payload(payload, caused_by), payload: p.clone() },
-            Payload::ModelDeploymentStartedPayload(p) => Self::ModelDeploymentStarted { metadata: EventMetadata::from_payload(payload, caused_by), payload: p.clone() },
-            Payload::ModelDeploymentStateDriftDetectedPayload(p) => Self::ModelDeploymentStateDriftDetected { metadata: EventMetadata::from_payload(payload, caused_by), payload: p.clone() },
-            Payload::ModelDeploymentStoppedPayload(p) => Self::ModelDeploymentStopped { metadata: EventMetadata::from_payload(payload, caused_by), payload: p.clone() },
+            Payload::ModelDeploymentDeletedPayload(p) => Self::ModelDeploymentDeleted {
+                metadata: EventMetadata::from_payload(payload, caused_by),
+                payload: p.clone(),
+            },
+            Payload::ModelDeploymentStartedPayload(p) => Self::ModelDeploymentStarted {
+                metadata: EventMetadata::from_payload(payload, caused_by),
+                payload: p.clone(),
+            },
+            Payload::ModelDeploymentStateDriftDetectedPayload(p) => {
+                Self::ModelDeploymentStateDriftDetected {
+                    metadata: EventMetadata::from_payload(payload, caused_by),
+                    payload: p.clone(),
+                }
+            }
+            Payload::ModelDeploymentStoppedPayload(p) => Self::ModelDeploymentStopped {
+                metadata: EventMetadata::from_payload(payload, caused_by),
+                payload: p.clone(),
+            },
         }
     }
 
     pub fn payload(&self) -> Payload {
         match self {
-            Event::ModelDeploymentDeleted { payload, .. } => Payload::ModelDeploymentDeletedPayload(payload.clone()),
-            Event::ModelDeploymentStarted { payload, .. } => Payload::ModelDeploymentStartedPayload(payload.clone()),
-            Event::ModelDeploymentStateDriftDetected { payload, .. } => Payload::ModelDeploymentStateDriftDetectedPayload(payload.clone()),
-            Event::ModelDeploymentStopped { payload, .. } => Payload::ModelDeploymentStoppedPayload(payload.clone()),
+            Event::ModelDeploymentDeleted { payload, .. } => {
+                Payload::ModelDeploymentDeletedPayload(payload.clone())
+            }
+            Event::ModelDeploymentStarted { payload, .. } => {
+                Payload::ModelDeploymentStartedPayload(payload.clone())
+            }
+            Event::ModelDeploymentStateDriftDetected { payload, .. } => {
+                Payload::ModelDeploymentStateDriftDetectedPayload(payload.clone())
+            }
+            Event::ModelDeploymentStopped { payload, .. } => {
+                Payload::ModelDeploymentStoppedPayload(payload.clone())
+            }
         }
     }
 
@@ -91,7 +115,13 @@ pub struct EventMetadata {
 }
 
 impl EventMetadata {
-    pub(crate) fn rehydrate(id: Uuid, kind: Kind, correlation_id: Uuid, causation_id: Uuid, timestamp: TimeStamp) -> Self {
+    pub(crate) fn rehydrate(
+        id: Uuid,
+        kind: Kind,
+        correlation_id: Uuid,
+        causation_id: Uuid,
+        timestamp: TimeStamp,
+    ) -> Self {
         Self {
             id,
             kind,

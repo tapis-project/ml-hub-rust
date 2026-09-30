@@ -439,6 +439,98 @@
         }
       }
     },
+    "/models-api/external-models/{external_model_id}/deployment-options": {
+      "get": {
+        "tags": [
+          "ExternalModels"
+        ],
+        "summary": "List deployment options for an external model",
+        "operationId": "list_external_model_deployment_options",
+        "parameters": [
+          {
+            "name": "external_model_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of deployment options to return. Values are capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "include_count",
+            "in": "query",
+            "description": "Include the number of deployment options for the ExternalModel.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployment options listed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListExternalModelDeploymentOptionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid external model identifier or cursor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ExternalModel not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to list deployment options",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/models-api/ingestions": {
       "get": {
         "tags": [
@@ -1231,6 +1323,73 @@
           }
         }
       },
+      "DataCenter": {
+        "type": "string",
+        "enum": [
+          "Tacc"
+        ]
+      },
+      "DeploymentModality": {
+        "type": "string",
+        "enum": [
+          "Batch",
+          "Service"
+        ]
+      },
+      "DeploymentOption": {
+        "type": "object",
+        "required": [
+          "id",
+          "external_model_id",
+          "supported_deployment_modalities",
+          "serving_runtime",
+          "deployment_target_type",
+          "available",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "deployment_target_type": {
+            "$ref": "#/components/schemas/DeploymentTargetType"
+          },
+          "external_model_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hpc_cluster_queue": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HpcClusterQueueTarget"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serving_runtime": {
+            "$ref": "#/components/schemas/ServingRuntime"
+          },
+          "supported_deployment_modalities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentModality"
+            }
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
       "DeploymentStrategyCriterion": {
         "type": "object",
         "required": [
@@ -1260,6 +1419,12 @@
             "$ref": "#/components/schemas/Platform"
           }
         }
+      },
+      "DeploymentTargetType": {
+        "type": "string",
+        "enum": [
+          "HpcClusterQueue"
+        ]
       },
       "DerivedModelMetadata": {
         "type": "object",
@@ -1383,15 +1548,33 @@
             "type": "string",
             "nullable": true
           },
+          "batch_scheduler_queue_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "deployment_strategies": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DeploymentStrategyCriterion"
             }
           },
+          "has_deployment_options": {
+            "type": "boolean",
+            "nullable": true
+          },
           "has_deployment_strategies": {
             "type": "boolean",
             "nullable": true
+          },
+          "hpc_cluster_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           "inference_runtimes": {
             "type": "array",
@@ -1448,6 +1631,18 @@
                 "$ref": "#/components/schemas/ModelProvider"
               }
             ]
+          },
+          "serving_runtimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServingRuntime"
+            }
+          },
+          "supported_deployment_modalities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentModality"
+            }
           },
           "tags": {
             "type": "array",
@@ -1668,6 +1863,43 @@
           }
         }
       },
+      "HpcClusterQueueTarget": {
+        "type": "object",
+        "required": [
+          "hpc_cluster_id",
+          "hpc_cluster_name",
+          "data_center",
+          "hpc_cluster_enabled",
+          "batch_scheduler_queue_id",
+          "batch_scheduler_queue_name",
+          "batch_scheduler_queue_enabled"
+        ],
+        "properties": {
+          "batch_scheduler_queue_enabled": {
+            "type": "boolean"
+          },
+          "batch_scheduler_queue_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "batch_scheduler_queue_name": {
+            "type": "string"
+          },
+          "data_center": {
+            "$ref": "#/components/schemas/DataCenter"
+          },
+          "hpc_cluster_enabled": {
+            "type": "boolean"
+          },
+          "hpc_cluster_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hpc_cluster_name": {
+            "type": "string"
+          }
+        }
+      },
       "HuggingFaceRepoLocator": {
         "type": "object",
         "required": [
@@ -1679,6 +1911,38 @@
             "type": "string"
           },
           "sha": {
+            "type": "string"
+          }
+        }
+      },
+      "ListExternalModelDeploymentOptionsResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentOption"
+            }
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "version": {
             "type": "string"
           }
         }
@@ -2117,6 +2381,12 @@
             "type": "string"
           }
         }
+      },
+      "ServingRuntime": {
+        "type": "string",
+        "enum": [
+          "FlexServ"
+        ]
       },
       "TapisSystemLocator": {
         "type": "object",

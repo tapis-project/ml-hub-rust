@@ -1,10 +1,10 @@
 use uuid::Uuid;
 
 use crate::application::ports::events::{self, EventMetadata};
+use crate::domain::entities::deployment::{DesiredState, State};
+use crate::infra::messaging::errors::SerializationError;
 use crate::infra::messaging::messages;
 use crate::shared_kernel::value_objects::TimeStamp;
-use crate::domain::entities::deployment::{State, DesiredState};
-use crate::infra::messaging::errors::SerializationError;
 
 impl TryFrom<messages::EventEnvelope> for events::Event {
     type Error = SerializationError;
@@ -17,37 +17,31 @@ impl TryFrom<messages::EventEnvelope> for events::Event {
         let payload = value.event.payload;
 
         Ok(match kind {
-            events::Kind::ModelDeploymentDeleted => {
-                events::Event::ModelDeploymentDeleted {
-                    metadata,
-                    payload: events::payloads::ModelDeploymentDeletedPayload::try_from(
-                        &messages::ModelDeploymentDeletedPayload::try_from(payload)?
-                    )?
-                }
+            events::Kind::ModelDeploymentDeleted => events::Event::ModelDeploymentDeleted {
+                metadata,
+                payload: events::payloads::ModelDeploymentDeletedPayload::try_from(
+                    &messages::ModelDeploymentDeletedPayload::try_from(payload)?,
+                )?,
             },
-            events::Kind::ModelDeploymentStarted => {
-                events::Event::ModelDeploymentStarted {
-                    metadata,
-                    payload: events::payloads::ModelDeploymentStartedPayload::try_from(
-                        &messages::ModelDeploymentStartedPayload::try_from(payload)?
-                    )?
-                }
+            events::Kind::ModelDeploymentStarted => events::Event::ModelDeploymentStarted {
+                metadata,
+                payload: events::payloads::ModelDeploymentStartedPayload::try_from(
+                    &messages::ModelDeploymentStartedPayload::try_from(payload)?,
+                )?,
             },
             events::Kind::ModelDeploymentStateDriftDetected => {
                 events::Event::ModelDeploymentStateDriftDetected {
                     metadata,
                     payload: events::payloads::ModelDeploymentStateDriftDetectedPayload::try_from(
-                        &messages::ModelDeploymentStateDriftDetectedPayload::try_from(payload)?
-                    )?
+                        &messages::ModelDeploymentStateDriftDetectedPayload::try_from(payload)?,
+                    )?,
                 }
-            },
-            events::Kind::ModelDeploymentStopped => {
-                events::Event::ModelDeploymentStopped {
-                    metadata,
-                    payload: events::payloads::ModelDeploymentStoppedPayload::try_from(
-                        &messages::ModelDeploymentStoppedPayload::try_from(payload)?
-                    )?
-                }
+            }
+            events::Kind::ModelDeploymentStopped => events::Event::ModelDeploymentStopped {
+                metadata,
+                payload: events::payloads::ModelDeploymentStoppedPayload::try_from(
+                    &messages::ModelDeploymentStoppedPayload::try_from(payload)?,
+                )?,
             },
         })
     }
@@ -68,10 +62,14 @@ impl TryFrom<(&events::Kind, messages::EventMetadata)> for events::EventMetadata
     }
 }
 
-impl TryFrom<&messages::ModelDeploymentStateDriftDetectedPayload> for events::payloads::ModelDeploymentStateDriftDetectedPayload {
+impl TryFrom<&messages::ModelDeploymentStateDriftDetectedPayload>
+    for events::payloads::ModelDeploymentStateDriftDetectedPayload
+{
     type Error = SerializationError;
 
-    fn try_from(value: &messages::ModelDeploymentStateDriftDetectedPayload) -> Result<Self, Self::Error> {
+    fn try_from(
+        value: &messages::ModelDeploymentStateDriftDetectedPayload,
+    ) -> Result<Self, Self::Error> {
         Ok(Self {
             deployment_id: Uuid::parse_str(value.deployment_id.as_str())
                 .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
@@ -85,7 +83,9 @@ impl TryFrom<&messages::ModelDeploymentStateDriftDetectedPayload> for events::pa
     }
 }
 
-impl TryFrom<&messages::ModelDeploymentDeletedPayload> for events::payloads::ModelDeploymentDeletedPayload {
+impl TryFrom<&messages::ModelDeploymentDeletedPayload>
+    for events::payloads::ModelDeploymentDeletedPayload
+{
     type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentDeletedPayload) -> Result<Self, Self::Error> {
@@ -98,7 +98,9 @@ impl TryFrom<&messages::ModelDeploymentDeletedPayload> for events::payloads::Mod
     }
 }
 
-impl TryFrom<&messages::ModelDeploymentStartedPayload> for events::payloads::ModelDeploymentStartedPayload {
+impl TryFrom<&messages::ModelDeploymentStartedPayload>
+    for events::payloads::ModelDeploymentStartedPayload
+{
     type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentStartedPayload) -> Result<Self, Self::Error> {
@@ -111,7 +113,9 @@ impl TryFrom<&messages::ModelDeploymentStartedPayload> for events::payloads::Mod
     }
 }
 
-impl TryFrom<&messages::ModelDeploymentStoppedPayload> for events::payloads::ModelDeploymentStoppedPayload {
+impl TryFrom<&messages::ModelDeploymentStoppedPayload>
+    for events::payloads::ModelDeploymentStoppedPayload
+{
     type Error = SerializationError;
 
     fn try_from(value: &messages::ModelDeploymentStoppedPayload) -> Result<Self, Self::Error> {

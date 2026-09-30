@@ -1,9 +1,9 @@
-use platforms::Platform;
-use thiserror::Error;
+use super::client_strategy::{ClientStrategy, ClientStrategyError};
+use super::parameter_set::ParameterSet;
 use super::rule_set::RuleSet;
 use super::strategy::{Strategy, StrategyError};
-use super::parameter_set::ParameterSet;
-use super::client_strategy::{ClientStrategy, ClientStrategyError};
+use platforms::Platform;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ClientStrategySetError {
@@ -20,7 +20,7 @@ pub enum ClientStrategySetError {
     ClientStrategyError(#[from] ClientStrategyError),
 
     #[error("{0}")]
-    StrategyError(#[from] StrategyError)
+    StrategyError(#[from] StrategyError),
 }
 
 #[derive(Debug, Clone)]
@@ -42,12 +42,14 @@ impl ClientStrategySet {
     ) -> Result<Self, ClientStrategySetError> {
         // Invariant: Client Strategy Seet MUST contain 1 or more strategies
         if client_strategies.len() == 0 {
-            return Err(ClientStrategySetError::MissingStrategies("Client Strategy Seet MUST contain 1 or more strategies".into()))
+            return Err(ClientStrategySetError::MissingStrategies(
+                "Client Strategy Seet MUST contain 1 or more strategies".into(),
+            ));
         };
 
         // Static to allow borrowing in lazy evaluation with zero runtime cost
         static EMPTY_RULE_SET: Vec<RuleSet> = Vec::new();
-        
+
         let client_rule_sets = rule_sets.as_ref().unwrap_or_else(|| &EMPTY_RULE_SET);
 
         // Convert ClientStrategies into Strategies
@@ -55,14 +57,18 @@ impl ClientStrategySet {
         for client_strat in client_strategies {
             // Set the current strategy rulesets to the explcitly defined rulesets
             // from the ClientStrategy
-            let mut strategy_rule_sets: Vec<RuleSet> = client_strat.rule_sets()
+            let mut strategy_rule_sets: Vec<RuleSet> = client_strat
+                .rule_sets()
                 .clone()
                 .unwrap_or_else(|| EMPTY_RULE_SET.clone());
 
             // Resolve any client ruleset references in the client strategy.
             let resolved_rule_sets = Self::resolve_rule_set_refs(
-                client_strat.rule_set_refs().clone().unwrap_or_else(|| Vec::new()),
-                client_rule_sets
+                client_strat
+                    .rule_set_refs()
+                    .clone()
+                    .unwrap_or_else(|| Vec::new()),
+                client_rule_sets,
             )?;
 
             // Merge the resovled references to the existing strategy rule sets
@@ -75,38 +81,35 @@ impl ClientStrategySet {
                 None => {
                     // Static to allow borrowing in lazy evaluation with zero runtime cost
                     static EMPTY_PARAMETER_SET: Vec<ParameterSet> = Vec::new();
-                    let client_parameter_sets = parameter_sets.as_ref().unwrap_or_else(|| &EMPTY_PARAMETER_SET);
+                    let client_parameter_sets = parameter_sets
+                        .as_ref()
+                        .unwrap_or_else(|| &EMPTY_PARAMETER_SET);
                     let parameter_set_ref = client_strat.parameter_set_ref();
-                    
-                    let maybe_parameter_set: Result<Option<ParameterSet>, ClientStrategySetError> = match parameter_set_ref {
-                        Some(r) => {
-                            Ok(Some(
-                                Self::resolve_parameter_set_ref(
+
+                    let maybe_parameter_set: Result<Option<ParameterSet>, ClientStrategySetError> =
+                        match parameter_set_ref {
+                            Some(r) => Ok(Some(Self::resolve_parameter_set_ref(
                                 r.clone(),
-                                    client_parameter_sets
-                                )?
-                            ))
-                        },
-                        None => Ok(None)
-                    };
+                                client_parameter_sets,
+                            )?)),
+                            None => Ok(None),
+                        };
 
                     maybe_parameter_set
                 }
             }?;
-            
+
             // Create the Strategy
-            strategies.push(
-                Strategy::reconstitute(
-                    client_strat.name.clone(),
-                    platform.clone(),
-                    client_strat.description.clone(),
-                    strategy_rule_sets,
-                    parameter_set,
-                    client_strat.config().clone(),
-                    client_strat.enabled(),
-                    client_strat.data().clone()
-                )?
-            );
+            strategies.push(Strategy::reconstitute(
+                client_strat.name.clone(),
+                platform.clone(),
+                client_strat.description.clone(),
+                strategy_rule_sets,
+                parameter_set,
+                client_strat.config().clone(),
+                client_strat.enabled(),
+                client_strat.data().clone(),
+            )?);
         }
 
         Ok(Self {
@@ -130,30 +133,47 @@ impl ClientStrategySet {
         &self.strategies
     }
 
-    fn resolve_rule_set_refs(rule_set_refs: Vec<String>, rule_sets: &Vec<RuleSet>) -> Result<Vec<RuleSet>, ClientStrategySetError>{
+    fn resolve_rule_set_refs(
+        rule_set_refs: Vec<String>,
+        rule_sets: &Vec<RuleSet>,
+    ) -> Result<Vec<RuleSet>, ClientStrategySetError> {
         let mut resolved_rule_sets: Vec<RuleSet> = Vec::new();
         for name in rule_set_refs {
-            let maybe_resolved_rule_set = rule_sets.iter()
+            let maybe_resolved_rule_set = rule_sets
+                .iter()
                 .filter(|client_rule_set| client_rule_set.name == name)
                 .next();
 
             match maybe_resolved_rule_set {
                 Some(resolved_rule_set) => resolved_rule_sets.push(resolved_rule_set.clone()),
-                None => return Err(ClientStrategySetError::InvalidClientRuleSetReference(format!("Failed to find client RuleSet with name '{}'", &name)))
+                None => {
+                    return Err(ClientStrategySetError::InvalidClientRuleSetReference(
+                        format!("Failed to find client RuleSet with name '{}'", &name),
+                    ))
+                }
             }
-        };
+        }
 
-        return Ok(resolved_rule_sets)
+        return Ok(resolved_rule_sets);
     }
 
-    fn resolve_parameter_set_ref(parameter_set_ref: String, parameter_sets: &Vec<ParameterSet>) -> Result<ParameterSet, ClientStrategySetError>{
-        let maybe_resolved_parameter_set = parameter_sets.iter()
+    fn resolve_parameter_set_ref(
+        parameter_set_ref: String,
+        parameter_sets: &Vec<ParameterSet>,
+    ) -> Result<ParameterSet, ClientStrategySetError> {
+        let maybe_resolved_parameter_set = parameter_sets
+            .iter()
             .filter(|client_parameter_set| client_parameter_set.name == parameter_set_ref.clone())
             .next();
 
         match maybe_resolved_parameter_set {
             Some(resolved_parameter_set) => Ok(resolved_parameter_set.clone()),
-            None => Err(ClientStrategySetError::InvalidClientParameterSetReference(format!("Failed to find client ParameterSet with name '{}'", &parameter_set_ref)))
+            None => Err(ClientStrategySetError::InvalidClientParameterSetReference(
+                format!(
+                    "Failed to find client ParameterSet with name '{}'",
+                    &parameter_set_ref
+                ),
+            )),
         }
     }
 }

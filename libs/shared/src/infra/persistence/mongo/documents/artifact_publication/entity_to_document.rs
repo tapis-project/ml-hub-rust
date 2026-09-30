@@ -1,14 +1,14 @@
-use crate::domain::entities::artifact_publication as entities;
 use crate::domain::entities::artifact::ArtifactType;
-use crate::infra::persistence::mongo::documents::artifact_publication as documents;
+use crate::domain::entities::artifact_publication as entities;
 use crate::infra::_common::mongo::ToBsonDateTime;
+use crate::infra::persistence::mongo::documents::artifact_publication as documents;
 use mongodb::bson::Uuid;
 
 impl From<ArtifactType> for documents::ArtifactType {
     fn from(value: ArtifactType) -> Self {
         match value {
             ArtifactType::Model => documents::ArtifactType::Model,
-            ArtifactType::Dataset => documents::ArtifactType::Dataset
+            ArtifactType::Dataset => documents::ArtifactType::Dataset,
         }
     }
 }
@@ -25,7 +25,7 @@ impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
             target_platform: value.target_platform.clone(),
             created_at: value.created_at.to_bson(),
             last_modified: value.last_modified.to_bson(),
-            status: documents::ArtifactPublicationStatus::from(value.status.clone())
+            status: documents::ArtifactPublicationStatus::from(value.status.clone()),
         }
     }
 }
@@ -33,16 +33,36 @@ impl From<&entities::ArtifactPublication> for documents::ArtifactPublication {
 impl From<entities::ArtifactPublicationStatus> for documents::ArtifactPublicationStatus {
     fn from(value: entities::ArtifactPublicationStatus) -> Self {
         match value {
-            entities::ArtifactPublicationStatus::Submitted => documents::ArtifactPublicationStatus::Submitted,
-            entities::ArtifactPublicationStatus::Pending => documents::ArtifactPublicationStatus::Pending,
-            entities::ArtifactPublicationStatus::Extracted => documents::ArtifactPublicationStatus::Extracted,
-            entities::ArtifactPublicationStatus::Extracting => documents::ArtifactPublicationStatus::Extracting,
-            entities::ArtifactPublicationStatus::PublishingModel => documents::ArtifactPublicationStatus::PublishingModel,
-            entities::ArtifactPublicationStatus::PublishedModel => documents::ArtifactPublicationStatus::PublishedModel,
-            entities::ArtifactPublicationStatus::PublishingArtifact => documents::ArtifactPublicationStatus::PublishingArtifact,
-            entities::ArtifactPublicationStatus::PublishedArtifact => documents::ArtifactPublicationStatus::PublishedArtifact,
-            entities::ArtifactPublicationStatus::Finished => documents::ArtifactPublicationStatus::Finished,
-            entities::ArtifactPublicationStatus::Failed => documents::ArtifactPublicationStatus::Failed,
+            entities::ArtifactPublicationStatus::Submitted => {
+                documents::ArtifactPublicationStatus::Submitted
+            }
+            entities::ArtifactPublicationStatus::Pending => {
+                documents::ArtifactPublicationStatus::Pending
+            }
+            entities::ArtifactPublicationStatus::Extracted => {
+                documents::ArtifactPublicationStatus::Extracted
+            }
+            entities::ArtifactPublicationStatus::Extracting => {
+                documents::ArtifactPublicationStatus::Extracting
+            }
+            entities::ArtifactPublicationStatus::PublishingModel => {
+                documents::ArtifactPublicationStatus::PublishingModel
+            }
+            entities::ArtifactPublicationStatus::PublishedModel => {
+                documents::ArtifactPublicationStatus::PublishedModel
+            }
+            entities::ArtifactPublicationStatus::PublishingArtifact => {
+                documents::ArtifactPublicationStatus::PublishingArtifact
+            }
+            entities::ArtifactPublicationStatus::PublishedArtifact => {
+                documents::ArtifactPublicationStatus::PublishedArtifact
+            }
+            entities::ArtifactPublicationStatus::Finished => {
+                documents::ArtifactPublicationStatus::Finished
+            }
+            entities::ArtifactPublicationStatus::Failed => {
+                documents::ArtifactPublicationStatus::Failed
+            }
         }
     }
 }

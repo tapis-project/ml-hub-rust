@@ -47,7 +47,7 @@ enum MongoArgumentPayload {
 
 pub struct MongoDeploymentArgumentRepository {
     read_collection: Collection<DeploymentArgumentsDocument>,
-    write_collection: Collection<DeploymentArgumentsDocument>
+    write_collection: Collection<DeploymentArgumentsDocument>,
 }
 
 impl MongoDeploymentArgumentRepository {
@@ -56,7 +56,7 @@ impl MongoDeploymentArgumentRepository {
 
         Self {
             write_collection: db.collection(DEPLOYMENT_ARGUMENT_COLLECTION),
-            read_collection: db.collection(DEPLOYMENT_ARGUMENT_COLLECTION)
+            read_collection: db.collection(DEPLOYMENT_ARGUMENT_COLLECTION),
         }
     }
 

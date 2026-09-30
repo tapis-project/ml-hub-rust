@@ -65,90 +65,30 @@ partial initial deployment. Grouped start commands assume the preceding infrastr
 migration stages have already completed. Stack deployment targets Minikube and uses the `minikube`
 overlay by default.
 
-### Deploy individual components
+### Expose the local stack
 
-> **Note**: Before running the next scripts, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
+The stack command starts Traefik but does not update the host machine's networking configuration.
+Add this entry to `/etc/hosts`:
 
-This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
+```text
+# MLHub local development
+127.0.0.1 dev.local.develop.tapis.io tacc.local.develop.tapis.io
+```
 
-From the project's root directory, run the following commands to initalize the project and launch the services in Minikube. For all ` ...` steps, ensure that each component pod is in the "Running" state before moving onto the next step.
+Then flush the local DNS cache:
 
-### Infrastructure (Required)
+- macOS: `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`
+- Modern Ubuntu, Fedora, or Debian: `sudo resolvectl flush-caches`
 
-0. `chmod +x dev` - Makes the lifecycle script executable
+Expose the Traefik reverse proxy after the stack deployment completes:
 
-0. `./dev start nfs` - Starts the shared file system
+```shell
+./dev expose traefik
+```
 
-0. `./dev start rabbit` - Starts the message broker
+If Minikube uses the Docker driver on macOS, keep this terminal open while accessing MLHub.
 
-0. `./dev start mongo` - Starts the database
-
-0. `./dev start traefik` - Starts the reverse proxy that routes traffic to the APIs
-
-### Migrations (Required)
-
-0. `./dev buildl-all migrations` - Builds all migration images and loads them into Minikube.
-
-0. `./dev run-all migrations` - Runs the Models, Federated Identities, and Principals migrations in order. The command stops if any migration fails.
-
-### Models API
-
-0. `./dev buildl models` - Builds the Models API image and loads it into minikube
-
-0. `./dev start models` - Starts the Models API pod(s)
-
-### Deployments API
-
-0. `./dev buildl deployments` - Builds the Deployments API image and loads it into Minikube.
-
-0. `./dev start deployments` - Starts the Deployments API pod(s).
-
-### Agents API
-
-0. `./dev buildl agents` - Builds the Agents API image and loads it into Minikube.
-
-0. `./dev start agents` - Starts the Agents API pod(s).
-
-### Artifacts Suite (Optional)
-
-0. `./dev buildl artifact-ingester && ./dev start artifact-ingester` - Start up the artifact ingestion workers
-
-0. `./dev buildl artifact-publisher && ./dev start artifact-publisher` - Start up the artifact publisher workers
-
-### Networking
-
-0. Add this entry to your `/etc/hosts` file:
-    
-    # MLHub local devleopment
-    127.0.0.1       dev.local.develop.tapis.io tacc.local.develop.tapis.io
-    
-    Then run one of the following OS-specific commands for the changes to take effect.
-
-    A. **MAC:** `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`
-    
-    B. **Linux (Modern Ubuntu, Fedora, Debian):** `sudo resolvectl flush-caches`
-
-    C. **Windows:** 🤷‍♂️
-
-Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
-
-`./dev expose traefik`
-
-You can now make request to the IP address and port output by the last command. The section below will provide detailed instructions on how to make request to each service.
-
-> **Note**: If you are using a Docker driver on darwin, the terminal will need to remain open in order to make requests to MLHub services
-
-## 3. Seed the database with some huggingface models
-
-Build and load both images used by the Hugging Face model ETL job, then run the job in Minikube:
-
-0. `./dev buildl-extract hf-model-etl` - Builds and loads the Hugging Face metadata extraction image.
-
-0. `./dev buildl-transform-load hf-model-etl` - Builds and loads the metadata transform/load image.
-
-0. `./dev run hf-model-etl` - Creates the Hugging Face model ETL job to extract, transform, and load models into MLHub.
-
-## 4. Making requests
+## 3. Making requests
 
 You can use the IP address and port produced by the last command to make API calls to any service in the MLHub suite. Your url will need to be structured as follows:
 

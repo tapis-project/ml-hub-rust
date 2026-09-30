@@ -9,6 +9,7 @@ pub mod get_model_ingestion;
 pub mod get_model_publication;
 pub mod health_check;
 pub mod index;
+pub mod list_external_model_deployment_options;
 pub mod list_model_artifacts;
 pub mod list_model_ingestions;
 pub mod list_model_publications;

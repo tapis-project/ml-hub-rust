@@ -1,25 +1,23 @@
+use crate::application;
 use crate::application::ports::artifacts::ArtifactPublicationRepositoryError;
 use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
-use crate::infra::persistence::mongo::database::ARTIFACT_PUBLICATION_COLLECTION;
-use crate::infra::persistence::mongo::documents::artifact_publication::{ArtifactPublication, UpdateArtifactPublicationStatusRequest};
-use crate::infra::artifacts::mongo::documents::ArtifactType as ArtifactTypeDoc;
-use crate::application;
 use crate::domain::entities;
-use mongodb::{
-    bson::{
-        doc,
-        Uuid
-    },
-    Client,
-    Collection,
+use crate::domain::entities::artifact::ArtifactType as ArtifactTypeEntity;
+use crate::infra::artifacts::mongo::documents::ArtifactType as ArtifactTypeDoc;
+use crate::infra::persistence::mongo::database::ARTIFACT_PUBLICATION_COLLECTION;
+use crate::infra::persistence::mongo::documents::artifact_publication::{
+    ArtifactPublication, UpdateArtifactPublicationStatusRequest,
 };
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
+use mongodb::{
+    bson::{doc, Uuid},
+    Client, Collection,
+};
 
 pub struct ArtifactPublicationRepository {
     read_collection: Collection<ArtifactPublication>,
-    write_collection: Collection<ArtifactPublication>
+    write_collection: Collection<ArtifactPublication>,
 }
 
 impl ArtifactPublicationRepository {
@@ -28,21 +26,32 @@ impl ArtifactPublicationRepository {
 
         Self {
             write_collection: db.collection(ARTIFACT_PUBLICATION_COLLECTION),
-            read_collection: db.collection(ARTIFACT_PUBLICATION_COLLECTION)
+            read_collection: db.collection(ARTIFACT_PUBLICATION_COLLECTION),
         }
     }
 }
 
 #[async_trait]
-impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPublicationRepository {
-    async fn save(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ArtifactPublicationRepositoryError> {
+impl application::ports::artifacts::ArtifactPublicationRepository
+    for ArtifactPublicationRepository
+{
+    async fn save(
+        &self,
+        publication: &entities::artifact_publication::ArtifactPublication,
+    ) -> Result<(), ArtifactPublicationRepositoryError> {
         let mut document = ArtifactPublication::from(publication);
-        
-        let result = self.write_collection.insert_one(&document)
+
+        let result = self
+            .write_collection
+            .insert_one(&document)
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                log::error!(
+                    "[{}] Persistence error: {}",
+                    error.error_id(),
+                    e.to_string()
+                );
                 error
             })?;
 
@@ -57,7 +66,7 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
     //     let filter = doc! {
     //         "id": Uuid::from_bytes(*publication.id.as_bytes())
     //     };
-        
+
     //     let document = doc! {
     //         "$set": {
     //             "status": String::from(update.status),
@@ -76,13 +85,16 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
     //     Ok(())
     // }
 
-    async fn update_status(&self, publication: &entities::artifact_publication::ArtifactPublication) -> Result<(), ArtifactPublicationRepositoryError> {
+    async fn update_status(
+        &self,
+        publication: &entities::artifact_publication::ArtifactPublication,
+    ) -> Result<(), ArtifactPublicationRepositoryError> {
         let update = UpdateArtifactPublicationStatusRequest::from(publication);
 
         let filter = doc! {
             "id": Uuid::from_bytes(*publication.id.as_bytes())
         };
-        
+
         let document = doc! {
             "$set": {
                 "status": update.status.to_string(),
@@ -91,40 +103,55 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
             }
         };
 
-        self.write_collection.update_one(filter, document)
+        self.write_collection
+            .update_one(filter, document)
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                log::error!(
+                    "[{}] Persistence error: {}",
+                    error.error_id(),
+                    e.to_string()
+                );
                 error
             })?;
-        
+
         Ok(())
     }
 
-    async fn find_by_artifact_id(&self, artifact_id: &uuid::Uuid) -> Result<Vec<entities::artifact_publication::ArtifactPublication>, ArtifactPublicationRepositoryError> {
+    async fn find_by_artifact_id(
+        &self,
+        artifact_id: &uuid::Uuid,
+    ) -> Result<
+        Vec<entities::artifact_publication::ArtifactPublication>,
+        ArtifactPublicationRepositoryError,
+    > {
         let filter = doc! {
             "artifact_id": Uuid::from_bytes(*artifact_id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?;
+        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
 
         let mut publications: Vec<entities::artifact_publication::ArtifactPublication> = Vec::new();
-        while let Some(publication_doc) = cursor.try_next()
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?
-        {
-            let publication = entities::artifact_publication::ArtifactPublication::from(&publication_doc);
+        while let Some(publication_doc) = cursor.try_next().await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })? {
+            let publication =
+                entities::artifact_publication::ArtifactPublication::from(&publication_doc);
 
             publications.push(publication);
         }
@@ -132,63 +159,87 @@ impl application::ports::artifacts::ArtifactPublicationRepository for ArtifactPu
         Ok(publications)
     }
 
-    async fn find_by_id(&self, id: uuid::Uuid) -> Result<Option<entities::artifact_publication::ArtifactPublication>, ArtifactPublicationRepositoryError> {
+    async fn find_by_id(
+        &self,
+        id: uuid::Uuid,
+    ) -> Result<
+        Option<entities::artifact_publication::ArtifactPublication>,
+        ArtifactPublicationRepositoryError,
+    > {
         let filter = doc! {
             "id": Uuid::from_bytes(*id.as_bytes()),
         };
 
-        let mut cursor = self.read_collection.find(filter)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?;
+        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
 
-        while let Some(publication_doc) = cursor.try_next()
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?
-        {
-            let publication = entities::artifact_publication::ArtifactPublication::try_from(&publication_doc)
-                .map_err(|e| {
-                    let error = InfrastructureError::new_internal();
-                    log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                    error
-                })?;
+        while let Some(publication_doc) = cursor.try_next().await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })? {
+            let publication =
+                entities::artifact_publication::ArtifactPublication::try_from(&publication_doc)
+                    .map_err(|e| {
+                        let error = InfrastructureError::new_internal();
+                        log::error!(
+                            "[{}] Persistence error: {}",
+                            error.error_id(),
+                            e.to_string()
+                        );
+                        error
+                    })?;
 
-            return Ok(Some(publication))
+            return Ok(Some(publication));
         }
 
         Ok(None)
     }
 
-    async fn find_by_artifact_type(&self, artifact_type: ArtifactTypeEntity) -> Result<Vec<entities::artifact_publication::ArtifactPublication>, ArtifactPublicationRepositoryError> {
+    async fn find_by_artifact_type(
+        &self,
+        artifact_type: ArtifactTypeEntity,
+    ) -> Result<
+        Vec<entities::artifact_publication::ArtifactPublication>,
+        ArtifactPublicationRepositoryError,
+    > {
         let filter = doc! {
             "artifact_type": String::from(ArtifactTypeDoc::from(artifact_type))
         };
 
-        let mut cursor = self.read_collection.find(filter)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?;
-        
+        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
+
         let mut publications: Vec<entities::artifact_publication::ArtifactPublication> = Vec::new();
-        while let Some(publication_doc) = cursor.try_next()
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?
-        {
-            let publication = entities::artifact_publication::ArtifactPublication::from(&publication_doc);
+        while let Some(publication_doc) = cursor.try_next().await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })? {
+            let publication =
+                entities::artifact_publication::ArtifactPublication::from(&publication_doc);
 
             publications.push(publication);
         }

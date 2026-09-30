@@ -15,9 +15,7 @@ impl TryFrom<documents::Agent> for entities::Agent {
             liveness: value.liveness.into(),
             last_missed_heartbeat: value
                 .last_missed_heartbeat
-                .map(|timestamp| {
-                    TimeStamp::parse_string(&timestamp)
-                })
+                .map(|timestamp| TimeStamp::parse_string(&timestamp))
                 .transpose()
                 .map_err(|error| entities::AgentError::DataIntegrityError(error.to_string()))?,
             consecutive_missed_heartbeats: value.consecutive_missed_heartbeats,

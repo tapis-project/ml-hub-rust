@@ -1,11 +1,14 @@
 use crate::bootstrap::{
     factories::{
-        external_model_discovery_service_factory, model_artifact_association_service_factory,
-        model_creation_service_factory, model_query_service_factory,
+        deployment_option_query_service_factory, external_model_discovery_service_factory,
+        model_artifact_association_service_factory, model_creation_service_factory,
+        model_query_service_factory,
     },
     state::AppState,
 };
-use crate::presentation::http::v1::actix_web::handlers;
+use crate::presentation::http::v1::actix_web::handlers::{
+    self, list_external_model_deployment_options::list_external_model_deployment_options,
+};
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{
     middleware::{from_fn, Logger},
@@ -136,6 +139,10 @@ pub async fn run_server() -> std::io::Result<()> {
         &mongo_client,
         db_name.clone(),
     ));
+    let deployment_option_query_service = Arc::new(deployment_option_query_service_factory(
+        &mongo_client,
+        db_name.clone(),
+    ));
 
     // Initialize AppState
     let state = AppState {
@@ -155,6 +162,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(web::Data::from(model_query_service.clone()))
             .app_data(web::Data::from(model_artifact_association_service.clone()))
             .app_data(web::Data::from(external_model_discovery_service.clone()))
+            .app_data(web::Data::from(deployment_option_query_service.clone()))
             .app_data(web::Data::new(state.clone()))
             // Globally-scoped middlewares
             .wrap(from_fn(preflight_short_circuit))
@@ -176,6 +184,7 @@ pub async fn run_server() -> std::io::Result<()> {
                     .service(handlers::list_models::list_models)
                     .service(handlers::get_external_model::get_external_model)
                     .service(handlers::discover_external_models::discover_external_models)
+                    .service(list_external_model_deployment_options)
                     .service(handlers::publish_model_artifact::publish_model_artifact)
                     .service(handlers::list_platforms::list_platforms)
                     .service(handlers::download_artifact::download_artifact)

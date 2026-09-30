@@ -1,7 +1,7 @@
 pub mod handlers;
 pub mod openapi;
-pub mod server;
 pub mod response_helpers;
+pub mod server;
 
 #[cfg(test)]
 mod tests;

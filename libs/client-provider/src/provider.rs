@@ -1,28 +1,21 @@
-use std::str::FromStr;
-use std::collections::HashMap;
-use platforms::Platform;
-use huggingface_client::client::HuggingFaceClient;
-use github_lfs_client::client::GithubLfsClient;
-use git_lfs_client::client::GitLfsClient;
-use patra_client::client::PatraClient;
-use crate::errors::ClientProviderError;
 use crate::clients::{
-    ListModelsClient,
-    GetModelClient,
-    DiscoverModelsClient,
-    PublishModelArtifactClient,
-    IngestModelClient,
-    IngestDatasetClient,
+    DiscoverModelsClient, GetDatasetClient, GetModelClient, IngestDatasetClient, IngestModelClient,
+    ListDatasetsClient, ListModelsClient, ModelConversionClient, PublishModelArtifactClient,
     PublishModelClient,
-    ModelConversionClient,
-    ListDatasetsClient,
-    GetDatasetClient
 };
-use clients::{Client, Capability};
+use crate::errors::ClientProviderError;
+use clients::{Capability, Client};
+use git_lfs_client::client::GitLfsClient;
+use github_lfs_client::client::GithubLfsClient;
+use huggingface_client::client::HuggingFaceClient;
+use patra_client::client::PatraClient;
+use platforms::Platform;
+use std::collections::HashMap;
+use std::str::FromStr;
 
 /// A provider for managing clients mapped to their respective platforms.
 ///
-/// This struct maintains a registry of model and clients, allowing retrieval 
+/// This struct maintains a registry of model and clients, allowing retrieval
 /// of the appropriate client based on the specified `Platform`.
 ///
 /// # Example
@@ -56,79 +49,133 @@ impl ClientProvider {
             }
         }
 
-        return platforms
+        return platforms;
     }
 
-    pub fn provide_list_models_client(platform_name: &str) -> Result<ListModelsClient, ClientProviderError> {
+    pub fn provide_list_models_client(
+        platform_name: &str,
+    ) -> Result<ListModelsClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(ListModelsClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(ListModelsClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("listing")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("listing"),
+            )),
         }
     }
 
-    pub fn provide_get_model_client(platform_name: &str) -> Result<GetModelClient, ClientProviderError> {
+    pub fn provide_get_model_client(
+        platform_name: &str,
+    ) -> Result<GetModelClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(GetModelClient::HuggingFace(HuggingFaceClient::new())),
             Platform::Patra => Ok(GetModelClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("fetching")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("fetching"),
+            )),
         }
     }
 
-    pub fn provide_discover_models_client(platform_name: &str) -> Result<DiscoverModelsClient, ClientProviderError> {
+    pub fn provide_discover_models_client(
+        platform_name: &str,
+    ) -> Result<DiscoverModelsClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::Patra => Ok(DiscoverModelsClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("discovery")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("discovery"),
+            )),
         }
     }
 
-    pub fn provide_ingest_model_client(platform_name: &str) -> Result<IngestModelClient, ClientProviderError> {
+    pub fn provide_ingest_model_client(
+        platform_name: &str,
+    ) -> Result<IngestModelClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::Git => Ok(IngestModelClient::Git(GitLfsClient::new())),
             Platform::Github => Ok(IngestModelClient::Github(GithubLfsClient::new())),
             Platform::HuggingFace => Ok(IngestModelClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model ingesting")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("model ingesting"),
+            )),
         }
     }
 
-    pub fn provide_publish_model_artifact_client(platform_name: &str) -> Result<PublishModelArtifactClient, ClientProviderError> {
+    pub fn provide_publish_model_artifact_client(
+        platform_name: &str,
+    ) -> Result<PublishModelArtifactClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
-            Platform::HuggingFace => Ok(PublishModelArtifactClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model publishing")))
+            Platform::HuggingFace => Ok(PublishModelArtifactClient::HuggingFace(
+                HuggingFaceClient::new(),
+            )),
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("model publishing"),
+            )),
         }
     }
 
-    pub fn provide_publish_model_client(platform_name: &str) -> Result<PublishModelClient, ClientProviderError> {
+    pub fn provide_publish_model_client(
+        platform_name: &str,
+    ) -> Result<PublishModelClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::Patra => Ok(PublishModelClient::Patra(PatraClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model publishing")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("model publishing"),
+            )),
         }
     }
 
-    pub fn provide_ingest_dataset_client(platform_name: &str) -> Result<IngestDatasetClient, ClientProviderError> {
+    pub fn provide_ingest_dataset_client(
+        platform_name: &str,
+    ) -> Result<IngestDatasetClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("dataset ingesting")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("dataset ingesting"),
+            )),
         }
     }
 
-    pub fn provide_model_conversion_client(platform_name: &str) -> Result<ModelConversionClient, ClientProviderError> {
+    pub fn provide_model_conversion_client(
+        platform_name: &str,
+    ) -> Result<ModelConversionClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
-            Platform::HuggingFace => Ok(ModelConversionClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("model")))
+            Platform::HuggingFace => {
+                Ok(ModelConversionClient::HuggingFace(HuggingFaceClient::new()))
+            }
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("model"),
+            )),
         }
     }
 
-    pub fn provide_get_dataset_client(platform_name: &str) -> Result<GetDatasetClient, ClientProviderError> {
+    pub fn provide_get_dataset_client(
+        platform_name: &str,
+    ) -> Result<GetDatasetClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(GetDatasetClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("listing")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("listing"),
+            )),
         }
     }
 
-    pub fn provide_list_datasets_client(platform_name: &str) -> Result<ListDatasetsClient, ClientProviderError> {
+    pub fn provide_list_datasets_client(
+        platform_name: &str,
+    ) -> Result<ListDatasetsClient, ClientProviderError> {
         match resolve_platform(platform_name)? {
             Platform::HuggingFace => Ok(ListDatasetsClient::HuggingFace(HuggingFaceClient::new())),
-            _ => Err(ClientProviderError::NotFound(String::from(platform_name), String::from("listing")))
+            _ => Err(ClientProviderError::NotFound(
+                String::from(platform_name),
+                String::from("listing"),
+            )),
         }
     }
 }

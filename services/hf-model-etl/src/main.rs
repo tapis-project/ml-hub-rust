@@ -51,6 +51,8 @@ async fn main() {
     };
 
     let inbox_path = env::var("INBOX").expect("INBOX env var not set");
+    let evaluation_config_path =
+        env::var("EVALUATION_CONFIG_PATH").expect("EVALUATION_CONFIG_PATH env var not set");
 
     let inbox = Path::new(&inbox_path);
     if !inbox.is_dir() {
@@ -71,8 +73,17 @@ async fn main() {
         Err(e) => panic!("Error reading dir: {}", e.to_string()),
     };
 
-    let ingestion_service =
-        external_model_ingestion_service_factory(&client, db_name, client_strategy_sets);
+    let ingestion_service = external_model_ingestion_service_factory(
+        &client,
+        db_name,
+        client_strategy_sets,
+        evaluation_config_path,
+    )
+    .await
+    .map_err(|error| {
+        error!("Ingestion service initialization error: {error}");
+    })
+    .expect("Ingestion service initialization error");
 
     // Fetch the Hugging Face model conversion client from the client provider.
     let huggingface_client = ClientProvider::provide_model_conversion_client("hugging-face")
@@ -122,7 +133,10 @@ async fn main() {
                         {
                             Ok(_) => (),
                             Err(e) => {
-                                eprintln!("Error saving model to the database: {}", e.to_string());
+                                eprintln!(
+                                    "Error ingesting ExternalModel and deployment options: {}",
+                                    e
+                                );
                                 continue;
                             }
                         }

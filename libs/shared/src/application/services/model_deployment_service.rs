@@ -222,12 +222,10 @@ impl ModelDeploymentService {
         // Find the strategy by platform and name
         let maybe_strategy = self
             .deployment_strategy_provider
-            .get_strategy_by_platform_and_name(
-                GetStrategyByPlatformAndNameInput {
-                    platform: input.platform.clone(),
-                    name: input.strategy_name.clone(),
-                }
-            )
+            .get_strategy_by_platform_and_name(GetStrategyByPlatformAndNameInput {
+                platform: input.platform.clone(),
+                name: input.strategy_name.clone(),
+            })
             .await;
 
         let strategy = match maybe_strategy {

@@ -265,7 +265,8 @@ impl ModelDeploymentController {
             },
             &Self::REPO_RETRY_POLICY,
             None,
-        ).await;
+        )
+        .await;
 
         // Fetch the external model for this model
         let external_model = match maybe_external_model {

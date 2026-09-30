@@ -1,5 +1,5 @@
-use crate::shared_kernel::value_objects::TimeStamp;
 use crate::domain::entities::identity::FederatedIdentity;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 use thiserror::Error;
 
@@ -28,11 +28,11 @@ pub struct Principal {
 impl Principal {
     pub fn new_user(props: NewUserPrincipalProps) -> Result<Self, PrincipalError> {
         if props.tenant_id != props.identity.tenant_id.clone() {
-            return Err(PrincipalError::TenantMismatch)
+            return Err(PrincipalError::TenantMismatch);
         }
 
         let now = TimeStamp::now();
-        
+
         Ok(Self {
             id: props.id,
             kind: Kind::User,
@@ -44,12 +44,12 @@ impl Principal {
     }
 
     pub fn active_identity(&self) -> FederatedIdentity {
-        return self.active_identity.clone()
+        return self.active_identity.clone();
     }
 
     pub fn rehydrate(props: RehydrateProps) -> Result<Self, PrincipalError> {
         if props.tenant_id != props.identity.tenant_id {
-            return Err(PrincipalError::TenantMismatch)
+            return Err(PrincipalError::TenantMismatch);
         }
 
         Ok(Self {

@@ -9,6 +9,8 @@ members = [
     "services/hf-dataset-etl",
     "services/hf-model-etl",
     "services/models-migrator",
+    "services/deployments-migrator",
+    "services/hpc-cluster-seeder",
     "services/principals-migrator",
     "services/federated-identities-migrator",
     "services/model-deployment-controller",
@@ -25,6 +27,7 @@ members = [
     "libs/huggingface-tasks",
     "libs/tapis-client",
     "libs/retry-utils",
+    "libs/evaluations",
 ]
 
 exclude = [
@@ -39,3 +42,4 @@ serde_json = "1.0.135"
 semver = "1.0.26"
 strum = "0.28.0"
 strum_macros = "0.28.0"
+thiserror = "2.0.12"

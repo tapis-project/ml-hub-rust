@@ -1,5 +1,5 @@
-use crate::domain::external::agntcy::domain as agntcy;
 use crate::domain::entities::domain as entities;
+use crate::domain::external::agntcy::domain as agntcy;
 
 impl From<agntcy::Domain> for entities::Domain {
     fn from(value: agntcy::Domain) -> Self {
@@ -103,7 +103,9 @@ impl From<agntcy::Domain> for entities::Domain {
             agntcy::Domain::IotSecurity => entities::Domain::IotSecurity,
             agntcy::Domain::LaboratoryManagement => entities::Domain::LaboratoryManagement,
             agntcy::Domain::LeanManufacturing => entities::Domain::LeanManufacturing,
-            agntcy::Domain::LearningManagementSystems => entities::Domain::LearningManagementSystems,
+            agntcy::Domain::LearningManagementSystems => {
+                entities::Domain::LearningManagementSystems
+            }
             agntcy::Domain::LegalResearch => entities::Domain::LegalResearch,
             agntcy::Domain::Litigation => entities::Domain::Litigation,
             agntcy::Domain::LivestockManagement => entities::Domain::LivestockManagement,
@@ -112,7 +114,7 @@ impl From<agntcy::Domain> for entities::Domain {
             agntcy::Domain::MarketingAnalytics => entities::Domain::MarketingAnalytics,
             agntcy::Domain::MarketingAutomation => entities::Domain::MarketingAutomation,
             agntcy::Domain::MedicalTechnology => entities::Domain::MedicalTechnology,
-            agntcy::Domain::MentalHealthServices => entities::Domain::MentalHealthServices,   
+            agntcy::Domain::MentalHealthServices => entities::Domain::MentalHealthServices,
             agntcy::Domain::Mlops => entities::Domain::Mlops,
             agntcy::Domain::MolecularBiology => entities::Domain::MolecularBiology,
             agntcy::Domain::NetworkArchitecture => entities::Domain::NetworkArchitecture,
@@ -181,7 +183,9 @@ impl From<agntcy::Domain> for entities::Domain {
             agntcy::Domain::TravelServices => entities::Domain::TravelServices,
             agntcy::Domain::Underwriting => entities::Domain::Underwriting,
             agntcy::Domain::UrbanPlanning => entities::Domain::UrbanPlanning,
-            agntcy::Domain::VoipAndUnifiedCommunications => entities::Domain::VoipAndUnifiedCommunications,
+            agntcy::Domain::VoipAndUnifiedCommunications => {
+                entities::Domain::VoipAndUnifiedCommunications
+            }
             agntcy::Domain::WirelessCommunication => entities::Domain::WirelessCommunication,
             agntcy::Domain::WirelessCommunications => entities::Domain::WirelessCommunications,
             agntcy::Domain::WorkflowAutomation => entities::Domain::WorkflowAutomation,

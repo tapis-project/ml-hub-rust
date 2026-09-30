@@ -1,14 +1,11 @@
-use actix_web::{web, post, HttpRequest, Responder, Result};
+use crate::application::artifact_inputs::DownloadArtifactInput;
+use crate::bootstrap::{factories::artifact_service_factory, state::AppState};
+use crate::presentation::http::v1::actix_web::response_helpers::build_error_response;
+use crate::presentation::http::v1::requests::{DownloadModelPath, DownloadModelRequest, Headers};
 use actix_files::NamedFile;
+use actix_web::{post, web, HttpRequest, Responder, Result};
 use shared::application::services::artifact_service::ArtifactServiceError;
 use shared::logging::SharedLogger;
-use crate::bootstrap::{
-    state::AppState,
-    factories::artifact_service_factory
-};
-use crate::application::artifact_inputs::DownloadArtifactInput;
-use crate::presentation::http::v1::requests::{Headers, DownloadModelPath, DownloadModelRequest};
-use crate::presentation::http::v1::actix_web::response_helpers::build_error_response;
 
 #[post("models-api/artifacts/{artifact_id}")]
 async fn download_artifact(
@@ -17,21 +14,18 @@ async fn download_artifact(
     data: web::Data<AppState>,
 ) -> Result<impl Responder> {
     let logger = SharedLogger::new();
-    
+
     logger.debug("Start download model operation");
 
     // Build the request used by the client
     let headers = match Headers::try_from(req.headers()) {
         Ok(h) => h,
         Err(err) => {
-            return Ok(build_error_response(
-                400,
-                String::from(err.to_string())
-            ));
+            return Ok(build_error_response(400, String::from(err.to_string())));
         }
     };
 
-    let request = DownloadModelRequest{
+    let request = DownloadModelRequest {
         headers,
         path: path.into_inner(),
     };
@@ -41,44 +35,47 @@ async fn download_artifact(
     }
 
     // Instantiate an artifact service
-    let artifact_service = artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
+    let artifact_service =
+        artifact_service_factory(&data.client, data.db_name.clone(), data.channel.clone());
 
     // Convert the request requests into an input
     let input = match DownloadArtifactInput::try_from(request) {
         Ok(i) => i,
-        Err(err) => return Ok(build_error_response(500, err.to_string()))
+        Err(err) => return Ok(build_error_response(500, err.to_string())),
     };
-    
+
     let artifact_path = match artifact_service.get_artifact_path(input).await {
         Ok(a) => a,
-        Err(err) => {
-            match err {
-                ArtifactServiceError::NotFound(err) => {
-                    return Ok(build_error_response(500, err.to_string()))
-                },
-                _ => {
-                    logger.debug(&err.to_string());
-                    return Ok(build_error_response(500, "Unexpected error occurred while downloading artifact".to_string()))
-                }
+        Err(err) => match err {
+            ArtifactServiceError::NotFound(err) => {
+                return Ok(build_error_response(500, err.to_string()))
             }
-        }
+            _ => {
+                logger.debug(&err.to_string());
+                return Ok(build_error_response(
+                    500,
+                    "Unexpected error occurred while downloading artifact".to_string(),
+                ));
+            }
+        },
     };
 
     let file = match NamedFile::open(artifact_path) {
         Ok(file) => file,
         Err(err) => {
             logger.debug(&err.to_string());
-            return Ok(build_error_response(500, "Failed to open artifact".to_string()));
+            return Ok(build_error_response(
+                500,
+                "Failed to open artifact".to_string(),
+            ));
         }
     };
 
     let response = file
-        .set_content_disposition(
-            actix_web::http::header::ContentDisposition {
-                disposition: actix_web::http::header::DispositionType::Attachment,
-                parameters: vec![],
-            }
-        )
+        .set_content_disposition(actix_web::http::header::ContentDisposition {
+            disposition: actix_web::http::header::DispositionType::Attachment,
+            parameters: vec![],
+        })
         .into_response(&req);
 
     Ok(response)

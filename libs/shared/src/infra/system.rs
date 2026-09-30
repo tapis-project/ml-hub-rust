@@ -2,9 +2,9 @@ use crate::logging::GlobalLogger;
 // Reexporting for continuity as this module is for code that accesses
 // system software. Both git and git lfs are called via Command
 pub use crate::infra::fs::git;
-use std::process::Command;
-use std::path::PathBuf;
 use std::fs::create_dir_all;
+use std::path::PathBuf;
+use std::process::Command;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -19,7 +19,7 @@ pub enum SystemError {
     CacheDirError(String),
 
     #[error("File system error: {0}")]
-    FileSystemError(String)
+    FileSystemError(String),
 }
 
 /// The Env struct contains data from system environment variables and vaules
@@ -34,26 +34,23 @@ impl Env {
         // Shared data dir
         let shared_data_dir: String = match std::env::var("SHARED_DATA") {
             Ok(var) => var,
-            Err(_) => Err(SystemError::MissingEnvVar("SHARED_DATA".into()))?
+            Err(_) => Err(SystemError::MissingEnvVar("SHARED_DATA".into()))?,
         };
-        
+
         // Cache directory
         let artifacts_cache_dir = format!("{}/{}", shared_data_dir, "cache");
 
         let dirs: Vec<&String> = vec![&shared_data_dir, &artifacts_cache_dir];
         for dir in dirs {
             if !PathBuf::from(dir).exists() {
-                create_dir_all(dir)
-                    .map_err(|err| SystemError::MissingEnvVar(err.to_string()))?;
+                create_dir_all(dir).map_err(|err| SystemError::MissingEnvVar(err.to_string()))?;
             }
         }
 
-        return Ok(
-            Self {
-                shared_data_dir,
-                artifacts_cache_dir
-            }
-        )
+        return Ok(Self {
+            shared_data_dir,
+            artifacts_cache_dir,
+        });
     }
 }
 
@@ -68,10 +65,14 @@ pub fn validate_system_dependencies(programs: SystemPrograms) -> Result<(), Syst
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
                 GlobalLogger::error(format!("Missing system program '{}'", program).as_str());
                 missing_programs.push(program);
-                continue
-            },
+                continue;
+            }
             Err(err) => {
-                let msg = format!("An error has occurred checking for program '{}': {}", program, err.to_string());
+                let msg = format!(
+                    "An error has occurred checking for program '{}': {}",
+                    program,
+                    err.to_string()
+                );
                 GlobalLogger::error(&msg.as_str());
                 SystemError::FileSystemError(msg)
             }
@@ -84,7 +85,7 @@ pub fn validate_system_dependencies(programs: SystemPrograms) -> Result<(), Syst
             let mut err_msg = String::from("Missing required system programs:");
             for program in missing_programs {
                 err_msg.push_str(program)
-            };
+            }
             GlobalLogger::error(&err_msg.as_str());
             Err(SystemError::MissingSystemProgram(err_msg))
         }

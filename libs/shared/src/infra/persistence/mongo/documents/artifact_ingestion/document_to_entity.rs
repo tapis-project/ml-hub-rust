@@ -8,17 +8,23 @@ use uuid::Uuid;
 impl From<documents::artifact_ingestion::ArtifactType> for entities::artifact::ArtifactType {
     fn from(value: documents::artifact_ingestion::ArtifactType) -> Self {
         match value {
-            documents::artifact_ingestion::ArtifactType::Model => entities::artifact::ArtifactType::Model,
-            documents::artifact_ingestion::ArtifactType::Dataset => entities::artifact::ArtifactType::Dataset,
+            documents::artifact_ingestion::ArtifactType::Model => {
+                entities::artifact::ArtifactType::Model
+            }
+            documents::artifact_ingestion::ArtifactType::Dataset => {
+                entities::artifact::ArtifactType::Dataset
+            }
         }
     }
 }
 
-impl From<documents::artifact_ingestion::ArtifactIngestion> for entities::artifact_ingestion::ArtifactIngestion {
+impl From<documents::artifact_ingestion::ArtifactIngestion>
+    for entities::artifact_ingestion::ArtifactIngestion
+{
     fn from(value: documents::artifact_ingestion::ArtifactIngestion) -> Self {
         let artifact_path = match value.artifact_path {
-            Some(s) =>  Some(PathBuf::from(s)),
-            None => None
+            Some(s) => Some(PathBuf::from(s)),
+            None => None,
         };
 
         Self {
@@ -31,23 +37,43 @@ impl From<documents::artifact_ingestion::ArtifactIngestion> for entities::artifa
             last_message: value.last_message,
             platform: value.platform,
             status: entities::artifact_ingestion::ArtifactIngestionStatus::from(value.status),
-            webhook_url: value.webhook_url
+            webhook_url: value.webhook_url,
         }
     }
 }
 
-impl From<documents::artifact_ingestion::ArtifactIngestionStatus> for entities::artifact_ingestion::ArtifactIngestionStatus {
+impl From<documents::artifact_ingestion::ArtifactIngestionStatus>
+    for entities::artifact_ingestion::ArtifactIngestionStatus
+{
     fn from(value: documents::artifact_ingestion::ArtifactIngestionStatus) -> Self {
         match value {
-            documents::artifact_ingestion::ArtifactIngestionStatus::Submitted => entities::artifact_ingestion::ArtifactIngestionStatus::Submitted,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Pending => entities::artifact_ingestion::ArtifactIngestionStatus::Pending,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Resubmitted => entities::artifact_ingestion::ArtifactIngestionStatus::Resubmitted,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Archived => entities::artifact_ingestion::ArtifactIngestionStatus::Archived,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Archiving => entities::artifact_ingestion::ArtifactIngestionStatus::Archiving,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Downloaded => entities::artifact_ingestion::ArtifactIngestionStatus::Downloaded,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Downloading=> entities::artifact_ingestion::ArtifactIngestionStatus::Downloading,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Finished => entities::artifact_ingestion::ArtifactIngestionStatus::Finished,
-            documents::artifact_ingestion::ArtifactIngestionStatus::Failed => entities::artifact_ingestion::ArtifactIngestionStatus::Failed
+            documents::artifact_ingestion::ArtifactIngestionStatus::Submitted => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Submitted
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Pending => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Pending
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Resubmitted => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Resubmitted
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Archived => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Archived
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Archiving => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Archiving
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Downloaded => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Downloaded
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Downloading => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Downloading
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Finished => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Finished
+            }
+            documents::artifact_ingestion::ArtifactIngestionStatus::Failed => {
+                entities::artifact_ingestion::ArtifactIngestionStatus::Failed
+            }
         }
     }
 }

@@ -66,10 +66,9 @@ mod agent_test {
 
     #[test]
     fn reconstitute_agent_preserves_missed_heartbeat_state() -> Result<(), AgentError> {
-        let last_missed_heartbeat = crate::shared_kernel::value_objects::TimeStamp::parse_string(
-            "2026-08-26T12:00:00Z",
-        )
-        .map_err(|error| AgentError::DataIntegrityError(error.to_string()))?;
+        let last_missed_heartbeat =
+            crate::shared_kernel::value_objects::TimeStamp::parse_string("2026-08-26T12:00:00Z")
+                .map_err(|error| AgentError::DataIntegrityError(error.to_string()))?;
         let agent = AgentBuilder::new()
             .with_last_missed_heartbeat(last_missed_heartbeat.clone())
             .with_consecutive_missed_heartbeats(3)

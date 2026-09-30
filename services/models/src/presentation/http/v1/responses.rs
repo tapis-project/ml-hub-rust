@@ -1,9 +1,4 @@
 pub use shared::presentation::http::v1::responses::artifacts::{
-    Artifact,
-    ingestions::ArtifactIngestion,
-    publications::ArtifactPublication,
+    ingestions::ArtifactIngestion, publications::ArtifactPublication, Artifact,
 };
-pub use shared::presentation::http::v1::responses::models::{
-    Model,
-    ModelArtifact,
-};
+pub use shared::presentation::http::v1::responses::models::{Model, ModelArtifact};

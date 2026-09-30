@@ -245,7 +245,6 @@ pub enum Skill {
     Geometry,
     #[doc = "Organizing intermediate reasoning steps into clear, justifiable sequences."]
     ChainOfThoughtStructuring,
-
 }
 
 #[cfg(all(feature = "skill", feature = "identify"))]
@@ -380,7 +379,6 @@ impl Identify for Skill {
             Skill::CodeOptimization => 50204,
             Skill::Geometry => 50103,
             Skill::ChainOfThoughtStructuring => 1503,
-
         }
     }
     fn name(&self) -> String {
@@ -507,8 +505,8 @@ impl Identify for Skill {
             Skill::CodeOptimization => "code_optimization",
             Skill::Geometry => "geometry",
             Skill::ChainOfThoughtStructuring => "chain_of_thought_structuring",
-
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -638,8 +636,8 @@ impl From<Skill> for String {
             Skill::CodeOptimization => "code_optimization",
             Skill::Geometry => "geometry",
             Skill::ChainOfThoughtStructuring => "chain_of_thought_structuring",
-
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -769,7 +767,6 @@ impl From<Skill> for u32 {
             Skill::CodeOptimization => 50204,
             Skill::Geometry => 50103,
             Skill::ChainOfThoughtStructuring => 1503,
-
         }
     }
 }

@@ -1,21 +1,17 @@
 #[cfg(test)]
 mod artifact_publication_test {
-    use uuid::Uuid;
-    use crate::domain::entities::artifact_publication::{
-        ArtifactPublication,
-        ArtifactPublicationStatus
-    };
     use crate::domain::entities::artifact::ArtifactType;
+    use crate::domain::entities::artifact_publication::{
+        ArtifactPublication, ArtifactPublicationStatus,
+    };
+    use uuid::Uuid;
 
     #[test]
     fn test_initializes_correctly() {
         let artifact_id = Uuid::new_v4();
-        let publication = ArtifactPublication::new(
-            artifact_id,
-            ArtifactType::Model,
-            "platform".into(),
-        );
-        
+        let publication =
+            ArtifactPublication::new(artifact_id, ArtifactType::Model, "platform".into());
+
         assert!(publication.artifact_id == artifact_id);
         assert!(publication.artifact_type == ArtifactType::Model);
         assert!(publication.attempts == 0);
@@ -26,15 +22,13 @@ mod artifact_publication_test {
 
     #[test]
     fn test_set_status_and_touch() {
-        let mut publication = ArtifactPublication::new(
-            Uuid::new_v4(),
-            ArtifactType::Model,
-            "platform".into(),
-        );
+        let mut publication =
+            ArtifactPublication::new(Uuid::new_v4(), ArtifactType::Model, "platform".into());
 
         let last_modified_before = publication.last_modified.clone();
 
-        let result = publication.change_status(&ArtifactPublicationStatus::Pending)
+        let result = publication
+            .change_status(&ArtifactPublicationStatus::Pending)
             .map(|p| {
                 // The status should be updated
                 assert!(p.status == ArtifactPublicationStatus::Pending);
@@ -42,20 +36,18 @@ mod artifact_publication_test {
                 // touch function.
                 assert!(p.last_modified.into_inner() > last_modified_before.into_inner());
             });
-        
+
         // Valid state transition must not produce error
         assert!(result.is_err() != true)
     }
 
     #[test]
     fn test_valid_transitions() {
-        let mut publication = ArtifactPublication::new(
-            Uuid::new_v4(),
-            ArtifactType::Model,
-            "platform".into(),
-        );
+        let mut publication =
+            ArtifactPublication::new(Uuid::new_v4(), ArtifactType::Model, "platform".into());
 
-        let maybe_publication = publication.change_status(&ArtifactPublicationStatus::Pending)
+        let maybe_publication = publication
+            .change_status(&ArtifactPublicationStatus::Pending)
             .and_then(|p| {
                 let publication = p.change_status(&ArtifactPublicationStatus::Extracting);
                 assert!(!publication.is_err());
@@ -91,17 +83,14 @@ mod artifact_publication_test {
                 assert!(!publication.is_err());
                 publication
             });
-        
+
         assert!(!maybe_publication.is_err());
     }
 
     #[test]
     fn test_invalid_transitions() {
-        let mut publication = ArtifactPublication::new(
-            Uuid::new_v4(),
-            ArtifactType::Model,
-            "platform".into(),
-        );
+        let mut publication =
+            ArtifactPublication::new(Uuid::new_v4(), ArtifactType::Model, "platform".into());
 
         let maybe_publication = publication.change_status(&ArtifactPublicationStatus::Finished);
         assert!(maybe_publication.is_err())

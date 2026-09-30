@@ -6,13 +6,18 @@ use platforms::Platform;
 
 use crate::{
     domain::entities::{deployment::ParallelismStrategy, operator::Operator},
-    shared_kernel::{
-        enums::DeploymentModality,
-        value_objects::Ttl
-    }
+    shared_kernel::{enums::DeploymentModality, value_objects::Ttl},
 };
 
-use super::{client_strategy::{ClientStrategy, ClientStrategyError}, parameter_set::ParameterSet, rule_set::{Rule, RuleSet}, strategy::{ReconstitueStrategyConfigProps, Strategy, StrategyConfig, StrategyConfigError, StrategyError}};
+use super::{
+    client_strategy::{ClientStrategy, ClientStrategyError},
+    parameter_set::ParameterSet,
+    rule_set::{Rule, RuleSet},
+    strategy::{
+        ReconstitueStrategyConfigProps, Strategy, StrategyConfig, StrategyConfigError,
+        StrategyError,
+    },
+};
 
 #[derive(Debug, Clone)]
 pub struct ReconstitutedClientStrategyBuilder {
@@ -24,7 +29,7 @@ pub struct ReconstitutedClientStrategyBuilder {
     use_parameter_set: Option<String>,
     config: StrategyConfig,
     enabled: Option<bool>,
-    data: Option<HashMap<String, String>>
+    data: Option<HashMap<String, String>>,
 }
 
 impl ReconstitutedClientStrategyBuilder {
@@ -32,18 +37,14 @@ impl ReconstitutedClientStrategyBuilder {
         Self {
             name: "Test Name".into(),
             description: None,
-            rule_sets: Some(vec![
-                RuleSet {
-                    name: "default-rule-set".into(),
-                    rules: vec![
-                        Rule {
-                            field_path: vec!["visibility".into()],
-                            operator: Operator::Eq,
-                            value: "Private".into(),
-                        },
-                    ]
-                }
-            ]),
+            rule_sets: Some(vec![RuleSet {
+                name: "default-rule-set".into(),
+                rules: vec![Rule {
+                    field_path: vec!["visibility".into()],
+                    operator: Operator::Eq,
+                    value: "Private".into(),
+                }],
+            }]),
             use_rule_sets: None,
             parameter_set: None,
             use_parameter_set: None,
@@ -64,7 +65,9 @@ impl ReconstitutedClientStrategyBuilder {
     }
 
     pub fn with_rule_set_reference(mut self, reference: String) -> Self {
-        self.use_rule_sets.get_or_insert_with(Vec::new).push(reference);
+        self.use_rule_sets
+            .get_or_insert_with(Vec::new)
+            .push(reference);
         self
     }
 
@@ -142,7 +145,7 @@ impl ReconstituteStrategyBuilder {
             self.parameter_set.clone(),
             self.config.clone(),
             self.enabled.clone(),
-            self.data.clone()
+            self.data.clone(),
         )?)
     }
 }
@@ -152,7 +155,7 @@ pub struct ReconstitutedStrategyConfigBuilder {
     min_replicas: Option<u64>,
     max_replicas: Option<u64>,
     supported_deployment_modalities: Vec<DeploymentModality>,
-    supported_parallelism_strategies: Vec<ParallelismStrategy>
+    supported_parallelism_strategies: Vec<ParallelismStrategy>,
 }
 
 impl ReconstitutedStrategyConfigBuilder {
@@ -163,7 +166,7 @@ impl ReconstitutedStrategyConfigBuilder {
             min_replicas: Some(1),
             max_replicas: Some(5),
             supported_deployment_modalities: vec![DeploymentModality::Batch],
-            supported_parallelism_strategies: vec![]
+            supported_parallelism_strategies: vec![],
         }
     }
 
@@ -183,15 +186,13 @@ impl ReconstitutedStrategyConfigBuilder {
     }
 
     pub fn build_reconstituted(self) -> Result<StrategyConfig, StrategyConfigError> {
-        StrategyConfig::reconstitute(
-            ReconstitueStrategyConfigProps {
-                max_ttl: self.max_ttl,
-                supported_deployment_modalities: self.supported_deployment_modalities,
-                supported_paralellism_strategies: self.supported_parallelism_strategies,
-                min_replicas: self.min_replicas,
-                max_replicas: self.max_replicas
-            }
-        )
+        StrategyConfig::reconstitute(ReconstitueStrategyConfigProps {
+            max_ttl: self.max_ttl,
+            supported_deployment_modalities: self.supported_deployment_modalities,
+            supported_paralellism_strategies: self.supported_parallelism_strategies,
+            min_replicas: self.min_replicas,
+            max_replicas: self.max_replicas,
+        })
     }
 
     pub fn build(self) -> StrategyConfig {

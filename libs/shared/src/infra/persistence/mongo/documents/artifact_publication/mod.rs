@@ -1,21 +1,21 @@
-pub mod entity_to_document;
 pub mod document_to_entity;
+pub mod entity_to_document;
 
+use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
-use mongodb::bson::{DateTime, Uuid, oid::ObjectId};
 use strum_macros::Display;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ArtifactPublicationError {
     #[error("Invalid status transition: {0}")]
-    InvalidStatusTransition(String)
+    InvalidStatusTransition(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ArtifactType {
     Model,
-    Dataset
+    Dataset,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
@@ -29,13 +29,13 @@ pub enum ArtifactPublicationStatus {
     PublishingArtifact,
     PublishedArtifact,
     Finished,
-    Failed
+    Failed,
 }
 
 type Status = ArtifactPublicationStatus;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ArtifactPublication  {
+pub struct ArtifactPublication {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>,
     pub id: Uuid,

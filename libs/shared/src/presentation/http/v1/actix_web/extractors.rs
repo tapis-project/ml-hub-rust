@@ -1,6 +1,6 @@
-use actix_web::{FromRequest, HttpRequest, dev::Payload, Error, HttpMessage as _};
-use futures_util::future::{ready, Ready};
 use crate::shared_kernel::context::RequestContext;
+use actix_web::{dev::Payload, Error, FromRequest, HttpMessage as _, HttpRequest};
+use futures_util::future::{ready, Ready};
 
 impl FromRequest for RequestContext {
     type Error = Error;

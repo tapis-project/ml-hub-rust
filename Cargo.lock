@@ -1090,6 +1090,19 @@ dependencies = [
  "shared",
  "utoipa",
  "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "deployments-migrator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "mongodb",
+ "shared",
+ "tfiala-mongodb-migrator",
+ "tokio",
 ]
 
 [[package]]
@@ -1343,6 +1356,16 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "evaluations"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -1716,6 +1739,7 @@ version = "0.1.0"
 dependencies = [
  "client-provider",
  "clients",
+ "evaluations",
  "log",
  "mongodb",
  "serde",
@@ -1787,6 +1811,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
  "digest",
+]
+
+[[package]]
+name = "hpc-cluster-seeder"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "env_logger",
+ "log",
+ "mongodb",
+ "serde",
+ "serde_json",
+ "shared",
+ "thiserror",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -4174,6 +4214,7 @@ dependencies = [
  "bytes",
  "chrono",
  "derive_more 2.1.1",
+ "evaluations",
  "futures",
  "futures-util",
  "huggingface-tasks",

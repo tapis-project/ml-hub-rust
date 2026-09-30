@@ -4,6 +4,8 @@ use crate::presentation::http::v1::responses::{
     artifacts::{ingestions::ArtifactIngestion, publications::ArtifactPublication, Artifact},
     datasets::Dataset,
     deployment::{strategy::Strategy, ModelDeployment},
+    deployment_options::DeploymentOption,
+    hpc_clusters::{HpcCluster, HpcClusterSummary},
     models::{ExternalModel, Model, ModelArtifact},
     platform_details::PlatformDetails,
     tasks::Task,
@@ -212,6 +214,16 @@ pub struct GetExternalModelResponse {
 }
 
 #[derive(ToSchema)]
+pub struct ListExternalModelDeploymentOptionsResponse {
+    pub result: Vec<DeploymentOption>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
 pub struct GetModelResponse {
     pub result: Model,
     pub status: u16,
@@ -254,6 +266,26 @@ pub struct ListModelArtifactResponse {
 #[derive(ToSchema)]
 pub struct ListDeploymentStrategiesResponse {
     pub result: Vec<Strategy>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct ListHpcClustersResponse {
+    pub result: Vec<HpcClusterSummary>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct GetHpcClusterResponse {
+    pub result: HpcCluster,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

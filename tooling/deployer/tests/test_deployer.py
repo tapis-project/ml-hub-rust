@@ -89,8 +89,10 @@ fi
         self.assertEqual(
             [
                 "dev buildl models-migrator",
+                "dev buildl deployments-migrator",
                 "dev buildl federated-identities-migrator",
                 "dev buildl principals-migrator",
+                "dev buildl hpc-cluster-seeder",
                 "dev buildl models",
                 "dev buildl datasets",
                 "dev buildl deployments",
@@ -132,6 +134,8 @@ fi
         commands = self._commands()
         self.assertLess(commands.index("dev start nfs -t overlay minikube"), commands.index("dev start rabbit -t overlay minikube"))
         self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run-models migrations -t overlay minikube"))
+        self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run-deployments migrations -t overlay minikube"))
+        self.assertLess(commands.index("dev run-deployments migrations -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
         self.assertLess(commands.index("dev run-principals migrations -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
         self.assertLess(commands.index("dev run hf-model-etl -t overlay minikube"), commands.index("dev run hf-dataset-etl -t overlay minikube"))
@@ -157,6 +161,15 @@ fi
         commands = self._commands()
         self.assertIn("dev run-models migrations -t overlay minikube", commands)
         self.assertNotIn("dev run-federated-identities migrations -t overlay minikube", commands)
+
+    def test_existing_seed_job_fails_before_migrations(self):
+        result = self._run(
+            "start-migrations",
+            DEPLOYER_EXISTING_JOBS="mlhub-hpc-cluster-seeder",
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
 
     def test_failed_build_stops_following_builds(self):
         result = self._run("build-services", DEPLOYER_FAIL_DEV_MATCH="buildl deployments")

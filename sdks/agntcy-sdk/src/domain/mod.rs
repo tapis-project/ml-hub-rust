@@ -363,7 +363,6 @@ pub enum Domain {
     CommunityOutreach,
     #[doc = "Shared transportation services available for the public, such as buses and trains. Subdomains: Urban Transit Planning, Rail Systems, Bus Networks, and Transit Operations."]
     PublicTransit,
-
 }
 
 #[cfg(all(feature = "domain", feature = "identify"))]
@@ -557,7 +556,6 @@ impl Identify for Domain {
             Domain::Insurtech => 2304,
             Domain::CommunityOutreach => 2103,
             Domain::PublicTransit => 803,
-
         }
     }
     fn name(&self) -> String {
@@ -743,8 +741,8 @@ impl Identify for Domain {
             Domain::Insurtech => "insurtech",
             Domain::CommunityOutreach => "community_outreach",
             Domain::PublicTransit => "public_transit",
-
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -933,8 +931,8 @@ impl From<Domain> for String {
             Domain::Insurtech => "insurtech",
             Domain::CommunityOutreach => "community_outreach",
             Domain::PublicTransit => "public_transit",
-
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -1123,7 +1121,6 @@ impl From<Domain> for u32 {
             Domain::Insurtech => 2304,
             Domain::CommunityOutreach => 2103,
             Domain::PublicTransit => 803,
-
         }
     }
 }

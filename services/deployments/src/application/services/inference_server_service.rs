@@ -19,7 +19,7 @@
 //         let inference_server = self.repo
 //             .save(InferenceServer::try_from(input)?)
 //             .await?;
-        
+
 //         return Ok(inference_server);
 //     }
 
@@ -28,7 +28,7 @@
 //         let inference_servers = self.repo
 //             .list_all()
 //             .await?;
-        
+
 //         return Ok(inference_servers);
 //     }
 // }

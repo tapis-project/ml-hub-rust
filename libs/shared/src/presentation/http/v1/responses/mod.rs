@@ -3,18 +3,19 @@ mod output_to_response;
 use serde::Serialize;
 use serde_json::Value;
 
-pub mod models;
 pub mod agent_records;
 pub mod agents;
-pub mod endpoints;
-pub mod deployment;
-pub mod operators;
-pub mod visibility;
-pub mod tasks;
 pub mod artifacts;
-pub mod platform_details;
 pub mod datasets;
-
+pub mod deployment;
+pub mod deployment_options;
+pub mod endpoints;
+pub mod hpc_clusters;
+pub mod models;
+pub mod operators;
+pub mod platform_details;
+pub mod tasks;
+pub mod visibility;
 
 #[derive(Serialize)]
 pub struct JsonResponse {
@@ -22,5 +23,5 @@ pub struct JsonResponse {
     pub message: Option<String>,
     pub result: Option<Value>,
     pub metadata: Option<Value>,
-    pub version: Option<String>
+    pub version: Option<String>,
 }

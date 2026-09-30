@@ -1,10 +1,13 @@
-pub use crate::shared_kernel::value_objects::TimeStamp;
 use crate::errors::Error as GenericError;
+pub use crate::shared_kernel::value_objects::TimeStamp;
 pub use mongodb::bson::DateTime;
 use mongodb::options::Credential;
-use mongodb::{error::{Error, ErrorKind, WriteError, WriteFailure}, Database, IndexModel};
+use mongodb::{
+    error::{Error, ErrorKind, WriteError, WriteFailure},
+    Database, IndexModel,
+};
+use mongodb::{options::ClientOptions, Client};
 use serde::Serialize;
-use mongodb::{Client, options::ClientOptions};
 
 pub struct ClientParams {
     pub username: String,
@@ -12,11 +15,12 @@ pub struct ClientParams {
     pub host: String,
     pub port: String,
     pub db: String,
-    pub replica_set: Option<String>
+    pub replica_set: Option<String>,
 }
 
 pub async fn initialize_client(params: ClientParams) -> Result<Client, GenericError> {
-    let mut options = ClientOptions::parse(format!("mongodb://{}:{}", params.host, params.port)).await
+    let mut options = ClientOptions::parse(format!("mongodb://{}:{}", params.host, params.port))
+        .await
         .map_err(|err| GenericError::new(err.to_string()))?;
 
     let credential = Credential::builder()
@@ -32,9 +36,8 @@ pub async fn initialize_client(params: ClientParams) -> Result<Client, GenericEr
         options.repl_set_name = Some(rs);
     }
 
-    let client = Client::with_options(options)
-        .map_err(|err| GenericError::new(err.to_string()))?;
-    
+    let client = Client::with_options(options).map_err(|err| GenericError::new(err.to_string()))?;
+
     Ok(client)
 }
 
@@ -54,13 +57,11 @@ pub trait Index {
         };
 
         let result = match error.kind.as_ref().clone() {
-            ErrorKind::Command(cmd_err) => {
-                match cmd_err.code {
-                    48 => Ok(()),
-                    _ => Err(error)
-                }
+            ErrorKind::Command(cmd_err) => match cmd_err.code {
+                48 => Ok(()),
+                _ => Err(error),
             },
-            _ => Err(error)
+            _ => Err(error),
         };
 
         result

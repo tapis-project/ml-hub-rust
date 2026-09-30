@@ -17,8 +17,8 @@ impl From<documents::ArtifactType> for entities::artifact::ArtifactType {
 impl From<documents::Artifact> for entities::artifact::Artifact {
     fn from(value: documents::Artifact) -> Self {
         let path = match value.path {
-            Some(s) =>  Some(PathBuf::from(s)),
-            None => None
+            Some(s) => Some(PathBuf::from(s)),
+            None => None,
         };
 
         Self {
@@ -26,7 +26,7 @@ impl From<documents::Artifact> for entities::artifact::Artifact {
             artifact_type: entities::artifact::ArtifactType::from(value.artifact_type),
             last_modified: TimeStamp::from(value.last_modified.to_chrono()),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
-            path
+            path,
         }
     }
 }

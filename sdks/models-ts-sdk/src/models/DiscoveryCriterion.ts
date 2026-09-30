@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    DeploymentModality,
+    DeploymentModalityFromJSON,
+    DeploymentModalityFromJSONTyped,
+    DeploymentModalityToJSON,
     DeploymentStrategyCriterion,
     DeploymentStrategyCriterionFromJSON,
     DeploymentStrategyCriterionFromJSONTyped,
@@ -22,6 +26,10 @@ import {
     ModelProviderFromJSON,
     ModelProviderFromJSONTyped,
     ModelProviderToJSON,
+    ServingRuntime,
+    ServingRuntimeFromJSON,
+    ServingRuntimeFromJSONTyped,
+    ServingRuntimeToJSON,
     Task,
     TaskFromJSON,
     TaskFromJSONTyped,
@@ -42,6 +50,12 @@ export interface DiscoveryCriterion {
     author?: string | null;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof DiscoveryCriterion
+     */
+    batch_scheduler_queue_ids?: Array<string>;
+    /**
+     * 
      * @type {Array<DeploymentStrategyCriterion>}
      * @memberof DiscoveryCriterion
      */
@@ -51,7 +65,19 @@ export interface DiscoveryCriterion {
      * @type {boolean}
      * @memberof DiscoveryCriterion
      */
+    has_deployment_options?: boolean | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DiscoveryCriterion
+     */
     has_deployment_strategies?: boolean | null;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DiscoveryCriterion
+     */
+    hpc_cluster_ids?: Array<string>;
     /**
      * 
      * @type {Array<string>}
@@ -114,6 +140,18 @@ export interface DiscoveryCriterion {
     provider?: ModelProvider;
     /**
      * 
+     * @type {Array<ServingRuntime>}
+     * @memberof DiscoveryCriterion
+     */
+    serving_runtimes?: Array<ServingRuntime>;
+    /**
+     * 
+     * @type {Array<DeploymentModality>}
+     * @memberof DiscoveryCriterion
+     */
+    supported_deployment_modalities?: Array<DeploymentModality>;
+    /**
+     * 
      * @type {Array<string>}
      * @memberof DiscoveryCriterion
      */
@@ -137,8 +175,11 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'author': !exists(json, 'author') ? undefined : json['author'],
+        'batch_scheduler_queue_ids': !exists(json, 'batch_scheduler_queue_ids') ? undefined : json['batch_scheduler_queue_ids'],
         'deployment_strategies': !exists(json, 'deployment_strategies') ? undefined : ((json['deployment_strategies'] as Array<any>).map(DeploymentStrategyCriterionFromJSON)),
+        'has_deployment_options': !exists(json, 'has_deployment_options') ? undefined : json['has_deployment_options'],
         'has_deployment_strategies': !exists(json, 'has_deployment_strategies') ? undefined : json['has_deployment_strategies'],
+        'hpc_cluster_ids': !exists(json, 'hpc_cluster_ids') ? undefined : json['hpc_cluster_ids'],
         'inference_runtimes': !exists(json, 'inference_runtimes') ? undefined : json['inference_runtimes'],
         'license': !exists(json, 'license') ? undefined : json['license'],
         'max_downloads': !exists(json, 'max_downloads') ? undefined : json['max_downloads'],
@@ -149,6 +190,8 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
         'min_size': !exists(json, 'min_size') ? undefined : json['min_size'],
         'name': !exists(json, 'name') ? undefined : json['name'],
         'provider': !exists(json, 'provider') ? undefined : ModelProviderFromJSON(json['provider']),
+        'serving_runtimes': !exists(json, 'serving_runtimes') ? undefined : ((json['serving_runtimes'] as Array<any>).map(ServingRuntimeFromJSON)),
+        'supported_deployment_modalities': !exists(json, 'supported_deployment_modalities') ? undefined : ((json['supported_deployment_modalities'] as Array<any>).map(DeploymentModalityFromJSON)),
         'tags': !exists(json, 'tags') ? undefined : json['tags'],
         'task_types': !exists(json, 'task_types') ? undefined : ((json['task_types'] as Array<any>).map(TaskFromJSON)),
     };
@@ -164,8 +207,11 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
     return {
         
         'author': value.author,
+        'batch_scheduler_queue_ids': value.batch_scheduler_queue_ids,
         'deployment_strategies': value.deployment_strategies === undefined ? undefined : ((value.deployment_strategies as Array<any>).map(DeploymentStrategyCriterionToJSON)),
+        'has_deployment_options': value.has_deployment_options,
         'has_deployment_strategies': value.has_deployment_strategies,
+        'hpc_cluster_ids': value.hpc_cluster_ids,
         'inference_runtimes': value.inference_runtimes,
         'license': value.license,
         'max_downloads': value.max_downloads,
@@ -176,6 +222,8 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
         'min_size': value.min_size,
         'name': value.name,
         'provider': ModelProviderToJSON(value.provider),
+        'serving_runtimes': value.serving_runtimes === undefined ? undefined : ((value.serving_runtimes as Array<any>).map(ServingRuntimeToJSON)),
+        'supported_deployment_modalities': value.supported_deployment_modalities === undefined ? undefined : ((value.supported_deployment_modalities as Array<any>).map(DeploymentModalityToJSON)),
         'tags': value.tags,
         'task_types': value.task_types === undefined ? undefined : ((value.task_types as Array<any>).map(TaskToJSON)),
     };
