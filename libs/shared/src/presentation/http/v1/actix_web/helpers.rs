@@ -1,8 +1,8 @@
-use crate::presentation::http::v1::responses::JsonResponse;
-use crate::presentation::http::v1::requests::common::Parameters;
 use crate::errors::Error;
+use crate::presentation::http::v1::requests::common::Parameters;
+use crate::presentation::http::v1::responses::JsonResponse;
+use actix_web::{http::StatusCode, HttpRequest, HttpResponse};
 use serde_json::Value;
-use actix_web::{HttpRequest, HttpResponse, http::StatusCode};
 
 pub fn param_to_string(params: Option<Parameters>, prop: &str) -> Result<Option<String>, Error> {
     let val = match params.and_then(|mut m| m.remove(prop)) {
@@ -21,8 +21,12 @@ pub fn get_header_value(header_key: &str, request: &HttpRequest) -> Option<Strin
         .map(|value| String::from(value))
 }
 
-
-pub fn build_error_response(status: u16, message: String, version: Option<String>, metadata: Option<Value>) -> HttpResponse {
+pub fn build_error_response(
+    status: u16,
+    message: String,
+    version: Option<String>,
+    metadata: Option<Value>,
+) -> HttpResponse {
     match StatusCode::from_u16(status) {
         Ok(code) => {
             return HttpResponse::build(code)
@@ -34,13 +38,16 @@ pub fn build_error_response(status: u16, message: String, version: Option<String
                     metadata,
                     version,
                 })
-        },
+        }
         Err(err) => {
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
                 .json(JsonResponse {
                     status: Some(500),
-                    message: Some(format!("Invalid http status code found: {}", err.to_string())),
+                    message: Some(format!(
+                        "Invalid http status code found: {}",
+                        err.to_string()
+                    )),
                     result: None,
                     metadata,
                     version,
@@ -49,7 +56,12 @@ pub fn build_error_response(status: u16, message: String, version: Option<String
     }
 }
 
-pub fn build_success_response(result: Option<Value>, message: Option<String>, version: Option<String>, metadata: Option<Value>) -> HttpResponse {
+pub fn build_success_response(
+    result: Option<Value>,
+    message: Option<String>,
+    version: Option<String>,
+    metadata: Option<Value>,
+) -> HttpResponse {
     HttpResponse::Ok()
         .content_type("application/json")
         .json(JsonResponse {

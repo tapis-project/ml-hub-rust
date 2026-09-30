@@ -15,10 +15,9 @@ patches:
           spec:
             containers:
               - name: federated-identities-migrator
-                image: tapis/mlhub-federated-identities-migrator:26Q2.0
+                image: tapis/mlhub-federated-identities-migrator:26Q2.3
                 imagePullPolicy: Always
                 resources: {}
                 env:
                   - name: MONGO_HOST
                     value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisprod.svc.cluster.local
-

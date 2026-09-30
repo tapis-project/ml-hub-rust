@@ -23,7 +23,10 @@ impl FileAppender {
         Self {}
     }
 
-    pub async fn append_chunk(destination: &PathBuf, chunk: Vec<u8>) -> Result<(), FileAppendError> {
+    pub async fn append_chunk(
+        destination: &PathBuf,
+        chunk: Vec<u8>,
+    ) -> Result<(), FileAppendError> {
         GlobalLogger::debug(
             format!(
                 "FILE STACKING (DESTINATION: {})",
@@ -35,10 +38,7 @@ impl FileAppender {
         if let Some(parent_dir) = destination.parent() {
             tokio::fs::create_dir_all(parent_dir)
                 .await
-                .map_err(|err| {
-                    FileAppendError::MkdirError(err.to_string())
-                }
-            )?;
+                .map_err(|err| FileAppendError::MkdirError(err.to_string()))?;
         }
 
         // 2. use OpenOptions to open the file for writing

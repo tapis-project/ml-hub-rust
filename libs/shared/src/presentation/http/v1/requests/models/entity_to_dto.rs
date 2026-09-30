@@ -1,6 +1,6 @@
 use crate::presentation::http::v1::requests::models as requests;
 use crate::presentation::http::v1::requests::task;
-use crate::domain::entities::model_metadata as entities;
+use crate::domain::entities::model as entities;
 use crate::errors::Error;
 
 impl TryFrom<entities::SystemRequirement> for requests::SystemRequirement {
@@ -58,10 +58,10 @@ impl TryFrom<entities::ModelIO> for requests::ModelIO {
         })
     }
 }
-impl TryFrom<entities::ModelMetadata> for requests::ModelMetadata {
+impl TryFrom<entities::Model> for requests::Model {
     type Error = Error;
     
-    fn try_from(value: entities::ModelMetadata) -> Result<Self, Self::Error> {
+    fn try_from(value: entities::Model) -> Result<Self, Self::Error> {
         let mut task_types: Vec<task::Task> = Vec::new();
         for task_type in value.task_types.unwrap_or(Vec::with_capacity(0)) {
             task_types.push(task::Task::from(task_type))

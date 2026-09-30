@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+projectRoot=$1
+if [[ -z $projectRoot ]]; then
+    echo ❌ Must provide the path to the project root
+    exit 1
+fi
+
+npmrcPath=$2
+if [[ -z $npmrcPath ]]; then
+    echo ❌ Must provide the local path to the .npmrc file
+    exit 1
+fi
+
+docker run \
+    -it \
+    --rm \
+    --workdir /src/tooling/typescript-sdk-generator \
+    --mount type=bind,source="$projectRoot/tooling/typescript-sdk-generator",target=/src/tooling/typescript-sdk-generator \
+    --mount type=volume,target=/src/tooling/typescript-sdk-generator/node_modules \
+    --mount type=bind,source="$projectRoot/specs",target=/src/specs \
+    --mount type=bind,source="$projectRoot/sdks",target=/src/sdks \
+    --mount type=bind,source="$npmrcPath",target=/root/.npmrc \
+    tapis/mlhub-typescript-sdk-generator:local

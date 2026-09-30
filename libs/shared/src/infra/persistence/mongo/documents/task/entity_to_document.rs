@@ -1,6 +1,5 @@
-
-use crate::shared_kernel::enums::Task;
 use crate::infra::persistence::mongo::documents::task as documents;
+use crate::shared_kernel::enums::Task;
 
 impl From<Task> for documents::Task {
     fn from(value: Task) -> Self {

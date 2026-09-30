@@ -1,0 +1,30 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-hf-dataset-etl
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-hf-dataset-etl
+      spec:
+        template:
+          metadata:
+            name: mlhub-hf-dataset-etl
+          spec:
+            initContainers:
+              - name: extract
+                env:
+                  - name: MAX_RECORDS
+                    value: "5000"
+                image: tapis/mlhub-hf-dataset-etl-extract:local
+            containers:
+              - name: hf-dataset-etl
+                env:
+                  - name: MAX_PROCESSABLE_ENTRIES
+                    value: "5000"
+                image: tapis/mlhub-hf-dataset-etl-transform-load:local
+                imagePullPolicy: Never

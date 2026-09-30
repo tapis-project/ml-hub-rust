@@ -43,15 +43,16 @@
         {
             "name": "FlexServerDeployerCompatible",
             "rules": [
-                {"field_path": ["libraries"], "operator": "Contains", "value": "transformers"},
-                {"field_path": ["task_types"], "operator": "AnyIn", "value": ["TextGeneration"]}
+                {"field_path": ["provider"], "operator": "Eq", "value": "HuggingFace"},
+                {"field_path": ["metadata", "derived", "inference_runtimes"], "operator": "Contains", "value": "transformers"},
+                {"field_path": ["metadata", "derived", "task_types"], "operator": "AnyIn", "value": ["TextGeneration"]}
             ]
         },
         {
             "name": "VisibilePublic",
             "rules": [
-                {"field_path": ["annotations", "canonical", "gated"], "operator": "Eq", "value": false},
-                {"field_path": ["annotations", "canonical", "private"], "operator": "Eq", "value": false}
+                {"field_path": ["metadata", "derived", "gated"], "operator": "Eq", "value": false},
+                {"field_path": ["metadata", "derived", "private"], "operator": "Eq", "value": false}
             ]
         }
     ],

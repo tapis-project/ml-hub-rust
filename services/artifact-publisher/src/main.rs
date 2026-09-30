@@ -33,7 +33,7 @@ use std::env;
 use artifact_publisher::bootstrap::artifact_service_factory;
 use artifact_publisher::database::{initialize_client, ClientParams};
 use shared::infra::fs::archiver::Archiver;
-use clients::{ClientError, PublishModelClient, PublishModelMetadataClient};
+use clients::{ClientError, PublishModelArtifactClient, PublishModelClient};
 use log::{error, info};
 
 struct ArtifactPublisherConsumer {
@@ -88,11 +88,11 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
         // Publish the artifact
         match artifact.artifact_type {
             ArtifactType::Model => {
-                // Fetch metadata associated with the model
-                let maybe_metadata = self.artifact_service.find_metadata_by_artifact_id(
+                // Fetch the model associated with the artifact.
+                let maybe_model = self.artifact_service.find_model_by_artifact_id(
                     &publication.artifact_id
                 ).await
-                    .expect(format!("Failed to fetch metadata for artifact '{}'", &artifact.id.to_string()).as_str());
+                    .expect(format!("Failed to fetch model for artifact '{}'", &artifact.id.to_string()).as_str());
 
                 // Update artifact publication to Pending
                 self.artifact_service.change_publication_status_by_publication_id(
@@ -105,25 +105,24 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                     panic!("Error updating publication status: {}", err.to_string())
                 }).unwrap();
                 
-                // Check whether at least one of the publish_model_client or the 
-                // publish_metadata_client exists
-                let (maybe_publish_model_client, maybe_publish_metadata_client) = {
+                // Check whether at least one artifact or model publishing client exists.
+                let (maybe_publish_model_artifact_client, maybe_publish_model_client) = {
+                    let maybe_artifact = ClientProvider::provide_publish_model_artifact_client(&publication.target_platform);
                     let maybe_model = ClientProvider::provide_publish_model_client(&publication.target_platform);
-                    let maybe_meta  = ClientProvider::provide_publish_metadata_client(&publication.target_platform);
                 
-                    match (maybe_model, maybe_meta) {
+                    match (maybe_artifact, maybe_model) {
                         (Err(_), Err(_)) => panic!(
-                            "Failed to find a client for both model and metadata publishing for platform {}",
+                            "Failed to find an artifact or model publishing client for platform {}",
                             publication.target_platform
                         ),
-                        (Ok(model), meta) => (Some(model), meta.ok()),
-                        (model, Ok(meta)) => (model.ok(), Some(meta)),
+                        (Ok(artifact), model) => (Some(artifact), model.ok()),
+                        (artifact, Ok(model)) => (artifact.ok(), Some(model)),
                     }
                 };
 
                 // Extract the artifact files and publish those files to the target
                 // platform
-                if let Some(client) = maybe_publish_model_client {
+                if let Some(client) = maybe_publish_model_artifact_client {
                     // Update publication status to Extracting
                     self.artifact_service.change_publication_status_by_publication_id(
                         publication_id.clone(),
@@ -169,7 +168,7 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         }).unwrap();
                     
                     // Publish the model files to the target platform
-                    match client.publish_model(&extracted_artifact_path, &artifact, maybe_metadata.as_ref(), &client_request).await {
+                    match client.publish_model_artifact(&extracted_artifact_path, &artifact, maybe_model.as_ref(), &client_request).await {
                         Ok(_) => {            
                             // Update publication status to PublishedArtifact
                             self.artifact_service.change_publication_status_by_publication_id(
@@ -183,8 +182,8 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                                 }).unwrap();
                         },
                         // Do nothing if getting an unimplemented error. This is because
-                        // we have already guaranteed that either there is a publish model
-                        // client, or a publish model metadata client and a platform client
+                        // we have already guaranteed that either there is an artifact
+                        // publishing client or a model publishing client, and a platform client
                         // only needs to implement one of those.
                         Err(ClientError::Unimplemented)  => {
                             println!("Should be unreachable");
@@ -214,12 +213,12 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                         .expect(format!("Error cleaning up extracted artifact at path {}", &extracted_artifact_path.to_string_lossy().to_string()).as_str());
                 }
 
-                // Publish the model metadata to the target platform
-                if let Some(client) = maybe_publish_metadata_client {
-                    // Update publication status to PublishingMetadata
+                // Publish the model to the target platform.
+                if let Some(client) = maybe_publish_model_client {
+                    // Update publication status to PublishingModel
                     self.artifact_service.change_publication_status_by_publication_id(
                         publication_id.clone(),
-                        ArtifactPublicationStatus::PublishingMetadata,
+                        ArtifactPublicationStatus::PublishingModel,
                         Some("Artifact published successfully".into())
                     )
                         .await
@@ -227,23 +226,23 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                             panic!("Error updating publication status: {}", err.to_string())
                         }).unwrap();
                     
-                    let metadata = match maybe_metadata {
+                    let model = match maybe_model {
                         Some(m) => m,
                         None => {
-                            eprintln!("Cannot publish metadata without metadata (:");
+                            eprintln!("Cannot publish a model without a model (:");
                             nack(&channel, &deliver, None, None).await;
                             return;
                         }
                     };
 
                     // Publish the model files to the target platform
-                    match client.publish_model_metadata(&metadata, &client_request).await {
+                    match client.publish_model(&model, &client_request).await {
                         Ok(_) => {
-                            // Update publication status to PublishedMetadata
+                            // Update publication status to PublishedModel
                             self.artifact_service.change_publication_status_by_publication_id(
                                 publication_id.clone(),
-                                ArtifactPublicationStatus::PublishedMetadata,
-                                Some("Metadata published successfully".into())
+                                ArtifactPublicationStatus::PublishedModel,
+                                Some("Model published successfully".into())
                             )
                                 .await
                                 .map_err(|err| {
@@ -251,8 +250,8 @@ impl AsyncConsumer for ArtifactPublisherConsumer {
                                 }).unwrap();
                         },
                         // Do nothing if getting an unimplemented error. This is because
-                        // we have already guaranteed that either there is a publish model
-                        // client, or a publish model metadata client and a platform client
+                        // we have already guaranteed that either there is an artifact
+                        // publishing client or a model publishing client, and a platform client
                         // only needs to implement one of those.
                         Err(ClientError::Unimplemented)  => {},
                         // All other errors are considered failure conditions. Handle them

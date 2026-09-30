@@ -1,0 +1,18 @@
+[package]
+name = "hf-dataset-etl"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+mongodb = "3.5.1"
+serde = { workspace = true }
+serde_json = { workspace = true }
+shared = { version = "0.1.0", path = "../../libs/shared" }
+thiserror = "2.0.17"
+tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+async-trait = "0.1.88"
+tempfile = "3.20.0"
+uuid = "1.15.1"

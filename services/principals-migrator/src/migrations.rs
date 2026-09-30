@@ -1,19 +1,17 @@
-use mongodb::Database;
-use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 use async_trait::async_trait;
-use shared::infra::principal::mongo::indexes::PrincipalIdTenantIdIndexUnique;
+use mongodb::Database;
 use shared::infra::_common::mongo::Index;
+use shared::infra::principal::mongo::indexes::PrincipalIdTenantIdIndexUnique;
+use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
-    vec![
-        Box::new(CreatePrincipalIdTenantIdIndexUniqueMigration),
-    ]
+    vec![Box::new(CreatePrincipalIdTenantIdIndexUniqueMigration)]
 }
 
 pub struct CreatePrincipalIdTenantIdIndexUniqueMigration;
 
 #[async_trait]
-impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {  
+impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {
     async fn up(&self, env: Env) -> anyhow::Result<()> {
         let db: &Database = &env.db.unwrap();
 
@@ -21,9 +19,11 @@ impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {
             .await
             .expect("Collection to be created");
 
-        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(PrincipalIdTenantIdIndexUnique::collection_name())
-            .create_index(PrincipalIdTenantIdIndexUnique::index())
-            .await?;
+        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(
+            PrincipalIdTenantIdIndexUnique::collection_name(),
+        )
+        .create_index(PrincipalIdTenantIdIndexUnique::index())
+        .await?;
 
         Ok(())
     }
@@ -35,8 +35,12 @@ impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {
             .await
             .expect("Collection to be created");
 
-        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(PrincipalIdTenantIdIndexUnique::collection_name()).drop_index(PrincipalIdTenantIdIndexUnique::INDEX_NAME).await?;
-        
+        db.collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(
+            PrincipalIdTenantIdIndexUnique::collection_name(),
+        )
+        .drop_index(PrincipalIdTenantIdIndexUnique::INDEX_NAME)
+        .await?;
+
         Ok(())
     }
 }

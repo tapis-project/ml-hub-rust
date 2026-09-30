@@ -13,7 +13,6 @@ use async_trait::async_trait;
 use platforms::Platform;
 use thiserror::Error;
 
-
 #[derive(Debug, Error)]
 pub enum ModelDeploymentRepositoryError {
     #[error(transparent)]
@@ -22,10 +21,23 @@ pub enum ModelDeploymentRepositoryError {
 
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
-    async fn save(&self, deployment: &ModelDeployment) -> Result<(), ModelDeploymentRepositoryError>;
-    async fn update(&self, deployment: &ModelDeployment) -> Result<(), ModelDeploymentRepositoryError>;
-    async fn find(&self, input: &FilterInput) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
-    async fn find_by_owner(&self, tenant_id: &str, owner: &str) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
+    async fn save(
+        &self,
+        deployment: &ModelDeployment,
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+    async fn update(
+        &self,
+        deployment: &ModelDeployment,
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+    async fn find(
+        &self,
+        input: &FilterInput,
+    ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+    async fn find_by_owner(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+    ) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
 }
 
 #[async_trait]
@@ -45,5 +57,12 @@ pub enum ModelDeploymentPlatformReconcilerProviderError {
 
 #[async_trait]
 pub trait ModelDeploymentPlatformReconcilerProvider: Send + Sync {
-    async fn provide(&self, platform: &Platform, site_context: &SiteContext) -> Result<Arc<dyn ModelDeploymentPlatformReconciliationClient>, ModelDeploymentPlatformReconcilerProviderError>;
+    async fn provide(
+        &self,
+        platform: &Platform,
+        site_context: &SiteContext,
+    ) -> Result<
+        Arc<dyn ModelDeploymentPlatformReconciliationClient>,
+        ModelDeploymentPlatformReconcilerProviderError,
+    >;
 }

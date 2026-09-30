@@ -3,8 +3,8 @@ pub mod entity_to_response;
 // use super::rule_set::RuleSet;
 use super::{parameter_set::Parameter, ParallelismStrategy};
 use platforms::Platform;
-use utoipa::ToSchema;
 use serde::Serialize;
+use utoipa::ToSchema;
 
 #[derive(Clone, Debug, ToSchema, Serialize)]
 pub struct Strategy {

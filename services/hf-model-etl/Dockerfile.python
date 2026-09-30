@@ -2,6 +2,7 @@ FROM python:3.12.8
 
 ARG SERVICE_DIR
 
-RUN pip install huggingface-hub
+RUN pip install "huggingface-hub>=1.2,<2"
 
 COPY ${SERVICE_DIR}/scripts/extract.py /src/extract.py
+COPY ${SERVICE_DIR}/scripts/rate_limit.py /src/rate_limit.py

@@ -44,16 +44,18 @@ runs:
         DIFF=$(git diff --name-only "$BASE" "$HEAD" || true)
 
         SERVICES=(
+          agents
           models
           deployments
           model-deployment-controller
-          artifact-ingester
-          artifact-publisher
           models-migrator
+          deployments-migrator
+          hpc-cluster-seeder
           principals-migrator
           federated-identities-migrator
+          hf-dataset-etl
           hf-model-etl
-          # datasets
+          datasets
         )
 
         JSON=$(jq -n '{services: []}')

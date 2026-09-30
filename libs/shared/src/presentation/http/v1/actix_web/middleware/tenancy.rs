@@ -1,17 +1,15 @@
-use crate::infra::configuration::{TenancyResolutionMode, SiteConfiguration};
 use crate::domain::entities::tenancy::Tenant;
+use crate::infra::configuration::{SiteConfiguration, TenancyResolutionMode};
 use actix_web::HttpResponse;
 use actix_web::{
-    web,
-    middleware::Next,
     body::{EitherBody, MessageBody},
     dev::{ServiceRequest, ServiceResponse},
-    Error,
-    HttpMessage
+    middleware::Next,
+    web, Error, HttpMessage,
 };
+use log::error;
 use serde_json::json;
 use url_parse::core::Parser;
-use log::error;
 
 pub async fn resolve_tenancy(
     req: ServiceRequest,
@@ -21,11 +19,12 @@ pub async fn resolve_tenancy(
         Some(c) => c.into_inner(),
         None => {
             error!("Site configuration missing from the request's app data");
-            return Ok(
-                req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "SiteConfiguration missing"})))
-                    .map_into_right_body()
-            )
+            return Ok(req
+                .into_response(
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "SiteConfiguration missing"})),
+                )
+                .map_into_right_body());
         }
     };
 
@@ -40,14 +39,15 @@ pub async fn resolve_tenancy(
         Some(domain) => domain,
         None => {
             error!("Failed to resolve FQDN from X-Forwarded-Host and Host headers");
-            return Ok(
-                req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Failed to resolve FQDN"})))
-                    .map_into_right_body()
-            )
+            return Ok(req
+                .into_response(
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "Failed to resolve FQDN"})),
+                )
+                .map_into_right_body());
         }
     };
-    
+
     let url = match Parser::new(None).parse(&fqdn) {
         Ok(u) => u,
         Err(err) => {
@@ -56,32 +56,35 @@ pub async fn resolve_tenancy(
                 req
                     .into_response(HttpResponse::InternalServerError().json(json!({"error": format!("Failed parse url when resolving tenancy: {}", err.to_string())})))
                     .map_into_right_body()
-            )
+            );
         }
     };
 
     let maybe_tenant_id = match config.tenancy_resolution_mode {
         TenancyResolutionMode::Subdomain => {
-            url.subdomain
-                .as_ref()
-                .and_then(|s| s.split(".").next())
+            url.subdomain.as_ref().and_then(|s| s.split(".").next())
         }
     };
 
     let tenant_id = match maybe_tenant_id {
         Some(t) => t,
         None => {
-            error!("Unable to resolve tenant id using the following tenancy resolution mode: {}", &config.tenancy_resolution_mode);
-            return Ok(
-                req
-                    .into_response(HttpResponse::InternalServerError().json(json!({"error": "Unable to resolve tenant id"})))
-                    .map_into_right_body()
-            )
+            error!(
+                "Unable to resolve tenant id using the following tenancy resolution mode: {}",
+                &config.tenancy_resolution_mode
+            );
+            return Ok(req
+                .into_response(
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "Unable to resolve tenant id"})),
+                )
+                .map_into_right_body());
         }
     };
 
-    req.extensions_mut().insert(Tenant { id: tenant_id.to_string() });
+    req.extensions_mut().insert(Tenant {
+        id: tenant_id.to_string(),
+    });
 
     Ok(next.call(req).await?.map_into_left_body())
 }
-

@@ -1,3 +1,3 @@
 pub mod authentication;
-pub mod tenancy;
 pub mod preflight;
+pub mod tenancy;

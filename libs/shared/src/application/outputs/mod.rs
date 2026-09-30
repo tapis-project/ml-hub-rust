@@ -1,4 +1,6 @@
 pub mod artifacts;
-pub mod discover_models;
+pub mod dataset;
 pub mod deployment;
-pub mod model_metadata;
+pub mod deployment_option;
+pub mod hpc_cluster;
+pub mod model;

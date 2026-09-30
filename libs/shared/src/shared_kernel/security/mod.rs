@@ -13,7 +13,7 @@ pub enum EncryptionEnvelopeMetadata {
 
         /// A value that ensure encryption of the same data results in different values
         nonce: value_objects::Nonce,
-    }
+    },
 }
 
 impl EncryptionEnvelopeMetadata {
@@ -30,10 +30,7 @@ pub struct EncryptionEnvelope {
 
 impl EncryptionEnvelope {
     pub fn new(payload: Base64EncodedString, metadata: EncryptionEnvelopeMetadata) -> Self {
-        Self {
-            payload,
-            metadata,
-        }
+        Self { payload, metadata }
     }
 
     pub fn payload(&self) -> &Base64EncodedString {
@@ -48,4 +45,3 @@ impl EncryptionEnvelope {
         &self.metadata
     }
 }
-

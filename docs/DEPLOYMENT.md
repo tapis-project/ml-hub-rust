@@ -26,55 +26,67 @@ https://minikube.sigs.k8s.io/docs/start/?arch=%2Fmacos%2Farm64%2Fstable%2Fbinary
 You will need to start Minikube with at least 2 nodes. Run the following command:
 `minikube start --nodes 2 --disk-space=50g --memory=4g`
 
-**Note** You may need to tune the disk space and memory for you machine. If you want to run the Huggingface Model ETL Pipeline (recommended), you will need more disk space than is allocated by default to the Minikube VM. Provision Minikube with at least 50gb to be safe. As the HuggingFace model metadata collection grows in size over time, you may need to allocate additional disk space to accomodate it.
+**Note** You may need to tune the disk space and memory for you machine. If you want to run the Huggingface Model ETL Pipeline (recommended), you will need more disk space than is allocated by default to the Minikube VM. Provision Minikube with at least 50gb to be safe. As the HuggingFace model collection grows in size over time, you may need to allocate additional disk space to accomodate it.
 
 ## 2. Start your Engines! 🏎️
 
-Now that you have all the necessary tools installed, we can start up the MLHub Models suite. 
+### Deploy the complete local stack
 
-> **Note**: Before running the next script, you may want to take a look at the Kubernetes configuration files (deployment.yaml, cr.yaml, crb.yaml, etc) in the root of the project to ensure that you will not be utilizing more resources than you want to. You can find the deployment config files in the root of the project in `deploy/k8s/minikube/` directory. Every component will have their own directory to houses their configs. `deploy/k8s/minikube/<component_name>/`
+Now that the development environment and Minikube are ready, open a terminal at the repository
+root and run:
 
-This project comes with a set of lifecycle management scripts that assist you in common or repetitive tasks you will encounter during the development of features in this project.
+```shell
+bash dev deploy stack
+```
 
-From the project's root directory, run the following commands to initalize the project and launch the services in Minikube. For all `./manage start` steps, ensure that each component pod is in the "Running" state before moving onto the next step.
+This builds every deployable image, loads it into Minikube, and starts the complete MLHub stack in
+dependency order. Invoking `dev` through Bash makes the first run work even when the file is not
+yet executable; the stack deployment makes it executable for subsequent `./dev` commands.
 
-0. `chmod +x manage` - Makes the lifecycle script executable
+The deployment waits for infrastructure and services to become ready and for each migration and ETL
+job to complete before continuing. It stops on the first failure and does not roll back resources
+that have already started.
 
-0. `./manage start nfs` - Starts the shared file system
+Migration and ETL Jobs are never deleted or reused automatically. If one of their Kubernetes Job
+resources already exists, remove it explicitly before retrying the failed stage.
 
-0. `./manage start rabbit` - Starts the message broker
+This complete deployment is intended primarily to bootstrap a new local environment and should
+normally be run only once. After the stack is available, use lifecycle commands on individual
+components for routine development, for example:
 
-0. `./manage start mongo` - Starts the database
+```shell
+./dev buildl models
+./dev start models
+./dev stop models
+```
 
-0. `./manage start artifact-ingester` - Start up the artifact ingestion workers
+The `stack` component also provides grouped build and start commands for recovering or completing a
+partial initial deployment. Grouped start commands assume the preceding infrastructure and
+migration stages have already completed. Stack deployment targets Minikube and uses the `minikube`
+overlay by default.
 
-0. `./manage start artifact-publisher` - Start up the artifact publisher workers
+### Expose the local stack
 
-0. `./manage start traefik` - Starts the reverse proxy that routes traffic to the APIs
+The stack command starts Traefik but does not update the host machine's networking configuration.
+Add this entry to `/etc/hosts`:
 
-0. `./manage buildl models-migrator -s` - Builds the Models API migrator image and loads it into minikube.
+```text
+# MLHub local development
+127.0.0.1 dev.local.develop.tapis.io tacc.local.develop.tapis.io
+```
 
-0. `./manage buildl models -s` - Builds the Models API image and loads it into minikube
+Then flush the local DNS cache:
 
-0. `./manage start models` - Starts the Models API pod
+- macOS: `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`
+- Modern Ubuntu, Fedora, or Debian: `sudo resolvectl flush-caches`
 
-0. Add this entry to your `/etc/hosts` file:
-    
-    `127.0.0.1       dev.local.tapis.io`
-    
-    Then run one of the following OS-specific commands for the changes to take effect.
+Expose the Traefik reverse proxy after the stack deployment completes:
 
-    A. **MAC:** `sudo killall -HUP mDNSResponder`
-    
-    B. **Linux:** ...
+```shell
+./dev expose traefik
+```
 
-Congrats! You know have a fully-functional local deployment of the MLHub Models Suite! The last step is exposing the Traefik reverse-proxy to external traffic. Once all of the pods for the MLHub components are `Running`, execute the following command:
-
-`./manage expose traefik`
-
-You can now make request to the IP address and port output by the last command. The section below will provide detailed instructions on how to make request to each service.
-
-> **Note**: If you are using a Docker driver on darwin, the terminal will need to remain open in order to make requests to MLHub services
+If Minikube uses the Docker driver on macOS, keep this terminal open while accessing MLHub.
 
 ## 3. Making requests
 
@@ -82,21 +94,49 @@ You can use the IP address and port produced by the last command to make API cal
 
 `http://<ipAddress>:<port>/<serviceName>`
 
-In the example below, we will use `curl` to list models from the HuggingFace Models API:
+The example below discovers models in MLHub's global external-model catalog. Replace
+`<access-token>` with a valid Tapis access token.
 
-Example (Returns a list of machine learning models from the Models API):
+```bash
+curl --request POST 'http://127.0.0.1:<YOUR EXPOSED PORT>/models-api/external-models/search?limit=10' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Tapis-Token: <access-token>' \
+  --data '{"criteria": []}'
+```
 
-`curl http://127.0.0.1:57783/models-api/platforms/huggingface/models`
+The request returns matching external models in the standard MLHub response envelope.
 
 ---
 
 ## Using the Lifecycle Management CLI
 
-The Lifecycle Management CLI is a python tool that can be invoked from the command line in the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. This is the same script invoked previously to initialize the MLHub project locally.
+The Lifecycle Management CLI is a Python tool that can be invoked through `./dev` from the root of the project to run commands and scripts that control the lifecycle of the various components of MLHub. Its implementation and tests live under `tooling/lifecycle`.
 
 ### The Components File
 
 The `components.json` file contains and exhaustive list of every component in the MLHub suite and every command you can run against those components using the CLI.
+
+A component may define an optional `aliases` array containing alternate names for use with the lifecycle CLI:
+
+```json
+{
+  "name": "deployments",
+  "aliases": ["deploy", "deps"]
+}
+```
+
+The canonical name and each alias select the same component. For example, `./dev start deployments`, `./dev start deploy`, and `./dev start deps` are equivalent. Aliases are case-sensitive and must be unique across all component names and aliases.
+
+A lifecycle command must select at least one component explicitly. Provide component names or aliases, use `-A` or `--all` to select every component, or use `--labels` to select only components containing every requested label:
+
+```shell
+./dev test models deployments
+./dev test --all
+./dev test --labels api
+./dev test --all --labels api
+```
+
+The `--all` flag cannot be combined with explicit component names or aliases. A label filter may be applied either to explicitly selected components or to all components.
 
 ### Using the MongoDB Compass GUI for local db administration
 1. Download and install the MongoDB Compass GUI

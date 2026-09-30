@@ -1,17 +1,17 @@
+pub mod client_strategy_set;
+mod entity_to_response;
 pub mod parameter_set;
 pub mod rule_set;
 pub mod strategy;
-pub mod client_strategy_set;
-mod entity_to_response;
 
-use std::collections::HashMap;
+use crate::presentation::http::v1::responses::visibility::Visibility;
 use openapiv3::OpenAPI;
 use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use utoipa::ToSchema;
 use uuid::Uuid;
-use crate::presentation::http::v1::responses::visibility::Visibility;
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct ModelDeployment {
@@ -39,8 +39,7 @@ pub struct ModelDeployment {
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct ModelReference {
-    pub name: String,
-    pub author: String,
+    pub model_id: uuid::Uuid,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, ToSchema)]
@@ -77,7 +76,7 @@ pub enum ParallelismStrategy {
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub enum ModelDeploymentInterface {
-    RestApi(RestApi)
+    RestApi(RestApi),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

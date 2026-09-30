@@ -3,15 +3,13 @@ pub mod huggingface_task_to_task;
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
-
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum TaskError {
     #[error("Failed to convert from type {0} to type {1}")]
-    FailedConversion(String, String)
+    FailedConversion(String, String),
 }
-
 
 #[doc = "An enum of all task types available on Huggingface"]
 #[derive(Display, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -106,7 +104,6 @@ pub enum Task {
     TextTo3d,
     #[doc = "Image-to-3D models take in image input and produce 3D output."]
     ImageTo3d,
-
 }
 
 impl TryFrom<&str> for Task {
@@ -159,7 +156,7 @@ impl TryFrom<&str> for Task {
             "ZeroShotClassification" => Task::ZeroShotClassification,
             "ZeroShotImageClassification" => Task::ZeroShotImageClassification,
             "ZeroShotObjectDetection" => Task::ZeroShotObjectDetection,
-            &_ => return Err(TaskError::FailedConversion("String".into(), "Task".into()))
+            &_ => return Err(TaskError::FailedConversion("String".into(), "Task".into())),
         };
 
         Ok(task)

@@ -1,8 +1,8 @@
 // Application
+use crate::application;
+use crate::application::inputs::deployment::FilterInput;
 use crate::application::ports::deployment::ModelDeploymentRepositoryError;
 use crate::application::ports::errors::InfrastructureError;
-use crate::application::inputs::deployment::FilterInput;
-use crate::application;
 
 // Domain
 use crate::domain::entities;
@@ -11,39 +11,47 @@ use crate::domain::entities;
 use crate::infra::persistence::mongo::database::MODEL_DEPLOYMENT_COLLECTION;
 use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, State};
 
-use mongodb::{
-    bson::{doc, Uuid, to_bson},
-    Client,
-    Collection,
-};
 use futures::stream::TryStreamExt;
+use mongodb::{
+    bson::{doc, to_bson, Uuid},
+    Client, Collection,
+};
 
 pub struct ModelDeploymentRepository {
     read_collection: Collection<ModelDeployment>,
-    write_collection: Collection<ModelDeployment>
+    write_collection: Collection<ModelDeployment>,
 }
 
 impl ModelDeploymentRepository {
     pub fn new(client: &Client, db_name: String) -> Self {
         let db = client.database(&db_name);
-        
+
         Self {
             write_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION),
-            read_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION)
+            read_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION),
         }
     }
 }
 
 #[async_trait::async_trait]
 impl application::ports::deployment::ModelDeploymentRepository for ModelDeploymentRepository {
-    async fn save(&self, input: &entities::deployment::ModelDeployment) -> Result<(), ModelDeploymentRepositoryError> {
+    async fn save(
+        &self,
+        input: &entities::deployment::ModelDeployment,
+    ) -> Result<(), ModelDeploymentRepositoryError> {
         let mut document = ModelDeployment::from(input);
 
-        let result = self.write_collection.insert_one(&document)
+        let result = self
+            .write_collection
+            .insert_one(&document)
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                log::error!(
+                    "[{}] Persistence error: {}",
+                    error.error_id(),
+                    e.to_string()
+                );
                 error
             })?;
 
@@ -52,7 +60,11 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         Ok(())
     }
 
-    async fn find_by_owner(&self, tenant_id: &str, owner: &str) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+    async fn find_by_owner(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+    ) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
         let filter = doc! {
             "tenant_id": tenant_id,
             "owner": owner,
@@ -60,30 +72,39 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
 
         let mut results: Vec<entities::deployment::ModelDeployment> = vec![];
 
-        let mut cursor = self.read_collection.find(filter)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?;
+        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
 
-            while let Some(entry) = cursor.try_next().await.map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })? {
-                results.push(entities::deployment::ModelDeployment::from(&entry));
-            }
+        while let Some(entry) = cursor.try_next().await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })? {
+            results.push(entities::deployment::ModelDeployment::from(&entry));
+        }
 
         Ok(results)
     }
 
-    async fn update(&self, deployment: &entities::deployment::ModelDeployment) -> Result<(), ModelDeploymentRepositoryError>  {
+    async fn update(
+        &self,
+        deployment: &entities::deployment::ModelDeployment,
+    ) -> Result<(), ModelDeploymentRepositoryError> {
         let filter = doc! {
             "id": Uuid::from_bytes(*deployment.id.as_bytes())
         };
-        
+
         let update = ModelDeployment::from(&deployment.clone());
 
         let document = doc! {
@@ -128,14 +149,21 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
+                log::error!(
+                    "[{}] Persistence error: {}",
+                    error.error_id(),
+                    e.to_string()
+                );
                 error
             })?;
 
         Ok(())
     }
 
-    async fn find(&self, input: &FilterInput) -> Result<Option<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+    async fn find(
+        &self,
+        input: &FilterInput,
+    ) -> Result<Option<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
         let mut filter = doc! {};
 
         if let Some(id) = input.deployment_id {
@@ -146,34 +174,42 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             match bson::to_bson(&State::from(state)) {
                 Ok(state) => {
                     filter.insert("state", state);
-                },
+                }
                 Err(e) => {
                     let error = InfrastructureError::new_internal();
-                    log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                    return Err(ModelDeploymentRepositoryError::from(error))
+                    log::error!(
+                        "[{}] Persistence error: {}",
+                        error.error_id(),
+                        e.to_string()
+                    );
+                    return Err(ModelDeploymentRepositoryError::from(error));
                 }
             }
         }
-        
-        let mut cursor = self.read_collection.find(filter)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?;
 
-        let maybe_model_deployment = cursor.try_next()
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Persistence error: {}", error.error_id(), e.to_string());
-                error
-            })?;
-        
+        let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
+
+        let maybe_model_deployment = cursor.try_next().await.map_err(|e| {
+            let error = InfrastructureError::new_internal();
+            log::error!(
+                "[{}] Persistence error: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
+
         match maybe_model_deployment {
             Some(m) => Ok(Some(entities::deployment::ModelDeployment::from(&m))),
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 }
