@@ -5,14 +5,14 @@ use crate::application::ports;
 use crate::application::ports::principal::PrincipalRepositoryError;
 use crate::domain::entities;
 use crate::infra::_common::mongo::is_duplicate_key_error;
-use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
-use crate::infra::principal::mongo::documents::{Principal, PRINCIPAL_COLLECTION};
+use crate::infra::identity::mongo::documents::{FEDERATED_IDENTITY_COLLECTION, FederatedIdentity};
+use crate::infra::principal::mongo::documents::{PRINCIPAL_COLLECTION, Principal};
 use futures::stream::TryStreamExt;
 use mongodb::{
-    bson::{doc, to_bson, to_document},
+    Client, Collection,
+    bson::{Document, doc, to_bson, to_document},
     error::{Error, TRANSIENT_TRANSACTION_ERROR},
     options::{ReadConcern, UpdateModifications, UpdateOneModel, WriteConcern, WriteModel},
-    Client, Collection,
 };
 
 type FederatedIdentityReadCollection = Collection<FederatedIdentity>;
@@ -87,11 +87,7 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
         let identity_doc =
             FederatedIdentity::from((principal.active_identity().clone(), principal.id.clone()));
 
-        let filter = doc! {
-            "issuer": &identity_doc.issuer,
-            "subject": &identity_doc.subject,
-            "principal_id": &identity_doc.principal_id.clone(),
-        };
+        let filter = federated_identity_filter(&identity_doc);
 
         // Create an update or insert model for the identity
         let mut insert_doc = to_document(&identity_doc)
@@ -181,9 +177,10 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
             None => return Ok(None),
         };
 
-        let principal_filter = doc! {
-            "id": &federated_identity_doc.principal_id
-        };
+        let principal_filter = principal_filter(
+            &federated_identity_doc.principal_id,
+            &federated_identity_doc.tenant_id,
+        );
 
         let mut principal_cursor = match self.principal_read_collection.find(principal_filter).await
         {
@@ -212,6 +209,22 @@ impl ports::principal::PrincipalRepository for PrincipalRepository {
     }
 }
 
+fn federated_identity_filter(identity: &FederatedIdentity) -> Document {
+    doc! {
+        "issuer": &identity.issuer,
+        "subject": &identity.subject,
+        "principal_id": &identity.principal_id,
+        "tenant_id": &identity.tenant_id,
+    }
+}
+
+fn principal_filter(principal_id: &str, tenant_id: &str) -> Document {
+    doc! {
+        "id": principal_id,
+        "tenant_id": tenant_id,
+    }
+}
+
 impl From<Error> for PrincipalRepositoryError {
     fn from(value: Error) -> Self {
         if is_duplicate_key_error(&value) {
@@ -231,3 +244,7 @@ impl From<Error> for PrincipalRepositoryError {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "principal_repository.test.rs"]
+mod principal_repository_test;

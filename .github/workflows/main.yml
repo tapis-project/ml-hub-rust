@@ -24,13 +24,13 @@ jobs:
         name: Set_image
         shell: bash
         run: |
-          # If the $GITHUB_REF contains "/refs/tags/v", then the "v" needs to be
-          # removed from the $GITHUB_REF_NAME to form a proper image tag
-          if [[ $GITHUB_REF =~ "/refs/tags/v"  ]]; then 
-            echo image_tag=$(echo $GITHUB_REF_NAME | sed -e 's!v!!') >> $GITHUB_OUTPUT
-          else
-            echo "image_tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT;
+          image_tag="$GITHUB_REF_NAME"
+
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$image_tag" == v* ]]; then
+            image_tag="${image_tag#v}"
           fi
+
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
 
   diffs:
     runs-on: ubuntu-latest
