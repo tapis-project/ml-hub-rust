@@ -15,7 +15,7 @@ patches:
           spec:
             containers:
               - name: hpc-cluster-seeder
-                image: tapis/mlhub-hpc-cluster-seeder:26Q2.1
+                image: tapis/mlhub-hpc-cluster-seeder:26Q2.3
                 imagePullPolicy: Always
                 resources: {}
                 env:

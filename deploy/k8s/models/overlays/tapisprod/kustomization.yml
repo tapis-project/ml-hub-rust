@@ -16,6 +16,6 @@ patches:
           spec:
             containers:
               - name: models-api
-                image: tapis/mlhub-models-api:26Q2.1
+                image: tapis/mlhub-models-api:26Q2.3
                 imagePullPolicy: Always
                 resources: {}

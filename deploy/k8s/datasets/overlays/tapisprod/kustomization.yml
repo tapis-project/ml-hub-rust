@@ -15,6 +15,6 @@ patches:
           spec:
             containers:
               - name: datasets-api
-                image: tapis/mlhub-datasets-api:prod
+                image: tapis/mlhub-datasets-api:26Q2.3
                 imagePullPolicy: Always
                 resources: {}

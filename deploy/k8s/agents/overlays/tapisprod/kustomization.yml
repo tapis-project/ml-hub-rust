@@ -16,6 +16,6 @@ patches:
           spec:
             containers:
               - name: agents-api
-                image: tapis/mlhub-agents-api:26Q2.1
+                image: tapis/mlhub-agents-api:26Q2.3
                 imagePullPolicy: Always
                 resources: {}
