@@ -31,58 +31,58 @@ import {
 /**
  * 
  * @export
- * @interface DeployModelWithStrategyBody
+ * @interface DeployModelWithOptionBody
  */
-export interface DeployModelWithStrategyBody {
+export interface DeployModelWithOptionBody {
     /**
      * 
      * @type {Array<Argument>}
-     * @memberof DeployModelWithStrategyBody
+     * @memberof DeployModelWithOptionBody
      */
     arguments?: Array<Argument> | null;
     /**
      * 
      * @type {DeploymentModality}
-     * @memberof DeployModelWithStrategyBody
+     * @memberof DeployModelWithOptionBody
      */
     deployment_modality: DeploymentModality;
     /**
      * 
      * @type {string}
-     * @memberof DeployModelWithStrategyBody
+     * @memberof DeployModelWithOptionBody
+     */
+    deployment_option_id: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof DeployModelWithOptionBody
      */
     description?: string | null;
     /**
      * 
      * @type {string}
-     * @memberof DeployModelWithStrategyBody
-     */
-    model_id: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DeployModelWithStrategyBody
+     * @memberof DeployModelWithOptionBody
      */
     name: string;
     /**
      * 
      * @type {Array<ParallelismStrategy>}
-     * @memberof DeployModelWithStrategyBody
+     * @memberof DeployModelWithOptionBody
      */
     parallelism_strategies?: Array<ParallelismStrategy> | null;
     /**
      * 
      * @type {number}
-     * @memberof DeployModelWithStrategyBody
+     * @memberof DeployModelWithOptionBody
      */
     replicas?: number | null;
 }
 
-export function DeployModelWithStrategyBodyFromJSON(json: any): DeployModelWithStrategyBody {
-    return DeployModelWithStrategyBodyFromJSONTyped(json, false);
+export function DeployModelWithOptionBodyFromJSON(json: any): DeployModelWithOptionBody {
+    return DeployModelWithOptionBodyFromJSONTyped(json, false);
 }
 
-export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): DeployModelWithStrategyBody {
+export function DeployModelWithOptionBodyFromJSONTyped(json: any, ignoreDiscriminator: boolean): DeployModelWithOptionBody {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -90,15 +90,15 @@ export function DeployModelWithStrategyBodyFromJSONTyped(json: any, ignoreDiscri
         
         'arguments': !exists(json, 'arguments') ? undefined : (json['arguments'] === null ? null : (json['arguments'] as Array<any>).map(ArgumentFromJSON)),
         'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
+        'deployment_option_id': json['deployment_option_id'],
         'description': !exists(json, 'description') ? undefined : json['description'],
-        'model_id': json['model_id'],
         'name': json['name'],
         'parallelism_strategies': !exists(json, 'parallelism_strategies') ? undefined : (json['parallelism_strategies'] === null ? null : (json['parallelism_strategies'] as Array<any>).map(ParallelismStrategyFromJSON)),
         'replicas': !exists(json, 'replicas') ? undefined : json['replicas'],
     };
 }
 
-export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrategyBody | null): any {
+export function DeployModelWithOptionBodyToJSON(value?: DeployModelWithOptionBody | null): any {
     if (value === undefined) {
         return undefined;
     }
@@ -109,8 +109,8 @@ export function DeployModelWithStrategyBodyToJSON(value?: DeployModelWithStrateg
         
         'arguments': value.arguments === undefined ? undefined : (value.arguments === null ? null : (value.arguments as Array<any>).map(ArgumentToJSON)),
         'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
+        'deployment_option_id': value.deployment_option_id,
         'description': value.description,
-        'model_id': value.model_id,
         'name': value.name,
         'parallelism_strategies': value.parallelism_strategies === undefined ? undefined : (value.parallelism_strategies === null ? null : (value.parallelism_strategies as Array<any>).map(ParallelismStrategyToJSON)),
         'replicas': value.replicas,

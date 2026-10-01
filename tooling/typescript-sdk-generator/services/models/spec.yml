@@ -333,6 +333,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
+  /models-api/external-models/{external_model_id}/deployment-options/{deployment_option_id}:
+    get:
+      tags:
+        - ExternalModels
+      summary: Get a deployment option and its required parameters
+      operationId: get_external_model_deployment_option
+      parameters:
+        - name: external_model_id
+          in: path
+          description: ExternalModel identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deployment_option_id
+          in: path
+          description: DeploymentOption identifier
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deployment option found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetExternalModelDeploymentOptionResponse'
+        '400':
+          description: Invalid identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestResponse'
+        '404':
+          description: ExternalModel or DeploymentOption not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '500':
+          description: Unable to get deployment option
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
   /models-api/ingestions:
     get:
       tags:
@@ -905,26 +951,68 @@ components:
             $ref: '#/components/schemas/DeploymentModality'
         updated_at:
           type: string
-    DeploymentStrategyCriterion:
+    DeploymentOptionDetail:
+      allOf:
+        - $ref: '#/components/schemas/DeploymentOption'
+        - type: object
+          required:
+            - parameters
+          properties:
+            parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/DeploymentParameter'
+    DeploymentParameter:
       type: object
       required:
         - name
-        - platform
+        - required
+        - secret
+        - parameter_type
       properties:
+        choices:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/DeploymentParameterChoice'
+        default:
+          type:
+            - string
+            - 'null'
+        description:
+          type:
+            - string
+            - 'null'
         name:
           type: string
-        platform:
-          $ref: '#/components/schemas/Platform'
-    DeploymentStrategyReference:
+        parameter_type:
+          $ref: '#/components/schemas/DeploymentParameterType'
+        required:
+          type: boolean
+        secret:
+          type: boolean
+    DeploymentParameterChoice:
       type: object
       required:
-        - name
-        - platform
+        - value
+        - enabled
       properties:
-        name:
+        description:
+          type:
+            - string
+            - 'null'
+        enabled:
+          type: boolean
+        value:
           type: string
-        platform:
-          $ref: '#/components/schemas/Platform'
+    DeploymentParameterType:
+      type: string
+      enum:
+        - String
+        - Integer
+        - Float
+        - Boolean
     DeploymentTargetType:
       type: string
       enum:
@@ -932,7 +1020,6 @@ components:
     DerivedModelMetadata:
       type: object
       required:
-        - deployment_strategies
         - inference_runtimes
         - tags
         - task_types
@@ -944,10 +1031,6 @@ components:
           type:
             - string
             - 'null'
-        deployment_strategies:
-          type: array
-          items:
-            $ref: '#/components/schemas/DeploymentStrategyReference'
         downloads:
           type:
             - integer
@@ -1029,15 +1112,7 @@ components:
           items:
             type: string
             format: uuid
-        deployment_strategies:
-          type: array
-          items:
-            $ref: '#/components/schemas/DeploymentStrategyCriterion'
         has_deployment_options:
-          type:
-            - boolean
-            - 'null'
-        has_deployment_strategies:
           type:
             - boolean
             - 'null'
@@ -1146,6 +1221,27 @@ components:
       properties:
         derived:
           $ref: '#/components/schemas/DerivedModelMetadata'
+    GetExternalModelDeploymentOptionResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/DeploymentOptionDetail'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
     GetExternalModelResponse:
       type: object
       required:

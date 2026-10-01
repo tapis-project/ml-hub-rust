@@ -27,8 +27,11 @@ src/models/CreateModelResponse.ts
 src/models/DataCenter.ts
 src/models/DeploymentModality.ts
 src/models/DeploymentOption.ts
-src/models/DeploymentStrategyCriterion.ts
-src/models/DeploymentStrategyReference.ts
+src/models/DeploymentOptionDetail.ts
+src/models/DeploymentOptionDetailAllOf.ts
+src/models/DeploymentParameter.ts
+src/models/DeploymentParameterChoice.ts
+src/models/DeploymentParameterType.ts
 src/models/DeploymentTargetType.ts
 src/models/DerivedModelMetadata.ts
 src/models/DiscoverExternalModelsBody.ts
@@ -36,6 +39,7 @@ src/models/DiscoverExternalModelsResponse.ts
 src/models/DiscoveryCriterion.ts
 src/models/ExternalModel.ts
 src/models/ExternalModelMetadata.ts
+src/models/GetExternalModelDeploymentOptionResponse.ts
 src/models/GetExternalModelResponse.ts
 src/models/GetModelArtifactResponse.ts
 src/models/GetModelIngestionResponse.ts

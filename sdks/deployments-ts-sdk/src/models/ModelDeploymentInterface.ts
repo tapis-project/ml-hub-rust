@@ -12,18 +12,37 @@
  * Do not edit the class manually.
  */
 
+import { exists, mapValues } from '../runtime';
 import {
-    ModelDeploymentInterfaceOneOf,
-    ModelDeploymentInterfaceOneOfFromJSONTyped,
-    ModelDeploymentInterfaceOneOfToJSON,
+    ModelDeploymentInterfaceType,
+    ModelDeploymentInterfaceTypeFromJSON,
+    ModelDeploymentInterfaceTypeFromJSONTyped,
+    ModelDeploymentInterfaceTypeToJSON,
+    RestApi,
+    RestApiFromJSON,
+    RestApiFromJSONTyped,
+    RestApiToJSON,
 } from './';
 
 /**
- * @type ModelDeploymentInterface
  * 
  * @export
+ * @interface ModelDeploymentInterface
  */
-export type ModelDeploymentInterface = ModelDeploymentInterfaceOneOf;
+export interface ModelDeploymentInterface {
+    /**
+     * 
+     * @type {ModelDeploymentInterfaceType}
+     * @memberof ModelDeploymentInterface
+     */
+    interface_type: ModelDeploymentInterfaceType;
+    /**
+     * 
+     * @type {RestApi}
+     * @memberof ModelDeploymentInterface
+     */
+    rest_api?: RestApi;
+}
 
 export function ModelDeploymentInterfaceFromJSON(json: any): ModelDeploymentInterface {
     return ModelDeploymentInterfaceFromJSONTyped(json, false);
@@ -33,7 +52,11 @@ export function ModelDeploymentInterfaceFromJSONTyped(json: any, ignoreDiscrimin
     if ((json === undefined) || (json === null)) {
         return json;
     }
-    return { ...ModelDeploymentInterfaceOneOfFromJSONTyped(json, true) };
+    return {
+        
+        'interface_type': ModelDeploymentInterfaceTypeFromJSON(json['interface_type']),
+        'rest_api': !exists(json, 'rest_api') ? undefined : RestApiFromJSON(json['rest_api']),
+    };
 }
 
 export function ModelDeploymentInterfaceToJSON(value?: ModelDeploymentInterface | null): any {
@@ -43,6 +66,10 @@ export function ModelDeploymentInterfaceToJSON(value?: ModelDeploymentInterface 
     if (value === null) {
         return null;
     }
-    return { ...ModelDeploymentInterfaceOneOfToJSON(value) };
+    return {
+        
+        'interface_type': ModelDeploymentInterfaceTypeToJSON(value.interface_type),
+        'rest_api': RestApiToJSON(value.rest_api),
+    };
 }
 

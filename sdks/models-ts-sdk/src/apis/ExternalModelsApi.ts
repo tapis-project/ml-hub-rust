@@ -24,6 +24,9 @@ import {
     DiscoverExternalModelsResponse,
     DiscoverExternalModelsResponseFromJSON,
     DiscoverExternalModelsResponseToJSON,
+    GetExternalModelDeploymentOptionResponse,
+    GetExternalModelDeploymentOptionResponseFromJSON,
+    GetExternalModelDeploymentOptionResponseToJSON,
     GetExternalModelResponse,
     GetExternalModelResponseFromJSON,
     GetExternalModelResponseToJSON,
@@ -47,6 +50,11 @@ export interface DiscoverExternalModelsRequest {
 
 export interface GetExternalModelRequest {
     externalModelId: string;
+}
+
+export interface GetExternalModelDeploymentOptionRequest {
+    externalModelId: string;
+    deploymentOptionId: string;
 }
 
 export interface ListExternalModelDeploymentOptionsRequest {
@@ -133,6 +141,40 @@ export class ExternalModelsApi extends runtime.BaseAPI {
      */
     async getExternalModel(requestParameters: GetExternalModelRequest, initOverrides?: RequestInit): Promise<GetExternalModelResponse> {
         const response = await this.getExternalModelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get a deployment option and its required parameters
+     */
+    async getExternalModelDeploymentOptionRaw(requestParameters: GetExternalModelDeploymentOptionRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<GetExternalModelDeploymentOptionResponse>> {
+        if (requestParameters.externalModelId === null || requestParameters.externalModelId === undefined) {
+            throw new runtime.RequiredError('externalModelId','Required parameter requestParameters.externalModelId was null or undefined when calling getExternalModelDeploymentOption.');
+        }
+
+        if (requestParameters.deploymentOptionId === null || requestParameters.deploymentOptionId === undefined) {
+            throw new runtime.RequiredError('deploymentOptionId','Required parameter requestParameters.deploymentOptionId was null or undefined when calling getExternalModelDeploymentOption.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/models-api/external-models/{external_model_id}/deployment-options/{deployment_option_id}`.replace(`{${"external_model_id"}}`, encodeURIComponent(String(requestParameters.externalModelId))).replace(`{${"deployment_option_id"}}`, encodeURIComponent(String(requestParameters.deploymentOptionId))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetExternalModelDeploymentOptionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Get a deployment option and its required parameters
+     */
+    async getExternalModelDeploymentOption(requestParameters: GetExternalModelDeploymentOptionRequest, initOverrides?: RequestInit): Promise<GetExternalModelDeploymentOptionResponse> {
+        const response = await this.getExternalModelDeploymentOptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

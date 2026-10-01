@@ -1,6 +1,6 @@
 {
 	"npmName": "@mlhub/datasets-ts-sdk",
-	"npmVersion": "0.32.0",
+	"npmVersion": "0.33.0",
 	"snapshot" : false,
 	"supportsES6": false,
 	"modelPropertyNaming": "original",

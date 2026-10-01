@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    DeploymentModality,
+    DeploymentModalityFromJSON,
+    DeploymentModalityFromJSONTyped,
+    DeploymentModalityToJSON,
     DesiredState,
     DesiredStateFromJSON,
     DesiredStateFromJSONTyped,
@@ -22,14 +26,6 @@ import {
     ModelDeploymentInterfaceFromJSON,
     ModelDeploymentInterfaceFromJSONTyped,
     ModelDeploymentInterfaceToJSON,
-    ModelReference,
-    ModelReferenceFromJSON,
-    ModelReferenceFromJSONTyped,
-    ModelReferenceToJSON,
-    Platform,
-    PlatformFromJSON,
-    PlatformFromJSONTyped,
-    PlatformToJSON,
     ReplicaGroup,
     ReplicaGroupFromJSON,
     ReplicaGroupFromJSONTyped,
@@ -64,10 +60,16 @@ export interface ModelDeployment {
     deployment_interface?: ModelDeploymentInterface;
     /**
      * 
+     * @type {DeploymentModality}
+     * @memberof ModelDeployment
+     */
+    deployment_modality: DeploymentModality;
+    /**
+     * 
      * @type {string}
      * @memberof ModelDeployment
      */
-    deployment_strategy?: string | null;
+    deployment_option_id: string;
     /**
      * 
      * @type {string}
@@ -80,6 +82,12 @@ export interface ModelDeployment {
      * @memberof ModelDeployment
      */
     desired_state: DesiredState;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    external_model_id: string;
     /**
      * 
      * @type {string}
@@ -118,12 +126,6 @@ export interface ModelDeployment {
     metadata?: { [key: string]: any; } | null;
     /**
      * 
-     * @type {ModelReference}
-     * @memberof ModelDeployment
-     */
-    model: ModelReference;
-    /**
-     * 
      * @type {string}
      * @memberof ModelDeployment
      */
@@ -134,12 +136,6 @@ export interface ModelDeployment {
      * @memberof ModelDeployment
      */
     owner: string;
-    /**
-     * 
-     * @type {Platform}
-     * @memberof ModelDeployment
-     */
-    platform: Platform;
     /**
      * 
      * @type {ReplicaGroup}
@@ -160,6 +156,12 @@ export interface ModelDeployment {
     state: State;
     /**
      * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    tenant_id: string;
+    /**
+     * 
      * @type {Visibility}
      * @memberof ModelDeployment
      */
@@ -178,22 +180,23 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'created_at': json['created_at'],
         'deployment_interface': !exists(json, 'deployment_interface') ? undefined : ModelDeploymentInterfaceFromJSON(json['deployment_interface']),
-        'deployment_strategy': !exists(json, 'deployment_strategy') ? undefined : json['deployment_strategy'],
+        'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
+        'deployment_option_id': json['deployment_option_id'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'desired_state': DesiredStateFromJSON(json['desired_state']),
+        'external_model_id': json['external_model_id'],
         'id': json['id'],
         'last_desired_state_change': json['last_desired_state_change'],
         'last_message': !exists(json, 'last_message') ? undefined : json['last_message'],
         'last_modified': json['last_modified'],
         'last_state_change': json['last_state_change'],
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
-        'model': ModelReferenceFromJSON(json['model']),
         'name': json['name'],
         'owner': json['owner'],
-        'platform': PlatformFromJSON(json['platform']),
         'replicas': ReplicaGroupFromJSON(json['replicas']),
         'revision': json['revision'],
         'state': StateFromJSON(json['state']),
+        'tenant_id': json['tenant_id'],
         'visibility': VisibilityFromJSON(json['visibility']),
     };
 }
@@ -209,22 +212,23 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
         
         'created_at': value.created_at,
         'deployment_interface': ModelDeploymentInterfaceToJSON(value.deployment_interface),
-        'deployment_strategy': value.deployment_strategy,
+        'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
+        'deployment_option_id': value.deployment_option_id,
         'description': value.description,
         'desired_state': DesiredStateToJSON(value.desired_state),
+        'external_model_id': value.external_model_id,
         'id': value.id,
         'last_desired_state_change': value.last_desired_state_change,
         'last_message': value.last_message,
         'last_modified': value.last_modified,
         'last_state_change': value.last_state_change,
         'metadata': value.metadata,
-        'model': ModelReferenceToJSON(value.model),
         'name': value.name,
         'owner': value.owner,
-        'platform': PlatformToJSON(value.platform),
         'replicas': ReplicaGroupToJSON(value.replicas),
         'revision': value.revision,
         'state': StateToJSON(value.state),
+        'tenant_id': value.tenant_id,
         'visibility': VisibilityToJSON(value.visibility),
     };
 }

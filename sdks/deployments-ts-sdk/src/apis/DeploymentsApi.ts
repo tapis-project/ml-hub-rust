@@ -18,9 +18,9 @@ import {
     BadRequestResponse,
     BadRequestResponseFromJSON,
     BadRequestResponseToJSON,
-    DeployModelWithStrategyBody,
-    DeployModelWithStrategyBodyFromJSON,
-    DeployModelWithStrategyBodyToJSON,
+    DeployModelWithOptionBody,
+    DeployModelWithOptionBodyFromJSON,
+    DeployModelWithOptionBodyToJSON,
     ListModelDeploymentsResponse,
     ListModelDeploymentsResponseFromJSON,
     ListModelDeploymentsResponseToJSON,
@@ -30,18 +30,13 @@ import {
     NotFoundResponse,
     NotFoundResponseFromJSON,
     NotFoundResponseToJSON,
-    Platform,
-    PlatformFromJSON,
-    PlatformToJSON,
     ServerErrorResponse,
     ServerErrorResponseFromJSON,
     ServerErrorResponseToJSON,
 } from '../models';
 
-export interface DeployModelWithStrategyRequest {
-    platform: Platform;
-    strategyName: string;
-    deployModelWithStrategyBody: DeployModelWithStrategyBody;
+export interface DeployModelWithOptionRequest {
+    deployModelWithOptionBody: DeployModelWithOptionBody;
 }
 
 export interface StartModelDeploymentRequest {
@@ -62,19 +57,11 @@ export interface UndeployModelDeploymentRequest {
 export class DeploymentsApi extends runtime.BaseAPI {
 
     /**
-     * Deploy a model to a target platform
+     * Deploy an ExternalModel with a deployment option
      */
-    async deployModelWithStrategyRaw(requestParameters: DeployModelWithStrategyRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ModelDeploymentResponse>> {
-        if (requestParameters.platform === null || requestParameters.platform === undefined) {
-            throw new runtime.RequiredError('platform','Required parameter requestParameters.platform was null or undefined when calling deployModelWithStrategy.');
-        }
-
-        if (requestParameters.strategyName === null || requestParameters.strategyName === undefined) {
-            throw new runtime.RequiredError('strategyName','Required parameter requestParameters.strategyName was null or undefined when calling deployModelWithStrategy.');
-        }
-
-        if (requestParameters.deployModelWithStrategyBody === null || requestParameters.deployModelWithStrategyBody === undefined) {
-            throw new runtime.RequiredError('deployModelWithStrategyBody','Required parameter requestParameters.deployModelWithStrategyBody was null or undefined when calling deployModelWithStrategy.');
+    async deployModelWithOptionRaw(requestParameters: DeployModelWithOptionRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ModelDeploymentResponse>> {
+        if (requestParameters.deployModelWithOptionBody === null || requestParameters.deployModelWithOptionBody === undefined) {
+            throw new runtime.RequiredError('deployModelWithOptionBody','Required parameter requestParameters.deployModelWithOptionBody was null or undefined when calling deployModelWithOption.');
         }
 
         const queryParameters: any = {};
@@ -84,21 +71,21 @@ export class DeploymentsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/deployments-api/platforms/{platform}/strategies/{strategy_name}`.replace(`{${"platform"}}`, encodeURIComponent(String(requestParameters.platform))).replace(`{${"strategy_name"}}`, encodeURIComponent(String(requestParameters.strategyName))),
+            path: `/deployments-api/deployments`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: DeployModelWithStrategyBodyToJSON(requestParameters.deployModelWithStrategyBody),
+            body: DeployModelWithOptionBodyToJSON(requestParameters.deployModelWithOptionBody),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ModelDeploymentResponseFromJSON(jsonValue));
     }
 
     /**
-     * Deploy a model to a target platform
+     * Deploy an ExternalModel with a deployment option
      */
-    async deployModelWithStrategy(requestParameters: DeployModelWithStrategyRequest, initOverrides?: RequestInit): Promise<ModelDeploymentResponse> {
-        const response = await this.deployModelWithStrategyRaw(requestParameters, initOverrides);
+    async deployModelWithOption(requestParameters: DeployModelWithOptionRequest, initOverrides?: RequestInit): Promise<ModelDeploymentResponse> {
+        const response = await this.deployModelWithOptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -129,7 +116,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deploy a model to a target platform
+     * Start a model deployment on its selected target
      */
     async startModelDeploymentRaw(requestParameters: StartModelDeploymentRequest, initOverrides?: RequestInit): Promise<runtime.ApiResponse<ModelDeploymentResponse>> {
         if (requestParameters.deploymentId === null || requestParameters.deploymentId === undefined) {
@@ -151,7 +138,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deploy a model to a target platform
+     * Start a model deployment on its selected target
      */
     async startModelDeployment(requestParameters: StartModelDeploymentRequest, initOverrides?: RequestInit): Promise<ModelDeploymentResponse> {
         const response = await this.startModelDeploymentRaw(requestParameters, initOverrides);
