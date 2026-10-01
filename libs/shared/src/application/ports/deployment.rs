@@ -7,7 +7,7 @@ use crate::application::workflows::reconciliation::{ReconcilerError, Reconciliat
 // Domain layer
 use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::deployment::argument::Argument;
-use crate::domain::entities::deployment::{DeploymentReconciliationProvider, ModelDeployment};
+use crate::domain::entities::deployment::{DeploymentOptionSnapshot, ModelDeployment};
 use crate::domain::entities::site::SiteContext;
 
 use async_trait::async_trait;
@@ -50,7 +50,7 @@ pub trait ModelDeploymentRepository: Send + Sync {
 }
 
 #[async_trait]
-pub trait ModelDeploymentPlatformReconciliationClient: Send + Sync {
+pub trait ModelDeploymentReconciliationClient: Send + Sync {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome;
 
     fn get_site_context(&self) -> &SiteContext;
@@ -59,7 +59,7 @@ pub trait ModelDeploymentPlatformReconciliationClient: Send + Sync {
 #[derive(Debug, Error)]
 pub enum ModelDeploymentReconcilerProviderError {
     #[error("{0}")]
-    PlatformClientNotFound(String),
+    ClientNotFound(String),
 
     #[error("{0}")]
     ClientInitializationError(#[from] ReconcilerError),
@@ -69,10 +69,7 @@ pub enum ModelDeploymentReconcilerProviderError {
 pub trait ModelDeploymentReconcilerProvider: Send + Sync {
     async fn provide(
         &self,
-        provider: &DeploymentReconciliationProvider,
+        deployment_option_snapshot: &DeploymentOptionSnapshot,
         site_context: &SiteContext,
-    ) -> Result<
-        Arc<dyn ModelDeploymentPlatformReconciliationClient>,
-        ModelDeploymentReconcilerProviderError,
-    >;
+    ) -> Result<Arc<dyn ModelDeploymentReconciliationClient>, ModelDeploymentReconcilerProviderError>;
 }

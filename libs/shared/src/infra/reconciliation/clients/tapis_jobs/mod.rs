@@ -7,7 +7,7 @@ use tapis_tokens::models::RefreshToken201Response;
 use thiserror::Error;
 
 use crate::application::inputs::deployment::ReconcileModelDeploymentInput;
-use crate::application::ports::deployment::ModelDeploymentPlatformReconciliationClient;
+use crate::application::ports::deployment::ModelDeploymentReconciliationClient;
 use crate::application::ports::errors::InfrastructureError;
 use crate::application::services::deployment_argument_service::DecryptedArgument;
 use crate::application::workflows::reconciliation::{
@@ -20,7 +20,6 @@ use crate::domain::entities::deployment::{
 };
 use crate::domain::entities::model::external_model::{ExternalModel, ModelLocator, ModelProvider};
 use crate::domain::entities::site::SiteContext;
-use crate::infra::configuration::TapisJobsConfiguration;
 
 use std::collections::HashMap;
 use std::env;
@@ -39,8 +38,8 @@ enum ReconciliationError {
     #[error("Unsupported FlexServ version for Tapis Jobs: {0}")]
     UnsupportedFlexServVersion(String),
 
-    #[error("No Tapis Jobs execution system is configured for HPC cluster host {0}")]
-    MissingTargetConfiguration(String),
+    #[error("Tapis Jobs reconciliation does not support HPC cluster host {0}")]
+    UnsupportedHpcCluster(String),
 }
 
 pub struct TapisJobsModelDeploymentReconciliationClient {
@@ -48,7 +47,6 @@ pub struct TapisJobsModelDeploymentReconciliationClient {
     site_context: SiteContext,
     client: Client,
     base_job_definition: ReqSubmitJob,
-    configuration: TapisJobsConfiguration,
 }
 
 impl TapisJobsModelDeploymentReconciliationClient {
@@ -57,10 +55,17 @@ impl TapisJobsModelDeploymentReconciliationClient {
     const FLEXSERV_JOB_DEF_URL: &'static str = "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/job.json";
     const TAPIS_JOB_UUID_KEY: &'static str = "tapis_job_uuid";
 
-    pub async fn new(
-        site_context: &SiteContext,
-        configuration: TapisJobsConfiguration,
-    ) -> Result<Self, ReconcilerError> {
+    fn resolve_tapis_system_id(cluster_host: &str) -> Result<&'static str, ReconciliationError> {
+        match cluster_host {
+            "frontera.tacc.utexas.edu" => Ok("MLHub-FlexServ-Frontera"),
+            "ls6.tacc.utexas.edu" => Ok("MLHub-FlexServ-Lonestar6"),
+            "stampede3.tacc.utexas.edu" => Ok("MLHub-FlexServ-Stampede3"),
+            "vista.tacc.utexas.edu" => Ok("MLHub-FlexServ-Vista-PKI"),
+            host => Err(ReconciliationError::UnsupportedHpcCluster(host.into())),
+        }
+    }
+
+    pub async fn new(site_context: &SiteContext) -> Result<Self, ReconcilerError> {
         let mlhub_service_password = match env::var("MLHUB_SERVICE_PASSWORD") {
             Ok(p) => p,
             Err(_) => {
@@ -105,7 +110,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Ok(Self {
             client,
             base_job_definition,
-            configuration,
             mlhub_service_password,
             site_context: site_context.clone(),
         })
@@ -441,16 +445,9 @@ impl TapisJobsModelDeploymentReconciliationClient {
             DeploymentTargetSnapshot::HpcClusterQueue(target) => target,
         };
 
-        let tapis_system_id = self
-            .configuration
-            .hpc_systems
-            .get(&target.cluster_host)
-            .cloned()
-            .ok_or_else(|| {
-                ReconciliationError::MissingTargetConfiguration(target.cluster_host.clone())
-            })?;
+        let tapis_system_id = Self::resolve_tapis_system_id(&target.cluster_host)?;
 
-        job_def.exec_system_id = Some(tapis_system_id);
+        job_def.exec_system_id = Some(tapis_system_id.into());
         job_def.exec_system_logical_queue = Some(target.queue_name.clone());
 
         // Set the slurm allocation
@@ -526,7 +523,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
 }
 
 #[async_trait::async_trait]
-impl ModelDeploymentPlatformReconciliationClient for TapisJobsModelDeploymentReconciliationClient {
+impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliationClient {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome {
         let outcome = match input.action {
             ReconciliationAction::Start { payload } => {
@@ -553,3 +550,7 @@ impl ModelDeploymentPlatformReconciliationClient for TapisJobsModelDeploymentRec
         return &self.site_context;
     }
 }
+
+#[cfg(test)]
+#[path = "tapis_jobs.test.rs"]
+mod tapis_jobs_test;

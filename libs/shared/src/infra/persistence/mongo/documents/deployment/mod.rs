@@ -60,12 +60,6 @@ pub struct HpcClusterQueueSnapshot {
     pub batch_scheduler_queue_id: Uuid,
     pub cluster_host: String,
     pub queue_name: String,
-    pub provider: DeploymentReconciliationProvider,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum DeploymentReconciliationProvider {
-    TapisJobs,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]

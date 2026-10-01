@@ -15,7 +15,6 @@ use shared::application::services::model_deployment_controller::ModelDeploymentC
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::domain::entities::site::SiteContext;
 use shared::infra::argument::mongo::MongoDeploymentArgumentRepository;
-use shared::infra::configuration::TapisJobsConfiguration;
 use shared::infra::encryption::vault::VaultCipher;
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;
 use shared::infra::persistence::mongo::repositories::{
@@ -45,10 +44,9 @@ pub fn event_publisher_factory(channel: Arc<Channel>) -> Arc<dyn EventPublisher>
     Arc::new(RabbitMQModelDeploymentMessagePublisher::new(channel))
 }
 
-pub fn model_deployment_reconciler_provider_factory(
-    tapis_jobs_configuration: TapisJobsConfiguration,
-) -> Arc<dyn ModelDeploymentReconcilerProvider> {
-    Arc::new(ReconciliationClientProvider::new(tapis_jobs_configuration))
+pub fn model_deployment_reconciler_provider_factory() -> Arc<dyn ModelDeploymentReconcilerProvider>
+{
+    Arc::new(ReconciliationClientProvider::new())
 }
 
 pub fn deployment_option_repo_factory(
@@ -103,7 +101,6 @@ pub fn model_deployment_conroller_builder(
     client: &Client,
     db_name: String,
     channel: Arc<Channel>,
-    tapis_jobs_configuration: TapisJobsConfiguration,
 ) -> Arc<ModelDeploymentController> {
     Arc::new(ModelDeploymentController::new(
         site_context,
@@ -111,6 +108,6 @@ pub fn model_deployment_conroller_builder(
         model_deployment_service_builder(client, db_name.clone(), channel.clone()),
         external_model_repo_factory(client, db_name.clone()),
         event_publisher_factory(channel.clone()),
-        model_deployment_reconciler_provider_factory(tapis_jobs_configuration),
+        model_deployment_reconciler_provider_factory(),
     ))
 }

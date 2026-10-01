@@ -361,13 +361,8 @@ async fn main() -> () {
         site_id: config.site_id.clone(),
     };
 
-    let controller = model_deployment_conroller_builder(
-        site_context,
-        &client,
-        db_name,
-        context.channel.clone(),
-        config.model_deployment.tapis_jobs,
-    );
+    let controller =
+        model_deployment_conroller_builder(site_context, &client, db_name, context.channel.clone());
 
     let consumer = ModelDeploymentControllerConsumer { controller };
 

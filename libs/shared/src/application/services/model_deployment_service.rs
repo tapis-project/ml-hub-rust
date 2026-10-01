@@ -28,9 +28,8 @@ use crate::application::workflows::deployment::{
 };
 use crate::application::workflows::Workflow;
 use crate::domain::entities::deployment::{
-    CreateFromOptionProps, DeploymentOptionSnapshot, DeploymentReconciliationProvider,
-    DeploymentTargetSnapshot, DesiredState, HpcClusterQueueSnapshot, ModelDeployment,
-    ModelDeploymentError, ReplicaGroup,
+    CreateFromOptionProps, DeploymentOptionSnapshot, DeploymentTargetSnapshot, DesiredState,
+    HpcClusterQueueSnapshot, ModelDeployment, ModelDeploymentError, ReplicaGroup,
 };
 use crate::domain::entities::deployment_option::deployment_parameters::DeploymentParameterError;
 use crate::domain::entities::deployment_option::DeploymentTarget;
@@ -282,7 +281,6 @@ impl ModelDeploymentService {
                 batch_scheduler_queue_id: *queue.id(),
                 cluster_host: cluster.host().into(),
                 queue_name: queue.name().into(),
-                provider: DeploymentReconciliationProvider::TapisJobs,
             }),
         };
 

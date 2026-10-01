@@ -107,17 +107,6 @@ impl From<documents::HpcClusterQueueSnapshot> for entities::HpcClusterQueueSnaps
             )),
             cluster_host: value.cluster_host,
             queue_name: value.queue_name,
-            provider: entities::DeploymentReconciliationProvider::from(value.provider),
-        }
-    }
-}
-
-impl From<documents::DeploymentReconciliationProvider>
-    for entities::DeploymentReconciliationProvider
-{
-    fn from(value: documents::DeploymentReconciliationProvider) -> Self {
-        match value {
-            documents::DeploymentReconciliationProvider::TapisJobs => Self::TapisJobs,
         }
     }
 }

@@ -2,15 +2,5 @@
     "site_id": "tacc",
     "base_url": "https://admin.tapis.io",
     "idps": ["tapis"],
-    "tenancy_resolution_mode": "subdomain",
-    "model_deployment": {
-        "tapis_jobs": {
-            "hpc_systems": {
-                "frontera.tacc.utexas.edu": "MLHub-FlexServ-Frontera",
-                "ls6.tacc.utexas.edu": "MLHub-FlexServ-Lonestar6",
-                "stampede3.tacc.utexas.edu": "MLHub-FlexServ-Stampede3",
-                "vista.tacc.utexas.edu": "MLHub-FlexServ-Vista-PKI"
-            }
-        }
-    }
+    "tenancy_resolution_mode": "subdomain"
 }

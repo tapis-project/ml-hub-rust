@@ -22,8 +22,8 @@ use crate::application::services::model_deployment_service::{
 };
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationOutcome};
 use crate::domain::entities::deployment::{
-    DeploymentTargetSnapshot, DesiredState, ModelDeployment, ModelDeploymentError,
-    ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
+    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentInterfaceDelta,
+    ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
 };
 
 // Domain
@@ -191,13 +191,9 @@ impl ModelDeploymentController {
         };
 
         // Initialize reconciliation client
-        let reconciliation_provider = match &deployment.deployment_option_snapshot.target {
-            DeploymentTargetSnapshot::HpcClusterQueue(target) => &target.provider,
-        };
-
         let client = match self
             .client_provider
-            .provide(reconciliation_provider, &self.site_context)
+            .provide(&deployment.deployment_option_snapshot, &self.site_context)
             .await
         {
             Ok(c) => c,
