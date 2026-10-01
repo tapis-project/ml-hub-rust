@@ -1,6 +1,5 @@
 use crate::bootstrap::factories::{
-    build_deployment_strategy_provider, hpc_cluster_query_service_builder,
-    model_deployment_service_builder,
+    hpc_cluster_query_service_builder, model_deployment_service_builder,
 };
 use crate::bootstrap::state::AppState;
 use crate::presentation;
@@ -11,7 +10,6 @@ use actix_web::{
 };
 use amqprs::channel::ExchangeType;
 use log::error;
-use shared::application::services::deployment_strategy_service::DeploymentStrategyService;
 use shared::bootstrap::build_shared_app_context;
 pub use shared::infra::_common::mongo::{initialize_client, ClientParams};
 use shared::infra::configuration::site_configuration_loader::SiteConfigurationLoader;
@@ -47,10 +45,13 @@ pub async fn run_server() -> std::io::Result<()> {
 
     let broker_host =
         std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
+
     let broker_port =
         std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
+
     let broker_username =
         std::env::var("RABBIT_USER").expect("RABBIT_USER missing from environment variables");
+
     let broker_password = std::env::var("RABBIT_PASSWORD")
         .expect("RABBIT_PASSWORD missing from environment variables");
 
@@ -105,8 +106,10 @@ pub async fn run_server() -> std::io::Result<()> {
     })
     .expect("Datbase initialization error");
 
+    let site_configuration = config_loader.get_config();
+
     let shared_app_context = build_shared_app_context(
-        config_loader.get_config(),
+        site_configuration.clone(),
         mongo_client.clone(),
         db_name.clone(),
     )
@@ -118,9 +121,12 @@ pub async fn run_server() -> std::io::Result<()> {
     .expect("SharedState to be initialzed");
 
     let site_config = web::Data::from(Arc::new(shared_app_context.config));
+
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
+
     let federated_identity_service =
         web::Data::from(Arc::new(shared_app_context.federated_identity_service));
+
     let principal_service = web::Data::new(shared_app_context.principal_service);
 
     // Initialize AppState
@@ -131,32 +137,11 @@ pub async fn run_server() -> std::io::Result<()> {
     };
 
     // Model Deployment Service
-    let model_deployment_service = Arc::new(
-        model_deployment_service_builder(&mongo_client, db_name.clone(), state.channel.clone())
-            .map_err(|e| {
-                error!(
-                    "Failed to initialize model deployment service: {}",
-                    e.to_string()
-                );
-                e
-            })
-            .expect("ModelDeploymentService to be initialzed"),
-    );
-
-    // Deployment Strategy Provider
-    let deployment_strategy_provider = build_deployment_strategy_provider()
-        .map_err(|e| {
-            error!(
-                "Failed to initialize DeploymentStrategyProvider: {}",
-                e.to_string()
-            );
-            e
-        })
-        .expect("DeploymentStrategyProvider to be initialized");
-
-    // Deployment Strategy Service
-    let deployment_strategy_service =
-        Arc::new(DeploymentStrategyService::new(deployment_strategy_provider));
+    let model_deployment_service = Arc::new(model_deployment_service_builder(
+        &mongo_client,
+        db_name.clone(),
+        state.channel.clone(),
+    ));
 
     let hpc_cluster_query_service = Arc::new(hpc_cluster_query_service_builder(
         &mongo_client,
@@ -170,7 +155,6 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(federated_identity_service.clone())
             .app_data(principal_service.clone())
             .app_data(web::Data::from(model_deployment_service.clone()))
-            .app_data(web::Data::from(deployment_strategy_service.clone()))
             .app_data(web::Data::from(hpc_cluster_query_service.clone()))
             .app_data(web::Data::new(state.clone()))
 
@@ -180,12 +164,9 @@ pub async fn run_server() -> std::io::Result<()> {
             .wrap(from_fn(resolve_tenancy))
             .wrap(Logger::default())
             .wrap(from_fn(preflight_short_circuit))
-
-
             .service(presentation::http::v1::actix_web::handlers::index::index)
-            .service(presentation::http::v1::actix_web::handlers::list_strategies::list_strategies)
             .service(presentation::http::v1::actix_web::handlers::list_model_deployments::list_model_deployments)
-            .service(presentation::http::v1::actix_web::handlers::deploy_model_with_strategy::deploy_model_with_strategy)
+            .service(presentation::http::v1::actix_web::handlers::deploy_model_with_option::deploy_model_with_option)
             .service(presentation::http::v1::actix_web::handlers::start_model_deployment::start_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::stop_model_deployment::stop_model_deployment)
             .service(presentation::http::v1::actix_web::handlers::undeploy_model_deployment::undeploy_model_deployment)

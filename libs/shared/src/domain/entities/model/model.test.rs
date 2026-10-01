@@ -1,10 +1,9 @@
 use uuid::Uuid;
 
 use super::{Model, ModelError, ReconstituteModelProps};
+use crate::domain::entities::model::external_model::ExternalModelId;
 use crate::shared_kernel::{
-    enums::Visibility,
-    identifiers::{traits::UrnGenerator, ExternalModelId},
-    value_objects::TimeStamp,
+    enums::Visibility, identifiers::traits::UrnGenerator, value_objects::TimeStamp,
 };
 
 #[test]

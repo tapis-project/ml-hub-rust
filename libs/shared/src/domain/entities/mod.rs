@@ -7,7 +7,6 @@ pub mod artifact_publication;
 pub mod dataset;
 pub mod deployment;
 pub mod deployment_option;
-pub mod deployment_strategy;
 pub mod domain;
 pub mod endpoint;
 pub mod hpc_cluster;

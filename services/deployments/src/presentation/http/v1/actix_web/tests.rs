@@ -32,8 +32,15 @@ impl HpcClusterRepository for EmptyHpcClusterRepository {
 
     async fn find_by_id(
         &self,
-        _data_center: &DataCenter,
         _id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(None)
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
+        _id: &HpcClusterId,
+        _data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
         Ok(None)
     }
@@ -82,14 +89,51 @@ fn openapi_contains_hpc_cluster_routes_and_schemas() -> Result<(), Box<dyn std::
 }
 
 #[test]
+fn openapi_exposes_option_based_deployment_without_strategy_routes(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    let operation = document
+        .pointer("/paths/~1deployments-api~1deployments/post")
+        .ok_or_else(|| std::io::Error::other("deployment creation should be documented"))?;
+
+    assert_eq!(
+        operation.pointer("/operationId"),
+        Some(&serde_json::json!("deploy_model_with_option"))
+    );
+    assert!(document
+        .pointer("/components/schemas/DeployModelWithOptionBody/properties/deployment_option_id")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/DeployModelWithOptionBody/properties/model_id")
+        .is_none());
+    assert!(document
+        .pointer("/components/schemas/ModelDeploymentInterface/properties/interface_type")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/ModelDeploymentInterface/properties/rest_api")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/ModelDeploymentInterface/oneOf")
+        .is_none());
+    assert!(document
+        .pointer("/paths/~1deployments-api~1models~1{model_id}~1strategies")
+        .is_none());
+
+    Ok(())
+}
+
+#[test]
 fn openapi_inlines_data_center_path_enum() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
+
     let parameters = document
         .pointer(
             "/paths/~1deployments-api~1data-centers~1{data_center}~1hpc-clusters/get/parameters",
         )
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| std::io::Error::other("List operation should define parameters"))?;
+
     let data_center = parameters
         .iter()
         .find(|parameter| parameter.get("name") == Some(&serde_json::json!("data_center")))
@@ -106,12 +150,14 @@ fn openapi_inlines_data_center_path_enum() -> Result<(), Box<dyn std::error::Err
 #[test]
 fn openapi_documents_hpc_cluster_pagination_limits() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
+
     let parameters = document
         .pointer(
             "/paths/~1deployments-api~1data-centers~1{data_center}~1hpc-clusters/get/parameters",
         )
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| std::io::Error::other("List operation should define parameters"))?;
+
     let limit = parameters
         .iter()
         .find(|parameter| parameter.get("name") == Some(&serde_json::json!("limit")))

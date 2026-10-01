@@ -17,13 +17,13 @@ pub struct ModelDeployment {
     pub description: Option<String>,
     pub deployment_modality: DeploymentModality,
     pub tenant_id: String,
-    pub platform: platforms::Platform,
     pub owner: String,
-    pub model: ModelReference,
+    pub external_model_id: Uuid,
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
+    pub deployment_option_id: Uuid,
+    pub deployment_option_snapshot: DeploymentOptionSnapshot,
     pub visibility: Visibility,
     pub created_at: DateTime,
     pub last_modified: DateTime,
@@ -36,15 +36,37 @@ pub struct ModelDeployment {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ModelReference {
-    pub model_id: Uuid,
+pub struct DeploymentOptionSnapshot {
+    pub deployment_option_id: Uuid,
+    pub external_model_id: Uuid,
+    pub serving_runtime: ServingRuntime,
+    pub target_type: DeploymentTargetType,
+    pub hpc_cluster_queue: Option<HpcClusterQueueSnapshot>,
 }
 
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub struct DeploymentStrategyReference {
-//     pub platform: Platform,
-//     pub name: String,
-// }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ServingRuntime {
+    FlexServ,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum DeploymentTargetType {
+    HpcClusterQueue,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HpcClusterQueueSnapshot {
+    pub hpc_cluster_id: Uuid,
+    pub batch_scheduler_queue_id: Uuid,
+    pub cluster_host: String,
+    pub queue_name: String,
+    pub provider: DeploymentReconciliationProvider,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum DeploymentReconciliationProvider {
+    TapisJobs,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum State {
@@ -130,9 +152,14 @@ pub enum ParallelismStrategy {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum ModelDeploymentInterface {
-    RestApi(RestApi),
+pub struct ModelDeploymentInterface {
+    pub interface_type: ModelDeploymentInterfaceType,
+    pub rest_api: Option<RestApi>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ModelDeploymentInterfaceType {
+    RestApi,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

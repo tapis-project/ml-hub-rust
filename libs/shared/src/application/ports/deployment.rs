@@ -6,11 +6,11 @@ use crate::application::workflows::reconciliation::{ReconcilerError, Reconciliat
 
 // Domain layer
 use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::deployment::ModelDeployment;
+use crate::domain::entities::deployment::argument::Argument;
+use crate::domain::entities::deployment::{DeploymentReconciliationProvider, ModelDeployment};
 use crate::domain::entities::site::SiteContext;
 
 use async_trait::async_trait;
-use platforms::Platform;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -25,14 +25,23 @@ pub trait ModelDeploymentRepository: Send + Sync {
         &self,
         deployment: &ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError>;
+
+    async fn save_with_arguments(
+        &self,
+        deployment: &ModelDeployment,
+        arguments: &[Argument],
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+
     async fn update(
         &self,
         deployment: &ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError>;
+
     async fn find(
         &self,
         input: &FilterInput,
     ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+
     async fn find_by_owner(
         &self,
         tenant_id: &str,
@@ -43,11 +52,12 @@ pub trait ModelDeploymentRepository: Send + Sync {
 #[async_trait]
 pub trait ModelDeploymentPlatformReconciliationClient: Send + Sync {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome;
+
     fn get_site_context(&self) -> &SiteContext;
 }
 
 #[derive(Debug, Error)]
-pub enum ModelDeploymentPlatformReconcilerProviderError {
+pub enum ModelDeploymentReconcilerProviderError {
     #[error("{0}")]
     PlatformClientNotFound(String),
 
@@ -56,13 +66,13 @@ pub enum ModelDeploymentPlatformReconcilerProviderError {
 }
 
 #[async_trait]
-pub trait ModelDeploymentPlatformReconcilerProvider: Send + Sync {
+pub trait ModelDeploymentReconcilerProvider: Send + Sync {
     async fn provide(
         &self,
-        platform: &Platform,
+        provider: &DeploymentReconciliationProvider,
         site_context: &SiteContext,
     ) -> Result<
         Arc<dyn ModelDeploymentPlatformReconciliationClient>,
-        ModelDeploymentPlatformReconcilerProviderError,
+        ModelDeploymentReconcilerProviderError,
     >;
 }

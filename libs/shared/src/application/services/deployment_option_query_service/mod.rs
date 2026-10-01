@@ -8,7 +8,8 @@ use crate::{
     application::{
         inputs::deployment_option::ListDeploymentOptionsInput,
         outputs::deployment_option::{
-            DeploymentOptionListOutput, DeploymentOptionOutput, HpcClusterQueueTargetOutput,
+            DeploymentOptionDetailOutput, DeploymentOptionListOutput, DeploymentOptionOutput,
+            HpcClusterQueueTargetOutput,
         },
         ports::{
             deployment_option::{DeploymentOptionRepository, DeploymentOptionRepositoryError},
@@ -17,16 +18,21 @@ use crate::{
         },
     },
     domain::entities::{
-        deployment_option::DeploymentTarget,
+        deployment_option::{DeploymentOptionId, DeploymentTarget},
         hpc_cluster::{HpcCluster, HpcClusterId},
+        model::external_model::ExternalModelId,
     },
-    shared_kernel::{context::RequestContext, identifiers::ExternalModelId},
+    domain::services::ModelDeploymentService as ModelDeploymentDomainService,
+    shared_kernel::context::RequestContext,
 };
 
 #[derive(Debug, Error)]
 pub enum DeploymentOptionQueryServiceError {
     #[error("ExternalModel not found")]
     ExternalModelNotFound,
+
+    #[error("DeploymentOption not found")]
+    DeploymentOptionNotFound,
 
     #[error("DeploymentOption data integrity error: {0}")]
     DataIntegrity(String),
@@ -123,6 +129,7 @@ impl DeploymentOptionQueryService {
             .into_iter()
             .map(|cluster| (*cluster.id(), cluster))
             .collect::<HashMap<HpcClusterId, HpcCluster>>();
+
         let mut deployment_options = Vec::with_capacity(page.deployment_options.len());
 
         for deployment_option in page.deployment_options {
@@ -152,6 +159,7 @@ impl DeploymentOptionQueryService {
                 })?;
 
             let available = hpc_cluster.enabled() && queue.enabled();
+
             let target = HpcClusterQueueTargetOutput {
                 hpc_cluster_id: *hpc_cluster.id(),
                 hpc_cluster_name: hpc_cluster.name().into(),
@@ -173,6 +181,95 @@ impl DeploymentOptionQueryService {
             deployment_options,
             cursor: page.cursor,
             count: page.count,
+        })
+    }
+
+    pub async fn get_external_model_deployment_option(
+        &self,
+        _ctx: &RequestContext,
+        external_model_id: &ExternalModelId,
+        deployment_option_id: &DeploymentOptionId,
+    ) -> Result<DeploymentOptionDetailOutput, DeploymentOptionQueryServiceError> {
+        let external_model = retry_async(
+            || self.external_model_repository.find_by_id(external_model_id),
+            &Self::RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        if external_model.is_none() {
+            return Err(DeploymentOptionQueryServiceError::ExternalModelNotFound);
+        }
+
+        let deployment_option = retry_async(
+            || {
+                self.deployment_option_repository
+                    .find_by_id(deployment_option_id)
+            },
+            &Self::RETRY_POLICY,
+            None,
+        )
+        .await?
+        .filter(|option| option.external_model_id() == external_model_id)
+        .ok_or(DeploymentOptionQueryServiceError::DeploymentOptionNotFound)?;
+
+        let reference = match deployment_option.deployment_target() {
+            DeploymentTarget::HpcClusterQueue(reference) => reference,
+        };
+
+        let cluster_ids = vec![*reference.hpc_cluster_id()];
+
+        let clusters = retry_async(
+            || self.hpc_cluster_repository.find_by_ids(&cluster_ids),
+            &Self::RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        let cluster = clusters.into_iter().next().ok_or_else(|| {
+            DeploymentOptionQueryServiceError::DataIntegrity(format!(
+                "HPC cluster {} does not exist",
+                reference.hpc_cluster_id()
+            ))
+        })?;
+
+        let queue = cluster
+            .queues()
+            .iter()
+            .find(|queue| queue.id() == reference.batch_scheduler_queue_id())
+            .ok_or_else(|| {
+                DeploymentOptionQueryServiceError::DataIntegrity(format!(
+                    "Batch scheduler queue {} does not exist in HPC cluster {}",
+                    reference.batch_scheduler_queue_id(),
+                    cluster.id()
+                ))
+            })?;
+
+        let parameters = ModelDeploymentDomainService::deployment_parameters(
+            &deployment_option,
+            &cluster,
+            queue,
+        )
+        .map_err(|error| DeploymentOptionQueryServiceError::DataIntegrity(error.to_string()))?
+        .into_definitions();
+
+        let target = HpcClusterQueueTargetOutput {
+            hpc_cluster_id: *cluster.id(),
+            hpc_cluster_name: cluster.name().into(),
+            data_center: *cluster.data_center(),
+            hpc_cluster_enabled: cluster.enabled(),
+            batch_scheduler_queue_id: *queue.id(),
+            batch_scheduler_queue_name: queue.name().into(),
+            batch_scheduler_queue_enabled: queue.enabled(),
+        };
+
+        Ok(DeploymentOptionDetailOutput {
+            deployment_option: DeploymentOptionOutput {
+                deployment_option,
+                target,
+                available: cluster.enabled() && queue.enabled(),
+            },
+            parameters,
         })
     }
 }

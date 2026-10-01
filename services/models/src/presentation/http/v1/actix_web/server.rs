@@ -7,7 +7,8 @@ use crate::bootstrap::{
     state::AppState,
 };
 use crate::presentation::http::v1::actix_web::handlers::{
-    self, list_external_model_deployment_options::list_external_model_deployment_options,
+    self, get_external_model_deployment_option::get_external_model_deployment_option,
+    list_external_model_deployment_options::list_external_model_deployment_options,
 };
 use crate::presentation::http::v1::actix_web::openapi::ApiDoc;
 use actix_web::{
@@ -50,10 +51,13 @@ pub async fn run_server() -> std::io::Result<()> {
 
     let broker_host =
         std::env::var("RABBIT_HOST").expect("RABBIT_URL missing from environment variables");
+
     let broker_port =
         std::env::var("RABBIT_PORT").expect("RABBIT_PORT missing from environment variables");
+
     let broker_username =
         std::env::var("RABBIT_USER").expect("RABBIT_USER missing from environment variables");
+
     let broker_password = std::env::var("RABBIT_PASSWORD")
         .expect("RABBIT_PASSWORD missing from environment variables");
 
@@ -121,24 +125,31 @@ pub async fn run_server() -> std::io::Result<()> {
     .expect("SharedState to be initialzed");
 
     let site_config = web::Data::from(Arc::new(shared_app_context.config));
+
     let idp_registrar = web::Data::from(Arc::new(shared_app_context.idp_registrar));
+
     let federated_identity_service =
         web::Data::from(Arc::new(shared_app_context.federated_identity_service));
+
     let principal_service = web::Data::new(shared_app_context.principal_service);
 
     let model_creation_service = Arc::new(model_creation_service_factory(
         &mongo_client,
         db_name.clone(),
     ));
+
     let model_query_service = Arc::new(model_query_service_factory(&mongo_client, db_name.clone()));
+
     let model_artifact_association_service = Arc::new(model_artifact_association_service_factory(
         &mongo_client,
         db_name.clone(),
     ));
+
     let external_model_discovery_service = Arc::new(external_model_discovery_service_factory(
         &mongo_client,
         db_name.clone(),
     ));
+
     let deployment_option_query_service = Arc::new(deployment_option_query_service_factory(
         &mongo_client,
         db_name.clone(),
@@ -185,6 +196,7 @@ pub async fn run_server() -> std::io::Result<()> {
                     .service(handlers::get_external_model::get_external_model)
                     .service(handlers::discover_external_models::discover_external_models)
                     .service(list_external_model_deployment_options)
+                    .service(get_external_model_deployment_option)
                     .service(handlers::publish_model_artifact::publish_model_artifact)
                     .service(handlers::list_platforms::list_platforms)
                     .service(handlers::download_artifact::download_artifact)

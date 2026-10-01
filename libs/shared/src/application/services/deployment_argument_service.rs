@@ -1,21 +1,13 @@
 use std::sync::Arc;
 
 use crate::{
-    application::{
-        inputs::deployment::Argument as ArgumentInput,
-        ports::{
-            cipher::{Cipher, CipherError, CryptoContext},
-            deployment_argument::{
-                DeploymentArgumentRepository, DeploymentArgumentRepositoryError,
-            },
-        },
+    application::ports::{
+        cipher::{Cipher, CipherError, CryptoContext},
+        deployment_argument::{DeploymentArgumentRepository, DeploymentArgumentRepositoryError},
     },
     domain::entities::{
-        deployment::{
-            argument::{Argument, ArgumentData},
-            ModelDeployment,
-        },
-        deployment_strategy::strategy::{Strategy, StrategyError},
+        deployment::argument::{Argument, ArgumentData},
+        deployment_option::deployment_parameters::ResolvedDeploymentParameter,
     },
 };
 
@@ -32,9 +24,6 @@ pub enum DeploymentArgumentServiceError {
 
     #[error("Failed to convert decrypted argument data into UTF8: {0}")]
     Utf8ConversionError(String),
-
-    #[error(transparent)]
-    StrategyError(#[from] StrategyError),
 
     #[error(transparent)]
     DeploymentArgumentPersistenceError(#[from] DeploymentArgumentRepositoryError),
@@ -69,22 +58,6 @@ impl DeploymentArgumentService {
         }
     }
 
-    pub async fn save(
-        &self,
-        deployment: &ModelDeployment,
-        strategy: &Strategy,
-        arguments: &[ArgumentInput],
-    ) -> Result<(), DeploymentArgumentServiceError> {
-        let prepared_arguments = self.prepare_arguments(strategy, &arguments).await?;
-
-        let save_args = || {
-            self.argument_repo
-                .save_all(&deployment.id, &prepared_arguments)
-        };
-
-        Ok(retry_async(save_args, &Self::REPO_RETRY_POLICY, None).await?)
-    }
-
     pub async fn get_decrypted_arguments_for_deployment(
         &self,
         deployment_id: &Uuid,
@@ -101,6 +74,7 @@ impl DeploymentArgumentService {
         args: Vec<Argument>,
     ) -> Result<Vec<DecryptedArgument>, DeploymentArgumentServiceError> {
         let mut decrypted_arguments: Vec<DecryptedArgument> = Vec::with_capacity(args.len());
+
         for arg in args.iter() {
             let encryption_envelope = match arg.data() {
                 ArgumentData::Encrypted(e) => e,
@@ -130,38 +104,33 @@ impl DeploymentArgumentService {
 
     pub async fn prepare_arguments(
         &self,
-        strategy: &Strategy,
-        inputs: &[ArgumentInput],
+        resolved_parameters: &[ResolvedDeploymentParameter],
     ) -> Result<Vec<Argument>, DeploymentArgumentServiceError> {
-        log::debug!("Start arg prep");
-        let mut prepared_args: Vec<Argument> = vec![];
-        for arg in inputs {
-            // Create the non-secret arguments
-            if !strategy.is_parameter_secret(&arg.parameter_name) {
+        let mut prepared_args = Vec::with_capacity(resolved_parameters.len());
+
+        for parameter in resolved_parameters {
+            if !parameter.secret() {
                 prepared_args.push(Argument::new_plaintext(
-                    arg.parameter_name.clone(),
-                    arg.value.clone(),
+                    parameter.name().into(),
+                    parameter.value().into(),
                 ));
+
                 continue;
             }
 
-            log::debug!("ecrypt arg");
-            // Encrypt the argument value and create a secret argument
             let encryption_envelope = self
                 .cipher
                 .encrypt(
                     CryptoContext::DeploymentArgumentSecret,
-                    arg.value.clone().into_bytes(),
+                    parameter.value().as_bytes().to_vec(),
                 )
                 .await?;
 
             prepared_args.push(Argument::new_encrypted(
-                arg.parameter_name.clone(),
+                parameter.name().into(),
                 encryption_envelope,
-            ))
+            ));
         }
-
-        strategy.validate_arguments(&prepared_args)?;
 
         Ok(prepared_args)
     }

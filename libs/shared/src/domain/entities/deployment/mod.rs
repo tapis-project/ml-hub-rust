@@ -1,17 +1,19 @@
 pub mod argument;
 
-use crate::domain::entities::deployment_strategy::strategy::Strategy;
+use crate::domain::entities::model::external_model::ExternalModelId;
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::value_objects::TimeStamp;
 use openapiv3::OpenAPI;
-use platforms::Platform;
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use thiserror::Error;
 use uuid::Uuid;
+
+use super::deployment_option::{DeploymentOption, DeploymentOptionId, ServingRuntime};
+use super::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId};
 
 #[derive(Debug, Error)]
 pub enum ModelDeploymentError {
@@ -21,8 +23,11 @@ pub enum ModelDeploymentError {
     #[error("Invalid desired state change. Cannot move from desired state '{0}' to {1}")]
     InvalidDesiredStateTransition(String, String),
 
-    #[error("Selected deployment strategy ({0}) not supported")]
+    #[error("Selected deployment option does not support modality {0}")]
     UnsupportedDeploymentModality(DeploymentModality),
+
+    #[error("Deployment option snapshot does not match the selected deployment option")]
+    InvalidDeploymentOptionSnapshot,
 }
 
 #[derive(Clone, Debug)]
@@ -37,20 +42,20 @@ pub struct ModelDeployment {
     pub description: Option<String>,
     /// The id of the tenant to which this model deployment belongs
     pub tenant_id: String,
-    /// The platform to which this model is deployed
-    pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
-    /// A reference to the model.
-    pub model: ModelReference,
-    /// The curent state of the delpoyment
+    /// Id of the external model
+    pub external_model_id: ExternalModelId,
+    /// The curent state of the deployment
     pub state: State,
     /// The state the user would like the deployment to be in
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
-    /// The name of the deployment strategy used to create this model deployment
-    pub deployment_strategy: Option<String>,
+    /// The option the Model was deployed with
+    pub deployment_option_id: DeploymentOptionId,
+    /// Resolved execution information retained for the lifetime of the deployment.
+    pub deployment_option_snapshot: DeploymentOptionSnapshot,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
@@ -68,15 +73,15 @@ pub struct ModelDeployment {
 impl_urn_generator!(ModelDeployment, tenant_id, "deployment", id);
 
 impl ModelDeployment {
-    /// Create the model deployment from props
-    pub fn deploy_with_srategy(
-        props: DeployWithStrategyProps,
-        strategy: &Strategy,
+    /// Create the model deployment from a deployment option
+    pub fn create_from_option(
+        props: CreateFromOptionProps,
+        option: &DeploymentOption,
+        snapshot: DeploymentOptionSnapshot,
     ) -> Result<Self, ModelDeploymentError> {
-        // Invariant: The selected deployment strategy must support the selected deployment modality.
-        if !strategy
-            .config()
-            .supported_deployment_modalities
+        // Invariant: The selected option must support the selected deployment modality.
+        if !option
+            .supported_deployment_modalities()
             .contains(&props.deployment_modality)
         {
             return Err(ModelDeploymentError::UnsupportedDeploymentModality(
@@ -84,21 +89,28 @@ impl ModelDeployment {
             ));
         }
 
+        if snapshot.external_model_id != *option.external_model_id()
+            || snapshot.deployment_option_id != *option.id()
+            || snapshot.serving_runtime != *option.serving_runtime()
+        {
+            return Err(ModelDeploymentError::InvalidDeploymentOptionSnapshot);
+        }
+
         let now = TimeStamp::now();
 
         Ok(Self {
-            id: props.id,
+            id: Uuid::now_v7(),
             name: props.name,
             description: props.description,
             tenant_id: props.tenant_id,
-            platform: props.platform,
             owner: props.owner,
-            model: props.model,
+            external_model_id: *option.external_model_id(),
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: props.last_message,
             deployment_modality: props.deployment_modality.clone(),
-            deployment_strategy: Some(strategy.name.clone()),
+            deployment_option_id: *option.id(),
+            deployment_option_snapshot: snapshot,
             visibility: props.visibility,
             created_at: now.clone(),
             last_modified: now.clone(),
@@ -117,14 +129,14 @@ impl ModelDeployment {
             name: props.name,
             description: props.description,
             tenant_id: props.tenant_id,
-            platform: props.platform,
             deployment_modality: props.deployment_modality,
+            deployment_option_id: props.deployment_option_id,
+            deployment_option_snapshot: props.deployment_option_snapshot,
             owner: props.owner,
-            model: props.model,
+            external_model_id: props.external_model_id,
             state: props.state,
             desired_state: props.desired_state,
             last_message: props.last_message,
-            deployment_strategy: props.deployment_strategy,
             visibility: props.visibility,
             created_at: props.created_at,
             last_modified: props.last_modified,
@@ -151,6 +163,7 @@ impl ModelDeployment {
 
     pub fn revise(&mut self) -> ModelDeploymentDraft<'_> {
         let revision = self.revision + 1;
+
         let draft = ModelDeploymentDraft {
             deployment: self,
             revision,
@@ -168,9 +181,31 @@ impl ModelDeployment {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct ModelReference {
-    pub model_id: Uuid,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DeploymentOptionSnapshot {
+    pub deployment_option_id: DeploymentOptionId,
+    pub external_model_id: ExternalModelId,
+    pub serving_runtime: ServingRuntime,
+    pub target: DeploymentTargetSnapshot,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DeploymentTargetSnapshot {
+    HpcClusterQueue(HpcClusterQueueSnapshot),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HpcClusterQueueSnapshot {
+    pub hpc_cluster_id: HpcClusterId,
+    pub batch_scheduler_queue_id: BatchSchedulerQueueId,
+    pub cluster_host: String,
+    pub queue_name: String,
+    pub provider: DeploymentReconciliationProvider,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeploymentReconciliationProvider {
+    TapisJobs,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -306,6 +341,7 @@ impl<'a> ModelDeploymentDraft<'a> {
     /// Updates last modified to the UTC timestamp
     fn touch(&mut self) -> &mut Self {
         let now = TimeStamp::now();
+
         self.deployment.last_modified = now.clone();
 
         self
@@ -313,6 +349,7 @@ impl<'a> ModelDeploymentDraft<'a> {
 
     fn valid_state_transitions() -> HashMap<State, Vec<State>> {
         let mut transitions = HashMap::new();
+
         transitions.insert(
             State::NotDeployed,
             vec![State::Blocked, State::Running, State::Failed],
@@ -373,6 +410,7 @@ impl<'a> ModelDeploymentDraft<'a> {
 
     fn valid_desired_state_transitions() -> HashMap<DesiredState, Vec<DesiredState>> {
         let mut transitions = HashMap::new();
+
         transitions.insert(DesiredState::NotDeployed, vec![DesiredState::Running]);
         transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
         transitions.insert(DesiredState::Running, vec![DesiredState::NotDeployed]);
@@ -492,13 +530,13 @@ pub struct ReconstituteModelDeploymentProps {
     pub description: Option<String>,
     pub deployment_modality: DeploymentModality,
     pub tenant_id: String,
-    pub platform: Platform,
     pub owner: String,
-    pub model: ModelReference,
+    pub external_model_id: ExternalModelId,
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
+    pub deployment_option_id: DeploymentOptionId,
+    pub deployment_option_snapshot: DeploymentOptionSnapshot,
     pub visibility: Visibility,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,
@@ -511,14 +549,11 @@ pub struct ReconstituteModelDeploymentProps {
 }
 
 #[derive(Clone, Debug)]
-pub struct DeployWithStrategyProps {
-    pub id: Uuid,
+pub struct CreateFromOptionProps {
     pub name: String,
     pub description: Option<String>,
     pub tenant_id: String,
-    pub platform: Platform,
     pub owner: String,
-    pub model: ModelReference,
     pub last_message: Option<String>,
     pub visibility: Visibility,
     pub deployment_modality: DeploymentModality,

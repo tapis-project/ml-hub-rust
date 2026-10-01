@@ -1,19 +1,20 @@
-pub mod deployment_strategy;
-
-use std::sync::Arc;
-
-use crate::application::ports::cipher::{Cipher, CipherError};
 use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
 
 use crate::domain::entities::artifact::ArtifactType;
 use crate::domain::entities::deployment::{
-    DeployWithStrategyProps, ModelDeployment, ModelDeploymentError,
+    CreateFromOptionProps, DeploymentOptionSnapshot, ModelDeployment, ModelDeploymentError,
 };
-use crate::domain::entities::deployment_strategy::strategy::Strategy;
-use crate::domain::entities::deployment_strategy::strategy::StrategyError;
-use crate::domain::entities::model::{external_model::ExternalModel, Model};
+use crate::domain::entities::deployment_option::{
+    deployment_parameters::{
+        DeploymentParameterError, DeploymentParameters, ResolvedDeploymentParameter,
+    },
+    traits::ProvideDeploymentParameters,
+    DeploymentOption, DeploymentTarget,
+};
+use crate::domain::entities::hpc_cluster::{BatchSchedulerQueue, HpcCluster};
+use crate::domain::entities::model::Model;
 
 pub mod endpoint_issuance_service;
 
@@ -93,47 +94,65 @@ pub enum ModelDeploymentDomainServiceError {
     #[error(transparent)]
     DomainError(#[from] ModelDeploymentError),
 
-    #[error(transparent)]
-    ArgumentEncryptionError(#[from] CipherError),
+    #[error("Deployment option target does not match the supplied HPC cluster and queue")]
+    InvalidDeploymentTarget,
 
     #[error(transparent)]
-    StrategyError(#[from] StrategyError),
+    DeploymentParameterError(#[from] DeploymentParameterError),
 }
 
-pub struct ModelDeploymentService {
-    cipher: Arc<dyn Cipher>,
+pub struct ModelDeploymentService;
+
+pub struct DeployWithOptionResult {
+    pub deployment: ModelDeployment,
+    pub resolved_parameters: Vec<ResolvedDeploymentParameter>,
 }
 
 impl ModelDeploymentService {
-    pub fn new(cipher: Arc<dyn Cipher>) -> Self {
-        Self { cipher }
+    pub fn deployment_parameters(
+        option: &DeploymentOption,
+        cluster: &HpcCluster,
+        queue: &BatchSchedulerQueue,
+    ) -> Result<DeploymentParameters, ModelDeploymentDomainServiceError> {
+        let target = match option.deployment_target() {
+            DeploymentTarget::HpcClusterQueue(target) => target,
+        };
+
+        if target.hpc_cluster_id() != cluster.id()
+            || target.batch_scheduler_queue_id() != queue.id()
+            || queue.cluster_id() != cluster.id()
+        {
+            return Err(ModelDeploymentDomainServiceError::InvalidDeploymentTarget);
+        }
+
+        let parameters = option
+            .serving_runtime()
+            .provide_parameters()
+            .into_iter()
+            .chain(cluster.provide_parameters())
+            .chain(queue.provide_parameters())
+            .collect();
+
+        Ok(DeploymentParameters::new(parameters)?)
     }
 
-    pub async fn deploy_model_with_strategy(
-        &self,
-        _model: &ExternalModel,
-        // TODO Uncomment the line below when ready. Details found in the issue below
-        // https://github.com/tapis-project/ml-hub-rust/issues/73
-        // artifact: &Artifact,
-        props: DeployWithStrategyProps,
-        strategy: &Strategy,
-    ) -> Result<ModelDeployment, ModelDeploymentDomainServiceError> {
-        // TODO Uncomment all lines below when ready. Details found in the issue below
-        // https://github.com/tapis-project/ml-hub-rust/issues/73
-        // if model.artifact_id.is_none() {
-        // };
+    pub fn deploy_with_option(
+        props: CreateFromOptionProps,
+        option: &DeploymentOption,
+        snapshot: DeploymentOptionSnapshot,
+        cluster: &HpcCluster,
+        queue: &BatchSchedulerQueue,
+        supplied_parameters: &[(String, String)],
+    ) -> Result<DeployWithOptionResult, ModelDeploymentDomainServiceError> {
+        let parameters = Self::deployment_parameters(option, cluster, queue)?;
 
-        // if model.artifact_id != Some(artifact.id) {
-        //     return Err(ModelDeploymentServiceError::MismatchedArtifactIds(model.artifact_id.and_then(|id| Some(id.to_string())).unwrap_or(String::from("NULL")), artifact.id.to_string()))
-        // };
+        let resolved_parameters = parameters.resolve(supplied_parameters)?;
 
-        // if artifact.artifact_type != ArtifactType::Model {
-        //     return Err(ModelDeploymentServiceError::InvalidArtifactType)
-        // };
+        let deployment = ModelDeployment::create_from_option(props, option, snapshot)?;
 
-        // if !artifact.is_fully_ingested() {
-        // };
-
-        Ok(ModelDeployment::deploy_with_srategy(props, strategy)?)
+        Ok(DeployWithOptionResult {
+            deployment,
+            resolved_parameters,
+        })
     }
 }

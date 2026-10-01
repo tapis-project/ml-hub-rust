@@ -18,6 +18,7 @@ use crate::{
             },
         },
     },
+    domain::entities::model::external_model::ExternalModelId,
     domain::entities::model::external_model::{
         ExternalModel as DomainExternalModel, ModelLocator, ModelProvider,
     },
@@ -29,7 +30,6 @@ use crate::{
             deployment_option::ServingRuntime as DocumentServingRuntime,
         },
     },
-    shared_kernel::identifiers::ExternalModelId,
 };
 
 pub struct ExternalModelRepository {
@@ -160,6 +160,7 @@ impl ExternalModelRepositoryPort for ExternalModelRepository {
         }
 
         let use_deployment_options = input.criteria.iter().any(uses_deployment_options);
+
         let mut pipeline = Vec::new();
 
         if use_deployment_options {
@@ -202,6 +203,7 @@ impl ExternalModelRepositoryPort for ExternalModelRepository {
 
         let count = if input.options.include_count() && use_deployment_options {
             let mut count_pipeline = vec![deployment_option_lookup()];
+
             count_pipeline.extend([doc! { "$match": count_filter }, doc! { "$count": "count" }]);
 
             let mut count_cursor = self
@@ -292,14 +294,6 @@ fn criterion_filter(criterion: &SearchCriterion) -> Result<Document, ExternalMod
     )?;
 
     let mut and_conditions = Vec::new();
-
-    if !criterion.deployment_strategies.is_empty() {
-        and_conditions.push(doc! { "metadata.derived.deployment_strategies": { "$elemMatch": { "$or": criterion.deployment_strategies.iter().map(|strategy| doc! { "name": exact_regex(&strategy.name), "platform": to_bson(&strategy.platform).unwrap_or(Bson::Null) }).collect::<Vec<_>>() } } });
-    }
-
-    if let Some(has_strategies) = criterion.has_deployment_strategies {
-        and_conditions.push(doc! { "metadata.derived.deployment_strategies": if has_strategies { doc! { "$ne": [] } } else { doc! { "$size": 0 } } });
-    }
 
     let deployment_option_filter = deployment_option_filter(criterion)?;
 
@@ -442,6 +436,7 @@ where
     <T as TryInto<i64>>::Error: std::fmt::Display,
 {
     let mut document = Document::new();
+
     if let Some(min) = range.min {
         document.insert("$gte", min.try_into().map_err(map_error)?);
     }

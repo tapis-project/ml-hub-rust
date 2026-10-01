@@ -5,7 +5,6 @@ pub mod dataset_query_service;
 pub mod dataset_registration_service;
 pub mod deployment_argument_service;
 pub mod deployment_option_query_service;
-pub mod deployment_strategy_service;
 pub mod endpoint_issuance_service;
 pub mod endpoint_query_service;
 pub mod external_model_discovery_service;

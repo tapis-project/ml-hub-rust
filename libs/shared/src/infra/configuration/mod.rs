@@ -1,6 +1,7 @@
 pub mod site_configuration_loader;
 
 use serde::Deserialize;
+use std::collections::HashMap;
 use strum_macros::{Display, EnumString};
 
 // Infra
@@ -14,6 +15,17 @@ pub struct SiteConfiguration {
     pub base_url: String,
     pub idps: Vec<Idp>,
     pub tenancy_resolution_mode: TenancyResolutionMode,
+    pub model_deployment: ModelDeploymentConfiguration,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ModelDeploymentConfiguration {
+    pub tapis_jobs: TapisJobsConfiguration,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TapisJobsConfiguration {
+    pub hpc_systems: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Display, EnumString)]

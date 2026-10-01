@@ -19,8 +19,15 @@ impl HpcClusterRepository for TestRepository {
 
     async fn find_by_id(
         &self,
-        _data_center: &DataCenter,
         _id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(self.found.clone())
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
+        _id: &HpcClusterId,
+        _data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
         Ok(self.found.clone())
     }
@@ -71,7 +78,9 @@ fn cluster() -> Result<HpcCluster, HpcClusterQueryServiceError> {
 #[tokio::test]
 async fn gets_cluster_by_data_center_and_id() -> Result<(), Box<dyn std::error::Error>> {
     let cluster = cluster()?;
+
     let id = *cluster.id();
+
     let service = HpcClusterQueryService::new(Arc::new(TestRepository {
         found: Some(cluster),
         summaries: Vec::new(),

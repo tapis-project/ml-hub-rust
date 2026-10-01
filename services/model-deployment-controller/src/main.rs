@@ -85,6 +85,7 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
         content: Vec<u8>,
     ) {
         let default_message_id = String::from("unknown");
+
         let message_id = properties.message_id().unwrap_or(&default_message_id);
 
         let event = match deserialize_event_message(content) {
@@ -131,12 +132,6 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                     }
                     ReconciliationDispatchError::ModelDeploymentDomainInvariantViolation(e) => {
                         error!("ModelDeploymentDomainInvariantViolation: {}", e.to_string());
-                        self.nack(&channel, &deliver, false, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::MissingDeploymentStrategy(e) => {
-                        error!("MissingDeploymentStrategy: {}", e.to_string());
                         self.nack(&channel, &deliver, false, message_id).await;
 
                         return;
@@ -212,10 +207,13 @@ async fn main() -> () {
 
     let broker_host =
         std::env::var("RABBIT_HOST").expect("RABBIT_URL to be in environment variables");
+
     let broker_port =
         std::env::var("RABBIT_PORT").expect("RABBIT_PORT to be in environment variables");
+
     let broker_username =
         std::env::var("RABBIT_USER").expect("RABBIT_USER to be in environment variables");
+
     let broker_password =
         std::env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD to be in environment variables");
 
@@ -363,18 +361,13 @@ async fn main() -> () {
         site_id: config.site_id.clone(),
     };
 
-    let controller = match model_deployment_conroller_builder(
+    let controller = model_deployment_conroller_builder(
         site_context,
         &client,
         db_name,
         context.channel.clone(),
-    ) {
-        Ok(c) => c,
-        Err(e) => {
-            error!("{}", e.to_string());
-            panic!("Failed to initialize ModelDeploymentController");
-        }
-    };
+        config.model_deployment.tapis_jobs,
+    );
 
     let consumer = ModelDeploymentControllerConsumer { controller };
 

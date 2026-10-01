@@ -21,8 +21,13 @@ pub trait HpcClusterRepository: Send + Sync {
 
     async fn find_by_id(
         &self,
-        data_center: &DataCenter,
         id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError>;
+
+    async fn find_by_id_and_data_center(
+        &self,
+        id: &HpcClusterId,
+        data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError>;
 
     async fn find_by_ids(

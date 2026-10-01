@@ -15,11 +15,12 @@ use crate::application::workflows::reconciliation::{
     StartedOutcome, StoppedOutcome, UndeployedOutcome,
 };
 use crate::domain::entities::deployment::{
-    ModelDeployment, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, State,
+    DeploymentTargetSnapshot, ModelDeployment, ModelDeploymentMetadata,
+    ModelDeploymentMetadataDelta, State,
 };
-use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::domain::entities::model::external_model::{ExternalModel, ModelLocator, ModelProvider};
 use crate::domain::entities::site::SiteContext;
+use crate::infra::configuration::TapisJobsConfiguration;
 
 use std::collections::HashMap;
 use std::env;
@@ -34,6 +35,12 @@ enum ReconciliationError {
 
     #[error("Unsupported model provider for Tapis Jobs: {0}")]
     UnsupportedModelProvider(String),
+
+    #[error("Unsupported FlexServ version for Tapis Jobs: {0}")]
+    UnsupportedFlexServVersion(String),
+
+    #[error("No Tapis Jobs execution system is configured for HPC cluster host {0}")]
+    MissingTargetConfiguration(String),
 }
 
 pub struct TapisJobsModelDeploymentReconciliationClient {
@@ -41,6 +48,7 @@ pub struct TapisJobsModelDeploymentReconciliationClient {
     site_context: SiteContext,
     client: Client,
     base_job_definition: ReqSubmitJob,
+    configuration: TapisJobsConfiguration,
 }
 
 impl TapisJobsModelDeploymentReconciliationClient {
@@ -49,11 +57,15 @@ impl TapisJobsModelDeploymentReconciliationClient {
     const FLEXSERV_JOB_DEF_URL: &'static str = "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/job.json";
     const TAPIS_JOB_UUID_KEY: &'static str = "tapis_job_uuid";
 
-    pub async fn new(site_context: &SiteContext) -> Result<Self, ReconcilerError> {
+    pub async fn new(
+        site_context: &SiteContext,
+        configuration: TapisJobsConfiguration,
+    ) -> Result<Self, ReconcilerError> {
         let mlhub_service_password = match env::var("MLHUB_SERVICE_PASSWORD") {
             Ok(p) => p,
             Err(_) => {
                 let msg = "Could not initialize Tapis Jobs deployment reconciler";
+
                 log::error!("{}", msg);
                 return Err(ReconcilerError::InitializationFailed(msg.into()));
             }
@@ -69,6 +81,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Error fetching FlexServ job definition: {}",
                     error.error_id(),
@@ -80,6 +93,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Error deserializing FlexServ job definition: {}",
                     error.error_id(),
@@ -91,6 +105,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Ok(Self {
             client,
             base_job_definition,
+            configuration,
             mlhub_service_password,
             site_context: site_context.clone(),
         })
@@ -100,7 +115,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
         &self,
         deployment: &ModelDeployment,
         external_model: &ExternalModel,
-        strategy: Option<Strategy>,
         arguments: &[DecryptedArgument],
     ) -> Result<ReconciliationOutcome, ReconciliationError> {
         let (model_id, model_revision) = match (external_model.provider(), external_model.locator())
@@ -122,6 +136,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         let jobs_client = TapisJobs::new(&self.get_target_base_url(deployment), Some(&service_jwt))
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Failed to initialize TapisJobs client: {}",
                     error.error_id(),
@@ -134,10 +149,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
         // OBO Tapis tenant
         let obo_tenant_id = deployment.tenant_id.as_str();
+
         custom_headers.insert(
             "X-Tapis-Tenant",
             HeaderValue::from_str(&obo_tenant_id).map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Invalid header value for X-Tapis-Tenant: {}",
                     error.error_id(),
@@ -149,10 +166,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
         // OBO Tapis username
         let obo_username = deployment.owner.as_str();
+
         custom_headers.insert(
             "X-Tapis-User",
             HeaderValue::from_str(obo_username).map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Invalid header value for X-Tapis-User: {}",
                     error.error_id(),
@@ -162,17 +181,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
             })?,
         );
 
-        let strat = match strategy {
-            Some(s) => s,
-            None => {
-                let error = InfrastructureError::new_internal();
-                log::error!("[{}] Missing strategy", error.error_id());
-                return Err(ReconciliationError::Fatal(error));
-            }
-        };
-
-        let job_def =
-            self.build_job_request(model_id, model_revision, deployment, &strat, arguments)?;
+        let job_def = self.build_job_request(model_id, model_revision, deployment, arguments)?;
 
         let job_uuid = with_headers(custom_headers, async {
             jobs_client.jobs.submit_job(job_def).await
@@ -180,6 +189,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         .await
         .map_err(|e| {
             let error = InfrastructureError::new_internal();
+
             log::error!(
                 "[{}] Error when submitting FlexServ job to Tapis: {}",
                 error.error_id(),
@@ -190,17 +200,20 @@ impl TapisJobsModelDeploymentReconciliationClient {
         .result
         .ok_or_else(|| {
             let error = InfrastructureError::new_internal();
+
             log::error!("[{}] Job is None", error.error_id());
             error
         })?
         .uuid
         .ok_or_else(|| {
             let error = InfrastructureError::new_internal();
+
             log::error!("[{}] Uuid is None", error.error_id());
             error
         })?;
 
         let mut map = HashMap::new();
+
         map.insert(Self::TAPIS_JOB_UUID_KEY.to_string(), json!(job_uuid));
 
         Ok(ReconciliationOutcome::Started(StartedOutcome {
@@ -270,6 +283,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] External service call error: {}",
                     error.error_id(),
@@ -281,6 +295,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Deserialization error: {}",
                     error.error_id(),
@@ -360,7 +375,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
         model_id: &str,
         model_revision: &str,
         deployment: &ModelDeployment,
-        strategy: &Strategy,
         args: &[DecryptedArgument],
     ) -> Result<ReqSubmitJob, ReconciliationError> {
         let mut job_def = self.base_job_definition.clone();
@@ -400,12 +414,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
             spec.arg = Some(format!("--model-revision {}", model_revision));
         }
 
-        let target_host_name = args
+        let flexserv_version = args
             .iter()
-            .find(|a| a.parameter_name == "HPC System")
+            .find(|argument| argument.parameter_name == "flexserv_version")
             .map(|arg| &arg.value)
             .ok_or_else(|| {
-                let message: String = "'HPC System' not provided in arguments".into();
+                let message: String = "'flexserv_version' not provided in arguments".into();
 
                 let error = InfrastructureError::new_internal();
 
@@ -414,53 +428,38 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 ReconciliationError::Fatal(error)
             })?;
 
-        let strategy_data = strategy.data().clone().unwrap_or_default();
+        match flexserv_version.as_str() {
+            "1.4" => {}
+            version => {
+                return Err(ReconciliationError::UnsupportedFlexServVersion(
+                    version.into(),
+                ));
+            }
+        }
 
-        // The key to retrieve the exec_system_id from the data on the Strategy
-        let exec_system_data_strategy_key =
-            format!("{}_tapis_system_id", &target_host_name.to_ascii_lowercase());
+        let target = match &deployment.deployment_option_snapshot.target {
+            DeploymentTargetSnapshot::HpcClusterQueue(target) => target,
+        };
 
-        let exec_system_id = strategy_data
-            .get(&exec_system_data_strategy_key)
+        let tapis_system_id = self
+            .configuration
+            .hpc_systems
+            .get(&target.cluster_host)
+            .cloned()
             .ok_or_else(|| {
-                let message = format!(
-                    "Could not find data on strategy at key '{}'",
-                    &exec_system_data_strategy_key
-                );
-
-                let error = InfrastructureError::new_internal();
-
-                log::error!("[{}] Missing strategy data: {}", error.error_id(), &message);
-
-                ReconciliationError::Fatal(error)
+                ReconciliationError::MissingTargetConfiguration(target.cluster_host.clone())
             })?;
 
-        job_def.exec_system_id = Some(exec_system_id.clone());
-
-        // Set the logical queue
-        let exec_system_logical_queue = args
-            .iter()
-            .find(|a| a.parameter_name == "Slurm Partition")
-            .map(|arg| &arg.value)
-            .ok_or_else(|| {
-                let message: String = "'Slurm Partition' not provided in arguments".into();
-
-                let error = InfrastructureError::new_internal();
-
-                log::error!("[{}] Missing argument: {}", error.error_id(), &message);
-
-                ReconciliationError::Fatal(error)
-            })?;
-
-        job_def.exec_system_logical_queue = Some(exec_system_logical_queue.clone());
+        job_def.exec_system_id = Some(tapis_system_id);
+        job_def.exec_system_logical_queue = Some(target.queue_name.clone());
 
         // Set the slurm allocation
         let slurm_allocation = args
             .iter()
-            .find(|a| a.parameter_name == "Slurm Project Allocation")
+            .find(|a| a.parameter_name == "project_allocation")
             .map(|arg| &arg.value)
             .ok_or_else(|| {
-                let message: String = "'Slurm Project Allocation' not provided in arguments".into();
+                let message: String = "'project_allocation' not provided in arguments".into();
 
                 let error = InfrastructureError::new_internal();
 
@@ -485,7 +484,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         // Set the slurm reservation
         let maybe_slurm_reservation = args
             .iter()
-            .find(|a| a.parameter_name == "Slurm Reservation" && !a.value.is_empty())
+            .find(|a| a.parameter_name == "reservation" && !a.value.is_empty())
             .map(|arg| &arg.value);
 
         if let Some(slurm_reservation) = maybe_slurm_reservation {
@@ -531,13 +530,8 @@ impl ModelDeploymentPlatformReconciliationClient for TapisJobsModelDeploymentRec
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome {
         let outcome = match input.action {
             ReconciliationAction::Start { payload } => {
-                self.handle_start(
-                    &input.deployment,
-                    &input.external_model,
-                    input.strategy,
-                    &payload,
-                )
-                .await
+                self.handle_start(&input.deployment, &input.external_model, &payload)
+                    .await
             }
             ReconciliationAction::Stop => self.handle_stop(&input).await,
             ReconciliationAction::Undeploy => self.handle_undeploy(&input).await,

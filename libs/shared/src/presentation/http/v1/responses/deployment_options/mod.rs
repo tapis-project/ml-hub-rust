@@ -3,8 +3,12 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::{
-    application::outputs::deployment_option::DeploymentOptionOutput,
-    domain::entities::deployment_option as domain,
+    application::outputs::deployment_option::{
+        DeploymentOptionDetailOutput, DeploymentOptionOutput,
+    },
+    domain::entities::deployment_option::{
+        self as domain, deployment_parameters as domain_parameters,
+    },
     presentation::http::v1::{
         deployment_options::{DeploymentModality, ServingRuntime},
         responses::hpc_clusters::DataCenter,
@@ -23,6 +27,39 @@ pub struct DeploymentOption {
     pub available: bool,
     pub created_at: String,
     pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DeploymentOptionDetail {
+    #[serde(flatten)]
+    pub deployment_option: DeploymentOption,
+    pub parameters: Vec<DeploymentParameter>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DeploymentParameter {
+    pub name: String,
+    pub description: Option<String>,
+    pub required: bool,
+    pub secret: bool,
+    pub parameter_type: DeploymentParameterType,
+    pub choices: Option<Vec<DeploymentParameterChoice>>,
+    pub default: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub enum DeploymentParameterType {
+    String,
+    Integer,
+    Float,
+    Boolean,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DeploymentParameterChoice {
+    pub value: String,
+    pub description: Option<String>,
+    pub enabled: bool,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -79,6 +116,59 @@ impl From<DeploymentOptionOutput> for DeploymentOption {
             available: value.available,
             created_at: value.deployment_option.created_at().clone().into(),
             updated_at: value.deployment_option.updated_at().clone().into(),
+        }
+    }
+}
+
+impl From<DeploymentOptionDetailOutput> for DeploymentOptionDetail {
+    fn from(value: DeploymentOptionDetailOutput) -> Self {
+        Self {
+            deployment_option: value.deployment_option.into(),
+            parameters: value
+                .parameters
+                .into_iter()
+                .map(DeploymentParameter::from)
+                .collect(),
+        }
+    }
+}
+
+impl From<domain_parameters::Parameter> for DeploymentParameter {
+    fn from(value: domain_parameters::Parameter) -> Self {
+        Self {
+            name: value.name,
+            description: value.description,
+            required: value.required,
+            secret: value.secret,
+            parameter_type: value.r#type.into(),
+            choices: value.choices.map(|choices| {
+                choices
+                    .into_iter()
+                    .map(DeploymentParameterChoice::from)
+                    .collect()
+            }),
+            default: value.default,
+        }
+    }
+}
+
+impl From<domain_parameters::ParameterType> for DeploymentParameterType {
+    fn from(value: domain_parameters::ParameterType) -> Self {
+        match value {
+            domain_parameters::ParameterType::String => Self::String,
+            domain_parameters::ParameterType::Integer => Self::Integer,
+            domain_parameters::ParameterType::Float => Self::Float,
+            domain_parameters::ParameterType::Boolean => Self::Boolean,
+        }
+    }
+}
+
+impl From<domain_parameters::Choice> for DeploymentParameterChoice {
+    fn from(value: domain_parameters::Choice) -> Self {
+        Self {
+            value: value.value,
+            description: value.description,
+            enabled: value.enabled,
         }
     }
 }

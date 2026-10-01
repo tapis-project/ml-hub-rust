@@ -25,10 +25,11 @@ impl From<entities::DesiredState> for responses::DesiredState {
     }
 }
 
-impl From<entities::ModelReference> for responses::ModelReference {
-    fn from(value: entities::ModelReference) -> Self {
-        Self {
-            model_id: value.model_id,
+impl From<crate::shared_kernel::enums::DeploymentModality> for responses::DeploymentModality {
+    fn from(value: crate::shared_kernel::enums::DeploymentModality) -> Self {
+        match value {
+            crate::shared_kernel::enums::DeploymentModality::Batch => Self::Batch,
+            crate::shared_kernel::enums::DeploymentModality::Service => Self::Service,
         }
     }
 }
@@ -77,9 +78,10 @@ impl From<entities::RestApi> for responses::RestApi {
 impl From<entities::ModelDeploymentInterface> for responses::ModelDeploymentInterface {
     fn from(value: entities::ModelDeploymentInterface) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(r) => {
-                responses::ModelDeploymentInterface::RestApi(responses::RestApi::from(r))
-            }
+            entities::ModelDeploymentInterface::RestApi(interface) => Self {
+                interface_type: responses::ModelDeploymentInterfaceType::RestApi,
+                rest_api: Some(responses::RestApi::from(interface)),
+            },
         }
     }
 }
@@ -90,9 +92,13 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             id: value.id.clone(),
             name: value.name.clone(),
             description: value.description.clone(),
-            platform: value.platform.clone(),
+            tenant_id: value.tenant_id.clone(),
             owner: value.owner.clone(),
-            model: responses::ModelReference::from(value.model.clone()),
+            external_model_id: *value.external_model_id.as_uuid(),
+            deployment_option_id: *value.deployment_option_id.as_uuid(),
+            deployment_modality: responses::DeploymentModality::from(
+                value.deployment_modality.clone(),
+            ),
             state: responses::State::from(value.state.clone()),
             desired_state: responses::DesiredState::from(value.desired_state.clone()),
             created_at: String::from(value.created_at.clone()),
@@ -103,15 +109,14 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
             revision: value.revision().clone(),
-            deployment_strategy: value.deployment_strategy.clone(),
             deployment_interface: value
                 .deployment_interface
                 .clone()
-                .and_then(|mdi| Some(responses::ModelDeploymentInterface::from(mdi))),
+                .map(responses::ModelDeploymentInterface::from),
             metadata: value
                 .metadata
                 .clone()
-                .and_then(|m| Some(m.into_inner().clone())),
+                .map(|metadata| metadata.into_inner().clone()),
         }
     }
 }

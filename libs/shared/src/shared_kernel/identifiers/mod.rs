@@ -1,42 +1,5 @@
-use std::fmt;
-
-use uuid::Uuid;
-
 pub mod traits;
 pub mod urn;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ExternalModelId(Uuid);
-
-impl ExternalModelId {
-    pub fn new() -> Self {
-        Self(Uuid::now_v7())
-    }
-
-    pub fn reconstitute(value: Uuid) -> Self {
-        Self(value)
-    }
-
-    pub fn as_uuid(&self) -> &Uuid {
-        &self.0
-    }
-
-    pub fn into_uuid(self) -> Uuid {
-        self.0
-    }
-}
-
-impl Default for ExternalModelId {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl fmt::Display for ExternalModelId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
 
 /// A macro to automatically implement `UrnGenerator` for any domain entity struct.
 #[macro_export]

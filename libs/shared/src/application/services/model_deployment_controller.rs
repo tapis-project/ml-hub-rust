@@ -6,27 +6,24 @@ use crate::application::inputs::deployment::{
     FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput,
 };
 use crate::application::ports::deployment::{
-    ModelDeploymentPlatformReconcilerProvider, ModelDeploymentPlatformReconcilerProviderError,
+    ModelDeploymentReconcilerProvider, ModelDeploymentReconcilerProviderError,
 };
 use crate::application::ports::events::payloads::{
     ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload,
     ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload,
 };
 use crate::application::ports::events::{Event, EventPublisher, EventPublisherError, Payload};
-use crate::application::ports::model::{ExternalModelRepository, ModelRepository};
+use crate::application::ports::model::ExternalModelRepository;
 use crate::application::services::deployment_argument_service::{
     DeploymentArgumentService, DeploymentArgumentServiceError,
-};
-use crate::application::services::deployment_strategy_service::{
-    DeploymentStrategyService, GetStrategyByPlatformAndNameInput,
 };
 use crate::application::services::model_deployment_service::{
     ModelDeploymentService, ModelDeploymentServiceError,
 };
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationOutcome};
 use crate::domain::entities::deployment::{
-    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentInterfaceDelta,
-    ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
+    DeploymentTargetSnapshot, DesiredState, ModelDeployment, ModelDeploymentError,
+    ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
 };
 
 // Domain
@@ -59,10 +56,7 @@ pub enum ReconciliationDispatchError {
     ModelDeploymentDomainInvariantViolation(#[from] ModelDeploymentError),
 
     #[error("Failed to initalize reconciliation client: {0}")]
-    ReconciliationClientInitilizationFailed(#[from] ModelDeploymentPlatformReconcilerProviderError),
-
-    #[error("Missing deployment strategy: {0}")]
-    MissingDeploymentStrategy(String),
+    ReconciliationClientInitilizationFailed(#[from] ModelDeploymentReconcilerProviderError),
 
     #[error("Invalid Actor Kind: {0}")]
     InvalidActorKind(String),
@@ -102,13 +96,11 @@ impl DispatchReconcilerResult {
 
 pub struct ModelDeploymentController {
     site_context: SiteContext,
-    deployment_strategy_service: DeploymentStrategyService,
     deployment_argument_service: DeploymentArgumentService,
     model_deployment_service: ModelDeploymentService,
-    model_repo: Arc<dyn ModelRepository>,
     external_model_repo: Arc<dyn ExternalModelRepository>,
     event_publisher: Arc<dyn EventPublisher>,
-    client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
+    client_provider: Arc<dyn ModelDeploymentReconcilerProvider>,
 }
 
 impl ModelDeploymentController {
@@ -121,20 +113,16 @@ impl ModelDeploymentController {
 
     pub fn new(
         site_context: SiteContext,
-        deployment_strategy_service: DeploymentStrategyService,
         deployment_argument_service: DeploymentArgumentService,
         model_deployment_service: ModelDeploymentService,
-        model_repo: Arc<dyn ModelRepository>,
         external_model_repo: Arc<dyn ExternalModelRepository>,
         event_publisher: Arc<dyn EventPublisher>,
-        client_provider: Arc<dyn ModelDeploymentPlatformReconcilerProvider>,
+        client_provider: Arc<dyn ModelDeploymentReconcilerProvider>,
     ) -> Self {
         Self {
             site_context,
-            deployment_strategy_service,
             deployment_argument_service,
             model_deployment_service,
-            model_repo,
             external_model_repo,
             event_publisher,
             client_provider,
@@ -203,9 +191,13 @@ impl ModelDeploymentController {
         };
 
         // Initialize reconciliation client
+        let reconciliation_provider = match &deployment.deployment_option_snapshot.target {
+            DeploymentTargetSnapshot::HpcClusterQueue(target) => &target.provider,
+        };
+
         let client = match self
             .client_provider
-            .provide(&deployment.platform, &self.site_context)
+            .provide(reconciliation_provider, &self.site_context)
             .await
         {
             Ok(c) => c,
@@ -220,48 +212,10 @@ impl ModelDeploymentController {
             }
         };
 
-        // Closure to call that fetches the model
-        let find_model = || {
-            self.model_repo
-                .find_by_id(&deployment.tenant_id, deployment.model.model_id)
-        };
-
-        // Fetch model
-        let maybe_model = match retry_async(find_model, &Self::REPO_RETRY_POLICY, None).await {
-            Ok(r) => r,
-            Err(e) => {
-                self.handle_deployment_failure(
-                    &mut deployment,
-                    "Internal Error: Failed to fetch metadata",
-                )
-                .await;
-
-                return Err(ReconciliationDispatchError::ModelRetrievalFailed(
-                    e.to_string(),
-                ));
-            }
-        };
-
-        let model = match maybe_model {
-            Some(mm) => mm,
-            None => {
-                self.handle_deployment_failure(
-                    &mut deployment,
-                    "The model for this deployment cannot be found",
-                )
-                .await;
-
-                return Err(ReconciliationDispatchError::ModelRetrievalFailed(format!(
-                    "Model {} not found",
-                    deployment.model.model_id
-                )));
-            }
-        };
-
         let maybe_external_model = retry_async(
             || {
                 self.external_model_repo
-                    .find_by_id(model.external_model_id())
+                    .find_by_id(&deployment.external_model_id)
             },
             &Self::REPO_RETRY_POLICY,
             None,
@@ -280,7 +234,7 @@ impl ModelDeploymentController {
 
                 return Err(ReconciliationDispatchError::ModelRetrievalFailed(format!(
                     "ExternalModel {} not found",
-                    model.external_model_id()
+                    deployment.external_model_id
                 )));
             }
             Err(error) => {
@@ -296,26 +250,12 @@ impl ModelDeploymentController {
             }
         };
 
-        // Fetch associated deployment strategy
-        let maybe_strategy = match &deployment.deployment_strategy {
-            Some(name) => {
-                self.deployment_strategy_service
-                    .get_strategy_by_platform_and_name(GetStrategyByPlatformAndNameInput {
-                        platform: deployment.platform.clone(),
-                        name: name.clone(),
-                    })
-                    .await
-            }
-            None => None,
-        };
-
         // Reconcile
         let outcome = client
             .reconcile(ReconcileModelDeploymentInput {
                 action,
                 deployment: deployment.clone(),
                 external_model,
-                strategy: maybe_strategy,
             })
             .await;
 
@@ -521,22 +461,6 @@ impl ModelDeploymentController {
     ) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
         if deployment.is_state_syncronized() {
             return Ok(None);
-        }
-
-        let maybe_strategy = match &deployment.deployment_strategy {
-            Some(strat_name) => {
-                self.deployment_strategy_service
-                    .get_strategy_by_platform_and_name(GetStrategyByPlatformAndNameInput {
-                        platform: deployment.platform.clone(),
-                        name: strat_name.clone(),
-                    })
-                    .await
-            }
-            None => None,
-        };
-
-        if deployment.deployment_strategy.is_some() && maybe_strategy.is_none() {
-            return Err(ReconciliationDispatchError::MissingDeploymentStrategy(format!("During reconciliation action resolution, the referenced deployment strategy '{}' was not found", deployment.deployment_strategy.clone().unwrap_or("No name found".into()))));
         }
 
         // Fetch the arguments for this deployment

@@ -13,7 +13,7 @@ use shared::presentation::http::v1::requests::deployment::StartModelDeploymentPa
     post,
     path = "/deployments-api/deployments/{deployment_id}/start",
     tag = "Deployments",
-    description = "Deploy a model to a target platform",
+    description = "Start a model deployment on its selected target",
     params(
         (
             "deployment_id" = Uuid,

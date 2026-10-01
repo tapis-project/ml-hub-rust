@@ -57,7 +57,7 @@ impl ModelRepository for TestModelRepository {
         &self,
         _tenant_id: &str,
         _owner: &str,
-        _external_model_id: &crate::shared_kernel::identifiers::ExternalModelId,
+        _external_model_id: &crate::domain::entities::model::external_model::ExternalModelId,
     ) -> Result<Option<Model>, ModelRepositoryError> {
         Ok(self
             .existing
@@ -116,14 +116,14 @@ impl ExternalModelRepository for TestExternalModelRepository {
 
     async fn find_by_id(
         &self,
-        _id: &crate::shared_kernel::identifiers::ExternalModelId,
+        _id: &crate::domain::entities::model::external_model::ExternalModelId,
     ) -> Result<Option<ExternalModel>, ExternalModelRepositoryError> {
         Ok(self.found.clone())
     }
 
     async fn find_by_ids(
         &self,
-        _ids: &[crate::shared_kernel::identifiers::ExternalModelId],
+        _ids: &[crate::domain::entities::model::external_model::ExternalModelId],
     ) -> Result<Vec<ExternalModel>, ExternalModelRepositoryError> {
         Ok(Vec::new())
     }
@@ -160,7 +160,7 @@ async fn missing_external_model_is_rejected() {
     let result = service
         .create_model(
             &context,
-            input(crate::shared_kernel::identifiers::ExternalModelId::new()),
+            input(crate::domain::entities::model::external_model::ExternalModelId::new()),
         )
         .await;
 
@@ -234,7 +234,7 @@ async fn duplicate_key_race_maps_to_collection_conflict() {
 }
 
 fn input(
-    external_model_id: crate::shared_kernel::identifiers::ExternalModelId,
+    external_model_id: crate::domain::entities::model::external_model::ExternalModelId,
 ) -> CreateModelInput {
     CreateModelInput {
         name: "my model".into(),

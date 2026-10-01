@@ -1083,7 +1083,6 @@ dependencies = [
  "log",
  "mongodb",
  "openapiv3",
- "platforms",
  "serde",
  "serde_json",
  "serde_yaml",

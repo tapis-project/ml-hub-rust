@@ -3,6 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 use super::*;
+use crate::domain::entities::model::external_model::ExternalModelId;
 use crate::{
     application::{
         inputs::discover_models::SearchExternalModelsInput,
@@ -13,7 +14,7 @@ use crate::{
         fixtures::full_external_model,
         ModelError,
     },
-    shared_kernel::{constants::GLOBAL_TENANT, identifiers::ExternalModelId},
+    shared_kernel::constants::GLOBAL_TENANT,
 };
 
 struct TestModelRepository {

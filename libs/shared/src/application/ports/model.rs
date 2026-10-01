@@ -8,10 +8,9 @@ use crate::{
         ports::errors::InfrastructureError,
     },
     domain::entities::model::{
-        external_model::{ExternalModel, ModelLocator, ModelProvider},
+        external_model::{ExternalModel, ExternalModelId, ModelLocator, ModelProvider},
         Model,
     },
-    shared_kernel::identifiers::ExternalModelId,
 };
 
 #[derive(Debug, Error)]

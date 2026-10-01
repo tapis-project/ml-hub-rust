@@ -1,41 +1,46 @@
+use std::sync::Arc;
+
 use crate::application::ports::deployment::ModelDeploymentPlatformReconciliationClient;
 use crate::application::ports::deployment::{
-    ModelDeploymentPlatformReconcilerProvider, ModelDeploymentPlatformReconcilerProviderError,
+    ModelDeploymentReconcilerProvider, ModelDeploymentReconcilerProviderError,
 };
+use crate::domain::entities::deployment::DeploymentReconciliationProvider;
 use crate::domain::entities::site::SiteContext;
+use crate::infra::configuration::TapisJobsConfiguration;
 use crate::infra::reconciliation::clients::tapis_jobs::TapisJobsModelDeploymentReconciliationClient;
-use std::sync::Arc;
-// use crate::infra::reconciliation::clients::tapis_pods::TapisPodsModelDeploymentReconciliationClient;
-use platforms::Platform;
 
-pub struct ReconciliationClientProvider;
+// use crate::infra::reconciliation::clients::tapis_pods::TapisPodsModelDeploymentReconciliationClient;
+
+pub struct ReconciliationClientProvider {
+    tapis_jobs_configuration: TapisJobsConfiguration,
+}
 
 impl ReconciliationClientProvider {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(tapis_jobs_configuration: TapisJobsConfiguration) -> Self {
+        Self {
+            tapis_jobs_configuration,
+        }
     }
 }
 
 #[async_trait::async_trait]
-impl ModelDeploymentPlatformReconcilerProvider for ReconciliationClientProvider {
+impl ModelDeploymentReconcilerProvider for ReconciliationClientProvider {
     async fn provide(
         &self,
-        platform: &Platform,
+        provider: &DeploymentReconciliationProvider,
         site_context: &SiteContext,
     ) -> Result<
         Arc<dyn ModelDeploymentPlatformReconciliationClient>,
-        ModelDeploymentPlatformReconcilerProviderError,
+        ModelDeploymentReconcilerProviderError,
     > {
-        match platform {
-            // Platform::TapisPods => Ok(Arc::new(TapisPodsModelDeploymentReconciliationClient::new())),
-            Platform::TapisJobs => Ok(Arc::new(
-                TapisJobsModelDeploymentReconciliationClient::new(site_context).await?,
+        match provider {
+            DeploymentReconciliationProvider::TapisJobs => Ok(Arc::new(
+                TapisJobsModelDeploymentReconciliationClient::new(
+                    site_context,
+                    self.tapis_jobs_configuration.clone(),
+                )
+                .await?,
             )),
-            _ => Err(
-                ModelDeploymentPlatformReconcilerProviderError::PlatformClientNotFound(
-                    platform.to_string(),
-                ),
-            ),
         }
     }
 }

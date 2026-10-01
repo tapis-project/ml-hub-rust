@@ -1,4 +1,5 @@
 use crate::domain::entities::deployment as entities;
+use crate::domain::entities::deployment_option::ServingRuntime;
 use crate::infra::_common::mongo::ToBsonDateTime;
 use crate::infra::persistence::mongo::documents::deployment as documents;
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
@@ -13,13 +14,12 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             name: value.name.clone(),
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
-            platform: value.platform.clone(),
             deployment_modality: documents::DeploymentModality::from(
                 value.deployment_modality.clone(),
             ),
             revision: value.revision().clone(),
             owner: value.owner.clone(),
-            model: documents::ModelReference::from(value.model.clone()),
+            external_model_id: Uuid::from_bytes(*value.external_model_id.as_uuid().as_bytes()),
             state: documents::State::from(value.state.clone()),
             desired_state: documents::DesiredState::from(value.desired_state.clone()),
             last_message: value.last_message.clone(),
@@ -28,7 +28,12 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
                 .deployment_interface
                 .clone()
                 .and_then(|di| Some(documents::ModelDeploymentInterface::from(di))),
-            deployment_strategy: value.deployment_strategy.clone(),
+            deployment_option_id: Uuid::from_bytes(
+                *value.deployment_option_id.as_uuid().as_bytes(),
+            ),
+            deployment_option_snapshot: documents::DeploymentOptionSnapshot::from(
+                value.deployment_option_snapshot.clone(),
+            ),
             replicas: documents::ReplicaGroup::from(value.replicas.clone()),
             last_desired_state_change: value.last_desired_state_change.to_bson(),
             last_state_change: value.last_state_change.to_bson(),
@@ -109,10 +114,55 @@ impl From<entities::DesiredState> for documents::DesiredState {
     }
 }
 
-impl From<entities::ModelReference> for documents::ModelReference {
-    fn from(value: entities::ModelReference) -> Self {
+impl From<entities::DeploymentOptionSnapshot> for documents::DeploymentOptionSnapshot {
+    fn from(value: entities::DeploymentOptionSnapshot) -> Self {
+        let (target_type, hpc_cluster_queue) = match value.target {
+            entities::DeploymentTargetSnapshot::HpcClusterQueue(target) => (
+                documents::DeploymentTargetType::HpcClusterQueue,
+                Some(documents::HpcClusterQueueSnapshot::from(target)),
+            ),
+        };
+
         Self {
-            model_id: mongodb::bson::Uuid::from_bytes(*value.model_id.as_bytes()),
+            deployment_option_id: Uuid::from_bytes(
+                *value.deployment_option_id.as_uuid().as_bytes(),
+            ),
+            external_model_id: Uuid::from_bytes(*value.external_model_id.as_uuid().as_bytes()),
+            serving_runtime: documents::ServingRuntime::from(value.serving_runtime),
+            target_type,
+            hpc_cluster_queue,
+        }
+    }
+}
+
+impl From<ServingRuntime> for documents::ServingRuntime {
+    fn from(value: ServingRuntime) -> Self {
+        match value {
+            ServingRuntime::FlexServ => Self::FlexServ,
+        }
+    }
+}
+
+impl From<entities::HpcClusterQueueSnapshot> for documents::HpcClusterQueueSnapshot {
+    fn from(value: entities::HpcClusterQueueSnapshot) -> Self {
+        Self {
+            hpc_cluster_id: Uuid::from_bytes(*value.hpc_cluster_id.as_uuid().as_bytes()),
+            batch_scheduler_queue_id: Uuid::from_bytes(
+                *value.batch_scheduler_queue_id.as_uuid().as_bytes(),
+            ),
+            cluster_host: value.cluster_host,
+            queue_name: value.queue_name,
+            provider: documents::DeploymentReconciliationProvider::from(value.provider),
+        }
+    }
+}
+
+impl From<entities::DeploymentReconciliationProvider>
+    for documents::DeploymentReconciliationProvider
+{
+    fn from(value: entities::DeploymentReconciliationProvider) -> Self {
+        match value {
+            entities::DeploymentReconciliationProvider::TapisJobs => Self::TapisJobs,
         }
     }
 }
@@ -126,9 +176,10 @@ impl From<entities::RestApi> for documents::RestApi {
 impl From<entities::ModelDeploymentInterface> for documents::ModelDeploymentInterface {
     fn from(value: entities::ModelDeploymentInterface) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(i) => {
-                documents::ModelDeploymentInterface::RestApi(documents::RestApi::from(i))
-            }
+            entities::ModelDeploymentInterface::RestApi(interface) => Self {
+                interface_type: documents::ModelDeploymentInterfaceType::RestApi,
+                rest_api: Some(documents::RestApi::from(interface)),
+            },
         }
     }
 }

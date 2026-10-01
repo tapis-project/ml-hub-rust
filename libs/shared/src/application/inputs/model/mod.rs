@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
-use crate::shared_kernel::{enums::Visibility, identifiers::ExternalModelId};
+use crate::domain::entities::model::external_model::ExternalModelId;
+use crate::shared_kernel::enums::Visibility;
 
 #[derive(Debug, Clone)]
 pub struct CreateModelInput {

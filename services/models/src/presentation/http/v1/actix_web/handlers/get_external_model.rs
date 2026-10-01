@@ -4,11 +4,11 @@ use shared::{
     application::services::external_model_discovery_service::{
         ExternalModelDiscoveryService, ExternalModelDiscoveryServiceError,
     },
+    domain::entities::model::external_model::ExternalModelId,
     presentation::http::v1::{
         contracts::responses::GetExternalModelResponse, requests::models::GetExternalModelPath,
         responses::models::ExternalModel,
     },
-    shared_kernel::identifiers::ExternalModelId,
 };
 
 use crate::presentation::http::v1::actix_web::response_helpers::{

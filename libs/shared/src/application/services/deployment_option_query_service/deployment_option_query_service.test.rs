@@ -38,6 +38,17 @@ struct TestDeploymentOptionRepository {
 
 #[async_trait]
 impl DeploymentOptionRepository for TestDeploymentOptionRepository {
+    async fn find_by_id(
+        &self,
+        id: &DeploymentOptionId,
+    ) -> Result<Option<DeploymentOption>, DeploymentOptionRepositoryError> {
+        Ok(self
+            .deployment_options
+            .iter()
+            .find(|option| option.id() == id)
+            .cloned())
+    }
+
     async fn find_by_external_model_id(
         &self,
         _external_model_id: &ExternalModelId,
@@ -126,8 +137,19 @@ impl HpcClusterRepository for TestHpcClusterRepository {
 
     async fn find_by_id(
         &self,
-        _data_center: &DataCenter,
+        id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(self
+            .hpc_clusters
+            .iter()
+            .find(|cluster| cluster.id() == id)
+            .cloned())
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
         _id: &HpcClusterId,
+        _data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
         Ok(None)
     }
@@ -218,6 +240,7 @@ fn service(
 #[tokio::test]
 async fn reports_missing_external_model() {
     let service = service(None, Vec::new(), Vec::new());
+
     let input = ListDeploymentOptionsInput::new(None, None, None);
 
     let result = service
@@ -237,9 +260,13 @@ async fn reports_missing_external_model() {
 #[tokio::test]
 async fn hydrates_display_ready_target_and_pagination() -> Result<(), Box<dyn std::error::Error>> {
     let external_model = full_external_model();
+
     let hpc_cluster = hpc_cluster(true, true)?;
+
     let option = deployment_option(*external_model.id(), &hpc_cluster)?;
+
     let service = service(Some(external_model), vec![option], vec![hpc_cluster]);
+
     let input = ListDeploymentOptionsInput::new(None, None, Some(true));
 
     let output = service
@@ -271,9 +298,13 @@ async fn hydrates_display_ready_target_and_pagination() -> Result<(), Box<dyn st
 #[tokio::test]
 async fn returns_disabled_target_as_unavailable() -> Result<(), Box<dyn std::error::Error>> {
     let external_model = full_external_model();
+
     let hpc_cluster = hpc_cluster(true, false)?;
+
     let option = deployment_option(*external_model.id(), &hpc_cluster)?;
+
     let service = service(Some(external_model), vec![option], vec![hpc_cluster]);
+
     let input = ListDeploymentOptionsInput::new(None, None, None);
 
     let output = service
@@ -298,9 +329,13 @@ async fn returns_disabled_target_as_unavailable() -> Result<(), Box<dyn std::err
 async fn returns_option_on_disabled_cluster_as_unavailable(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let external_model = full_external_model();
+
     let hpc_cluster = hpc_cluster(false, true)?;
+
     let option = deployment_option(*external_model.id(), &hpc_cluster)?;
+
     let service = service(Some(external_model), vec![option], vec![hpc_cluster]);
+
     let input = ListDeploymentOptionsInput::new(None, None, None);
 
     let output = service
@@ -325,9 +360,13 @@ async fn returns_option_on_disabled_cluster_as_unavailable(
 #[tokio::test]
 async fn reports_dangling_hpc_cluster_reference() -> Result<(), Box<dyn std::error::Error>> {
     let external_model = full_external_model();
+
     let hpc_cluster = hpc_cluster(true, true)?;
+
     let option = deployment_option(*external_model.id(), &hpc_cluster)?;
+
     let service = service(Some(external_model), vec![option], Vec::new());
+
     let input = ListDeploymentOptionsInput::new(None, None, None);
 
     let result = service
@@ -349,7 +388,9 @@ async fn reports_dangling_hpc_cluster_reference() -> Result<(), Box<dyn std::err
 #[tokio::test]
 async fn reports_dangling_queue_reference() -> Result<(), Box<dyn std::error::Error>> {
     let external_model = full_external_model();
+
     let hpc_cluster = hpc_cluster(true, true)?;
+
     let option = DeploymentOption::new(NewDeploymentOptionProps {
         external_model_id: *external_model.id(),
         supported_deployment_modalities: NonEmpty::new(DeploymentModality::Batch),
@@ -359,7 +400,9 @@ async fn reports_dangling_queue_reference() -> Result<(), Box<dyn std::error::Er
         )),
         serving_runtime: ServingRuntime::FlexServ,
     })?;
+
     let service = service(Some(external_model), vec![option], vec![hpc_cluster]);
+
     let input = ListDeploymentOptionsInput::new(None, None, None);
 
     let result = service

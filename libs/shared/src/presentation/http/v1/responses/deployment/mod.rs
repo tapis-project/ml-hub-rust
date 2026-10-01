@@ -1,12 +1,7 @@
-pub mod client_strategy_set;
 mod entity_to_response;
-pub mod parameter_set;
-pub mod rule_set;
-pub mod strategy;
 
 use crate::presentation::http::v1::responses::visibility::Visibility;
 use openapiv3::OpenAPI;
-use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -19,13 +14,14 @@ pub struct ModelDeployment {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
-    pub platform: Platform,
+    pub tenant_id: String,
     pub owner: String,
-    pub model: ModelReference,
+    pub external_model_id: Uuid,
+    pub deployment_option_id: Uuid,
+    pub deployment_modality: DeploymentModality,
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
     pub visibility: Visibility,
     pub created_at: String,
     pub last_modified: String,
@@ -38,8 +34,9 @@ pub struct ModelDeployment {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct ModelReference {
-    pub model_id: uuid::Uuid,
+pub enum DeploymentModality {
+    Batch,
+    Service,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, ToSchema)]
@@ -75,8 +72,14 @@ pub enum ParallelismStrategy {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub enum ModelDeploymentInterface {
-    RestApi(RestApi),
+pub struct ModelDeploymentInterface {
+    pub interface_type: ModelDeploymentInterfaceType,
+    pub rest_api: Option<RestApi>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub enum ModelDeploymentInterfaceType {
+    RestApi,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

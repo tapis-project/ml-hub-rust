@@ -1,7 +1,4 @@
-use platforms::Platform;
-
 use super::*;
-use crate::application::inputs::discover_models::DeploymentStrategyCriterion;
 use crate::domain::entities::deployment_option::ServingRuntime;
 use crate::shared_kernel::enums::DeploymentModality;
 
@@ -25,11 +22,6 @@ fn criterion_combines_fields_and_uses_case_insensitive_exact_array_matches(
             min: Some(10),
             max: Some(20),
         },
-        deployment_strategies: vec![DeploymentStrategyCriterion {
-            name: "GPU.*".into(),
-            platform: Platform::TapisJobs,
-        }],
-        has_deployment_strategies: Some(true),
         ..Default::default()
     };
 
@@ -46,8 +38,6 @@ fn criterion_combines_fields_and_uses_case_insensitive_exact_array_matches(
 
     let size = filter.get_document("metadata.derived.size")?;
 
-    let strategy_conditions = filter.get_array("$and")?;
-
     assert_eq!(filter.get_str("provider")?, "HuggingFace");
     assert_eq!(name.pattern, "^Model\\.\\*$");
     assert_eq!(name.options, "i");
@@ -58,7 +48,6 @@ fn criterion_combines_fields_and_uses_case_insensitive_exact_array_matches(
     )));
     assert_eq!(size.get_i64("$gte")?, 10);
     assert_eq!(size.get_i64("$lte")?, 20);
-    assert_eq!(strategy_conditions.len(), 2);
 
     Ok(())
 }
@@ -66,7 +55,9 @@ fn criterion_combines_fields_and_uses_case_insensitive_exact_array_matches(
 #[test]
 fn deployment_option_fields_match_the_same_option() -> Result<(), Box<dyn std::error::Error>> {
     let hpc_cluster_id = uuid::Uuid::now_v7();
+
     let batch_scheduler_queue_id = uuid::Uuid::now_v7();
+
     let criterion = SearchCriterion {
         serving_runtimes: vec![ServingRuntime::FlexServ],
         hpc_cluster_ids: vec![hpc_cluster_id],
@@ -77,8 +68,11 @@ fn deployment_option_fields_match_the_same_option() -> Result<(), Box<dyn std::e
     };
 
     let filter = criterion_filter(&criterion)?;
+
     let conditions = filter.get_array("$and")?;
+
     let option_condition = conditions[0].as_document().ok_or("option condition")?;
+
     let option_filter = option_condition
         .get_document("deployment_options")?
         .get_document("$elemMatch")?;
@@ -117,7 +111,9 @@ fn has_no_deployment_options_uses_empty_array_match() -> Result<(), Box<dyn std:
     };
 
     let filter = criterion_filter(&criterion)?;
+
     let conditions = filter.get_array("$and")?;
+
     let condition = conditions[0].as_document().ok_or("option condition")?;
 
     assert_eq!(

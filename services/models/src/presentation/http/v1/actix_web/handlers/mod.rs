@@ -3,6 +3,7 @@ pub mod create_model;
 pub mod discover_external_models;
 pub mod download_artifact;
 pub mod get_external_model;
+pub mod get_external_model_deployment_option;
 pub mod get_model;
 pub mod get_model_artifact;
 pub mod get_model_ingestion;

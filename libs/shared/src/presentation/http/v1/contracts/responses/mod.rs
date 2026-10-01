@@ -3,8 +3,8 @@ use crate::presentation::http::v1::responses::{
     agents::Agent,
     artifacts::{ingestions::ArtifactIngestion, publications::ArtifactPublication, Artifact},
     datasets::Dataset,
-    deployment::{strategy::Strategy, ModelDeployment},
-    deployment_options::DeploymentOption,
+    deployment::ModelDeployment,
+    deployment_options::{DeploymentOption, DeploymentOptionDetail},
     hpc_clusters::{HpcCluster, HpcClusterSummary},
     models::{ExternalModel, Model, ModelArtifact},
     platform_details::PlatformDetails,
@@ -224,6 +224,16 @@ pub struct ListExternalModelDeploymentOptionsResponse {
 }
 
 #[derive(ToSchema)]
+pub struct GetExternalModelDeploymentOptionResponse {
+    pub result: DeploymentOptionDetail,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
 pub struct GetModelResponse {
     pub result: Model,
     pub status: u16,
@@ -256,16 +266,6 @@ pub struct GetModelArtifactResponse {
 #[derive(ToSchema)]
 pub struct ListModelArtifactResponse {
     pub result: Vec<Artifact>,
-    pub status: u16,
-    pub message: String,
-    #[schema(value_type = Object)]
-    pub metadata: Value,
-    pub version: String,
-}
-
-#[derive(ToSchema)]
-pub struct ListDeploymentStrategiesResponse {
-    pub result: Vec<Strategy>,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

@@ -11,6 +11,7 @@ use super::handlers::associate_model_with_artifact::__path_associate_model_with_
 use super::handlers::create_model::__path_create_model;
 use super::handlers::discover_external_models::__path_discover_external_models;
 use super::handlers::get_external_model::__path_get_external_model;
+use super::handlers::get_external_model_deployment_option::__path_get_external_model_deployment_option;
 use super::handlers::get_model::__path_get_model;
 use super::handlers::get_model_artifact::__path_get_model_artifact;
 use super::handlers::get_model_ingestion::__path_get_model_ingestion;
@@ -32,6 +33,7 @@ use super::handlers::publish_model_artifact::__path_publish_model_artifact;
         get_model,
         list_models,
         get_external_model,
+        get_external_model_deployment_option,
         discover_external_models,
         list_external_model_deployment_options,
         get_model_artifact,

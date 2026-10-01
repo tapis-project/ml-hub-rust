@@ -6,9 +6,15 @@ use crate::application::ports::errors::InfrastructureError;
 
 // Domain
 use crate::domain::entities;
+use crate::domain::entities::deployment::argument::Argument;
+use crate::infra::argument::mongo::{
+    DeploymentArgumentsDocument, MongoDeploymentArgumentRepository,
+};
 
 // Infra
-use crate::infra::persistence::mongo::database::MODEL_DEPLOYMENT_COLLECTION;
+use crate::infra::persistence::mongo::database::{
+    DEPLOYMENT_ARGUMENT_COLLECTION, MODEL_DEPLOYMENT_COLLECTION,
+};
 use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, State};
 
 use futures::stream::TryStreamExt;
@@ -18,8 +24,10 @@ use mongodb::{
 };
 
 pub struct ModelDeploymentRepository {
+    client: Client,
     read_collection: Collection<ModelDeployment>,
     write_collection: Collection<ModelDeployment>,
+    argument_collection: Collection<DeploymentArgumentsDocument>,
 }
 
 impl ModelDeploymentRepository {
@@ -27,8 +35,10 @@ impl ModelDeploymentRepository {
         let db = client.database(&db_name);
 
         Self {
+            client: client.clone(),
             write_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION),
             read_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION),
+            argument_collection: db.collection(DEPLOYMENT_ARGUMENT_COLLECTION),
         }
     }
 }
@@ -47,6 +57,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Persistence error: {}",
                     error.error_id(),
@@ -56,6 +67,51 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             })?;
 
         document._id = result.inserted_id.as_object_id();
+
+        Ok(())
+    }
+
+    async fn save_with_arguments(
+        &self,
+        deployment: &entities::deployment::ModelDeployment,
+        arguments: &[Argument],
+    ) -> Result<(), ModelDeploymentRepositoryError> {
+        let deployment_document = ModelDeployment::from(deployment);
+
+        let argument_document =
+            MongoDeploymentArgumentRepository::document_from_domain(&deployment.id, arguments)
+                .map_err(|error| map_error("Could not prepare deployment arguments", error))?;
+
+        let argument_id = argument_document.deployment_id.clone();
+
+        let deployment_collection = self.write_collection.clone();
+
+        let argument_collection = self.argument_collection.clone();
+
+        let mut session = self
+            .client
+            .start_session()
+            .await
+            .map_err(|error| map_error("Could not start deployment transaction", error))?;
+
+        session
+            .start_transaction()
+            .and_run2(async move |session| {
+                deployment_collection
+                    .insert_one(deployment_document.clone())
+                    .session(&mut *session)
+                    .await?;
+
+                argument_collection
+                    .replace_one(doc! { "_id": &argument_id }, argument_document.clone())
+                    .upsert(true)
+                    .session(&mut *session)
+                    .await?;
+
+                Ok(())
+            })
+            .await
+            .map_err(|error| map_error("Could not save deployment and arguments", error))?;
 
         Ok(())
     }
@@ -74,6 +130,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
 
         let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
             let error = InfrastructureError::new_internal();
+
             log::error!(
                 "[{}] Persistence error: {}",
                 error.error_id(),
@@ -84,6 +141,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
 
         while let Some(entry) = cursor.try_next().await.map_err(|e| {
             let error = InfrastructureError::new_internal();
+
             log::error!(
                 "[{}] Persistence error: {}",
                 error.error_id(),
@@ -91,7 +149,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             );
             error
         })? {
-            results.push(entities::deployment::ModelDeployment::from(&entry));
+            results.push(map_document(entry)?);
         }
 
         Ok(results)
@@ -109,13 +167,13 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
 
         let document = doc! {
             "$set": {
-                "platform": update.platform.to_string(),
                 "state": String::from(update.state),
                 "desired_state": String::from(update.desired_state),
                 "last_message": update.last_message,
                 "visibility": to_bson(&update.visibility)
                     .map_err(|e| {
                         let error = InfrastructureError::new_internal();
+
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
@@ -125,18 +183,21 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 "deployment_interface": to_bson(&update.deployment_interface)
                     .map_err(|e| {
                         let error = InfrastructureError::new_internal();
+
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
                 "replicas": to_bson(&update.replicas)
                     .map_err(|e| {
                         let error = InfrastructureError::new_internal();
+
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
                 "metadata": to_bson(&update.metadata)
                     .map_err(|e| {
                         let error = InfrastructureError::new_internal();
+
                         log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
                         error
                     })?,
@@ -149,6 +210,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             .await
             .map_err(|e| {
                 let error = InfrastructureError::new_internal();
+
                 log::error!(
                     "[{}] Persistence error: {}",
                     error.error_id(),
@@ -177,6 +239,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 }
                 Err(e) => {
                     let error = InfrastructureError::new_internal();
+
                     log::error!(
                         "[{}] Persistence error: {}",
                         error.error_id(),
@@ -189,6 +252,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
 
         let mut cursor = self.read_collection.find(filter).await.map_err(|e| {
             let error = InfrastructureError::new_internal();
+
             log::error!(
                 "[{}] Persistence error: {}",
                 error.error_id(),
@@ -199,6 +263,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
 
         let maybe_model_deployment = cursor.try_next().await.map_err(|e| {
             let error = InfrastructureError::new_internal();
+
             log::error!(
                 "[{}] Persistence error: {}",
                 error.error_id(),
@@ -208,8 +273,37 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         })?;
 
         match maybe_model_deployment {
-            Some(m) => Ok(Some(entities::deployment::ModelDeployment::from(&m))),
+            Some(document) => Ok(Some(map_document(document)?)),
             None => Ok(None),
         }
     }
+}
+
+fn map_error(context: &str, error: impl std::fmt::Display) -> ModelDeploymentRepositoryError {
+    let infrastructure_error = InfrastructureError::new_internal();
+
+    log::error!(
+        "[{}] {}: {}",
+        infrastructure_error.error_id(),
+        context,
+        error
+    );
+
+    infrastructure_error.into()
+}
+
+fn map_document(
+    document: ModelDeployment,
+) -> Result<entities::deployment::ModelDeployment, ModelDeploymentRepositoryError> {
+    entities::deployment::ModelDeployment::try_from(&document).map_err(|error| {
+        let infrastructure_error = InfrastructureError::new_internal();
+
+        log::error!(
+            "[{}] ModelDeployment data integrity error: {}",
+            infrastructure_error.error_id(),
+            error
+        );
+
+        infrastructure_error.into()
+    })
 }

@@ -43,6 +43,7 @@ impl HpcClusterRepository {
 impl HpcClusterRepositoryPort for HpcClusterRepository {
     async fn list_all(&self) -> Result<Vec<DomainHpcCluster>, HpcClusterRepositoryError> {
         let mut cursor = self.collection.find(doc! {}).await.map_err(map_error)?;
+
         let mut hpc_clusters = Vec::new();
 
         while let Some(document) = cursor.try_next().await.map_err(map_error)? {
@@ -54,10 +55,26 @@ impl HpcClusterRepositoryPort for HpcClusterRepository {
 
     async fn find_by_id(
         &self,
-        data_center: &DomainDataCenter,
         id: &HpcClusterId,
     ) -> Result<Option<DomainHpcCluster>, HpcClusterRepositoryError> {
+        let id = Uuid::from_bytes(*id.as_uuid().as_bytes());
+
+        self.collection
+            .find_one(doc! { "id": id })
+            .await
+            .map_err(map_error)?
+            .map(TryInto::try_into)
+            .transpose()
+            .map_err(map_conversion_error)
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
+        id: &HpcClusterId,
+        data_center: &DomainDataCenter,
+    ) -> Result<Option<DomainHpcCluster>, HpcClusterRepositoryError> {
         let data_center = to_bson(&DataCenter::from(data_center)).map_err(map_error)?;
+
         let id = Uuid::from_bytes(*id.as_uuid().as_bytes());
 
         self.collection
@@ -97,7 +114,9 @@ impl HpcClusterRepositoryPort for HpcClusterRepository {
         input: &ListHpcClustersInput,
     ) -> Result<HpcClusterListOutput, HpcClusterRepositoryError> {
         let filter = list_filter(input)?;
+
         let count_filter = filter.clone();
+
         let pipeline = list_pipeline(filter, input)?;
 
         let mut cursor = self
@@ -180,7 +199,9 @@ fn summaries_to_page(
     limit: u16,
 ) -> (Vec<HpcClusterSummaryOutput>, Option<String>) {
     let limit = usize::from(limit);
+
     let has_next_page = documents.len() > limit;
+
     let mut last_id = None;
 
     let hpc_clusters = documents

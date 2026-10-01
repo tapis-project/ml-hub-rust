@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use actix_web::{http::StatusCode, test as actix_test, web, App, HttpMessage};
 use async_trait::async_trait;
+use shared::domain::entities::model::external_model::ExternalModelId;
 use shared::{
     application::{
         inputs::{
@@ -27,7 +28,7 @@ use shared::{
             ModelProvider,
         },
     },
-    shared_kernel::{context::RequestContext, identifiers::ExternalModelId},
+    shared_kernel::context::RequestContext,
 };
 use utoipa::OpenApi;
 
@@ -40,6 +41,13 @@ struct EmptyDeploymentOptionRepository;
 
 #[async_trait]
 impl DeploymentOptionRepository for EmptyDeploymentOptionRepository {
+    async fn find_by_id(
+        &self,
+        _id: &shared::domain::entities::deployment_option::DeploymentOptionId,
+    ) -> Result<Option<DeploymentOption>, DeploymentOptionRepositoryError> {
+        Ok(None)
+    }
+
     async fn find_by_external_model_id(
         &self,
         _external_model_id: &ExternalModelId,
@@ -140,8 +148,15 @@ impl HpcClusterRepository for EmptyHpcClusterRepository {
 
     async fn find_by_id(
         &self,
-        _data_center: &DataCenter,
         _id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(None)
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
+        _id: &HpcClusterId,
+        _data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
         Ok(None)
     }
@@ -189,6 +204,7 @@ fn external_model() -> Result<ExternalModel, Box<dyn std::error::Error>> {
         None,
         None,
     )?;
+
     let locator = HuggingFaceRepoLocator::new("author/model".into(), "sha".into())?;
 
     Ok(ExternalModel::ingest(
@@ -321,6 +337,7 @@ fn openapi_exposes_deployment_option_search_filters() -> Result<(), Box<dyn std:
 #[test]
 fn openapi_exposes_external_model_deployment_options() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
+
     let operation = document
         .pointer(
             "/paths/~1models-api~1external-models~1{external_model_id}~1deployment-options/get",
@@ -360,10 +377,41 @@ fn openapi_exposes_external_model_deployment_options() -> Result<(), Box<dyn std
     Ok(())
 }
 
+#[test]
+fn openapi_exposes_deployment_option_details_and_parameters(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    let operation = document
+        .pointer(
+            "/paths/~1models-api~1external-models~1{external_model_id}~1deployment-options~1{deployment_option_id}/get",
+        )
+        .ok_or_else(|| {
+            std::io::Error::other("deployment option detail operation should be documented")
+        })?;
+
+    assert_eq!(
+        operation.pointer("/operationId"),
+        Some(&serde_json::json!("get_external_model_deployment_option"))
+    );
+    assert!(document
+        .pointer("/components/schemas/DeploymentOptionDetail/allOf/1/properties/parameters")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/DeploymentParameter/properties/default")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/DeploymentParameterChoice/properties/enabled")
+        .is_some());
+
+    Ok(())
+}
+
 #[actix_web::test]
 async fn deployment_options_reject_a_malformed_external_model_id(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let external_model = external_model()?;
+
     let app = actix_test::init_service(
         App::new()
             .app_data(deployment_option_query_service(Some(external_model)))
@@ -414,6 +462,7 @@ async fn deployment_options_return_not_found_for_a_missing_external_model() {
 #[actix_web::test]
 async fn deployment_options_reject_an_invalid_cursor() -> Result<(), Box<dyn std::error::Error>> {
     let external_model = external_model()?;
+
     let app = actix_test::init_service(
         App::new()
             .app_data(deployment_option_query_service(Some(external_model)))
@@ -443,6 +492,7 @@ async fn deployment_options_reject_an_invalid_cursor() -> Result<(), Box<dyn std
 async fn deployment_options_return_an_empty_page_with_count_metadata(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let external_model = external_model()?;
+
     let app = actix_test::init_service(
         App::new()
             .app_data(deployment_option_query_service(Some(external_model)))
@@ -477,6 +527,7 @@ async fn deployment_options_return_an_empty_page_with_count_metadata(
 async fn deployment_options_return_server_error_for_repository_failure(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let external_model = external_model()?;
+
     let app = actix_test::init_service(
         App::new()
             .app_data(deployment_option_query_service(Some(external_model)))

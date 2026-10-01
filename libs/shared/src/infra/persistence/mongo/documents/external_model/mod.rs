@@ -1,14 +1,13 @@
 pub mod external_model_indexes;
 
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
-use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::{
-    domain::entities::model::external_model as domain,
+    domain::entities::model::external_model::{self as domain, ExternalModelId},
     infra::persistence::mongo::documents::task::Task,
-    shared_kernel::{identifiers::ExternalModelId, value_objects::TimeStamp},
+    shared_kernel::value_objects::TimeStamp,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,7 +53,6 @@ pub struct ModelMetadata {
 pub struct DerivedMetadata {
     pub name: Option<String>,
     pub author: Option<String>,
-    pub deployment_strategies: Vec<DeploymentStrategyReference>,
     pub inference_runtimes: Vec<String>,
     pub tags: Vec<String>,
     pub task_types: Vec<Task>,
@@ -64,12 +62,6 @@ pub struct DerivedMetadata {
     pub private: bool,
     pub likes: Option<u64>,
     pub downloads: Option<u64>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DeploymentStrategyReference {
-    pub name: String,
-    pub platform: Platform,
 }
 
 impl TryFrom<&domain::ExternalModel> for ExternalModel {
@@ -121,14 +113,6 @@ impl TryFrom<&domain::ExternalModel> for ExternalModel {
                 derived: DerivedMetadata {
                     name: derived.name().map(Into::into),
                     author: derived.author().map(Into::into),
-                    deployment_strategies: derived
-                        .deployment_strategies()
-                        .iter()
-                        .map(|strategy| DeploymentStrategyReference {
-                            name: strategy.name().into(),
-                            platform: strategy.platform().clone(),
-                        })
-                        .collect(),
                     inference_runtimes: derived.inference_runtimes().to_vec(),
                     tags: derived
                         .tags()
@@ -200,13 +184,6 @@ impl TryFrom<ExternalModel> for domain::ExternalModel {
         let derived = domain::DerivedMetadata::reconstitute(
             derived.name,
             derived.author,
-            derived
-                .deployment_strategies
-                .into_iter()
-                .map(|strategy| {
-                    domain::DeploymentStrategyReference::new(strategy.name, strategy.platform)
-                })
-                .collect(),
             derived.inference_runtimes,
             derived.tags,
             derived.task_types.into_iter().map(Into::into).collect(),

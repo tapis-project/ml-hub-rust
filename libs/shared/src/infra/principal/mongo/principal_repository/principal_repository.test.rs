@@ -1,4 +1,4 @@
-use mongodb::bson::{DateTime, doc};
+use mongodb::bson::{doc, DateTime};
 
 use super::*;
 

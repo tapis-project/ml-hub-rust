@@ -6,8 +6,8 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use super::deployment_option::{
+    deployment_parameters::{Parameter, ParameterType},
     traits::ProvideDeploymentParameters,
-    parameter_set::{Parameter, ParameterType},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -131,6 +131,7 @@ impl HpcCluster {
         }
 
         let mut queue_ids = HashSet::new();
+
         let mut queue_names = HashSet::new();
 
         for queue in &props.queues {
@@ -198,6 +199,12 @@ impl HpcCluster {
         }
 
         schedulers
+    }
+}
+
+impl ProvideDeploymentParameters for HpcCluster {
+    fn provide_parameters(&self) -> Vec<Parameter> {
+        Vec::new()
     }
 }
 
@@ -299,7 +306,7 @@ impl ProvideDeploymentParameters for BatchSchedulerQueue {
         match self.scheduler_type {
             SchedulerType::Slurm => vec![
                 Parameter {
-                    name: "Slurm Account (Project Allocation)".into(),
+                    name: "project_allocation".into(),
                     description: Some("The Slurm account to be charged".into()),
                     required: true,
                     default: None,
@@ -308,7 +315,7 @@ impl ProvideDeploymentParameters for BatchSchedulerQueue {
                     choices: None,
                 },
                 Parameter {
-                    name: "Resource Reservation".into(),
+                    name: "reservation".into(),
                     description: Some("The dedicated time-slot or event code assigned by the cluster administrator to give your group immediate access to specific nodes".into()),
                     required: false,
                     default: None,

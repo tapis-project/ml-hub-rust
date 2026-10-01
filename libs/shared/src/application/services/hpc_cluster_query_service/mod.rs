@@ -46,7 +46,7 @@ impl HpcClusterQueryService {
         id: &HpcClusterId,
     ) -> Result<HpcClusterQueryOutput, HpcClusterQueryServiceError> {
         let hpc_cluster = retry_async(
-            || self.repository.find_by_id(data_center, id),
+            || self.repository.find_by_id_and_data_center(id, data_center),
             &Self::REPOSITORY_RETRY_POLICY,
             None,
         )

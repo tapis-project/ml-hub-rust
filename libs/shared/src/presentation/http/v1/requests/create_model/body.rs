@@ -5,8 +5,9 @@ use validator::Validate;
 
 use crate::{
     application::inputs::model::CreateModelInput,
+    domain::entities::model::external_model::ExternalModelId,
     presentation::http::v1::requests::datasets::Visibility,
-    shared_kernel::{enums::Visibility as DomainVisibility, identifiers::ExternalModelId},
+    shared_kernel::enums::Visibility as DomainVisibility,
 };
 
 #[derive(Deserialize, Serialize, Validate, Debug, Clone, ToSchema)]

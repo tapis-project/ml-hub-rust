@@ -5,14 +5,14 @@ use crate::application::ports;
 use crate::application::ports::principal::PrincipalRepositoryError;
 use crate::domain::entities;
 use crate::infra::_common::mongo::is_duplicate_key_error;
-use crate::infra::identity::mongo::documents::{FEDERATED_IDENTITY_COLLECTION, FederatedIdentity};
-use crate::infra::principal::mongo::documents::{PRINCIPAL_COLLECTION, Principal};
+use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
+use crate::infra::principal::mongo::documents::{Principal, PRINCIPAL_COLLECTION};
 use futures::stream::TryStreamExt;
 use mongodb::{
-    Client, Collection,
-    bson::{Document, doc, to_bson, to_document},
+    bson::{doc, to_bson, to_document, Document},
     error::{Error, TRANSIENT_TRANSACTION_ERROR},
     options::{ReadConcern, UpdateModifications, UpdateOneModel, WriteConcern, WriteModel},
+    Client, Collection,
 };
 
 type FederatedIdentityReadCollection = Collection<FederatedIdentity>;
