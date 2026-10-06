@@ -258,6 +258,24 @@ class ComponentAliasTests(unittest.TestCase):
             repository_root / "components.json",
         )
 
+    def test_local_cycle_commands_stop_build_and_start_with_the_selected_overlay(self):
+        config = lifecycle_cli.load(lifecycle_cli.get_config_path())
+
+        for component in config["components"]:
+            cycle_command = component.get("commands", {}).get("cyclel")
+            if cycle_command is None:
+                continue
+
+            component_name = component["name"]
+            expected_command = (
+                "./dev stop {{ self.name }} -t overlay {{ overlay }} "
+                "&& ./dev buildl {{ self.name }} "
+                "&& ./dev start {{ self.name }} -t overlay {{ overlay }}"
+            )
+
+            with self.subTest(component=component_name):
+                self.assertEqual(cycle_command, expected_command)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -8,7 +8,7 @@ use amqprs::{
 };
 use async_trait::async_trait;
 use log::{error, info, warn};
-use model_deployment_controller::bootstrap::model_deployment_conroller_builder;
+use model_deployment_controller::bootstrap::model_deployment_reconciliation_service_builder;
 use shared::infra::messaging::codec::deserialize_event_message;
 use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
@@ -19,8 +19,8 @@ use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
 use shared::{
     application::{
         ports::events::Event,
-        services::model_deployment_controller::{
-            FinishReconciliationError, ModelDeploymentController, ReconciliationDispatchError,
+        services::model_deployment_reconciliation_service::{
+            FinishReconciliationError, ModelDeploymentReconciliationService, ReconciliationDispatchError,
         },
     },
     domain::entities::site::SiteContext,
@@ -46,7 +46,7 @@ struct MessagingContext {
 }
 
 struct ModelDeploymentControllerConsumer {
-    controller: Arc<ModelDeploymentController>,
+    reconciliation_service: Arc<ModelDeploymentReconciliationService>,
 }
 
 impl ModelDeploymentControllerConsumer {
@@ -107,7 +107,7 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
                 // Initialize a system request context with the correlation id of the event
                 let ctx = RequestContext::system(Some(*event.metadata().correlation_id()));
 
-                self.controller.dispatch_reconciler(&ctx, payload).await
+                self.reconciliation_service.dispatch_reconciler(&ctx, payload).await
             }
             _ => {
                 error!(
@@ -176,7 +176,7 @@ impl AsyncConsumer for ModelDeploymentControllerConsumer {
         // by this reconciliation
         dispatch_result.correlate_event(event.clone());
 
-        let maybe_finish_result = self.controller.finish_reconiliation(dispatch_result).await;
+        let maybe_finish_result = self.reconciliation_service.finish_reconciliation(dispatch_result).await;
 
         match maybe_finish_result {
             Ok(_) => {
@@ -361,10 +361,14 @@ async fn main() -> () {
         site_id: config.site_id.clone(),
     };
 
-    let controller =
-        model_deployment_conroller_builder(site_context, &client, db_name, context.channel.clone());
+    let reconciliation_service = model_deployment_reconciliation_service_builder(
+        site_context, 
+        &client, 
+        db_name, 
+        context.channel.clone()
+    );
 
-    let consumer = ModelDeploymentControllerConsumer { controller };
+    let consumer = ModelDeploymentControllerConsumer { reconciliation_service };
 
     let args = BasicConsumeArguments::default()
         .queue(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into())

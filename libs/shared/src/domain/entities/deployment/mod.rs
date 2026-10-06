@@ -15,7 +15,7 @@ use uuid::Uuid;
 use super::deployment_option::{DeploymentOption, DeploymentOptionId, ServingRuntime};
 use super::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId};
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentError {
     #[error("Invalid state change. Cannot move from state '{0}' to {1}")]
     InvalidStateTransition(String, String),
@@ -60,6 +60,7 @@ pub struct ModelDeployment {
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
+    // pub last_observed: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,
@@ -149,10 +150,30 @@ impl ModelDeployment {
         }
     }
 
+    pub fn resolve_reconciliation_requirement(&self) -> Option<ReconciliationRequirement> {
+        if self.is_state_syncronized() {
+            return None
+        }
+
+        match (&self.state, &self.desired_state) {
+            (State::NotDeployed, DesiredState::Running)
+            | (State::Stopped, DesiredState::Running)
+            | (State::Failed, DesiredState::Running)
+            | (State::Blocked, DesiredState::Running) => Some(ReconciliationRequirement::Start),
+
+            (_, DesiredState::NotDeployed) => Some(ReconciliationRequirement::Undeploy),
+
+            (State::Running, DesiredState::Stopped) => Some(ReconciliationRequirement::Stop),
+
+            _ => None,
+        }
+    }
+
     pub fn is_state_syncronized(&self) -> bool {
         match (&self.state, &self.desired_state) {
             (State::Running, DesiredState::Running) => true,
             (State::Stopped, DesiredState::Stopped) => true,
+            (State::NotDeployed, DesiredState::NotDeployed) => true,
             _ => false,
         }
     }
@@ -179,6 +200,13 @@ impl ModelDeployment {
 
         Ok(())
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ReconciliationRequirement {
+    Start,
+    Stop,
+    Undeploy,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -248,6 +276,17 @@ impl From<DesiredState> for String {
     }
 }
 
+impl PartialEq<DesiredState> for State {
+    fn eq(&self, other: &DesiredState) -> bool {
+        match (self, other) {
+            (&State::NotDeployed, &DesiredState::NotDeployed) => true,
+            (&State::Stopped, &DesiredState::Stopped) => true,
+            (&State::Running, &DesiredState::Running) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ModelDeploymentMetadata(pub HashMap<String, Value>);
 
@@ -267,8 +306,9 @@ impl ModelDeploymentMetadata {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum ModelDeploymentMetadataDelta {
+    #[default]
     NoChange,
     Delete,
     Merge(ModelDeploymentMetadata),
@@ -301,8 +341,9 @@ pub enum ParallelismStrategy {
     ExpertParallelism,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum ReplicaGroupDelta {
+    #[default]
     NoChange,
     Delete,
     Replace(ReplicaGroup),
@@ -318,8 +359,9 @@ pub struct RestApi {
     pub spec: OpenAPI,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum ModelDeploymentInterfaceDelta {
+    #[default]
     NoChange,
     Delete,
     Replace(ModelDeploymentInterface),
@@ -366,8 +408,8 @@ impl<'a> ModelDeploymentDraft<'a> {
 
     /// Returns whether a transition from one state to another is valid
     fn is_valid_state_transition(from: &State, to: &State) -> bool {
-        // Unknown can transition to any state
-        if from == &State::Unknown {
+        // Unknown can transition to or from any state
+        if from == &State::Unknown || to == &State::Unknown {
             return true;
         }
 

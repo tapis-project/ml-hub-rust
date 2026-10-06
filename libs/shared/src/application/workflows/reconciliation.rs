@@ -20,8 +20,8 @@ pub enum ReconciliationAction {
     Start { payload: Vec<DecryptedArgument> },
     /// Stop the deployment
     Stop,
-    /// Observe the reason for the Blocked or Unknown state
-    Observe,
+    // /// Observe the reason for the Blocked or Unknown state
+    // Observe,
     /// Delete the infra
     Undeploy,
 }
@@ -50,7 +50,7 @@ pub struct UndeployedOutcome {
 }
 
 #[derive(Clone, Debug)]
-pub struct ObeservedOutcome {
+pub struct ObservedOutcome {
     pub message: Option<String>,
     pub state: State,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
@@ -80,7 +80,7 @@ pub enum ReconciliationOutcome {
     Started(StartedOutcome),
     Stopped(StoppedOutcome),
     Undeployed(UndeployedOutcome),
-    Observed(ObeservedOutcome),
+    // Observed(ObeservedOutcome),
     Failed(FailedOutcome),
     Unknown(UnknownOutcome),
     NoOp,

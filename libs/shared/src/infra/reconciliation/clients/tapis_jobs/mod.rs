@@ -11,7 +11,7 @@ use crate::application::ports::deployment::ModelDeploymentReconciliationClient;
 use crate::application::ports::errors::InfrastructureError;
 use crate::application::services::deployment_argument_service::DecryptedArgument;
 use crate::application::workflows::reconciliation::{
-    FailedOutcome, ObeservedOutcome, ReconcilerError, ReconciliationAction, ReconciliationOutcome,
+    FailedOutcome, ObservedOutcome, ReconcilerError, ReconciliationAction, ReconciliationOutcome,
     StartedOutcome, StoppedOutcome, UndeployedOutcome,
 };
 use crate::domain::entities::deployment::{
@@ -40,6 +40,12 @@ enum ReconciliationError {
 
     #[error("Tapis Jobs reconciliation does not support HPC cluster host {0}")]
     UnsupportedHpcCluster(String),
+}
+
+#[derive(Debug, Clone, Error)]
+enum ObservationError {
+    #[error(transparent)]
+    DownstreamError(#[from] InfrastructureError),
 }
 
 pub struct TapisJobsModelDeploymentReconciliationClient {
@@ -221,7 +227,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
         map.insert(Self::TAPIS_JOB_UUID_KEY.to_string(), json!(job_uuid));
 
         Ok(ReconciliationOutcome::Started(StartedOutcome {
-            message: Some("Deployment started successfully".to_string()),
+            message: Some("Deployment submitted".to_string()),
             state: State::Unknown,
             metadata: Some(ModelDeploymentMetadataDelta::Merge(
                 ModelDeploymentMetadata(map),
@@ -259,15 +265,15 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
     async fn handle_observe(
         &self,
-        _input: &ReconcileModelDeploymentInput,
-    ) -> Result<ReconciliationOutcome, ReconciliationError> {
-        Ok(ReconciliationOutcome::Observed(ObeservedOutcome {
+        _input: &ModelDeployment,
+    ) -> Result<ObservedOutcome, ReconciliationError> {
+        Ok(ObservedOutcome {
             message: Some("Observing Tapis Job".into()),
             state: State::Unknown, // TODO Put the actual observed state
             metadata: None,
             replicas: None,
             interface: None,
-        }))
+        })
     }
 
     async fn generate_service_token(&self) -> Result<String, ReconciliationError> {
@@ -532,7 +538,6 @@ impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliat
             }
             ReconciliationAction::Stop => self.handle_stop(&input).await,
             ReconciliationAction::Undeploy => self.handle_undeploy(&input).await,
-            ReconciliationAction::Observe => self.handle_observe(&input).await,
         };
 
         match outcome {
@@ -543,6 +548,21 @@ impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliat
                 replicas: None,
                 interface: None,
             }),
+        }
+    }
+
+    async fn observe(&self, deployment: ModelDeployment) -> ObservedOutcome {
+        let outcome = self.handle_observe(&deployment).await;
+
+        match outcome {
+            Ok(o) => o,
+            Err(e) => ObservedOutcome {
+                message: Some(e.to_string().clone()),
+                state: State::Failed,
+                metadata: None,
+                replicas: None,
+                interface: None,
+            },
         }
     }
 

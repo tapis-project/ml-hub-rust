@@ -11,7 +11,7 @@ use shared::application::ports::events::EventPublisher;
 use shared::application::ports::hpc_cluster::HpcClusterRepository;
 use shared::application::ports::model::ExternalModelRepository;
 use shared::application::services::deployment_argument_service::DeploymentArgumentService;
-use shared::application::services::model_deployment_controller::ModelDeploymentController;
+use shared::application::services::model_deployment_reconciliation_service::ModelDeploymentReconciliationService;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::domain::entities::site::SiteContext;
 use shared::infra::argument::mongo::MongoDeploymentArgumentRepository;
@@ -96,13 +96,13 @@ pub fn model_deployment_service_builder(
     )
 }
 
-pub fn model_deployment_conroller_builder(
+pub fn model_deployment_reconciliation_service_builder(
     site_context: SiteContext,
     client: &Client,
     db_name: String,
     channel: Arc<Channel>,
-) -> Arc<ModelDeploymentController> {
-    Arc::new(ModelDeploymentController::new(
+) -> Arc<ModelDeploymentReconciliationService> {
+    Arc::new(ModelDeploymentReconciliationService::new(
         site_context,
         deployment_argument_service_builder(client, &db_name),
         model_deployment_service_builder(client, db_name.clone(), channel.clone()),

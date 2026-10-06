@@ -22,8 +22,7 @@ use crate::application::services::model_deployment_service::{
 };
 use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationOutcome};
 use crate::domain::entities::deployment::{
-    DesiredState, ModelDeployment, ModelDeploymentError, ModelDeploymentInterfaceDelta,
-    ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
+    ModelDeployment, ModelDeploymentError, ReconciliationRequirement, State
 };
 
 // Domain
@@ -94,7 +93,7 @@ impl DispatchReconcilerResult {
     }
 }
 
-pub struct ModelDeploymentController {
+pub struct ModelDeploymentReconciliationService {
     site_context: SiteContext,
     deployment_argument_service: DeploymentArgumentService,
     model_deployment_service: ModelDeploymentService,
@@ -103,7 +102,7 @@ pub struct ModelDeploymentController {
     client_provider: Arc<dyn ModelDeploymentReconcilerProvider>,
 }
 
-impl ModelDeploymentController {
+impl ModelDeploymentReconciliationService {
     const REPO_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| {
         RetryPolicy::FixedBackoff(FixedBackoff {
             retries: Retry::NTimes(3),
@@ -183,11 +182,22 @@ impl ModelDeploymentController {
         }?;
 
         // Resolve reconciliation action
-        let maybe_action = self.resolve_reconciliation_action(&deployment).await?;
+        let Some(requirement) = deployment.resolve_reconciliation_requirement() else {
+            return Ok(DispatchReconcilerResult::new(None, vec![]));
+        };
 
-        let action = match maybe_action {
-            Some(a) => a,
-            None => return Ok(DispatchReconcilerResult::new(None, vec![])),
+        let action = match requirement {
+            ReconciliationRequirement::Stop => ReconciliationAction::Stop,
+            ReconciliationRequirement::Undeploy => ReconciliationAction::Undeploy,
+            ReconciliationRequirement::Start => {
+                // Fetch the arguments for this deployment
+                let decrypted_args = self
+                    .deployment_argument_service
+                    .get_decrypted_arguments_for_deployment(&deployment.id)
+                    .await?;
+
+                ReconciliationAction::Start { payload: decrypted_args }
+            }
         };
 
         // Initialize reconciliation client
@@ -259,54 +269,13 @@ impl ModelDeploymentController {
         let mut events: Vec<Payload> = Vec::with_capacity(1);
 
         let maybe_modified_deployment = match outcome {
-            ReconciliationOutcome::Observed(payload) => {
-                let revised = deployment
-                    .revise()
-                    .transition_to_state(payload.state.clone(), payload.message.clone())?
-                    .apply_metadata_delta(
-                        payload
-                            .metadata
-                            .unwrap_or(ModelDeploymentMetadataDelta::NoChange),
-                    )
-                    .apply_interface_delta(
-                        payload
-                            .interface
-                            .unwrap_or(ModelDeploymentInterfaceDelta::NoChange),
-                    )
-                    .apply_replica_group_delta(
-                        payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange),
-                    )
-                    .finish();
-
-                events.push(Payload::ModelDeploymentStateDriftDetectedPayload(
-                    ModelDeploymentStateDriftDetectedPayload {
-                        deployment_id: deployment.id.clone(),
-                        deployment_revision: deployment.revision().clone(),
-                        actual_state: payload.state.clone(),
-                        desired_state: deployment.desired_state.clone(),
-                        message: payload.message,
-                    },
-                ));
-
-                Some(revised)
-            }
             ReconciliationOutcome::Started(payload) => {
                 let revised = deployment
                     .revise()
-                    .transition_to_state(State::Running, payload.message.clone())?
-                    .apply_metadata_delta(
-                        payload
-                            .metadata
-                            .unwrap_or(ModelDeploymentMetadataDelta::NoChange),
-                    )
-                    .apply_interface_delta(
-                        payload
-                            .interface
-                            .unwrap_or(ModelDeploymentInterfaceDelta::NoChange),
-                    )
-                    .apply_replica_group_delta(
-                        payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange),
-                    )
+                    .transition_to_state(payload.state, payload.message.clone())?
+                    .apply_metadata_delta(payload.metadata.unwrap_or_default())
+                    .apply_interface_delta(payload.interface.unwrap_or_default())
+                    .apply_replica_group_delta(payload.replicas.unwrap_or_default())
                     .finish();
 
                 events.push(Payload::ModelDeploymentStartedPayload(
@@ -323,19 +292,9 @@ impl ModelDeploymentController {
                 let revised = deployment
                     .revise()
                     .transition_to_state(State::Stopped, payload.message.clone())?
-                    .apply_metadata_delta(
-                        payload
-                            .metadata
-                            .unwrap_or(ModelDeploymentMetadataDelta::NoChange),
-                    )
-                    .apply_interface_delta(
-                        payload
-                            .interface
-                            .unwrap_or(ModelDeploymentInterfaceDelta::NoChange),
-                    )
-                    .apply_replica_group_delta(
-                        payload.replicas.unwrap_or(ReplicaGroupDelta::NoChange),
-                    )
+                    .apply_metadata_delta(payload.metadata.unwrap_or_default())
+                    .apply_interface_delta(payload.interface.unwrap_or_default())
+                    .apply_replica_group_delta(payload.replicas.unwrap_or_default())
                     .finish();
 
                 events.push(Payload::ModelDeploymentStoppedPayload(
@@ -414,7 +373,7 @@ impl ModelDeploymentController {
         ))
     }
 
-    pub async fn finish_reconiliation(
+    pub async fn finish_reconciliation(
         &self,
         result: DispatchReconcilerResult,
     ) -> Result<(), FinishReconciliationError> {
@@ -448,35 +407,6 @@ impl ModelDeploymentController {
         }
 
         Ok(())
-    }
-
-    /// Dermine what reconciliation action must be take to synchronize the actual state with the desired state
-    async fn resolve_reconciliation_action(
-        &self,
-        deployment: &ModelDeployment,
-    ) -> Result<Option<ReconciliationAction>, ReconciliationDispatchError> {
-        if deployment.is_state_syncronized() {
-            return Ok(None);
-        }
-
-        // Fetch the arguments for this deployment
-        let decrypted_args = self
-            .deployment_argument_service
-            .get_decrypted_arguments_for_deployment(&deployment.id)
-            .await?;
-
-        Ok(match (&deployment.state, &deployment.desired_state) {
-            (State::NotDeployed, DesiredState::Running)
-            | (State::Stopped, DesiredState::Running)
-            | (State::Failed, DesiredState::Running)
-            | (State::Blocked, DesiredState::Running) => Some(ReconciliationAction::Start {
-                payload: decrypted_args,
-            }),
-            (State::Unknown, _) => Some(ReconciliationAction::Observe),
-            (_, DesiredState::NotDeployed) => Some(ReconciliationAction::Undeploy),
-            (State::Running, DesiredState::Stopped) => Some(ReconciliationAction::Stop),
-            _ => None,
-        })
     }
 
     /// Handles deployment updates on failure.

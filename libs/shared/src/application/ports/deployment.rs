@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 // Application layer
 use crate::application::inputs::deployment::{FilterInput, ReconcileModelDeploymentInput};
-use crate::application::workflows::reconciliation::{ReconcilerError, ReconciliationOutcome};
+use crate::application::workflows::reconciliation::{ObservedOutcome, ReconcilerError, ReconciliationOutcome};
 
 // Domain layer
 use crate::application::ports::errors::InfrastructureError;
@@ -52,11 +52,11 @@ pub trait ModelDeploymentRepository: Send + Sync {
 #[async_trait]
 pub trait ModelDeploymentReconciliationClient: Send + Sync {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome;
-
+    async fn observe(&self, deployment: ModelDeployment) -> ObservedOutcome;
     fn get_site_context(&self) -> &SiteContext;
 }
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentReconcilerProviderError {
     #[error("{0}")]
     ClientNotFound(String),
