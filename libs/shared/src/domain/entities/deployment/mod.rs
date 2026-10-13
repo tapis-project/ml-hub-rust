@@ -12,6 +12,7 @@ use openapiv3::OpenAPI;
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::time::Duration;
 use thiserror::Error;
 
 use super::deployment_option::{DeploymentOption, DeploymentOptionId, ServingRuntime};
@@ -30,6 +31,15 @@ pub enum ModelDeploymentError {
 
     #[error("Deployment option snapshot does not match the selected deployment option")]
     InvalidDeploymentOptionSnapshot,
+
+    #[error("Maximum runtime must be greater than zero")]
+    InvalidMaximumRuntime,
+
+    #[error("Maximum runtime exceeds the supported timestamp range")]
+    MaximumRuntimeOverflow,
+
+    #[error("Invalid persisted ModelDeployment data: {0}")]
+    DataIntegrityError(String),
 }
 
 #[derive(Clone, Debug)]
@@ -63,6 +73,8 @@ pub struct ModelDeployment {
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
     last_observed: Option<TimeStamp>,
+    maximum_runtime: Option<Duration>,
+    expires_at: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,
@@ -81,6 +93,7 @@ impl ModelDeployment {
         props: CreateFromOptionProps,
         option: &DeploymentOption,
         snapshot: DeploymentOptionSnapshot,
+        maximum_runtime: Option<Duration>,
     ) -> Result<Self, ModelDeploymentError> {
         // Invariant: The selected option must support the selected deployment modality.
         if !option
@@ -98,6 +111,8 @@ impl ModelDeployment {
         {
             return Err(ModelDeploymentError::InvalidDeploymentOptionSnapshot);
         }
+
+        Self::validate_maximum_runtime(maximum_runtime)?;
 
         let now = TimeStamp::now();
 
@@ -119,6 +134,8 @@ impl ModelDeployment {
             last_modified: now.clone(),
             last_state_change: now.clone(),
             last_observed: None,
+            maximum_runtime,
+            expires_at: None,
             last_desired_state_change: now.clone(),
             deployment_interface: props.deployment_interface,
             replicas: props.replicas,
@@ -127,8 +144,38 @@ impl ModelDeployment {
         })
     }
 
-    pub fn reconstitute(props: ReconstituteModelDeploymentProps) -> Self {
-        Self {
+    pub fn reconstitute(
+        props: ReconstituteModelDeploymentProps,
+    ) -> Result<Self, ModelDeploymentError> {
+        Self::validate_maximum_runtime(props.maximum_runtime)
+            .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))?;
+
+        if props.expires_at.is_some() && props.maximum_runtime.is_none() {
+            return Err(ModelDeploymentError::DataIntegrityError(
+                "expires_at requires maximum_runtime".into(),
+            ));
+        }
+
+        if props.state == State::Running
+            && props.maximum_runtime.is_some()
+            && props.expires_at.is_none()
+        {
+            return Err(ModelDeploymentError::DataIntegrityError(
+                "Running deployments with a maximum runtime require expires_at".into(),
+            ));
+        }
+
+        if props
+            .expires_at
+            .as_ref()
+            .is_some_and(|expires_at| expires_at.into_inner() < props.created_at.into_inner())
+        {
+            return Err(ModelDeploymentError::DataIntegrityError(
+                "expires_at cannot precede created_at".into(),
+            ));
+        }
+
+        Ok(Self {
             id: props.id,
             name: props.name,
             description: props.description,
@@ -146,20 +193,25 @@ impl ModelDeployment {
             last_modified: props.last_modified,
             last_state_change: props.last_state_change,
             last_observed: props.last_observed,
+            maximum_runtime: props.maximum_runtime,
+            expires_at: props.expires_at,
             last_desired_state_change: props.last_desired_state_change,
             deployment_interface: props.deployment_interface,
             replicas: props.replicas,
             metadata: props.metadata,
             revision: props.revision,
-        }
+        })
     }
 
     pub fn id(&self) -> &ModelDeploymentId {
         &self.id
     }
 
-    pub fn resolve_reconciliation_requirement(&self) -> Option<ReconciliationRequirement> {
-        if self.is_state_syncronized() {
+    pub fn resolve_reconciliation_requirement(
+        &self,
+        evaluated_at: &TimeStamp,
+    ) -> Option<ReconciliationRequirement> {
+        if self.is_expired(evaluated_at) || self.is_state_syncronized() {
             return None;
         }
 
@@ -194,6 +246,20 @@ impl ModelDeployment {
         self.last_observed.as_ref()
     }
 
+    pub fn maximum_runtime(&self) -> Option<Duration> {
+        self.maximum_runtime
+    }
+
+    pub fn expires_at(&self) -> Option<&TimeStamp> {
+        self.expires_at.as_ref()
+    }
+
+    pub fn is_expired(&self, evaluated_at: &TimeStamp) -> bool {
+        self.expires_at
+            .as_ref()
+            .is_some_and(|expires_at| evaluated_at.into_inner() >= expires_at.into_inner())
+    }
+
     pub fn record_observation(&mut self, observed_at: TimeStamp) {
         let should_update = self
             .last_observed
@@ -221,6 +287,23 @@ impl ModelDeployment {
         self.revise()
             .transition_to_state(State::Failed, message)?
             .finish();
+
+        Ok(())
+    }
+
+    fn validate_maximum_runtime(
+        maximum_runtime: Option<Duration>,
+    ) -> Result<(), ModelDeploymentError> {
+        let Some(maximum_runtime) = maximum_runtime else {
+            return Ok(());
+        };
+
+        if maximum_runtime.is_zero() {
+            return Err(ModelDeploymentError::InvalidMaximumRuntime);
+        }
+
+        chrono::Duration::from_std(maximum_runtime)
+            .map_err(|_| ModelDeploymentError::MaximumRuntimeOverflow)?;
 
         Ok(())
     }
@@ -448,6 +531,15 @@ impl<'a> ModelDeploymentDraft<'a> {
         new_state: State,
         message: Option<String>,
     ) -> Result<&mut Self, ModelDeploymentError> {
+        self.transition_to_state_at(new_state, message, TimeStamp::now())
+    }
+
+    pub fn transition_to_state_at(
+        &mut self,
+        new_state: State,
+        message: Option<String>,
+        transitioned_at: TimeStamp,
+    ) -> Result<&mut Self, ModelDeploymentError> {
         if !Self::is_valid_state_transition(&self.deployment.state, &new_state) {
             return Err(ModelDeploymentError::InvalidStateTransition(
                 self.deployment.state.clone().into(),
@@ -455,15 +547,35 @@ impl<'a> ModelDeploymentDraft<'a> {
             ));
         }
 
+        let expires_at = if new_state == State::Running && self.deployment.expires_at.is_none() {
+            self.deployment
+                .maximum_runtime
+                .map(|maximum_runtime| {
+                    let duration = chrono::Duration::from_std(maximum_runtime)
+                        .map_err(|_| ModelDeploymentError::MaximumRuntimeOverflow)?;
+
+                    transitioned_at
+                        .into_inner()
+                        .checked_add_signed(duration)
+                        .map(TimeStamp::from)
+                        .ok_or(ModelDeploymentError::MaximumRuntimeOverflow)
+                })
+                .transpose()?
+        } else {
+            self.deployment.expires_at.clone()
+        };
+
         // Changes the state
         self.deployment.state = new_state;
+
+        self.deployment.expires_at = expires_at;
 
         // Update the last message if provided
         if let Some(m) = message {
             self.deployment.last_message = Some(m);
         }
 
-        self.deployment.last_state_change = TimeStamp::now();
+        self.deployment.last_state_change = transitioned_at;
 
         Ok(self)
     }
@@ -604,6 +716,8 @@ pub struct ReconstituteModelDeploymentProps {
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
     pub last_observed: Option<TimeStamp>,
+    pub maximum_runtime: Option<Duration>,
+    pub expires_at: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
     pub created_at: TimeStamp,
     pub metadata: Option<ModelDeploymentMetadata>,

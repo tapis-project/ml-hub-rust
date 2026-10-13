@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::domain::entities::{
     deployment::{self as entities, ModelDeploymentId, ModelDeploymentMetadata},
     deployment_option::{DeploymentOptionId, ServingRuntime},
@@ -57,11 +59,15 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
             last_observed: value
                 .last_observed
                 .map(|last_observed| TimeStamp::from(last_observed.to_chrono())),
+            maximum_runtime: value.maximum_runtime_seconds.map(Duration::from_secs),
+            expires_at: value
+                .expires_at
+                .map(|expires_at| TimeStamp::from(expires_at.to_chrono())),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
             metadata: value.metadata.clone().map(ModelDeploymentMetadata),
         };
 
-        Ok(entities::ModelDeployment::reconstitute(props))
+        entities::ModelDeployment::reconstitute(props).map_err(|error| error.to_string())
     }
 }
 

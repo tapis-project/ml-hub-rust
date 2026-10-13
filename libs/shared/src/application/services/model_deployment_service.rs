@@ -86,6 +86,9 @@ pub enum ModelDeploymentServiceError {
     #[error("Deployment option is currently unavailable")]
     DeploymentOptionUnavailable,
 
+    #[error("Model deployment has expired")]
+    DeploymentExpired,
+
     #[error("Model deployment error: {0}")]
     ModelDeploymentError(#[from] ModelDeploymentError),
 

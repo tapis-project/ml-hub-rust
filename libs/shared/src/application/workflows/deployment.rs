@@ -1,10 +1,13 @@
 use crate::application::inputs::deployment::FilterInput;
 use crate::application::ports::deployment::ModelDeploymentRepository;
-use crate::application::ports::events::payloads::{ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStateDriftDetectedPayload, ModelDeploymentStoppedPayload};
+use crate::application::ports::events::payloads::{
+    ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStoppedPayload,
+};
 use crate::application::ports::events::{Event, EventPublisher, Payload};
 use crate::application::services::model_deployment_service::ModelDeploymentServiceError;
 use crate::application::workflows::Workflow;
 use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ModelDeploymentId};
+use crate::shared_kernel::value_objects::TimeStamp;
 use log::error;
 use once_cell::sync::Lazy;
 use retry_utils::{retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy};
@@ -68,6 +71,10 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             }
         };
 
+        if deployment.is_expired(&TimeStamp::now()) {
+            return Err(ModelDeploymentServiceError::DeploymentExpired);
+        }
+
         // If the user is request that the deployment move to a state that it is already in
         // we noop and return the same deployment without revision
         if deployment.desired_state == input.desired_state {
@@ -94,39 +101,27 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
                     message: Some("Model deployment start requested".into()),
                     deployment_revision: modified_deployment.revision().clone(),
                 };
-        
-                Event::from_payload(
-                    &Payload::ModelDeploymentStartedPayload(payload),
-                    None,
-                    None,
-                )
-            },
+
+                Event::from_payload(&Payload::ModelDeploymentStartedPayload(payload), None, None)
+            }
             DesiredState::Stopped => {
                 let payload = ModelDeploymentStoppedPayload {
                     deployment_id: *modified_deployment.id(),
                     message: Some("Model deployment stop requested".into()),
                     deployment_revision: modified_deployment.revision().clone(),
                 };
-        
-                Event::from_payload(
-                    &Payload::ModelDeploymentStoppedPayload(payload),
-                    None,
-                    None,
-                )
-            },
+
+                Event::from_payload(&Payload::ModelDeploymentStoppedPayload(payload), None, None)
+            }
             DesiredState::NotDeployed => {
                 let payload = ModelDeploymentDeletedPayload {
                     deployment_id: *modified_deployment.id(),
                     message: Some("Model deployment deletion requested".into()),
                     deployment_revision: modified_deployment.revision().clone(),
                 };
-        
-                Event::from_payload(
-                    &Payload::ModelDeploymentDeletedPayload(payload),
-                    None,
-                    None,
-                )
-            },
+
+                Event::from_payload(&Payload::ModelDeploymentDeletedPayload(payload), None, None)
+            }
         };
 
         // Closure for publishing model deployment

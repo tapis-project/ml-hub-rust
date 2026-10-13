@@ -26,6 +26,7 @@ use crate::domain::entities::principal::Kind;
 use crate::domain::entities::site::SiteContext;
 // Shared Kernel
 use crate::shared_kernel::context::RequestContext;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 // Project libs
 use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
@@ -106,9 +107,15 @@ impl ModelDeploymentReconciliationService {
             },
         }?;
 
+        let evaluated_at = TimeStamp::now();
+
         // Resolve reconciliation action
-        let Some(requirement) = deployment.resolve_reconciliation_requirement() else {
-            return Ok(ReconciliationResult { requirement: None, action: None, deployment: None });
+        let Some(requirement) = deployment.resolve_reconciliation_requirement(&evaluated_at) else {
+            return Ok(ReconciliationResult {
+                requirement: None,
+                action: None,
+                deployment: None,
+            });
         };
 
         let action = match requirement {
@@ -121,7 +128,9 @@ impl ModelDeploymentReconciliationService {
                     .get_decrypted_arguments_for_deployment(deployment.id())
                     .await?;
 
-                ReconciliationAction::Start { payload: decrypted_args }
+                ReconciliationAction::Start {
+                    payload: decrypted_args,
+                }
             }
         };
 
@@ -181,6 +190,14 @@ impl ModelDeploymentReconciliationService {
             }
         };
 
+        if deployment.is_expired(&TimeStamp::now()) {
+            return Ok(ReconciliationResult {
+                requirement: None,
+                action: None,
+                deployment: None,
+            });
+        }
+
         // Reconcile
         let outcome = client
             .reconcile(ReconcileModelDeploymentInput {
@@ -215,11 +232,11 @@ impl ModelDeploymentReconciliationService {
                     .apply_replica_group_delta(payload.replicas.unwrap_or_default())
                     .finish();
 
-                    ReconciliationResult {
-                        deployment: Some(revised),
-                        requirement: Some(requirement),
-                        action: Some(ReconciliationActionTaken::Stopped),
-                    }
+                ReconciliationResult {
+                    deployment: Some(revised),
+                    requirement: Some(requirement),
+                    action: Some(ReconciliationActionTaken::Stopped),
+                }
             }
             ReconciliationOutcome::Undeployed(payload) => {
                 let mut revised = deployment.revise();

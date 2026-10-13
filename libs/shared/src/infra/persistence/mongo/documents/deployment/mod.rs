@@ -30,6 +30,10 @@ pub struct ModelDeployment {
     pub last_state_change: DateTime,
     #[serde(default)]
     pub last_observed: Option<DateTime>,
+    #[serde(default)]
+    pub maximum_runtime_seconds: Option<u64>,
+    #[serde(default)]
+    pub expires_at: Option<DateTime>,
     pub last_desired_state_change: DateTime,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,
@@ -162,3 +166,7 @@ pub enum ModelDeploymentInterfaceType {
 pub struct RestApi {
     pub spec: OpenAPI,
 }
+
+#[cfg(test)]
+#[path = "deployment.test.rs"]
+mod deployment_test;

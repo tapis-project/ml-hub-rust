@@ -294,6 +294,16 @@
               }
             }
           },
+          "409": {
+            "description": "Model deployment has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Not found",
             "content": {
@@ -357,6 +367,16 @@
               }
             }
           },
+          "409": {
+            "description": "Model deployment has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Not found",
             "content": {
@@ -416,6 +436,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Model deployment has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
                 }
               }
             }
@@ -553,6 +583,34 @@
           "queue_multiplier": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "ConflictResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {},
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "default": 409,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
           }
         }
       },
@@ -958,6 +1016,12 @@
           },
           "desired_state": {
             "$ref": "#/components/schemas/DesiredState"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "external_model_id": {
             "type": "string",

@@ -185,6 +185,10 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 "last_state_change": update.last_state_change,
                 "last_observed": to_bson(&update.last_observed)
                     .map_err(|error| map_error("Could not serialize last_observed", error))?,
+                "maximum_runtime_seconds": to_bson(&update.maximum_runtime_seconds)
+                    .map_err(|error| map_error("Could not serialize maximum_runtime_seconds", error))?,
+                "expires_at": to_bson(&update.expires_at)
+                    .map_err(|error| map_error("Could not serialize expires_at", error))?,
                 "last_desired_state_change": update.last_desired_state_change,
                 "deployment_interface": to_bson(&update.deployment_interface)
                     .map_err(|e| {
@@ -312,12 +316,24 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
     ) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
         let not_deployed_state = String::from(State::NotDeployed);
         let not_deployed_desired_state = String::from(DesiredState::NotDeployed);
+        let now = mongodb::bson::DateTime::now();
 
         let filter = doc! {
-            "$nor": [{
-                "state": not_deployed_state,
-                "desired_state": not_deployed_desired_state,
-            }],
+            "$and": [
+                {
+                    "$nor": [{
+                        "state": not_deployed_state,
+                        "desired_state": not_deployed_desired_state,
+                    }],
+                },
+                {
+                    "$or": [
+                        { "expires_at": { "$exists": false } },
+                        { "expires_at": null },
+                        { "expires_at": { "$gt": now } },
+                    ],
+                },
+            ],
         };
 
         let mut cursor =

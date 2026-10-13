@@ -38,6 +38,10 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             last_desired_state_change: value.last_desired_state_change.to_bson(),
             last_state_change: value.last_state_change.to_bson(),
             last_observed: value.last_observed().map(ToBsonDateTime::to_bson),
+            maximum_runtime_seconds: value
+                .maximum_runtime()
+                .map(|maximum_runtime| maximum_runtime.as_secs()),
+            expires_at: value.expires_at().map(ToBsonDateTime::to_bson),
             created_at: value.created_at.to_bson(),
             last_modified: value.last_modified.to_bson(),
             metadata: value

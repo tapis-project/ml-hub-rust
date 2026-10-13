@@ -8,7 +8,9 @@ use indexmap::IndexMap;
 use log::{error, warn};
 use shared::application::inputs::deployment::UpdateModelDeploymentInput;
 use shared::application::ports::events::Event;
-use shared::application::services::model_deployment_observation_service::ModelDeploymentObservationService;
+use shared::application::services::model_deployment_observation_service::{
+    ModelDeploymentObservationService, ObservationResult,
+};
 use shared::application::services::model_deployment_reconciliation_service::{
     DispatchReconcilerInput, ModelDeploymentReconciliationService, ReconciliationDispatchError,
 };
@@ -19,6 +21,7 @@ use shared::domain::entities::deployment::{ModelDeploymentId, ReconciliationRequ
 use shared::infra::messaging::codec::deserialize_event_message;
 use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
 use shared::shared_kernel::context::RequestContext;
+use shared::shared_kernel::value_objects::TimeStamp;
 use thiserror::Error;
 use tokio::sync::Notify;
 use tokio::time::MissedTickBehavior;
@@ -37,6 +40,17 @@ impl ObservationSet {
             .map_err(|_| ControlLoopStateError::LockPoisoned("observation set"))?;
 
         set.insert(id);
+
+        Ok(())
+    }
+
+    async fn remove(&self, id: &ModelDeploymentId) -> Result<(), ControlLoopStateError> {
+        let mut set = self
+            .0
+            .lock()
+            .map_err(|_| ControlLoopStateError::LockPoisoned("observation set"))?;
+
+        set.remove(id);
 
         Ok(())
     }
@@ -175,7 +189,10 @@ impl ModelDeploymentController {
         for deployment in deployments {
             self.register_for_observation(*deployment.id()).await?;
 
-            if let Some(requirement) = deployment.resolve_reconciliation_requirement() {
+            let evaluated_at = TimeStamp::now();
+
+            if let Some(requirement) = deployment.resolve_reconciliation_requirement(&evaluated_at)
+            {
                 self.queue_for_reconciliation(ReconciliationJob {
                     deployment_id: deployment.id().clone(),
                     deployment_revision: deployment.revision().clone(),
@@ -194,6 +211,13 @@ impl ModelDeploymentController {
         deployment_id: ModelDeploymentId,
     ) -> Result<(), ControlLoopStateError> {
         self.state.observation_set.add(deployment_id).await
+    }
+
+    pub async fn unregister_from_observation(
+        &self,
+        deployment_id: &ModelDeploymentId,
+    ) -> Result<(), ControlLoopStateError> {
+        self.state.observation_set.remove(deployment_id).await
     }
 
     pub async fn queue_for_reconciliation(
@@ -265,18 +289,36 @@ impl ModelDeploymentController {
                     }
                 };
 
-                let observed_deployment_id = *result.deployment.id();
-                let observed_deployment_revision = *result.deployment.revision();
+                let (deployment, observed_at, deployment_changed, reconciliation_requirement) =
+                    match result {
+                        ObservationResult::Expired { deployment_id } => {
+                            self.unregister_from_observation(&deployment_id).await?;
 
-                let persistence_result = if result.deployment_changed {
+                            continue;
+                        }
+                        ObservationResult::Observed {
+                            deployment,
+                            observed_at,
+                            deployment_changed,
+                            reconciliation_requirement,
+                        } => (
+                            deployment,
+                            observed_at,
+                            deployment_changed,
+                            reconciliation_requirement,
+                        ),
+                    };
+
+                let observed_deployment_id = *deployment.id();
+                let observed_deployment_revision = *deployment.revision();
+
+                let persistence_result = if deployment_changed {
                     self.model_deployment_service
-                        .update(UpdateModelDeploymentInput {
-                            deployment: result.deployment,
-                        })
+                        .update(UpdateModelDeploymentInput { deployment })
                         .await
                 } else {
                     self.model_deployment_service
-                        .record_observation(&context, &observed_deployment_id, &result.observed_at)
+                        .record_observation(&context, &observed_deployment_id, &observed_at)
                         .await
                 };
 
@@ -289,7 +331,7 @@ impl ModelDeploymentController {
                     continue;
                 }
 
-                if let Some(requirement) = result.reconciliation_requirement {
+                if let Some(requirement) = reconciliation_requirement {
                     self.queue_for_reconciliation(ReconciliationJob {
                         deployment_id: observed_deployment_id,
                         deployment_revision: observed_deployment_revision,

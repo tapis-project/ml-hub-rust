@@ -15,6 +15,7 @@ use crate::shared_kernel::context::RequestContext;
 use crate::shared_kernel::value_objects::TimeStamp;
 
 use thiserror::Error;
+
 pub struct ModelDeploymentObservationService {
     site_context: SiteContext,
     model_deployment_service: ModelDeploymentService,
@@ -52,6 +53,12 @@ impl ModelDeploymentObservationService {
             .await?
             .ok_or_else(|| ModelDeploymentObserverError::ModelDeploymentNotFound(deployment_id))?;
 
+        let evaluated_at = TimeStamp::now();
+
+        if deployment.is_expired(&evaluated_at) {
+            return Ok(ObservationResult::Expired { deployment_id });
+        }
+
         // Initialize reconciliation client
         let client = match self
             .client_provider
@@ -68,52 +75,51 @@ impl ModelDeploymentObservationService {
         // Observe
         let observed = client.observe(deployment.clone()).await;
 
+        let observed_at = TimeStamp::now();
+
+        if deployment.is_expired(&observed_at) {
+            return Ok(ObservationResult::Expired { deployment_id });
+        }
+
         let deployment_changed = observed.state != deployment.state;
 
         // Update the state of the deployment to the observed state
         if deployment_changed {
             deployment
                 .revise()
-                .transition_to_state(observed.state.clone(), observed.message.clone())?
+                .transition_to_state_at(
+                    observed.state.clone(),
+                    observed.message.clone(),
+                    observed_at.clone(),
+                )?
                 .apply_metadata_delta(observed.metadata.unwrap_or_default())
                 .apply_interface_delta(observed.interface.unwrap_or_default())
                 .apply_replica_group_delta(observed.replicas.unwrap_or_default())
                 .finish();
         }
 
-        let observed_at = TimeStamp::now();
-
         deployment.record_observation(observed_at.clone());
 
-        Ok(ObservationResult::new(
+        Ok(ObservationResult::Observed {
+            reconciliation_requirement: deployment.resolve_reconciliation_requirement(&observed_at),
             deployment,
             observed_at,
             deployment_changed,
-        ))
+        })
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct ObservationResult {
-    pub deployment: ModelDeployment,
-    pub observed_at: TimeStamp,
-    pub deployment_changed: bool,
-    pub reconciliation_requirement: Option<ReconciliationRequirement>,
-}
-
-impl ObservationResult {
-    pub fn new(
+pub enum ObservationResult {
+    Expired {
+        deployment_id: ModelDeploymentId,
+    },
+    Observed {
         deployment: ModelDeployment,
         observed_at: TimeStamp,
         deployment_changed: bool,
-    ) -> Self {
-        Self {
-            reconciliation_requirement: deployment.resolve_reconciliation_requirement(),
-            deployment,
-            observed_at,
-            deployment_changed,
-        }
-    }
+        reconciliation_requirement: Option<ReconciliationRequirement>,
+    },
 }
 
 #[derive(Debug, Clone, Error)]

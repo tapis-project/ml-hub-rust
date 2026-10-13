@@ -7,7 +7,9 @@ use crate::presentation::http::v1::responses::ModelDeployment;
 use actix_web::{post, web, Responder};
 use serde_json::to_value;
 use shared::application::inputs::deployment::UndeployModelDeploymentInput;
-use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::application::services::model_deployment_service::{
+    ModelDeploymentService, ModelDeploymentServiceError,
+};
 use shared::domain::entities::deployment::ModelDeploymentId;
 
 #[utoipa::path(
@@ -39,6 +41,11 @@ use shared::domain::entities::deployment::ModelDeploymentId;
             body = contracts::responses::NotFoundResponse
         ),
         (
+            status = 409,
+            description = "Model deployment has expired",
+            body = contracts::responses::ConflictResponse
+        ),
+        (
             status = 500,
             description = "Not found",
             body = contracts::responses::ServerErrorResponse
@@ -57,6 +64,9 @@ async fn undeploy_model_deployment(
 
     let output = match service.undeploy_model_deployment(input).await {
         Ok(output) => output,
+        Err(ModelDeploymentServiceError::DeploymentExpired) => {
+            return build_error_response(409, "Model deployment has expired".into())
+        }
         Err(err) => return build_error_response(500, err.to_string()),
     };
 

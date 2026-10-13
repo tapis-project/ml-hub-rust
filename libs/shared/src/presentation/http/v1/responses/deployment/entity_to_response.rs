@@ -105,6 +105,7 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             last_desired_state_change: String::from(value.last_desired_state_change.clone()),
             last_state_change: String::from(value.last_state_change.clone()),
             last_observed: value.last_observed().cloned().map(String::from),
+            expires_at: value.expires_at().cloned().map(String::from),
             last_modified: String::from(value.last_modified.clone()),
             replicas: responses::ReplicaGroup::from(value.replicas.clone()),
             last_message: value.last_message.clone(),

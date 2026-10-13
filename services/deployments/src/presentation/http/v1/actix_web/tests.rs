@@ -124,6 +124,29 @@ fn openapi_exposes_option_based_deployment_without_strategy_routes(
 }
 
 #[test]
+fn openapi_exposes_deployment_expiration_and_conflicts() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert_eq!(
+        document.pointer("/components/schemas/ModelDeployment/properties/expires_at/type"),
+        Some(&serde_json::json!(["string", "null"]))
+    );
+
+    for operation in ["start", "stop", "undeploy"] {
+        let pointer = format!(
+            "/paths/~1deployments-api~1deployments~1{{deployment_id}}~1{operation}/post/responses/409/content/application~1json/schema/$ref"
+        );
+
+        assert_eq!(
+            document.pointer(&pointer),
+            Some(&serde_json::json!("#/components/schemas/ConflictResponse"))
+        );
+    }
+
+    Ok(())
+}
+
+#[test]
 fn openapi_inlines_data_center_path_enum() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
 

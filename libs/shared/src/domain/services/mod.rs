@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::domain::entities::artifact::Artifact;
 use crate::domain::entities::artifact_ingestion::{ArtifactIngestion, ArtifactIngestionStatus};
 use thiserror::Error;
@@ -148,7 +150,15 @@ impl ModelDeploymentService {
 
         let resolved_parameters = parameters.resolve(supplied_parameters)?;
 
-        let deployment = ModelDeployment::create_from_option(props, option, snapshot)?;
+        let maximum_runtime_seconds =
+            u64::from(queue.scheduling_policy().max_wall_time_per_job_hr())
+                .checked_mul(60 * 60)
+                .ok_or(ModelDeploymentError::MaximumRuntimeOverflow)?;
+
+        let maximum_runtime = Duration::from_secs(maximum_runtime_seconds);
+
+        let deployment =
+            ModelDeployment::create_from_option(props, option, snapshot, Some(maximum_runtime))?;
 
         Ok(DeployWithOptionResult {
             deployment,
