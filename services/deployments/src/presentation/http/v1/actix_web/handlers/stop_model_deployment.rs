@@ -8,6 +8,7 @@ use actix_web::{post, web, Responder};
 use serde_json::to_value;
 use shared::application::inputs::deployment::StopModelDeploymentInput;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::domain::entities::deployment::ModelDeploymentId;
 
 #[utoipa::path(
     post,
@@ -51,7 +52,7 @@ async fn stop_model_deployment(
 ) -> impl Responder {
     let input = StopModelDeploymentInput {
         owner: "mlhub".into(),
-        deployment_id: path.deployment_id,
+        deployment_id: ModelDeploymentId::reconstitute(path.deployment_id),
     };
 
     let output = match service.stop_model_deployment(input).await {

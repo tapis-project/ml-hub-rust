@@ -234,7 +234,7 @@ mod agent_service_test {
         );
 
         service
-            .register_agent(&RequestContext::system(None), input())
+            .register_agent(&RequestContext::system(None, None, None), input())
             .await?;
 
         assert_eq!(agent_repository.saved_count(), 1);
@@ -256,7 +256,7 @@ mod agent_service_test {
 
         service
             .register_agent(
-                &RequestContext::system(None),
+                &RequestContext::system(None, None, None),
                 input_without_network_target(),
             )
             .await?;
@@ -277,7 +277,7 @@ mod agent_service_test {
         );
 
         let result = service
-            .register_agent(&RequestContext::system(None), input())
+            .register_agent(&RequestContext::system(None, None, None), input())
             .await;
 
         assert!(matches!(

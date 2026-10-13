@@ -7,6 +7,7 @@ use crate::application::ports::errors::InfrastructureError;
 // Domain
 use crate::domain::entities;
 use crate::domain::entities::deployment::argument::Argument;
+use crate::infra::_common::mongo::ToBsonDateTime;
 use crate::infra::argument::mongo::{
     DeploymentArgumentsDocument, MongoDeploymentArgumentRepository,
 };
@@ -15,7 +16,10 @@ use crate::infra::argument::mongo::{
 use crate::infra::persistence::mongo::database::{
     DEPLOYMENT_ARGUMENT_COLLECTION, MODEL_DEPLOYMENT_COLLECTION,
 };
-use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, State};
+use crate::infra::persistence::mongo::documents::deployment::{
+    DesiredState, ModelDeployment, State,
+};
+use crate::shared_kernel::value_objects::TimeStamp;
 
 use futures::stream::TryStreamExt;
 use mongodb::{
@@ -79,7 +83,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let deployment_document = ModelDeployment::from(deployment);
 
         let argument_document =
-            MongoDeploymentArgumentRepository::document_from_domain(&deployment.id, arguments)
+            MongoDeploymentArgumentRepository::document_from_domain(deployment.id(), arguments)
                 .map_err(|error| map_error("Could not prepare deployment arguments", error))?;
 
         let argument_id = argument_document.deployment_id.clone();
@@ -160,7 +164,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         deployment: &entities::deployment::ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError> {
         let filter = doc! {
-            "id": Uuid::from_bytes(*deployment.id.as_bytes())
+            "id": Uuid::from_bytes(*deployment.id().as_uuid().as_bytes())
         };
 
         let update = ModelDeployment::from(&deployment.clone());
@@ -179,6 +183,8 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                     })?,
                 "last_modified": update.last_modified,
                 "last_state_change": update.last_state_change,
+                "last_observed": to_bson(&update.last_observed)
+                    .map_err(|error| map_error("Could not serialize last_observed", error))?,
                 "last_desired_state_change": update.last_desired_state_change,
                 "deployment_interface": to_bson(&update.deployment_interface)
                     .map_err(|e| {
@@ -222,6 +228,29 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         Ok(())
     }
 
+    async fn record_observation(
+        &self,
+        deployment_id: &entities::deployment::ModelDeploymentId,
+        observed_at: &TimeStamp,
+    ) -> Result<(), ModelDeploymentRepositoryError> {
+        let filter = doc! {
+            "id": Uuid::from_bytes(*deployment_id.as_uuid().as_bytes()),
+        };
+
+        let update = doc! {
+            "$max": {
+                "last_observed": observed_at.to_bson(),
+            },
+        };
+
+        self.write_collection
+            .update_one(filter, update)
+            .await
+            .map_err(|error| map_error("Could not record model deployment observation", error))?;
+
+        Ok(())
+    }
+
     async fn find(
         &self,
         input: &FilterInput,
@@ -229,7 +258,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         let mut filter = doc! {};
 
         if let Some(id) = input.deployment_id {
-            filter.insert("id", Uuid::from_bytes(*id.clone().as_bytes()));
+            filter.insert("id", Uuid::from_bytes(*id.as_uuid().as_bytes()));
         }
 
         if let Some(state) = input.state.clone() {
@@ -276,6 +305,37 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             Some(document) => Ok(Some(map_document(document)?)),
             None => Ok(None),
         }
+    }
+
+    async fn find_reconcilable(
+        &self,
+    ) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+        let not_deployed_state = String::from(State::NotDeployed);
+        let not_deployed_desired_state = String::from(DesiredState::NotDeployed);
+
+        let filter = doc! {
+            "$nor": [{
+                "state": not_deployed_state,
+                "desired_state": not_deployed_desired_state,
+            }],
+        };
+
+        let mut cursor =
+            self.read_collection.find(filter).await.map_err(|error| {
+                map_error("Could not find reconcilable model deployments", error)
+            })?;
+
+        let mut deployments = Vec::new();
+
+        while let Some(document) = cursor
+            .try_next()
+            .await
+            .map_err(|error| map_error("Could not read a reconcilable model deployment", error))?
+        {
+            deployments.push(map_document(document)?);
+        }
+
+        Ok(deployments)
     }
 }
 

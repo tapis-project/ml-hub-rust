@@ -1,53 +1,57 @@
 use std::sync::Arc;
 
-use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
-
-use crate::application::ports::deployment::{ModelDeploymentReconcilerProvider, ModelDeploymentReconcilerProviderError};
-use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
-use crate::application::ports::events::{EventPublisher, Payload};
-use crate::application::services::model_deployment_service::ModelDeploymentService;
-use crate::application::ports::model::ExternalModelRepository;
-use crate::domain::entities::deployment::{ModelDeployment, ModelDeploymentError};
+use crate::application::ports::deployment::{
+    ModelDeploymentReconcilerProvider, ModelDeploymentReconcilerProviderError,
+};
+use crate::application::services::model_deployment_service::{
+    ModelDeploymentService, ModelDeploymentServiceError,
+};
+use crate::domain::entities::deployment::{
+    ModelDeployment, ModelDeploymentError, ModelDeploymentId, ReconciliationRequirement,
+};
+use crate::domain::entities::principal::Kind;
 use crate::domain::entities::site::SiteContext;
+use crate::shared_kernel::context::RequestContext;
+use crate::shared_kernel::value_objects::TimeStamp;
 
-use once_cell::sync::Lazy;
 use thiserror::Error;
 pub struct ModelDeploymentObservationService {
     site_context: SiteContext,
-    model_deployment_service: Arc<ModelDeploymentService>,
-    external_model_repo: Arc<dyn ExternalModelRepository>,
-    event_publisher: Arc<dyn EventPublisher>,
+    model_deployment_service: ModelDeploymentService,
     client_provider: Arc<dyn ModelDeploymentReconcilerProvider>,
 }
 
 impl ModelDeploymentObservationService {
-    const REPO_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| {
-        RetryPolicy::FixedBackoff(FixedBackoff {
-            retries: Retry::NTimes(3),
-            delay: 50,
-        })
-    });
-
     pub fn new(
         site_context: SiteContext,
-        model_deployment_service: Arc<ModelDeploymentService>,
-        external_model_repo: Arc<dyn ExternalModelRepository>,
-        event_publisher: Arc<dyn EventPublisher>,
+        model_deployment_service: ModelDeploymentService,
         client_provider: Arc<dyn ModelDeploymentReconcilerProvider>,
     ) -> Self {
         Self {
             site_context,
             model_deployment_service,
-            external_model_repo,
-            event_publisher,
             client_provider,
         }
     }
 
     pub async fn observe(
         &self,
-        deployment: &mut ModelDeployment,
-    ) -> Result<Vec<Payload>, ModelDeploymentObserverError> {
+        ctx: &RequestContext,
+        deployment_id: ModelDeploymentId,
+    ) -> Result<ObservationResult, ModelDeploymentObserverError> {
+        // Only permit System actors to call this method
+        if ctx.actor_kind() != &Kind::System {
+            return Err(ModelDeploymentObserverError::Forbidden(
+                "Model Deployment observation can only be performed by system actors".into(),
+            ));
+        }
+
+        let mut deployment = self
+            .model_deployment_service
+            .find_by_id(&deployment_id)
+            .await?
+            .ok_or_else(|| ModelDeploymentObserverError::ModelDeploymentNotFound(deployment_id))?;
+
         // Initialize reconciliation client
         let client = match self
             .client_provider
@@ -61,33 +65,54 @@ impl ModelDeploymentObservationService {
             }
         }?;
 
-        // Reconcile
-        let observed = client
-            .observe(deployment.clone())
-            .await;
+        // Observe
+        let observed = client.observe(deployment.clone()).await;
+
+        let deployment_changed = observed.state != deployment.state;
 
         // Update the state of the deployment to the observed state
-        let mut events = vec![];
-        if observed.state != deployment.state {
-            deployment.revise()
+        if deployment_changed {
+            deployment
+                .revise()
                 .transition_to_state(observed.state.clone(), observed.message.clone())?
                 .apply_metadata_delta(observed.metadata.unwrap_or_default())
                 .apply_interface_delta(observed.interface.unwrap_or_default())
                 .apply_replica_group_delta(observed.replicas.unwrap_or_default())
                 .finish();
-
-            events.push(Payload::ModelDeploymentStateDriftDetectedPayload(
-                ModelDeploymentStateDriftDetectedPayload {
-                    deployment_id: deployment.id.clone(),
-                    deployment_revision: deployment.revision().clone(),
-                    actual_state: observed.state.clone(),
-                    desired_state: deployment.desired_state.clone(),
-                    message: observed.message,
-                },
-            ));
         }
 
-        Ok(events)
+        let observed_at = TimeStamp::now();
+
+        deployment.record_observation(observed_at.clone());
+
+        Ok(ObservationResult::new(
+            deployment,
+            observed_at,
+            deployment_changed,
+        ))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ObservationResult {
+    pub deployment: ModelDeployment,
+    pub observed_at: TimeStamp,
+    pub deployment_changed: bool,
+    pub reconciliation_requirement: Option<ReconciliationRequirement>,
+}
+
+impl ObservationResult {
+    pub fn new(
+        deployment: ModelDeployment,
+        observed_at: TimeStamp,
+        deployment_changed: bool,
+    ) -> Self {
+        Self {
+            reconciliation_requirement: deployment.resolve_reconciliation_requirement(),
+            deployment,
+            observed_at,
+            deployment_changed,
+        }
     }
 }
 
@@ -97,5 +122,14 @@ pub enum ModelDeploymentObserverError {
     ModelDeployment(#[from] ModelDeploymentError),
 
     #[error(transparent)]
+    ModelDeploymentServiceError(#[from] ModelDeploymentServiceError),
+
+    #[error(transparent)]
     ReconciliationProvider(#[from] ModelDeploymentReconcilerProviderError),
+
+    #[error("Action forbidden: {0}")]
+    Forbidden(String),
+
+    #[error("Model deployment with id '{0}' not found")]
+    ModelDeploymentNotFound(ModelDeploymentId),
 }

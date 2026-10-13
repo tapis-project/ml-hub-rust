@@ -1,389 +1,88 @@
-use amqprs::{
-    channel::{
-        BasicConsumeArguments, Channel, ExchangeType, QueueBindArguments, QueueDeclareArguments,
-    },
-    connection::Connection,
-    consumer::AsyncConsumer,
-    BasicProperties, Deliver, FieldTable, FieldValue,
+use amqprs::channel::BasicConsumeArguments;
+use log::info;
+use model_deployment_controller::bootstrap::{
+    bootstrap, model_deployment_controller_builder, BootstrapOutput,
 };
-use async_trait::async_trait;
-use log::{error, info, warn};
-use model_deployment_controller::bootstrap::model_deployment_reconciliation_service_builder;
-use shared::infra::messaging::codec::deserialize_event_message;
-use shared::infra::messaging::rabbitmq::exchanges::declare_exchanges;
 use shared::infra::messaging::rabbitmq::queues::MODEL_DEPLOYMENT_RECONCILIATION_QUEUE;
-use shared::infra::messaging::rabbitmq::routing::{
-    DEAD_LETTER_ROUTING_KEY, MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
-};
-use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
-use shared::{
-    application::{
-        ports::events::Event,
-        services::model_deployment_reconciliation_service::{
-            FinishReconciliationError, ModelDeploymentReconciliationService, ReconciliationDispatchError,
-        },
-    },
-    domain::entities::site::SiteContext,
-    infra::{
-        _common::mongo::{initialize_client, ClientParams},
-        configuration::site_configuration_loader::SiteConfigurationLoader,
-        messaging::rabbitmq::{
-            connection::open_channel,
-            exchanges::{DEAD_LETTER_EXCHANGE, MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE},
-            queues::DEAD_LETTER_QUEUE,
-        },
-    },
-    shared_kernel::context::RequestContext,
-};
-use std::env;
-use std::sync::Arc;
-use tokio;
 use uuid::Uuid;
 
-struct MessagingContext {
-    _connection: Connection,
-    channel: Arc<Channel>,
-}
-
-struct ModelDeploymentControllerConsumer {
-    reconciliation_service: Arc<ModelDeploymentReconciliationService>,
-}
-
-impl ModelDeploymentControllerConsumer {
-    // Acknowledges the message and kills the process if unable
-    async fn ack(&self, channel: &Channel, deliver: &Deliver, message_id: &String) {
-        if let Err(err) = ack(&channel, &deliver, None).await {
-            error!(
-                "Failed to ack message_id={}: Error: {}. Shutting down...",
-                message_id,
-                err.to_string()
-            );
-            std::process::exit(1);
-        }
-    }
-
-    // Negatively acknowledges the message and kills the process if unable
-    async fn nack(&self, channel: &Channel, deliver: &Deliver, requeue: bool, message_id: &String) {
-        if let Err(err) = nack(&channel, &deliver, Some(requeue), None).await {
-            error!(
-                "Failed to nack message_id={}: Error: {}. Shutting down...",
-                message_id,
-                err.to_string()
-            );
-            std::process::exit(1);
-        }
-    }
-}
-
-#[async_trait]
-impl AsyncConsumer for ModelDeploymentControllerConsumer {
-    async fn consume(
-        &mut self,
-        channel: &Channel,
-        deliver: Deliver,
-        properties: BasicProperties,
-        content: Vec<u8>,
-    ) {
-        let default_message_id = String::from("unknown");
-
-        let message_id = properties.message_id().unwrap_or(&default_message_id);
-
-        let event = match deserialize_event_message(content) {
-            Ok(e) => e,
-            Err(err) => {
-                error!(
-                    "Failed to desireialize message: Message id={}; Error: {}",
-                    message_id,
-                    err.to_string()
-                );
-                self.nack(&channel, &deliver, false, message_id).await;
-
-                return;
-            }
-        };
-
-        let maybe_outcome = match &event {
-            Event::ModelDeploymentStateDriftDetected { payload, .. } => {
-                // Initialize a system request context with the correlation id of the event
-                let ctx = RequestContext::system(Some(*event.metadata().correlation_id()));
-
-                self.reconciliation_service.dispatch_reconciler(&ctx, payload).await
-            }
-            _ => {
-                error!(
-                    "Invalid event type for this consumer: {}",
-                    String::from(event.metadata().kind())
-                );
-                self.nack(&channel, &deliver, false, message_id).await;
-
-                return;
-            }
-        };
-
-        let mut dispatch_result = match maybe_outcome {
-            Ok(result) => result,
-            Err(err) => {
-                match err {
-                    ReconciliationDispatchError::InvalidActorKind(e) => {
-                        error!("{}", e.to_string());
-                        self.nack(&channel, &deliver, false, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::ModelDeploymentDomainInvariantViolation(e) => {
-                        error!("ModelDeploymentDomainInvariantViolation: {}", e.to_string());
-                        self.nack(&channel, &deliver, false, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::DeploymentArgumentServiceError(e) => {
-                        error!("DeploymentArgumentServiceError: {}", e.to_string());
-                        self.nack(&channel, &deliver, true, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::ModelDeploymentRetrievalFailed(e) => {
-                        error!("ModelDeploymentRetrievalFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, true, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::ModelRetrievalFailed(e) => {
-                        error!("ModelRetrievalFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, true, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::StaleEvent(e) => {
-                        warn!("StaleEvent: {}", e.to_string());
-                        self.ack(&channel, &deliver, message_id).await;
-
-                        return;
-                    }
-                    ReconciliationDispatchError::ReconciliationClientInitilizationFailed(e) => {
-                        // Event was processible but client was incorrectly configured. This is a long term
-                        // failure so we will reject to prevent rapid attempts at reprocessing the message
-                        error!("ReconciliationClientInitilizationFailed: {}", e.to_string());
-                        self.nack(&channel, &deliver, false, message_id).await;
-
-                        return;
-                    }
-                };
-            }
-        };
-
-        // Relate the event that caused this reconciliation to the events caused
-        // by this reconciliation
-        dispatch_result.correlate_event(event.clone());
-
-        let maybe_finish_result = self.reconciliation_service.finish_reconciliation(dispatch_result).await;
-
-        match maybe_finish_result {
-            Ok(_) => {
-                // Successfully processed. Acknowledge
-                self.ack(&channel, &deliver, message_id).await;
-            }
-            Err(err) => match err {
-                FinishReconciliationError::ModelDeploymentUpdateFailed(e) => {
-                    error!("ModelDeploymentUpdateFailed: {}", e.to_string());
-                    self.nack(&channel, &deliver, false, message_id).await;
-
-                    return;
-                }
-                FinishReconciliationError::EventPublicationFailed(e) => {
-                    error!("EventPublicationFailed: {}", e.to_string());
-                    self.nack(&channel, &deliver, false, message_id).await;
-
-                    return;
-                }
-            },
-        };
-    }
-}
-
 #[tokio::main]
-async fn main() -> () {
+async fn main() {
     env_logger::init();
 
-    let broker_host =
-        std::env::var("RABBIT_HOST").expect("RABBIT_URL to be in environment variables");
+    let BootstrapOutput {
+        messaging_context,
+        client,
+        db_name,
+        site_context,
+    } = bootstrap().await;
 
-    let broker_port =
-        std::env::var("RABBIT_PORT").expect("RABBIT_PORT to be in environment variables");
-
-    let broker_username =
-        std::env::var("RABBIT_USER").expect("RABBIT_USER to be in environment variables");
-
-    let broker_password =
-        std::env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD to be in environment variables");
-
-    let (_connection, channel) = open_channel(
-        broker_host,
-        broker_port
-            .parse::<u16>()
-            .expect("u16 parsed from 'port' String"),
-        broker_username,
-        broker_password,
+    let controller = model_deployment_controller_builder(
+        &client,
+        db_name,
+        messaging_context.channel.clone(),
+        site_context,
     )
     .await
-    .map_err(|err| error!("{}", err.to_string()))
-    .expect("Connection to message broker established and channel created");
+    .unwrap_or_else(|err| panic!("Failed to initialize Model Deployment Controller: {}", err));
 
-    // We keep the connection in the MessageContext because even though we never
-    // use it, if we drop it from memory, the connection will also drop.
-    let context = MessagingContext {
-        _connection,
-        channel: Arc::new(channel),
-    };
-
-    // Declare dlx
-    declare_exchanges(
-        &context.channel,
-        vec![(DEAD_LETTER_EXCHANGE, ExchangeType::Direct)],
-    )
-    .await
-    .expect("Exchanges to be declared");
-
-    // Declare dlq
-    let _ = match context
-        .channel
-        .queue_declare(QueueDeclareArguments::new(DEAD_LETTER_QUEUE.into()))
-        .await
-    {
-        Ok(q) => q,
-        Err(err) => panic!("Failed to declare dead letter queue: {}", err.to_string()),
-    };
-
-    // Bind dlq to dlx
-    context
-        .channel
-        .queue_bind(QueueBindArguments::new(
-            DEAD_LETTER_QUEUE,
-            DEAD_LETTER_EXCHANGE,
-            DEAD_LETTER_ROUTING_KEY,
-        ))
-        .await
-        .expect(
-            format!(
-                "DLQ bound to DLX with routing key {}",
-                DEAD_LETTER_ROUTING_KEY
-            )
-            .as_str(),
-        );
-
-    // Declare main queue
-    let mut dl_args = FieldTable::new();
-
-    // When message is rejected, send to DLX
-    dl_args.insert(
-        String::from("x-dead-letter-exchange")
-            .try_into()
-            .expect("Should be ShortStr"),
-        FieldValue::from(DEAD_LETTER_EXCHANGE),
-    );
-
-    // Routing key used when dead-lettering
-    dl_args.insert(
-        String::from("x-dead-letter-routing-key")
-            .try_into()
-            .expect("Should be ShortStr"),
-        FieldValue::from(DEAD_LETTER_ROUTING_KEY),
-    );
-
-    let mut queue_declare_args =
-        QueueDeclareArguments::new(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into());
-
-    queue_declare_args.arguments(dl_args);
-
-    let _ = context
-        .channel
-        .queue_declare(queue_declare_args.clone())
-        .await
-        .expect("Model deployment reconciliation queue to be declared");
-
-    declare_exchanges(
-        &context.channel,
-        vec![
-            (
-                MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
-                ExchangeType::Topic,
-            ),
-            (DEAD_LETTER_EXCHANGE, ExchangeType::Direct),
-        ],
-    )
-    .await
-    .expect("Model deployment reconciliation and dead leater exchanges to be declared");
-
-    context
-        .channel
-        .queue_bind(QueueBindArguments::new(
-            MODEL_DEPLOYMENT_RECONCILIATION_QUEUE,
-            MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE,
-            MODEL_DEPLOYMENT_RECONCILIATION_ROUTING_KEY,
-        ))
-        .await
-        .expect("Model deployment reconciliation queue bound to exchange with routing key");
-
-    // Unique consumer tag to identitfy the worker.
     let consumer_tag = Uuid::now_v7();
 
-    let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
-
-    // Database connection
-    let client = initialize_client(ClientParams {
-        username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
-        password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
-        host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
-        port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
-        db: env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set"),
-        replica_set: Some(
-            env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set"),
-        ),
-    })
-    .await
-    .map_err(|err| {
-        panic!(
-            "Database initialization error: {}",
-            err.to_string().as_str()
-        );
-    })
-    .expect("Datbase initialization error");
-
-    // Build site context form site configuration
-    let config_loader = SiteConfigurationLoader::new()
-        .map_err(|e| error!("{}", e.to_string()))
-        .expect("Site configuration repository to be intialized");
-
-    let config = config_loader.get_config();
-
-    let site_context = SiteContext {
-        base_url: config.base_url.clone(),
-        site_id: config.site_id.clone(),
-    };
-
-    let reconciliation_service = model_deployment_reconciliation_service_builder(
-        site_context, 
-        &client, 
-        db_name, 
-        context.channel.clone()
-    );
-
-    let consumer = ModelDeploymentControllerConsumer { reconciliation_service };
-
-    let args = BasicConsumeArguments::default()
+    let consume_arguments = BasicConsumeArguments::default()
         .queue(MODEL_DEPLOYMENT_RECONCILIATION_QUEUE.into())
         .consumer_tag(consumer_tag.to_string())
         .finish();
 
-    match context.channel.basic_consume(consumer, args).await {
-        Ok(_) => {
-            info!("Ready to recieve messages...")
-        }
-        Err(err) => panic!("Failed to consume: {}", err.to_string()),
-    };
+    let event_listener_channel = messaging_context.channel.clone();
+    let event_listener_controller = controller.clone();
 
-    // Block forever or until terminated
-    if let Err(err) = tokio::signal::ctrl_c().await {
-        panic!("{}", err.to_string())
+    let event_listener_task = tokio::spawn(async move {
+        event_listener_channel
+            .basic_consume(event_listener_controller, consume_arguments)
+            .await
+            .unwrap_or_else(|err| panic!("Failed to consume deployment events: {}", err));
+
+        info!("Ready to receive messages...");
+
+        std::future::pending::<()>().await;
+    });
+
+    let reconciliation_loop_controller = controller.clone();
+
+    let reconciliation_loop_task = tokio::spawn(async move {
+        reconciliation_loop_controller
+            .run_reconciliation_loop()
+            .await
+    });
+
+    let synchronization_loop_controller = controller.clone();
+
+    let synchronization_loop_task = tokio::spawn(async move {
+        synchronization_loop_controller
+            .run_synchronization_loop()
+            .await;
+    });
+
+    let observation_loop_task =
+        tokio::spawn(async move { controller.run_observation_loop().await });
+
+    tokio::select! {
+        result = event_listener_task => {
+            panic!("Event-listener task exited unexpectedly: {:?}", result)
+        }
+        result = reconciliation_loop_task => {
+            panic!("Reconciliation-loop task exited unexpectedly: {:?}", result)
+        }
+        result = observation_loop_task => {
+            panic!("Observation-loop task exited unexpectedly: {:?}", result)
+        }
+        result = synchronization_loop_task => {
+            panic!("Synchronization-loop task exited unexpectedly: {:?}", result)
+        }
+        result = tokio::signal::ctrl_c() => {
+            if let Err(err) = result {
+                panic!("Failed to listen for the shutdown signal: {}", err)
+            }
+        }
     }
 }

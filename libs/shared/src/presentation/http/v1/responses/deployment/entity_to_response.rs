@@ -89,7 +89,7 @@ impl From<entities::ModelDeploymentInterface> for responses::ModelDeploymentInte
 impl From<entities::ModelDeployment> for responses::ModelDeployment {
     fn from(value: entities::ModelDeployment) -> Self {
         Self {
-            id: value.id.clone(),
+            id: value.id().into_uuid(),
             name: value.name.clone(),
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
@@ -104,6 +104,7 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             created_at: String::from(value.created_at.clone()),
             last_desired_state_change: String::from(value.last_desired_state_change.clone()),
             last_state_change: String::from(value.last_state_change.clone()),
+            last_observed: value.last_observed().cloned().map(String::from),
             last_modified: String::from(value.last_modified.clone()),
             replicas: responses::ReplicaGroup::from(value.replicas.clone()),
             last_message: value.last_message.clone(),

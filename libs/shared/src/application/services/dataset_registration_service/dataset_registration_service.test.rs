@@ -90,7 +90,7 @@ async fn derives_identity_and_saves_huggingface_dataset(
 ) -> Result<(), DatasetRegistrationServiceError> {
     let repository = Arc::new(TestRepository::default());
     let service = DatasetRegistrationService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let dataset = service
         .register_dataset(&context, huggingface_input())
@@ -116,7 +116,7 @@ async fn accepts_tapis_locator_outside_request_site_and_tenant(
 ) -> Result<(), DatasetRegistrationServiceError> {
     let repository = Arc::new(TestRepository::default());
     let service = DatasetRegistrationService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let dataset = service
         .register_dataset(&context, tapis_input("other-site", "other-tenant"))
@@ -136,7 +136,7 @@ async fn accepts_tapis_locator_outside_request_site_and_tenant(
 async fn invalid_domain_input_is_rejected_before_persistence() {
     let repository = Arc::new(TestRepository::default());
     let service = DatasetRegistrationService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
     let mut input = huggingface_input();
     input.provider = DatasetProviderInput::HuggingFace(HuggingFaceRepoLocatorInput {
         id: String::new(),
@@ -165,7 +165,7 @@ async fn repository_failures_are_retried_and_returned() {
         ..Default::default()
     });
     let service = DatasetRegistrationService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let result = service
         .register_dataset(&context, huggingface_input())

@@ -78,7 +78,7 @@ impl ModelService {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentDomainServiceError {
     #[error("Cannot create model deployment for model {0}/{1}. Artifact for the selected model must be fully ingested")]
     ArtifactIngestionRequired(String, String),

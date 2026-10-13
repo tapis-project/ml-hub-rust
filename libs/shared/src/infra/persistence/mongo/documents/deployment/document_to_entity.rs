@@ -1,5 +1,5 @@
 use crate::domain::entities::{
-    deployment::{self as entities, ModelDeploymentMetadata},
+    deployment::{self as entities, ModelDeploymentId, ModelDeploymentMetadata},
     deployment_option::{DeploymentOptionId, ServingRuntime},
     hpc_cluster::{BatchSchedulerQueueId, HpcClusterId},
     model::external_model::ExternalModelId,
@@ -31,7 +31,7 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
         }
 
         let props = entities::ReconstituteModelDeploymentProps {
-            id: Uuid::from_bytes(value.id.bytes()),
+            id: ModelDeploymentId::reconstitute(Uuid::from_bytes(value.id.bytes())),
             name: value.name.clone(),
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
@@ -54,6 +54,9 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
             last_modified: TimeStamp::from(value.last_modified.to_chrono()),
             last_desired_state_change: TimeStamp::from(value.last_desired_state_change.to_chrono()),
             last_state_change: TimeStamp::from(value.last_state_change.to_chrono()),
+            last_observed: value
+                .last_observed
+                .map(|last_observed| TimeStamp::from(last_observed.to_chrono())),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
             metadata: value.metadata.clone().map(ModelDeploymentMetadata),
         };

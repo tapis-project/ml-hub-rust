@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use async_trait::async_trait;
-use uuid::Uuid;
 use k8s_openapi::ByteString;
 use k8s_openapi::api::core::v1::Secret;
 use kube::{Client, Api};
@@ -8,7 +7,10 @@ use kube::api::{PostParams, DeleteParams, ObjectMeta};
 use serde::{Serialize, Deserialize};
 
 use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::deployment::argument::{Argument, ArgumentData};
+use crate::domain::entities::deployment::{
+    argument::{Argument, ArgumentData},
+    ModelDeploymentId,
+};
 use crate::shared_kernel::security::value_objects::{KeyId, Nonce};
 use crate::shared_kernel::security::{EncryptionEnvelope, EncryptionEnvelopeMetadata};
 use crate::shared_kernel::value_objects::Base64EncodedString;
@@ -42,7 +44,7 @@ impl K8sDeploymentArgumentRepository {
         Self { client, namespace }
     }
 
-    fn secret_name_from_deployment_id(deployment_id: &Uuid) -> String {
+    fn secret_name_from_deployment_id(deployment_id: &ModelDeploymentId) -> String {
         format!("{}{}", Self::MLHUB_ARGUMENT_SECRET_PREFIX, deployment_id)
     }
 }
@@ -51,7 +53,7 @@ impl K8sDeploymentArgumentRepository {
 impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
     async fn save_all(
         &self, 
-        deployment_id: &Uuid, 
+        deployment_id: &ModelDeploymentId,
         arguments: &[Argument]
     ) -> Result<(), DeploymentArgumentRepositoryError> {
         let secrets_api: Api<Secret> = Api::namespaced(self.client.clone(), &self.namespace);
@@ -113,7 +115,7 @@ impl DeploymentArgumentRepository for K8sDeploymentArgumentRepository {
 
     async fn find_all_for_deployment(
         &self, 
-        deployment_id: &Uuid
+        deployment_id: &ModelDeploymentId,
     ) -> Result<Vec<Argument>, DeploymentArgumentRepositoryError> {
         let secrets_api: Api<Secret> = Api::namespaced(self.client.clone(), &self.namespace);
         let secret_name = Self::secret_name_from_deployment_id(deployment_id);

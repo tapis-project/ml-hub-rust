@@ -155,7 +155,7 @@ async fn missing_external_model_is_rejected() {
         Arc::new(TestExternalModelRepository { found: None }),
     );
 
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let result = service
         .create_model(
@@ -196,7 +196,7 @@ async fn existing_pairing_returns_collection_conflict() -> Result<(), Box<dyn st
     );
 
     let result = service
-        .create_model(&RequestContext::system(None), input(*external_model.id()))
+        .create_model(&RequestContext::system(None, None, None), input(*external_model.id()))
         .await;
 
     assert!(matches!(
@@ -224,7 +224,7 @@ async fn duplicate_key_race_maps_to_collection_conflict() {
     );
 
     let result = service
-        .create_model(&RequestContext::system(None), input(*external_model.id()))
+        .create_model(&RequestContext::system(None, None, None), input(*external_model.id()))
         .await;
 
     assert!(matches!(

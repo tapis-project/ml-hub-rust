@@ -425,7 +425,7 @@ async fn deployment_options_reject_a_malformed_external_model_id(
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -452,7 +452,7 @@ async fn deployment_options_return_not_found_for_a_missing_external_model() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -479,7 +479,7 @@ async fn deployment_options_reject_an_invalid_cursor() -> Result<(), Box<dyn std
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -509,7 +509,7 @@ async fn deployment_options_return_an_empty_page_with_count_metadata(
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -544,7 +544,7 @@ async fn deployment_options_return_server_error_for_repository_failure(
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 

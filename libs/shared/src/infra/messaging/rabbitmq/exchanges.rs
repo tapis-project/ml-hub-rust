@@ -6,8 +6,7 @@ use log::info;
 
 pub const ARTIFACT_INGESTION_EXCHANGE: &'static str = "exchange.artifact.ingest";
 pub const ARTIFACT_PUBLICATION_EXCHANGE: &'static str = "exchange.artifact.publish";
-pub const MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE: &'static str =
-    "exchange.model_deployment.reconcile";
+pub const MODEL_DEPLOYMENT_RECONCILIATION_EXCHANGE: &'static str = "exchange.model_deployment.reconcile";
 pub const DEAD_LETTER_EXCHANGE: &'static str = "exchange.dead_letter";
 
 pub async fn declare_exchanges(

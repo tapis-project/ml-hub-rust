@@ -112,7 +112,7 @@ async fn skips_an_existing_sha_and_registers_a_changed_sha(
     let repository = Arc::new(TestDatasetRepository::default());
     let registration_service = DatasetRegistrationService::new(repository.clone());
     let query_service = DatasetQueryService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let summary = process_inbox(
         directory.path(),

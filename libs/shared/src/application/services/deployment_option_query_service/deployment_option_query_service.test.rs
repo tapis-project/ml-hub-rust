@@ -245,7 +245,7 @@ async fn reports_missing_external_model() {
 
     let result = service
         .list_external_model_deployment_options(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ExternalModelId::new(),
             &input,
         )
@@ -271,7 +271,7 @@ async fn hydrates_display_ready_target_and_pagination() -> Result<(), Box<dyn st
 
     let output = service
         .list_external_model_deployment_options(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ExternalModelId::new(),
             &input,
         )
@@ -309,7 +309,7 @@ async fn returns_disabled_target_as_unavailable() -> Result<(), Box<dyn std::err
 
     let output = service
         .list_external_model_deployment_options(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ExternalModelId::new(),
             &input,
         )
@@ -340,7 +340,7 @@ async fn returns_option_on_disabled_cluster_as_unavailable(
 
     let output = service
         .list_external_model_deployment_options(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ExternalModelId::new(),
             &input,
         )
@@ -371,7 +371,7 @@ async fn reports_dangling_hpc_cluster_reference() -> Result<(), Box<dyn std::err
 
     let result = service
         .list_external_model_deployment_options(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ExternalModelId::new(),
             &input,
         )
@@ -407,7 +407,7 @@ async fn reports_dangling_queue_reference() -> Result<(), Box<dyn std::error::Er
 
     let result = service
         .list_external_model_deployment_options(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ExternalModelId::new(),
             &input,
         )

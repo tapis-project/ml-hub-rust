@@ -106,7 +106,7 @@ mod endpoint_issuance_service_test {
     {
         let repository = Arc::new(InMemoryEndpointRepository::new());
         let service = EndpointIssuanceService::new(repository.clone());
-        let ctx = RequestContext::system(None);
+        let ctx = RequestContext::system(None, None, None);
 
         let issued = service.issue_for_resource(&ctx, &TestResource).await?;
 

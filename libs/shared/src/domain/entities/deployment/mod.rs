@@ -1,4 +1,7 @@
 pub mod argument;
+mod model_deployment_id;
+
+pub use model_deployment_id::ModelDeploymentId;
 
 use crate::domain::entities::model::external_model::ExternalModelId;
 use crate::impl_urn_generator;
@@ -10,7 +13,6 @@ use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use thiserror::Error;
-use uuid::Uuid;
 
 use super::deployment_option::{DeploymentOption, DeploymentOptionId, ServingRuntime};
 use super::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId};
@@ -33,7 +35,7 @@ pub enum ModelDeploymentError {
 #[derive(Clone, Debug)]
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
-    pub id: Uuid,
+    id: ModelDeploymentId,
     /// Display name of the deployment
     pub name: String,
     /// The modality of the deployment
@@ -60,7 +62,7 @@ pub struct ModelDeployment {
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
-    // pub last_observed: Option<TimeStamp>,
+    last_observed: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,
@@ -100,7 +102,7 @@ impl ModelDeployment {
         let now = TimeStamp::now();
 
         Ok(Self {
-            id: Uuid::now_v7(),
+            id: ModelDeploymentId::new(),
             name: props.name,
             description: props.description,
             tenant_id: props.tenant_id,
@@ -116,6 +118,7 @@ impl ModelDeployment {
             created_at: now.clone(),
             last_modified: now.clone(),
             last_state_change: now.clone(),
+            last_observed: None,
             last_desired_state_change: now.clone(),
             deployment_interface: props.deployment_interface,
             replicas: props.replicas,
@@ -142,6 +145,7 @@ impl ModelDeployment {
             created_at: props.created_at,
             last_modified: props.last_modified,
             last_state_change: props.last_state_change,
+            last_observed: props.last_observed,
             last_desired_state_change: props.last_desired_state_change,
             deployment_interface: props.deployment_interface,
             replicas: props.replicas,
@@ -150,9 +154,13 @@ impl ModelDeployment {
         }
     }
 
+    pub fn id(&self) -> &ModelDeploymentId {
+        &self.id
+    }
+
     pub fn resolve_reconciliation_requirement(&self) -> Option<ReconciliationRequirement> {
         if self.is_state_syncronized() {
-            return None
+            return None;
         }
 
         match (&self.state, &self.desired_state) {
@@ -182,6 +190,22 @@ impl ModelDeployment {
         &self.revision
     }
 
+    pub fn last_observed(&self) -> Option<&TimeStamp> {
+        self.last_observed.as_ref()
+    }
+
+    pub fn record_observation(&mut self, observed_at: TimeStamp) {
+        let should_update = self
+            .last_observed
+            .as_ref()
+            .map(|current| current.into_inner() < observed_at.into_inner())
+            .unwrap_or(true);
+
+        if should_update {
+            self.last_observed = Some(observed_at);
+        }
+    }
+
     pub fn revise(&mut self) -> ModelDeploymentDraft<'_> {
         let revision = self.revision + 1;
 
@@ -202,7 +226,7 @@ impl ModelDeployment {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum ReconciliationRequirement {
     Start,
     Stop,
@@ -561,7 +585,7 @@ impl<'a> ModelDeploymentDraft<'a> {
 
 #[derive(Clone, Debug)]
 pub struct ReconstituteModelDeploymentProps {
-    pub id: Uuid,
+    pub id: ModelDeploymentId,
     pub name: String,
     pub description: Option<String>,
     pub deployment_modality: DeploymentModality,
@@ -579,6 +603,7 @@ pub struct ReconstituteModelDeploymentProps {
     pub revision: u32,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
+    pub last_observed: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
     pub created_at: TimeStamp,
     pub metadata: Option<ModelDeploymentMetadata>,
@@ -597,3 +622,7 @@ pub struct CreateFromOptionProps {
     pub replicas: ReplicaGroup,
     pub metadata: Option<ModelDeploymentMetadata>,
 }
+
+#[cfg(test)]
+#[path = "model_deployment.test.rs"]
+mod model_deployment_test;

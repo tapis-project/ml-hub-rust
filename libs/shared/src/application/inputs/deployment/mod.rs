@@ -1,12 +1,10 @@
 use crate::application::workflows::reconciliation::ReconciliationAction;
 use crate::domain::entities::deployment::{
-    DesiredState, ModelDeployment, ParallelismStrategy, State,
+    ModelDeployment, ModelDeploymentId, ParallelismStrategy, State,
 };
 use crate::domain::entities::{
     deployment_option::DeploymentOptionId, model::external_model::ExternalModel,
 };
-use uuid::Uuid;
-
 use crate::shared_kernel::enums::DeploymentModality;
 
 pub struct ClientModelDeploymentRequest {
@@ -16,14 +14,12 @@ pub struct ClientModelDeploymentRequest {
 
 #[derive(Debug, Clone)]
 pub struct FindForReconciliationInput {
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
     pub revision: u32,
-    pub desired_state: DesiredState,
-    pub state: State,
 }
 
 pub struct FilterInput {
-    pub deployment_id: Option<Uuid>,
+    pub deployment_id: Option<ModelDeploymentId>,
     pub revision: Option<u32>,
     pub state: Option<State>,
 }
@@ -48,19 +44,19 @@ pub struct Argument {
 #[derive(Debug)]
 pub struct StartModelDeploymentInput {
     pub owner: String,
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
 }
 
 #[derive(Debug)]
 pub struct StopModelDeploymentInput {
     pub owner: String,
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
 }
 
 #[derive(Debug)]
 pub struct UndeployModelDeploymentInput {
     pub owner: String,
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
 }
 
 pub struct ReconcileModelDeploymentInput {

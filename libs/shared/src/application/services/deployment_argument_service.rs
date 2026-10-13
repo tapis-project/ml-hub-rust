@@ -6,7 +6,10 @@ use crate::{
         deployment_argument::{DeploymentArgumentRepository, DeploymentArgumentRepositoryError},
     },
     domain::entities::{
-        deployment::argument::{Argument, ArgumentData},
+        deployment::{
+            argument::{Argument, ArgumentData},
+            ModelDeploymentId,
+        },
         deployment_option::deployment_parameters::ResolvedDeploymentParameter,
     },
 };
@@ -15,8 +18,6 @@ use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
 
 use once_cell::sync::Lazy;
 use thiserror::Error;
-use uuid::Uuid;
-
 #[derive(Debug, Clone, Error)]
 pub enum DeploymentArgumentServiceError {
     #[error(transparent)]
@@ -60,7 +61,7 @@ impl DeploymentArgumentService {
 
     pub async fn get_decrypted_arguments_for_deployment(
         &self,
-        deployment_id: &Uuid,
+        deployment_id: &ModelDeploymentId,
     ) -> Result<Vec<DecryptedArgument>, DeploymentArgumentServiceError> {
         let find_args = || self.argument_repo.find_all_for_deployment(deployment_id);
 

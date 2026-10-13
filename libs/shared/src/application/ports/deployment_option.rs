@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum DeploymentOptionRepositoryError {
     #[error("Invalid deployment option cursor")]
     InvalidCursor,

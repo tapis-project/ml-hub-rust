@@ -228,9 +228,9 @@ pub async fn authenticate(
             }
         };
 
-        let identity_conext = RequestContext::new(Actor::from(principal), "".into(), None);
+        let request_context = RequestContext::new(Actor::from(principal), "".into(), None, None, None);
 
-        req.extensions_mut().insert(identity_conext);
+        req.extensions_mut().insert(request_context);
     }
 
     // Call the next middleware

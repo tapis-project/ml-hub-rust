@@ -10,7 +10,7 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
     fn from(value: &entities::ModelDeployment) -> Self {
         Self {
             _id: None,
-            id: Uuid::from_bytes(value.id.into_bytes()),
+            id: Uuid::from_bytes(*value.id().as_uuid().as_bytes()),
             name: value.name.clone(),
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
@@ -37,6 +37,7 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             replicas: documents::ReplicaGroup::from(value.replicas.clone()),
             last_desired_state_change: value.last_desired_state_change.to_bson(),
             last_state_change: value.last_state_change.to_bson(),
+            last_observed: value.last_observed().map(ToBsonDateTime::to_bson),
             created_at: value.created_at.to_bson(),
             last_modified: value.last_modified.to_bson(),
             metadata: value

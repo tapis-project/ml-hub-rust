@@ -2,18 +2,23 @@ use std::sync::Arc;
 
 // Application layer
 use crate::application::inputs::deployment::{FilterInput, ReconcileModelDeploymentInput};
-use crate::application::workflows::reconciliation::{ObservedOutcome, ReconcilerError, ReconciliationOutcome};
+use crate::application::workflows::reconciliation::{
+    ObservedOutcome, ReconcilerError, ReconciliationOutcome,
+};
 
 // Domain layer
 use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::deployment::argument::Argument;
-use crate::domain::entities::deployment::{DeploymentOptionSnapshot, ModelDeployment};
+use crate::domain::entities::deployment::{
+    DeploymentOptionSnapshot, ModelDeployment, ModelDeploymentId,
+};
 use crate::domain::entities::site::SiteContext;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 use async_trait::async_trait;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentRepositoryError {
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),
@@ -37,10 +42,20 @@ pub trait ModelDeploymentRepository: Send + Sync {
         deployment: &ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError>;
 
+    async fn record_observation(
+        &self,
+        deployment_id: &ModelDeploymentId,
+        observed_at: &TimeStamp,
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+
     async fn find(
         &self,
         input: &FilterInput,
     ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+
+    async fn find_reconcilable(
+        &self,
+    ) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
 
     async fn find_by_owner(
         &self,

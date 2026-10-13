@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelRepositoryError {
     #[error("Model already in your collection")]
     ModelAlreadyInCollection,
@@ -25,7 +25,7 @@ pub enum ModelRepositoryError {
     Persistence(#[from] InfrastructureError),
 }
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ExternalModelRepositoryError {
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),

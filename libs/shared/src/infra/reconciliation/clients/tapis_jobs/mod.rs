@@ -389,7 +389,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
     ) -> Result<ReqSubmitJob, ReconciliationError> {
         let mut job_def = self.base_job_definition.clone();
 
-        let job_name = format!("MLHub-FlexServ-{}", &deployment.id);
+        let job_name = format!("MLHub-FlexServ-{}", deployment.id());
 
         job_def.name = job_name.clone();
         job_def.app_id = Self::FLEXSERV_APP_ID.into();

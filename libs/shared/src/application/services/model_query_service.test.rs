@@ -146,7 +146,7 @@ async fn private_model_owned_by_another_principal_is_concealed(
     let service = service(Some(model), Vec::new(), vec![external_model]);
 
     let result = service
-        .get_model(&RequestContext::system(None), Uuid::now_v7())
+        .get_model(&RequestContext::system(None, None, None), Uuid::now_v7())
         .await;
 
     assert!(matches!(result, Err(ModelQueryServiceError::NotFound)));
@@ -163,7 +163,7 @@ async fn public_model_is_hydrated_for_a_non_owner() -> Result<(), Box<dyn std::e
     let service = service(Some(model), Vec::new(), vec![external_model.clone()]);
 
     let output = service
-        .get_model(&RequestContext::system(None), Uuid::now_v7())
+        .get_model(&RequestContext::system(None, None, None), Uuid::now_v7())
         .await?;
 
     assert_eq!(output.external_model.id(), external_model.id());
@@ -180,7 +180,7 @@ async fn dangling_external_reference_is_a_data_integrity_error(
 
     let result = service
         .list_owned(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &ListModelsInput::new(None, None, None),
         )
         .await;

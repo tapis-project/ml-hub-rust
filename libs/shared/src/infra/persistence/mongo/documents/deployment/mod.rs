@@ -28,6 +28,8 @@ pub struct ModelDeployment {
     pub created_at: DateTime,
     pub last_modified: DateTime,
     pub last_state_change: DateTime,
+    #[serde(default)]
+    pub last_observed: Option<DateTime>,
     pub last_desired_state_change: DateTime,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,

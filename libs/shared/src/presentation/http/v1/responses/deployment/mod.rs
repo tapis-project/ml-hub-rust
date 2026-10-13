@@ -26,6 +26,7 @@ pub struct ModelDeployment {
     pub created_at: String,
     pub last_modified: String,
     pub last_state_change: String,
+    pub last_observed: Option<String>,
     pub last_desired_state_change: String,
     pub deployment_interface: Option<ModelDeploymentInterface>,
     pub replicas: ReplicaGroup,

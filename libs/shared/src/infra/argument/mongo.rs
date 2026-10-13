@@ -2,13 +2,15 @@ use async_trait::async_trait;
 use mongodb::Client;
 use mongodb::{bson::doc, Collection};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::application::ports::deployment_argument::{
     DeploymentArgumentRepository, DeploymentArgumentRepositoryError,
 };
 use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::deployment::argument::{Argument, ArgumentData};
+use crate::domain::entities::deployment::{
+    argument::{Argument, ArgumentData},
+    ModelDeploymentId,
+};
 use crate::infra::persistence::mongo::database::DEPLOYMENT_ARGUMENT_COLLECTION;
 use crate::shared_kernel::security::value_objects::{KeyId, Nonce};
 use crate::shared_kernel::security::{EncryptionEnvelope, EncryptionEnvelopeMetadata};
@@ -99,7 +101,7 @@ impl MongoDeploymentArgumentRepository {
     }
 
     pub(crate) fn document_from_domain(
-        deployment_id: &Uuid,
+        deployment_id: &ModelDeploymentId,
         arguments: &[Argument],
     ) -> Result<DeploymentArgumentsDocument, DeploymentArgumentRepositoryError> {
         let arguments = arguments
@@ -157,7 +159,7 @@ impl MongoDeploymentArgumentRepository {
 impl DeploymentArgumentRepository for MongoDeploymentArgumentRepository {
     async fn save_all(
         &self,
-        deployment_id: &Uuid,
+        deployment_id: &ModelDeploymentId,
         arguments: &[Argument],
     ) -> Result<(), DeploymentArgumentRepositoryError> {
         let document = Self::document_from_domain(deployment_id, arguments)?;
@@ -175,7 +177,7 @@ impl DeploymentArgumentRepository for MongoDeploymentArgumentRepository {
 
     async fn find_all_for_deployment(
         &self,
-        deployment_id: &Uuid,
+        deployment_id: &ModelDeploymentId,
     ) -> Result<Vec<Argument>, DeploymentArgumentRepositoryError> {
         let document = self
             .read_collection

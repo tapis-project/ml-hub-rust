@@ -294,7 +294,7 @@ async fn list_rejects_an_unsupported_data_center() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -316,7 +316,7 @@ async fn detail_rejects_a_malformed_cluster_id() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -341,7 +341,7 @@ async fn detail_returns_not_found_within_the_data_center() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -363,7 +363,7 @@ async fn list_returns_scoped_count_metadata() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 

@@ -979,6 +979,12 @@
           "last_modified": {
             "type": "string"
           },
+          "last_observed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "last_state_change": {
             "type": "string"
           },

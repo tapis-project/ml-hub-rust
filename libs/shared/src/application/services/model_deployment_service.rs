@@ -19,7 +19,7 @@ use crate::application::ports::deployment::{
 use crate::application::ports::deployment_option::{
     DeploymentOptionRepository, DeploymentOptionRepositoryError,
 };
-use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
+use crate::application::ports::events::payloads::ModelDeploymentStartedPayload;
 use crate::application::ports::events::{Event, EventPublisher, Payload};
 use crate::application::ports::hpc_cluster::{HpcClusterRepository, HpcClusterRepositoryError};
 use crate::application::ports::model::{ExternalModelRepository, ExternalModelRepositoryError};
@@ -29,7 +29,8 @@ use crate::application::workflows::deployment::{
 use crate::application::workflows::Workflow;
 use crate::domain::entities::deployment::{
     CreateFromOptionProps, DeploymentOptionSnapshot, DeploymentTargetSnapshot, DesiredState,
-    HpcClusterQueueSnapshot, ModelDeployment, ModelDeploymentError, ReplicaGroup,
+    HpcClusterQueueSnapshot, ModelDeployment, ModelDeploymentError, ModelDeploymentId,
+    ReplicaGroup,
 };
 use crate::domain::entities::deployment_option::deployment_parameters::DeploymentParameterError;
 use crate::domain::entities::deployment_option::DeploymentTarget;
@@ -38,21 +39,16 @@ use crate::domain::services::{
 };
 use crate::shared_kernel::context::RequestContext;
 use crate::shared_kernel::enums::Visibility;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 use super::deployment_argument_service::{
     DeploymentArgumentService, DeploymentArgumentServiceError,
 };
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentServiceError {
     #[error("Revision mismatch: Expected to find revision `{0}` but found `{1}`")]
     RevisionMismatch(String, String),
-
-    #[error("State mismatch: Expected to find state `{0}` but found `{1}`")]
-    StateMismatch(String, String),
-
-    #[error("Desired state mismatch: Expected to find desired state `{0}` but found `{1}`")]
-    DesiredStateMismatch(String, String),
 
     #[error("Model Deployment repository error: {0}")]
     ModelDeploymentRepoError(#[from] ModelDeploymentRepositoryError),
@@ -142,6 +138,26 @@ impl ModelDeploymentService {
         }
     }
 
+    pub async fn find_by_id(
+        &self,
+        deployment_id: &ModelDeploymentId,
+    ) -> Result<Option<ModelDeployment>, ModelDeploymentServiceError> {
+        let filter = FilterInput {
+            deployment_id: Some(*deployment_id),
+            state: None,
+            revision: None,
+        };
+
+        let deployment = retry_async(
+            || self.model_deployment_repository.find(&filter),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(deployment)
+    }
+
     pub async fn list_by_owner(
         &self,
         input: ListModelDeploymentsByOwnerInput,
@@ -187,21 +203,20 @@ impl ModelDeploymentService {
             ));
         }
 
-        if deployment.state != input.state {
-            return Err(ModelDeploymentServiceError::StateMismatch(
-                String::from(input.state),
-                String::from(deployment.state.clone()),
-            ));
-        }
-
-        if deployment.desired_state != input.desired_state {
-            return Err(ModelDeploymentServiceError::DesiredStateMismatch(
-                String::from(input.desired_state),
-                String::from(deployment.desired_state.clone()),
-            ));
-        }
-
         Ok(deployment)
+    }
+
+    pub async fn find_all_reconcilable(
+        &self,
+    ) -> Result<Vec<ModelDeployment>, ModelDeploymentServiceError> {
+        let deployments = retry_async(
+            || self.model_deployment_repository.find_reconcilable(),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(deployments)
     }
 
     pub async fn deploy_model_with_option(
@@ -326,22 +341,42 @@ impl ModelDeploymentService {
             .prepare_arguments(&deployment_result.resolved_parameters)
             .await?;
 
+        let deployment = deployment_result.deployment;
+
         retry_async(
             || {
                 self.model_deployment_repository
-                    .save_with_arguments(&deployment_result.deployment, &prepared_arguments)
+                    .save_with_arguments(&deployment, &prepared_arguments)
             },
             &Self::REPO_RETRY_POLICY,
             None,
         )
         .await?;
 
-        self.publish_state_drift_event(&deployment_result.deployment)
-            .await;
+        let payload = ModelDeploymentStartedPayload {
+            deployment_id: *deployment.id(),
+            message: Some("Model deployment start request reciceved".into()),
+            deployment_revision: *deployment.revision(),
+        };
 
-        Ok(DeployModelWithOptionOutput {
-            deployment: deployment_result.deployment,
-        })
+        let event =
+            Event::from_payload(&Payload::ModelDeploymentStartedPayload(payload), None, None);
+
+        if let Err(publish_error) = retry_async(
+            || self.event_publisher.publish(&event),
+            &Self::EVENT_PUBLISHER_RETRY_POLICY,
+            None,
+        )
+        .await
+        {
+            error!(
+                "Failed to publish state drift event for deployment {}: {}",
+                deployment.id(),
+                publish_error
+            );
+        }
+
+        Ok(DeployModelWithOptionOutput { deployment })
     }
 
     pub async fn start_model_deployment(
@@ -403,9 +438,28 @@ impl ModelDeploymentService {
         Ok(())
     }
 
+    pub async fn record_observation(
+        &self,
+        _ctx: &RequestContext,
+        deployment_id: &ModelDeploymentId,
+        observed_at: &TimeStamp,
+    ) -> Result<(), ModelDeploymentServiceError> {
+        retry_async(
+            || {
+                self.model_deployment_repository
+                    .record_observation(deployment_id, observed_at)
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(())
+    }
+
     async fn update_desired_state(
         &self,
-        deployment_id: uuid::Uuid,
+        deployment_id: ModelDeploymentId,
         desired_state: DesiredState,
         message: &str,
     ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
@@ -422,34 +476,6 @@ impl ModelDeploymentService {
             })
             .await
             .map_err(Into::into)
-    }
-
-    async fn publish_state_drift_event(&self, deployment: &ModelDeployment) {
-        let payload = ModelDeploymentStateDriftDetectedPayload {
-            deployment_id: deployment.id,
-            message: Some("Model deployment initiated with StateDriftDetected event".into()),
-            deployment_revision: *deployment.revision(),
-            desired_state: deployment.desired_state.clone(),
-            actual_state: deployment.state.clone(),
-        };
-
-        let event = Event::from_payload(
-            &Payload::ModelDeploymentStateDriftDetectedPayload(payload),
-            None,
-        );
-
-        if let Err(publish_error) = retry_async(
-            || self.event_publisher.publish(&event),
-            &Self::EVENT_PUBLISHER_RETRY_POLICY,
-            None,
-        )
-        .await
-        {
-            error!(
-                "Failed to publish state drift event for deployment {}: {}",
-                deployment.id, publish_error
-            );
-        }
     }
 }
 
