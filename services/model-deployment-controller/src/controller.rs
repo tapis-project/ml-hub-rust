@@ -8,6 +8,7 @@ use indexmap::IndexMap;
 use log::{error, warn};
 use shared::application::inputs::deployment::UpdateModelDeploymentInput;
 use shared::application::ports::events::Event;
+use shared::application::services::endpoint_issuance_service::EndpointIssuanceService;
 use shared::application::services::model_deployment_observation_service::{
     ModelDeploymentObservationService, ObservationResult,
 };
@@ -18,6 +19,7 @@ use shared::application::services::model_deployment_service::{
     ModelDeploymentService, ModelDeploymentServiceError,
 };
 use shared::domain::entities::deployment::{ModelDeploymentId, ReconciliationRequirement};
+use shared::domain::entities::endpoint::NetworkAddressableResource;
 use shared::infra::messaging::codec::deserialize_event_message;
 use shared::infra::messaging::rabbitmq::settlement::{ack, nack};
 use shared::shared_kernel::context::RequestContext;
@@ -146,6 +148,7 @@ pub struct ModelDeploymentController {
     model_deployment_service: Arc<ModelDeploymentService>,
     reconciliation_service: Arc<ModelDeploymentReconciliationService>,
     observer_service: Arc<ModelDeploymentObservationService>,
+    endpoint_issuance_service: Arc<EndpointIssuanceService>,
     state: Arc<ControlLoopState>,
 }
 
@@ -166,12 +169,14 @@ impl ModelDeploymentController {
         model_deployment_service: Arc<ModelDeploymentService>,
         reconciliation_service: Arc<ModelDeploymentReconciliationService>,
         observer_service: Arc<ModelDeploymentObservationService>,
+        endpoint_issuance_service: Arc<EndpointIssuanceService>,
         state: Arc<ControlLoopState>,
     ) -> Result<Self, ModelDeploymentControllerInitializationError> {
         let controller = Self {
             model_deployment_service,
             reconciliation_service,
             observer_service,
+            endpoint_issuance_service,
             state,
         };
 
@@ -310,7 +315,10 @@ impl ModelDeploymentController {
                     };
 
                 let observed_deployment_id = *deployment.id();
+
                 let observed_deployment_revision = *deployment.revision();
+
+                let endpoint_resource = deployment.clone();
 
                 let persistence_result = if deployment_changed {
                     self.model_deployment_service
@@ -329,6 +337,19 @@ impl ModelDeploymentController {
                     );
 
                     continue;
+                }
+
+                if !endpoint_resource.network_target_names().is_empty() {
+                    if let Err(err) = self
+                        .endpoint_issuance_service
+                        .issue_for_resource(&context, &endpoint_resource)
+                        .await
+                    {
+                        error!(
+                            "Failed to issue endpoint for observed model deployment '{}': {}",
+                            observed_deployment_id, err
+                        );
+                    }
                 }
 
                 if let Some(requirement) = reconciliation_requirement {

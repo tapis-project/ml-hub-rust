@@ -1,7 +1,7 @@
 use crate::{
     application::services::deployment_argument_service::DecryptedArgument,
     domain::entities::deployment::{
-        DesiredState, ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta,
+        DesiredState, ModelDeploymentEndpointDelta, ModelDeploymentMetadataDelta,
         ReplicaGroupDelta, State,
     },
 };
@@ -32,7 +32,7 @@ pub struct StartedOutcome {
     pub state: State,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -40,13 +40,14 @@ pub struct StoppedOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
 pub struct UndeployedOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -55,7 +56,7 @@ pub struct ObservedOutcome {
     pub state: State,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -63,7 +64,7 @@ pub struct FailedOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -72,7 +73,7 @@ pub struct UnknownOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]

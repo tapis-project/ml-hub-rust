@@ -322,7 +322,7 @@ impl ModelDeploymentService {
                 last_message: Some("Model deployment request received".into()),
                 visibility: Visibility::Private,
                 deployment_modality: input.deployment_modality,
-                deployment_interface: None,
+                target_endpoint: None,
                 replicas,
                 metadata: None,
             },

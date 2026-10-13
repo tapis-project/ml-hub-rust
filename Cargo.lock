@@ -1082,7 +1082,6 @@ dependencies = [
  "futures",
  "log",
  "mongodb",
- "openapiv3",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -2947,17 +2946,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
-name = "openapiv3"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c8d427828b22ae1fff2833a03d8486c2c881367f1c336349f307f321e7f4d05"
-dependencies = [
- "indexmap 2.13.0",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "openssl"
 version = "0.10.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4227,7 +4215,6 @@ dependencies = [
  "nanoid",
  "nonempty",
  "once_cell",
- "openapiv3",
  "partially",
  "platforms",
  "rand 0.9.2",
@@ -4246,6 +4233,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-retry",
+ "url",
  "url-parse",
  "utoipa",
  "utoipa-swagger-ui",

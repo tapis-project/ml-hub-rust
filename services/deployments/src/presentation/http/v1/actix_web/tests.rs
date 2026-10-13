@@ -108,14 +108,15 @@ fn openapi_exposes_option_based_deployment_without_strategy_routes(
         .pointer("/components/schemas/DeployModelWithOptionBody/properties/model_id")
         .is_none());
     assert!(document
-        .pointer("/components/schemas/ModelDeploymentInterface/properties/interface_type")
+        .pointer("/components/schemas/ModelDeployment/properties/target_endpoint")
         .is_some());
     assert!(document
-        .pointer("/components/schemas/ModelDeploymentInterface/properties/rest_api")
+        .pointer("/components/schemas/ModelDeployment/properties/endpoint")
         .is_some());
-    assert!(document
-        .pointer("/components/schemas/ModelDeploymentInterface/oneOf")
-        .is_none());
+    assert_eq!(
+        document.pointer("/components/schemas/Protocol/enum/0"),
+        Some(&serde_json::json!("RestHttp"))
+    );
     assert!(document
         .pointer("/paths/~1deployments-api~1models~1{model_id}~1strategies")
         .is_none());

@@ -190,7 +190,7 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 "expires_at": to_bson(&update.expires_at)
                     .map_err(|error| map_error("Could not serialize expires_at", error))?,
                 "last_desired_state_change": update.last_desired_state_change,
-                "deployment_interface": to_bson(&update.deployment_interface)
+                "target_endpoint": to_bson(&update.target_endpoint)
                     .map_err(|e| {
                         let error = InfrastructureError::new_internal();
 

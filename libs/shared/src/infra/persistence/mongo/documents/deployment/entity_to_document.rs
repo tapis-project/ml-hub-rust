@@ -24,10 +24,10 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             desired_state: documents::DesiredState::from(value.desired_state.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
-            deployment_interface: value
-                .deployment_interface
-                .clone()
-                .and_then(|di| Some(documents::ModelDeploymentInterface::from(di))),
+            target_endpoint: value
+                .target_endpoint()
+                .cloned()
+                .map(documents::ModelDeploymentEndpoint::from),
             deployment_option_id: Uuid::from_bytes(
                 *value.deployment_option_id.as_uuid().as_bytes(),
             ),
@@ -161,19 +161,20 @@ impl From<entities::HpcClusterQueueSnapshot> for documents::HpcClusterQueueSnaps
     }
 }
 
-impl From<entities::RestApi> for documents::RestApi {
-    fn from(value: entities::RestApi) -> Self {
-        Self { spec: value.spec }
+impl From<entities::ModelDeploymentEndpoint> for documents::ModelDeploymentEndpoint {
+    fn from(value: entities::ModelDeploymentEndpoint) -> Self {
+        Self {
+            name: value.name().map(String::from),
+            protocol: documents::Protocol::from(value.protocol().clone()),
+            base_url: value.base_url().map(String::from),
+        }
     }
 }
 
-impl From<entities::ModelDeploymentInterface> for documents::ModelDeploymentInterface {
-    fn from(value: entities::ModelDeploymentInterface) -> Self {
+impl From<entities::Protocol> for documents::Protocol {
+    fn from(value: entities::Protocol) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(interface) => Self {
-                interface_type: documents::ModelDeploymentInterfaceType::RestApi,
-                rest_api: Some(documents::RestApi::from(interface)),
-            },
+            entities::Protocol::RestHttp => Self::RestHttp,
         }
     }
 }

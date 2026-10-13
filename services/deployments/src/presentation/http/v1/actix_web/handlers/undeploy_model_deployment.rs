@@ -7,10 +7,13 @@ use crate::presentation::http::v1::responses::ModelDeployment;
 use actix_web::{post, web, Responder};
 use serde_json::to_value;
 use shared::application::inputs::deployment::UndeployModelDeploymentInput;
+use shared::application::services::endpoint_query_service::EndpointQueryService;
 use shared::application::services::model_deployment_service::{
     ModelDeploymentService, ModelDeploymentServiceError,
 };
 use shared::domain::entities::deployment::ModelDeploymentId;
+use shared::domain::entities::endpoint::NetworkAddressableResource;
+use shared::shared_kernel::context::RequestContext;
 
 #[utoipa::path(
     post,
@@ -56,6 +59,8 @@ use shared::domain::entities::deployment::ModelDeploymentId;
 async fn undeploy_model_deployment(
     path: web::Path<UndeployModelDeploymentPathParams>,
     service: web::Data<ModelDeploymentService>,
+    endpoint_query_service: web::Data<EndpointQueryService>,
+    ctx: RequestContext,
 ) -> impl Responder {
     let input = UndeployModelDeploymentInput {
         owner: "mlhub".into(),
@@ -70,7 +75,24 @@ async fn undeploy_model_deployment(
         Err(err) => return build_error_response(500, err.to_string()),
     };
 
-    let resp = match to_value(ModelDeployment::from(output.deployment)) {
+    let endpoints = if output.deployment.network_target_names().is_empty() {
+        Vec::new()
+    } else {
+        match endpoint_query_service
+            .find_by_network_addressable_resource(&ctx, &output.deployment)
+            .await
+        {
+            Ok(endpoints) => endpoints,
+            Err(error) => return build_error_response(500, error.to_string()),
+        }
+    };
+
+    let response = match ModelDeployment::try_from((output.deployment, endpoints)) {
+        Ok(response) => response,
+        Err(error) => return build_error_response(500, error.to_string()),
+    };
+
+    let resp = match to_value(response) {
         Ok(r) => r,
         Err(err) => return build_error_response(500, err.to_string()),
     };

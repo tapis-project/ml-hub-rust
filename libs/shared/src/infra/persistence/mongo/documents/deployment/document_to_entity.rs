@@ -47,10 +47,10 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
             deployment_option_id,
             deployment_option_snapshot,
             visibility: Visibility::from(value.visibility.clone()),
-            deployment_interface: value
-                .deployment_interface
+            target_endpoint: value
+                .target_endpoint
                 .clone()
-                .map(entities::ModelDeploymentInterface::try_from)
+                .map(entities::ModelDeploymentEndpoint::try_from)
                 .transpose()?,
             replicas: entities::ReplicaGroup::from(value.replicas.clone()),
             last_modified: TimeStamp::from(value.last_modified.to_chrono()),
@@ -177,23 +177,19 @@ impl From<documents::DesiredState> for entities::DesiredState {
     }
 }
 
-impl From<documents::RestApi> for entities::RestApi {
-    fn from(value: documents::RestApi) -> Self {
-        Self { spec: value.spec }
+impl TryFrom<documents::ModelDeploymentEndpoint> for entities::ModelDeploymentEndpoint {
+    type Error = String;
+
+    fn try_from(value: documents::ModelDeploymentEndpoint) -> Result<Self, Self::Error> {
+        Self::reconstitute(value.name, value.protocol.into(), value.base_url)
+            .map_err(|error| error.to_string())
     }
 }
 
-impl TryFrom<documents::ModelDeploymentInterface> for entities::ModelDeploymentInterface {
-    type Error = String;
-
-    fn try_from(value: documents::ModelDeploymentInterface) -> Result<Self, Self::Error> {
-        match (value.interface_type, value.rest_api) {
-            (documents::ModelDeploymentInterfaceType::RestApi, Some(interface)) => {
-                Ok(Self::RestApi(interface.into()))
-            }
-            (documents::ModelDeploymentInterfaceType::RestApi, None) => {
-                Err("Model deployment interface discriminator requires rest_api".into())
-            }
+impl From<documents::Protocol> for entities::Protocol {
+    fn from(value: documents::Protocol) -> Self {
+        match value {
+            documents::Protocol::RestHttp => Self::RestHttp,
         }
     }
 }

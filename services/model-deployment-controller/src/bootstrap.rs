@@ -14,10 +14,12 @@ use shared::application::ports::deployment::ModelDeploymentReconcilerProvider;
 use shared::application::ports::deployment::ModelDeploymentRepository;
 use shared::application::ports::deployment_argument::DeploymentArgumentRepository;
 use shared::application::ports::deployment_option::DeploymentOptionRepository;
+use shared::application::ports::endpoint::EndpointRepository;
 use shared::application::ports::events::EventPublisher;
 use shared::application::ports::hpc_cluster::HpcClusterRepository;
 use shared::application::ports::model::ExternalModelRepository;
 use shared::application::services::deployment_argument_service::DeploymentArgumentService;
+use shared::application::services::endpoint_issuance_service::EndpointIssuanceService;
 use shared::application::services::model_deployment_observation_service::ModelDeploymentObservationService;
 use shared::application::services::model_deployment_reconciliation_service::ModelDeploymentReconciliationService;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
@@ -39,6 +41,7 @@ use shared::infra::messaging::rabbitmq::routing::{
 };
 use shared::infra::persistence::mongo::repositories::{
     DeploymentOptionRepository as MongoDeploymentOptionRepository,
+    EndpointRepository as MongoEndpointRepository,
     ExternalModelRepository as MongoExternalModelRepository,
     HpcClusterRepository as MongoHpcClusterRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
@@ -216,7 +219,11 @@ pub async fn model_deployment_controller_builder(
     );
 
     let observer_service =
-        model_deployment_observer_service_builder(site_context, client, db_name, channel);
+        model_deployment_observer_service_builder(site_context, client, db_name.clone(), channel);
+
+    let endpoint_issuance_service = Arc::new(EndpointIssuanceService::new(endpoint_repo_factory(
+        client, db_name,
+    )));
 
     let state = Arc::new(ControlLoopState::new());
 
@@ -224,6 +231,7 @@ pub async fn model_deployment_controller_builder(
         model_deployment_service,
         reconciliation_service,
         observer_service,
+        endpoint_issuance_service,
         state,
     )
     .await
@@ -261,6 +269,10 @@ pub fn deployment_option_repo_factory(
 
 pub fn hpc_cluster_repo_factory(client: &Client, db_name: String) -> Arc<dyn HpcClusterRepository> {
     Arc::new(MongoHpcClusterRepository::new(client, db_name))
+}
+
+pub fn endpoint_repo_factory(client: &Client, db_name: String) -> Arc<dyn EndpointRepository> {
+    Arc::new(MongoEndpointRepository::new(client, db_name))
 }
 
 pub fn deployment_argument_repo_factory(

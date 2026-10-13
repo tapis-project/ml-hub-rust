@@ -213,7 +213,7 @@ impl ModelDeploymentReconciliationService {
                     .revise()
                     .transition_to_state(payload.state, payload.message.clone())?
                     .apply_metadata_delta(payload.metadata.unwrap_or_default())
-                    .apply_interface_delta(payload.interface.unwrap_or_default())
+                    .apply_target_endpoint_delta(payload.target_endpoint.unwrap_or_default())
                     .apply_replica_group_delta(payload.replicas.unwrap_or_default())
                     .finish();
 
@@ -228,7 +228,7 @@ impl ModelDeploymentReconciliationService {
                     .revise()
                     .transition_to_state(State::Stopped, payload.message.clone())?
                     .apply_metadata_delta(payload.metadata.unwrap_or_default())
-                    .apply_interface_delta(payload.interface.unwrap_or_default())
+                    .apply_target_endpoint_delta(payload.target_endpoint.unwrap_or_default())
                     .apply_replica_group_delta(payload.replicas.unwrap_or_default())
                     .finish();
 
@@ -247,6 +247,8 @@ impl ModelDeploymentReconciliationService {
                     revised.apply_metadata_delta(metadata_delta);
                 }
 
+                revised.apply_target_endpoint_delta(payload.target_endpoint.unwrap_or_default());
+
                 let revised = revised.finish();
 
                 ReconciliationResult {
@@ -264,6 +266,8 @@ impl ModelDeploymentReconciliationService {
                     revised.apply_metadata_delta(metadata_delta);
                 }
 
+                revised.apply_target_endpoint_delta(payload.target_endpoint.unwrap_or_default());
+
                 let revised = revised.finish();
 
                 ReconciliationResult {
@@ -280,6 +284,8 @@ impl ModelDeploymentReconciliationService {
                 if let Some(metadata_delta) = payload.metadata {
                     revised.apply_metadata_delta(metadata_delta);
                 }
+
+                revised.apply_target_endpoint_delta(payload.target_endpoint.unwrap_or_default());
 
                 let revised = revised.finish();
 

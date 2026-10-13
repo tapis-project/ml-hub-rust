@@ -3,17 +3,19 @@ mod model_deployment_id;
 
 pub use model_deployment_id::ModelDeploymentId;
 
+use crate::domain::entities::endpoint::NetworkAddressableResource;
 use crate::domain::entities::model::external_model::ExternalModelId;
+use crate::domain::entities::tenancy::TenantScopedResource;
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::value_objects::TimeStamp;
-use openapiv3::OpenAPI;
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::time::Duration;
 use thiserror::Error;
+use url::Url;
 
 use super::deployment_option::{DeploymentOption, DeploymentOptionId, ServingRuntime};
 use super::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId};
@@ -37,6 +39,12 @@ pub enum ModelDeploymentError {
 
     #[error("Maximum runtime exceeds the supported timestamp range")]
     MaximumRuntimeOverflow,
+
+    #[error("Model deployment endpoint name must not be empty")]
+    InvalidEndpointName,
+
+    #[error("Model deployment endpoint base URL must be an absolute HTTP or HTTPS URL")]
+    InvalidEndpointBaseUrl,
 
     #[error("Invalid persisted ModelDeployment data: {0}")]
     DataIntegrityError(String),
@@ -76,7 +84,7 @@ pub struct ModelDeployment {
     maximum_runtime: Option<Duration>,
     expires_at: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     /// Metadata provided by and for deployment clients
     pub metadata: Option<ModelDeploymentMetadata>,
@@ -86,6 +94,36 @@ pub struct ModelDeployment {
 }
 
 impl_urn_generator!(ModelDeployment, tenant_id, "deployment", id);
+
+impl TenantScopedResource for ModelDeployment {
+    fn tenant_id(&self) -> String {
+        self.tenant_id.clone()
+    }
+}
+
+impl NetworkAddressableResource for ModelDeployment {
+    fn network_target_names(&self) -> Vec<String> {
+        self.target_endpoint
+            .as_ref()
+            .and_then(|endpoint| {
+                endpoint
+                    .base_url()
+                    .and_then(|_| endpoint.name().map(String::from))
+            })
+            .into_iter()
+            .collect()
+    }
+
+    fn resolve_target_url(&self, target_name: &str) -> Option<&str> {
+        let endpoint = self.target_endpoint.as_ref()?;
+
+        if endpoint.name()? != target_name {
+            return None;
+        }
+
+        endpoint.base_url()
+    }
+}
 
 impl ModelDeployment {
     /// Create the model deployment from a deployment option
@@ -137,7 +175,7 @@ impl ModelDeployment {
             maximum_runtime,
             expires_at: None,
             last_desired_state_change: now.clone(),
-            deployment_interface: props.deployment_interface,
+            target_endpoint: props.target_endpoint,
             replicas: props.replicas,
             metadata: props.metadata,
             revision: 0,
@@ -196,7 +234,7 @@ impl ModelDeployment {
             maximum_runtime: props.maximum_runtime,
             expires_at: props.expires_at,
             last_desired_state_change: props.last_desired_state_change,
-            deployment_interface: props.deployment_interface,
+            target_endpoint: props.target_endpoint,
             replicas: props.replicas,
             metadata: props.metadata,
             revision: props.revision,
@@ -246,6 +284,10 @@ impl ModelDeployment {
         self.last_observed.as_ref()
     }
 
+    pub fn target_endpoint(&self) -> Option<&ModelDeploymentEndpoint> {
+        self.target_endpoint.as_ref()
+    }
+
     pub fn maximum_runtime(&self) -> Option<Duration> {
         self.maximum_runtime
     }
@@ -286,6 +328,7 @@ impl ModelDeployment {
     pub fn mark_as_failed(&mut self, message: Option<String>) -> Result<(), ModelDeploymentError> {
         self.revise()
             .transition_to_state(State::Failed, message)?
+            .apply_target_endpoint_delta(ModelDeploymentEndpointDelta::Delete)
             .finish();
 
         Ok(())
@@ -456,22 +499,100 @@ pub enum ReplicaGroupDelta {
     Replace(ReplicaGroup),
 }
 
-#[derive(Clone, Debug)]
-pub enum ModelDeploymentInterface {
-    RestApi(RestApi),
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Protocol {
+    RestHttp,
 }
 
-#[derive(Clone, Debug)]
-pub struct RestApi {
-    pub spec: OpenAPI,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModelDeploymentEndpoint {
+    name: Option<String>,
+    protocol: Protocol,
+    base_url: Option<String>,
 }
 
-#[derive(Clone, Debug, Default)]
-pub enum ModelDeploymentInterfaceDelta {
+impl ModelDeploymentEndpoint {
+    pub fn new(
+        name: Option<String>,
+        protocol: Protocol,
+        base_url: Option<String>,
+    ) -> Result<Self, ModelDeploymentError> {
+        Self::validate_name(name.as_deref())?;
+        Self::validate_base_url(&protocol, base_url.as_deref())?;
+
+        Ok(Self {
+            name,
+            protocol,
+            base_url,
+        })
+    }
+
+    pub fn reconstitute(
+        name: Option<String>,
+        protocol: Protocol,
+        base_url: Option<String>,
+    ) -> Result<Self, ModelDeploymentError> {
+        Self::new(name, protocol, base_url)
+            .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))
+    }
+
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
+    pub fn protocol(&self) -> &Protocol {
+        &self.protocol
+    }
+
+    pub fn base_url(&self) -> Option<&str> {
+        self.base_url.as_deref()
+    }
+
+    fn validate_name(name: Option<&str>) -> Result<(), ModelDeploymentError> {
+        if name.is_some_and(|name| name.trim().is_empty()) {
+            return Err(ModelDeploymentError::InvalidEndpointName);
+        }
+
+        Ok(())
+    }
+
+    fn validate_base_url(
+        protocol: &Protocol,
+        base_url: Option<&str>,
+    ) -> Result<(), ModelDeploymentError> {
+        let Some(base_url) = base_url else {
+            return Ok(());
+        };
+
+        if base_url.trim().is_empty() {
+            return Err(ModelDeploymentError::InvalidEndpointBaseUrl);
+        }
+
+        let parsed =
+            Url::parse(base_url).map_err(|_| ModelDeploymentError::InvalidEndpointBaseUrl)?;
+
+        match protocol {
+            Protocol::RestHttp
+                if matches!(parsed.scheme(), "http" | "https") && parsed.has_host() => {}
+            Protocol::RestHttp => return Err(ModelDeploymentError::InvalidEndpointBaseUrl),
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub enum ModelDeploymentEndpointDelta {
     #[default]
     NoChange,
     Delete,
-    Replace(ModelDeploymentInterface),
+    Replace(ModelDeploymentEndpoint),
+}
+
+impl ModelDeploymentEndpointDelta {
+    pub fn is_no_change(&self) -> bool {
+        matches!(self, Self::NoChange)
+    }
 }
 
 #[derive(Debug)]
@@ -622,13 +743,16 @@ impl<'a> ModelDeploymentDraft<'a> {
         Ok(self)
     }
 
-    pub fn apply_interface_delta(&mut self, delta: ModelDeploymentInterfaceDelta) -> &mut Self {
+    pub fn apply_target_endpoint_delta(
+        &mut self,
+        delta: ModelDeploymentEndpointDelta,
+    ) -> &mut Self {
         match delta {
-            ModelDeploymentInterfaceDelta::Delete => self.deployment.metadata = None,
-            ModelDeploymentInterfaceDelta::Replace(i) => {
-                self.deployment.deployment_interface = Some(i);
+            ModelDeploymentEndpointDelta::Delete => self.deployment.target_endpoint = None,
+            ModelDeploymentEndpointDelta::Replace(endpoint) => {
+                self.deployment.target_endpoint = Some(endpoint);
             }
-            ModelDeploymentInterfaceDelta::NoChange => {}
+            ModelDeploymentEndpointDelta::NoChange => {}
         };
 
         self
@@ -710,7 +834,7 @@ pub struct ReconstituteModelDeploymentProps {
     pub deployment_option_id: DeploymentOptionId,
     pub deployment_option_snapshot: DeploymentOptionSnapshot,
     pub visibility: Visibility,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     pub revision: u32,
     pub last_modified: TimeStamp,
@@ -732,7 +856,7 @@ pub struct CreateFromOptionProps {
     pub last_message: Option<String>,
     pub visibility: Visibility,
     pub deployment_modality: DeploymentModality,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     pub metadata: Option<ModelDeploymentMetadata>,
 }

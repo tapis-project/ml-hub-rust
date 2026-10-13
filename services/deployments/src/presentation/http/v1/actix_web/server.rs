@@ -1,5 +1,6 @@
 use crate::bootstrap::factories::{
-    hpc_cluster_query_service_builder, model_deployment_service_builder,
+    endpoint_query_service_builder, hpc_cluster_query_service_builder,
+    model_deployment_service_builder,
 };
 use crate::bootstrap::state::AppState;
 use crate::presentation;
@@ -148,6 +149,11 @@ pub async fn run_server() -> std::io::Result<()> {
         db_name.clone(),
     ));
 
+    let endpoint_query_service = Arc::new(endpoint_query_service_builder(
+        &mongo_client,
+        db_name.clone(),
+    ));
+
     HttpServer::new(move || {
         App::new()
             .app_data(site_config.clone())
@@ -156,6 +162,7 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(principal_service.clone())
             .app_data(web::Data::from(model_deployment_service.clone()))
             .app_data(web::Data::from(hpc_cluster_query_service.clone()))
+            .app_data(web::Data::from(endpoint_query_service.clone()))
             .app_data(web::Data::new(state.clone()))
 
             // Globally-scoped middlewares.

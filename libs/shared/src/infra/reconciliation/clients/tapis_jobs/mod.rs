@@ -15,8 +15,9 @@ use crate::application::workflows::reconciliation::{
     StartedOutcome, StoppedOutcome, UndeployedOutcome,
 };
 use crate::domain::entities::deployment::{
-    DeploymentTargetSnapshot, ModelDeployment, ModelDeploymentMetadata,
-    ModelDeploymentMetadataDelta, State,
+    DeploymentTargetSnapshot, ModelDeployment, ModelDeploymentEndpoint,
+    ModelDeploymentEndpointDelta, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, Protocol,
+    State,
 };
 use crate::domain::entities::model::external_model::{ExternalModel, ModelLocator, ModelProvider};
 use crate::domain::entities::site::SiteContext;
@@ -42,12 +43,6 @@ enum ReconciliationError {
     UnsupportedHpcCluster(String),
 }
 
-#[derive(Debug, Clone, Error)]
-enum ObservationError {
-    #[error(transparent)]
-    DownstreamError(#[from] InfrastructureError),
-}
-
 pub struct TapisJobsModelDeploymentReconciliationClient {
     mlhub_service_password: String,
     site_context: SiteContext,
@@ -60,6 +55,8 @@ impl TapisJobsModelDeploymentReconciliationClient {
     const FLEXSERV_APP_VERSION: &'static str = "1.4.0";
     const FLEXSERV_JOB_DEF_URL: &'static str = "https://raw.githubusercontent.com/tapis-project/FlexServ-Deployer/refs/heads/main/tapis_def/1.4.0/job.json";
     const TAPIS_JOB_UUID_KEY: &'static str = "tapis_job_uuid";
+    const FLEXSERV_ACCESS_INFO_PATH: &'static str = "flexserv_access_info.txt";
+    const FLEXSERV_ENDPOINT_NAME: &'static str = "default";
 
     fn resolve_tapis_system_id(cluster_host: &str) -> Result<&'static str, ReconciliationError> {
         match cluster_host {
@@ -155,41 +152,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 error
             })?;
 
-        let mut custom_headers = HeaderMap::new();
-
-        // OBO Tapis tenant
-        let obo_tenant_id = deployment.tenant_id.as_str();
-
-        custom_headers.insert(
-            "X-Tapis-Tenant",
-            HeaderValue::from_str(&obo_tenant_id).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-
-                log::error!(
-                    "[{}] Invalid header value for X-Tapis-Tenant: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?,
-        );
-
-        // OBO Tapis username
-        let obo_username = deployment.owner.as_str();
-
-        custom_headers.insert(
-            "X-Tapis-User",
-            HeaderValue::from_str(obo_username).map_err(|e| {
-                let error = InfrastructureError::new_internal();
-
-                log::error!(
-                    "[{}] Invalid header value for X-Tapis-User: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?,
-        );
+        let custom_headers = Self::obo_headers(deployment)?;
 
         let job_def = self.build_job_request(model_id, model_revision, deployment, arguments)?;
 
@@ -233,7 +196,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 ModelDeploymentMetadata(map),
             )),
             replicas: None,
-            interface: None,
+            target_endpoint: None,
         }))
     }
 
@@ -249,7 +212,7 @@ impl TapisJobsModelDeploymentReconciliationClient {
             message: Some("Deployment stopped successfully".to_string()),
             metadata: None,
             replicas: None,
-            interface: None,
+            target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),
         }))
     }
 
@@ -260,20 +223,211 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Ok(ReconciliationOutcome::Undeployed(UndeployedOutcome {
             message: Some("Deployment canceled successfully".to_string()),
             metadata: Some(ModelDeploymentMetadataDelta::Delete),
+            target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),
         }))
     }
 
     async fn handle_observe(
         &self,
-        _input: &ModelDeployment,
+        deployment: &ModelDeployment,
     ) -> Result<ObservedOutcome, ReconciliationError> {
+        let job_uuid = Self::extract_job_uuid(deployment).ok_or_else(|| {
+            ReconciliationError::Recoverable(
+                "Tapis job identifier is unavailable for observation".into(),
+            )
+        })?;
+
+        let service_jwt = self.generate_service_token().await?;
+
+        let jobs_client = TapisJobs::new(&self.get_target_base_url(deployment), Some(&service_jwt))
+            .map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Failed to initialize Tapis Jobs observation client: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+
+                infrastructure_error
+            })?;
+
+        let status_response = with_headers(Self::obo_headers(deployment)?, async {
+            jobs_client.jobs.get_job_status(&job_uuid).await
+        })
+        .await
+        .map_err(|error| {
+            let infrastructure_error = InfrastructureError::new_internal();
+
+            log::error!(
+                "[{}] Failed to observe Tapis job status: {}",
+                infrastructure_error.error_id(),
+                error
+            );
+
+            infrastructure_error
+        })?;
+
+        let status = status_response
+            .result
+            .and_then(|result| result.status)
+            .ok_or_else(|| {
+                ReconciliationError::Recoverable(
+                    "Tapis job status response did not contain a status".into(),
+                )
+            })?;
+
+        let state = Self::state_from_job_status(&status);
+
+        if state != State::Running {
+            return Ok(ObservedOutcome {
+                message: Some(format!("Observed Tapis job status {status}")),
+                state,
+                metadata: None,
+                replicas: None,
+                target_endpoint: Some(Self::target_endpoint_deletion(deployment)),
+            });
+        }
+
+        let target_endpoint = self
+            .discover_flexserv_endpoint(&jobs_client, deployment, &job_uuid)
+            .await;
+
         Ok(ObservedOutcome {
-            message: Some("Observing Tapis Job".into()),
-            state: State::Unknown, // TODO Put the actual observed state
+            message: Some("Observed running Tapis job".into()),
+            state,
             metadata: None,
             replicas: None,
-            interface: None,
+            target_endpoint,
         })
+    }
+
+    async fn discover_flexserv_endpoint(
+        &self,
+        jobs_client: &TapisJobs,
+        deployment: &ModelDeployment,
+        job_uuid: &str,
+    ) -> Option<ModelDeploymentEndpointDelta> {
+        let response = with_headers(Self::obo_headers(deployment).ok()?, async {
+            jobs_client
+                .jobs
+                .get_job_output_download(
+                    job_uuid,
+                    Self::FLEXSERV_ACCESS_INFO_PATH,
+                    Some(false),
+                    None,
+                    Some(true),
+                )
+                .await
+        })
+        .await;
+
+        let Ok(response) = response else {
+            log::warn!(
+                "FlexServ access information is not yet available for model deployment '{}'",
+                deployment.id()
+            );
+
+            return Some(ModelDeploymentEndpointDelta::NoChange);
+        };
+
+        let Ok(contents) = response.text().await else {
+            log::warn!(
+                "FlexServ access information could not be read for model deployment '{}'",
+                deployment.id()
+            );
+
+            return Some(ModelDeploymentEndpointDelta::NoChange);
+        };
+
+        let Ok(endpoint) = Self::parse_flexserv_access_info(&contents) else {
+            log::warn!(
+                "FlexServ access information is incomplete or malformed for model deployment '{}'",
+                deployment.id()
+            );
+
+            return Some(ModelDeploymentEndpointDelta::NoChange);
+        };
+
+        if deployment.target_endpoint() == Some(&endpoint) {
+            return Some(ModelDeploymentEndpointDelta::NoChange);
+        }
+
+        Some(ModelDeploymentEndpointDelta::Replace(endpoint))
+    }
+
+    fn parse_flexserv_access_info(
+        contents: &str,
+    ) -> Result<ModelDeploymentEndpoint, ReconciliationError> {
+        let contents = contents.trim();
+
+        let remainder = contents.strip_prefix("FlexServ address: ").ok_or_else(|| {
+            ReconciliationError::Recoverable("Invalid FlexServ access information".into())
+        })?;
+
+        let (address, token) = remainder.split_once("  FlexServ token: ").ok_or_else(|| {
+            ReconciliationError::Recoverable("Invalid FlexServ access information".into())
+        })?;
+
+        if address.trim().is_empty()
+            || token.trim().is_empty()
+            || token.split_whitespace().count() != 1
+        {
+            return Err(ReconciliationError::Recoverable(
+                "Invalid FlexServ access information".into(),
+            ));
+        }
+
+        ModelDeploymentEndpoint::new(
+            Some(Self::FLEXSERV_ENDPOINT_NAME.into()),
+            Protocol::RestHttp,
+            Some(address.trim().into()),
+        )
+        .map_err(|_| ReconciliationError::Recoverable("Invalid FlexServ access information".into()))
+    }
+
+    fn obo_headers(deployment: &ModelDeployment) -> Result<HeaderMap, ReconciliationError> {
+        let mut headers = HeaderMap::new();
+
+        headers.insert(
+            "X-Tapis-Tenant",
+            HeaderValue::from_str(deployment.tenant_id.as_str()).map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Invalid Tapis tenant header: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+
+                infrastructure_error
+            })?,
+        );
+
+        headers.insert(
+            "X-Tapis-User",
+            HeaderValue::from_str(deployment.owner.as_str()).map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Invalid Tapis user header: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+
+                infrastructure_error
+            })?,
+        );
+
+        Ok(headers)
+    }
+
+    fn target_endpoint_deletion(deployment: &ModelDeployment) -> ModelDeploymentEndpointDelta {
+        if deployment.target_endpoint().is_some() {
+            ModelDeploymentEndpointDelta::Delete
+        } else {
+            ModelDeploymentEndpointDelta::NoChange
+        }
     }
 
     async fn generate_service_token(&self) -> Result<String, ReconciliationError> {
@@ -546,7 +700,7 @@ impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliat
                 message: Some(e.to_string().clone()),
                 metadata: None,
                 replicas: None,
-                interface: None,
+                target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),
             }),
         }
     }
@@ -561,7 +715,7 @@ impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliat
                 state: State::Failed,
                 metadata: None,
                 replicas: None,
-                interface: None,
+                target_endpoint: Some(Self::target_endpoint_deletion(&deployment)),
             },
         }
     }

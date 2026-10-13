@@ -3,7 +3,6 @@ pub mod entity_to_document;
 
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
-use openapiv3::OpenAPI;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -35,7 +34,8 @@ pub struct ModelDeployment {
     #[serde(default)]
     pub expires_at: Option<DateTime>,
     pub last_desired_state_change: DateTime,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    #[serde(default)]
+    pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     pub metadata: Option<HashMap<String, Value>>,
     pub revision: u32,
@@ -152,19 +152,15 @@ pub enum ParallelismStrategy {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ModelDeploymentInterface {
-    pub interface_type: ModelDeploymentInterfaceType,
-    pub rest_api: Option<RestApi>,
+pub struct ModelDeploymentEndpoint {
+    pub name: Option<String>,
+    pub protocol: Protocol,
+    pub base_url: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum ModelDeploymentInterfaceType {
-    RestApi,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RestApi {
-    pub spec: OpenAPI,
+pub enum Protocol {
+    RestHttp,
 }
 
 #[cfg(test)]

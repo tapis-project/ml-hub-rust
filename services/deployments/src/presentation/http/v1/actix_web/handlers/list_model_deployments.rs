@@ -5,8 +5,10 @@ use crate::presentation::http::v1::contracts;
 use crate::presentation::http::v1::responses;
 use actix_web::{get, web, Responder};
 use serde_json::{to_value, Value};
+use shared::application::services::endpoint_query_service::EndpointQueryService;
 use shared::application::services::model_deployment_service::ListModelDeploymentsByOwnerInput;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::domain::entities::endpoint::NetworkAddressableResource;
 use shared::shared_kernel::context::RequestContext;
 
 #[utoipa::path(
@@ -40,6 +42,7 @@ use shared::shared_kernel::context::RequestContext;
 #[get("deployments-api/deployments")]
 async fn list_model_deployments(
     service: web::Data<ModelDeploymentService>,
+    endpoint_query_service: web::Data<EndpointQueryService>,
     ctx: RequestContext,
 ) -> impl Responder {
     let maybe_deployments = service
@@ -57,8 +60,21 @@ async fn list_model_deployments(
     };
 
     let mut values: Vec<Value> = Vec::with_capacity(model_deployments.len());
+
     for deployment in model_deployments {
-        let model_resp = match responses::ModelDeployment::try_from(deployment) {
+        let endpoints = if deployment.network_target_names().is_empty() {
+            Vec::new()
+        } else {
+            match endpoint_query_service
+                .find_by_network_addressable_resource(&ctx, &deployment)
+                .await
+            {
+                Ok(endpoints) => endpoints,
+                Err(error) => return build_error_response(500, error.to_string()),
+            }
+        };
+
+        let model_resp = match responses::ModelDeployment::try_from((deployment, endpoints)) {
             Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string()),
         };

@@ -81,19 +81,28 @@ impl ModelDeploymentObservationService {
             return Ok(ObservationResult::Expired { deployment_id });
         }
 
-        let deployment_changed = observed.state != deployment.state;
+        let state_changed = observed.state != deployment.state;
 
-        // Update the state of the deployment to the observed state
+        let target_endpoint_delta = observed.target_endpoint.unwrap_or_default();
+
+        let target_endpoint_changed = !target_endpoint_delta.is_no_change();
+
+        let deployment_changed = state_changed || target_endpoint_changed;
+
         if deployment_changed {
-            deployment
-                .revise()
-                .transition_to_state_at(
-                    observed.state.clone(),
-                    observed.message.clone(),
+            let mut draft = deployment.revise();
+
+            if state_changed {
+                draft.transition_to_state_at(
+                    observed.state,
+                    observed.message,
                     observed_at.clone(),
-                )?
+                )?;
+            }
+
+            draft
                 .apply_metadata_delta(observed.metadata.unwrap_or_default())
-                .apply_interface_delta(observed.interface.unwrap_or_default())
+                .apply_target_endpoint_delta(target_endpoint_delta)
                 .apply_replica_group_delta(observed.replicas.unwrap_or_default())
                 .finish();
         }

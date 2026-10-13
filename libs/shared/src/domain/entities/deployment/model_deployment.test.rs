@@ -6,6 +6,7 @@ use nonempty::nonempty;
 use crate::domain::entities::deployment_option::{
     DeploymentTarget, HpcClusterQueueReference, NewDeploymentOptionProps,
 };
+use crate::shared_kernel::identifiers::traits::UrnGenerator;
 
 use super::*;
 
@@ -44,7 +45,7 @@ fn create_deployment(maximum_runtime: Option<Duration>) -> Result<ModelDeploymen
             last_message: None,
             visibility: Visibility::Private,
             deployment_modality: DeploymentModality::Batch,
-            deployment_interface: None,
+            target_endpoint: None,
             replicas: ReplicaGroup::default(),
             metadata: None,
         },
@@ -62,6 +63,7 @@ struct ModelDeploymentTestBuilder {
     state: State,
     desired_state: DesiredState,
     revision: u32,
+    target_endpoint: Option<ModelDeploymentEndpoint>,
 }
 
 impl ModelDeploymentTestBuilder {
@@ -74,6 +76,7 @@ impl ModelDeploymentTestBuilder {
             state: State::Running,
             desired_state: DesiredState::Running,
             revision: 3,
+            target_endpoint: None,
         }
     }
 
@@ -103,6 +106,12 @@ impl ModelDeploymentTestBuilder {
 
     fn desired_state(mut self, desired_state: DesiredState) -> Self {
         self.desired_state = desired_state;
+
+        self
+    }
+
+    fn target_endpoint(mut self, target_endpoint: ModelDeploymentEndpoint) -> Self {
+        self.target_endpoint = Some(target_endpoint);
 
         self
     }
@@ -138,7 +147,7 @@ impl ModelDeploymentTestBuilder {
                     }),
                 },
                 visibility: Visibility::Private,
-                deployment_interface: None,
+                target_endpoint: self.target_endpoint,
                 replicas: ReplicaGroup::default(),
                 revision: self.revision,
                 last_modified,
@@ -152,6 +161,108 @@ impl ModelDeploymentTestBuilder {
             },
         )?)
     }
+}
+
+#[test]
+fn target_endpoint_validates_and_resolves_network_address() -> Result<(), Box<dyn Error>> {
+    let endpoint = ModelDeploymentEndpoint::new(
+        Some("default".into()),
+        Protocol::RestHttp,
+        Some("https://vista.tacc.utexas.edu:60048".into()),
+    )?;
+
+    let deployment = ModelDeploymentTestBuilder::new()
+        .target_endpoint(endpoint.clone())
+        .build()?;
+
+    assert_eq!(endpoint.name(), Some("default"));
+    assert_eq!(endpoint.protocol(), &Protocol::RestHttp);
+    assert_eq!(
+        endpoint.base_url(),
+        Some("https://vista.tacc.utexas.edu:60048")
+    );
+    assert_eq!(deployment.network_target_names(), vec!["default"]);
+    assert_eq!(
+        deployment.resolve_target_url("default"),
+        Some("https://vista.tacc.utexas.edu:60048")
+    );
+    assert_eq!(
+        deployment.urn().as_str(),
+        format!("urn:mlhub:v1:test-tenant:deployment:{}", deployment.id())
+    );
+
+    Ok(())
+}
+
+#[test]
+fn target_endpoint_rejects_empty_names_and_invalid_urls() {
+    let empty_name = ModelDeploymentEndpoint::new(
+        Some("  ".into()),
+        Protocol::RestHttp,
+        Some("https://example.test".into()),
+    );
+
+    let relative_url = ModelDeploymentEndpoint::new(
+        Some("default".into()),
+        Protocol::RestHttp,
+        Some("/models/1".into()),
+    );
+
+    let unsupported_scheme = ModelDeploymentEndpoint::new(
+        Some("default".into()),
+        Protocol::RestHttp,
+        Some("ftp://example.test/model".into()),
+    );
+
+    assert!(matches!(
+        empty_name,
+        Err(ModelDeploymentError::InvalidEndpointName)
+    ));
+    assert!(matches!(
+        relative_url,
+        Err(ModelDeploymentError::InvalidEndpointBaseUrl)
+    ));
+    assert!(matches!(
+        unsupported_scheme,
+        Err(ModelDeploymentError::InvalidEndpointBaseUrl)
+    ));
+
+    let invalid_persisted = ModelDeploymentEndpoint::reconstitute(
+        Some("default".into()),
+        Protocol::RestHttp,
+        Some("not-a-url".into()),
+    );
+
+    assert!(matches!(
+        invalid_persisted,
+        Err(ModelDeploymentError::DataIntegrityError(_))
+    ));
+}
+
+#[test]
+fn target_endpoint_delta_replaces_and_deletes_endpoint() -> Result<(), Box<dyn Error>> {
+    let endpoint = ModelDeploymentEndpoint::new(
+        Some("default".into()),
+        Protocol::RestHttp,
+        Some("https://example.test".into()),
+    )?;
+    let mut deployment = ModelDeploymentTestBuilder::new().build()?;
+
+    deployment
+        .revise()
+        .apply_target_endpoint_delta(ModelDeploymentEndpointDelta::Replace(endpoint.clone()))
+        .finish();
+
+    assert_eq!(deployment.target_endpoint(), Some(&endpoint));
+
+    deployment
+        .revise()
+        .apply_target_endpoint_delta(ModelDeploymentEndpointDelta::Delete)
+        .finish();
+
+    assert_eq!(deployment.target_endpoint(), None);
+
+    Ok(())
 }
 
 #[test]

@@ -1,7 +1,7 @@
 mod entity_to_response;
 
+use crate::presentation::http::v1::responses::endpoints::Endpoint;
 use crate::presentation::http::v1::responses::visibility::Visibility;
-use openapiv3::OpenAPI;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -29,7 +29,8 @@ pub struct ModelDeployment {
     pub last_observed: Option<String>,
     pub expires_at: Option<String>,
     pub last_desired_state_change: String,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub target_endpoint: Option<ModelDeploymentEndpoint>,
+    pub endpoint: Option<Endpoint>,
     pub replicas: ReplicaGroup,
     pub metadata: Option<HashMap<String, Value>>,
     pub revision: u32,
@@ -74,18 +75,13 @@ pub enum ParallelismStrategy {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct ModelDeploymentInterface {
-    pub interface_type: ModelDeploymentInterfaceType,
-    pub rest_api: Option<RestApi>,
+pub struct ModelDeploymentEndpoint {
+    pub name: Option<String>,
+    pub protocol: Protocol,
+    pub base_url: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub enum ModelDeploymentInterfaceType {
-    RestApi,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct RestApi {
-    #[schema(value_type = Value)]
-    pub spec: OpenAPI,
+pub enum Protocol {
+    RestHttp,
 }

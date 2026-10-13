@@ -1,5 +1,7 @@
 use crate::domain::entities::deployment as entities;
+use crate::domain::entities::endpoint;
 use crate::presentation::http::v1::responses::deployment as responses;
+use crate::presentation::http::v1::responses::endpoints;
 use crate::presentation::http::v1::responses::visibility::Visibility;
 
 impl From<entities::State> for responses::State {
@@ -69,19 +71,20 @@ impl From<entities::ReplicaGroup> for responses::ReplicaGroup {
     }
 }
 
-impl From<entities::RestApi> for responses::RestApi {
-    fn from(value: entities::RestApi) -> Self {
-        Self { spec: value.spec }
+impl From<entities::ModelDeploymentEndpoint> for responses::ModelDeploymentEndpoint {
+    fn from(value: entities::ModelDeploymentEndpoint) -> Self {
+        Self {
+            name: value.name().map(String::from),
+            protocol: responses::Protocol::from(value.protocol().clone()),
+            base_url: value.base_url().map(String::from),
+        }
     }
 }
 
-impl From<entities::ModelDeploymentInterface> for responses::ModelDeploymentInterface {
-    fn from(value: entities::ModelDeploymentInterface) -> Self {
+impl From<entities::Protocol> for responses::Protocol {
+    fn from(value: entities::Protocol) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(interface) => Self {
-                interface_type: responses::ModelDeploymentInterfaceType::RestApi,
-                rest_api: Some(responses::RestApi::from(interface)),
-            },
+            entities::Protocol::RestHttp => Self::RestHttp,
         }
     }
 }
@@ -111,14 +114,31 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
             revision: value.revision().clone(),
-            deployment_interface: value
-                .deployment_interface
-                .clone()
-                .map(responses::ModelDeploymentInterface::from),
+            target_endpoint: value
+                .target_endpoint()
+                .cloned()
+                .map(responses::ModelDeploymentEndpoint::from),
+            endpoint: None,
             metadata: value
                 .metadata
                 .clone()
                 .map(|metadata| metadata.into_inner().clone()),
         }
+    }
+}
+
+impl From<(entities::ModelDeployment, Vec<endpoint::Endpoint>)> for responses::ModelDeployment {
+    fn from(value: (entities::ModelDeployment, Vec<endpoint::Endpoint>)) -> Self {
+        let (deployment, endpoints) = value;
+
+        let endpoint = endpoints
+            .into_iter()
+            .find_map(|endpoint| endpoints::Endpoint::try_from((endpoint, &deployment)).ok());
+
+        let mut response = Self::from(deployment);
+
+        response.endpoint = endpoint;
+
+        response
     }
 }

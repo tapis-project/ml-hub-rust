@@ -48,7 +48,7 @@ fn document() -> ModelDeployment {
         maximum_runtime_seconds: Some(7200),
         expires_at: Some(now),
         last_desired_state_change: now,
-        deployment_interface: None,
+        target_endpoint: None,
         replicas: ReplicaGroup {
             count: 1,
             parallelism_strategies: Vec::new(),
@@ -82,6 +82,40 @@ fn expiration_fields_round_trip() -> Result<(), Box<dyn Error>> {
 
     assert_eq!(deployment.maximum_runtime_seconds, Some(7200));
     assert_eq!(deployment.expires_at, source.expires_at);
+
+    Ok(())
+}
+
+#[test]
+fn target_endpoint_defaults_to_none_and_round_trips() -> Result<(), Box<dyn Error>> {
+    let mut source = document();
+
+    let mut legacy_bson = to_document(&source)?;
+
+    legacy_bson.remove("target_endpoint");
+
+    let legacy = from_document::<ModelDeployment>(legacy_bson)?;
+
+    assert!(legacy.target_endpoint.is_none());
+
+    source.target_endpoint = Some(ModelDeploymentEndpoint {
+        name: Some("default".into()),
+        protocol: Protocol::RestHttp,
+        base_url: Some("https://vista.tacc.utexas.edu:60048".into()),
+    });
+
+    let persisted = from_document::<ModelDeployment>(to_document(&source)?)?;
+
+    let endpoint = persisted
+        .target_endpoint
+        .ok_or_else(|| std::io::Error::other("target endpoint should round trip"))?;
+
+    assert_eq!(endpoint.name.as_deref(), Some("default"));
+    assert!(matches!(endpoint.protocol, Protocol::RestHttp));
+    assert_eq!(
+        endpoint.base_url.as_deref(),
+        Some("https://vista.tacc.utexas.edu:60048")
+    );
 
     Ok(())
 }

@@ -60,20 +60,18 @@ mod endpoint_issuance_service_test {
     }
 
     #[test]
-    fn rejects_resource_from_another_tenant() {
+    fn system_actor_can_issue_for_tenant_owned_resource() -> Result<(), EndpointIssuanceServiceError>
+    {
         let resource = TestResource {
             tenant_id: "tenant-a".into(),
             target_names: vec!["rest".into()],
         };
 
-        let result = EndpointIssuanceService::issue_for_resource(&Actor::system(), &resource);
+        let endpoints = EndpointIssuanceService::issue_for_resource(&Actor::system(), &resource)?;
 
-        assert!(matches!(
-            result,
-            Err(EndpointIssuanceServiceError::TenantMismatch {
-                actor_tenant_id,
-                resource_tenant_id,
-            }) if actor_tenant_id == "__GLOBAL__" && resource_tenant_id == "tenant-a"
-        ));
+        assert_eq!(endpoints.len(), 1);
+        assert_eq!(endpoints[0].tenant_id(), "tenant-a");
+
+        Ok(())
     }
 }

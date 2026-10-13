@@ -7,10 +7,12 @@ use shared::application::ports::cipher::Cipher;
 use shared::application::ports::deployment::ModelDeploymentRepository;
 use shared::application::ports::deployment_argument::DeploymentArgumentRepository;
 use shared::application::ports::deployment_option::DeploymentOptionRepository;
+use shared::application::ports::endpoint::EndpointRepository;
 use shared::application::ports::events::EventPublisher;
 use shared::application::ports::hpc_cluster::HpcClusterRepository;
 use shared::application::ports::model::ExternalModelRepository;
 use shared::application::services::deployment_argument_service::DeploymentArgumentService;
+use shared::application::services::endpoint_query_service::EndpointQueryService;
 use shared::application::services::hpc_cluster_query_service::HpcClusterQueryService;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::infra::argument::mongo::MongoDeploymentArgumentRepository;
@@ -18,6 +20,7 @@ use shared::infra::encryption::vault::VaultCipher;
 use shared::infra::messaging::rabbitmq::model_deployment_message_publisher::RabbitMQModelDeploymentMessagePublisher;
 use shared::infra::persistence::mongo::repositories::{
     DeploymentOptionRepository as MongoDeploymentOptionRepository,
+    EndpointRepository as MongoEndpointRepository,
     ExternalModelRepository as MongoExternalModelRepository,
     HpcClusterRepository as MongoHpcClusterRepository,
     ModelDeploymentRepository as MongoModelDeploymentRepository,
@@ -58,6 +61,14 @@ pub fn deployment_option_repo_factory(
 
 pub fn event_publisher_factory(channel: Arc<Channel>) -> Arc<dyn EventPublisher> {
     Arc::new(RabbitMQModelDeploymentMessagePublisher::new(channel))
+}
+
+pub fn endpoint_repo_factory(client: &Client, db_name: String) -> Arc<dyn EndpointRepository> {
+    Arc::new(MongoEndpointRepository::new(client, db_name))
+}
+
+pub fn endpoint_query_service_builder(client: &Client, db_name: String) -> EndpointQueryService {
+    EndpointQueryService::new(endpoint_repo_factory(client, db_name))
 }
 
 pub fn deployment_argument_repo_factory(
