@@ -1,9 +1,8 @@
-pub mod deploy_model_with_strategy;
+pub mod deploy_model_with_option;
 pub mod get_hpc_cluster;
 pub mod index;
 pub mod list_hpc_clusters;
 pub mod list_model_deployments;
-pub mod list_strategies;
 pub mod openapi;
 pub mod start_model_deployment;
 pub mod stop_model_deployment;

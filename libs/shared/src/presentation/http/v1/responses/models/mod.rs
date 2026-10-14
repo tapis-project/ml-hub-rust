@@ -1,4 +1,3 @@
-use platforms::Platform;
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -71,7 +70,6 @@ pub struct ExternalModelMetadata {
 pub struct DerivedModelMetadata {
     pub name: Option<String>,
     pub author: Option<String>,
-    pub deployment_strategies: Vec<DeploymentStrategyReference>,
     pub inference_runtimes: Vec<String>,
     pub tags: Vec<String>,
     pub task_types: Vec<Task>,
@@ -81,12 +79,6 @@ pub struct DerivedModelMetadata {
     pub private: bool,
     pub likes: Option<u128>,
     pub downloads: Option<u128>,
-}
-
-#[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct DeploymentStrategyReference {
-    pub name: String,
-    pub platform: Platform,
 }
 
 impl From<ModelWithExternalModel> for Model {
@@ -129,6 +121,7 @@ impl From<domain::ExternalModel> for ExternalModel {
         };
 
         let derived = value.metadata().derived();
+
         Self {
             id: value.id().into_uuid(),
             provider: match value.provider() {
@@ -141,14 +134,6 @@ impl From<domain::ExternalModel> for ExternalModel {
                 derived: DerivedModelMetadata {
                     name: derived.name().map(Into::into),
                     author: derived.author().map(Into::into),
-                    deployment_strategies: derived
-                        .deployment_strategies()
-                        .iter()
-                        .map(|strategy| DeploymentStrategyReference {
-                            name: strategy.name().into(),
-                            platform: strategy.platform().clone(),
-                        })
-                        .collect(),
                     inference_runtimes: derived.inference_runtimes().to_vec(),
                     tags: derived
                         .tags()

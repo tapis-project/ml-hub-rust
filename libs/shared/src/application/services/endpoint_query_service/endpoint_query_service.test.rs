@@ -29,6 +29,10 @@ mod endpoint_query_service_test {
     }
 
     impl NetworkAddressableResource for TestResource {
+        fn owner(&self) -> &str {
+            "owner-a"
+        }
+
         fn network_target_names(&self) -> Vec<String> {
             Vec::new()
         }
@@ -119,7 +123,10 @@ mod endpoint_query_service_test {
         let repository = Arc::new(RecordingEndpointRepository::new());
         let service = EndpointQueryService::new(repository.clone());
         let endpoints = service
-            .find_by_network_addressable_resource(&RequestContext::system(None), &TestResource)
+            .find_by_network_addressable_resource(
+                &RequestContext::system(None, None, None),
+                &TestResource,
+            )
             .await?;
 
         assert!(endpoints.is_empty());
@@ -147,7 +154,10 @@ mod endpoint_query_service_test {
         let service = EndpointQueryService::new(Arc::new(FailingEndpointRepository));
 
         let result = service
-            .find_by_network_addressable_resource(&RequestContext::system(None), &TestResource)
+            .find_by_network_addressable_resource(
+                &RequestContext::system(None, None, None),
+                &TestResource,
+            )
             .await;
 
         assert!(matches!(

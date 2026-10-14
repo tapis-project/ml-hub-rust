@@ -8,7 +8,6 @@ pub mod artifacts;
 pub mod configuration;
 pub mod contracts;
 pub mod counts;
-pub mod deployment;
 pub mod encryption;
 pub mod fs;
 pub mod identity;

@@ -1,0 +1,89 @@
+use actix_web::{get, web, Responder};
+use serde_json::{to_value, Map, Value};
+use shared::{
+    application::services::endpoint_catalog_query_service::EndpointCatalogQueryService,
+    infra::configuration::SiteConfiguration,
+    presentation::http::v1::{
+        contracts::responses::ListEndpointsResponse, requests::endpoints::ListEndpointsQuery,
+        responses::endpoints::Endpoint,
+    },
+    shared_kernel::context::RequestContext,
+};
+
+use crate::presentation::http::v1::actix_web::helpers::{
+    build_error_response, build_success_response, catalog_error_response,
+};
+
+#[utoipa::path(
+    get,
+    path = "/endpoints-api/endpoints",
+    tag = "Endpoints",
+    summary = "List owned endpoints",
+    params(ListEndpointsQuery),
+    responses(
+        (
+            status = 200,
+            description = "Endpoints listed",
+            body = ListEndpointsResponse
+        ),
+        (
+            status = 400,
+            description = "Invalid pagination parameters"
+        ),
+        (
+            status = 500,
+            description = "Unable to list endpoints"
+        ),
+    ),
+)]
+#[get("endpoints-api/endpoints")]
+pub async fn list_endpoints(
+    query: web::Query<ListEndpointsQuery>,
+    ctx: RequestContext,
+    service: web::Data<EndpointCatalogQueryService>,
+    site_configuration: web::Data<SiteConfiguration>,
+) -> impl Responder {
+    let output = match service
+        .list(
+            &ctx,
+            query.limit,
+            query.cursor.clone(),
+            query.include_count.unwrap_or(false),
+        )
+        .await
+    {
+        Ok(output) => output,
+        Err(error) => return catalog_error_response(error),
+    };
+
+    let mut endpoints = output
+        .endpoints
+        .into_iter()
+        .map(Endpoint::from)
+        .collect::<Vec<_>>();
+
+    for endpoint in &mut endpoints {
+        endpoint.populate_proxy_url(&site_configuration.endpoint_router);
+    }
+
+    let result = match to_value(endpoints) {
+        Ok(result) => result,
+        Err(error) => return build_error_response(500, error.to_string()),
+    };
+
+    let mut metadata = Map::new();
+
+    if let Some(cursor) = output.cursor {
+        metadata.insert("cursor".into(), Value::String(cursor));
+    }
+
+    if let Some(count) = output.count {
+        metadata.insert("count".into(), Value::Number(count.into()));
+    }
+
+    build_success_response(
+        Some(result),
+        Some("Successfully listed endpoints".into()),
+        Some(Value::Object(metadata)),
+    )
+}

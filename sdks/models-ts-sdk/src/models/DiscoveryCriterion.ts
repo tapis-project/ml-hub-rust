@@ -18,10 +18,6 @@ import {
     DeploymentModalityFromJSON,
     DeploymentModalityFromJSONTyped,
     DeploymentModalityToJSON,
-    DeploymentStrategyCriterion,
-    DeploymentStrategyCriterionFromJSON,
-    DeploymentStrategyCriterionFromJSONTyped,
-    DeploymentStrategyCriterionToJSON,
     ModelProvider,
     ModelProviderFromJSON,
     ModelProviderFromJSONTyped,
@@ -56,22 +52,10 @@ export interface DiscoveryCriterion {
     batch_scheduler_queue_ids?: Array<string>;
     /**
      * 
-     * @type {Array<DeploymentStrategyCriterion>}
-     * @memberof DiscoveryCriterion
-     */
-    deployment_strategies?: Array<DeploymentStrategyCriterion>;
-    /**
-     * 
      * @type {boolean}
      * @memberof DiscoveryCriterion
      */
     has_deployment_options?: boolean | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof DiscoveryCriterion
-     */
-    has_deployment_strategies?: boolean | null;
     /**
      * 
      * @type {Array<string>}
@@ -176,9 +160,7 @@ export function DiscoveryCriterionFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'author': !exists(json, 'author') ? undefined : json['author'],
         'batch_scheduler_queue_ids': !exists(json, 'batch_scheduler_queue_ids') ? undefined : json['batch_scheduler_queue_ids'],
-        'deployment_strategies': !exists(json, 'deployment_strategies') ? undefined : ((json['deployment_strategies'] as Array<any>).map(DeploymentStrategyCriterionFromJSON)),
         'has_deployment_options': !exists(json, 'has_deployment_options') ? undefined : json['has_deployment_options'],
-        'has_deployment_strategies': !exists(json, 'has_deployment_strategies') ? undefined : json['has_deployment_strategies'],
         'hpc_cluster_ids': !exists(json, 'hpc_cluster_ids') ? undefined : json['hpc_cluster_ids'],
         'inference_runtimes': !exists(json, 'inference_runtimes') ? undefined : json['inference_runtimes'],
         'license': !exists(json, 'license') ? undefined : json['license'],
@@ -208,9 +190,7 @@ export function DiscoveryCriterionToJSON(value?: DiscoveryCriterion | null): any
         
         'author': value.author,
         'batch_scheduler_queue_ids': value.batch_scheduler_queue_ids,
-        'deployment_strategies': value.deployment_strategies === undefined ? undefined : ((value.deployment_strategies as Array<any>).map(DeploymentStrategyCriterionToJSON)),
         'has_deployment_options': value.has_deployment_options,
-        'has_deployment_strategies': value.has_deployment_strategies,
         'hpc_cluster_ids': value.hpc_cluster_ids,
         'inference_runtimes': value.inference_runtimes,
         'license': value.license,

@@ -1,0 +1,25 @@
+resources:
+  - ../../base
+
+images:
+  - name: tapis/mlhub-endpoints-migrator
+    newTag: 26Q2.3
+
+patches:
+  - target:
+      kind: Job
+      name: mlhub-endpoints-migrator
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: mlhub-endpoints-migrator
+      spec:
+        template:
+          spec:
+            containers:
+              - name: endpoints-migrator
+                imagePullPolicy: Always
+                env:
+                  - name: MONGO_HOST
+                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisprod.svc.cluster.local

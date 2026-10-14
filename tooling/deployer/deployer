@@ -17,6 +17,7 @@ chmod +x "$project_root/dev"
 migration_jobs=(
     mlhub-models-migrator
     mlhub-deployments-migrator
+    mlhub-endpoints-migrator
     mlhub-federated-identities-migrator
     mlhub-principals-migrator
 )
@@ -43,6 +44,7 @@ build_migrations() {
     announce "Building migration images"
     run_dev buildl models-migrator
     run_dev buildl deployments-migrator
+    run_dev buildl endpoints-migrator
     run_dev buildl federated-identities-migrator
     run_dev buildl principals-migrator
 
@@ -56,6 +58,8 @@ build_services() {
     run_dev buildl datasets
     run_dev buildl deployments
     run_dev buildl agents
+    run_dev buildl endpoints
+    run_dev buildl endpoint-router
 
     announce "Building worker images"
     run_dev buildl artifact-ingester
@@ -152,6 +156,10 @@ run_migrations() {
     run_dev run-deployments migrations -t overlay "$overlay"
     wait_for_job mlhub-deployments-migrator
 
+    announce "Running endpoints migration"
+    run_dev run endpoints-migrator -t overlay "$overlay"
+    wait_for_job mlhub-endpoints-migrator
+
     announce "Running federated identities migration"
     run_dev run-federated-identities migrations -t overlay "$overlay"
     wait_for_job mlhub-federated-identities-migrator
@@ -182,6 +190,18 @@ start_services() {
     announce "Starting Agents API"
     run_dev start agents -t overlay "$overlay"
     wait_for_rollout deployment/mlhub-agents-api-deployment
+
+    announce "Starting Endpoints API"
+    run_dev start endpoints -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-endpoints-api-deployment
+
+    announce "Starting endpoint router"
+    run_dev start endpoint-router -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-endpoint-router-deployment
+
+    announce "Starting Envoy endpoint proxy"
+    run_dev start envoy -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-endpoint-envoy-deployment
 
     announce "Starting artifact ingester"
     run_dev start artifact-ingester -t overlay "$overlay"

@@ -49,8 +49,6 @@ spec:
               value: debug
             - name: SHARED_DATA
               value: /srv/mlhub
-            - name: CLIENT_DEPLOYMENT_STRATEGIES_DIR
-              value: /etc/mlhub/deployment-strategies.d
           image: tapis/mlhub-deployments-api:local
           imagePullPolicy: Never
           name: deployments-api
@@ -70,12 +68,6 @@ spec:
           volumeMounts:
             - name: nfs-server-mount
               mountPath: /srv/mlhub/
-            - name: site-config
-              mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
-              subPath: tapis-pods-deployment-strategies.json
-            - name: site-config
-              mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
-              subPath: tapis-jobs-deployment-strategies.json
             - name: site-config
               mountPath: /etc/mlhub/site.json
               subPath: site.json

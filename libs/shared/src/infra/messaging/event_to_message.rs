@@ -21,9 +21,6 @@ impl TryFrom<&Event> for messages::EventEnvelope {
             Event::ModelDeploymentStopped { payload, .. } => {
                 &Payload::ModelDeploymentStoppedPayload(payload.clone()).kind()
             }
-            Event::ModelDeploymentStateDriftDetected { payload, .. } => {
-                &Payload::ModelDeploymentStateDriftDetectedPayload(payload.clone()).kind()
-            }
         };
 
         Ok(messages::EventEnvelope {
@@ -44,19 +41,15 @@ impl TryFrom<&Payload> for Value {
             Payload::ModelDeploymentDeletedPayload(p) => {
                 to_value(messages::ModelDeploymentDeletedPayload::from(p))
                     .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            }
+            },
             Payload::ModelDeploymentStartedPayload(p) => {
                 to_value(messages::ModelDeploymentStartedPayload::from(p))
                     .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            }
-            Payload::ModelDeploymentStateDriftDetectedPayload(p) => {
-                to_value(messages::ModelDeploymentStateDriftDetectedPayload::from(p))
-                    .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            }
+            },
             Payload::ModelDeploymentStoppedPayload(p) => {
                 to_value(messages::ModelDeploymentStoppedPayload::from(p))
                     .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            }
+            },
         };
 
         Ok(payload)
@@ -79,7 +72,7 @@ impl From<&ModelDeploymentStateDriftDetectedPayload>
 {
     fn from(value: &ModelDeploymentStateDriftDetectedPayload) -> Self {
         Self {
-            deployment_id: String::from(value.deployment_id),
+            deployment_id: value.deployment_id.to_string(),
             actual_state: String::from(value.actual_state.clone()),
             desired_state: String::from(value.desired_state.clone()),
             deployment_revision: value.deployment_revision,
@@ -91,7 +84,7 @@ impl From<&ModelDeploymentStateDriftDetectedPayload>
 impl From<&ModelDeploymentDeletedPayload> for messages::ModelDeploymentDeletedPayload {
     fn from(value: &ModelDeploymentDeletedPayload) -> Self {
         Self {
-            deployment_id: String::from(value.deployment_id),
+            deployment_id: value.deployment_id.to_string(),
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         }
@@ -101,7 +94,7 @@ impl From<&ModelDeploymentDeletedPayload> for messages::ModelDeploymentDeletedPa
 impl From<&ModelDeploymentStartedPayload> for messages::ModelDeploymentStartedPayload {
     fn from(value: &ModelDeploymentStartedPayload) -> Self {
         Self {
-            deployment_id: String::from(value.deployment_id),
+            deployment_id: value.deployment_id.to_string(),
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         }
@@ -111,7 +104,7 @@ impl From<&ModelDeploymentStartedPayload> for messages::ModelDeploymentStartedPa
 impl From<&ModelDeploymentStoppedPayload> for messages::ModelDeploymentStoppedPayload {
     fn from(value: &ModelDeploymentStoppedPayload) -> Self {
         Self {
-            deployment_id: String::from(value.deployment_id),
+            deployment_id: value.deployment_id.to_string(),
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         }

@@ -1,19 +1,26 @@
 pub mod argument;
+mod model_deployment_id;
 
-use crate::domain::entities::deployment_strategy::strategy::Strategy;
+pub use model_deployment_id::ModelDeploymentId;
+
+use crate::domain::entities::endpoint::NetworkAddressableResource;
+use crate::domain::entities::model::external_model::ExternalModelId;
+use crate::domain::entities::tenancy::TenantScopedResource;
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::DeploymentModality;
 use crate::shared_kernel::enums::Visibility;
 use crate::shared_kernel::value_objects::TimeStamp;
-use openapiv3::OpenAPI;
-use platforms::Platform;
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::time::Duration;
 use thiserror::Error;
-use uuid::Uuid;
+use url::Url;
 
-#[derive(Debug, Error)]
+use super::deployment_option::{DeploymentOption, DeploymentOptionId, ServingRuntime};
+use super::hpc_cluster::{BatchSchedulerQueueId, HpcClusterId};
+
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentError {
     #[error("Invalid state change. Cannot move from state '{0}' to {1}")]
     InvalidStateTransition(String, String),
@@ -21,14 +28,32 @@ pub enum ModelDeploymentError {
     #[error("Invalid desired state change. Cannot move from desired state '{0}' to {1}")]
     InvalidDesiredStateTransition(String, String),
 
-    #[error("Selected deployment strategy ({0}) not supported")]
+    #[error("Selected deployment option does not support modality {0}")]
     UnsupportedDeploymentModality(DeploymentModality),
+
+    #[error("Deployment option snapshot does not match the selected deployment option")]
+    InvalidDeploymentOptionSnapshot,
+
+    #[error("Maximum runtime must be greater than zero")]
+    InvalidMaximumRuntime,
+
+    #[error("Maximum runtime exceeds the supported timestamp range")]
+    MaximumRuntimeOverflow,
+
+    #[error("Model deployment endpoint name must not be empty")]
+    InvalidEndpointName,
+
+    #[error("Model deployment endpoint base URL must be an absolute HTTP or HTTPS URL")]
+    InvalidEndpointBaseUrl,
+
+    #[error("Invalid persisted ModelDeployment data: {0}")]
+    DataIntegrityError(String),
 }
 
 #[derive(Clone, Debug)]
 pub struct ModelDeployment {
     /// The unique identifier of this deployment
-    pub id: Uuid,
+    id: ModelDeploymentId,
     /// Display name of the deployment
     pub name: String,
     /// The modality of the deployment
@@ -37,26 +62,29 @@ pub struct ModelDeployment {
     pub description: Option<String>,
     /// The id of the tenant to which this model deployment belongs
     pub tenant_id: String,
-    /// The platform to which this model is deployed
-    pub platform: Platform,
     /// The user that owns this deployment
     pub owner: String,
-    /// A reference to the model.
-    pub model: ModelReference,
-    /// The curent state of the delpoyment
+    /// Id of the external model
+    pub external_model_id: ExternalModelId,
+    /// The curent state of the deployment
     pub state: State,
     /// The state the user would like the deployment to be in
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
     pub last_message: Option<String>,
-    /// The name of the deployment strategy used to create this model deployment
-    pub deployment_strategy: Option<String>,
+    /// The option the Model was deployed with
+    pub deployment_option_id: DeploymentOptionId,
+    /// Resolved execution information retained for the lifetime of the deployment.
+    pub deployment_option_snapshot: DeploymentOptionSnapshot,
     pub visibility: Visibility,
     pub created_at: TimeStamp,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
+    last_observed: Option<TimeStamp>,
+    maximum_runtime: Option<Duration>,
+    expires_at: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     /// Metadata provided by and for deployment clients
     pub metadata: Option<ModelDeploymentMetadata>,
@@ -67,16 +95,51 @@ pub struct ModelDeployment {
 
 impl_urn_generator!(ModelDeployment, tenant_id, "deployment", id);
 
+impl TenantScopedResource for ModelDeployment {
+    fn tenant_id(&self) -> String {
+        self.tenant_id.clone()
+    }
+}
+
+impl NetworkAddressableResource for ModelDeployment {
+    fn owner(&self) -> &str {
+        self.owner()
+    }
+
+    fn network_target_names(&self) -> Vec<String> {
+        self.target_endpoint
+            .as_ref()
+            .and_then(|endpoint| {
+                endpoint
+                    .base_url()
+                    .and_then(|_| endpoint.name().map(String::from))
+            })
+            .into_iter()
+            .collect()
+    }
+
+    fn resolve_target_url(&self, target_name: &str) -> Option<&str> {
+        let endpoint = self.target_endpoint.as_ref()?;
+
+        if endpoint.name()? != target_name {
+            return None;
+        }
+
+        endpoint.base_url()
+    }
+}
+
 impl ModelDeployment {
-    /// Create the model deployment from props
-    pub fn deploy_with_srategy(
-        props: DeployWithStrategyProps,
-        strategy: &Strategy,
+    /// Create the model deployment from a deployment option
+    pub fn create_from_option(
+        props: CreateFromOptionProps,
+        option: &DeploymentOption,
+        snapshot: DeploymentOptionSnapshot,
+        maximum_runtime: Option<Duration>,
     ) -> Result<Self, ModelDeploymentError> {
-        // Invariant: The selected deployment strategy must support the selected deployment modality.
-        if !strategy
-            .config()
-            .supported_deployment_modalities
+        // Invariant: The selected option must support the selected deployment modality.
+        if !option
+            .supported_deployment_modalities()
             .contains(&props.deployment_modality)
         {
             return Err(ModelDeploymentError::UnsupportedDeploymentModality(
@@ -84,56 +147,131 @@ impl ModelDeployment {
             ));
         }
 
+        if snapshot.external_model_id != *option.external_model_id()
+            || snapshot.deployment_option_id != *option.id()
+            || snapshot.serving_runtime != *option.serving_runtime()
+        {
+            return Err(ModelDeploymentError::InvalidDeploymentOptionSnapshot);
+        }
+
+        Self::validate_maximum_runtime(maximum_runtime)?;
+
         let now = TimeStamp::now();
 
         Ok(Self {
-            id: props.id,
+            id: ModelDeploymentId::new(),
             name: props.name,
             description: props.description,
             tenant_id: props.tenant_id,
-            platform: props.platform,
             owner: props.owner,
-            model: props.model,
+            external_model_id: *option.external_model_id(),
             state: State::NotDeployed,
             desired_state: DesiredState::Running,
             last_message: props.last_message,
             deployment_modality: props.deployment_modality.clone(),
-            deployment_strategy: Some(strategy.name.clone()),
+            deployment_option_id: *option.id(),
+            deployment_option_snapshot: snapshot,
             visibility: props.visibility,
             created_at: now.clone(),
             last_modified: now.clone(),
             last_state_change: now.clone(),
+            last_observed: None,
+            maximum_runtime,
+            expires_at: None,
             last_desired_state_change: now.clone(),
-            deployment_interface: props.deployment_interface,
+            target_endpoint: props.target_endpoint,
             replicas: props.replicas,
             metadata: props.metadata,
             revision: 0,
         })
     }
 
-    pub fn reconstitute(props: ReconstituteModelDeploymentProps) -> Self {
-        Self {
+    pub fn reconstitute(
+        props: ReconstituteModelDeploymentProps,
+    ) -> Result<Self, ModelDeploymentError> {
+        Self::validate_maximum_runtime(props.maximum_runtime)
+            .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))?;
+
+        if props.expires_at.is_some() && props.maximum_runtime.is_none() {
+            return Err(ModelDeploymentError::DataIntegrityError(
+                "expires_at requires maximum_runtime".into(),
+            ));
+        }
+
+        if props.state == State::Running
+            && props.maximum_runtime.is_some()
+            && props.expires_at.is_none()
+        {
+            return Err(ModelDeploymentError::DataIntegrityError(
+                "Running deployments with a maximum runtime require expires_at".into(),
+            ));
+        }
+
+        if props
+            .expires_at
+            .as_ref()
+            .is_some_and(|expires_at| expires_at.into_inner() < props.created_at.into_inner())
+        {
+            return Err(ModelDeploymentError::DataIntegrityError(
+                "expires_at cannot precede created_at".into(),
+            ));
+        }
+
+        Ok(Self {
             id: props.id,
             name: props.name,
             description: props.description,
             tenant_id: props.tenant_id,
-            platform: props.platform,
             deployment_modality: props.deployment_modality,
+            deployment_option_id: props.deployment_option_id,
+            deployment_option_snapshot: props.deployment_option_snapshot,
             owner: props.owner,
-            model: props.model,
+            external_model_id: props.external_model_id,
             state: props.state,
             desired_state: props.desired_state,
             last_message: props.last_message,
-            deployment_strategy: props.deployment_strategy,
             visibility: props.visibility,
             created_at: props.created_at,
             last_modified: props.last_modified,
             last_state_change: props.last_state_change,
+            last_observed: props.last_observed,
+            maximum_runtime: props.maximum_runtime,
+            expires_at: props.expires_at,
             last_desired_state_change: props.last_desired_state_change,
-            deployment_interface: props.deployment_interface,
+            target_endpoint: props.target_endpoint,
             replicas: props.replicas,
             metadata: props.metadata,
             revision: props.revision,
+        })
+    }
+
+    pub fn id(&self) -> &ModelDeploymentId {
+        &self.id
+    }
+
+    pub fn owner(&self) -> &str {
+        &self.owner
+    }
+
+    pub fn resolve_reconciliation_requirement(
+        &self,
+        evaluated_at: &TimeStamp,
+    ) -> Option<ReconciliationRequirement> {
+        if self.is_expired(evaluated_at) || self.is_state_syncronized() {
+            return None;
+        }
+
+        match (&self.state, &self.desired_state) {
+            (State::NotDeployed, DesiredState::Running)
+            | (State::Stopped, DesiredState::Running)
+            | (State::Failed, DesiredState::Running)
+            | (State::Blocked, DesiredState::Running) => Some(ReconciliationRequirement::Start),
+
+            (_, DesiredState::NotDeployed) => Some(ReconciliationRequirement::Undeploy),
+
+            (State::Running, DesiredState::Stopped) => Some(ReconciliationRequirement::Stop),
+
+            _ => None,
         }
     }
 
@@ -141,6 +279,7 @@ impl ModelDeployment {
         match (&self.state, &self.desired_state) {
             (State::Running, DesiredState::Running) => true,
             (State::Stopped, DesiredState::Stopped) => true,
+            (State::NotDeployed, DesiredState::NotDeployed) => true,
             _ => false,
         }
     }
@@ -149,8 +288,43 @@ impl ModelDeployment {
         &self.revision
     }
 
+    pub fn last_observed(&self) -> Option<&TimeStamp> {
+        self.last_observed.as_ref()
+    }
+
+    pub fn target_endpoint(&self) -> Option<&ModelDeploymentEndpoint> {
+        self.target_endpoint.as_ref()
+    }
+
+    pub fn maximum_runtime(&self) -> Option<Duration> {
+        self.maximum_runtime
+    }
+
+    pub fn expires_at(&self) -> Option<&TimeStamp> {
+        self.expires_at.as_ref()
+    }
+
+    pub fn is_expired(&self, evaluated_at: &TimeStamp) -> bool {
+        self.expires_at
+            .as_ref()
+            .is_some_and(|expires_at| evaluated_at.into_inner() >= expires_at.into_inner())
+    }
+
+    pub fn record_observation(&mut self, observed_at: TimeStamp) {
+        let should_update = self
+            .last_observed
+            .as_ref()
+            .map(|current| current.into_inner() < observed_at.into_inner())
+            .unwrap_or(true);
+
+        if should_update {
+            self.last_observed = Some(observed_at);
+        }
+    }
+
     pub fn revise(&mut self) -> ModelDeploymentDraft<'_> {
         let revision = self.revision + 1;
+
         let draft = ModelDeploymentDraft {
             deployment: self,
             revision,
@@ -162,15 +336,56 @@ impl ModelDeployment {
     pub fn mark_as_failed(&mut self, message: Option<String>) -> Result<(), ModelDeploymentError> {
         self.revise()
             .transition_to_state(State::Failed, message)?
+            .apply_target_endpoint_delta(ModelDeploymentEndpointDelta::Delete)
             .finish();
+
+        Ok(())
+    }
+
+    fn validate_maximum_runtime(
+        maximum_runtime: Option<Duration>,
+    ) -> Result<(), ModelDeploymentError> {
+        let Some(maximum_runtime) = maximum_runtime else {
+            return Ok(());
+        };
+
+        if maximum_runtime.is_zero() {
+            return Err(ModelDeploymentError::InvalidMaximumRuntime);
+        }
+
+        chrono::Duration::from_std(maximum_runtime)
+            .map_err(|_| ModelDeploymentError::MaximumRuntimeOverflow)?;
 
         Ok(())
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct ModelReference {
-    pub model_id: Uuid,
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum ReconciliationRequirement {
+    Start,
+    Stop,
+    Undeploy,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DeploymentOptionSnapshot {
+    pub deployment_option_id: DeploymentOptionId,
+    pub external_model_id: ExternalModelId,
+    pub serving_runtime: ServingRuntime,
+    pub target: DeploymentTargetSnapshot,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DeploymentTargetSnapshot {
+    HpcClusterQueue(HpcClusterQueueSnapshot),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HpcClusterQueueSnapshot {
+    pub hpc_cluster_id: HpcClusterId,
+    pub batch_scheduler_queue_id: BatchSchedulerQueueId,
+    pub cluster_host: String,
+    pub queue_name: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -219,6 +434,17 @@ impl From<DesiredState> for String {
     }
 }
 
+impl PartialEq<DesiredState> for State {
+    fn eq(&self, other: &DesiredState) -> bool {
+        match (self, other) {
+            (&State::NotDeployed, &DesiredState::NotDeployed) => true,
+            (&State::Stopped, &DesiredState::Stopped) => true,
+            (&State::Running, &DesiredState::Running) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ModelDeploymentMetadata(pub HashMap<String, Value>);
 
@@ -238,8 +464,9 @@ impl ModelDeploymentMetadata {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum ModelDeploymentMetadataDelta {
+    #[default]
     NoChange,
     Delete,
     Merge(ModelDeploymentMetadata),
@@ -272,28 +499,108 @@ pub enum ParallelismStrategy {
     ExpertParallelism,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum ReplicaGroupDelta {
+    #[default]
     NoChange,
     Delete,
     Replace(ReplicaGroup),
 }
 
-#[derive(Clone, Debug)]
-pub enum ModelDeploymentInterface {
-    RestApi(RestApi),
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Protocol {
+    RestHttp,
 }
 
-#[derive(Clone, Debug)]
-pub struct RestApi {
-    pub spec: OpenAPI,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModelDeploymentEndpoint {
+    name: Option<String>,
+    protocol: Protocol,
+    base_url: Option<String>,
 }
 
-#[derive(Clone, Debug)]
-pub enum ModelDeploymentInterfaceDelta {
+impl ModelDeploymentEndpoint {
+    pub fn new(
+        name: Option<String>,
+        protocol: Protocol,
+        base_url: Option<String>,
+    ) -> Result<Self, ModelDeploymentError> {
+        Self::validate_name(name.as_deref())?;
+        Self::validate_base_url(&protocol, base_url.as_deref())?;
+
+        Ok(Self {
+            name,
+            protocol,
+            base_url,
+        })
+    }
+
+    pub fn reconstitute(
+        name: Option<String>,
+        protocol: Protocol,
+        base_url: Option<String>,
+    ) -> Result<Self, ModelDeploymentError> {
+        Self::new(name, protocol, base_url)
+            .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))
+    }
+
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
+    pub fn protocol(&self) -> &Protocol {
+        &self.protocol
+    }
+
+    pub fn base_url(&self) -> Option<&str> {
+        self.base_url.as_deref()
+    }
+
+    fn validate_name(name: Option<&str>) -> Result<(), ModelDeploymentError> {
+        if name.is_some_and(|name| name.trim().is_empty()) {
+            return Err(ModelDeploymentError::InvalidEndpointName);
+        }
+
+        Ok(())
+    }
+
+    fn validate_base_url(
+        protocol: &Protocol,
+        base_url: Option<&str>,
+    ) -> Result<(), ModelDeploymentError> {
+        let Some(base_url) = base_url else {
+            return Ok(());
+        };
+
+        if base_url.trim().is_empty() {
+            return Err(ModelDeploymentError::InvalidEndpointBaseUrl);
+        }
+
+        let parsed =
+            Url::parse(base_url).map_err(|_| ModelDeploymentError::InvalidEndpointBaseUrl)?;
+
+        match protocol {
+            Protocol::RestHttp
+                if matches!(parsed.scheme(), "http" | "https") && parsed.has_host() => {}
+            Protocol::RestHttp => return Err(ModelDeploymentError::InvalidEndpointBaseUrl),
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub enum ModelDeploymentEndpointDelta {
+    #[default]
     NoChange,
     Delete,
-    Replace(ModelDeploymentInterface),
+    Replace(ModelDeploymentEndpoint),
+}
+
+impl ModelDeploymentEndpointDelta {
+    pub fn is_no_change(&self) -> bool {
+        matches!(self, Self::NoChange)
+    }
 }
 
 #[derive(Debug)]
@@ -306,6 +613,7 @@ impl<'a> ModelDeploymentDraft<'a> {
     /// Updates last modified to the UTC timestamp
     fn touch(&mut self) -> &mut Self {
         let now = TimeStamp::now();
+
         self.deployment.last_modified = now.clone();
 
         self
@@ -313,6 +621,7 @@ impl<'a> ModelDeploymentDraft<'a> {
 
     fn valid_state_transitions() -> HashMap<State, Vec<State>> {
         let mut transitions = HashMap::new();
+
         transitions.insert(
             State::NotDeployed,
             vec![State::Blocked, State::Running, State::Failed],
@@ -335,8 +644,8 @@ impl<'a> ModelDeploymentDraft<'a> {
 
     /// Returns whether a transition from one state to another is valid
     fn is_valid_state_transition(from: &State, to: &State) -> bool {
-        // Unknown can transition to any state
-        if from == &State::Unknown {
+        // Unknown can transition to or from any state
+        if from == &State::Unknown || to == &State::Unknown {
             return true;
         }
 
@@ -351,6 +660,15 @@ impl<'a> ModelDeploymentDraft<'a> {
         new_state: State,
         message: Option<String>,
     ) -> Result<&mut Self, ModelDeploymentError> {
+        self.transition_to_state_at(new_state, message, TimeStamp::now())
+    }
+
+    pub fn transition_to_state_at(
+        &mut self,
+        new_state: State,
+        message: Option<String>,
+        transitioned_at: TimeStamp,
+    ) -> Result<&mut Self, ModelDeploymentError> {
         if !Self::is_valid_state_transition(&self.deployment.state, &new_state) {
             return Err(ModelDeploymentError::InvalidStateTransition(
                 self.deployment.state.clone().into(),
@@ -358,21 +676,42 @@ impl<'a> ModelDeploymentDraft<'a> {
             ));
         }
 
+        let expires_at = if new_state == State::Running && self.deployment.expires_at.is_none() {
+            self.deployment
+                .maximum_runtime
+                .map(|maximum_runtime| {
+                    let duration = chrono::Duration::from_std(maximum_runtime)
+                        .map_err(|_| ModelDeploymentError::MaximumRuntimeOverflow)?;
+
+                    transitioned_at
+                        .into_inner()
+                        .checked_add_signed(duration)
+                        .map(TimeStamp::from)
+                        .ok_or(ModelDeploymentError::MaximumRuntimeOverflow)
+                })
+                .transpose()?
+        } else {
+            self.deployment.expires_at.clone()
+        };
+
         // Changes the state
         self.deployment.state = new_state;
+
+        self.deployment.expires_at = expires_at;
 
         // Update the last message if provided
         if let Some(m) = message {
             self.deployment.last_message = Some(m);
         }
 
-        self.deployment.last_state_change = TimeStamp::now();
+        self.deployment.last_state_change = transitioned_at;
 
         Ok(self)
     }
 
     fn valid_desired_state_transitions() -> HashMap<DesiredState, Vec<DesiredState>> {
         let mut transitions = HashMap::new();
+
         transitions.insert(DesiredState::NotDeployed, vec![DesiredState::Running]);
         transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
         transitions.insert(DesiredState::Running, vec![DesiredState::NotDeployed]);
@@ -412,13 +751,16 @@ impl<'a> ModelDeploymentDraft<'a> {
         Ok(self)
     }
 
-    pub fn apply_interface_delta(&mut self, delta: ModelDeploymentInterfaceDelta) -> &mut Self {
+    pub fn apply_target_endpoint_delta(
+        &mut self,
+        delta: ModelDeploymentEndpointDelta,
+    ) -> &mut Self {
         match delta {
-            ModelDeploymentInterfaceDelta::Delete => self.deployment.metadata = None,
-            ModelDeploymentInterfaceDelta::Replace(i) => {
-                self.deployment.deployment_interface = Some(i);
+            ModelDeploymentEndpointDelta::Delete => self.deployment.target_endpoint = None,
+            ModelDeploymentEndpointDelta::Replace(endpoint) => {
+                self.deployment.target_endpoint = Some(endpoint);
             }
-            ModelDeploymentInterfaceDelta::NoChange => {}
+            ModelDeploymentEndpointDelta::NoChange => {}
         };
 
         self
@@ -487,42 +829,46 @@ impl<'a> ModelDeploymentDraft<'a> {
 
 #[derive(Clone, Debug)]
 pub struct ReconstituteModelDeploymentProps {
-    pub id: Uuid,
+    pub id: ModelDeploymentId,
     pub name: String,
     pub description: Option<String>,
     pub deployment_modality: DeploymentModality,
     pub tenant_id: String,
-    pub platform: Platform,
     pub owner: String,
-    pub model: ModelReference,
+    pub external_model_id: ExternalModelId,
     pub state: State,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
-    pub deployment_strategy: Option<String>,
+    pub deployment_option_id: DeploymentOptionId,
+    pub deployment_option_snapshot: DeploymentOptionSnapshot,
     pub visibility: Visibility,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     pub revision: u32,
     pub last_modified: TimeStamp,
     pub last_state_change: TimeStamp,
+    pub last_observed: Option<TimeStamp>,
+    pub maximum_runtime: Option<Duration>,
+    pub expires_at: Option<TimeStamp>,
     pub last_desired_state_change: TimeStamp,
     pub created_at: TimeStamp,
     pub metadata: Option<ModelDeploymentMetadata>,
 }
 
 #[derive(Clone, Debug)]
-pub struct DeployWithStrategyProps {
-    pub id: Uuid,
+pub struct CreateFromOptionProps {
     pub name: String,
     pub description: Option<String>,
     pub tenant_id: String,
-    pub platform: Platform,
     pub owner: String,
-    pub model: ModelReference,
     pub last_message: Option<String>,
     pub visibility: Visibility,
     pub deployment_modality: DeploymentModality,
-    pub deployment_interface: Option<ModelDeploymentInterface>,
+    pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     pub metadata: Option<ModelDeploymentMetadata>,
 }
+
+#[cfg(test)]
+#[path = "model_deployment.test.rs"]
+mod model_deployment_test;

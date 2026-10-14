@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod endpoint_issuance_service_test {
-    use std::sync::{Arc, Mutex};
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    };
 
     use async_trait::async_trait;
 
@@ -28,6 +31,10 @@ mod endpoint_issuance_service_test {
     }
 
     impl NetworkAddressableResource for TestResource {
+        fn owner(&self) -> &str {
+            "owner-a"
+        }
+
         fn network_target_names(&self) -> Vec<String> {
             vec!["rest".into(), "rpc".into()]
         }
@@ -43,12 +50,21 @@ mod endpoint_issuance_service_test {
 
     struct InMemoryEndpointRepository {
         endpoints: Mutex<Vec<Endpoint>>,
+        conflict_on_next_save: AtomicBool,
     }
 
     impl InMemoryEndpointRepository {
         fn new() -> Self {
             Self {
                 endpoints: Mutex::new(Vec::new()),
+                conflict_on_next_save: AtomicBool::new(false),
+            }
+        }
+
+        fn with_concurrent_save_conflict() -> Self {
+            Self {
+                endpoints: Mutex::new(Vec::new()),
+                conflict_on_next_save: AtomicBool::new(true),
             }
         }
 
@@ -97,6 +113,10 @@ mod endpoint_issuance_service_test {
 
             endpoints.push(endpoint.clone());
 
+            if self.conflict_on_next_save.swap(false, Ordering::SeqCst) {
+                return Err(EndpointRepositoryError::AlreadyExists);
+            }
+
             Ok(())
         }
     }
@@ -106,7 +126,7 @@ mod endpoint_issuance_service_test {
     {
         let repository = Arc::new(InMemoryEndpointRepository::new());
         let service = EndpointIssuanceService::new(repository.clone());
-        let ctx = RequestContext::system(None);
+        let ctx = RequestContext::system(None, None, None);
 
         let issued = service.issue_for_resource(&ctx, &TestResource).await?;
 
@@ -116,6 +136,21 @@ mod endpoint_issuance_service_test {
         let reissued = service.issue_for_resource(&ctx, &TestResource).await?;
 
         assert_eq!(reissued.len(), 2);
+        assert_eq!(repository.saved_count(), 2);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_endpoint_created_by_a_concurrent_issuer(
+    ) -> Result<(), EndpointIssuanceServiceError> {
+        let repository = Arc::new(InMemoryEndpointRepository::with_concurrent_save_conflict());
+        let service = EndpointIssuanceService::new(repository.clone());
+        let ctx = RequestContext::system(None, None, None);
+
+        let issued = service.issue_for_resource(&ctx, &TestResource).await?;
+
+        assert_eq!(issued.len(), 2);
         assert_eq!(repository.saved_count(), 2);
 
         Ok(())

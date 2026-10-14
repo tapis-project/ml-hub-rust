@@ -1,4 +1,3 @@
-use platforms::Platform;
 use uuid::Uuid;
 
 use crate::{
@@ -18,8 +17,6 @@ pub struct SearchCriterion {
     pub size: NumericRange<u64>,
     pub likes: NumericRange<u128>,
     pub downloads: NumericRange<u128>,
-    pub deployment_strategies: Vec<DeploymentStrategyCriterion>,
-    pub has_deployment_strategies: Option<bool>,
     pub serving_runtimes: Vec<ServingRuntime>,
     pub hpc_cluster_ids: Vec<Uuid>,
     pub batch_scheduler_queue_ids: Vec<Uuid>,
@@ -31,12 +28,6 @@ pub struct SearchCriterion {
 pub struct NumericRange<T> {
     pub min: Option<T>,
     pub max: Option<T>,
-}
-
-#[derive(Debug, Clone)]
-pub struct DeploymentStrategyCriterion {
-    pub name: String,
-    pub platform: Platform,
 }
 
 #[derive(Debug, Clone)]

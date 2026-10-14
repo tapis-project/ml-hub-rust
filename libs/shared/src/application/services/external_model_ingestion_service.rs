@@ -11,19 +11,13 @@ use crate::{
         deployment_option::{DeploymentOptionRepository, DeploymentOptionRepositoryError},
         model::{ExternalModelRepository, ExternalModelRepositoryError},
     },
-    domain::{
-        entities::{
-            deployment_option::{
-                DeploymentOption, DeploymentOptionError, DeploymentTarget,
-                HpcClusterQueueReference, NewDeploymentOptionProps, ServingRuntime,
-            },
-            deployment_strategy::client_strategy_set::ClientStrategySet,
-            hpc_cluster::HpcCluster,
-            model::external_model::{
-                DeploymentStrategyReference, ExternalModel, ExternalModelError,
-            },
+    domain::entities::{
+        deployment_option::{
+            DeploymentOption, DeploymentOptionError, DeploymentTarget, HpcClusterQueueReference,
+            NewDeploymentOptionProps, ServingRuntime,
         },
-        services::deployment_strategy::{resolve_viable_strategies, StrategyEvaluationError},
+        hpc_cluster::HpcCluster,
+        model::external_model::{ExternalModel, ExternalModelError},
     },
     shared_kernel::enums::DeploymentModality,
 };
@@ -39,9 +33,6 @@ pub enum ExternalModelIngestionServiceError {
     Domain(#[from] ExternalModelError),
 
     #[error(transparent)]
-    Strategy(#[from] StrategyEvaluationError),
-
-    #[error(transparent)]
     Evaluation(#[from] EvaluatorError),
 
     #[error(transparent)]
@@ -54,7 +45,6 @@ pub enum ExternalModelIngestionServiceError {
 pub struct ExternalModelIngestionService {
     repository: Arc<dyn ExternalModelRepository>,
     deployment_option_repository: Arc<dyn DeploymentOptionRepository>,
-    client_strategy_sets: Arc<Vec<ClientStrategySet>>,
     evaluator: Evaluator,
     hpc_clusters: Vec<HpcCluster>,
 }
@@ -70,14 +60,12 @@ impl ExternalModelIngestionService {
     pub fn new(
         repository: Arc<dyn ExternalModelRepository>,
         deployment_option_repository: Arc<dyn DeploymentOptionRepository>,
-        client_strategy_sets: Arc<Vec<ClientStrategySet>>,
         evaluator: Evaluator,
         hpc_clusters: Vec<HpcCluster>,
     ) -> Self {
         Self {
             repository,
             deployment_option_repository,
-            client_strategy_sets,
             evaluator,
             hpc_clusters,
         }
@@ -99,27 +87,13 @@ impl ExternalModelIngestionService {
 
         let updating = existing.is_some();
 
-        let mut external_model = match existing {
+        let external_model = match existing {
             Some(mut model) => {
                 model.update_metadata(candidate.metadata().clone());
                 model
             }
             None => candidate,
         };
-
-        let mut references = Vec::new();
-
-        for set in self.client_strategy_sets.iter() {
-            for strategy in resolve_viable_strategies(&external_model, set.strategies())? {
-                let strategy = strategy.into_inner();
-                references.push(DeploymentStrategyReference::new(
-                    strategy.name,
-                    strategy.platform,
-                ));
-            }
-        }
-
-        external_model.replace_deployment_strategies(references);
 
         let deployment_options = self.calculate_deployment_options(&external_model).await?;
 
@@ -158,11 +132,13 @@ impl ExternalModelIngestionService {
     ) -> Result<Vec<DeploymentOption>, ExternalModelIngestionServiceError> {
         let candidates = {
             let mut candidates = Vec::new();
+
             let model_argument = Rc::new(external_model.clone());
 
             for cluster in &self.hpc_clusters {
                 for queue in cluster.queues() {
                     let mut arguments = Arguments::new();
+
                     arguments.insert("model".into(), model_argument.clone());
                     arguments.insert("queue".into(), Rc::new(queue.clone()));
 
@@ -209,6 +185,7 @@ impl ExternalModelIngestionService {
             };
 
             let mut option = existing.remove(index);
+
             option.replace_supported_deployment_modalities(
                 candidate.supported_deployment_modalities().clone(),
             )?;

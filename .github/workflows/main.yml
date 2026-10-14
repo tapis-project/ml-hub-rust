@@ -111,6 +111,18 @@ jobs:
       image_name: tapis/mlhub-deployments-api
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
+  agents:
+    if: contains(fromJson(needs.diffs.outputs.services), 'agents') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+      - tests
+    secrets: inherit
+    uses: ./.github/workflows/agents.yml
+    with:
+      image_name: tapis/mlhub-agents-api
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
   model-deployment-controller:
     if: contains(fromJson(needs.diffs.outputs.services), 'model-deployment-controller') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
     needs:
@@ -157,6 +169,42 @@ jobs:
     uses: ./.github/workflows/hpc-cluster-seeder.yml
     with:
       image_name: tapis/mlhub-hpc-cluster-seeder
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
+  endpoints-migrator:
+    if: contains(fromJson(needs.diffs.outputs.services), 'endpoints-migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+      - tests
+    secrets: inherit
+    uses: ./.github/workflows/endpoints-migrator.yml
+    with:
+      image_name: tapis/mlhub-endpoints-migrator
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
+  endpoint-router:
+    if: contains(fromJson(needs.diffs.outputs.services), 'endpoint-router') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+      - tests
+    secrets: inherit
+    uses: ./.github/workflows/endpoint-router.yml
+    with:
+      image_name: tapis/mlhub-endpoint-router
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
+  endpoints:
+    if: contains(fromJson(needs.diffs.outputs.services), 'endpoints') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+    needs:
+      - resolve_image_tag
+      - diffs
+      - tests
+    secrets: inherit
+    uses: ./.github/workflows/endpoints.yml
+    with:
+      image_name: tapis/mlhub-endpoints-api
       image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
 
   federated-identities-migrator:

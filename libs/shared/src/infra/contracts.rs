@@ -21,9 +21,6 @@ impl From<&Kind> for String {
         match value {
             Kind::ModelDeploymentDeleted => "model_deployment.deleted".into(),
             Kind::ModelDeploymentStarted => "model_deployment.started".into(),
-            Kind::ModelDeploymentStateDriftDetected => {
-                "model_deployment.state_drift_detected".into()
-            }
             Kind::ModelDeploymentStopped => "model_deployment.stopped".into(),
         }
     }
@@ -36,7 +33,6 @@ impl<'a> TryFrom<&'a str> for Kind {
         Ok(match value {
             "model_deployment.deleted" => Kind::ModelDeploymentDeleted,
             "model_deployment.started" => Kind::ModelDeploymentStarted,
-            "model_deployment.state_drift_detected" => Kind::ModelDeploymentStateDriftDetected,
             "model_deployment.stopped" => Kind::ModelDeploymentStopped,
             other => return Err(ContractError::UknownEventKind(other)),
         })

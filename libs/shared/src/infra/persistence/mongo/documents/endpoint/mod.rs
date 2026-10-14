@@ -1,5 +1,6 @@
 pub mod document_to_entity;
 pub mod entity_to_document;
+pub mod indexes;
 
 use mongodb::bson::{oid::ObjectId, Uuid};
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,7 @@ pub struct Endpoint {
     pub _id: Option<ObjectId>,
     pub id: Uuid,
     pub tenant_id: String,
+    pub owner: String,
     pub target_resource_urn: String,
     pub target_name: String,
     pub slug: String,

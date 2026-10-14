@@ -90,6 +90,7 @@ fi
             [
                 "dev buildl models-migrator",
                 "dev buildl deployments-migrator",
+                "dev buildl endpoints-migrator",
                 "dev buildl federated-identities-migrator",
                 "dev buildl principals-migrator",
                 "dev buildl hpc-cluster-seeder",
@@ -97,6 +98,8 @@ fi
                 "dev buildl datasets",
                 "dev buildl deployments",
                 "dev buildl agents",
+                "dev buildl endpoints",
+                "dev buildl endpoint-router",
                 "dev buildl artifact-ingester",
                 "dev buildl artifact-publisher",
                 "dev buildl model-deployment-controller",
@@ -136,10 +139,41 @@ fi
         self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run-models migrations -t overlay minikube"))
         self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run-deployments migrations -t overlay minikube"))
         self.assertLess(commands.index("dev run-deployments migrations -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
+        self.assertLess(commands.index("dev run endpoints-migrator -t overlay minikube"), commands.index("dev start endpoints -t overlay minikube"))
+        self.assertLess(commands.index("dev run endpoints-migrator -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
+        self.assertLess(commands.index("dev start endpoints -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
+        self.assertLess(commands.index("dev start endpoint-router -t overlay minikube"), commands.index("dev start envoy -t overlay minikube"))
         self.assertLess(commands.index("dev run-principals migrations -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
         self.assertLess(commands.index("dev run hf-model-etl -t overlay minikube"), commands.index("dev run hf-dataset-etl -t overlay minikube"))
         self.assertIn("kubectl rollout status statefulset/mlhub-mongo-stateful-set --timeout=0s", commands)
+
+        expected_components = [
+            "models",
+            "datasets",
+            "deployments",
+            "agents",
+            "endpoints",
+            "endpoint-router",
+            "envoy",
+        ]
+
+        for component in expected_components:
+            self.assertEqual(
+                1,
+                commands.count(f"dev start {component} -t overlay minikube"),
+            )
+
+        expected_migrations = [
+            "dev run-models migrations -t overlay minikube",
+            "dev run-deployments migrations -t overlay minikube",
+            "dev run endpoints-migrator -t overlay minikube",
+            "dev run-federated-identities migrations -t overlay minikube",
+            "dev run-principals migrations -t overlay minikube",
+        ]
+
+        for migration in expected_migrations:
+            self.assertEqual(1, commands.count(migration))
 
     def test_existing_job_fails_before_aggregate_start(self):
         result = self._run("start", DEPLOYER_EXISTING_JOBS="mlhub-principals-migrator")

@@ -1,7 +1,7 @@
 use crate::{
     application::services::deployment_argument_service::DecryptedArgument,
     domain::entities::deployment::{
-        DesiredState, ModelDeploymentInterfaceDelta, ModelDeploymentMetadataDelta,
+        DesiredState, ModelDeploymentEndpointDelta, ModelDeploymentMetadataDelta,
         ReplicaGroupDelta, State,
     },
 };
@@ -20,8 +20,8 @@ pub enum ReconciliationAction {
     Start { payload: Vec<DecryptedArgument> },
     /// Stop the deployment
     Stop,
-    /// Observe the reason for the Blocked or Unknown state
-    Observe,
+    // /// Observe the reason for the Blocked or Unknown state
+    // Observe,
     /// Delete the infra
     Undeploy,
 }
@@ -32,7 +32,7 @@ pub struct StartedOutcome {
     pub state: State,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -40,22 +40,23 @@ pub struct StoppedOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
 pub struct UndeployedOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
-pub struct ObeservedOutcome {
+pub struct ObservedOutcome {
     pub message: Option<String>,
     pub state: State,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -63,7 +64,7 @@ pub struct FailedOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -72,7 +73,7 @@ pub struct UnknownOutcome {
     pub message: Option<String>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
-    pub interface: Option<ModelDeploymentInterfaceDelta>,
+    pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
 }
 
 #[derive(Clone, Debug)]
@@ -80,7 +81,7 @@ pub enum ReconciliationOutcome {
     Started(StartedOutcome),
     Stopped(StoppedOutcome),
     Undeployed(UndeployedOutcome),
-    Observed(ObeservedOutcome),
+    // Observed(ObeservedOutcome),
     Failed(FailedOutcome),
     Unknown(UnknownOutcome),
     NoOp,

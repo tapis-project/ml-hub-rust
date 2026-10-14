@@ -1,0 +1,15 @@
+.gitignore
+.npmignore
+.openapi-generator-ignore
+README.md
+package.json
+src/apis/EndpointsApi.ts
+src/apis/HealthApi.ts
+src/apis/index.ts
+src/index.ts
+src/models/Endpoint.ts
+src/models/GetEndpointResponse.ts
+src/models/ListEndpointsResponse.ts
+src/models/index.ts
+src/runtime.ts
+tsconfig.json

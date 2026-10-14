@@ -49,6 +49,7 @@ impl TryFrom<&HuggingFaceHeaders> for reqwest::header::HeaderMap {
 
     fn try_from(value: &HuggingFaceHeaders) -> Result<Self, Self::Error> {
         let mut header_map = HeaderMap::new();
+
         for (key, value) in value.0.into_inner().iter() {
             let header_name =
                 HeaderName::try_from(key.as_str()).map_err(|err| {
@@ -160,6 +161,7 @@ impl GetModelClient for HuggingFaceClient {
             Ok(_header_map) => {
                 // TODO Add the authorization header and value if one exists
                 let map = HeaderMap::new();
+
                 map
             }
             Err(_) => {
@@ -378,6 +380,7 @@ impl PublishModelArtifactClient for HuggingFaceClient {
 
         // Check that the repo on huggingface exists
         let base_url = Self::format_url("models");
+
         let maybe_response = self
             .client
             .get(format!("{}/{}", &base_url, &model_name))
@@ -622,6 +625,7 @@ impl ModelConversionClient for HuggingFaceClient {
                 })?;
 
         let mut task_types = Vec::new();
+
         for candidate in hf_model
             .tags
             .iter()

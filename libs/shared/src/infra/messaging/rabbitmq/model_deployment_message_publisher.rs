@@ -41,8 +41,8 @@ impl EventPublisher for RabbitMQModelDeploymentMessagePublisher {
             get_exchange_for_event(event),
             get_routing_key_for_event(event),
         )
-        .mandatory(true)
-        .finish();
+            .mandatory(true)
+            .finish();
 
         let props = BasicProperties::default()
             .with_message_id(Uuid::now_v7().to_string().as_str())

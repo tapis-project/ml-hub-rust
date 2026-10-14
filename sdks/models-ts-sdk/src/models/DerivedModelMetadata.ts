@@ -14,10 +14,6 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-    DeploymentStrategyReference,
-    DeploymentStrategyReferenceFromJSON,
-    DeploymentStrategyReferenceFromJSONTyped,
-    DeploymentStrategyReferenceToJSON,
     Task,
     TaskFromJSON,
     TaskFromJSONTyped,
@@ -36,12 +32,6 @@ export interface DerivedModelMetadata {
      * @memberof DerivedModelMetadata
      */
     author?: string | null;
-    /**
-     * 
-     * @type {Array<DeploymentStrategyReference>}
-     * @memberof DerivedModelMetadata
-     */
-    deployment_strategies: Array<DeploymentStrategyReference>;
     /**
      * 
      * @type {number}
@@ -115,7 +105,6 @@ export function DerivedModelMetadataFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'author': !exists(json, 'author') ? undefined : json['author'],
-        'deployment_strategies': ((json['deployment_strategies'] as Array<any>).map(DeploymentStrategyReferenceFromJSON)),
         'downloads': !exists(json, 'downloads') ? undefined : json['downloads'],
         'gated': json['gated'],
         'inference_runtimes': json['inference_runtimes'],
@@ -139,7 +128,6 @@ export function DerivedModelMetadataToJSON(value?: DerivedModelMetadata | null):
     return {
         
         'author': value.author,
-        'deployment_strategies': ((value.deployment_strategies as Array<any>).map(DeploymentStrategyReferenceToJSON)),
         'downloads': value.downloads,
         'gated': value.gated,
         'inference_runtimes': value.inference_runtimes,

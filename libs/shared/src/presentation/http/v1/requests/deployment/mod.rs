@@ -2,24 +2,15 @@ mod dto_to_entity;
 mod dto_to_input;
 mod dto_to_shared_kernel;
 
-use platforms::Platform;
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Clone, IntoParams, ToSchema)]
-pub struct DeployModelWithStrategyPathParams {
-    /// The target platform for the Model Deployment
-    pub platform: Platform,
-    /// The name of the deployment strategy
-    pub strategy_name: String,
-}
-
-#[derive(Debug, Deserialize, Clone, IntoParams, ToSchema)]
-pub struct DeployModelWithStrategyBody {
+#[derive(Debug, Deserialize, Clone, ToSchema)]
+pub struct DeployModelWithOptionBody {
     pub name: String,
     pub description: Option<String>,
-    pub model_id: Uuid,
+    pub deployment_option_id: Uuid,
     pub deployment_modality: DeploymentModality,
     pub arguments: Option<Vec<Argument>>,
     pub replicas: Option<u8>,

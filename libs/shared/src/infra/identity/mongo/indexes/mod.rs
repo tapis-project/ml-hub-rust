@@ -1,6 +1,6 @@
 use crate::infra::_common::mongo::Index;
-use crate::infra::identity::mongo::documents::{FEDERATED_IDENTITY_COLLECTION, FederatedIdentity};
-use mongodb::{IndexModel, bson::doc, options::IndexOptions};
+use crate::infra::identity::mongo::documents::{FederatedIdentity, FEDERATED_IDENTITY_COLLECTION};
+use mongodb::{bson::doc, options::IndexOptions, IndexModel};
 
 macro_rules! federated_identity_index {
     ($name:ident, $index_name:literal, $keys:expr) => {

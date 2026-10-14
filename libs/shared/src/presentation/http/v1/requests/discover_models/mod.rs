@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use platforms::Platform;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -61,9 +60,6 @@ pub struct DiscoveryCriterion {
     pub min_downloads: Option<u128>,
     pub max_downloads: Option<u128>,
     #[serde(default)]
-    pub deployment_strategies: Vec<DeploymentStrategyCriterion>,
-    pub has_deployment_strategies: Option<bool>,
-    #[serde(default)]
     pub serving_runtimes: Vec<ServingRuntime>,
     #[serde(default)]
     pub hpc_cluster_ids: Vec<Uuid>,
@@ -78,12 +74,6 @@ pub struct DiscoveryCriterion {
 pub enum ModelProvider {
     HuggingFace,
     Tapis,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, ToSchema)]
-pub struct DeploymentStrategyCriterion {
-    pub name: String,
-    pub platform: Platform,
 }
 
 impl From<DiscoveryCriterion> for inputs::SearchCriterion {
@@ -111,15 +101,6 @@ impl From<DiscoveryCriterion> for inputs::SearchCriterion {
                 min: value.min_downloads,
                 max: value.max_downloads,
             },
-            deployment_strategies: value
-                .deployment_strategies
-                .into_iter()
-                .map(|strategy| inputs::DeploymentStrategyCriterion {
-                    name: strategy.name,
-                    platform: strategy.platform,
-                })
-                .collect(),
-            has_deployment_strategies: value.has_deployment_strategies,
             serving_runtimes: value
                 .serving_runtimes
                 .into_iter()

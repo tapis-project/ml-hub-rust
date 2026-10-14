@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;
-use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
+use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy, RetryStrategyAction};
 use thiserror::Error;
 
 use crate::application::ports::endpoint::{EndpointRepository, EndpointRepositoryError};
@@ -70,12 +70,44 @@ impl EndpointIssuanceService {
             match existing {
                 Some(endpoint) => endpoints.push(endpoint),
                 None => {
-                    retry_async(
+                    let save_result = retry_async(
                         || self.endpoint_repository.save(&candidate),
                         &Self::REPOSITORY_RETRY_POLICY,
-                        None,
+                        |error: &EndpointRepositoryError, _| match error {
+                            EndpointRepositoryError::AlreadyExists => {
+                                RetryStrategyAction::ReturnResult
+                            }
+                            EndpointRepositoryError::Persistence(_) => {
+                                RetryStrategyAction::ContinueRetries
+                            }
+                            EndpointRepositoryError::InvalidCursor => {
+                                RetryStrategyAction::ReturnResult
+                            }
+                        },
                     )
-                    .await?;
+                    .await;
+
+                    if let Err(EndpointRepositoryError::AlreadyExists) = save_result {
+                        let existing = retry_async(
+                            || {
+                                self.endpoint_repository.get_by_target(
+                                    tenant_id.as_str(),
+                                    target_resource_urn.as_str(),
+                                    candidate.target_name(),
+                                )
+                            },
+                            &Self::REPOSITORY_RETRY_POLICY,
+                            None,
+                        )
+                        .await?
+                        .ok_or(EndpointRepositoryError::AlreadyExists)?;
+
+                        endpoints.push(existing);
+
+                        continue;
+                    }
+
+                    save_result?;
 
                     endpoints.push(candidate);
                 }

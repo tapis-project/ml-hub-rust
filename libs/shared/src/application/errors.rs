@@ -18,9 +18,6 @@ pub enum ApplicationError {
     #[error("Site config loader initialization error: {0}")]
     SiteConfigLoaderInitialization(String),
 
-    #[error("Deployment strategy provider initialization error: {0}")]
-    DeploymentStrategyProviderInitialization(String),
-
     #[error("Model deployment failed: {0}")]
     ModelDeploymentFailed(String),
 }

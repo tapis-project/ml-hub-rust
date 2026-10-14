@@ -1,0 +1,7 @@
+resources:
+  - ../../base
+  - ../../../site-configs/overlays/minikube
+
+images:
+  - name: tapis/mlhub-endpoint-router
+    newTag: local

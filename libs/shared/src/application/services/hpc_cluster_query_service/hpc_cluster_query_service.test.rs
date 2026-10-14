@@ -19,8 +19,15 @@ impl HpcClusterRepository for TestRepository {
 
     async fn find_by_id(
         &self,
-        _data_center: &DataCenter,
         _id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(self.found.clone())
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
+        _id: &HpcClusterId,
+        _data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
         Ok(self.found.clone())
     }
@@ -71,14 +78,16 @@ fn cluster() -> Result<HpcCluster, HpcClusterQueryServiceError> {
 #[tokio::test]
 async fn gets_cluster_by_data_center_and_id() -> Result<(), Box<dyn std::error::Error>> {
     let cluster = cluster()?;
+
     let id = *cluster.id();
+
     let service = HpcClusterQueryService::new(Arc::new(TestRepository {
         found: Some(cluster),
         summaries: Vec::new(),
     }));
 
     let output = service
-        .get_hpc_cluster(&RequestContext::system(None), &DataCenter::Tacc, &id)
+        .get_hpc_cluster(&RequestContext::system(None, None, None), &DataCenter::Tacc, &id)
         .await?;
 
     assert_eq!(output.hpc_cluster.id(), &id);
@@ -95,7 +104,7 @@ async fn reports_missing_cluster() {
 
     let result = service
         .get_hpc_cluster(
-            &RequestContext::system(None),
+            &RequestContext::system(None, None, None),
             &DataCenter::Tacc,
             &HpcClusterId::new(),
         )
@@ -121,7 +130,7 @@ async fn lists_paginated_summaries() -> Result<(), Box<dyn std::error::Error>> {
     let input = ListHpcClustersInput::new(DataCenter::Tacc, None, None, Some(true));
 
     let output = service
-        .list_hpc_clusters(&RequestContext::system(None), &input)
+        .list_hpc_clusters(&RequestContext::system(None, None, None), &input)
         .await?;
 
     assert_eq!(output.hpc_clusters.len(), 1);

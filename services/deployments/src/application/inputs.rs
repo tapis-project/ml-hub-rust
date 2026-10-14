@@ -1,1 +1,1 @@
-pub use shared::application::inputs::deployment::DeployWithStrategyInput;
+pub use shared::application::inputs::deployment::DeployWithOptionInput;

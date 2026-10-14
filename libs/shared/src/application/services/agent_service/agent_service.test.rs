@@ -3,6 +3,7 @@ mod agent_service_test {
     use std::sync::{Arc, Mutex};
 
     use async_trait::async_trait;
+    use uuid::Uuid;
 
     use crate::application::inputs::agent::{
         AgentDeploymentModalityInput, AgentEndpointInput, MessageBindingInput, ProtocolInput,
@@ -42,6 +43,22 @@ mod agent_service_test {
 
     #[async_trait]
     impl AgentRepository for InMemoryAgentRepository {
+        async fn find_by_id(
+            &self,
+            tenant_id: &str,
+            id: &Uuid,
+        ) -> Result<Option<Agent>, AgentRepositoryError> {
+            let agents = match self.agents.lock() {
+                Ok(agents) => agents,
+                Err(error) => panic!("Agent repository mutex poisoned: {error}"),
+            };
+
+            Ok(agents
+                .iter()
+                .find(|agent| agent.tenant_id() == tenant_id && agent.id() == id)
+                .cloned())
+        }
+
         async fn save(&self, agent: &Agent) -> Result<(), AgentRepositoryError> {
             let mut agents = match self.agents.lock() {
                 Ok(agents) => agents,
@@ -234,7 +251,7 @@ mod agent_service_test {
         );
 
         service
-            .register_agent(&RequestContext::system(None), input())
+            .register_agent(&RequestContext::system(None, None, None), input())
             .await?;
 
         assert_eq!(agent_repository.saved_count(), 1);
@@ -256,7 +273,7 @@ mod agent_service_test {
 
         service
             .register_agent(
-                &RequestContext::system(None),
+                &RequestContext::system(None, None, None),
                 input_without_network_target(),
             )
             .await?;
@@ -277,7 +294,7 @@ mod agent_service_test {
         );
 
         let result = service
-            .register_agent(&RequestContext::system(None), input())
+            .register_agent(&RequestContext::system(None, None, None), input())
             .await;
 
         assert!(matches!(
