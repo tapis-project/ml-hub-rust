@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: MLHub Endpoints API
+  description: ''
+  license:
+    name: ''
+  version: 0.1.0
+paths:
+  /endpoints-api/endpoints:
+    get:
+      tags:
+        - Endpoints
+      summary: List owned endpoints
+      operationId: list_endpoints
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            maximum: 100
+            minimum: 1
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: include_count
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Endpoints listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEndpointsResponse'
+        '400':
+          description: Invalid pagination parameters
+        '500':
+          description: Unable to list endpoints
+  /endpoints-api/endpoints/{endpoint_id}:
+    get:
+      tags:
+        - Endpoints
+      summary: Get an owned endpoint
+      operationId: get_endpoint
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Endpoint found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEndpointResponse'
+        '400':
+          description: Invalid endpoint identifier
+        '404':
+          description: Endpoint not found
+        '500':
+          description: Unable to get endpoint
+  /endpoints-api/healthcheck:
+    get:
+      tags:
+        - Health
+      summary: Check service health
+      operationId: healthcheck
+      responses:
+        '200':
+          description: Service is healthy
+  /endpoints-api/resources/{resource_urn}/endpoints:
+    get:
+      tags:
+        - Endpoints
+      summary: List endpoints issued for an owned resource
+      operationId: list_resource_endpoints
+      parameters:
+        - name: resource_urn
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            maximum: 100
+            minimum: 1
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: include_count
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Resource endpoints listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEndpointsResponse'
+        '400':
+          description: Invalid resource URN or pagination parameters
+        '403':
+          description: Resource access is forbidden
+        '404':
+          description: Resource not found
+        '500':
+          description: Unable to list resource endpoints
+components:
+  schemas:
+    Endpoint:
+      type: object
+      required:
+        - id
+        - tenant_id
+        - owner
+        - target_resource_urn
+        - target_name
+        - slug
+        - proxy_url
+        - available
+      properties:
+        available:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        owner:
+          type: string
+        proxy_url:
+          type: string
+        slug:
+          type: string
+        target_base_url:
+          type: string
+          nullable: true
+        target_name:
+          type: string
+        target_resource_urn:
+          type: string
+        tenant_id:
+          type: string
+    GetEndpointResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          $ref: '#/components/schemas/Endpoint'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
+    ListEndpointsResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Endpoint'
+        status:
+          type: integer
+          format: int32
+          minimum: 0
+        version:
+          type: string
