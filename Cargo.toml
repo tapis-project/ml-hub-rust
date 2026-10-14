@@ -12,6 +12,7 @@ members = [
     "services/deployments-migrator",
     "services/endpoints-migrator",
     "services/endpoint-router",
+    "services/endpoints",
     "services/hpc-cluster-seeder",
     "services/principals-migrator",
     "services/federated-identities-migrator",

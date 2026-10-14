@@ -102,6 +102,10 @@ impl TenantScopedResource for ModelDeployment {
 }
 
 impl NetworkAddressableResource for ModelDeployment {
+    fn owner(&self) -> &str {
+        self.owner()
+    }
+
     fn network_target_names(&self) -> Vec<String> {
         self.target_endpoint
             .as_ref()

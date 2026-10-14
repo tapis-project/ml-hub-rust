@@ -32,6 +32,22 @@ pub trait ModelDeploymentRepository: Send + Sync {
         deployment_id: &ModelDeploymentId,
     ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
 
+    async fn find_by_ids_and_tenant(
+        &self,
+        tenant_id: &str,
+        deployment_ids: &[ModelDeploymentId],
+    ) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError> {
+        let mut deployments = Vec::with_capacity(deployment_ids.len());
+
+        for deployment_id in deployment_ids {
+            if let Some(deployment) = self.find_by_id_and_tenant(tenant_id, deployment_id).await? {
+                deployments.push(deployment);
+            }
+        }
+
+        Ok(deployments)
+    }
+
     async fn save(
         &self,
         deployment: &ModelDeployment,

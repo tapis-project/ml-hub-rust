@@ -36,3 +36,12 @@ cd "$here/endpoint-envoy"
 
 cd "$here/endpoint-router"
 ./burndown.sh "$overlay"
+
+cd "$here/endpoints"
+./burndown.sh "$overlay"
+
+cd "$here/agents"
+./burndown.sh "$overlay"
+
+cd "$here/datasets"
+./burndown.sh "$overlay"

@@ -16,6 +16,8 @@
     "deployments-migrator-image": "tapis/mlhub-deployments-migrator",
     "endpoints-migrator-image": "tapis/mlhub-endpoints-migrator",
     "endpoint-router-image": "tapis/mlhub-endpoint-router",
+    "endpoints-image": "tapis/mlhub-endpoints-api",
+    "endpoints-deployment": "mlhub-endpoints-api-deployment",
     "endpoint-router-deployment": "mlhub-endpoint-router-deployment",
     "endpoint-envoy-deployment": "mlhub-endpoint-envoy-deployment",
     "hpc-cluster-seeder-image": "tapis/mlhub-hpc-cluster-seeder",
@@ -162,6 +164,28 @@
         "logs": "kubectl logs deployment/{{ endpoint-router-deployment }}",
         "watch": "kubectl logs deployment/{{ endpoint-router-deployment }} -f"
       }
+    },
+    {
+      "name": "endpoints",
+      "description": "Lists issued endpoints and their current availability",
+      "rootDir": "services/endpoints",
+      "labels": ["api"],
+      "lifecycle": "experimental",
+      "commands": {
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
+        "cyclel": "./dev stop {{ self.name }} -t overlay {{ overlay }} && ./dev buildl {{ self.name }} && ./dev start {{ self.name }} -t overlay {{ overlay }}",
+        "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "logs": "kubectl logs deployment/{{ endpoints-deployment }}",
+        "watch": "kubectl logs deployment/{{ endpoints-deployment }} -f",
+        "code": "code {{ self.rootDir }}"
+      },
+      "dependencies": ["traefik", "mongo"]
     },
     {
       "name": "envoy",
@@ -317,6 +341,7 @@
       "lifecycle": "production",
       "commands": {
         "generate-agents": "mkdir -p {{ specs-dir }}/agents && cargo run --bin agents-openapi | jq > {{ specs-dir }}/agents/openapi.json",
+        "generate-endpoints": "mkdir -p {{ specs-dir }}/endpoints && cargo run --bin endpoints-openapi | jq > {{ specs-dir }}/endpoints/openapi.json",
         "generate-models": "mkdir -p {{ specs-dir }}/models && cargo run --bin models-openapi | jq > {{ specs-dir }}/models/openapi.json",
         "generate-deployments": "mkdir -p {{ specs-dir }}/deployments && cargo run --bin deployments-openapi | jq > {{ specs-dir }}/deployments/openapi.json",
         "generate-datasets": "mkdir -p {{ specs-dir }}/datasets && cargo run --bin datasets-openapi | jq > {{ specs-dir }}/datasets/openapi.json",

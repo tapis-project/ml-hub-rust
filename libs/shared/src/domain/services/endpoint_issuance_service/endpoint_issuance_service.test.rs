@@ -26,6 +26,10 @@ mod endpoint_issuance_service_test {
     }
 
     impl NetworkAddressableResource for TestResource {
+        fn owner(&self) -> &str {
+            "owner-a"
+        }
+
         fn network_target_names(&self) -> Vec<String> {
             self.target_names.clone()
         }

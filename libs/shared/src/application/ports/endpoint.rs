@@ -1,7 +1,11 @@
 use async_trait::async_trait;
 use thiserror::Error;
+use uuid::Uuid;
 
 use crate::application::ports::errors::InfrastructureError;
+use crate::application::{
+    inputs::endpoint::ListEndpointsInput, outputs::endpoint::EndpointListOutput,
+};
 use crate::domain::entities::endpoint::Endpoint;
 
 #[derive(Debug, Error)]
@@ -9,12 +13,35 @@ pub enum EndpointRepositoryError {
     #[error("Endpoint already exists")]
     AlreadyExists,
 
+    #[error("Invalid endpoint cursor")]
+    InvalidCursor,
+
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),
 }
 
 #[async_trait]
 pub trait EndpointRepository: Send + Sync {
+    async fn list(
+        &self,
+        input: &ListEndpointsInput,
+    ) -> Result<EndpointListOutput, EndpointRepositoryError> {
+        let _ = input;
+
+        Err(InfrastructureError::new_internal().into())
+    }
+
+    async fn get_by_id(
+        &self,
+        tenant_id: &str,
+        owner: &str,
+        id: &Uuid,
+    ) -> Result<Option<Endpoint>, EndpointRepositoryError> {
+        let _ = (tenant_id, owner, id);
+
+        Err(InfrastructureError::new_internal().into())
+    }
+
     async fn list_by_target_urn(
         &self,
         tenant_id: &str,

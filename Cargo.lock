@@ -1335,11 +1335,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "endpoints"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "env_logger",
+ "log",
+ "mongodb",
+ "serde_json",
+ "shared",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "endpoints-migrator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "futures",
  "mongodb",
  "shared",
  "tfiala-mongodb-migrator",

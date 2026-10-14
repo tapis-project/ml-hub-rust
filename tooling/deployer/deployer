@@ -58,6 +58,7 @@ build_services() {
     run_dev buildl datasets
     run_dev buildl deployments
     run_dev buildl agents
+    run_dev buildl endpoints
     run_dev buildl endpoint-router
 
     announce "Building worker images"
@@ -189,6 +190,10 @@ start_services() {
     announce "Starting Agents API"
     run_dev start agents -t overlay "$overlay"
     wait_for_rollout deployment/mlhub-agents-api-deployment
+
+    announce "Starting Endpoints API"
+    run_dev start endpoints -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-endpoints-api-deployment
 
     announce "Starting endpoint router"
     run_dev start endpoint-router -t overlay "$overlay"

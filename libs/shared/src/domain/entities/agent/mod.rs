@@ -460,6 +460,10 @@ impl TenantScopedResource for Agent {
 }
 
 impl NetworkAddressableResource for Agent {
+    fn owner(&self) -> &str {
+        self.owner()
+    }
+
     fn network_target_names(&self) -> Vec<String> {
         self.target_endpoints()
             .iter()

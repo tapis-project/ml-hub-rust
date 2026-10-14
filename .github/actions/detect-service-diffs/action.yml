@@ -53,11 +53,13 @@ runs:
           deployments-migrator
           endpoints-migrator
           endpoint-router
+          endpoints
           hpc-cluster-seeder
           principals-migrator
           federated-identities-migrator
           hf-model-etl
           datasets
+          agents
         )
 
         JSON=$(jq -n '{services: []}')

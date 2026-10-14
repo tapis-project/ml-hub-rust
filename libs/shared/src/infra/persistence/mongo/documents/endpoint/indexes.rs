@@ -36,6 +36,55 @@ endpoint_index!(
     "endpoint_id_index_unique",
     doc! { "id": 1 }
 );
+
+pub struct EndpointOwnerPageIndex;
+
+impl Index for EndpointOwnerPageIndex {
+    type Collection = Endpoint;
+    const INDEX_NAME: &'static str = "endpoint_owner_page_index";
+
+    fn index() -> IndexModel {
+        IndexModel::builder()
+            .keys(doc! { "tenant_id": 1, "owner": 1, "_id": 1 })
+            .options(
+                IndexOptions::builder()
+                    .name(Self::INDEX_NAME.to_string())
+                    .build(),
+            )
+            .build()
+    }
+
+    fn collection_name() -> &'static str {
+        ENDPOINT_COLLECTION
+    }
+}
+
+pub struct EndpointResourcePageIndex;
+
+impl Index for EndpointResourcePageIndex {
+    type Collection = Endpoint;
+    const INDEX_NAME: &'static str = "endpoint_resource_page_index";
+
+    fn index() -> IndexModel {
+        IndexModel::builder()
+            .keys(doc! {
+                "tenant_id": 1,
+                "owner": 1,
+                "target_resource_urn": 1,
+                "_id": 1,
+            })
+            .options(
+                IndexOptions::builder()
+                    .name(Self::INDEX_NAME.to_string())
+                    .build(),
+            )
+            .build()
+    }
+
+    fn collection_name() -> &'static str {
+        ENDPOINT_COLLECTION
+    }
+}
 endpoint_index!(
     EndpointTenantSlugIndexUnique,
     "endpoint_tenant_slug_index_unique",

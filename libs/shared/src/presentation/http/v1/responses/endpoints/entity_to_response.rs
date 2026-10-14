@@ -1,3 +1,4 @@
+use crate::application::outputs::endpoint::ResolvedEndpointOutput;
 use crate::domain::entities::endpoint::NetworkAddressableResource;
 use crate::domain::entities::{agent, deployment, endpoint};
 use crate::presentation::http::v1::responses::endpoints as responses;
@@ -18,11 +19,13 @@ impl TryFrom<(endpoint::Endpoint, &agent::Agent)> for responses::Endpoint {
         Ok(Self {
             id: *value.0.id(),
             tenant_id: value.0.tenant_id().to_owned(),
+            owner: value.0.owner().to_owned(),
             target_resource_urn: value.0.target_resource_urn().as_str().to_owned(),
             target_name: value.0.target_name().to_owned(),
             slug: value.0.slug().to_owned(),
             proxy_url: String::new(),
-            target_base_url: target_base_url.to_owned(),
+            available: true,
+            target_base_url: Some(target_base_url.to_owned()),
         })
     }
 }
@@ -45,11 +48,29 @@ impl TryFrom<(endpoint::Endpoint, &deployment::ModelDeployment)> for responses::
         Ok(Self {
             id: *value.0.id(),
             tenant_id: value.0.tenant_id().to_owned(),
+            owner: value.0.owner().to_owned(),
             target_resource_urn: value.0.target_resource_urn().as_str().to_owned(),
             target_name: value.0.target_name().to_owned(),
             slug: value.0.slug().to_owned(),
             proxy_url: String::new(),
-            target_base_url: target_base_url.to_owned(),
+            available: true,
+            target_base_url: Some(target_base_url.to_owned()),
         })
+    }
+}
+
+impl From<ResolvedEndpointOutput> for responses::Endpoint {
+    fn from(value: ResolvedEndpointOutput) -> Self {
+        Self {
+            id: *value.endpoint.id(),
+            tenant_id: value.endpoint.tenant_id().to_owned(),
+            owner: value.endpoint.owner().to_owned(),
+            target_resource_urn: value.endpoint.target_resource_urn().as_str().to_owned(),
+            target_name: value.endpoint.target_name().to_owned(),
+            slug: value.endpoint.slug().to_owned(),
+            proxy_url: String::new(),
+            available: value.target_base_url.is_some(),
+            target_base_url: value.target_base_url,
+        }
     }
 }

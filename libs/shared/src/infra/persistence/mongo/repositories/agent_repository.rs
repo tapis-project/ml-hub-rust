@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 use mongodb::{
-    bson::{doc, to_bson},
+    bson::{doc, to_bson, Uuid as BsonUuid},
     Client, Collection,
 };
+use uuid::Uuid;
 
 use crate::application::ports::agent::AgentRepositoryError;
 use crate::application::ports::errors::InfrastructureError;
@@ -58,9 +59,9 @@ impl crate::application::ports::agent::AgentRepository for AgentRepository {
     async fn find_by_id(
         &self,
         tenant_id: &str,
-        id: &uuid::Uuid,
+        id: &Uuid,
     ) -> Result<Option<entities::agent::Agent>, AgentRepositoryError> {
-        let id = mongodb::bson::Uuid::from_bytes(*id.as_bytes());
+        let id = BsonUuid::from_bytes(*id.as_bytes());
 
         let document = self
             .read_collection
@@ -82,6 +83,23 @@ impl crate::application::ports::agent::AgentRepository for AgentRepository {
 
                 infrastructure_error.into()
             })
+    }
+
+    async fn find_by_ids(
+        &self,
+        tenant_id: &str,
+        ids: &[Uuid],
+    ) -> Result<Vec<entities::agent::Agent>, AgentRepositoryError> {
+        let ids = ids
+            .iter()
+            .map(|id| BsonUuid::from_bytes(*id.as_bytes()))
+            .collect::<Vec<_>>();
+
+        self.list(doc! {
+            "tenant_id": tenant_id,
+            "id": { "$in": ids },
+        })
+        .await
     }
 
     async fn save(&self, agent: &entities::agent::Agent) -> Result<(), AgentRepositoryError> {

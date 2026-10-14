@@ -36,9 +36,11 @@ echo "Starting Migrations"
 
 cd "$here/seeders/hpc-cluster-seeder"
 ./burnup.sh "$overlay"
+kubectl wait --for=condition=complete job/mlhub-hpc-cluster-seeder --timeout=10m
 
 cd "$here/migrations/models-migrator"
 ./burnup.sh "$overlay"
+kubectl wait --for=condition=complete job/mlhub-models-migrator --timeout=10m
 
 cd "$here/migrations/deployments-migrator"
 ./burnup.sh "$overlay"
@@ -46,27 +48,42 @@ kubectl wait --for=condition=complete job/mlhub-deployments-migrator --timeout=1
 
 cd "$here/migrations/endpoints-migrator"
 ./burnup.sh "$overlay"
+kubectl wait --for=condition=complete job/mlhub-endpoints-migrator --timeout=10m
 
 cd "$here/migrations/principals-migrator"
 ./burnup.sh "$overlay"
+kubectl wait --for=condition=complete job/mlhub-principals-migrator --timeout=10m
 
 cd "$here/migrations/federated-identities-migrator"
 ./burnup.sh "$overlay"
+kubectl wait --for=condition=complete job/mlhub-federated-identities-migrator --timeout=10m
 
 echo "All migrations started"
 
 echo "Starting APIs"
 
+cd "$here/endpoints"
+./burnup.sh "$overlay"
+kubectl rollout status deployment/mlhub-endpoints-api-deployment --timeout=10m
+
 cd "$here/endpoint-router"
 ./burnup.sh "$overlay"
+kubectl rollout status deployment/mlhub-endpoint-router-deployment --timeout=10m
 
 cd "$here/endpoint-envoy"
 ./burnup.sh "$overlay"
+kubectl rollout status deployment/mlhub-endpoint-envoy-deployment --timeout=10m
 
 cd "$here/models"
 ./burnup.sh "$overlay"
 
+cd "$here/datasets"
+./burnup.sh "$overlay"
+
 cd "$here/deployments"
+./burnup.sh "$overlay"
+
+cd "$here/agents"
 ./burnup.sh "$overlay"
 
 cd "$here/model-deployment-controller"

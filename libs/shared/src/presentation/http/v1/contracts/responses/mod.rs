@@ -5,6 +5,7 @@ use crate::presentation::http::v1::responses::{
     datasets::Dataset,
     deployment::ModelDeployment,
     deployment_options::{DeploymentOption, DeploymentOptionDetail},
+    endpoints::Endpoint,
     hpc_clusters::{HpcCluster, HpcClusterSummary},
     models::{ExternalModel, Model, ModelArtifact},
     platform_details::PlatformDetails,
@@ -276,6 +277,26 @@ pub struct ListModelArtifactResponse {
 #[derive(ToSchema)]
 pub struct ListHpcClustersResponse {
     pub result: Vec<HpcClusterSummary>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct ListEndpointsResponse {
+    pub result: Vec<Endpoint>,
+    pub status: u16,
+    pub message: String,
+    #[schema(value_type = Object)]
+    pub metadata: Value,
+    pub version: String,
+}
+
+#[derive(ToSchema)]
+pub struct GetEndpointResponse {
+    pub result: Endpoint,
     pub status: u16,
     pub message: String,
     #[schema(value_type = Object)]

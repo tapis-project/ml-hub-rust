@@ -80,6 +80,9 @@ impl EndpointIssuanceService {
                             EndpointRepositoryError::Persistence(_) => {
                                 RetryStrategyAction::ContinueRetries
                             }
+                            EndpointRepositoryError::InvalidCursor => {
+                                RetryStrategyAction::ReturnResult
+                            }
                         },
                     )
                     .await;

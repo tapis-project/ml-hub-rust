@@ -66,6 +66,38 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         document.map(map_document).transpose()
     }
 
+    async fn find_by_ids_and_tenant(
+        &self,
+        tenant_id: &str,
+        deployment_ids: &[entities::deployment::ModelDeploymentId],
+    ) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+        let deployment_ids = deployment_ids
+            .iter()
+            .map(|id| Uuid::from_bytes(*id.as_uuid().as_bytes()))
+            .collect::<Vec<_>>();
+
+        let mut cursor = self
+            .read_collection
+            .find(doc! {
+                "tenant_id": tenant_id,
+                "id": { "$in": deployment_ids },
+            })
+            .await
+            .map_err(|error| map_error("Could not find model deployments", error))?;
+
+        let mut deployments = Vec::new();
+
+        while let Some(document) = cursor
+            .try_next()
+            .await
+            .map_err(|error| map_error("Could not read model deployments", error))?
+        {
+            deployments.push(map_document(document)?);
+        }
+
+        Ok(deployments)
+    }
+
     async fn save(
         &self,
         input: &entities::deployment::ModelDeployment,

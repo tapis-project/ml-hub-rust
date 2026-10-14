@@ -12,4 +12,5 @@ pub mod dataset;
 pub mod deployment;
 pub mod deployment_option;
 pub mod discover_models;
+pub mod endpoint;
 pub mod principal;

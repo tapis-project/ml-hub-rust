@@ -10,11 +10,13 @@ pub struct Endpoint {
     #[schema(value_type = String, format = "uuid")]
     pub id: Uuid,
     pub tenant_id: String,
+    pub owner: String,
     pub target_resource_urn: String,
     pub target_name: String,
     pub slug: String,
     pub proxy_url: String,
-    pub target_base_url: String,
+    pub available: bool,
+    pub target_base_url: Option<String>,
 }
 
 impl Endpoint {

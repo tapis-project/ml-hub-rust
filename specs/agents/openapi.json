@@ -735,16 +735,23 @@
         "required": [
           "id",
           "tenant_id",
+          "owner",
           "target_resource_urn",
           "target_name",
           "slug",
           "proxy_url",
-          "target_base_url"
+          "available"
         ],
         "properties": {
+          "available": {
+            "type": "boolean"
+          },
           "id": {
             "type": "string",
             "format": "uuid"
+          },
+          "owner": {
+            "type": "string"
           },
           "proxy_url": {
             "type": "string"
@@ -753,7 +760,10 @@
             "type": "string"
           },
           "target_base_url": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "target_name": {
             "type": "string"
