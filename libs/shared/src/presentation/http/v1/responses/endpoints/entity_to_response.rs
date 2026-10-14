@@ -21,6 +21,7 @@ impl TryFrom<(endpoint::Endpoint, &agent::Agent)> for responses::Endpoint {
             target_resource_urn: value.0.target_resource_urn().as_str().to_owned(),
             target_name: value.0.target_name().to_owned(),
             slug: value.0.slug().to_owned(),
+            proxy_url: String::new(),
             target_base_url: target_base_url.to_owned(),
         })
     }
@@ -47,6 +48,7 @@ impl TryFrom<(endpoint::Endpoint, &deployment::ModelDeployment)> for responses::
             target_resource_urn: value.0.target_resource_urn().as_str().to_owned(),
             target_name: value.0.target_name().to_owned(),
             slug: value.0.slug().to_owned(),
+            proxy_url: String::new(),
             target_base_url: target_base_url.to_owned(),
         })
     }

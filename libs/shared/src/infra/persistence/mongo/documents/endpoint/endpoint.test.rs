@@ -1,5 +1,11 @@
 use crate::domain::entities::endpoint::{Endpoint, ReconstituteEndpointProps};
+use crate::infra::_common::mongo::Index;
+use crate::infra::persistence::mongo::database::ENDPOINT_COLLECTION;
+use crate::infra::persistence::mongo::documents::endpoint::indexes::{
+    EndpointIdIndexUnique, EndpointTargetIndexUnique, EndpointTenantSlugIndexUnique,
+};
 use crate::shared_kernel::identifiers::urn::Urn;
+use mongodb::bson::doc;
 
 use super::Endpoint as EndpointDocument;
 
@@ -25,4 +31,34 @@ fn endpoint_document_round_trip_preserves_fields() {
     );
     assert_eq!(reconstituted.target_name(), "rest");
     assert_eq!(reconstituted.slug(), "abc123def4");
+}
+
+#[test]
+fn endpoint_indexes_enforce_identity_and_route_uniqueness() {
+    let id_index = EndpointIdIndexUnique::index();
+    let tenant_slug_index = EndpointTenantSlugIndexUnique::index();
+    let target_index = EndpointTargetIndexUnique::index();
+
+    assert_eq!(
+        EndpointIdIndexUnique::collection_name(),
+        ENDPOINT_COLLECTION
+    );
+    assert_eq!(id_index.keys, doc! { "id": 1 });
+    assert_eq!(tenant_slug_index.keys, doc! { "tenant_id": 1, "slug": 1 });
+    assert_eq!(
+        target_index.keys,
+        doc! { "tenant_id": 1, "target_resource_urn": 1, "target_name": 1 }
+    );
+    assert_eq!(
+        id_index.options.and_then(|options| options.unique),
+        Some(true)
+    );
+    assert_eq!(
+        tenant_slug_index.options.and_then(|options| options.unique),
+        Some(true)
+    );
+    assert_eq!(
+        target_index.options.and_then(|options| options.unique),
+        Some(true)
+    );
 }

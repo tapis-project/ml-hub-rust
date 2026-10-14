@@ -7,7 +7,9 @@ use uuid::Uuid;
 use crate::domain::entities::agent_record::{
     AgentRecord, LivenessProbeConfiguration, MessageBinding, Protocol,
 };
-use crate::domain::entities::endpoint::NetworkAddressableResource;
+use crate::domain::entities::endpoint::{
+    NetworkAddressableResource, NetworkProtocol, NetworkTargetError, ResolvedNetworkTarget,
+};
 use crate::domain::entities::tenancy::TenantScopedResource;
 use crate::impl_urn_generator;
 use crate::shared_kernel::enums::Visibility;
@@ -473,5 +475,36 @@ impl NetworkAddressableResource for Agent {
             .iter()
             .find(|endpoint| endpoint.name() == Some(target_name))
             .and_then(AgentEndpoint::base_url)
+    }
+
+    fn resolve_network_target(
+        &self,
+        target_name: &str,
+    ) -> Result<Option<ResolvedNetworkTarget>, NetworkTargetError> {
+        let Some(endpoint) = self
+            .target_endpoints()
+            .iter()
+            .find(|endpoint| endpoint.name() == Some(target_name))
+        else {
+            return Ok(None);
+        };
+
+        let is_http = matches!(endpoint.protocol(), Protocol::RestHttp)
+            || matches!(
+                (endpoint.protocol(), endpoint.message_binding()),
+                (
+                    Protocol::Rpc,
+                    Some(MessageBinding::HttpJson | MessageBinding::JsonRpc2_0)
+                )
+            );
+
+        if !is_http {
+            return Err(NetworkTargetError::UnsupportedProtocol);
+        }
+
+        endpoint
+            .base_url()
+            .map(|base_url| ResolvedNetworkTarget::new(NetworkProtocol::RestHttp, base_url))
+            .transpose()
     }
 }

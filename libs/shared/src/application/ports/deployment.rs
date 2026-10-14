@@ -26,6 +26,12 @@ pub enum ModelDeploymentRepositoryError {
 
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
+    async fn find_by_id_and_tenant(
+        &self,
+        tenant_id: &str,
+        deployment_id: &ModelDeploymentId,
+    ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+
     async fn save(
         &self,
         deployment: &ModelDeployment,

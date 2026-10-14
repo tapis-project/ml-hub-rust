@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-endpoint-envoy-deployment
+  labels:
+    app: mlhub-endpoint-envoy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-endpoint-envoy
+  template:
+    metadata:
+      labels:
+        app: mlhub-endpoint-envoy
+    spec:
+      containers:
+        - name: envoy
+          image: envoyproxy/envoy:v1.39.4
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - >-
+              sed "s|__ALLOWED_ORIGIN_REGEX__|${ALLOWED_ORIGIN_REGEX}|g"
+              /etc/envoy-template/envoy.yaml > /tmp/envoy.yaml &&
+              exec envoy -c /tmp/envoy.yaml
+          env:
+            - name: ALLOWED_ORIGIN_REGEX
+              value: ^https?://localhost(:[0-9]+)?$
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy-template/envoy.yaml
+              subPath: envoy.yaml
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: mlhub-endpoint-envoy-config

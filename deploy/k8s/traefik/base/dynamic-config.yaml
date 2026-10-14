@@ -5,6 +5,11 @@ http:
         prefixes:
           - "/v3/mlhub"
   routers:
+    endpoint-envoy:
+      rule: "PathPrefix(`/v3/mlhub/endpoints/`)"
+      priority: 100
+      service: endpoint-envoy
+
     dashboard:
       #rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       rule: "PathPrefix(`/v3/mlhub/dashboard`)"
@@ -37,6 +42,11 @@ http:
       service: agents-api
 
   services:
+    endpoint-envoy:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-endpoint-envoy-service:8080
+
     models-api:
       loadBalancer:
         servers:

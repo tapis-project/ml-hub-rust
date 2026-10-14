@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use thiserror::Error;
+use uuid::Uuid;
 
 use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::agent::Agent;
@@ -12,6 +13,12 @@ pub enum AgentRepositoryError {
 
 #[async_trait]
 pub trait AgentRepository: Send + Sync {
+    async fn find_by_id(
+        &self,
+        tenant_id: &str,
+        id: &Uuid,
+    ) -> Result<Option<Agent>, AgentRepositoryError>;
+
     async fn save(&self, agent: &Agent) -> Result<(), AgentRepositoryError>;
 
     async fn list_by_owner(

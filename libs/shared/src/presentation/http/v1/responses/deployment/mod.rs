@@ -36,6 +36,17 @@ pub struct ModelDeployment {
     pub revision: u32,
 }
 
+impl ModelDeployment {
+    pub fn populate_endpoint_proxy_url(
+        &mut self,
+        configuration: &crate::infra::configuration::EndpointRouterConfiguration,
+    ) {
+        if let Some(endpoint) = self.endpoint.as_mut() {
+            endpoint.populate_proxy_url(configuration);
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub enum DeploymentModality {
     Batch,

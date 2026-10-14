@@ -10,8 +10,10 @@ use actix_web::{HttpMessage, HttpResponse};
 use log::{error, info, warn};
 use serde_json::json;
 
-use crate::application::inputs::principal::GetOrCreateFromFederatedIdentity;
 use crate::application::ports::identity::FederatedIdentityProviderError;
+use crate::application::services::authentication_service::{
+    authenticate_token, AuthenticationServiceError,
+};
 use crate::application::services::federated_identity_service::FederatedIdentityService;
 use crate::application::services::federated_idp_registrar::FederatedIdpRegistrar;
 use crate::application::services::principal_service::{PrincipalService, PrincipalServiceError};
@@ -19,7 +21,6 @@ use crate::domain::entities::tenancy::Tenant;
 use crate::presentation::http::v1::actix_web::helpers::get_header_value;
 use crate::presentation::http::v1::adapters::derive_header_keys_from_authorities;
 use crate::presentation::http::v1::requests::common::headers::AuthToken;
-use crate::shared_kernel::context::{Actor, RequestContext};
 
 pub async fn authenticate(
     req: ServiceRequest,
@@ -101,137 +102,85 @@ pub async fn authenticate(
         }
     };
 
-    // Determine IDP name from the token
-    let authority = match federated_identity_service.resolve_idp_from_token(&token.into_inner()) {
-        Some(a) => a,
+    let principal_service = match req.app_data::<web::Data<PrincipalService>>().cloned() {
+        Some(service) => service.into_inner(),
         None => {
-            error!("Failed to derive Authority from token");
+            error!("Principal service not found in authentication middleware");
+
             return Ok(req
                 .into_response(
-                    HttpResponse::Unauthorized()
-                        .json(json!({"error": "Failed to derive Authority"})),
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "Principal service not found"})),
                 )
                 .map_into_right_body());
         }
     };
 
-    // Get the federated identitiy service from the registrar
-    let idp = match idp_registrar.get_by_authority(authority.clone()) {
-        Some(i) => i,
-        None => {
-            error!(
-                "Failed to find an IDP from the IDP registrar using authority {}",
-                &authority
-            );
+    let request_context = match authenticate_token(
+        token.into_inner(),
+        &tenant.id,
+        &federated_identity_service,
+        &idp_registrar,
+        &principal_service,
+    )
+    .await
+    {
+        Ok(context) => context,
+        Err(AuthenticationServiceError::TenantMismatch { .. }) => {
+            warn!("Authenticated identity does not belong to the requested tenant");
+
             return Ok(req
-                .into_response(HttpResponse::Unauthorized().finish())
+                .into_response(HttpResponse::Forbidden().json(json!({"error": "Federated user's tenant_id does not match the resolved tenant_id"})))
+                .map_into_right_body());
+        }
+        Err(AuthenticationServiceError::IdentityProvider(
+            FederatedIdentityProviderError::InvalidCredentials(message)
+            | FederatedIdentityProviderError::MalformedCredentials(message),
+        )) => {
+            warn!("Malformed or invalid credentials");
+
+            return Ok(req
+                .into_response(HttpResponse::Unauthorized().json(json!({"error": message})))
+                .map_into_right_body());
+        }
+        Err(AuthenticationServiceError::Principal(
+            PrincipalServiceError::FederatedIdentityConflict(..)
+            | PrincipalServiceError::PrincipalConflict,
+        )) => {
+            info!("Principal identity conflict while authenticating request");
+
+            return Ok(req
+                .into_response(
+                    HttpResponse::Conflict().json(json!({"error": "Principal identity conflict"})),
+                )
+                .map_into_right_body());
+        }
+        Err(AuthenticationServiceError::IdentityProvider(
+            FederatedIdentityProviderError::InternalIdpError(_)
+            | FederatedIdentityProviderError::InitializationError(_, _),
+        ))
+        | Err(AuthenticationServiceError::Principal(PrincipalServiceError::InternalError(_))) => {
+            error!("Authentication dependency failed");
+
+            return Ok(req
+                .into_response(
+                    HttpResponse::InternalServerError()
+                        .json(json!({"error": "Authentication service unavailable"})),
+                )
+                .map_into_right_body());
+        }
+        Err(error) => {
+            error!("Authentication failed: {error}");
+
+            return Ok(req
+                .into_response(
+                    HttpResponse::Unauthorized().json(json!({"error": error.to_string()})),
+                )
                 .map_into_right_body());
         }
     };
 
-    // Authenticate with the IDP and get the federated identity. Might be missing.
-    let maybe_federated_identity = match idp.authenticate(token.into_inner()).await {
-        Ok(f) => f,
-        Err(err) => {
-            use FederatedIdentityProviderError as E;
-            return match err {
-                E::InvalidCredentials(msg) | E::MalformedCredentials(msg) => {
-                    warn!("Malformed or invalid credentials found when attempting to authenticate with IDP {}. Error: {}", &authority, &msg);
-                    Ok(req
-                        .into_response(HttpResponse::Unauthorized().json(json!({"error": msg})))
-                        .map_into_right_body())
-                }
-                E::InternalIdpError(msg) | E::InitializationError(_, msg) => {
-                    error!("Internal IDP error: {}", &msg);
-                    Ok(req
-                        .into_response(
-                            HttpResponse::InternalServerError().json(json!({"error": msg})),
-                        )
-                        .map_into_right_body())
-                }
-            };
-        }
-    };
-
-    // Check that the tenant of the federated identity and the tenant resolved from
-    // the requested fqdn are the same
-    let maybe_federated_identity = match maybe_federated_identity {
-        Some(i) => {
-            if i.clone().tenant_id != tenant.id {
-                warn!("The federated identity's tenant ID does not match the tenant ID derived in a previous step. Expected: {}. Found: {}", tenant.id, i.clone().tenant_id);
-                return Ok(
-                    req
-                        .into_response(HttpResponse::Forbidden().json(json!({"error": "Federated user's tenant_id does not match the resolved tenanat_id"})))
-                        .map_into_right_body()
-                );
-            }
-
-            Some(i)
-        }
-        None => None,
-    };
-
-    // Get the Principal that owns this federated identity
-    if let Some(identity) = maybe_federated_identity {
-        let principal_id = match authority.resolve_principal_id(&identity) {
-            Ok(id) => id,
-            Err(err) => {
-                info!("Unable to resolve principal id: {}", &err);
-                return Ok(req
-                    .into_response(
-                        HttpResponse::Unauthorized().json(json!({"error": err.to_string()})),
-                    )
-                    .map_into_right_body());
-            }
-        };
-
-        let principal_service = match req.app_data::<web::Data<PrincipalService>>().cloned() {
-            Some(s) => s.into_inner(),
-            None => {
-                error!("Principal service not found in authentication middleware. This is very likely a bootstraping issue");
-                return Ok(req
-                    .into_response(
-                        HttpResponse::InternalServerError()
-                            .json(json!({"error": "Principal service not found"})),
-                    )
-                    .map_into_right_body());
-            }
-        };
-
-        let input = GetOrCreateFromFederatedIdentity {
-            principal_id,
-            identity,
-        };
-
-        let principal = match principal_service.get_or_create_from_identity(input).await {
-            Ok(p) => p,
-            Err(err) => {
-                let resp = match err {
-                    PrincipalServiceError::FederatedIdentityConflict(..) => {
-                        info!("Federated identity conflict: {}", err.to_string());
-                        HttpResponse::Conflict().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())}))
-                    }
-                    PrincipalServiceError::PrincipalConflict => {
-                        info!("Principal conflict: {}", err.to_string());
-                        HttpResponse::Conflict().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())}))
-                    }
-                    PrincipalServiceError::InternalError(..) => {
-                        error!(
-                            "Internal error creating principal from federated identity: {}",
-                            err.to_string()
-                        );
-                        HttpResponse::InternalServerError().json(json!({"error": format!("Error fetching or creating principal: {}", err.to_string())}))
-                    }
-                };
-
-                return Ok(req.into_response(resp).map_into_right_body());
-            }
-        };
-
-        let request_context = RequestContext::new(Actor::from(principal), "".into(), None, None, None);
-
-        req.extensions_mut().insert(request_context);
-    }
+    req.extensions_mut().insert(request_context);
 
     // Call the next middleware
     Ok(next.call(req).await?.map_into_left_body())

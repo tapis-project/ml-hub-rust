@@ -49,6 +49,23 @@ impl ModelDeploymentRepository {
 
 #[async_trait::async_trait]
 impl application::ports::deployment::ModelDeploymentRepository for ModelDeploymentRepository {
+    async fn find_by_id_and_tenant(
+        &self,
+        tenant_id: &str,
+        deployment_id: &entities::deployment::ModelDeploymentId,
+    ) -> Result<Option<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+        let document = self
+            .read_collection
+            .find_one(doc! {
+                "tenant_id": tenant_id,
+                "id": Uuid::from_bytes(*deployment_id.as_uuid().as_bytes()),
+            })
+            .await
+            .map_err(|error| map_error("Could not find model deployment", error))?;
+
+        document.map(map_document).transpose()
+    }
+
     async fn save(
         &self,
         input: &entities::deployment::ModelDeployment,

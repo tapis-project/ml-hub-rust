@@ -9,6 +9,7 @@ use shared::application::services::endpoint_query_service::EndpointQueryService;
 use shared::application::services::model_deployment_service::ListModelDeploymentsByOwnerInput;
 use shared::application::services::model_deployment_service::ModelDeploymentService;
 use shared::domain::entities::endpoint::NetworkAddressableResource;
+use shared::infra::configuration::SiteConfiguration;
 use shared::shared_kernel::context::RequestContext;
 
 #[utoipa::path(
@@ -43,6 +44,7 @@ use shared::shared_kernel::context::RequestContext;
 async fn list_model_deployments(
     service: web::Data<ModelDeploymentService>,
     endpoint_query_service: web::Data<EndpointQueryService>,
+    site_configuration: web::Data<SiteConfiguration>,
     ctx: RequestContext,
 ) -> impl Responder {
     let maybe_deployments = service
@@ -74,10 +76,12 @@ async fn list_model_deployments(
             }
         };
 
-        let model_resp = match responses::ModelDeployment::try_from((deployment, endpoints)) {
+        let mut model_resp = match responses::ModelDeployment::try_from((deployment, endpoints)) {
             Ok(m) => m,
             Err(err) => return build_error_response(500, err.to_string()),
         };
+
+        model_resp.populate_endpoint_proxy_url(&site_configuration.endpoint_router);
 
         match to_value(model_resp) {
             Ok(v) => values.push(v),

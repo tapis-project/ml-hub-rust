@@ -12,6 +12,7 @@ use shared::application::services::model_deployment_service::{
 };
 use shared::domain::entities::deployment::ModelDeploymentId;
 use shared::domain::entities::endpoint::NetworkAddressableResource;
+use shared::infra::configuration::SiteConfiguration;
 use shared::presentation::http::v1::requests::deployment::StartModelDeploymentPathParams;
 use shared::shared_kernel::context::RequestContext;
 
@@ -60,6 +61,7 @@ async fn start_model_deployment(
     path: web::Path<StartModelDeploymentPathParams>,
     service: web::Data<ModelDeploymentService>,
     endpoint_query_service: web::Data<EndpointQueryService>,
+    site_configuration: web::Data<SiteConfiguration>,
     ctx: RequestContext,
 ) -> impl Responder {
     let input = StartModelDeploymentInput {
@@ -87,10 +89,12 @@ async fn start_model_deployment(
         }
     };
 
-    let response = match ModelDeployment::try_from((output.deployment, endpoints)) {
+    let mut response = match ModelDeployment::try_from((output.deployment, endpoints)) {
         Ok(response) => response,
         Err(error) => return build_error_response(500, error.to_string()),
     };
+
+    response.populate_endpoint_proxy_url(&site_configuration.endpoint_router);
 
     let resp = match to_value(response) {
         Ok(r) => r,

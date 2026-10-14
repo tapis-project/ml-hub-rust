@@ -2,5 +2,10 @@
     "site_id": "tacc",
     "base_url": "https://admin.develop.tapis.io",
     "idps": ["tapis"],
-    "tenancy_resolution_mode": "subdomain"
+    "tenancy_resolution_mode": "subdomain",
+    "endpoint_router": {
+        "public_url_template": "http://{tenant}.local.develop.tapis.io/v3/mlhub/endpoints/{slug}",
+        "route_cache_ttl_seconds": 30,
+        "route_cache_capacity": 10000
+    }
 }

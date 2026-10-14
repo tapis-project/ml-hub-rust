@@ -245,6 +245,10 @@ impl ModelDeployment {
         &self.id
     }
 
+    pub fn owner(&self) -> &str {
+        &self.owner
+    }
+
     pub fn resolve_reconciliation_requirement(
         &self,
         evaluated_at: &TimeStamp,

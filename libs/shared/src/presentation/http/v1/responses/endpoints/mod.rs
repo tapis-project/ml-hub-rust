@@ -13,7 +13,17 @@ pub struct Endpoint {
     pub target_resource_urn: String,
     pub target_name: String,
     pub slug: String,
+    pub proxy_url: String,
     pub target_base_url: String,
+}
+
+impl Endpoint {
+    pub fn populate_proxy_url(
+        &mut self,
+        configuration: &crate::infra::configuration::EndpointRouterConfiguration,
+    ) {
+        self.proxy_url = configuration.build_public_url(&self.tenant_id, &self.slug);
+    }
 }
 
 #[derive(Debug, Error)]

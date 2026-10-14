@@ -1,4 +1,6 @@
 use nanoid::nanoid;
+use thiserror::Error;
+use url::Url;
 use uuid::Uuid;
 
 use crate::domain::entities::tenancy::TenantScopedResource;
@@ -80,10 +82,63 @@ pub struct ReconstituteEndpointProps {
     pub slug: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum NetworkProtocol {
+    RestHttp,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ResolvedNetworkTarget {
+    protocol: NetworkProtocol,
+    base_url: Url,
+}
+
+impl ResolvedNetworkTarget {
+    pub fn new(
+        protocol: NetworkProtocol,
+        base_url: impl AsRef<str>,
+    ) -> Result<Self, NetworkTargetError> {
+        let base_url = Url::parse(base_url.as_ref())
+            .map_err(|_| NetworkTargetError::InvalidBaseUrl(base_url.as_ref().into()))?;
+
+        if !matches!(base_url.scheme(), "http" | "https") || base_url.host_str().is_none() {
+            return Err(NetworkTargetError::InvalidBaseUrl(base_url.to_string()));
+        }
+
+        Ok(Self { protocol, base_url })
+    }
+
+    pub fn protocol(&self) -> &NetworkProtocol {
+        &self.protocol
+    }
+
+    pub fn base_url(&self) -> &Url {
+        &self.base_url
+    }
+}
+
+#[derive(Clone, Debug, Error, Eq, PartialEq)]
+pub enum NetworkTargetError {
+    #[error("Invalid network target base URL: {0}")]
+    InvalidBaseUrl(String),
+
+    #[error("Network target protocol is not supported by the endpoint proxy")]
+    UnsupportedProtocol,
+}
+
 pub trait NetworkAddressableResource: TenantScopedResource + UrnGenerator {
     fn network_target_names(&self) -> Vec<String>;
 
     fn resolve_target_url(&self, target_name: &str) -> Option<&str>;
+
+    fn resolve_network_target(
+        &self,
+        target_name: &str,
+    ) -> Result<Option<ResolvedNetworkTarget>, NetworkTargetError> {
+        self.resolve_target_url(target_name)
+            .map(|base_url| ResolvedNetworkTarget::new(NetworkProtocol::RestHttp, base_url))
+            .transpose()
+    }
 }
 
 #[cfg(test)]

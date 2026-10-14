@@ -90,6 +90,7 @@ fi
             [
                 "dev buildl models-migrator",
                 "dev buildl deployments-migrator",
+                "dev buildl endpoints-migrator",
                 "dev buildl federated-identities-migrator",
                 "dev buildl principals-migrator",
                 "dev buildl hpc-cluster-seeder",
@@ -97,6 +98,7 @@ fi
                 "dev buildl datasets",
                 "dev buildl deployments",
                 "dev buildl agents",
+                "dev buildl endpoint-router",
                 "dev buildl artifact-ingester",
                 "dev buildl artifact-publisher",
                 "dev buildl model-deployment-controller",
@@ -136,6 +138,8 @@ fi
         self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run-models migrations -t overlay minikube"))
         self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run-deployments migrations -t overlay minikube"))
         self.assertLess(commands.index("dev run-deployments migrations -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
+        self.assertLess(commands.index("dev run endpoints-migrator -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
+        self.assertLess(commands.index("dev start endpoint-router -t overlay minikube"), commands.index("dev start envoy -t overlay minikube"))
         self.assertLess(commands.index("dev run-principals migrations -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
         self.assertLess(commands.index("dev run hf-model-etl -t overlay minikube"), commands.index("dev run hf-dataset-etl -t overlay minikube"))

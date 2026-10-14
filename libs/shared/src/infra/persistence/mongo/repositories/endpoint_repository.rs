@@ -5,6 +5,7 @@ use mongodb::{bson::doc, Client, Collection};
 use crate::application::ports::endpoint::EndpointRepositoryError;
 use crate::application::ports::errors::InfrastructureError;
 use crate::domain::entities::endpoint as entities;
+use crate::infra::_common::mongo::is_duplicate_key_error;
 use crate::infra::persistence::mongo::database::ENDPOINT_COLLECTION;
 use crate::infra::persistence::mongo::documents::endpoint::Endpoint;
 
@@ -50,11 +51,50 @@ impl crate::application::ports::endpoint::EndpointRepository for EndpointReposit
             .map(|endpoint| endpoint.map(entities::Endpoint::from))
     }
 
-    async fn save(&self, endpoint: &entities::Endpoint) -> Result<(), EndpointRepositoryError> {
-        self.write_collection
-            .insert_one(Endpoint::from(endpoint))
+    async fn get_by_tenant_and_slug(
+        &self,
+        tenant_id: &str,
+        slug: &str,
+    ) -> Result<Option<entities::Endpoint>, EndpointRepositoryError> {
+        self.read_collection
+            .find_one(doc! { "tenant_id": tenant_id, "slug": slug })
             .await
-            .map_err(log_persistence_error)?;
+            .map_err(log_persistence_error)
+            .map_err(EndpointRepositoryError::from)
+            .map(|endpoint| endpoint.map(entities::Endpoint::from))
+    }
+
+    async fn get_by_target(
+        &self,
+        tenant_id: &str,
+        target_resource_urn: &str,
+        target_name: &str,
+    ) -> Result<Option<entities::Endpoint>, EndpointRepositoryError> {
+        self.read_collection
+            .find_one(doc! {
+                "tenant_id": tenant_id,
+                "target_resource_urn": target_resource_urn,
+                "target_name": target_name,
+            })
+            .await
+            .map_err(log_persistence_error)
+            .map_err(EndpointRepositoryError::from)
+            .map(|endpoint| endpoint.map(entities::Endpoint::from))
+    }
+
+    async fn save(&self, endpoint: &entities::Endpoint) -> Result<(), EndpointRepositoryError> {
+        let result = self
+            .write_collection
+            .insert_one(Endpoint::from(endpoint))
+            .await;
+
+        if let Err(error) = result {
+            if is_duplicate_key_error(&error) {
+                return Err(EndpointRepositoryError::AlreadyExists);
+            }
+
+            return Err(log_persistence_error(error).into());
+        }
 
         Ok(())
     }

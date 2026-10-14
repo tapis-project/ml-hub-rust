@@ -14,6 +14,10 @@
     "models-image": "tapis/mlhub-models-api",
     "models-migrator-image": "tapis/mlhub-models-migrator",
     "deployments-migrator-image": "tapis/mlhub-deployments-migrator",
+    "endpoints-migrator-image": "tapis/mlhub-endpoints-migrator",
+    "endpoint-router-image": "tapis/mlhub-endpoint-router",
+    "endpoint-router-deployment": "mlhub-endpoint-router-deployment",
+    "endpoint-envoy-deployment": "mlhub-endpoint-envoy-deployment",
     "hpc-cluster-seeder-image": "tapis/mlhub-hpc-cluster-seeder",
     "principals-migrator-image": "tapis/mlhub-principals-migrator",
     "federated-identities-migrator-image": "tapis/mlhub-federated-identities-migrator",
@@ -125,6 +129,55 @@
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
         "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
       }
+    },
+    {
+      "name": "endpoints-migrator",
+      "description": "Standalone MongoDB schema migrator for issued endpoints",
+      "rootDir": "services/endpoints-migrator",
+      "lifecycle": "experimental",
+      "commands": {
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} . && minikube image rm {{ {{ self.name }}-image }}:{{ local }} || true && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml"
+      }
+    },
+    {
+      "name": "endpoint-router",
+      "description": "Resolves issued endpoint routes for Envoy",
+      "rootDir": "services/endpoint-router",
+      "labels": ["bin", "service"],
+      "lifecycle": "experimental",
+      "commands": {
+        "start": "cd {{ k8s-dir }}/{{ self.name }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ k8s-dir }}/{{ self.name }} && ./burndown.sh {{ overlay }}",
+        "build": "docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f {{ self.rootDir }}/Dockerfile.{{ env }} -t {{ {{ self.name }}-image }}:{{ tag }} --build-arg SERVICE_NAME={{ self.name }} .",
+        "buildl": "docker build -f {{ self.rootDir }}/Dockerfile.local -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} . && minikube image load {{ {{ self.name }}-image }}:{{ local }}",
+        "buildp": "{{ self.commands.build }} && {{ self.commands.push }}",
+        "cyclel": "./dev stop {{ self.name }} -t overlay {{ overlay }} && ./dev buildl {{ self.name }} && ./dev start {{ self.name }} -t overlay {{ overlay }}",
+        "push": "docker push {{ {{ self.name }}-image }}:{{ tag }}",
+        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml",
+        "logs": "kubectl logs deployment/{{ endpoint-router-deployment }}",
+        "watch": "kubectl logs deployment/{{ endpoint-router-deployment }} -f"
+      }
+    },
+    {
+      "name": "envoy",
+      "description": "Streams issued endpoint traffic to resolved network targets",
+      "rootDir": "deploy/k8s/endpoint-envoy",
+      "labels": ["component", "infra"],
+      "lifecycle": "experimental",
+      "commands": {
+        "start": "cd {{ self.rootDir }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ self.rootDir }} && ./burndown.sh {{ overlay }}",
+        "logs": "kubectl logs deployment/{{ endpoint-envoy-deployment }}",
+        "watch": "kubectl logs deployment/{{ endpoint-envoy-deployment }} -f",
+        "exec": "kubectl exec -it deployment/{{ endpoint-envoy-deployment }} -- sh",
+        "code": "code {{ self.rootDir }}/base/envoy.yaml"
+      },
+      "dependencies": ["traefik", "endpoint-router"]
     },
     {
       "name": "hpc-cluster-seeder",
@@ -710,10 +763,11 @@
       "labels": ["workflow"],
       "lifecycle": "experimental",
       "commands": {
-        "buildl-all": "./dev buildl hpc-cluster-seeder models-migrator deployments-migrator federated-identities-migrator principals-migrator",
-        "run-all": "./dev run hpc-cluster-seeder -t overlay {{ overlay }} && ./dev run-models migrations -t overlay {{ overlay }} && ./dev run-deployments migrations -t overlay {{ overlay }} && ./dev run-federated-identities migrations -t overlay {{ overlay }} && ./dev run-principals migrations -t overlay {{ overlay }}",
+        "buildl-all": "./dev buildl hpc-cluster-seeder models-migrator deployments-migrator endpoints-migrator federated-identities-migrator principals-migrator",
+        "run-all": "./dev run hpc-cluster-seeder -t overlay {{ overlay }} && ./dev run-models migrations -t overlay {{ overlay }} && ./dev run-deployments migrations -t overlay {{ overlay }} && ./dev run-endpoints migrations -t overlay {{ overlay }} && ./dev run-federated-identities migrations -t overlay {{ overlay }} && ./dev run-principals migrations -t overlay {{ overlay }}",
         "run-models": "cd {{ k8s-dir }}/{{ self.name }}/models-migrator && ./burnup.sh {{ overlay }}",
         "run-deployments": "cd {{ k8s-dir }}/{{ self.name }}/deployments-migrator && ./burnup.sh {{ overlay }}",
+        "run-endpoints": "cd {{ k8s-dir }}/{{ self.name }}/endpoints-migrator && ./burnup.sh {{ overlay }}",
         "run-federated-identities": "cd {{ k8s-dir }}/{{ self.name }}/federated-identities-migrator && ./burnup.sh {{ overlay }}",
         "run-principals": "cd {{ k8s-dir }}/{{ self.name }}/principals-migrator && ./burnup.sh {{ overlay }}"
       }

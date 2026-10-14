@@ -51,6 +51,8 @@ runs:
           artifact-publisher
           models-migrator
           deployments-migrator
+          endpoints-migrator
+          endpoint-router
           hpc-cluster-seeder
           principals-migrator
           federated-identities-migrator

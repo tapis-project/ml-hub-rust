@@ -55,6 +55,35 @@ impl AgentRepository {
 
 #[async_trait]
 impl crate::application::ports::agent::AgentRepository for AgentRepository {
+    async fn find_by_id(
+        &self,
+        tenant_id: &str,
+        id: &uuid::Uuid,
+    ) -> Result<Option<entities::agent::Agent>, AgentRepositoryError> {
+        let id = mongodb::bson::Uuid::from_bytes(*id.as_bytes());
+
+        let document = self
+            .read_collection
+            .find_one(doc! { "tenant_id": tenant_id, "id": id })
+            .await
+            .map_err(log_persistence_error)?;
+
+        document
+            .map(entities::agent::Agent::try_from)
+            .transpose()
+            .map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Agent data integrity error: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+
+                infrastructure_error.into()
+            })
+    }
+
     async fn save(&self, agent: &entities::agent::Agent) -> Result<(), AgentRepositoryError> {
         self.write_collection
             .insert_one(Agent::from(agent))

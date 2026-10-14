@@ -1,5 +1,6 @@
 pub mod document_to_entity;
 pub mod entity_to_document;
+pub mod indexes;
 
 use mongodb::bson::{oid::ObjectId, Uuid};
 use serde::{Deserialize, Serialize};
