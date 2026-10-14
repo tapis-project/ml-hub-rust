@@ -492,11 +492,14 @@ components:
         - target_resource_urn
         - target_name
         - slug
+        - proxy_url
         - target_base_url
       properties:
         id:
           type: string
           format: uuid
+        proxy_url:
+          type: string
         slug:
           type: string
         target_base_url:

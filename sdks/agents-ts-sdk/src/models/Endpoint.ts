@@ -30,6 +30,12 @@ export interface Endpoint {
      * @type {string}
      * @memberof Endpoint
      */
+    proxy_url: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Endpoint
+     */
     slug: string;
     /**
      * 
@@ -68,6 +74,7 @@ export function EndpointFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return {
         
         'id': json['id'],
+        'proxy_url': json['proxy_url'],
         'slug': json['slug'],
         'target_base_url': json['target_base_url'],
         'target_name': json['target_name'],
@@ -86,6 +93,7 @@ export function EndpointToJSON(value?: Endpoint | null): any {
     return {
         
         'id': value.id,
+        'proxy_url': value.proxy_url,
         'slug': value.slug,
         'target_base_url': value.target_base_url,
         'target_name': value.target_name,

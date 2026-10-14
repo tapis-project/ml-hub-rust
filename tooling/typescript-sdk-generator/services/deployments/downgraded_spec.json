@@ -294,6 +294,16 @@
               }
             }
           },
+          "409": {
+            "description": "Model deployment has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Not found",
             "content": {
@@ -357,6 +367,16 @@
               }
             }
           },
+          "409": {
+            "description": "Model deployment has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Not found",
             "content": {
@@ -416,6 +436,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Model deployment has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
                 }
               }
             }
@@ -556,6 +586,34 @@
           }
         }
       },
+      "ConflictResponse": {
+        "type": "object",
+        "required": [
+          "result",
+          "status",
+          "message",
+          "metadata",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "result": {},
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "default": 409,
+            "minimum": 0
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
       "ContainerRuntime": {
         "type": "string",
         "enum": [
@@ -633,6 +691,42 @@
           "Stopped",
           "NotDeployed"
         ]
+      },
+      "Endpoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "target_resource_urn",
+          "target_name",
+          "slug",
+          "proxy_url",
+          "target_base_url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proxy_url": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "target_base_url": {
+            "type": "string"
+          },
+          "target_name": {
+            "type": "string"
+          },
+          "target_resource_urn": {
+            "type": "string"
+          },
+          "tenant_id": {
+            "type": "string"
+          }
+        }
       },
       "GetHpcClusterResponse": {
         "type": "object",
@@ -921,16 +1015,6 @@
           "created_at": {
             "type": "string"
           },
-          "deployment_interface": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/ModelDeploymentInterface"
-              }
-            ]
-          },
           "deployment_modality": {
             "$ref": "#/components/schemas/DeploymentModality"
           },
@@ -944,6 +1028,20 @@
           },
           "desired_state": {
             "$ref": "#/components/schemas/DesiredState"
+          },
+          "endpoint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Endpoint"
+              }
+            ]
+          },
+          "expires_at": {
+            "type": "string",
+            "nullable": true
           },
           "external_model_id": {
             "type": "string",
@@ -962,6 +1060,10 @@
           },
           "last_modified": {
             "type": "string"
+          },
+          "last_observed": {
+            "type": "string",
+            "nullable": true
           },
           "last_state_change": {
             "type": "string"
@@ -988,6 +1090,16 @@
           "state": {
             "$ref": "#/components/schemas/State"
           },
+          "target_endpoint": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelDeploymentEndpoint"
+              }
+            ]
+          },
           "tenant_id": {
             "type": "string"
           },
@@ -996,32 +1108,24 @@
           }
         }
       },
-      "ModelDeploymentInterface": {
+      "ModelDeploymentEndpoint": {
         "type": "object",
         "required": [
-          "interface_type"
+          "protocol"
         ],
         "properties": {
-          "interface_type": {
-            "$ref": "#/components/schemas/ModelDeploymentInterfaceType"
+          "base_url": {
+            "type": "string",
+            "nullable": true
           },
-          "rest_api": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/RestApi"
-              }
-            ]
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/Protocol"
           }
         }
-      },
-      "ModelDeploymentInterfaceType": {
-        "type": "string",
-        "enum": [
-          "RestApi"
-        ]
       },
       "ModelDeploymentResponse": {
         "type": "object",
@@ -1090,6 +1194,12 @@
           "ExpertParallelism"
         ]
       },
+      "Protocol": {
+        "type": "string",
+        "enum": [
+          "RestHttp"
+        ]
+      },
       "ReplicaGroup": {
         "type": "object",
         "required": [
@@ -1108,15 +1218,6 @@
               "$ref": "#/components/schemas/ParallelismStrategy"
             }
           }
-        }
-      },
-      "RestApi": {
-        "type": "object",
-        "required": [
-          "spec"
-        ],
-        "properties": {
-          "spec": {}
         }
       },
       "SchedulerType": {

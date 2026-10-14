@@ -187,6 +187,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFoundResponse'
+        '409':
+          description: Model deployment has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
         '500':
           description: Not found
           content:
@@ -226,6 +232,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFoundResponse'
+        '409':
+          description: Model deployment has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
         '500':
           description: Not found
           content:
@@ -265,6 +277,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFoundResponse'
+        '409':
+          description: Model deployment has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
         '500':
           description: Not found
           content:
@@ -356,6 +374,27 @@ components:
         queue_multiplier:
           type: number
           format: double
+    ConflictResponse:
+      type: object
+      required:
+        - result
+        - status
+        - message
+        - metadata
+        - version
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+        result: {}
+        status:
+          type: integer
+          format: int32
+          default: 409
+          minimum: 0
+        version:
+          type: string
     ContainerRuntime:
       type: string
       enum:
@@ -418,6 +457,32 @@ components:
         - Running
         - Stopped
         - NotDeployed
+    Endpoint:
+      type: object
+      required:
+        - id
+        - tenant_id
+        - target_resource_urn
+        - target_name
+        - slug
+        - proxy_url
+        - target_base_url
+      properties:
+        id:
+          type: string
+          format: uuid
+        proxy_url:
+          type: string
+        slug:
+          type: string
+        target_base_url:
+          type: string
+        target_name:
+          type: string
+        target_resource_urn:
+          type: string
+        tenant_id:
+          type: string
     GetHpcClusterResponse:
       type: object
       required:
@@ -628,10 +693,6 @@ components:
       properties:
         created_at:
           type: string
-        deployment_interface:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/ModelDeploymentInterface'
         deployment_modality:
           $ref: '#/components/schemas/DeploymentModality'
         deployment_option_id:
@@ -643,6 +704,14 @@ components:
             - 'null'
         desired_state:
           $ref: '#/components/schemas/DesiredState'
+        endpoint:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Endpoint'
+        expires_at:
+          type:
+            - string
+            - 'null'
         external_model_id:
           type: string
           format: uuid
@@ -657,6 +726,10 @@ components:
             - 'null'
         last_modified:
           type: string
+        last_observed:
+          type:
+            - string
+            - 'null'
         last_state_change:
           type: string
         metadata:
@@ -678,25 +751,29 @@ components:
           minimum: 0
         state:
           $ref: '#/components/schemas/State'
+        target_endpoint:
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/ModelDeploymentEndpoint'
         tenant_id:
           type: string
         visibility:
           $ref: '#/components/schemas/Visibility'
-    ModelDeploymentInterface:
+    ModelDeploymentEndpoint:
       type: object
       required:
-        - interface_type
+        - protocol
       properties:
-        interface_type:
-          $ref: '#/components/schemas/ModelDeploymentInterfaceType'
-        rest_api:
-          oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/RestApi'
-    ModelDeploymentInterfaceType:
-      type: string
-      enum:
-        - RestApi
+        base_url:
+          type:
+            - string
+            - 'null'
+        name:
+          type:
+            - string
+            - 'null'
+        protocol:
+          $ref: '#/components/schemas/Protocol'
     ModelDeploymentResponse:
       type: object
       required:
@@ -747,6 +824,10 @@ components:
         - SequenceParallelism
         - ContextParallelism
         - ExpertParallelism
+    Protocol:
+      type: string
+      enum:
+        - RestHttp
     ReplicaGroup:
       type: object
       required:
@@ -761,12 +842,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ParallelismStrategy'
-    RestApi:
-      type: object
-      required:
-        - spec
-      properties:
-        spec: {}
     SchedulerType:
       type: string
       enum:
