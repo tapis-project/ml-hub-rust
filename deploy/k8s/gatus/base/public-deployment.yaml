@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-gatus-public-deployment
+  labels:
+    app: mlhub-gatus-public
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-gatus-public
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlhub-gatus-public
+    spec:
+      containers:
+        - name: gatus
+          image: ghcr.io/twin/gatus:v5.37.0
+          env:
+            - name: GATUS_CONFIG_PATH
+              value: /config/config.yaml
+            - name: MODELS_HEALTH_URL
+              value: http://mlhub-models-api-service:8000/models-api/healthcheck
+            - name: DATASETS_HEALTH_URL
+              value: http://mlhub-datasets-api-service:8000/datasets-api/healthcheck
+            - name: DEPLOYMENTS_HEALTH_URL
+              value: http://mlhub-deployments-api-service:8000/deployments-api/healthcheck
+            - name: AGENTS_HEALTH_URL
+              value: http://mlhub-agents-api-service:8000/agents-api/healthcheck
+            - name: ENDPOINTS_HEALTH_URL
+              value: http://mlhub-endpoints-api-service:8000/endpoints-api/healthcheck
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: config
+          configMap:
+            name: mlhub-gatus-public-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: mlhub-gatus-public-pvc

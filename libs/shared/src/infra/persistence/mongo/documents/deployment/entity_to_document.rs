@@ -48,6 +48,26 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
                 .metadata
                 .clone()
                 .and_then(|m| Some(m.into_inner().clone())),
+            reconciliation_status: value
+                .reconciliation_status()
+                .cloned()
+                .map(documents::ReconciliationStatus::from),
+            retries: value.retries(),
+            retry_after: value.retry_after().map(ToBsonDateTime::to_bson),
+        }
+    }
+}
+
+impl From<entities::ReconciliationStatus> for documents::ReconciliationStatus {
+    fn from(value: entities::ReconciliationStatus) -> Self {
+        match value {
+            entities::ReconciliationStatus::Pending => Self::Pending,
+            entities::ReconciliationStatus::Starting => Self::Starting,
+            entities::ReconciliationStatus::Stopping => Self::Stopping,
+            entities::ReconciliationStatus::Undeploying => Self::Undeploying,
+            entities::ReconciliationStatus::Retrying => Self::Retrying,
+            entities::ReconciliationStatus::Synchronized => Self::Synchronized,
+            entities::ReconciliationStatus::Failed => Self::Failed,
         }
     }
 }

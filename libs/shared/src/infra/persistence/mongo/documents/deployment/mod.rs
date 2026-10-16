@@ -1,5 +1,6 @@
 pub mod document_to_entity;
 pub mod entity_to_document;
+pub mod indexes;
 
 use crate::infra::persistence::mongo::documents::visibility::Visibility;
 use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
@@ -38,7 +39,24 @@ pub struct ModelDeployment {
     pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub replicas: ReplicaGroup,
     pub metadata: Option<HashMap<String, Value>>,
+    #[serde(default)]
+    pub reconciliation_status: Option<ReconciliationStatus>,
+    #[serde(default)]
+    pub retries: u32,
+    #[serde(default)]
+    pub retry_after: Option<DateTime>,
     pub revision: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ReconciliationStatus {
+    Pending,
+    Starting,
+    Stopping,
+    Undeploying,
+    Retrying,
+    Synchronized,
+    Failed,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

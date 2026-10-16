@@ -32,6 +32,17 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
             );
         }
 
+        let state = entities::State::from(value.state.clone());
+        let desired_state = entities::DesiredState::from(value.desired_state.clone());
+
+        let reconciliation_status = value
+            .reconciliation_status
+            .clone()
+            .map(entities::ReconciliationStatus::from)
+            .or_else(|| {
+                (state == desired_state).then_some(entities::ReconciliationStatus::Synchronized)
+            });
+
         let props = entities::ReconstituteModelDeploymentProps {
             id: ModelDeploymentId::reconstitute(Uuid::from_bytes(value.id.bytes())),
             name: value.name.clone(),
@@ -41,8 +52,8 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
             revision: value.revision,
             owner: value.owner.clone(),
             external_model_id,
-            state: entities::State::from(value.state.clone()),
-            desired_state: entities::DesiredState::from(value.desired_state.clone()),
+            state,
+            desired_state,
             last_message: value.last_message.clone(),
             deployment_option_id,
             deployment_option_snapshot,
@@ -65,9 +76,28 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
                 .map(|expires_at| TimeStamp::from(expires_at.to_chrono())),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
             metadata: value.metadata.clone().map(ModelDeploymentMetadata),
+            reconciliation_status,
+            retries: value.retries,
+            retry_after: value
+                .retry_after
+                .map(|retry_after| TimeStamp::from(retry_after.to_chrono())),
         };
 
         entities::ModelDeployment::reconstitute(props).map_err(|error| error.to_string())
+    }
+}
+
+impl From<documents::ReconciliationStatus> for entities::ReconciliationStatus {
+    fn from(value: documents::ReconciliationStatus) -> Self {
+        match value {
+            documents::ReconciliationStatus::Pending => Self::Pending,
+            documents::ReconciliationStatus::Starting => Self::Starting,
+            documents::ReconciliationStatus::Stopping => Self::Stopping,
+            documents::ReconciliationStatus::Undeploying => Self::Undeploying,
+            documents::ReconciliationStatus::Retrying => Self::Retrying,
+            documents::ReconciliationStatus::Synchronized => Self::Synchronized,
+            documents::ReconciliationStatus::Failed => Self::Failed,
+        }
     }
 }
 

@@ -22,6 +22,9 @@ use thiserror::Error;
 pub enum ModelDeploymentRepositoryError {
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),
+
+    #[error("Model deployment revision changed before the update could be applied")]
+    RevisionConflict,
 }
 
 #[async_trait]
@@ -62,6 +65,12 @@ pub trait ModelDeploymentRepository: Send + Sync {
     async fn update(
         &self,
         deployment: &ModelDeployment,
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+
+    async fn update_at_revision(
+        &self,
+        deployment: &ModelDeployment,
+        expected_revision: u32,
     ) -> Result<(), ModelDeploymentRepositoryError>;
 
     async fn record_observation(

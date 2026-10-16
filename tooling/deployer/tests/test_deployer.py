@@ -145,6 +145,8 @@ fi
         self.assertLess(commands.index("dev start endpoint-router -t overlay minikube"), commands.index("dev start envoy -t overlay minikube"))
         self.assertLess(commands.index("dev run-principals migrations -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
+        self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev start gatus -t overlay minikube"))
+        self.assertLess(commands.index("dev start gatus -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
         self.assertLess(commands.index("dev run hf-model-etl -t overlay minikube"), commands.index("dev run hf-dataset-etl -t overlay minikube"))
         self.assertIn("kubectl rollout status statefulset/mlhub-mongo-stateful-set --timeout=0s", commands)
 
@@ -156,6 +158,7 @@ fi
             "endpoints",
             "endpoint-router",
             "envoy",
+            "gatus",
         ]
 
         for component in expected_components:
@@ -163,6 +166,19 @@ fi
                 1,
                 commands.count(f"dev start {component} -t overlay minikube"),
             )
+
+        self.assertEqual(
+            1,
+            commands.count(
+                "kubectl rollout status deployment/mlhub-gatus-public-deployment --timeout=0s"
+            ),
+        )
+        self.assertEqual(
+            1,
+            commands.count(
+                "kubectl rollout status deployment/mlhub-gatus-internal-deployment --timeout=0s"
+            ),
+        )
 
         expected_migrations = [
             "dev run-models migrations -t overlay minikube",
@@ -181,6 +197,23 @@ fi
         self.assertNotEqual(0, result.returncode)
         self.assertIn("already exists", result.stderr)
         self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
+
+    def test_stop_services_stops_gatus_before_monitored_services(self):
+        result = self._run("stop-services")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+
+        commands = self._commands()
+
+        self.assertEqual("dev stop gatus -t overlay minikube", commands[0])
+        self.assertLess(
+            commands.index("dev stop gatus -t overlay minikube"),
+            commands.index("dev stop model-deployment-controller -t overlay minikube"),
+        )
+        self.assertLess(
+            commands.index("dev stop gatus -t overlay minikube"),
+            commands.index("dev stop models -t overlay minikube"),
+        )
 
     def test_existing_job_fails_before_grouped_job_stage(self):
         result = self._run("start-jobs", DEPLOYER_EXISTING_JOBS="mlhub-hf-model-etl")

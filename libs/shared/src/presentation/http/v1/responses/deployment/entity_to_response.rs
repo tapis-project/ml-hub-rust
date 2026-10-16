@@ -109,6 +109,12 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
             last_state_change: String::from(value.last_state_change.clone()),
             last_observed: value.last_observed().cloned().map(String::from),
             expires_at: value.expires_at().cloned().map(String::from),
+            reconciliation_status: value
+                .reconciliation_status()
+                .cloned()
+                .map(responses::ReconciliationStatus::from),
+            retries: value.retries(),
+            retry_after: value.retry_after().cloned().map(String::from),
             last_modified: String::from(value.last_modified.clone()),
             replicas: responses::ReplicaGroup::from(value.replicas.clone()),
             last_message: value.last_message.clone(),
@@ -123,6 +129,20 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
                 .metadata
                 .clone()
                 .map(|metadata| metadata.into_inner().clone()),
+        }
+    }
+}
+
+impl From<entities::ReconciliationStatus> for responses::ReconciliationStatus {
+    fn from(value: entities::ReconciliationStatus) -> Self {
+        match value {
+            entities::ReconciliationStatus::Pending => Self::Pending,
+            entities::ReconciliationStatus::Starting => Self::Starting,
+            entities::ReconciliationStatus::Stopping => Self::Stopping,
+            entities::ReconciliationStatus::Undeploying => Self::Undeploying,
+            entities::ReconciliationStatus::Retrying => Self::Retrying,
+            entities::ReconciliationStatus::Synchronized => Self::Synchronized,
+            entities::ReconciliationStatus::Failed => Self::Failed,
         }
     }
 }

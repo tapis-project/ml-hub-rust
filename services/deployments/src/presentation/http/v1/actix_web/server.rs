@@ -167,22 +167,26 @@ pub async fn run_server() -> std::io::Result<()> {
 
             // Globally-scoped middlewares.
             // NOTE: Middleware runs in reverse order of registration
-            .wrap(from_fn(authenticate))
-            .wrap(from_fn(resolve_tenancy))
-            .wrap(Logger::default())
+            .wrap(Logger::default().exclude("/deployments-api/healthcheck"))
             .wrap(from_fn(preflight_short_circuit))
             .service(presentation::http::v1::actix_web::handlers::index::index)
-            .service(presentation::http::v1::actix_web::handlers::list_model_deployments::list_model_deployments)
-            .service(presentation::http::v1::actix_web::handlers::deploy_model_with_option::deploy_model_with_option)
-            .service(presentation::http::v1::actix_web::handlers::start_model_deployment::start_model_deployment)
-            .service(presentation::http::v1::actix_web::handlers::stop_model_deployment::stop_model_deployment)
-            .service(presentation::http::v1::actix_web::handlers::undeploy_model_deployment::undeploy_model_deployment)
-            .service(presentation::http::v1::actix_web::handlers::list_hpc_clusters::list_hpc_clusters)
-            .service(presentation::http::v1::actix_web::handlers::get_hpc_cluster::get_hpc_cluster)
+            .service(presentation::http::v1::actix_web::handlers::healthcheck::healthcheck)
             .service(presentation::http::v1::actix_web::handlers::openapi::openapi)
             .service(
                 SwaggerUi::new("deployments-api/swagger-ui/{_:.*}")
                     .url("/deployments-api/specs/openapi.json", ApiDoc::openapi()),
+            )
+            .service(
+                web::scope("")
+                    .wrap(from_fn(authenticate))
+                    .wrap(from_fn(resolve_tenancy))
+                    .service(presentation::http::v1::actix_web::handlers::list_model_deployments::list_model_deployments)
+                    .service(presentation::http::v1::actix_web::handlers::deploy_model_with_option::deploy_model_with_option)
+                    .service(presentation::http::v1::actix_web::handlers::start_model_deployment::start_model_deployment)
+                    .service(presentation::http::v1::actix_web::handlers::stop_model_deployment::stop_model_deployment)
+                    .service(presentation::http::v1::actix_web::handlers::undeploy_model_deployment::undeploy_model_deployment)
+                    .service(presentation::http::v1::actix_web::handlers::list_hpc_clusters::list_hpc_clusters)
+                    .service(presentation::http::v1::actix_web::handlers::get_hpc_cluster::get_hpc_cluster),
             )
     })
         .bind(addrs)?

@@ -20,6 +20,14 @@ spec:
         - env:
             - name: RUST_LOG
               value: debug
+            - name: RECONCILIATION_RETRY_INITIAL_SECONDS
+              value: "30"
+            - name: RECONCILIATION_RETRY_MULTIPLIER
+              value: "2"
+            - name: RECONCILIATION_RETRY_MAXIMUM_SECONDS
+              value: "900"
+            - name: RECONCILIATION_MAXIMUM_RETRIES
+              value: "5"
             - name: MONGO_HOST
               value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local
             - name: MONGO_PORT
@@ -62,6 +70,15 @@ spec:
           image: tapis/mlhub-model-deployment-controller:local
           imagePullPolicy: Never
           name: model-deployment-controller
+          ports:
+            - containerPort: 8000
+              name: healthcheck
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            initialDelaySeconds: 2
+            periodSeconds: 5
           resources: {}
           tty: true
           volumeMounts:

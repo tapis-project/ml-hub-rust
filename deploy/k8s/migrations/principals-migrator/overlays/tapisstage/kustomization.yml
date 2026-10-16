@@ -20,5 +20,5 @@ patches:
                 resources: {}
                 env:
                   - name: MONGO_HOST
-                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisprod.svc.cluster.local
+                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisstage.svc.cluster.local
 

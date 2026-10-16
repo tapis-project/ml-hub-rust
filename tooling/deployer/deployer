@@ -214,6 +214,46 @@ start_services() {
     announce "Starting model deployment controller"
     run_dev start model-deployment-controller -t overlay "$overlay"
     wait_for_rollout deployment/mlhub-model-deployment-controller-deployment
+
+    announce "Starting Gatus health dashboards"
+    run_dev start gatus -t overlay "$overlay"
+    wait_for_rollout deployment/mlhub-gatus-public-deployment
+    wait_for_rollout deployment/mlhub-gatus-internal-deployment
+}
+
+stop_services() {
+    announce "Stopping Gatus health dashboards"
+    run_dev stop gatus -t overlay "$overlay"
+
+    announce "Stopping model deployment controller"
+    run_dev stop model-deployment-controller -t overlay "$overlay"
+
+    announce "Stopping artifact publisher"
+    run_dev stop artifact-publisher -t overlay "$overlay"
+
+    announce "Stopping artifact ingester"
+    run_dev stop artifact-ingester -t overlay "$overlay"
+
+    announce "Stopping Envoy endpoint proxy"
+    run_dev stop envoy -t overlay "$overlay"
+
+    announce "Stopping endpoint router"
+    run_dev stop endpoint-router -t overlay "$overlay"
+
+    announce "Stopping Endpoints API"
+    run_dev stop endpoints -t overlay "$overlay"
+
+    announce "Stopping Agents API"
+    run_dev stop agents -t overlay "$overlay"
+
+    announce "Stopping Deployments API"
+    run_dev stop deployments -t overlay "$overlay"
+
+    announce "Stopping Datasets API"
+    run_dev stop datasets -t overlay "$overlay"
+
+    announce "Stopping Models API"
+    run_dev stop models -t overlay "$overlay"
 }
 
 run_jobs() {
@@ -247,6 +287,7 @@ case "$stage" in
     start-infra) start_infra ;;
     start-migrations) start_migrations ;;
     start-services) start_services ;;
+    stop-services) stop_services ;;
     start-jobs) start_jobs ;;
     start) start_all ;;
     deploy)

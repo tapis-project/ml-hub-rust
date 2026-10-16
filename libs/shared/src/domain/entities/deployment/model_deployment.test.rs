@@ -55,6 +55,119 @@ fn create_deployment(maximum_runtime: Option<Duration>) -> Result<ModelDeploymen
     )?)
 }
 
+#[test]
+fn new_deployment_has_no_reconciliation_status() -> Result<(), Box<dyn Error>> {
+    let deployment = create_deployment(None)?;
+
+    assert_eq!(deployment.reconciliation_status(), None);
+    assert_eq!(deployment.retries(), 0);
+    assert_eq!(deployment.retry_after(), None);
+
+    Ok(())
+}
+
+#[test]
+fn reconciliation_workflow_does_not_change_revision() -> Result<(), Box<dyn Error>> {
+    let mut deployment = create_deployment(None)?;
+    let revision = *deployment.revision();
+
+    deployment.accept_for_reconciliation();
+    deployment.begin_reconciliation(&ReconciliationRequirement::Start);
+
+    let retry_after = TimeStamp::parse_string("2026-10-15T18:00:00Z")?;
+
+    deployment.schedule_reconciliation_retry(retry_after.clone())?;
+
+    assert_eq!(deployment.revision(), &revision);
+    assert_eq!(
+        deployment.reconciliation_status(),
+        Some(&ReconciliationStatus::Retrying)
+    );
+    assert_eq!(deployment.retries(), 1);
+    assert_eq!(deployment.retry_after(), Some(&retry_after));
+
+    Ok(())
+}
+
+#[test]
+fn retrying_requires_retry_count_and_deadline() -> Result<(), Box<dyn Error>> {
+    let result = ModelDeploymentTestBuilder::new()
+        .reconciliation_status(ReconciliationStatus::Retrying)
+        .build();
+
+    let error = match result {
+        Ok(_) => return Err("Retrying without retry data was accepted".into()),
+        Err(error) => error,
+    };
+
+    assert!(error
+        .to_string()
+        .contains("Retrying requires a positive retry count and retry_after"));
+
+    Ok(())
+}
+
+#[test]
+fn synchronized_requires_matching_actual_and_desired_state() -> Result<(), Box<dyn Error>> {
+    let result = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build();
+
+    let error = match result {
+        Ok(_) => return Err("Mismatched state was accepted as synchronized".into()),
+        Err(error) => error,
+    };
+
+    assert!(error
+        .to_string()
+        .contains("Synchronized requires actual and desired state to agree"));
+
+    Ok(())
+}
+
+#[test]
+fn valid_retrying_state_reconstitutes() -> Result<(), Box<dyn Error>> {
+    let retry_after = TimeStamp::parse_string("2026-10-15T18:00:00Z")?;
+
+    let deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .reconciliation_status(ReconciliationStatus::Retrying)
+        .retries(2)
+        .retry_after(retry_after.clone())
+        .build()?;
+
+    assert_eq!(deployment.retries(), 2);
+    assert_eq!(deployment.retry_after(), Some(&retry_after));
+
+    Ok(())
+}
+
+#[test]
+fn restarting_terminal_reconciliation_creates_a_clean_revision() -> Result<(), Box<dyn Error>> {
+    let mut deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Failed)
+        .desired_state(DesiredState::Running)
+        .reconciliation_status(ReconciliationStatus::Failed)
+        .retries(5)
+        .build()?;
+    let previous_revision = *deployment.revision();
+
+    let restarted = deployment
+        .revise()
+        .restart_reconciliation(Some("Retry requested".into()))
+        .finish();
+
+    assert_eq!(restarted.revision(), &(previous_revision + 1));
+    assert_eq!(restarted.reconciliation_status(), None);
+    assert_eq!(restarted.retries(), 0);
+    assert_eq!(restarted.retry_after(), None);
+
+    Ok(())
+}
+
 struct ModelDeploymentTestBuilder {
     last_observed: Option<TimeStamp>,
     last_modified: Option<TimeStamp>,
@@ -64,6 +177,9 @@ struct ModelDeploymentTestBuilder {
     desired_state: DesiredState,
     revision: u32,
     target_endpoint: Option<ModelDeploymentEndpoint>,
+    reconciliation_status: Option<ReconciliationStatus>,
+    retries: u32,
+    retry_after: Option<TimeStamp>,
 }
 
 impl ModelDeploymentTestBuilder {
@@ -77,6 +193,9 @@ impl ModelDeploymentTestBuilder {
             desired_state: DesiredState::Running,
             revision: 3,
             target_endpoint: None,
+            reconciliation_status: None,
+            retries: 0,
+            retry_after: None,
         }
     }
 
@@ -112,6 +231,24 @@ impl ModelDeploymentTestBuilder {
 
     fn target_endpoint(mut self, target_endpoint: ModelDeploymentEndpoint) -> Self {
         self.target_endpoint = Some(target_endpoint);
+
+        self
+    }
+
+    fn reconciliation_status(mut self, status: ReconciliationStatus) -> Self {
+        self.reconciliation_status = Some(status);
+
+        self
+    }
+
+    fn retries(mut self, retries: u32) -> Self {
+        self.retries = retries;
+
+        self
+    }
+
+    fn retry_after(mut self, retry_after: TimeStamp) -> Self {
+        self.retry_after = Some(retry_after);
 
         self
     }
@@ -158,6 +295,9 @@ impl ModelDeploymentTestBuilder {
                 last_desired_state_change: created_at.clone(),
                 created_at,
                 metadata: None,
+                reconciliation_status: self.reconciliation_status,
+                retries: self.retries,
+                retry_after: self.retry_after,
             },
         )?)
     }

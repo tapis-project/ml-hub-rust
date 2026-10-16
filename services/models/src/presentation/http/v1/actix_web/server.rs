@@ -177,10 +177,10 @@ pub async fn run_server() -> std::io::Result<()> {
             .app_data(web::Data::new(state.clone()))
             // Globally-scoped middlewares
             .wrap(from_fn(preflight_short_circuit))
-            .wrap(Logger::default())
+            .wrap(Logger::default().exclude("/models-api/healthcheck"))
             // Public routes
             .service(handlers::index::index)
-            .service(handlers::health_check::health_check)
+            .service(handlers::healthcheck::healthcheck)
             .service(
                 SwaggerUi::new("models-api/swagger-ui/{_:.*}")
                     .url("/models-api/specs/openapi.json", ApiDoc::openapi()),

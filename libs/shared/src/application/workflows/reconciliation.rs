@@ -62,9 +62,16 @@ pub struct ObservedOutcome {
 #[derive(Clone, Debug)]
 pub struct FailedOutcome {
     pub message: Option<String>,
+    pub disposition: FailureDisposition,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
     pub target_endpoint: Option<ModelDeploymentEndpointDelta>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FailureDisposition {
+    Recoverable,
+    Terminal,
 }
 
 #[derive(Clone, Debug)]

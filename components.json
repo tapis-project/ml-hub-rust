@@ -42,6 +42,8 @@
     "hf-dataset-etl-extract-image": "tapis/mlhub-hf-dataset-etl-extract",
     "model-deployment-controller-deployment": "mlhub-model-deployment-controller-deployment",
     "model-deployment-controller-image": "tapis/mlhub-model-deployment-controller",
+    "gatus-public-deployment": "mlhub-gatus-public-deployment",
+    "gatus-internal-deployment": "mlhub-gatus-internal-deployment",
     "project-root": "$(pwd)",
     "specs-dir": "specs"
   },
@@ -767,6 +769,32 @@
       }
     },
     {
+      "name": "gatus",
+      "description": "Runs the public and cluster-private MLHub health dashboards",
+      "rootDir": "deploy/k8s/gatus",
+      "labels": ["component", "monitoring"],
+      "lifecycle": "production",
+      "commands": {
+        "start": "cd {{ self.rootDir }} && ./burnup.sh {{ overlay }}",
+        "stop": "cd {{ self.rootDir }} && ./burndown.sh {{ overlay }}",
+        "logs": "kubectl logs deployment/{{ gatus-public-deployment }}",
+        "logs-internal": "kubectl logs deployment/{{ gatus-internal-deployment }}",
+        "watch": "kubectl logs deployment/{{ gatus-public-deployment }} -f",
+        "watch-internal": "kubectl logs deployment/{{ gatus-internal-deployment }} -f",
+        "expose-internal": "kubectl port-forward service/mlhub-gatus-internal-service 8081:8080",
+        "code": "code {{ self.rootDir }}"
+      },
+      "dependencies": [
+        "models",
+        "datasets",
+        "deployments",
+        "agents",
+        "endpoints",
+        "model-deployment-controller",
+        "envoy"
+      ]
+    },
+    {
       "name": "stack",
       "rootDir": "tooling/deployer",
       "labels": ["workflow", "tooling"],
@@ -779,6 +807,7 @@
         "start-infra": "./{{ self.rootDir }}/deployer start-infra \"{{ project-root }}\" {{ overlay }}",
         "start-migrations": "./{{ self.rootDir }}/deployer start-migrations \"{{ project-root }}\" {{ overlay }}",
         "start-services": "./{{ self.rootDir }}/deployer start-services \"{{ project-root }}\" {{ overlay }}",
+        "stop-services": "./{{ self.rootDir }}/deployer stop-services \"{{ project-root }}\" {{ overlay }}",
         "start-jobs": "./{{ self.rootDir }}/deployer start-jobs \"{{ project-root }}\" {{ overlay }}",
         "start": "./{{ self.rootDir }}/deployer start \"{{ project-root }}\" {{ overlay }}",
         "deploy": "./{{ self.rootDir }}/deployer deploy \"{{ project-root }}\" {{ overlay }}"

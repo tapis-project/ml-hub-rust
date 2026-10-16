@@ -5,6 +5,7 @@ use utoipa::OpenApi;
 // handlers
 use super::handlers::deploy_model_with_option::__path_deploy_model_with_option;
 use super::handlers::get_hpc_cluster::__path_get_hpc_cluster;
+use super::handlers::healthcheck::__path_healthcheck;
 use super::handlers::list_hpc_clusters::__path_list_hpc_clusters;
 use super::handlers::list_model_deployments::__path_list_model_deployments;
 use super::handlers::start_model_deployment::__path_start_model_deployment;
@@ -21,6 +22,7 @@ use super::handlers::undeploy_model_deployment::__path_undeploy_model_deployment
         list_model_deployments,
         list_hpc_clusters,
         get_hpc_cluster,
+        healthcheck,
     ),
     components(schemas()),
     info(title = "MLHub Deployments API", version=VERSION)

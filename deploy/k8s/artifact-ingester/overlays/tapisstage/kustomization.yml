@@ -1,6 +1,6 @@
 resources:
   - ../../base
-  - ../../../site-configs/overlays/tapisprod
+  - ../../../site-configs/overlays/tapisstage
 
 patches:
   - target:

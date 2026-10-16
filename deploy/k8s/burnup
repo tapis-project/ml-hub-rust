@@ -89,6 +89,11 @@ cd "$here/agents"
 cd "$here/model-deployment-controller"
 ./burnup.sh "$overlay"
 
+cd "$here/gatus"
+./burnup.sh "$overlay"
+kubectl rollout status deployment/mlhub-gatus-public-deployment --timeout=10m
+kubectl rollout status deployment/mlhub-gatus-internal-deployment --timeout=10m
+
 
 echo "Starting ETL Pipelines"
 

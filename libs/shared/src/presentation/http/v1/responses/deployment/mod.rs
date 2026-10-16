@@ -28,6 +28,9 @@ pub struct ModelDeployment {
     pub last_state_change: String,
     pub last_observed: Option<String>,
     pub expires_at: Option<String>,
+    pub reconciliation_status: Option<ReconciliationStatus>,
+    pub retries: u32,
+    pub retry_after: Option<String>,
     pub last_desired_state_change: String,
     pub target_endpoint: Option<ModelDeploymentEndpoint>,
     pub endpoint: Option<Endpoint>,
@@ -68,6 +71,17 @@ pub enum DesiredState {
     Running,
     Stopped,
     NotDeployed,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, ToSchema)]
+pub enum ReconciliationStatus {
+    Pending,
+    Starting,
+    Stopping,
+    Undeploying,
+    Retrying,
+    Synchronized,
+    Failed,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

@@ -4,6 +4,9 @@ here=$(pwd)
 
 overlay="{{ mlhub_env }}"
 
+cd "$here/gatus"
+./burndown.sh "$overlay"
+
 cd "$here/traefik"
 ./burndown.sh "$overlay"
 

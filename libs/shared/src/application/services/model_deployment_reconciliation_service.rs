@@ -3,19 +3,21 @@ use std::sync::Arc;
 
 // Application
 use crate::application::inputs::deployment::{
-    FindForReconciliationInput, ReconcileModelDeploymentInput, UpdateModelDeploymentInput,
+    FindForReconciliationInput, ReconcileModelDeploymentInput,
 };
 use crate::application::ports::deployment::{
     ModelDeploymentReconcilerProvider, ModelDeploymentReconcilerProviderError,
 };
-use crate::application::ports::model::ExternalModelRepository;
+use crate::application::ports::model::{ExternalModelRepository, ExternalModelRepositoryError};
 use crate::application::services::deployment_argument_service::{
     DeploymentArgumentService, DeploymentArgumentServiceError,
 };
 use crate::application::services::model_deployment_service::{
     ModelDeploymentService, ModelDeploymentServiceError,
 };
-use crate::application::workflows::reconciliation::{ReconciliationAction, ReconciliationOutcome};
+use crate::application::workflows::reconciliation::{
+    FailureDisposition, ReconciliationAction, ReconciliationOutcome,
+};
 use crate::domain::entities::deployment::{
     ModelDeployment, ModelDeploymentError, ModelDeploymentId, ReconciliationRequirement, State,
 };
@@ -32,7 +34,7 @@ use crate::shared_kernel::value_objects::TimeStamp;
 use retry_utils::{retry_async, FixedBackoff, Retry, RetryPolicy};
 
 // External
-use log::error;
+use log::{debug, error, info, warn};
 use once_cell::sync::Lazy;
 use thiserror::Error;
 
@@ -73,12 +75,31 @@ impl ModelDeploymentReconciliationService {
         ctx: &RequestContext,
         input: &DispatchReconcilerInput,
     ) -> Result<ReconciliationResult, ReconciliationDispatchError> {
+        debug!(
+            "Dispatching model deployment reconciliation; deployment_id='{}'; requested_revision={}; request_id='{}'",
+            input.deployment_id,
+            input.deployment_revision,
+            ctx.request_id()
+        );
+
         // Ensure only system-type actors can take this action
         if ctx.actor_kind() != &Kind::System {
+            warn!(
+                "Rejected model deployment reconciliation from non-system actor; deployment_id='{}'; actor_kind='{:?}'; request_id='{}'",
+                input.deployment_id,
+                ctx.actor_kind(),
+                ctx.request_id()
+            );
+
             return Err(ReconciliationDispatchError::InvalidActorKind(
                 "Only System actors can dispatch model deployment reconcilers".into(),
             ));
         }
+
+        debug!(
+            "Fetching model deployment '{}' at revision {} for reconciliation",
+            input.deployment_id, input.deployment_revision
+        );
 
         // Fetch deployment
         let input = FindForReconciliationInput {
@@ -107,32 +128,80 @@ impl ModelDeploymentReconciliationService {
             },
         }?;
 
+        debug!(
+            "Loaded model deployment '{}' for reconciliation; revision={}; state='{:?}'; desired_state='{:?}'; external_model_id='{}'",
+            deployment.id(),
+            deployment.revision(),
+            deployment.state,
+            deployment.desired_state,
+            deployment.external_model_id
+        );
+
         let evaluated_at = TimeStamp::now();
 
         // Resolve reconciliation action
         let Some(requirement) = deployment.resolve_reconciliation_requirement(&evaluated_at) else {
+            debug!(
+                "Model deployment '{}' does not currently require reconciliation; state='{:?}'; desired_state='{:?}'; expired={}",
+                deployment.id(),
+                deployment.state,
+                deployment.desired_state,
+                deployment.is_expired(&evaluated_at)
+            );
+
             return Ok(ReconciliationResult {
                 requirement: None,
                 action: None,
                 deployment: None,
+                failure_disposition: None,
             });
         };
+
+        debug!(
+            "Resolved '{:?}' reconciliation requirement for model deployment '{}'",
+            requirement,
+            deployment.id()
+        );
 
         let action = match requirement {
             ReconciliationRequirement::Stop => ReconciliationAction::Stop,
             ReconciliationRequirement::Undeploy => ReconciliationAction::Undeploy,
             ReconciliationRequirement::Start => {
+                debug!(
+                    "Loading encrypted deployment arguments for model deployment '{}'",
+                    deployment.id()
+                );
+
                 // Fetch the arguments for this deployment
                 let decrypted_args = self
                     .deployment_argument_service
                     .get_decrypted_arguments_for_deployment(deployment.id())
                     .await?;
 
+                let parameter_names = decrypted_args
+                    .iter()
+                    .map(|argument| argument.parameter_name.as_str())
+                    .collect::<Vec<_>>();
+
+                debug!(
+                    "Loaded {} deployment argument(s) for model deployment '{}'; parameter_names={:?}",
+                    decrypted_args.len(),
+                    deployment.id(),
+                    parameter_names
+                );
+
                 ReconciliationAction::Start {
                     payload: decrypted_args,
                 }
             }
         };
+
+        debug!(
+            "Resolving reconciliation client for model deployment '{}'; serving_runtime='{:?}'; target='{:?}'",
+            deployment.id(),
+            deployment.deployment_option_snapshot.serving_runtime,
+            deployment.deployment_option_snapshot.target
+        );
 
         // Initialize reconciliation client
         let client = match self
@@ -142,15 +211,20 @@ impl ModelDeploymentReconciliationService {
         {
             Ok(c) => c,
             Err(e) => {
-                self.handle_deployment_failure(
-                    &mut deployment,
-                    "Internal Error: Failed to initialize deployment client",
-                )
-                .await;
-
                 return Err(e)?;
             }
         };
+
+        debug!(
+            "Resolved reconciliation client for model deployment '{}'",
+            deployment.id()
+        );
+
+        debug!(
+            "Fetching ExternalModel '{}' for model deployment '{}'",
+            deployment.external_model_id,
+            deployment.id()
+        );
 
         let maybe_external_model = retry_async(
             || {
@@ -166,37 +240,42 @@ impl ModelDeploymentReconciliationService {
         let external_model = match maybe_external_model {
             Ok(Some(external_model)) => external_model,
             Ok(None) => {
-                self.handle_deployment_failure(
-                    &mut deployment,
-                    "The ExternalModel for this deployment cannot be found",
-                )
-                .await;
-
-                return Err(ReconciliationDispatchError::ModelRetrievalFailed(format!(
+                return Err(ReconciliationDispatchError::ExternalModelNotFound(format!(
                     "ExternalModel {} not found",
                     deployment.external_model_id
                 )));
             }
             Err(error) => {
-                self.handle_deployment_failure(
-                    &mut deployment,
-                    "Internal Error: Failed to fetch ExternalModel",
-                )
-                .await;
-
-                return Err(ReconciliationDispatchError::ModelRetrievalFailed(
-                    error.to_string(),
-                ));
+                return Err(ReconciliationDispatchError::ExternalModelRepository(error));
             }
         };
 
+        debug!(
+            "Loaded ExternalModel '{}' for model deployment '{}'; provider='{}'",
+            external_model.id(),
+            deployment.id(),
+            external_model.provider()
+        );
+
         if deployment.is_expired(&TimeStamp::now()) {
+            info!(
+                "Skipping reconciliation for expired model deployment '{}'",
+                deployment.id()
+            );
+
             return Ok(ReconciliationResult {
                 requirement: None,
                 action: None,
                 deployment: None,
+                failure_disposition: None,
             });
         }
+
+        debug!(
+            "Invoking reconciliation client for model deployment '{}' with requirement '{:?}'",
+            deployment.id(),
+            requirement
+        );
 
         // Reconcile
         let outcome = client
@@ -209,6 +288,13 @@ impl ModelDeploymentReconciliationService {
 
         let result = match outcome {
             ReconciliationOutcome::Started(payload) => {
+                debug!(
+                    "Reconciliation client started model deployment '{}'; resulting_state='{:?}'; message={:?}",
+                    deployment.id(),
+                    payload.state,
+                    payload.message
+                );
+
                 let revised = deployment
                     .revise()
                     .transition_to_state(payload.state, payload.message.clone())?
@@ -221,9 +307,16 @@ impl ModelDeploymentReconciliationService {
                     deployment: Some(revised),
                     requirement: Some(requirement),
                     action: Some(ReconciliationActionTaken::Started),
+                    failure_disposition: None,
                 }
             }
             ReconciliationOutcome::Stopped(payload) => {
+                debug!(
+                    "Reconciliation client stopped model deployment '{}'; message={:?}",
+                    deployment.id(),
+                    payload.message
+                );
+
                 let revised = deployment
                     .revise()
                     .transition_to_state(State::Stopped, payload.message.clone())?
@@ -236,9 +329,16 @@ impl ModelDeploymentReconciliationService {
                     deployment: Some(revised),
                     requirement: Some(requirement),
                     action: Some(ReconciliationActionTaken::Stopped),
+                    failure_disposition: None,
                 }
             }
             ReconciliationOutcome::Undeployed(payload) => {
+                debug!(
+                    "Reconciliation client undeployed model deployment '{}'; message={:?}",
+                    deployment.id(),
+                    payload.message
+                );
+
                 let mut revised = deployment.revise();
 
                 revised.transition_to_state(State::NotDeployed, payload.message.clone())?;
@@ -255,9 +355,40 @@ impl ModelDeploymentReconciliationService {
                     deployment: Some(revised),
                     requirement: Some(requirement),
                     action: Some(ReconciliationActionTaken::Undeployed),
+                    failure_disposition: None,
                 }
             }
             ReconciliationOutcome::Failed(payload) => {
+                error!(
+                    "Reconciliation client failed model deployment '{}'; current_state='{:?}'; message={:?}",
+                    deployment.id(),
+                    deployment.state,
+                    payload.message
+                );
+
+                if payload.disposition == FailureDisposition::Recoverable {
+                    return Ok(ReconciliationResult {
+                        deployment: Some(deployment),
+                        requirement: Some(requirement),
+                        action: None,
+                        failure_disposition: Some(FailureDisposition::Recoverable),
+                    });
+                }
+
+                if deployment.state == State::Failed {
+                    warn!(
+                        "Model deployment '{}' is already failed; skipping duplicate Failed-to-Failed transition",
+                        deployment.id()
+                    );
+
+                    return Ok(ReconciliationResult {
+                        deployment: Some(deployment),
+                        requirement: Some(requirement),
+                        action: None,
+                        failure_disposition: Some(FailureDisposition::Terminal),
+                    });
+                }
+
                 let mut revised = deployment.revise();
 
                 revised.transition_to_state(State::Failed, payload.message.clone())?;
@@ -274,9 +405,16 @@ impl ModelDeploymentReconciliationService {
                     deployment: Some(revised),
                     requirement: Some(requirement),
                     action: None,
+                    failure_disposition: Some(FailureDisposition::Terminal),
                 }
             }
             ReconciliationOutcome::Unknown(payload) => {
+                debug!(
+                    "Reconciliation client returned an unknown outcome for model deployment '{}'; message={:?}",
+                    deployment.id(),
+                    payload.message
+                );
+
                 let mut revised = deployment.revise();
 
                 revised.transition_to_state(State::Unknown, payload.message.clone())?;
@@ -293,46 +431,30 @@ impl ModelDeploymentReconciliationService {
                     deployment: Some(revised),
                     requirement: Some(requirement),
                     action: None,
+                    failure_disposition: None,
                 }
             }
-            ReconciliationOutcome::NoOp => ReconciliationResult {
-                deployment: None,
-                requirement: Some(requirement),
-                action: None,
-            },
+            ReconciliationOutcome::NoOp => {
+                debug!(
+                    "Reconciliation client returned no operation for model deployment '{}'",
+                    deployment.id()
+                );
+
+                ReconciliationResult {
+                    deployment: None,
+                    requirement: Some(requirement),
+                    action: None,
+                    failure_disposition: None,
+                }
+            }
         };
+
+        debug!(
+            "Model deployment '{}' reconciliation dispatch completed",
+            deployment.id()
+        );
 
         Ok(result)
-    }
-
-    /// Handles deployment updates on failure.
-    async fn handle_deployment_failure(
-        &self,
-        deployment: &mut ModelDeployment,
-        reason: &str,
-    ) -> () {
-        if let Err(e) = deployment.mark_as_failed(Some(reason.into())) {
-            error!(
-                "Domain Error: Failed to mark deployment '{}' as failed: {}",
-                deployment.id(),
-                e.to_string()
-            );
-            return;
-        };
-
-        if let Err(e) = self
-            .model_deployment_service
-            .update(UpdateModelDeploymentInput {
-                deployment: deployment.clone(),
-            })
-            .await
-        {
-            error!(
-                "Infrastructure Error: Failed to update status for model deployment '{}': {}",
-                deployment.id(),
-                e.to_string()
-            );
-        };
     }
 }
 
@@ -345,7 +467,10 @@ pub enum ReconciliationDispatchError {
     ModelDeploymentRetrievalFailed(#[from] ModelDeploymentServiceError),
 
     #[error("Failed to find model associated with deployment: {0}")]
-    ModelRetrievalFailed(String),
+    ExternalModelNotFound(String),
+
+    #[error("Failed to load model associated with deployment: {0}")]
+    ExternalModelRepository(#[from] ExternalModelRepositoryError),
 
     #[error("Model deployment domain invariant violation: {0}")]
     ModelDeploymentDomainInvariantViolation(#[from] ModelDeploymentError),
@@ -360,12 +485,26 @@ pub enum ReconciliationDispatchError {
     DeploymentArgumentServiceError(#[from] DeploymentArgumentServiceError),
 }
 
+impl ReconciliationDispatchError {
+    pub fn is_recoverable(&self) -> bool {
+        matches!(
+            self,
+            Self::ModelDeploymentRetrievalFailed(
+                ModelDeploymentServiceError::ModelDeploymentRepoError(_)
+            ) | Self::DeploymentArgumentServiceError(_)
+                | Self::ExternalModelRepository(_)
+        )
+    }
+}
+
 pub struct ReconciliationResult {
     pub deployment: Option<ModelDeployment>,
     pub requirement: Option<ReconciliationRequirement>,
     pub action: Option<ReconciliationActionTaken>,
+    pub failure_disposition: Option<FailureDisposition>,
 }
 
+#[derive(Debug)]
 pub enum ReconciliationActionTaken {
     Stopped,
     Started,

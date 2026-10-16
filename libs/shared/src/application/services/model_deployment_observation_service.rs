@@ -8,12 +8,14 @@ use crate::application::services::model_deployment_service::{
 };
 use crate::domain::entities::deployment::{
     ModelDeployment, ModelDeploymentError, ModelDeploymentId, ReconciliationRequirement,
+    ReconciliationStatus,
 };
 use crate::domain::entities::principal::Kind;
 use crate::domain::entities::site::SiteContext;
 use crate::shared_kernel::context::RequestContext;
 use crate::shared_kernel::value_objects::TimeStamp;
 
+use log::{debug, info, warn};
 use thiserror::Error;
 
 pub struct ModelDeploymentObservationService {
@@ -40,8 +42,21 @@ impl ModelDeploymentObservationService {
         ctx: &RequestContext,
         deployment_id: ModelDeploymentId,
     ) -> Result<ObservationResult, ModelDeploymentObserverError> {
+        debug!(
+            "Starting model deployment observation; deployment_id='{}'; request_id='{}'",
+            deployment_id,
+            ctx.request_id()
+        );
+
         // Only permit System actors to call this method
         if ctx.actor_kind() != &Kind::System {
+            warn!(
+                "Rejected model deployment observation from non-system actor; deployment_id='{}'; actor_kind='{:?}'; request_id='{}'",
+                deployment_id,
+                ctx.actor_kind(),
+                ctx.request_id()
+            );
+
             return Err(ModelDeploymentObserverError::Forbidden(
                 "Model Deployment observation can only be performed by system actors".into(),
             ));
@@ -53,11 +68,40 @@ impl ModelDeploymentObservationService {
             .await?
             .ok_or_else(|| ModelDeploymentObserverError::ModelDeploymentNotFound(deployment_id))?;
 
+        debug!(
+            "Loaded model deployment '{}' for observation; revision={}; state='{:?}'; desired_state='{:?}'",
+            deployment.id(),
+            deployment.revision(),
+            deployment.state,
+            deployment.desired_state
+        );
+
         let evaluated_at = TimeStamp::now();
 
         if deployment.is_expired(&evaluated_at) {
+            info!(
+                "Skipping observation for expired model deployment '{}'",
+                deployment.id()
+            );
+
             return Ok(ObservationResult::Expired { deployment_id });
         }
+
+        if deployment.is_waiting_for_retry(&evaluated_at) {
+            debug!(
+                "Deferring observation for model deployment '{}' until its reconciliation retry is eligible",
+                deployment.id()
+            );
+
+            return Ok(ObservationResult::Deferred { deployment_id });
+        }
+
+        debug!(
+            "Resolving observation client for model deployment '{}'; serving_runtime='{:?}'; target='{:?}'",
+            deployment.id(),
+            deployment.deployment_option_snapshot.serving_runtime,
+            deployment.deployment_option_snapshot.target
+        );
 
         // Initialize reconciliation client
         let client = match self
@@ -72,12 +116,30 @@ impl ModelDeploymentObservationService {
             }
         }?;
 
+        debug!(
+            "Invoking observation client for model deployment '{}'",
+            deployment.id()
+        );
+
         // Observe
         let observed = client.observe(deployment.clone()).await;
+
+        debug!(
+            "Observation client returned for model deployment '{}'; current_state='{:?}'; observed_state='{:?}'; message={:?}",
+            deployment.id(),
+            deployment.state,
+            observed.state,
+            observed.message
+        );
 
         let observed_at = TimeStamp::now();
 
         if deployment.is_expired(&observed_at) {
+            info!(
+                "Model deployment '{}' expired while observation was in progress",
+                deployment.id()
+            );
+
             return Ok(ObservationResult::Expired { deployment_id });
         }
 
@@ -87,9 +149,25 @@ impl ModelDeploymentObservationService {
 
         let target_endpoint_changed = !target_endpoint_delta.is_no_change();
 
-        let deployment_changed = state_changed || target_endpoint_changed;
+        let reconciliation_status_changed = observed.state == deployment.desired_state
+            && !matches!(
+                deployment.reconciliation_status(),
+                Some(ReconciliationStatus::Synchronized)
+            );
 
-        if deployment_changed {
+        let deployment_changed =
+            state_changed || target_endpoint_changed || reconciliation_status_changed;
+
+        debug!(
+            "Calculated observation changes for model deployment '{}'; state_changed={}; target_endpoint_changed={}; reconciliation_status_changed={}; deployment_changed={}",
+            deployment.id(),
+            state_changed,
+            target_endpoint_changed,
+            reconciliation_status_changed,
+            deployment_changed
+        );
+
+        if state_changed || target_endpoint_changed {
             let mut draft = deployment.revise();
 
             if state_changed {
@@ -107,10 +185,25 @@ impl ModelDeploymentObservationService {
                 .finish();
         }
 
+        if deployment.is_state_syncronized() {
+            deployment.mark_reconciliation_synchronized()?;
+        }
+
         deployment.record_observation(observed_at.clone());
 
+        let reconciliation_requirement =
+            deployment.resolve_reconciliation_requirement(&observed_at);
+
+        debug!(
+            "Completed model deployment observation; deployment_id='{}'; revision={}; state='{:?}'; reconciliation_requirement='{:?}'",
+            deployment.id(),
+            deployment.revision(),
+            deployment.state,
+            reconciliation_requirement
+        );
+
         Ok(ObservationResult::Observed {
-            reconciliation_requirement: deployment.resolve_reconciliation_requirement(&observed_at),
+            reconciliation_requirement,
             deployment,
             observed_at,
             deployment_changed,
@@ -121,6 +214,9 @@ impl ModelDeploymentObservationService {
 #[derive(Clone, Debug)]
 pub enum ObservationResult {
     Expired {
+        deployment_id: ModelDeploymentId,
+    },
+    Deferred {
         deployment_id: ModelDeploymentId,
     },
     Observed {

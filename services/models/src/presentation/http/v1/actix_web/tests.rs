@@ -219,6 +219,10 @@ fn openapi_exposes_model_contracts_and_association_route() -> Result<(), Box<dyn
 {
     let document = serde_json::to_value(ApiDoc::openapi())?;
 
+    assert!(document
+        .pointer("/paths/~1models-api~1healthcheck/get")
+        .is_some());
+
     for path in [
         "/paths/~1models-api~1artifacts~1{artifact_id}~1model/post",
         "/paths/~1models-api~1external-models~1search/post",

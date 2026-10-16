@@ -75,6 +75,9 @@ fn openapi_contains_hpc_cluster_routes_and_schemas() -> Result<(), Box<dyn std::
     let document = serde_json::to_value(ApiDoc::openapi())?;
 
     assert!(document
+        .pointer("/paths/~1deployments-api~1healthcheck/get")
+        .is_some());
+    assert!(document
         .pointer("/paths/~1deployments-api~1data-centers~1{data_center}~1hpc-clusters/get")
         .is_some());
     assert!(document
@@ -143,6 +146,32 @@ fn openapi_exposes_deployment_expiration_and_conflicts() -> Result<(), Box<dyn s
             Some(&serde_json::json!("#/components/schemas/ConflictResponse"))
         );
     }
+
+    Ok(())
+}
+
+#[test]
+fn openapi_exposes_reconciliation_workflow_state() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    for field in ["reconciliation_status", "retries", "retry_after"] {
+        let pointer = format!("/components/schemas/ModelDeployment/properties/{field}");
+
+        assert!(document.pointer(&pointer).is_some(), "missing {field}");
+    }
+
+    assert_eq!(
+        document.pointer("/components/schemas/ReconciliationStatus/enum"),
+        Some(&serde_json::json!([
+            "Pending",
+            "Starting",
+            "Stopping",
+            "Undeploying",
+            "Retrying",
+            "Synchronized",
+            "Failed"
+        ]))
+    );
 
     Ok(())
 }

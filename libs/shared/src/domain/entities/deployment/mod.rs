@@ -46,6 +46,9 @@ pub enum ModelDeploymentError {
     #[error("Model deployment endpoint base URL must be an absolute HTTP or HTTPS URL")]
     InvalidEndpointBaseUrl,
 
+    #[error("Invalid reconciliation state: {0}")]
+    InvalidReconciliationState(String),
+
     #[error("Invalid persisted ModelDeployment data: {0}")]
     DataIntegrityError(String),
 }
@@ -88,6 +91,9 @@ pub struct ModelDeployment {
     pub replicas: ReplicaGroup,
     /// Metadata provided by and for deployment clients
     pub metadata: Option<ModelDeploymentMetadata>,
+    reconciliation_status: Option<ReconciliationStatus>,
+    retries: u32,
+    retry_after: Option<TimeStamp>,
     /// Indicates changes to desired state over time. This field is incremented
     /// every time desired state changes.
     revision: u32,
@@ -182,6 +188,9 @@ impl ModelDeployment {
             target_endpoint: props.target_endpoint,
             replicas: props.replicas,
             metadata: props.metadata,
+            reconciliation_status: None,
+            retries: 0,
+            retry_after: None,
             revision: 0,
         })
     }
@@ -217,6 +226,15 @@ impl ModelDeployment {
             ));
         }
 
+        Self::validate_reconciliation_state(
+            props.reconciliation_status.as_ref(),
+            props.retries,
+            props.retry_after.as_ref(),
+            &props.state,
+            &props.desired_state,
+        )
+        .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))?;
+
         Ok(Self {
             id: props.id,
             name: props.name,
@@ -241,6 +259,9 @@ impl ModelDeployment {
             target_endpoint: props.target_endpoint,
             replicas: props.replicas,
             metadata: props.metadata,
+            reconciliation_status: props.reconciliation_status,
+            retries: props.retries,
+            retry_after: props.retry_after,
             revision: props.revision,
         })
     }
@@ -258,6 +279,17 @@ impl ModelDeployment {
         evaluated_at: &TimeStamp,
     ) -> Option<ReconciliationRequirement> {
         if self.is_expired(evaluated_at) || self.is_state_syncronized() {
+            return None;
+        }
+
+        if matches!(
+            self.reconciliation_status,
+            Some(ReconciliationStatus::Failed)
+        ) {
+            return None;
+        }
+
+        if self.is_waiting_for_retry(evaluated_at) {
             return None;
         }
 
@@ -286,6 +318,81 @@ impl ModelDeployment {
 
     pub fn revision(&self) -> &u32 {
         &self.revision
+    }
+
+    pub fn reconciliation_status(&self) -> Option<&ReconciliationStatus> {
+        self.reconciliation_status.as_ref()
+    }
+
+    pub fn retries(&self) -> u32 {
+        self.retries
+    }
+
+    pub fn retry_after(&self) -> Option<&TimeStamp> {
+        self.retry_after.as_ref()
+    }
+
+    pub fn is_waiting_for_retry(&self, evaluated_at: &TimeStamp) -> bool {
+        matches!(
+            self.reconciliation_status,
+            Some(ReconciliationStatus::Retrying)
+        ) && self
+            .retry_after
+            .as_ref()
+            .is_some_and(|retry_after| retry_after.into_inner() > evaluated_at.into_inner())
+    }
+
+    pub fn accept_for_reconciliation(&mut self) {
+        self.set_reconciliation_state(Some(ReconciliationStatus::Pending), 0, None);
+    }
+
+    pub fn begin_reconciliation(&mut self, requirement: &ReconciliationRequirement) {
+        let status = match requirement {
+            ReconciliationRequirement::Start => ReconciliationStatus::Starting,
+            ReconciliationRequirement::Stop => ReconciliationStatus::Stopping,
+            ReconciliationRequirement::Undeploy => ReconciliationStatus::Undeploying,
+        };
+
+        self.set_reconciliation_state(Some(status), self.retries, None);
+    }
+
+    pub fn schedule_reconciliation_retry(
+        &mut self,
+        retry_after: TimeStamp,
+    ) -> Result<(), ModelDeploymentError> {
+        let retries = self.retries.checked_add(1).ok_or_else(|| {
+            ModelDeploymentError::InvalidReconciliationState(
+                "reconciliation retry count overflowed".into(),
+            )
+        })?;
+
+        self.set_reconciliation_state(
+            Some(ReconciliationStatus::Retrying),
+            retries,
+            Some(retry_after),
+        );
+
+        Ok(())
+    }
+
+    pub fn mark_reconciliation_failed(&mut self) {
+        self.set_reconciliation_state(Some(ReconciliationStatus::Failed), self.retries, None);
+    }
+
+    pub fn mark_reconciliation_synchronized(&mut self) -> Result<(), ModelDeploymentError> {
+        if !self.is_state_syncronized() {
+            return Err(ModelDeploymentError::InvalidReconciliationState(
+                "a deployment can only be synchronized when actual and desired state agree".into(),
+            ));
+        }
+
+        self.set_reconciliation_state(Some(ReconciliationStatus::Synchronized), 0, None);
+
+        Ok(())
+    }
+
+    pub fn reset_reconciliation(&mut self) {
+        self.set_reconciliation_state(None, 0, None);
     }
 
     pub fn last_observed(&self) -> Option<&TimeStamp> {
@@ -357,6 +464,47 @@ impl ModelDeployment {
             .map_err(|_| ModelDeploymentError::MaximumRuntimeOverflow)?;
 
         Ok(())
+    }
+
+    fn validate_reconciliation_state(
+        status: Option<&ReconciliationStatus>,
+        retries: u32,
+        retry_after: Option<&TimeStamp>,
+        state: &State,
+        desired_state: &DesiredState,
+    ) -> Result<(), ModelDeploymentError> {
+        if matches!(status, Some(ReconciliationStatus::Retrying)) {
+            if retries == 0 || retry_after.is_none() {
+                return Err(ModelDeploymentError::InvalidReconciliationState(
+                    "Retrying requires a positive retry count and retry_after".into(),
+                ));
+            }
+        } else if retry_after.is_some() {
+            return Err(ModelDeploymentError::InvalidReconciliationState(
+                "retry_after is only valid while Retrying".into(),
+            ));
+        }
+
+        if matches!(status, Some(ReconciliationStatus::Synchronized)) && state != desired_state {
+            return Err(ModelDeploymentError::InvalidReconciliationState(
+                "Synchronized requires actual and desired state to agree".into(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn set_reconciliation_state(
+        &mut self,
+        status: Option<ReconciliationStatus>,
+        retries: u32,
+        retry_after: Option<TimeStamp>,
+    ) {
+        self.reconciliation_status = status;
+        self.retries = retries;
+        self.retry_after = retry_after;
+
+        self.last_modified = TimeStamp::now();
     }
 }
 
@@ -443,6 +591,17 @@ impl PartialEq<DesiredState> for State {
             _ => false,
         }
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ReconciliationStatus {
+    Pending,
+    Starting,
+    Stopping,
+    Undeploying,
+    Retrying,
+    Synchronized,
+    Failed,
 }
 
 #[derive(Clone, Debug)]
@@ -748,7 +907,21 @@ impl<'a> ModelDeploymentDraft<'a> {
 
         self.deployment.last_desired_state_change = TimeStamp::now();
 
+        self.deployment.reset_reconciliation();
+
         Ok(self)
+    }
+
+    pub fn restart_reconciliation(&mut self, message: Option<String>) -> &mut Self {
+        if let Some(message) = message {
+            self.deployment.last_message = Some(message);
+        }
+
+        self.deployment.last_desired_state_change = TimeStamp::now();
+
+        self.deployment.reset_reconciliation();
+
+        self
     }
 
     pub fn apply_target_endpoint_delta(
@@ -853,6 +1026,9 @@ pub struct ReconstituteModelDeploymentProps {
     pub last_desired_state_change: TimeStamp,
     pub created_at: TimeStamp,
     pub metadata: Option<ModelDeploymentMetadata>,
+    pub reconciliation_status: Option<ReconciliationStatus>,
+    pub retries: u32,
+    pub retry_after: Option<TimeStamp>,
 }
 
 #[derive(Clone, Debug)]

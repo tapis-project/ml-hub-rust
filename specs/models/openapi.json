@@ -604,6 +604,20 @@
         }
       }
     },
+    "/models-api/healthcheck": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Check service health",
+        "operationId": "healthcheck",
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
+    },
     "/models-api/ingestions": {
       "get": {
         "tags": [

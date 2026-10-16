@@ -20,6 +20,22 @@ http:
           - X-Tapis-Token
         accessControlAllowCredentials: true
   routers:
+    gatus-public:
+      rule: "Host(`mlhub-status.local.develop.tapis.io`)"
+      service: gatus-public
+
+    endpoint-envoy:
+      rule: "Host(`tacc.local.develop.tapis.io`) && PathPrefix(`/v3/mlhub/endpoints/`)"
+      priority: 100
+      service: endpoint-envoy
+
+    endpoints-api:
+      rule: "Host(`tacc.local.develop.tapis.io`) && PathPrefix(`/endpoints-api`)"
+      service: endpoints-api
+      middlewares:
+        - tapis-rewrite-host
+        - cors
+
     dashboard:
       rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       service: api@internal
@@ -30,7 +46,7 @@ http:
       middlewares:
         - tapis-rewrite-host
         - cors
-    
+
     datasets-api:
       rule: "HostRegexp(`tacc.local.develop.tapis.io`) && PathPrefix(`/datasets-api`)"
       service: datasets-api
@@ -53,6 +69,18 @@ http:
         - cors
 
   services:
+    gatus-public:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-gatus-public-service:8080
+    endpoint-envoy:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-endpoint-envoy-service:8080
+    endpoints-api:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-endpoints-api-service:8000
     models-api:
       loadBalancer:
         servers:

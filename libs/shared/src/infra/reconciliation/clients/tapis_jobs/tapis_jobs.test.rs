@@ -1,6 +1,17 @@
 use super::*;
 
 #[test]
+fn classifies_retryable_tapis_status_codes() {
+    for status in [408, 425, 429, 500, 503, 599] {
+        assert!(TapisJobsModelDeploymentReconciliationClient::is_retryable_status(status));
+    }
+
+    for status in [400, 401, 403, 404, 409, 422] {
+        assert!(!TapisJobsModelDeploymentReconciliationClient::is_retryable_status(status));
+    }
+}
+
+#[test]
 fn resolves_supported_hpc_cluster_hosts() -> Result<(), ReconciliationError> {
     let cases = [
         ("frontera.tacc.utexas.edu", "MLHub-FlexServ-Frontera"),
@@ -64,4 +75,44 @@ fn rejects_incomplete_or_malformed_flexserv_access_information() {
 
         assert!(result.is_err());
     }
+}
+
+#[test]
+fn sanitizes_sensitive_values_in_json_response_bodies() {
+    let response = r#"{
+        "message": "submission failed",
+        "access_token": "secret-token",
+        "details": {
+            "password": "secret-password",
+            "reason": "invalid queue"
+        },
+        "environment_variable": {
+            "name": "HF_TOKEN",
+            "value": "secret-environment-value"
+        }
+    }"#;
+
+    let sanitized = TapisJobsModelDeploymentReconciliationClient::sanitized_response_body(response);
+
+    assert!(sanitized.contains("submission failed"));
+    assert!(sanitized.contains("invalid queue"));
+    assert!(!sanitized.contains("secret-token"));
+    assert!(!sanitized.contains("secret-password"));
+    assert!(!sanitized.contains("secret-environment-value"));
+    assert!(sanitized.contains("[REDACTED]"));
+}
+
+#[test]
+fn omits_non_json_response_bodies_from_diagnostic_logs() {
+    let response = "upstream included an opaque error response";
+
+    let sanitized = TapisJobsModelDeploymentReconciliationClient::sanitized_response_body(response);
+
+    assert_eq!(
+        sanitized,
+        format!(
+            "<non-JSON response body omitted; byte_length={}>",
+            response.len()
+        )
+    );
 }

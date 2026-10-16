@@ -1,6 +1,6 @@
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
-use serde_json::json;
+use serde_json::{json, Value};
 use tapis_jobs::models::{JobArgSpec, ReqSubmitJob};
 use tapis_jobs::{with_headers, TapisJobs};
 use tapis_tokens::models::RefreshToken201Response;
@@ -11,8 +11,8 @@ use crate::application::ports::deployment::ModelDeploymentReconciliationClient;
 use crate::application::ports::errors::InfrastructureError;
 use crate::application::services::deployment_argument_service::DecryptedArgument;
 use crate::application::workflows::reconciliation::{
-    FailedOutcome, ObservedOutcome, ReconcilerError, ReconciliationAction, ReconciliationOutcome,
-    StartedOutcome, StoppedOutcome, UndeployedOutcome,
+    FailedOutcome, FailureDisposition, ObservedOutcome, ReconcilerError, ReconciliationAction,
+    ReconciliationOutcome, StartedOutcome, StoppedOutcome, UndeployedOutcome,
 };
 use crate::domain::entities::deployment::{
     DeploymentTargetSnapshot, ModelDeployment, ModelDeploymentEndpoint,
@@ -58,6 +58,10 @@ impl TapisJobsModelDeploymentReconciliationClient {
     const FLEXSERV_ACCESS_INFO_PATH: &'static str = "flexserv_access_info.txt";
     const FLEXSERV_ENDPOINT_NAME: &'static str = "default";
 
+    fn is_retryable_status(status: u16) -> bool {
+        matches!(status, 408 | 425 | 429 | 500..=599)
+    }
+
     fn resolve_tapis_system_id(cluster_host: &str) -> Result<&'static str, ReconciliationError> {
         match cluster_host {
             "frontera.tacc.utexas.edu" => Ok("MLHub-FlexServ-Frontera"),
@@ -69,6 +73,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
     }
 
     pub async fn new(site_context: &SiteContext) -> Result<Self, ReconcilerError> {
+        log::debug!(
+            "Initializing Tapis Jobs reconciliation client; site_id='{}'; site_base_url='{}'",
+            site_context.site_id,
+            site_context.base_url
+        );
+
         let mlhub_service_password = match env::var("MLHUB_SERVICE_PASSWORD") {
             Ok(p) => p,
             Err(_) => {
@@ -81,6 +91,11 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
         // Initialize http client
         let client = Client::new();
+
+        log::debug!(
+            "Fetching FlexServ base job definition from '{}'",
+            Self::FLEXSERV_JOB_DEF_URL
+        );
 
         // Fetch the base tapis job def
         let base_job_definition = client
@@ -110,6 +125,8 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 ReconcilerError::InitializationFailed(error.to_string())
             })?;
 
+        log::debug!("FlexServ base job definition loaded successfully");
+
         Ok(Self {
             client,
             base_job_definition,
@@ -124,6 +141,15 @@ impl TapisJobsModelDeploymentReconciliationClient {
         external_model: &ExternalModel,
         arguments: &[DecryptedArgument],
     ) -> Result<ReconciliationOutcome, ReconciliationError> {
+        log::debug!(
+            "Preparing Tapis Jobs start reconciliation; deployment_id='{}'; tenant_id='{}'; owner='{}'; external_model_id='{}'; argument_count={}",
+            deployment.id(),
+            deployment.tenant_id,
+            deployment.owner,
+            external_model.id(),
+            arguments.len()
+        );
+
         let (model_id, model_revision) = match (external_model.provider(), external_model.locator())
         {
             (ModelProvider::HuggingFace, ModelLocator::HuggingFace(locator)) => {
@@ -136,39 +162,122 @@ impl TapisJobsModelDeploymentReconciliationClient {
             }
         };
 
+        log::debug!(
+            "Resolved Hugging Face source for model deployment '{}'; model_id='{}'; model_revision='{}'",
+            deployment.id(),
+            model_id,
+            model_revision
+        );
+
         // TODO Check if Job UUID is in the metadata. If so, resubmit instead of submit
+
+        log::debug!(
+            "Requesting MLHub service token for model deployment '{}'",
+            deployment.id()
+        );
 
         let service_jwt = self.generate_service_token().await?;
 
-        let jobs_client = TapisJobs::new(&self.get_target_base_url(deployment), Some(&service_jwt))
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
+        log::debug!(
+            "MLHub service token acquired for model deployment '{}'",
+            deployment.id()
+        );
 
-                log::error!(
-                    "[{}] Failed to initialize TapisJobs client: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?;
+        let target_base_url = self.get_target_base_url(deployment);
+
+        log::debug!(
+            "Initializing Tapis Jobs SDK for model deployment '{}'; base_url='{}'",
+            deployment.id(),
+            target_base_url
+        );
+
+        let jobs_client = TapisJobs::new(&target_base_url, Some(&service_jwt)).map_err(|e| {
+            let error = InfrastructureError::new_internal();
+
+            log::error!(
+                "[{}] Failed to initialize TapisJobs client: {}",
+                error.error_id(),
+                e.to_string()
+            );
+            error
+        })?;
 
         let custom_headers = Self::obo_headers(deployment)?;
 
         let job_def = self.build_job_request(model_id, model_revision, deployment, arguments)?;
 
+        log::debug!(
+            "Built FlexServ Tapis job request for model deployment '{}'; job_name='{}'; app_id='{}'; app_version='{}'; exec_system_id={:?}; exec_system_logical_queue={:?}",
+            deployment.id(),
+            job_def.name,
+            job_def.app_id,
+            job_def.app_version,
+            job_def.exec_system_id,
+            job_def.exec_system_logical_queue
+        );
+
+        if log::log_enabled!(log::Level::Debug) {
+            match serde_json::to_value(&job_def) {
+                Ok(mut payload) => {
+                    Self::redact_sensitive_json(&mut payload);
+
+                    log::debug!(
+                        "Submitting FlexServ Tapis job request for model deployment '{}'; payload={}",
+                        deployment.id(),
+                        payload
+                    );
+                }
+                Err(error) => {
+                    log::warn!(
+                        "Unable to serialize FlexServ Tapis job request for diagnostic logging; deployment_id='{}'; error={}",
+                        deployment.id(),
+                        error
+                    );
+                }
+            }
+        }
+
         let job_uuid = with_headers(custom_headers, async {
             jobs_client.jobs.submit_job(job_def).await
         })
         .await
-        .map_err(|e| {
-            let error = InfrastructureError::new_internal();
+        .map_err(|tapis_error| {
+            match &tapis_error {
+                tapis_jobs::apis::Error::ResponseError(response) => {
+                    let error = InfrastructureError::new_internal();
 
-            log::error!(
-                "[{}] Error when submitting FlexServ job to Tapis: {}",
-                error.error_id(),
-                e.to_string()
-            );
-            error
+                    log::error!(
+                        "[{}] Tapis rejected FlexServ job submission; deployment_id='{}'; status={}; response_body={}",
+                        error.error_id(),
+                        deployment.id(),
+                        response.status,
+                        Self::sanitized_response_body(&response.content)
+                    );
+
+                    if Self::is_retryable_status(response.status.as_u16()) {
+                        return ReconciliationError::Recoverable(format!(
+                            "Tapis Jobs request failed with retryable status {}",
+                            response.status
+                        ));
+                    }
+
+                    ReconciliationError::Fatal(error)
+                }
+                _ => {
+                    let error = InfrastructureError::new_internal();
+
+                    log::error!(
+                        "[{}] Error when submitting FlexServ job to Tapis; deployment_id='{}'; error={}",
+                        error.error_id(),
+                        deployment.id(),
+                        tapis_error
+                    );
+
+                    ReconciliationError::Recoverable(
+                        "Tapis Jobs request failed before receiving a response".into(),
+                    )
+                }
+            }
         })?
         .result
         .ok_or_else(|| {
@@ -184,6 +293,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
             log::error!("[{}] Uuid is None", error.error_id());
             error
         })?;
+
+        log::info!(
+            "Tapis accepted FlexServ job for model deployment '{}'; job_uuid='{}'",
+            deployment.id(),
+            job_uuid
+        );
 
         let mut map = HashMap::new();
 
@@ -231,16 +346,38 @@ impl TapisJobsModelDeploymentReconciliationClient {
         &self,
         deployment: &ModelDeployment,
     ) -> Result<ObservedOutcome, ReconciliationError> {
+        log::debug!(
+            "Observing Tapis Jobs deployment; deployment_id='{}'; revision={}; state='{:?}'",
+            deployment.id(),
+            deployment.revision(),
+            deployment.state
+        );
+
         let job_uuid = Self::extract_job_uuid(deployment).ok_or_else(|| {
             ReconciliationError::Recoverable(
                 "Tapis job identifier is unavailable for observation".into(),
             )
         })?;
 
+        log::debug!(
+            "Resolved Tapis job identifier for model deployment '{}'; job_uuid='{}'",
+            deployment.id(),
+            job_uuid
+        );
+
         let service_jwt = self.generate_service_token().await?;
 
-        let jobs_client = TapisJobs::new(&self.get_target_base_url(deployment), Some(&service_jwt))
-            .map_err(|error| {
+        let target_base_url = self.get_target_base_url(deployment);
+
+        log::debug!(
+            "Fetching Tapis job status for model deployment '{}'; job_uuid='{}'; base_url='{}'",
+            deployment.id(),
+            job_uuid,
+            target_base_url
+        );
+
+        let jobs_client =
+            TapisJobs::new(&target_base_url, Some(&service_jwt)).map_err(|error| {
                 let infrastructure_error = InfrastructureError::new_internal();
 
                 log::error!(
@@ -278,6 +415,14 @@ impl TapisJobsModelDeploymentReconciliationClient {
             })?;
 
         let state = Self::state_from_job_status(&status);
+
+        log::debug!(
+            "Observed Tapis job status for model deployment '{}'; job_uuid='{}'; tapis_status='{}'; mapped_state='{:?}'",
+            deployment.id(),
+            job_uuid,
+            status,
+            state
+        );
 
         if state != State::Running {
             return Ok(ObservedOutcome {
@@ -438,6 +583,12 @@ impl TapisJobsModelDeploymentReconciliationClient {
             "target_site_id": self.site_context.site_id.clone(),
         });
 
+        log::debug!(
+            "Requesting MLHub service token; site_id='{}'; token_service_base_url='{}'",
+            self.site_context.site_id,
+            self.get_site_context().base_url
+        );
+
         let resp = self
             .client
             .post(format!("{}/v3/tokens", self.get_site_context().base_url))
@@ -498,7 +649,63 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 e
             })?;
 
+        log::debug!(
+            "MLHub service token request succeeded; site_id='{}'",
+            self.site_context.site_id
+        );
+
         Ok(resp)
+    }
+
+    fn sanitized_response_body(content: &str) -> String {
+        let Ok(mut value) = serde_json::from_str::<Value>(content) else {
+            return format!(
+                "<non-JSON response body omitted; byte_length={}>",
+                content.len()
+            );
+        };
+
+        Self::redact_sensitive_json(&mut value);
+
+        value.to_string()
+    }
+
+    fn redact_sensitive_json(value: &mut Value) {
+        match value {
+            Value::Object(object) => {
+                let contains_sensitive_identifier = object
+                    .iter()
+                    .filter(|(key, _)| matches!(key.as_str(), "name" | "key" | "id"))
+                    .filter_map(|(_, value)| value.as_str())
+                    .any(Self::is_sensitive_name);
+
+                for (key, value) in object {
+                    let is_sensitive_key = Self::is_sensitive_name(key);
+                    let is_sensitive_value =
+                        contains_sensitive_identifier && matches!(key.as_str(), "value" | "arg");
+
+                    if is_sensitive_key || is_sensitive_value {
+                        *value = Value::String("[REDACTED]".into());
+                    } else {
+                        Self::redact_sensitive_json(value);
+                    }
+                }
+            }
+            Value::Array(values) => {
+                for value in values {
+                    Self::redact_sensitive_json(value);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn is_sensitive_name(name: &str) -> bool {
+        let normalized_name = name.to_ascii_lowercase();
+
+        ["authorization", "credential", "password", "secret", "token"]
+            .iter()
+            .any(|candidate| normalized_name.contains(candidate))
     }
 
     /// `job_uuid` from metadata when the deployment already submitted a Tapis job.
@@ -607,6 +814,14 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
         let tapis_system_id = Self::resolve_tapis_system_id(&target.cluster_host)?;
 
+        log::debug!(
+            "Resolved Tapis execution target for model deployment '{}'; cluster_host='{}'; tapis_system_id='{}'; queue='{}'",
+            deployment.id(),
+            target.cluster_host,
+            tapis_system_id,
+            target.queue_name
+        );
+
         job_def.exec_system_id = Some(tapis_system_id.into());
         job_def.exec_system_logical_queue = Some(target.queue_name.clone());
 
@@ -685,6 +900,19 @@ impl TapisJobsModelDeploymentReconciliationClient {
 #[async_trait::async_trait]
 impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliationClient {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome {
+        let deployment_id = *input.deployment.id();
+        let action_name = match &input.action {
+            ReconciliationAction::Start { .. } => "Start",
+            ReconciliationAction::Stop => "Stop",
+            ReconciliationAction::Undeploy => "Undeploy",
+        };
+
+        log::debug!(
+            "Tapis Jobs reconciler received action for model deployment '{}'; action='{}'",
+            deployment_id,
+            action_name
+        );
+
         let outcome = match input.action {
             ReconciliationAction::Start { payload } => {
                 self.handle_start(&input.deployment, &input.external_model, &payload)
@@ -695,13 +923,32 @@ impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliat
         };
 
         match outcome {
-            Ok(o) => o,
-            Err(e) => ReconciliationOutcome::Failed(FailedOutcome {
-                message: Some(e.to_string().clone()),
-                metadata: None,
-                replicas: None,
-                target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),
-            }),
+            Ok(outcome) => {
+                log::debug!(
+                    "Tapis Jobs reconciliation completed for model deployment '{}'",
+                    deployment_id
+                );
+
+                outcome
+            }
+            Err(error) => {
+                log::error!(
+                    "Tapis Jobs reconciliation failed for model deployment '{}': {}",
+                    deployment_id,
+                    error
+                );
+
+                ReconciliationOutcome::Failed(FailedOutcome {
+                    message: Some(error.to_string()),
+                    disposition: match error {
+                        ReconciliationError::Recoverable(_) => FailureDisposition::Recoverable,
+                        _ => FailureDisposition::Terminal,
+                    },
+                    metadata: None,
+                    replicas: None,
+                    target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),
+                })
+            }
         }
     }
 

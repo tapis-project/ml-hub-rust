@@ -77,14 +77,28 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
 
         // If the user is request that the deployment move to a state that it is already in
         // we noop and return the same deployment without revision
-        if deployment.desired_state == input.desired_state {
+        let retry_failed_start = deployment.desired_state == DesiredState::Running
+            && input.desired_state == DesiredState::Running
+            && matches!(
+                deployment.reconciliation_status(),
+                Some(crate::domain::entities::deployment::ReconciliationStatus::Failed)
+            );
+
+        if deployment.desired_state == input.desired_state && !retry_failed_start {
             return Ok(deployment);
         }
 
-        let modified_deployment = deployment
-            .revise()
-            .transition_to_desired(input.desired_state, input.last_message)?
-            .finish();
+        let modified_deployment = if retry_failed_start {
+            deployment
+                .revise()
+                .restart_reconciliation(input.last_message)
+                .finish()
+        } else {
+            deployment
+                .revise()
+                .transition_to_desired(input.desired_state, input.last_message)?
+                .finish()
+        };
 
         // Update the deployment
         retry_async(

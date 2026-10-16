@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use mongodb::Database;
 use shared::{
     infra::_common::mongo::Index,
+    infra::persistence::mongo::documents::deployment::indexes::ModelDeploymentReconciliationIndex,
     infra::persistence::mongo::documents::hpc_cluster::indexes::{
         HpcClusterDataCenterIndex, HpcClusterIdIndexUnique, HpcClusterQueueIdIndexUnique,
     },
@@ -9,7 +10,27 @@ use shared::{
 use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
 
 pub fn get_migrations() -> Vec<Box<dyn Migration>> {
-    vec![Box::new(CreateHpcClusterIndexesMigration)]
+    vec![
+        Box::new(CreateHpcClusterIndexesMigration),
+        Box::new(CreateModelDeploymentReconciliationIndexMigration),
+    ]
+}
+
+pub struct CreateModelDeploymentReconciliationIndexMigration;
+
+#[async_trait]
+impl Migration for CreateModelDeploymentReconciliationIndexMigration {
+    async fn up(&self, env: Env) -> anyhow::Result<()> {
+        let database = env.db.as_ref().expect("migration database");
+
+        create_index::<ModelDeploymentReconciliationIndex>(database).await
+    }
+
+    async fn down(&self, env: Env) -> anyhow::Result<()> {
+        let database = env.db.as_ref().expect("migration database");
+
+        drop_index::<ModelDeploymentReconciliationIndex>(database).await
+    }
 }
 
 pub struct CreateHpcClusterIndexesMigration;

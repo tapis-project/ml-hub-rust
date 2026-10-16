@@ -1,0 +1,44 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-gatus-public-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-gatus-public-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: gatus
+                env:
+                  - name: MODELS_HEALTH_URL
+                    value: https://tacc.develop.tapis.io/v3/mlhub/models-api/healthcheck
+                  - name: DATASETS_HEALTH_URL
+                    value: https://tacc.develop.tapis.io/v3/mlhub/datasets-api/healthcheck
+                  - name: DEPLOYMENTS_HEALTH_URL
+                    value: https://tacc.develop.tapis.io/v3/mlhub/deployments-api/healthcheck
+                  - name: AGENTS_HEALTH_URL
+                    value: https://tacc.develop.tapis.io/v3/mlhub/agents-api/healthcheck
+                  - name: ENDPOINTS_HEALTH_URL
+                    value: https://tacc.develop.tapis.io/v3/mlhub/endpoints-api/healthcheck
+  - target:
+      kind: Deployment
+      name: mlhub-gatus-internal-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-gatus-internal-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: gatus
+                env:
+                  - name: TRAEFIK_ADDRESS
+                    value: tcp://mlhub-traefik-service:80

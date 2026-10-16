@@ -28,3 +28,16 @@ All other services follow the same pattern
 ## Tapis Deployments
 
 For all Tapis environments, the secrets used by each MLHub subsystem are assumed to have been created by the Tapis Deployer, therefore, you will find no Secrets manifests in any of the Tapis overlays.
+
+## Health dashboards
+
+The `gatus` component deploys a public API-status dashboard and a separate cluster-private operations dashboard. Access the internal dashboard locally with `./dev expose-internal gatus`; it is intentionally absent from Traefik.
+
+The public dashboard uses an environment-specific hostname because Gatus does not support path-based hosting:
+
+- `mlhub-status.local.develop.tapis.io`
+- `mlhub-status.develop.tapis.io`
+- `mlhub-status.staging.tapis.io`
+- `mlhub-status.tapis.io`
+
+This repository configures the MLHub Traefik host routes. DNS records, certificates, and upstream Tapis ingress routing to `mlhub-traefik-service` must be provisioned outside this repository.

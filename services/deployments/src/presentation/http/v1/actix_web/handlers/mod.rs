@@ -1,5 +1,6 @@
 pub mod deploy_model_with_option;
 pub mod get_hpc_cluster;
+pub mod healthcheck;
 pub mod index;
 pub mod list_hpc_clusters;
 pub mod list_model_deployments;

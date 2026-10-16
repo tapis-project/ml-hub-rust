@@ -441,6 +441,24 @@ impl ModelDeploymentService {
         Ok(())
     }
 
+    pub async fn update_at_revision(
+        &self,
+        input: UpdateModelDeploymentInput,
+        expected_revision: u32,
+    ) -> Result<(), ModelDeploymentServiceError> {
+        retry_async(
+            || {
+                self.model_deployment_repository
+                    .update_at_revision(&input.deployment, expected_revision)
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn record_observation(
         &self,
         _ctx: &RequestContext,

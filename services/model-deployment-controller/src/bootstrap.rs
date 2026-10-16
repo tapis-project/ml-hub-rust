@@ -7,7 +7,7 @@ use amqprs::{
     connection::Connection,
     FieldTable, FieldValue,
 };
-use log::error;
+use log::{debug, error, info};
 use mongodb::Client;
 use shared::application::ports::cipher::Cipher;
 use shared::application::ports::deployment::ModelDeploymentReconcilerProvider;
@@ -50,6 +50,7 @@ use shared::infra::reconciliation::client_provider::ReconciliationClientProvider
 
 use crate::controller::{
     ControlLoopState, ModelDeploymentController, ModelDeploymentControllerInitializationError,
+    ReconciliationRetryConfiguration,
 };
 
 pub struct MessagingContext {
@@ -65,6 +66,8 @@ pub struct BootstrapOutput {
 }
 
 pub async fn bootstrap() -> BootstrapOutput {
+    info!("Bootstrapping model deployment controller infrastructure");
+
     let broker_host = env::var("RABBIT_HOST").expect("RABBIT_HOST to be in environment variables");
 
     let broker_port = env::var("RABBIT_PORT").expect("RABBIT_PORT to be in environment variables");
@@ -74,6 +77,11 @@ pub async fn bootstrap() -> BootstrapOutput {
 
     let broker_password =
         env::var("RABBIT_PASSWORD").expect("RABBIT_PASSWORD to be in environment variables");
+
+    debug!(
+        "Opening model deployment controller RabbitMQ channel; host='{}'; port='{}'",
+        broker_host, broker_port
+    );
 
     let (_connection, channel) = open_channel(
         broker_host,
@@ -91,6 +99,10 @@ pub async fn bootstrap() -> BootstrapOutput {
         _connection,
         channel: Arc::new(channel),
     };
+
+    info!("Model deployment controller RabbitMQ channel opened");
+
+    debug!("Declaring model deployment controller RabbitMQ topology");
 
     declare_exchanges(
         &messaging_context.channel,
@@ -166,20 +178,36 @@ pub async fn bootstrap() -> BootstrapOutput {
         .await
         .expect("Model deployment reconciliation queue to be bound");
 
+    info!("Model deployment controller RabbitMQ topology is ready");
+
     let db_name = env::var("MONGO_DBNAME").expect("MONGO_DBNAME env var not set");
+
+    let mongo_host = env::var("MONGO_HOST").expect("MONGO_HOST env var not set");
+
+    let mongo_port = env::var("MONGO_PORT").expect("MONGO_PORT env var not set");
+
+    let mongo_replica_set =
+        env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set");
+
+    debug!(
+        "Initializing model deployment controller Mongo client; host='{}'; port='{}'; database='{}'; replica_set='{}'",
+        mongo_host, mongo_port, db_name, mongo_replica_set
+    );
 
     let client = initialize_client(ClientParams {
         username: env::var("MONGO_USERNAME").expect("MONGO_USERNAME env var not set"),
         password: env::var("MONGO_PASSWORD").expect("MONGO_PASSWORD env var not set"),
-        host: env::var("MONGO_HOST").expect("MONGO_HOST env var not set"),
-        port: env::var("MONGO_PORT").expect("MONGO_PORT env var not set"),
+        host: mongo_host,
+        port: mongo_port,
         db: db_name.clone(),
-        replica_set: Some(
-            env::var("MONGO_REPLICA_SET").expect("MONGO_REPLICA_SET env var not set"),
-        ),
+        replica_set: Some(mongo_replica_set),
     })
     .await
     .unwrap_or_else(|err| panic!("Database initialization error: {}", err));
+
+    info!("Model deployment controller Mongo client initialized");
+
+    debug!("Loading model deployment controller site configuration");
 
     let config_loader = SiteConfigurationLoader::new()
         .unwrap_or_else(|err| panic!("Site configuration initialization error: {}", err));
@@ -190,6 +218,11 @@ pub async fn bootstrap() -> BootstrapOutput {
         base_url: config.base_url.clone(),
         site_id: config.site_id.clone(),
     };
+
+    info!(
+        "Model deployment controller site configuration loaded; site_id='{}'; base_url='{}'",
+        site_context.site_id, site_context.base_url
+    );
 
     BootstrapOutput {
         messaging_context,
@@ -205,6 +238,8 @@ pub async fn model_deployment_controller_builder(
     channel: Arc<Channel>,
     site_context: SiteContext,
 ) -> Result<ModelDeploymentController, ModelDeploymentControllerInitializationError> {
+    debug!("Building model deployment controller application services");
+
     let model_deployment_service = Arc::new(model_deployment_service_builder(
         client,
         db_name.clone(),
@@ -227,12 +262,17 @@ pub async fn model_deployment_controller_builder(
 
     let state = Arc::new(ControlLoopState::new());
 
+    let retry_configuration = ReconciliationRetryConfiguration::from_environment();
+
+    debug!("Model deployment controller application services built");
+
     ModelDeploymentController::new(
         model_deployment_service,
         reconciliation_service,
         observer_service,
         endpoint_issuance_service,
         state,
+        retry_configuration,
     )
     .await
 }

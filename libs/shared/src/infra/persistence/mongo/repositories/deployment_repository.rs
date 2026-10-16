@@ -16,9 +16,7 @@ use crate::infra::argument::mongo::{
 use crate::infra::persistence::mongo::database::{
     DEPLOYMENT_ARGUMENT_COLLECTION, MODEL_DEPLOYMENT_COLLECTION,
 };
-use crate::infra::persistence::mongo::documents::deployment::{
-    DesiredState, ModelDeployment, State,
-};
+use crate::infra::persistence::mongo::documents::deployment::{ModelDeployment, State};
 use crate::shared_kernel::value_objects::TimeStamp;
 
 use futures::stream::TryStreamExt;
@@ -44,6 +42,57 @@ impl ModelDeploymentRepository {
             read_collection: db.collection(MODEL_DEPLOYMENT_COLLECTION),
             argument_collection: db.collection(DEPLOYMENT_ARGUMENT_COLLECTION),
         }
+    }
+
+    async fn update_with_filter(
+        &self,
+        deployment: &entities::deployment::ModelDeployment,
+        filter: mongodb::bson::Document,
+    ) -> Result<(), ModelDeploymentRepositoryError> {
+        let update = ModelDeployment::from(deployment);
+
+        let document = doc! {
+            "$set": {
+                "state": String::from(update.state),
+                "desired_state": String::from(update.desired_state),
+                "last_message": update.last_message,
+                "visibility": to_bson(&update.visibility)
+                    .map_err(|error| map_error("Could not serialize visibility", error))?,
+                "last_modified": update.last_modified,
+                "last_state_change": update.last_state_change,
+                "last_observed": to_bson(&update.last_observed)
+                    .map_err(|error| map_error("Could not serialize last_observed", error))?,
+                "maximum_runtime_seconds": to_bson(&update.maximum_runtime_seconds)
+                    .map_err(|error| map_error("Could not serialize maximum_runtime_seconds", error))?,
+                "expires_at": to_bson(&update.expires_at)
+                    .map_err(|error| map_error("Could not serialize expires_at", error))?,
+                "last_desired_state_change": update.last_desired_state_change,
+                "target_endpoint": to_bson(&update.target_endpoint)
+                    .map_err(|error| map_error("Could not serialize target_endpoint", error))?,
+                "replicas": to_bson(&update.replicas)
+                    .map_err(|error| map_error("Could not serialize replicas", error))?,
+                "metadata": to_bson(&update.metadata)
+                    .map_err(|error| map_error("Could not serialize metadata", error))?,
+                "reconciliation_status": to_bson(&update.reconciliation_status)
+                    .map_err(|error| map_error("Could not serialize reconciliation_status", error))?,
+                "retries": update.retries,
+                "retry_after": to_bson(&update.retry_after)
+                    .map_err(|error| map_error("Could not serialize retry_after", error))?,
+                "revision": update.revision,
+            }
+        };
+
+        let result = self
+            .write_collection
+            .update_one(filter, document)
+            .await
+            .map_err(|error| map_error("Could not update model deployment", error))?;
+
+        if result.matched_count == 0 {
+            return Err(ModelDeploymentRepositoryError::RevisionConflict);
+        }
+
+        Ok(())
     }
 }
 
@@ -212,73 +261,22 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
         &self,
         deployment: &entities::deployment::ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError> {
+        let filter = doc! { "id": Uuid::from_bytes(*deployment.id().as_uuid().as_bytes()) };
+
+        self.update_with_filter(deployment, filter).await
+    }
+
+    async fn update_at_revision(
+        &self,
+        deployment: &entities::deployment::ModelDeployment,
+        expected_revision: u32,
+    ) -> Result<(), ModelDeploymentRepositoryError> {
         let filter = doc! {
-            "id": Uuid::from_bytes(*deployment.id().as_uuid().as_bytes())
+            "id": Uuid::from_bytes(*deployment.id().as_uuid().as_bytes()),
+            "revision": expected_revision,
         };
 
-        let update = ModelDeployment::from(&deployment.clone());
-
-        let document = doc! {
-            "$set": {
-                "state": String::from(update.state),
-                "desired_state": String::from(update.desired_state),
-                "last_message": update.last_message,
-                "visibility": to_bson(&update.visibility)
-                    .map_err(|e| {
-                        let error = InfrastructureError::new_internal();
-
-                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
-                        error
-                    })?,
-                "last_modified": update.last_modified,
-                "last_state_change": update.last_state_change,
-                "last_observed": to_bson(&update.last_observed)
-                    .map_err(|error| map_error("Could not serialize last_observed", error))?,
-                "maximum_runtime_seconds": to_bson(&update.maximum_runtime_seconds)
-                    .map_err(|error| map_error("Could not serialize maximum_runtime_seconds", error))?,
-                "expires_at": to_bson(&update.expires_at)
-                    .map_err(|error| map_error("Could not serialize expires_at", error))?,
-                "last_desired_state_change": update.last_desired_state_change,
-                "target_endpoint": to_bson(&update.target_endpoint)
-                    .map_err(|e| {
-                        let error = InfrastructureError::new_internal();
-
-                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
-                        error
-                    })?,
-                "replicas": to_bson(&update.replicas)
-                    .map_err(|e| {
-                        let error = InfrastructureError::new_internal();
-
-                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
-                        error
-                    })?,
-                "metadata": to_bson(&update.metadata)
-                    .map_err(|e| {
-                        let error = InfrastructureError::new_internal();
-
-                        log::error!("[{}] Conversion Error: {}", error.error_id(), e.to_string());
-                        error
-                    })?,
-                "revision": update.revision,
-            }
-        };
-
-        self.write_collection
-            .update_one(filter, document)
-            .await
-            .map_err(|e| {
-                let error = InfrastructureError::new_internal();
-
-                log::error!(
-                    "[{}] Persistence error: {}",
-                    error.error_id(),
-                    e.to_string()
-                );
-                error
-            })?;
-
-        Ok(())
+        self.update_with_filter(deployment, filter).await
     }
 
     async fn record_observation(
@@ -363,18 +361,12 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
     async fn find_reconcilable(
         &self,
     ) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
-        let not_deployed_state = String::from(State::NotDeployed);
-        let not_deployed_desired_state = String::from(DesiredState::NotDeployed);
         let now = mongodb::bson::DateTime::now();
 
         let filter = doc! {
             "$and": [
-                {
-                    "$nor": [{
-                        "state": not_deployed_state,
-                        "desired_state": not_deployed_desired_state,
-                    }],
-                },
+                { "$expr": { "$ne": ["$state", "$desired_state"] } },
+                { "reconciliation_status": { "$ne": "Failed" } },
                 {
                     "$or": [
                         { "expires_at": { "$exists": false } },

@@ -2,6 +2,7 @@ use std::error::Error;
 
 use mongodb::bson::{from_document, to_document, DateTime, Uuid};
 
+use crate::infra::_common::mongo::Index;
 use crate::shared_kernel::value_objects::TimeStamp;
 
 use super::*;
@@ -54,6 +55,9 @@ fn document() -> ModelDeployment {
             parallelism_strategies: Vec::new(),
         },
         metadata: None,
+        reconciliation_status: Some(ReconciliationStatus::Synchronized),
+        retries: 0,
+        retry_after: None,
         revision: 0,
     }
 }
@@ -84,6 +88,36 @@ fn expiration_fields_round_trip() -> Result<(), Box<dyn Error>> {
     assert_eq!(deployment.expires_at, source.expires_at);
 
     Ok(())
+}
+
+#[test]
+fn reconciliation_fields_default_for_legacy_documents() -> Result<(), Box<dyn Error>> {
+    let mut bson = to_document(&document())?;
+
+    bson.remove("reconciliation_status");
+    bson.remove("retries");
+    bson.remove("retry_after");
+
+    let deployment = from_document::<ModelDeployment>(bson)?;
+
+    assert!(deployment.reconciliation_status.is_none());
+    assert_eq!(deployment.retries, 0);
+    assert!(deployment.retry_after.is_none());
+
+    Ok(())
+}
+
+#[test]
+fn reconciliation_index_supports_status_and_deadline_queries() {
+    let index = indexes::ModelDeploymentReconciliationIndex::index();
+
+    assert_eq!(
+        index.keys,
+        mongodb::bson::doc! {
+            "reconciliation_status": 1,
+            "retry_after": 1,
+        }
+    );
 }
 
 #[test]
