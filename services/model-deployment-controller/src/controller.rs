@@ -6,7 +6,7 @@ use std::time::Duration;
 use amqprs::{channel::Channel, consumer::AsyncConsumer, BasicProperties, Deliver};
 use async_trait::async_trait;
 use indexmap::IndexMap;
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use rand::random_range;
 use shared::application::inputs::deployment::UpdateModelDeploymentInput;
 use shared::application::ports::events::Event;
@@ -768,8 +768,8 @@ impl ModelDeploymentController {
                 }
 
                 if !endpoint_resource.network_target_names().is_empty() {
-                    debug!(
-                        "Issuing endpoint for observed model deployment '{}'",
+                    trace!(
+                        "Ensuring endpoint exists for observed model deployment '{}'",
                         observed_deployment_id
                     );
 

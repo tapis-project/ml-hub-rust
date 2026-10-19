@@ -109,6 +109,13 @@ impl EndpointIssuanceService {
 
                     save_result?;
 
+                    log::debug!(
+                        "Issued endpoint '{}'; target_resource_urn='{}'; target_name='{}'",
+                        candidate.id(),
+                        candidate.target_resource_urn(),
+                        candidate.target_name()
+                    );
+
                     endpoints.push(candidate);
                 }
             }
