@@ -54,6 +54,8 @@ impl ModelDeploymentRepository {
         let document = doc! {
             "$set": {
                 "state": String::from(update.state),
+                "batch_execution_outcome": to_bson(&update.batch_execution_outcome)
+                    .map_err(|error| map_error("Could not serialize batch_execution_outcome", error))?,
                 "desired_state": String::from(update.desired_state),
                 "last_message": update.last_message,
                 "visibility": to_bson(&update.visibility)

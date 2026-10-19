@@ -1087,13 +1087,9 @@ impl<'a> ModelDeploymentDraft<'a> {
     }
 
     fn add_metadata(&mut self, k: String, v: Value) -> &mut Self {
-        if let Some(ref mut m) = self
-            .deployment
-            .metadata
-            .as_mut()
-            .and_then(|m| Some(m.into_inner().clone()))
-        {
-            m.insert(k, v);
+        if let Some(metadata) = self.deployment.metadata.as_mut() {
+            metadata.0.insert(k, v);
+
             return self;
         }
 

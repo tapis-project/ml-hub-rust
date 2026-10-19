@@ -90,6 +90,40 @@ fn reconciliation_workflow_does_not_change_revision() -> Result<(), Box<dyn Erro
 }
 
 #[test]
+fn metadata_merge_replaces_an_existing_value() -> Result<(), Box<dyn Error>> {
+    let mut deployment = create_deployment(None)?;
+    let initial_metadata = ModelDeploymentMetadata(HashMap::from([(
+        "tapis_job_uuid".into(),
+        serde_json::json!("previous-job"),
+    )]));
+
+    deployment
+        .revise()
+        .apply_metadata_delta(ModelDeploymentMetadataDelta::Merge(initial_metadata))
+        .finish();
+
+    let replacement_metadata = ModelDeploymentMetadata(HashMap::from([(
+        "tapis_job_uuid".into(),
+        serde_json::json!("replacement-job"),
+    )]));
+
+    let revised = deployment
+        .revise()
+        .apply_metadata_delta(ModelDeploymentMetadataDelta::Merge(replacement_metadata))
+        .finish();
+
+    assert_eq!(
+        revised
+            .metadata
+            .as_ref()
+            .and_then(|metadata| metadata.get("tapis_job_uuid")),
+        Some(&serde_json::json!("replacement-job"))
+    );
+
+    Ok(())
+}
+
+#[test]
 fn retrying_requires_retry_count_and_deadline() -> Result<(), Box<dyn Error>> {
     let result = ModelDeploymentTestBuilder::new()
         .reconciliation_status(ReconciliationStatus::Retrying)
