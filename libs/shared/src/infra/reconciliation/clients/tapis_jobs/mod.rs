@@ -15,12 +15,13 @@ use crate::application::workflows::reconciliation::{
     ReconciliationOutcome, StartedOutcome, StoppedOutcome, UndeployedOutcome,
 };
 use crate::domain::entities::deployment::{
-    DeploymentTargetSnapshot, ModelDeployment, ModelDeploymentEndpoint,
-    ModelDeploymentEndpointDelta, ModelDeploymentMetadata, ModelDeploymentMetadataDelta, Protocol,
-    State,
+    BatchExecutionOutcome, DeploymentTargetSnapshot, DesiredState, ModelDeployment,
+    ModelDeploymentEndpoint, ModelDeploymentEndpointDelta, ModelDeploymentMetadata,
+    ModelDeploymentMetadataDelta, Protocol, State,
 };
 use crate::domain::entities::model::external_model::{ExternalModel, ModelLocator, ModelProvider};
 use crate::domain::entities::site::SiteContext;
+use crate::shared_kernel::enums::DeploymentModality;
 
 use std::collections::HashMap;
 use std::env;
@@ -60,6 +61,52 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
     fn is_retryable_status(status: u16) -> bool {
         matches!(status, 408 | 425 | 429 | 500..=599)
+    }
+
+    fn map_job_request_error<T>(
+        deployment: &ModelDeployment,
+        operation: &str,
+        tapis_error: tapis_jobs::apis::Error<T>,
+    ) -> ReconciliationError {
+        match tapis_error {
+            tapis_jobs::apis::Error::ResponseError(response) => {
+                let error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Tapis rejected job {}; deployment_id='{}'; status={}; response_body={}",
+                    error.error_id(),
+                    operation,
+                    deployment.id(),
+                    response.status,
+                    Self::sanitized_response_body(&response.content)
+                );
+
+                if Self::is_retryable_status(response.status.as_u16()) {
+                    return ReconciliationError::Recoverable(format!(
+                        "Tapis Jobs {} failed with retryable status {}",
+                        operation, response.status
+                    ));
+                }
+
+                ReconciliationError::Fatal(error)
+            }
+            tapis_error => {
+                let error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Tapis job {} failed before receiving a response; deployment_id='{}'; error={}",
+                    error.error_id(),
+                    operation,
+                    deployment.id(),
+                    tapis_error
+                );
+
+                ReconciliationError::Recoverable(format!(
+                    "Tapis Jobs {} failed before receiving a response",
+                    operation
+                ))
+            }
+        }
     }
 
     fn resolve_tapis_system_id(cluster_host: &str) -> Result<&'static str, ReconciliationError> {
@@ -169,8 +216,6 @@ impl TapisJobsModelDeploymentReconciliationClient {
             model_revision
         );
 
-        // TODO Check if Job UUID is in the metadata. If so, resubmit instead of submit
-
         log::debug!(
             "Requesting MLHub service token for model deployment '{}'",
             deployment.id()
@@ -203,6 +248,25 @@ impl TapisJobsModelDeploymentReconciliationClient {
         })?;
 
         let custom_headers = Self::obo_headers(deployment)?;
+
+        if let Some(job_uuid) = Self::extract_job_uuid(deployment) {
+            let status = self
+                .fetch_job_status(&jobs_client, deployment, &job_uuid)
+                .await?;
+
+            if Self::is_terminal_job_status(&status) {
+                return self.resubmit_job(&jobs_client, deployment, &job_uuid).await;
+            }
+
+            log::info!(
+                "Retaining active Tapis job for model deployment '{}'; job_uuid='{}'; status='{}'",
+                deployment.id(),
+                job_uuid,
+                status
+            );
+
+            return Ok(ReconciliationOutcome::NoOp);
+        }
 
         let job_def = self.build_job_request(model_id, model_revision, deployment, arguments)?;
 
@@ -315,8 +379,71 @@ impl TapisJobsModelDeploymentReconciliationClient {
         }))
     }
 
-    async fn resubmit_job() -> Result<ReconciliationOutcome, ReconciliationError> {
-        todo!();
+    async fn resubmit_job(
+        &self,
+        jobs_client: &TapisJobs,
+        deployment: &ModelDeployment,
+        previous_job_uuid: &str,
+    ) -> Result<ReconciliationOutcome, ReconciliationError> {
+        log::debug!(
+            "Resubmitting terminal Tapis job for model deployment '{}'; previous_job_uuid='{}'",
+            deployment.id(),
+            previous_job_uuid
+        );
+
+        let response = with_headers(Self::obo_headers(deployment)?, async {
+            jobs_client.jobs.resubmit_job(previous_job_uuid, None).await
+        })
+        .await
+        .map_err(|tapis_error| {
+            Self::map_job_request_error(deployment, "resubmission", tapis_error)
+        })?;
+
+        let job_uuid = response
+            .result
+            .ok_or_else(|| {
+                let error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Tapis job resubmission response did not contain a job; deployment_id='{}'",
+                    error.error_id(),
+                    deployment.id()
+                );
+
+                error
+            })?
+            .uuid
+            .ok_or_else(|| {
+                let error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Tapis job resubmission response did not contain a UUID; deployment_id='{}'",
+                    error.error_id(),
+                    deployment.id()
+                );
+
+                error
+            })?;
+
+        log::info!(
+            "Tapis accepted FlexServ job resubmission for model deployment '{}'; job_uuid='{}'",
+            deployment.id(),
+            job_uuid
+        );
+
+        let mut metadata = HashMap::new();
+
+        metadata.insert(Self::TAPIS_JOB_UUID_KEY.to_string(), json!(job_uuid));
+
+        Ok(ReconciliationOutcome::Started(StartedOutcome {
+            message: Some("Deployment resubmitted".into()),
+            state: State::Unknown,
+            metadata: Some(ModelDeploymentMetadataDelta::Merge(
+                ModelDeploymentMetadata(metadata),
+            )),
+            replicas: None,
+            target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),
+        }))
     }
 
     async fn handle_stop(
@@ -389,32 +516,16 @@ impl TapisJobsModelDeploymentReconciliationClient {
                 infrastructure_error
             })?;
 
-        let status_response = with_headers(Self::obo_headers(deployment)?, async {
-            jobs_client.jobs.get_job_status(&job_uuid).await
-        })
-        .await
-        .map_err(|error| {
-            let infrastructure_error = InfrastructureError::new_internal();
+        let status = self
+            .fetch_job_status(&jobs_client, deployment, &job_uuid)
+            .await?;
 
-            log::error!(
-                "[{}] Failed to observe Tapis job status: {}",
-                infrastructure_error.error_id(),
-                error
+        let (state, batch_execution_outcome, failure_disposition) =
+            Self::observation_from_job_status(
+                &deployment.deployment_modality,
+                &deployment.desired_state,
+                &status,
             );
-
-            infrastructure_error
-        })?;
-
-        let status = status_response
-            .result
-            .and_then(|result| result.status)
-            .ok_or_else(|| {
-                ReconciliationError::Recoverable(
-                    "Tapis job status response did not contain a status".into(),
-                )
-            })?;
-
-        let state = Self::state_from_job_status(&status);
 
         log::debug!(
             "Observed Tapis job status for model deployment '{}'; job_uuid='{}'; tapis_status='{}'; mapped_state='{:?}'",
@@ -428,6 +539,8 @@ impl TapisJobsModelDeploymentReconciliationClient {
             return Ok(ObservedOutcome {
                 message: Some(format!("Observed Tapis job status {status}")),
                 state,
+                batch_execution_outcome,
+                failure_disposition,
                 metadata: None,
                 replicas: None,
                 target_endpoint: Some(Self::target_endpoint_deletion(deployment)),
@@ -441,6 +554,8 @@ impl TapisJobsModelDeploymentReconciliationClient {
         Ok(ObservedOutcome {
             message: Some("Observed running Tapis job".into()),
             state,
+            batch_execution_outcome,
+            failure_disposition,
             metadata: None,
             replicas: None,
             target_endpoint,
@@ -719,15 +834,76 @@ impl TapisJobsModelDeploymentReconciliationClient {
         })
     }
 
-    fn state_from_job_status(status: &str) -> State {
-        match status {
-            "RUNNING" => State::Running,
-            "QUEUED" | "PENDING" | "PROCESSING_INPUTS" | "STAGING_INPUTS" | "STAGING_JOB"
-            | "SUBMITTING_JOB" | "ARCHIVING" => State::Unknown,
-            "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" => State::Stopped,
-            "FAILED" => State::Failed,
-            "BLOCKED" | "PAUSED" => State::Blocked,
-            _ => State::Unknown,
+    async fn fetch_job_status(
+        &self,
+        jobs_client: &TapisJobs,
+        deployment: &ModelDeployment,
+        job_uuid: &str,
+    ) -> Result<String, ReconciliationError> {
+        let response = with_headers(Self::obo_headers(deployment)?, async {
+            jobs_client.jobs.get_job_status(job_uuid).await
+        })
+        .await
+        .map_err(|error| Self::map_job_request_error(deployment, "status request", error))?;
+
+        response
+            .result
+            .and_then(|result| result.status)
+            .ok_or_else(|| {
+                ReconciliationError::Recoverable(
+                    "Tapis job status response did not contain a status".into(),
+                )
+            })
+    }
+
+    fn is_terminal_job_status(status: &str) -> bool {
+        matches!(
+            status,
+            "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" | "FAILED"
+        )
+    }
+
+    fn observation_from_job_status(
+        deployment_modality: &DeploymentModality,
+        desired_state: &DesiredState,
+        status: &str,
+    ) -> (
+        State,
+        Option<BatchExecutionOutcome>,
+        Option<FailureDisposition>,
+    ) {
+        let desires_running = desired_state == &DesiredState::Running;
+
+        match (deployment_modality, status) {
+            (_, "RUNNING") => (State::Running, None, None),
+            (
+                _,
+                "QUEUED" | "PENDING" | "PROCESSING_INPUTS" | "STAGING_INPUTS" | "STAGING_JOB"
+                | "SUBMITTING_JOB" | "ARCHIVING",
+            ) => (State::Unknown, None, None),
+            (DeploymentModality::Batch, "FINISHED" | "COMPLETED") => {
+                (State::Stopped, Some(BatchExecutionOutcome::Succeeded), None)
+            }
+            (DeploymentModality::Batch, "CANCELLED" | "CANCELED" | "STOPPED") => (
+                State::Stopped,
+                Some(BatchExecutionOutcome::Cancelled),
+                desires_running.then_some(FailureDisposition::Terminal),
+            ),
+            (DeploymentModality::Batch, "FAILED") => (
+                State::Stopped,
+                Some(BatchExecutionOutcome::Failed),
+                desires_running.then_some(FailureDisposition::Terminal),
+            ),
+            (
+                DeploymentModality::Service,
+                "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" | "FAILED",
+            ) if desires_running => (State::Failed, None, Some(FailureDisposition::Terminal)),
+            (
+                DeploymentModality::Service,
+                "FINISHED" | "COMPLETED" | "CANCELLED" | "CANCELED" | "STOPPED" | "FAILED",
+            ) => (State::Stopped, None, None),
+            (_, "BLOCKED" | "PAUSED") => (State::Blocked, None, None),
+            _ => (State::Unknown, None, None),
         }
     }
 
@@ -959,10 +1135,12 @@ impl ModelDeploymentReconciliationClient for TapisJobsModelDeploymentReconciliat
             Ok(o) => o,
             Err(e) => ObservedOutcome {
                 message: Some(e.to_string().clone()),
-                state: State::Failed,
+                state: deployment.state.clone(),
+                batch_execution_outcome: deployment.batch_execution_outcome().cloned(),
+                failure_disposition: Some(FailureDisposition::Recoverable),
                 metadata: None,
                 replicas: None,
-                target_endpoint: Some(Self::target_endpoint_deletion(&deployment)),
+                target_endpoint: Some(ModelDeploymentEndpointDelta::NoChange),
             },
         }
     }

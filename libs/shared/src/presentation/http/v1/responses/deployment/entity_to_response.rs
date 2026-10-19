@@ -103,6 +103,10 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
                 value.deployment_modality.clone(),
             ),
             state: responses::State::from(value.state.clone()),
+            batch_execution_outcome: value
+                .batch_execution_outcome()
+                .cloned()
+                .map(responses::BatchExecutionOutcome::from),
             desired_state: responses::DesiredState::from(value.desired_state.clone()),
             created_at: String::from(value.created_at.clone()),
             last_desired_state_change: String::from(value.last_desired_state_change.clone()),
@@ -129,6 +133,16 @@ impl From<entities::ModelDeployment> for responses::ModelDeployment {
                 .metadata
                 .clone()
                 .map(|metadata| metadata.into_inner().clone()),
+        }
+    }
+}
+
+impl From<entities::BatchExecutionOutcome> for responses::BatchExecutionOutcome {
+    fn from(value: entities::BatchExecutionOutcome) -> Self {
+        match value {
+            entities::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            entities::BatchExecutionOutcome::Cancelled => Self::Cancelled,
+            entities::BatchExecutionOutcome::Failed => Self::Failed,
         }
     }
 }

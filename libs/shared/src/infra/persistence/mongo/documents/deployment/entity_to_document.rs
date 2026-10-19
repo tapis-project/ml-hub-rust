@@ -21,6 +21,10 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
             owner: value.owner.clone(),
             external_model_id: Uuid::from_bytes(*value.external_model_id.as_uuid().as_bytes()),
             state: documents::State::from(value.state.clone()),
+            batch_execution_outcome: value
+                .batch_execution_outcome()
+                .cloned()
+                .map(documents::BatchExecutionOutcome::from),
             desired_state: documents::DesiredState::from(value.desired_state.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
@@ -54,6 +58,16 @@ impl From<&entities::ModelDeployment> for documents::ModelDeployment {
                 .map(documents::ReconciliationStatus::from),
             retries: value.retries(),
             retry_after: value.retry_after().map(ToBsonDateTime::to_bson),
+        }
+    }
+}
+
+impl From<entities::BatchExecutionOutcome> for documents::BatchExecutionOutcome {
+    fn from(value: entities::BatchExecutionOutcome) -> Self {
+        match value {
+            entities::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            entities::BatchExecutionOutcome::Cancelled => Self::Cancelled,
+            entities::BatchExecutionOutcome::Failed => Self::Failed,
         }
     }
 }

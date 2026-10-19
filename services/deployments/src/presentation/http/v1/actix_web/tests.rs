@@ -177,6 +177,22 @@ fn openapi_exposes_reconciliation_workflow_state() -> Result<(), Box<dyn std::er
 }
 
 #[test]
+fn openapi_exposes_batch_execution_outcome() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert!(document
+        .pointer("/components/schemas/ModelDeployment/properties/batch_execution_outcome")
+        .is_some());
+
+    assert_eq!(
+        document.pointer("/components/schemas/BatchExecutionOutcome/enum"),
+        Some(&serde_json::json!(["Succeeded", "Cancelled", "Failed"]))
+    );
+
+    Ok(())
+}
+
+#[test]
 fn openapi_inlines_data_center_path_enum() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
 

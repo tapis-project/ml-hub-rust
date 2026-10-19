@@ -116,3 +116,95 @@ fn omits_non_json_response_bodies_from_diagnostic_logs() {
         )
     );
 }
+
+#[test]
+fn maps_successful_batch_completion_without_terminal_failure() {
+    for status in ["FINISHED", "COMPLETED"] {
+        let (state, outcome, disposition) =
+            TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+                &DeploymentModality::Batch,
+                &DesiredState::Running,
+                status,
+            );
+
+        assert_eq!(state, State::Stopped);
+        assert_eq!(outcome, Some(BatchExecutionOutcome::Succeeded));
+        assert_eq!(disposition, None);
+    }
+}
+
+#[test]
+fn maps_cancelled_batch_execution_to_terminal_failure_while_running_is_desired() {
+    for status in ["CANCELLED", "CANCELED", "STOPPED"] {
+        let (state, outcome, disposition) =
+            TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+                &DeploymentModality::Batch,
+                &DesiredState::Running,
+                status,
+            );
+
+        assert_eq!(state, State::Stopped);
+        assert_eq!(outcome, Some(BatchExecutionOutcome::Cancelled));
+        assert_eq!(disposition, Some(FailureDisposition::Terminal));
+    }
+}
+
+#[test]
+fn maps_failed_batch_execution_to_terminal_failure_while_running_is_desired() {
+    let (state, outcome, disposition) =
+        TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+            &DeploymentModality::Batch,
+            &DesiredState::Running,
+            "FAILED",
+        );
+
+    assert_eq!(state, State::Stopped);
+    assert_eq!(outcome, Some(BatchExecutionOutcome::Failed));
+    assert_eq!(disposition, Some(FailureDisposition::Terminal));
+}
+
+#[test]
+fn maps_expected_batch_termination_without_terminal_failure() {
+    let (state, outcome, disposition) =
+        TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+            &DeploymentModality::Batch,
+            &DesiredState::Stopped,
+            "CANCELLED",
+        );
+
+    assert_eq!(state, State::Stopped);
+    assert_eq!(outcome, Some(BatchExecutionOutcome::Cancelled));
+    assert_eq!(disposition, None);
+}
+
+#[test]
+fn maps_service_completion_to_terminal_failure_while_running_is_desired() {
+    let (state, outcome, disposition) =
+        TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+            &DeploymentModality::Service,
+            &DesiredState::Running,
+            "FINISHED",
+        );
+
+    assert_eq!(state, State::Failed);
+    assert_eq!(outcome, None);
+    assert_eq!(disposition, Some(FailureDisposition::Terminal));
+}
+
+#[test]
+fn only_terminal_tapis_statuses_are_eligible_for_resubmission() {
+    for status in [
+        "FINISHED",
+        "COMPLETED",
+        "CANCELLED",
+        "CANCELED",
+        "STOPPED",
+        "FAILED",
+    ] {
+        assert!(TapisJobsModelDeploymentReconciliationClient::is_terminal_job_status(status));
+    }
+
+    for status in ["PENDING", "QUEUED", "RUNNING", "BLOCKED", "PAUSED"] {
+        assert!(!TapisJobsModelDeploymentReconciliationClient::is_terminal_job_status(status));
+    }
+}

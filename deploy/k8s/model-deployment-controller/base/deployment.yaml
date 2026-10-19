@@ -65,7 +65,7 @@ spec:
             - name: MLHUB_SERVICE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mlhub-secrets
+                  name: mlhub-secrets-staging
                   key: service-password
           image: tapis/mlhub-model-deployment-controller:local
           imagePullPolicy: Never

@@ -6,9 +6,9 @@ use crate::application::ports::deployment::{
 use crate::application::services::model_deployment_service::{
     ModelDeploymentService, ModelDeploymentServiceError,
 };
+use crate::application::workflows::reconciliation::FailureDisposition;
 use crate::domain::entities::deployment::{
     ModelDeployment, ModelDeploymentError, ModelDeploymentId, ReconciliationRequirement,
-    ReconciliationStatus,
 };
 use crate::domain::entities::principal::Kind;
 use crate::domain::entities::site::SiteContext;
@@ -143,31 +143,30 @@ impl ModelDeploymentObservationService {
             return Ok(ObservationResult::Expired { deployment_id });
         }
 
+        if matches!(
+            observed.failure_disposition,
+            Some(FailureDisposition::Recoverable)
+        ) {
+            warn!(
+                "Deferring model deployment observation after recoverable client failure; deployment_id='{}'",
+                deployment.id()
+            );
+
+            return Ok(ObservationResult::Deferred { deployment_id });
+        }
+
         let state_changed = observed.state != deployment.state;
+
+        let batch_execution_outcome_changed =
+            observed.batch_execution_outcome.as_ref() != deployment.batch_execution_outcome();
 
         let target_endpoint_delta = observed.target_endpoint.unwrap_or_default();
 
         let target_endpoint_changed = !target_endpoint_delta.is_no_change();
 
-        let reconciliation_status_changed = observed.state == deployment.desired_state
-            && !matches!(
-                deployment.reconciliation_status(),
-                Some(ReconciliationStatus::Synchronized)
-            );
+        let previous_reconciliation_status = deployment.reconciliation_status().cloned();
 
-        let deployment_changed =
-            state_changed || target_endpoint_changed || reconciliation_status_changed;
-
-        debug!(
-            "Calculated observation changes for model deployment '{}'; state_changed={}; target_endpoint_changed={}; reconciliation_status_changed={}; deployment_changed={}",
-            deployment.id(),
-            state_changed,
-            target_endpoint_changed,
-            reconciliation_status_changed,
-            deployment_changed
-        );
-
-        if state_changed || target_endpoint_changed {
+        if state_changed || batch_execution_outcome_changed || target_endpoint_changed {
             let mut draft = deployment.revise();
 
             if state_changed {
@@ -179,15 +178,39 @@ impl ModelDeploymentObservationService {
             }
 
             draft
+                .replace_batch_execution_outcome(observed.batch_execution_outcome)?
                 .apply_metadata_delta(observed.metadata.unwrap_or_default())
                 .apply_target_endpoint_delta(target_endpoint_delta)
                 .apply_replica_group_delta(observed.replicas.unwrap_or_default())
                 .finish();
         }
 
-        if deployment.is_state_syncronized() {
+        if matches!(
+            observed.failure_disposition,
+            Some(FailureDisposition::Terminal)
+        ) {
+            deployment.mark_reconciliation_failed();
+        } else if deployment.is_state_syncronized() {
             deployment.mark_reconciliation_synchronized()?;
         }
+
+        let reconciliation_status_changed =
+            previous_reconciliation_status.as_ref() != deployment.reconciliation_status();
+
+        let deployment_changed = state_changed
+            || batch_execution_outcome_changed
+            || target_endpoint_changed
+            || reconciliation_status_changed;
+
+        debug!(
+            "Calculated observation changes for model deployment '{}'; state_changed={}; batch_execution_outcome_changed={}; target_endpoint_changed={}; reconciliation_status_changed={}; deployment_changed={}",
+            deployment.id(),
+            state_changed,
+            batch_execution_outcome_changed,
+            target_endpoint_changed,
+            reconciliation_status_changed,
+            deployment_changed
+        );
 
         deployment.record_observation(observed_at.clone());
 

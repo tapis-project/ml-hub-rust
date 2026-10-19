@@ -529,6 +529,14 @@
           }
         }
       },
+      "BatchExecutionOutcome": {
+        "type": "string",
+        "enum": [
+          "Succeeded",
+          "Cancelled",
+          "Failed"
+        ]
+      },
       "BatchSchedulerQueue": {
         "type": "object",
         "required": [
@@ -1049,6 +1057,16 @@
           "revision"
         ],
         "properties": {
+          "batch_execution_outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BatchExecutionOutcome"
+              }
+            ]
+          },
           "created_at": {
             "type": "string"
           },

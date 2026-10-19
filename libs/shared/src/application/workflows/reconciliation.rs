@@ -1,8 +1,8 @@
 use crate::{
     application::services::deployment_argument_service::DecryptedArgument,
     domain::entities::deployment::{
-        DesiredState, ModelDeploymentEndpointDelta, ModelDeploymentMetadataDelta,
-        ReplicaGroupDelta, State,
+        BatchExecutionOutcome, DesiredState, ModelDeploymentEndpointDelta,
+        ModelDeploymentMetadataDelta, ReplicaGroupDelta, State,
     },
 };
 
@@ -54,6 +54,8 @@ pub struct UndeployedOutcome {
 pub struct ObservedOutcome {
     pub message: Option<String>,
     pub state: State,
+    pub batch_execution_outcome: Option<BatchExecutionOutcome>,
+    pub failure_disposition: Option<FailureDisposition>,
     pub metadata: Option<ModelDeploymentMetadataDelta>,
     pub replicas: Option<ReplicaGroupDelta>,
     pub target_endpoint: Option<ModelDeploymentEndpointDelta>,

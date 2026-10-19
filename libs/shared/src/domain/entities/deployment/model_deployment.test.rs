@@ -122,7 +122,7 @@ fn synchronized_requires_matching_actual_and_desired_state() -> Result<(), Box<d
 
     assert!(error
         .to_string()
-        .contains("Synchronized requires actual and desired state to agree"));
+        .contains("Synchronized requires actual state to satisfy desired state"));
 
     Ok(())
 }
@@ -168,12 +168,115 @@ fn restarting_terminal_reconciliation_creates_a_clean_revision() -> Result<(), B
     Ok(())
 }
 
+#[test]
+fn successful_batch_execution_satisfies_running_desired_state() -> Result<(), Box<dyn Error>> {
+    let deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .batch_execution_outcome(BatchExecutionOutcome::Succeeded)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    assert!(deployment.is_state_syncronized());
+    assert!(deployment.is_completed_batch_execution());
+    assert_eq!(
+        deployment.resolve_reconciliation_requirement(&TimeStamp::now()),
+        None
+    );
+
+    Ok(())
+}
+
+#[test]
+fn cancelled_batch_execution_does_not_satisfy_running_desired_state() -> Result<(), Box<dyn Error>>
+{
+    let mut deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .batch_execution_outcome(BatchExecutionOutcome::Cancelled)
+        .build()?;
+
+    assert!(!deployment.is_state_syncronized());
+    assert_eq!(
+        deployment.resolve_reconciliation_requirement(&TimeStamp::now()),
+        Some(ReconciliationRequirement::Start)
+    );
+
+    deployment.mark_reconciliation_failed();
+
+    assert_eq!(
+        deployment.resolve_reconciliation_requirement(&TimeStamp::now()),
+        None
+    );
+
+    Ok(())
+}
+
+#[test]
+fn service_deployment_rejects_batch_execution_outcome() -> Result<(), Box<dyn Error>> {
+    let result = ModelDeploymentTestBuilder::new()
+        .deployment_modality(DeploymentModality::Service)
+        .state(State::Stopped)
+        .batch_execution_outcome(BatchExecutionOutcome::Succeeded)
+        .build();
+
+    let error = match result {
+        Ok(_) => return Err("Service deployment accepted a batch execution outcome".into()),
+        Err(error) => error,
+    };
+
+    assert!(error
+        .to_string()
+        .contains("service deployments cannot have a batch execution outcome"));
+
+    Ok(())
+}
+
+#[test]
+fn running_deployment_rejects_terminal_batch_execution_outcome() -> Result<(), Box<dyn Error>> {
+    let result = ModelDeploymentTestBuilder::new()
+        .batch_execution_outcome(BatchExecutionOutcome::Succeeded)
+        .build();
+
+    let error = match result {
+        Ok(_) => return Err("Running deployment accepted a terminal batch outcome".into()),
+        Err(error) => error,
+    };
+
+    assert!(error
+        .to_string()
+        .contains("running deployments cannot have a terminal batch execution outcome"));
+
+    Ok(())
+}
+
+#[test]
+fn restarting_batch_execution_clears_previous_outcome() -> Result<(), Box<dyn Error>> {
+    let mut deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .batch_execution_outcome(BatchExecutionOutcome::Succeeded)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    let restarted = deployment
+        .revise()
+        .restart_reconciliation(Some("Run again".into()))
+        .finish();
+
+    assert_eq!(restarted.batch_execution_outcome(), None);
+    assert_eq!(restarted.reconciliation_status(), None);
+
+    Ok(())
+}
+
 struct ModelDeploymentTestBuilder {
+    deployment_modality: DeploymentModality,
     last_observed: Option<TimeStamp>,
     last_modified: Option<TimeStamp>,
     maximum_runtime: Option<Duration>,
     expires_at: Option<TimeStamp>,
     state: State,
+    batch_execution_outcome: Option<BatchExecutionOutcome>,
     desired_state: DesiredState,
     revision: u32,
     target_endpoint: Option<ModelDeploymentEndpoint>,
@@ -185,11 +288,13 @@ struct ModelDeploymentTestBuilder {
 impl ModelDeploymentTestBuilder {
     fn new() -> Self {
         Self {
+            deployment_modality: DeploymentModality::Batch,
             last_observed: None,
             last_modified: None,
             maximum_runtime: None,
             expires_at: None,
             state: State::Running,
+            batch_execution_outcome: None,
             desired_state: DesiredState::Running,
             revision: 3,
             target_endpoint: None,
@@ -201,6 +306,12 @@ impl ModelDeploymentTestBuilder {
 
     fn last_observed(mut self, last_observed: TimeStamp) -> Self {
         self.last_observed = Some(last_observed);
+
+        self
+    }
+
+    fn deployment_modality(mut self, deployment_modality: DeploymentModality) -> Self {
+        self.deployment_modality = deployment_modality;
 
         self
     }
@@ -225,6 +336,12 @@ impl ModelDeploymentTestBuilder {
 
     fn desired_state(mut self, desired_state: DesiredState) -> Self {
         self.desired_state = desired_state;
+
+        self
+    }
+
+    fn batch_execution_outcome(mut self, outcome: BatchExecutionOutcome) -> Self {
+        self.batch_execution_outcome = Some(outcome);
 
         self
     }
@@ -264,11 +381,12 @@ impl ModelDeploymentTestBuilder {
                 id: ModelDeploymentId::new(),
                 name: "Test deployment".into(),
                 description: None,
-                deployment_modality: DeploymentModality::Batch,
+                deployment_modality: self.deployment_modality,
                 tenant_id: "test-tenant".into(),
                 owner: "test-user".into(),
                 external_model_id,
                 state: self.state,
+                batch_execution_outcome: self.batch_execution_outcome,
                 desired_state: self.desired_state,
                 last_message: None,
                 deployment_option_id,

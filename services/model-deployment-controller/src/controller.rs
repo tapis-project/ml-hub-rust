@@ -800,7 +800,12 @@ impl ModelDeploymentController {
                         context,
                     })
                     .await?;
-                } else if endpoint_resource.is_state_syncronized() {
+                } else if endpoint_resource.is_state_syncronized()
+                    || matches!(
+                        endpoint_resource.reconciliation_status(),
+                        Some(ReconciliationStatus::Failed)
+                    )
+                {
                     self.remove_from_reconciliation_queue(&observed_deployment_id)
                         .await?;
                 }

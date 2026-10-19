@@ -53,6 +53,10 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
             owner: value.owner.clone(),
             external_model_id,
             state,
+            batch_execution_outcome: value
+                .batch_execution_outcome
+                .clone()
+                .map(entities::BatchExecutionOutcome::from),
             desired_state,
             last_message: value.last_message.clone(),
             deployment_option_id,
@@ -84,6 +88,16 @@ impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
         };
 
         entities::ModelDeployment::reconstitute(props).map_err(|error| error.to_string())
+    }
+}
+
+impl From<documents::BatchExecutionOutcome> for entities::BatchExecutionOutcome {
+    fn from(value: documents::BatchExecutionOutcome) -> Self {
+        match value {
+            documents::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            documents::BatchExecutionOutcome::Cancelled => Self::Cancelled,
+            documents::BatchExecutionOutcome::Failed => Self::Failed,
+        }
     }
 }
 

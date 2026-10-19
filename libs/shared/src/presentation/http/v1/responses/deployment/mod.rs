@@ -20,6 +20,7 @@ pub struct ModelDeployment {
     pub deployment_option_id: Uuid,
     pub deployment_modality: DeploymentModality,
     pub state: State,
+    pub batch_execution_outcome: Option<BatchExecutionOutcome>,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
     pub visibility: Visibility,
@@ -81,6 +82,13 @@ pub enum ReconciliationStatus {
     Undeploying,
     Retrying,
     Synchronized,
+    Failed,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, ToSchema)]
+pub enum BatchExecutionOutcome {
+    Succeeded,
+    Cancelled,
     Failed,
 }
 

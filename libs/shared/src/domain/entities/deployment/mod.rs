@@ -49,6 +49,9 @@ pub enum ModelDeploymentError {
     #[error("Invalid reconciliation state: {0}")]
     InvalidReconciliationState(String),
 
+    #[error("Invalid batch execution outcome: {0}")]
+    InvalidBatchExecutionOutcome(String),
+
     #[error("Invalid persisted ModelDeployment data: {0}")]
     DataIntegrityError(String),
 }
@@ -71,6 +74,8 @@ pub struct ModelDeployment {
     pub external_model_id: ExternalModelId,
     /// The curent state of the deployment
     pub state: State,
+    /// The terminal outcome of the latest batch execution.
+    batch_execution_outcome: Option<BatchExecutionOutcome>,
     /// The state the user would like the deployment to be in
     pub desired_state: DesiredState,
     /// The last message associated with the last state or desired state change
@@ -172,6 +177,7 @@ impl ModelDeployment {
             owner: props.owner,
             external_model_id: *option.external_model_id(),
             state: State::NotDeployed,
+            batch_execution_outcome: None,
             desired_state: DesiredState::Running,
             last_message: props.last_message,
             deployment_modality: props.deployment_modality.clone(),
@@ -230,8 +236,17 @@ impl ModelDeployment {
             props.reconciliation_status.as_ref(),
             props.retries,
             props.retry_after.as_ref(),
+            &props.deployment_modality,
             &props.state,
             &props.desired_state,
+            props.batch_execution_outcome.as_ref(),
+        )
+        .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))?;
+
+        Self::validate_batch_execution_outcome(
+            &props.deployment_modality,
+            &props.state,
+            props.batch_execution_outcome.as_ref(),
         )
         .map_err(|error| ModelDeploymentError::DataIntegrityError(error.to_string()))?;
 
@@ -246,6 +261,7 @@ impl ModelDeployment {
             owner: props.owner,
             external_model_id: props.external_model_id,
             state: props.state,
+            batch_execution_outcome: props.batch_execution_outcome,
             desired_state: props.desired_state,
             last_message: props.last_message,
             visibility: props.visibility,
@@ -308,12 +324,48 @@ impl ModelDeployment {
     }
 
     pub fn is_state_syncronized(&self) -> bool {
-        match (&self.state, &self.desired_state) {
-            (State::Running, DesiredState::Running) => true,
-            (State::Stopped, DesiredState::Stopped) => true,
-            (State::NotDeployed, DesiredState::NotDeployed) => true,
+        Self::state_satisfies_desired_state(
+            &self.deployment_modality,
+            &self.state,
+            &self.desired_state,
+            &self.batch_execution_outcome,
+        )
+    }
+
+    fn state_satisfies_desired_state(
+        deployment_modality: &DeploymentModality,
+        state: &State,
+        desired_state: &DesiredState,
+        batch_execution_outcome: &Option<BatchExecutionOutcome>,
+    ) -> bool {
+        match (
+            deployment_modality,
+            state,
+            desired_state,
+            batch_execution_outcome,
+        ) {
+            (
+                DeploymentModality::Batch,
+                State::Stopped,
+                DesiredState::Running,
+                Some(BatchExecutionOutcome::Succeeded),
+            ) => true,
+            (_, State::Running, DesiredState::Running, _) => true,
+            (_, State::Stopped, DesiredState::Stopped, _) => true,
+            (_, State::NotDeployed, DesiredState::NotDeployed, _) => true,
             _ => false,
         }
+    }
+
+    pub fn batch_execution_outcome(&self) -> Option<&BatchExecutionOutcome> {
+        self.batch_execution_outcome.as_ref()
+    }
+
+    pub fn is_completed_batch_execution(&self) -> bool {
+        self.deployment_modality == DeploymentModality::Batch
+            && self.desired_state == DesiredState::Running
+            && self.state == State::Stopped
+            && self.batch_execution_outcome == Some(BatchExecutionOutcome::Succeeded)
     }
 
     pub fn revision(&self) -> &u32 {
@@ -470,8 +522,10 @@ impl ModelDeployment {
         status: Option<&ReconciliationStatus>,
         retries: u32,
         retry_after: Option<&TimeStamp>,
+        deployment_modality: &DeploymentModality,
         state: &State,
         desired_state: &DesiredState,
+        batch_execution_outcome: Option<&BatchExecutionOutcome>,
     ) -> Result<(), ModelDeploymentError> {
         if matches!(status, Some(ReconciliationStatus::Retrying)) {
             if retries == 0 || retry_after.is_none() {
@@ -485,9 +539,38 @@ impl ModelDeployment {
             ));
         }
 
-        if matches!(status, Some(ReconciliationStatus::Synchronized)) && state != desired_state {
+        let batch_execution_outcome = batch_execution_outcome.cloned();
+
+        if matches!(status, Some(ReconciliationStatus::Synchronized))
+            && !Self::state_satisfies_desired_state(
+                deployment_modality,
+                state,
+                desired_state,
+                &batch_execution_outcome,
+            )
+        {
             return Err(ModelDeploymentError::InvalidReconciliationState(
-                "Synchronized requires actual and desired state to agree".into(),
+                "Synchronized requires actual state to satisfy desired state".into(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn validate_batch_execution_outcome(
+        deployment_modality: &DeploymentModality,
+        state: &State,
+        outcome: Option<&BatchExecutionOutcome>,
+    ) -> Result<(), ModelDeploymentError> {
+        if deployment_modality == &DeploymentModality::Service && outcome.is_some() {
+            return Err(ModelDeploymentError::InvalidBatchExecutionOutcome(
+                "service deployments cannot have a batch execution outcome".into(),
+            ));
+        }
+
+        if state == &State::Running && outcome.is_some() {
+            return Err(ModelDeploymentError::InvalidBatchExecutionOutcome(
+                "running deployments cannot have a terminal batch execution outcome".into(),
             ));
         }
 
@@ -570,6 +653,13 @@ pub enum DesiredState {
     Running,
     Stopped,
     NotDeployed,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum BatchExecutionOutcome {
+    Succeeded,
+    Cancelled,
+    Failed,
 }
 
 impl From<DesiredState> for String {
@@ -856,6 +946,10 @@ impl<'a> ModelDeploymentDraft<'a> {
         // Changes the state
         self.deployment.state = new_state;
 
+        if self.deployment.state == State::Running {
+            self.deployment.batch_execution_outcome = None;
+        }
+
         self.deployment.expires_at = expires_at;
 
         // Update the last message if provided
@@ -900,6 +994,10 @@ impl<'a> ModelDeploymentDraft<'a> {
 
         self.deployment.desired_state = new_state;
 
+        if self.deployment.desired_state == DesiredState::Running {
+            self.deployment.batch_execution_outcome = None;
+        }
+
         // Update the last message if provided
         if let Some(m) = message {
             self.deployment.last_message = Some(m);
@@ -913,6 +1011,8 @@ impl<'a> ModelDeploymentDraft<'a> {
     }
 
     pub fn restart_reconciliation(&mut self, message: Option<String>) -> &mut Self {
+        self.deployment.batch_execution_outcome = None;
+
         if let Some(message) = message {
             self.deployment.last_message = Some(message);
         }
@@ -922,6 +1022,21 @@ impl<'a> ModelDeploymentDraft<'a> {
         self.deployment.reset_reconciliation();
 
         self
+    }
+
+    pub fn replace_batch_execution_outcome(
+        &mut self,
+        outcome: Option<BatchExecutionOutcome>,
+    ) -> Result<&mut Self, ModelDeploymentError> {
+        ModelDeployment::validate_batch_execution_outcome(
+            &self.deployment.deployment_modality,
+            &self.deployment.state,
+            outcome.as_ref(),
+        )?;
+
+        self.deployment.batch_execution_outcome = outcome;
+
+        Ok(self)
     }
 
     pub fn apply_target_endpoint_delta(
@@ -1010,6 +1125,7 @@ pub struct ReconstituteModelDeploymentProps {
     pub owner: String,
     pub external_model_id: ExternalModelId,
     pub state: State,
+    pub batch_execution_outcome: Option<BatchExecutionOutcome>,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
     pub deployment_option_id: DeploymentOptionId,

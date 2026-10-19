@@ -26,6 +26,7 @@ fn document() -> ModelDeployment {
         owner: "test-user".into(),
         external_model_id,
         state: State::Running,
+        batch_execution_outcome: None,
         desired_state: DesiredState::Running,
         last_message: None,
         deployment_option_id,
@@ -103,6 +104,33 @@ fn reconciliation_fields_default_for_legacy_documents() -> Result<(), Box<dyn Er
     assert!(deployment.reconciliation_status.is_none());
     assert_eq!(deployment.retries, 0);
     assert!(deployment.retry_after.is_none());
+
+    Ok(())
+}
+
+#[test]
+fn batch_execution_outcome_defaults_to_none_and_round_trips() -> Result<(), Box<dyn Error>> {
+    let mut source = document();
+
+    let mut legacy_bson = to_document(&source)?;
+
+    legacy_bson.remove("batch_execution_outcome");
+
+    let legacy = from_document::<ModelDeployment>(legacy_bson)?;
+
+    assert!(legacy.batch_execution_outcome.is_none());
+
+    source.state = State::Stopped;
+    source.batch_execution_outcome = Some(BatchExecutionOutcome::Succeeded);
+
+    let persisted = to_document(&source)?;
+
+    let round_trip = from_document::<ModelDeployment>(persisted)?;
+
+    assert!(matches!(
+        round_trip.batch_execution_outcome,
+        Some(BatchExecutionOutcome::Succeeded)
+    ));
 
     Ok(())
 }
