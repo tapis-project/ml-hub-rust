@@ -462,6 +462,20 @@
           }
         }
       }
+    },
+    "/deployments-api/healthcheck": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Check service health",
+        "operationId": "healthcheck",
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -514,6 +528,14 @@
             "type": "string"
           }
         }
+      },
+      "BatchExecutionOutcome": {
+        "type": "string",
+        "enum": [
+          "Succeeded",
+          "Cancelled",
+          "Failed"
+        ]
       },
       "BatchSchedulerQueue": {
         "type": "object",
@@ -1015,11 +1037,22 @@
           "created_at",
           "last_modified",
           "last_state_change",
+          "retries",
           "last_desired_state_change",
           "replicas",
           "revision"
         ],
         "properties": {
+          "batch_execution_outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BatchExecutionOutcome"
+              }
+            ]
+          },
           "created_at": {
             "type": "string"
           },
@@ -1087,8 +1120,27 @@
           "owner": {
             "type": "string"
           },
+          "reconciliation_status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReconciliationStatus"
+              }
+            ]
+          },
           "replicas": {
             "$ref": "#/components/schemas/ReplicaGroup"
+          },
+          "retries": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "retry_after": {
+            "type": "string",
+            "nullable": true
           },
           "revision": {
             "type": "integer",
@@ -1206,6 +1258,18 @@
         "type": "string",
         "enum": [
           "RestHttp"
+        ]
+      },
+      "ReconciliationStatus": {
+        "type": "string",
+        "enum": [
+          "Pending",
+          "Starting",
+          "Stopping",
+          "Undeploying",
+          "Retrying",
+          "Synchronized",
+          "Failed"
         ]
       },
       "ReplicaGroup": {

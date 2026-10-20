@@ -5,6 +5,7 @@ README.md
 package.json
 src/apis/ArtifactsApi.ts
 src/apis/ExternalModelsApi.ts
+src/apis/HealthApi.ts
 src/apis/IngestionsApi.ts
 src/apis/ModelsApi.ts
 src/apis/PlatformsApi.ts

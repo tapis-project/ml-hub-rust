@@ -289,6 +289,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServerErrorResponse'
+  /deployments-api/healthcheck:
+    get:
+      tags:
+        - Health
+      summary: Check service health
+      operationId: healthcheck
+      responses:
+        '200':
+          description: Service is healthy
 components:
   schemas:
     AcceleratorType:
@@ -326,6 +335,12 @@ components:
           minimum: 0
         version:
           type: string
+    BatchExecutionOutcome:
+      type: string
+      enum:
+        - Succeeded
+        - Cancelled
+        - Failed
     BatchSchedulerQueue:
       type: object
       required:
@@ -684,10 +699,14 @@ components:
         - created_at
         - last_modified
         - last_state_change
+        - retries
         - last_desired_state_change
         - replicas
         - revision
       properties:
+        batch_execution_outcome:
+          $ref: '#/components/schemas/BatchExecutionOutcome'
+          nullable: true
         created_at:
           type: string
         deployment_modality:
@@ -732,8 +751,18 @@ components:
           type: string
         owner:
           type: string
+        reconciliation_status:
+          $ref: '#/components/schemas/ReconciliationStatus'
+          nullable: true
         replicas:
           $ref: '#/components/schemas/ReplicaGroup'
+        retries:
+          type: integer
+          format: int32
+          minimum: 0
+        retry_after:
+          type: string
+          nullable: true
         revision:
           type: integer
           format: int32
@@ -814,6 +843,16 @@ components:
       type: string
       enum:
         - RestHttp
+    ReconciliationStatus:
+      type: string
+      enum:
+        - Pending
+        - Starting
+        - Stopping
+        - Undeploying
+        - Retrying
+        - Synchronized
+        - Failed
     ReplicaGroup:
       type: object
       required:

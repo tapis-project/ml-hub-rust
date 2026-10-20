@@ -4,12 +4,14 @@
 README.md
 package.json
 src/apis/DeploymentsApi.ts
+src/apis/HealthApi.ts
 src/apis/TargetsApi.ts
 src/apis/index.ts
 src/index.ts
 src/models/AcceleratorType.ts
 src/models/Argument.ts
 src/models/BadRequestResponse.ts
+src/models/BatchExecutionOutcome.ts
 src/models/BatchSchedulerQueue.ts
 src/models/BillingMetric.ts
 src/models/BillingPolicy.ts
@@ -33,6 +35,7 @@ src/models/ModelDeploymentResponse.ts
 src/models/NotFoundResponse.ts
 src/models/ParallelismStrategy.ts
 src/models/Protocol.ts
+src/models/ReconciliationStatus.ts
 src/models/ReplicaGroup.ts
 src/models/SchedulerType.ts
 src/models/SchedulingPolicy.ts

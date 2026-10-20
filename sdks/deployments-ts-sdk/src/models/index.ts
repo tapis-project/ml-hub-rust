@@ -3,6 +3,7 @@
 export * from './AcceleratorType';
 export * from './Argument';
 export * from './BadRequestResponse';
+export * from './BatchExecutionOutcome';
 export * from './BatchSchedulerQueue';
 export * from './BillingMetric';
 export * from './BillingPolicy';
@@ -26,6 +27,7 @@ export * from './ModelDeploymentResponse';
 export * from './NotFoundResponse';
 export * from './ParallelismStrategy';
 export * from './Protocol';
+export * from './ReconciliationStatus';
 export * from './ReplicaGroup';
 export * from './SchedulerType';
 export * from './SchedulingPolicy';

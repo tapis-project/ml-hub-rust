@@ -14,6 +14,10 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    BatchExecutionOutcome,
+    BatchExecutionOutcomeFromJSON,
+    BatchExecutionOutcomeFromJSONTyped,
+    BatchExecutionOutcomeToJSON,
     DeploymentModality,
     DeploymentModalityFromJSON,
     DeploymentModalityFromJSONTyped,
@@ -30,6 +34,10 @@ import {
     ModelDeploymentEndpointFromJSON,
     ModelDeploymentEndpointFromJSONTyped,
     ModelDeploymentEndpointToJSON,
+    ReconciliationStatus,
+    ReconciliationStatusFromJSON,
+    ReconciliationStatusFromJSONTyped,
+    ReconciliationStatusToJSON,
     ReplicaGroup,
     ReplicaGroupFromJSON,
     ReplicaGroupFromJSONTyped,
@@ -50,6 +58,12 @@ import {
  * @interface ModelDeployment
  */
 export interface ModelDeployment {
+    /**
+     * 
+     * @type {BatchExecutionOutcome}
+     * @memberof ModelDeployment
+     */
+    batch_execution_outcome?: BatchExecutionOutcome;
     /**
      * 
      * @type {string}
@@ -154,10 +168,28 @@ export interface ModelDeployment {
     owner: string;
     /**
      * 
+     * @type {ReconciliationStatus}
+     * @memberof ModelDeployment
+     */
+    reconciliation_status?: ReconciliationStatus;
+    /**
+     * 
      * @type {ReplicaGroup}
      * @memberof ModelDeployment
      */
     replicas: ReplicaGroup;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelDeployment
+     */
+    retries: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    retry_after?: string | null;
     /**
      * 
      * @type {number}
@@ -200,6 +232,7 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'batch_execution_outcome': !exists(json, 'batch_execution_outcome') ? undefined : BatchExecutionOutcomeFromJSON(json['batch_execution_outcome']),
         'created_at': json['created_at'],
         'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
         'deployment_option_id': json['deployment_option_id'],
@@ -217,7 +250,10 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
         'name': json['name'],
         'owner': json['owner'],
+        'reconciliation_status': !exists(json, 'reconciliation_status') ? undefined : ReconciliationStatusFromJSON(json['reconciliation_status']),
         'replicas': ReplicaGroupFromJSON(json['replicas']),
+        'retries': json['retries'],
+        'retry_after': !exists(json, 'retry_after') ? undefined : json['retry_after'],
         'revision': json['revision'],
         'state': StateFromJSON(json['state']),
         'target_endpoint': !exists(json, 'target_endpoint') ? undefined : ModelDeploymentEndpointFromJSON(json['target_endpoint']),
@@ -235,6 +271,7 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
     }
     return {
         
+        'batch_execution_outcome': BatchExecutionOutcomeToJSON(value.batch_execution_outcome),
         'created_at': value.created_at,
         'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
         'deployment_option_id': value.deployment_option_id,
@@ -252,7 +289,10 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
         'metadata': value.metadata,
         'name': value.name,
         'owner': value.owner,
+        'reconciliation_status': ReconciliationStatusToJSON(value.reconciliation_status),
         'replicas': ReplicaGroupToJSON(value.replicas),
+        'retries': value.retries,
+        'retry_after': value.retry_after,
         'revision': value.revision,
         'state': StateToJSON(value.state),
         'target_endpoint': ModelDeploymentEndpointToJSON(value.target_endpoint),
