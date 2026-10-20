@@ -222,6 +222,65 @@ fn successful_batch_execution_satisfies_running_desired_state() -> Result<(), Bo
 }
 
 #[test]
+fn timed_out_batch_execution_satisfies_running_desired_state_and_can_restart(
+) -> Result<(), Box<dyn Error>> {
+    let mut deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .batch_execution_outcome(BatchExecutionOutcome::TimedOut)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    assert!(deployment.is_state_syncronized());
+    assert!(deployment.is_completed_batch_execution());
+    assert_eq!(
+        deployment.resolve_reconciliation_requirement(&TimeStamp::now()),
+        None
+    );
+
+    let restarted = deployment
+        .revise()
+        .restart_reconciliation(Some("Run again".into()))
+        .finish();
+
+    assert_eq!(restarted.batch_execution_outcome(), None);
+    assert_eq!(restarted.reconciliation_status(), None);
+
+    Ok(())
+}
+
+#[test]
+fn timed_out_batch_execution_preserves_stop_and_undeploy_requirements() -> Result<(), Box<dyn Error>>
+{
+    let stopped = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Stopped)
+        .batch_execution_outcome(BatchExecutionOutcome::TimedOut)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    assert!(stopped.is_state_syncronized());
+    assert_eq!(
+        stopped.resolve_reconciliation_requirement(&TimeStamp::now()),
+        None
+    );
+
+    let not_deployed = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::NotDeployed)
+        .batch_execution_outcome(BatchExecutionOutcome::TimedOut)
+        .build()?;
+
+    assert!(!not_deployed.is_state_syncronized());
+    assert_eq!(
+        not_deployed.resolve_reconciliation_requirement(&TimeStamp::now()),
+        Some(ReconciliationRequirement::Undeploy)
+    );
+
+    Ok(())
+}
+
+#[test]
 fn cancelled_batch_execution_does_not_satisfy_running_desired_state() -> Result<(), Box<dyn Error>>
 {
     let mut deployment = ModelDeploymentTestBuilder::new()
@@ -242,6 +301,123 @@ fn cancelled_batch_execution_does_not_satisfy_running_desired_state() -> Result<
         deployment.resolve_reconciliation_requirement(&TimeStamp::now()),
         None
     );
+
+    Ok(())
+}
+
+#[test]
+fn every_reconcilable_deployment_requires_observation() -> Result<(), Box<dyn Error>> {
+    let evaluated_at = TimeStamp::parse_string("2026-10-20T12:00:00Z")?;
+    let deployments = [
+        ModelDeploymentTestBuilder::new()
+            .state(State::NotDeployed)
+            .desired_state(DesiredState::Running)
+            .build()?,
+        ModelDeploymentTestBuilder::new()
+            .state(State::Running)
+            .desired_state(DesiredState::Stopped)
+            .build()?,
+        ModelDeploymentTestBuilder::new()
+            .state(State::Stopped)
+            .desired_state(DesiredState::NotDeployed)
+            .build()?,
+    ];
+
+    for deployment in deployments {
+        assert!(deployment
+            .resolve_reconciliation_requirement(&evaluated_at)
+            .is_some());
+        assert!(deployment.requires_observation(&evaluated_at));
+    }
+
+    Ok(())
+}
+
+#[test]
+fn observation_tracks_active_and_in_flight_deployments() -> Result<(), Box<dyn Error>> {
+    let evaluated_at = TimeStamp::parse_string("2026-10-20T12:00:00Z")?;
+    let running = ModelDeploymentTestBuilder::new()
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    let unknown = ModelDeploymentTestBuilder::new()
+        .state(State::Unknown)
+        .desired_state(DesiredState::Running)
+        .build()?;
+
+    let pending = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Stopped)
+        .reconciliation_status(ReconciliationStatus::Pending)
+        .build()?;
+
+    assert!(running.requires_observation(&evaluated_at));
+    assert!(unknown.requires_observation(&evaluated_at));
+    assert!(pending.requires_observation(&evaluated_at));
+
+    Ok(())
+}
+
+#[test]
+fn delayed_reconciliation_remains_observable() -> Result<(), Box<dyn Error>> {
+    let evaluated_at = TimeStamp::parse_string("2026-10-20T12:00:00Z")?;
+    let retry_after = TimeStamp::parse_string("2026-10-20T12:05:00Z")?;
+    let deployment = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .reconciliation_status(ReconciliationStatus::Retrying)
+        .retries(1)
+        .retry_after(retry_after)
+        .build()?;
+
+    assert_eq!(
+        deployment.resolve_reconciliation_requirement(&evaluated_at),
+        None
+    );
+    assert!(deployment.requires_observation(&evaluated_at));
+
+    Ok(())
+}
+
+#[test]
+fn observation_ignores_terminal_and_inactive_deployments() -> Result<(), Box<dyn Error>> {
+    let evaluated_at = TimeStamp::parse_string("2026-10-20T12:00:00Z")?;
+    let stopped = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Stopped)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    let completed_batch = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .batch_execution_outcome(BatchExecutionOutcome::Succeeded)
+        .reconciliation_status(ReconciliationStatus::Synchronized)
+        .build()?;
+
+    let terminal_failure = ModelDeploymentTestBuilder::new()
+        .state(State::Stopped)
+        .desired_state(DesiredState::Running)
+        .reconciliation_status(ReconciliationStatus::Failed)
+        .build()?;
+
+    assert!(!stopped.requires_observation(&evaluated_at));
+    assert!(!completed_batch.requires_observation(&evaluated_at));
+    assert!(!terminal_failure.requires_observation(&evaluated_at));
+
+    Ok(())
+}
+
+#[test]
+fn expired_deployment_does_not_require_observation() -> Result<(), Box<dyn Error>> {
+    let expires_at = TimeStamp::parse_string("2026-10-20T11:00:00Z")?;
+    let evaluated_at = TimeStamp::parse_string("2026-10-20T12:00:00Z")?;
+    let deployment = ModelDeploymentTestBuilder::new()
+        .maximum_runtime(Duration::from_secs(60))
+        .expires_at(expires_at)
+        .build()?;
+
+    assert!(!deployment.requires_observation(&evaluated_at));
 
     Ok(())
 }

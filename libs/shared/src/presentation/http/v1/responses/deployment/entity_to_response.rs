@@ -141,6 +141,7 @@ impl From<entities::BatchExecutionOutcome> for responses::BatchExecutionOutcome 
     fn from(value: entities::BatchExecutionOutcome) -> Self {
         match value {
             entities::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            entities::BatchExecutionOutcome::TimedOut => Self::TimedOut,
             entities::BatchExecutionOutcome::Cancelled => Self::Cancelled,
             entities::BatchExecutionOutcome::Failed => Self::Failed,
         }

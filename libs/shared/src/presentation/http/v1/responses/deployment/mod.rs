@@ -88,6 +88,7 @@ pub enum ReconciliationStatus {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, ToSchema)]
 pub enum BatchExecutionOutcome {
     Succeeded,
+    TimedOut,
     Cancelled,
     Failed,
 }

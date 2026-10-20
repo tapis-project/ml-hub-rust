@@ -1,6 +1,7 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
-use log::error;
+use log::{error, warn};
 use once_cell::sync::Lazy;
 use retry_utils::{retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy};
 use thiserror::Error;
@@ -209,17 +210,93 @@ impl ModelDeploymentService {
         Ok(deployment)
     }
 
-    pub async fn find_all_reconcilable(
+    pub async fn find_control_loop_candidates(
         &self,
-    ) -> Result<Vec<ModelDeployment>, ModelDeploymentServiceError> {
-        let deployments = retry_async(
+        ctx: &RequestContext,
+    ) -> Result<ControlLoopCandidates, ModelDeploymentServiceError> {
+        let observable_candidates = retry_async(
+            || self.model_deployment_repository.find_observable(),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        let reconcilable_candidates = retry_async(
             || self.model_deployment_repository.find_reconcilable(),
             &Self::REPO_RETRY_POLICY,
             None,
         )
         .await?;
 
-        Ok(deployments)
+        let evaluated_at = TimeStamp::now();
+
+        // Repository filters deliberately identify candidates. Reapply the domain predicate
+        // here so persistence-query drift can never schedule invalid observation work.
+        let mut observable = observable_candidates
+            .into_iter()
+            .filter(|deployment| {
+                let is_observable = deployment.requires_observation(&evaluated_at);
+
+                if !is_observable {
+                    warn!(
+                        "Discarding false-positive observable model deployment candidate; deployment_id='{}'; request_id='{}'",
+                        deployment.id(),
+                        ctx.request_id()
+                    );
+                }
+
+                is_observable
+            })
+            .collect::<Vec<_>>();
+
+        // Delayed retries are evaluated at their persisted deadline. They are reconcilable
+        // work even though they are not eligible for immediate dispatch at startup.
+        let reconcilable = reconcilable_candidates
+            .into_iter()
+            .filter(|deployment| {
+                let reconciliation_at = deployment
+                    .retry_after()
+                    .cloned()
+                    .unwrap_or_else(|| evaluated_at.clone());
+                let is_reconcilable = deployment
+                    .resolve_reconciliation_requirement(&reconciliation_at)
+                    .is_some();
+
+                if !is_reconcilable {
+                    warn!(
+                        "Discarding false-positive reconcilable model deployment candidate; deployment_id='{}'; request_id='{}'",
+                        deployment.id(),
+                        ctx.request_id()
+                    );
+                }
+
+                is_reconcilable
+            })
+            .collect::<Vec<_>>();
+
+        let mut observable_ids = observable
+            .iter()
+            .map(|deployment| *deployment.id())
+            .collect::<HashSet<_>>();
+
+        // Invariant: every reconcilable deployment must also be observable. Repair an
+        // infrastructure-query false negative in memory so control-plane work is not lost.
+        for deployment in &reconcilable {
+            if observable_ids.insert(*deployment.id()) {
+                warn!(
+                    "Reconcilable model deployment was absent from observable candidates; adding it to observation; deployment_id='{}'; request_id='{}'",
+                    deployment.id(),
+                    ctx.request_id()
+                );
+
+                observable.push(deployment.clone());
+            }
+        }
+
+        Ok(ControlLoopCandidates {
+            observable,
+            reconcilable,
+        })
     }
 
     pub async fn deploy_model_with_option(
@@ -498,6 +575,11 @@ impl ModelDeploymentService {
             .await
             .map_err(Into::into)
     }
+}
+
+pub struct ControlLoopCandidates {
+    pub observable: Vec<ModelDeployment>,
+    pub reconcilable: Vec<ModelDeployment>,
 }
 
 pub struct ListModelDeploymentsByOwnerInput {

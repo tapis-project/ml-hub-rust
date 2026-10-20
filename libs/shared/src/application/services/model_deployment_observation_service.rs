@@ -87,6 +87,15 @@ impl ModelDeploymentObservationService {
             return Ok(ObservationResult::Expired { deployment_id });
         }
 
+        if !deployment.requires_observation(&evaluated_at) {
+            debug!(
+                "Skipping model deployment observation because the domain no longer requires it; deployment_id='{}'",
+                deployment.id()
+            );
+
+            return Ok(ObservationResult::NotRequired { deployment_id });
+        }
+
         if deployment.is_waiting_for_retry(&evaluated_at) {
             debug!(
                 "Deferring observation for model deployment '{}' until its reconciliation retry is eligible",
@@ -240,6 +249,9 @@ pub enum ObservationResult {
         deployment_id: ModelDeploymentId,
     },
     Deferred {
+        deployment_id: ModelDeploymentId,
+    },
+    NotRequired {
         deployment_id: ModelDeploymentId,
     },
     Observed {

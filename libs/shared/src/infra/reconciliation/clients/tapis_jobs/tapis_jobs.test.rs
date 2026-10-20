@@ -125,6 +125,7 @@ fn maps_successful_batch_completion_without_terminal_failure() {
                 &DeploymentModality::Batch,
                 &DesiredState::Running,
                 status,
+                None,
             );
 
         assert_eq!(state, State::Stopped);
@@ -141,6 +142,7 @@ fn maps_cancelled_batch_execution_to_terminal_failure_while_running_is_desired()
                 &DeploymentModality::Batch,
                 &DesiredState::Running,
                 status,
+                None,
             );
 
         assert_eq!(state, State::Stopped);
@@ -156,6 +158,7 @@ fn maps_failed_batch_execution_to_terminal_failure_while_running_is_desired() {
             &DeploymentModality::Batch,
             &DesiredState::Running,
             "FAILED",
+            None,
         );
 
     assert_eq!(state, State::Stopped);
@@ -170,6 +173,7 @@ fn maps_expected_batch_termination_without_terminal_failure() {
             &DeploymentModality::Batch,
             &DesiredState::Stopped,
             "CANCELLED",
+            None,
         );
 
     assert_eq!(state, State::Stopped);
@@ -184,6 +188,43 @@ fn maps_service_completion_to_terminal_failure_while_running_is_desired() {
             &DeploymentModality::Service,
             &DesiredState::Running,
             "FINISHED",
+            None,
+        );
+
+    assert_eq!(state, State::Failed);
+    assert_eq!(outcome, None);
+    assert_eq!(disposition, Some(FailureDisposition::Terminal));
+}
+
+#[test]
+fn maps_scheduler_timeout_to_expected_batch_timeout() {
+    for desired_state in [
+        DesiredState::Running,
+        DesiredState::Stopped,
+        DesiredState::NotDeployed,
+    ] {
+        let (state, outcome, disposition) =
+            TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+                &DeploymentModality::Batch,
+                &desired_state,
+                "FAILED",
+                Some("SCHEDULER_TIMEOUT"),
+            );
+
+        assert_eq!(state, State::Stopped);
+        assert_eq!(outcome, Some(BatchExecutionOutcome::TimedOut));
+        assert_eq!(disposition, None);
+    }
+}
+
+#[test]
+fn scheduler_timeout_remains_a_terminal_failure_for_service_deployments() {
+    let (state, outcome, disposition) =
+        TapisJobsModelDeploymentReconciliationClient::observation_from_job_status(
+            &DeploymentModality::Service,
+            &DesiredState::Running,
+            "FAILED",
+            Some("SCHEDULER_TIMEOUT"),
         );
 
     assert_eq!(state, State::Failed);

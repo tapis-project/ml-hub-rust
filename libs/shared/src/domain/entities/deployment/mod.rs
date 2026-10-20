@@ -294,6 +294,8 @@ impl ModelDeployment {
         &self,
         evaluated_at: &TimeStamp,
     ) -> Option<ReconciliationRequirement> {
+        // Invariant: reconciliation is active control-plane work, so every deployment that
+        // returns a requirement here must also be observable at the same point in time.
         if self.is_expired(evaluated_at) || self.is_state_syncronized() {
             return None;
         }
@@ -323,6 +325,44 @@ impl ModelDeployment {
         }
     }
 
+    pub fn requires_observation(&self, evaluated_at: &TimeStamp) -> bool {
+        if self.is_expired(evaluated_at)
+            || matches!(
+                self.reconciliation_status,
+                Some(ReconciliationStatus::Failed)
+            )
+        {
+            return false;
+        }
+
+        // Invariant: every reconcilable deployment is observable. Check the domain
+        // requirement first so new user intent cannot be omitted before it is accepted by
+        // the control plane.
+        if self
+            .resolve_reconciliation_requirement(evaluated_at)
+            .is_some()
+        {
+            return true;
+        }
+
+        if matches!(self.state, State::Running | State::Unknown | State::Blocked) {
+            return true;
+        }
+
+        // A delayed retry has no immediately executable reconciliation requirement, but it
+        // remains observable while waiting so downstream state changes are not missed.
+        matches!(
+            self.reconciliation_status,
+            Some(
+                ReconciliationStatus::Pending
+                    | ReconciliationStatus::Starting
+                    | ReconciliationStatus::Stopping
+                    | ReconciliationStatus::Undeploying
+                    | ReconciliationStatus::Retrying
+            )
+        )
+    }
+
     pub fn is_state_syncronized(&self) -> bool {
         Self::state_satisfies_desired_state(
             &self.deployment_modality,
@@ -348,7 +388,7 @@ impl ModelDeployment {
                 DeploymentModality::Batch,
                 State::Stopped,
                 DesiredState::Running,
-                Some(BatchExecutionOutcome::Succeeded),
+                Some(BatchExecutionOutcome::Succeeded | BatchExecutionOutcome::TimedOut),
             ) => true,
             (_, State::Running, DesiredState::Running, _) => true,
             (_, State::Stopped, DesiredState::Stopped, _) => true,
@@ -365,7 +405,10 @@ impl ModelDeployment {
         self.deployment_modality == DeploymentModality::Batch
             && self.desired_state == DesiredState::Running
             && self.state == State::Stopped
-            && self.batch_execution_outcome == Some(BatchExecutionOutcome::Succeeded)
+            && matches!(
+                self.batch_execution_outcome.as_ref(),
+                Some(BatchExecutionOutcome::Succeeded | BatchExecutionOutcome::TimedOut)
+            )
     }
 
     pub fn revision(&self) -> &u32 {
@@ -658,6 +701,7 @@ pub enum DesiredState {
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum BatchExecutionOutcome {
     Succeeded,
+    TimedOut,
     Cancelled,
     Failed,
 }

@@ -370,6 +370,16 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
                 { "$expr": { "$ne": ["$state", "$desired_state"] } },
                 { "reconciliation_status": { "$ne": "Failed" } },
                 {
+                    "$nor": [
+                        {
+                            "deployment_modality": "batch",
+                            "state": "Stopped",
+                            "desired_state": "Running",
+                            "batch_execution_outcome": { "$in": ["Succeeded", "TimedOut"] },
+                        },
+                    ],
+                },
+                {
                     "$or": [
                         { "expires_at": { "$exists": false } },
                         { "expires_at": null },
@@ -390,6 +400,54 @@ impl application::ports::deployment::ModelDeploymentRepository for ModelDeployme
             .try_next()
             .await
             .map_err(|error| map_error("Could not read a reconcilable model deployment", error))?
+        {
+            deployments.push(map_document(document)?);
+        }
+
+        Ok(deployments)
+    }
+
+    async fn find_observable(
+        &self,
+    ) -> Result<Vec<entities::deployment::ModelDeployment>, ModelDeploymentRepositoryError> {
+        let now = mongodb::bson::DateTime::now();
+
+        let filter = doc! {
+            "$and": [
+                { "reconciliation_status": { "$ne": "Failed" } },
+                {
+                    "$or": [
+                        { "expires_at": { "$exists": false } },
+                        { "expires_at": null },
+                        { "expires_at": { "$gt": now } },
+                    ],
+                },
+                {
+                    "$or": [
+                        { "state": { "$in": ["Running", "Unknown", "Blocked"] } },
+                        {
+                            "reconciliation_status": {
+                                "$in": ["Pending", "Starting", "Stopping", "Undeploying", "Retrying"],
+                            },
+                        },
+                        { "$expr": { "$ne": ["$state", "$desired_state"] } },
+                    ],
+                },
+            ],
+        };
+
+        let mut cursor = self
+            .read_collection
+            .find(filter)
+            .await
+            .map_err(|error| map_error("Could not find observable model deployments", error))?;
+
+        let mut deployments = Vec::new();
+
+        while let Some(document) = cursor
+            .try_next()
+            .await
+            .map_err(|error| map_error("Could not read an observable model deployment", error))?
         {
             deployments.push(map_document(document)?);
         }

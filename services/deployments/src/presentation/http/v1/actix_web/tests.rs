@@ -186,7 +186,12 @@ fn openapi_exposes_batch_execution_outcome() -> Result<(), Box<dyn std::error::E
 
     assert_eq!(
         document.pointer("/components/schemas/BatchExecutionOutcome/enum"),
-        Some(&serde_json::json!(["Succeeded", "Cancelled", "Failed"]))
+        Some(&serde_json::json!([
+            "Succeeded",
+            "TimedOut",
+            "Cancelled",
+            "Failed"
+        ]))
     );
 
     Ok(())

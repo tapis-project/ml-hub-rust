@@ -95,6 +95,7 @@ impl From<documents::BatchExecutionOutcome> for entities::BatchExecutionOutcome 
     fn from(value: documents::BatchExecutionOutcome) -> Self {
         match value {
             documents::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            documents::BatchExecutionOutcome::TimedOut => Self::TimedOut,
             documents::BatchExecutionOutcome::Cancelled => Self::Cancelled,
             documents::BatchExecutionOutcome::Failed => Self::Failed,
         }

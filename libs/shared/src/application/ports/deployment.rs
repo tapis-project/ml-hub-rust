@@ -88,6 +88,9 @@ pub trait ModelDeploymentRepository: Send + Sync {
         &self,
     ) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
 
+    async fn find_observable(&self)
+        -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
+
     async fn find_by_owner(
         &self,
         tenant_id: &str,

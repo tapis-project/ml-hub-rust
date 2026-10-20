@@ -348,19 +348,34 @@ impl ModelDeploymentController {
     }
 
     async fn synchronize(&self) -> Result<(), ModelDeploymentControllerInitializationError> {
-        debug!("Loading reconcilable model deployments for queue synchronization");
+        debug!("Loading observable and reconcilable model deployments for control-loop synchronization");
 
-        let deployments = self
+        let context = RequestContext::system(None, None, None);
+
+        let candidates = self
             .model_deployment_service
-            .find_all_reconcilable()
+            .find_control_loop_candidates(&context)
             .await?;
 
         info!(
-            "Synchronizing {} reconcilable model deployment(s)",
-            deployments.len()
+            "Synchronizing {} observable and {} reconcilable model deployment(s)",
+            candidates.observable.len(),
+            candidates.reconcilable.len()
         );
 
-        for mut deployment in deployments {
+        for deployment in candidates.observable {
+            debug!(
+                "Registering model deployment '{}' for observation; revision={}; state='{:?}'; desired_state='{:?}'",
+                deployment.id(),
+                deployment.revision(),
+                deployment.state,
+                deployment.desired_state
+            );
+
+            self.register_for_observation(*deployment.id()).await?;
+        }
+
+        for mut deployment in candidates.reconcilable {
             let deployment_id = *deployment.id();
 
             let deployment_revision = *deployment.revision();
@@ -378,11 +393,8 @@ impl ModelDeploymentController {
                     .await?;
             }
 
-            debug!(
-                "Registering synchronized model deployment '{}' at revision {} for observation; state='{:?}'; desired_state='{:?}'",
-                deployment_id, deployment_revision, deployment.state, deployment.desired_state
-            );
-
+            // Invariant: reconciliation is a subset of observation. Registration is
+            // idempotent and repairs any concurrent or query-level omission.
             self.register_for_observation(*deployment.id()).await?;
 
             let evaluated_at = deployment
@@ -700,9 +712,22 @@ impl ModelDeploymentController {
                         }
                         ObservationResult::Deferred { deployment_id } => {
                             debug!(
-                                "Observation deferred for model deployment '{}' while it awaits retry",
+                                "Observation deferred for model deployment '{}' while its reconciliation retry deadline is pending",
                                 deployment_id
                             );
+
+                            continue;
+                        }
+                        ObservationResult::NotRequired { deployment_id } => {
+                            debug!(
+                                "Model deployment '{}' no longer requires observation; removing it from control-loop work",
+                                deployment_id
+                            );
+
+                            self.unregister_from_observation(&deployment_id).await?;
+
+                            self.remove_from_reconciliation_queue(&deployment_id)
+                                .await?;
 
                             continue;
                         }
@@ -763,6 +788,21 @@ impl ModelDeploymentController {
                         "Failed to persist observed model deployment '{}': {}",
                         observed_deployment_id, err
                     );
+
+                    continue;
+                }
+
+                if !endpoint_resource.requires_observation(&observed_at) {
+                    debug!(
+                        "Observed model deployment '{}' no longer requires observation; removing it from control-loop work",
+                        observed_deployment_id
+                    );
+
+                    self.unregister_from_observation(&observed_deployment_id)
+                        .await?;
+
+                    self.remove_from_reconciliation_queue(&observed_deployment_id)
+                        .await?;
 
                     continue;
                 }

@@ -121,7 +121,7 @@ fn batch_execution_outcome_defaults_to_none_and_round_trips() -> Result<(), Box<
     assert!(legacy.batch_execution_outcome.is_none());
 
     source.state = State::Stopped;
-    source.batch_execution_outcome = Some(BatchExecutionOutcome::Succeeded);
+    source.batch_execution_outcome = Some(BatchExecutionOutcome::TimedOut);
 
     let persisted = to_document(&source)?;
 
@@ -129,7 +129,7 @@ fn batch_execution_outcome_defaults_to_none_and_round_trips() -> Result<(), Box<
 
     assert!(matches!(
         round_trip.batch_execution_outcome,
-        Some(BatchExecutionOutcome::Succeeded)
+        Some(BatchExecutionOutcome::TimedOut)
     ));
 
     Ok(())
