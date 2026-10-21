@@ -2,6 +2,6 @@ target
 .env
 .idea
 .vscode
-.codex-build
+.codex*
 outputs
 .!*

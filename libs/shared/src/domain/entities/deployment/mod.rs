@@ -1010,8 +1010,7 @@ impl<'a> ModelDeploymentDraft<'a> {
         let mut transitions = HashMap::new();
 
         transitions.insert(DesiredState::NotDeployed, vec![DesiredState::Running]);
-        transitions.insert(DesiredState::Running, vec![DesiredState::Stopped]);
-        transitions.insert(DesiredState::Running, vec![DesiredState::NotDeployed]);
+        transitions.insert(DesiredState::Running, vec![DesiredState::Stopped, DesiredState::NotDeployed]);
         transitions.insert(DesiredState::Stopped, vec![DesiredState::Running]);
         transitions
     }
@@ -1031,7 +1030,7 @@ impl<'a> ModelDeploymentDraft<'a> {
     ) -> Result<&mut Self, ModelDeploymentError> {
         if !Self::is_valid_desired_state_transition(&self.deployment.desired_state, &new_state) {
             return Err(ModelDeploymentError::InvalidDesiredStateTransition(
-                self.deployment.state.clone().into(),
+                self.deployment.desired_state.clone().into(),
                 new_state.into(),
             ));
         }

@@ -9,6 +9,7 @@ pub mod configuration;
 pub mod contracts;
 pub mod counts;
 pub mod encryption;
+pub mod error_chain;
 pub mod fs;
 pub mod identity;
 pub mod messaging;

@@ -41,15 +41,15 @@ impl TryFrom<&Payload> for Value {
             Payload::ModelDeploymentDeletedPayload(p) => {
                 to_value(messages::ModelDeploymentDeletedPayload::from(p))
                     .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            },
+            }
             Payload::ModelDeploymentStartedPayload(p) => {
                 to_value(messages::ModelDeploymentStartedPayload::from(p))
                     .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            },
+            }
             Payload::ModelDeploymentStoppedPayload(p) => {
                 to_value(messages::ModelDeploymentStoppedPayload::from(p))
                     .map_err(|err| Self::Error::SerializationFailed(err.to_string()))?
-            },
+            }
         };
 
         Ok(payload)
