@@ -1,7 +1,11 @@
 FROM rust:1.82.0
 
-RUN apt update
-
-RUN apt install -y jq vim curl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        jq \
+        vim && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ENTRYPOINT [ "bash" ]

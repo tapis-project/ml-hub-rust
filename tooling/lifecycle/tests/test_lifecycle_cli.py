@@ -262,14 +262,14 @@ class ComponentAliasTests(unittest.TestCase):
         config = lifecycle_cli.load(lifecycle_cli.get_config_path())
 
         for component in config["components"]:
-            cycle_command = component.get("commands", {}).get("cyclel")
+            cycle_command = component.get("commands", {}).get("cycle")
             if cycle_command is None:
                 continue
 
             component_name = component["name"]
             expected_command = (
                 "./dev stop {{ self.name }} -t overlay {{ overlay }} "
-                "&& ./dev buildl {{ self.name }} "
+                "&& ./dev build {{ self.name }} "
                 "&& ./dev start {{ self.name }} -t overlay {{ overlay }}"
             )
 

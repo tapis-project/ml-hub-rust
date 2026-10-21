@@ -45,6 +45,6 @@ jobs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
     - name: Build Image
-      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/hf-model-etl/Dockerfile.rust.gh-actions -t ${{ inputs.transform_load_stage_image_name }}:${{ inputs.transform_load_stage_image_tag }} --build-arg SERVICE_NAME=hf-model-etl --build-arg SERVICE_DIR="services/hf-model-etl" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/hf-model-etl/Dockerfile.rust -t ${{ inputs.transform_load_stage_image_name }}:${{ inputs.transform_load_stage_image_tag }} --build-arg SERVICE_NAME=hf-model-etl --build-arg SERVICE_DIR="services/hf-model-etl" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
     - name: Push Image
       run: docker push --all-tags ${{ inputs.transform_load_stage_image_name }}

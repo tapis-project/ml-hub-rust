@@ -20,18 +20,17 @@ ARG SERVICE_NAME
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        libssl3 ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+        ca-certificates \
+        git \
+        git-lfs \
+        libssl3 && \
+    update-ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 COPY --from=builder \
     /usr/local/mlhub/target/release/${SERVICE_NAME} \
     /usr/local/bin/mlhub
-
-RUN apt-get update && rm -rf /var/lib/apt/lists/*
-RUN apt update
-RUN apt install libssl3
-RUN apt-get install -y --no-install-recommends ca-certificates
-RUN update-ca-certificates
 
 ENV RUST_LOG=debug,shared=debug
 

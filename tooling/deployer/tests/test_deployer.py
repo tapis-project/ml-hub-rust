@@ -88,25 +88,25 @@ fi
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(
             [
-                "dev buildl models-migrator",
-                "dev buildl deployments-migrator",
-                "dev buildl endpoints-migrator",
-                "dev buildl federated-identities-migrator",
-                "dev buildl principals-migrator",
-                "dev buildl hpc-cluster-seeder",
-                "dev buildl models",
-                "dev buildl datasets",
-                "dev buildl deployments",
-                "dev buildl agents",
-                "dev buildl endpoints",
-                "dev buildl endpoint-router",
-                "dev buildl artifact-ingester",
-                "dev buildl artifact-publisher",
-                "dev buildl model-deployment-controller",
-                "dev buildl-extract hf-model-etl",
-                "dev buildl-transform-load hf-model-etl",
-                "dev buildl-extract hf-dataset-etl",
-                "dev buildl-transform-load hf-dataset-etl",
+                "dev build models-migrator",
+                "dev build deployments-migrator",
+                "dev build endpoints-migrator",
+                "dev build federated-identities-migrator",
+                "dev build principals-migrator",
+                "dev build hpc-cluster-seeder",
+                "dev build models",
+                "dev build datasets",
+                "dev build deployments",
+                "dev build agents",
+                "dev build endpoints",
+                "dev build endpoint-router",
+                "dev build artifact-ingester",
+                "dev build artifact-publisher",
+                "dev build model-deployment-controller",
+                "dev build-extract hf-model-etl",
+                "dev build-transform-load hf-model-etl",
+                "dev build-extract hf-dataset-etl",
+                "dev build-transform-load hf-dataset-etl",
             ],
             self._commands(),
         )
@@ -119,7 +119,7 @@ fi
 
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertTrue(os.access(dev, os.X_OK))
-        self.assertEqual("dev buildl models-migrator", self._commands()[0])
+        self.assertEqual("dev build models-migrator", self._commands()[0])
 
     def test_missing_dev_fails_during_chmod_before_running_stage(self):
         (self.root / "dev").unlink()
@@ -239,12 +239,12 @@ fi
         self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
 
     def test_failed_build_stops_following_builds(self):
-        result = self._run("build-services", DEPLOYER_FAIL_DEV_MATCH="buildl deployments")
+        result = self._run("build-services", DEPLOYER_FAIL_DEV_MATCH="build deployments")
 
         self.assertNotEqual(0, result.returncode)
         commands = self._commands()
-        self.assertIn("dev buildl deployments", commands)
-        self.assertNotIn("dev buildl agents", commands)
+        self.assertIn("dev build deployments", commands)
+        self.assertNotIn("dev build agents", commands)
 
 
 if __name__ == "__main__":

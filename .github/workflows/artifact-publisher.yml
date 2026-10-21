@@ -23,6 +23,6 @@ jobs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
     - name: Build Image
-      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/artifact-publisher/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=artifact-publisher --build-arg SERVICE_DIR="services/artifact-publisher" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
+      run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/artifact-publisher/Dockerfile -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=artifact-publisher --build-arg SERVICE_DIR="services/artifact-publisher" --build-arg LIBS_DIR="libs" --build-arg SDKS_DIR="sdks" .
     - name: Push Image
       run: docker push --all-tags ${{ inputs.image_name }}

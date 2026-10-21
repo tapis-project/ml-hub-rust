@@ -5,15 +5,12 @@ RUN apk add --no-cache \
     openjdk17-jre-headless \
     python3
 
-RUN mkdir -p /src/tooling/typescript-sdk-generator
-
 WORKDIR /src/tooling/typescript-sdk-generator
 
 COPY package.json package-lock.json ./
 
-RUN npm ci
-
-RUN npm install --global \
-    @openapitools/openapi-generator-cli@2.5.2
+RUN npm ci && \
+    npm install --global \
+        @openapitools/openapi-generator-cli@2.5.2
 
 ENTRYPOINT ["bash"]

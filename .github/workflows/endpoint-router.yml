@@ -21,6 +21,6 @@ jobs:
           password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
       - uses: actions/checkout@v4
       - name: Build Image
-        run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/endpoint-router/Dockerfile.gh-actions -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=endpoint-router .
+        run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/endpoint-router/Dockerfile -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=endpoint-router .
       - name: Push Image
         run: docker push --all-tags ${{ inputs.image_name }}

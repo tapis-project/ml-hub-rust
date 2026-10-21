@@ -55,7 +55,7 @@ normally be run only once. After the stack is available, use lifecycle commands 
 components for routine development, for example:
 
 ```shell
-./dev buildl models
+./dev build models
 ./dev start models
 ./dev stop models
 ```
