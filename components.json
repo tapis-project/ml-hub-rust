@@ -12,17 +12,13 @@
     "release-flag": "debug",
     "models-deployment": "mlhub-models-api-deployment",
     "models-image": "tapis/mlhub-models-api",
-    "models-migrator-image": "tapis/mlhub-models-migrator",
-    "deployments-migrator-image": "tapis/mlhub-deployments-migrator",
-    "endpoints-migrator-image": "tapis/mlhub-endpoints-migrator",
+    "migrator-image": "tapis/mlhub-migrator",
     "endpoint-router-image": "tapis/mlhub-endpoint-router",
     "endpoints-image": "tapis/mlhub-endpoints-api",
     "endpoints-deployment": "mlhub-endpoints-api-deployment",
     "endpoint-router-deployment": "mlhub-endpoint-router-deployment",
     "endpoint-envoy-deployment": "mlhub-endpoint-envoy-deployment",
     "hpc-cluster-seeder-image": "tapis/mlhub-hpc-cluster-seeder",
-    "principals-migrator-image": "tapis/mlhub-principals-migrator",
-    "federated-identities-migrator-image": "tapis/mlhub-federated-identities-migrator",
     "datasets-deployment": "mlhub-datasets-api-deployment",
     "datasets-image": "tapis/mlhub-datasets-api",
     "deployments-deployment": "mlhub-deployments-api-deployment",
@@ -78,64 +74,19 @@
       ]
     },
     {
-      "name": "models-migrator",
-      "description": "This is a standalone binary for managing the migrations of the models api. This has no seperate deployment. It must be deployed as an init container on the models api deployment",
-      "rootDir": "services/models-migrator",
-      "lifecycle": "experimental",
-      "commands": {
-        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "install": "cargo install --path {{ self.rootDir }}",
-        "build": "docker build -f {{ self.rootDir }}/Dockerfile -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }} --overwrite",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
-      }
-    },
-    {
-      "name": "principals-migrator",
-      "description": "This is a standalone binary for managing the migrations of the Princials collection. This has no seperate deployment. It must be deployed as a job",
-      "rootDir": "services/principals-migrator",
-      "lifecycle": "experimental",
-      "commands": {
-        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "install": "cargo install --path {{ self.rootDir }}",
-        "build": "docker build -f {{ self.rootDir }}/Dockerfile -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }} --overwrite",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
-      }
-    },
-    {
-      "name": "deployments-migrator",
-      "description": "Standalone MongoDB schema migrator for the Deployments API",
-      "rootDir": "services/deployments-migrator",
+      "name": "migrator",
+      "description": "Runs all MLHub MongoDB migrations in bounded-context groups",
+      "rootDir": "services/migrator",
       "lifecycle": "experimental",
       "commands": {
         "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
         "install": "cargo install --path {{ self.rootDir }}",
         "build": "docker build -f {{ self.rootDir }}/Dockerfile -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} . && minikube image load {{ {{ self.name }}-image }}:{{ local }} --overwrite",
         "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
+        "logs": "kubectl logs job/mlhub-migrator",
+        "watch": "kubectl logs job/mlhub-migrator -f",
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
-      }
-    },
-    {
-      "name": "endpoints-migrator",
-      "description": "Standalone MongoDB schema migrator for issued endpoints",
-      "rootDir": "services/endpoints-migrator",
-      "lifecycle": "experimental",
-      "commands": {
-        "build": "docker build -f {{ self.rootDir }}/Dockerfile -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} . && minikube image load {{ {{ self.name }}-image }}:{{ local }} --overwrite",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
         "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}",
         "test": "cargo test --manifest-path {{ self.rootDir }}/Cargo.toml"
       }
@@ -207,24 +158,6 @@
         "code": "code {{ self.rootDir }}",
         "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
         "run": "cd {{ k8s-dir }}/seeders/{{ self.name }} && ./burnup.sh {{ overlay }}"
-      }
-    },
-    {
-      "name": "federated-identities-migrator",
-      "description": "This is a standalone binary for managing the migrations of the FederatedIdentities collection. This has no seperate deployment. It must be deployed as a job",
-      "rootDir": "services/federated-identities-migrator",
-      "lifecycle": "experimental",
-      "commands": {
-        "add": "cargo add --manifest-path {{ self.rootDir }}/Cargo.toml",
-        "install": "cargo install --path {{ self.rootDir }}",
-        "build": "docker build -f {{ self.rootDir }}/Dockerfile -t {{ {{ self.name }}-image }}:{{ local }} --build-arg SERVICE_NAME={{ self.name }} --build-arg SERVICE_DIR=\"{{ self.rootDir }}\" --build-arg LIBS_DIR=\"{{ libs-dir }}\" --build-arg SDKS_DIR=\"{{ sdks-dir }}\" . && minikube image load {{ {{ self.name }}-image }}:{{ local }} --overwrite",
-        "pusht": "docker push --all-tags {{ {{ self.name }}-image }}",
-        "logs": "kubectl logs deployment/{{ {{ self.name }}-deployment }}",
-        "watch": "kubectl logs deployment/{{ {{ self.name }}-deployment }} -f",
-        "exec": "kubectl exec -it deployment/{{ {{ self.name }}-deployment }} -- bash",
-        "code": "code {{ self.rootDir }}",
-        "docs": "cargo doc --manifest-path {{ self.rootDir }}/Cargo.toml --open",
-        "run": "cd {{ k8s-dir }}/migrations/{{ self.name }} && ./burnup.sh {{ overlay }}"
       }
     },
     {
@@ -780,17 +713,12 @@
     },
     {
       "name": "migrations",
-      "rootDir": "deploy/k8s/minikube/migrations",
+      "rootDir": "deploy/k8s/migrations",
       "labels": ["workflow"],
       "lifecycle": "experimental",
       "commands": {
-        "build-all": "./dev build hpc-cluster-seeder models-migrator deployments-migrator endpoints-migrator federated-identities-migrator principals-migrator",
-        "run-all": "./dev run hpc-cluster-seeder -t overlay {{ overlay }} && ./dev run-models migrations -t overlay {{ overlay }} && ./dev run-deployments migrations -t overlay {{ overlay }} && ./dev run-endpoints migrations -t overlay {{ overlay }} && ./dev run-federated-identities migrations -t overlay {{ overlay }} && ./dev run-principals migrations -t overlay {{ overlay }}",
-        "run-models": "cd {{ k8s-dir }}/{{ self.name }}/models-migrator && ./burnup.sh {{ overlay }}",
-        "run-deployments": "cd {{ k8s-dir }}/{{ self.name }}/deployments-migrator && ./burnup.sh {{ overlay }}",
-        "run-endpoints": "cd {{ k8s-dir }}/{{ self.name }}/endpoints-migrator && ./burnup.sh {{ overlay }}",
-        "run-federated-identities": "cd {{ k8s-dir }}/{{ self.name }}/federated-identities-migrator && ./burnup.sh {{ overlay }}",
-        "run-principals": "cd {{ k8s-dir }}/{{ self.name }}/principals-migrator && ./burnup.sh {{ overlay }}"
+        "build-all": "./dev build hpc-cluster-seeder migrator",
+        "run-all": "./dev run hpc-cluster-seeder -t overlay {{ overlay }} && ./dev run migrator -t overlay {{ overlay }}"
       }
     }
   ]

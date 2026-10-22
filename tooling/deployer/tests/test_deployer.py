@@ -88,11 +88,7 @@ fi
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(
             [
-                "dev build models-migrator",
-                "dev build deployments-migrator",
-                "dev build endpoints-migrator",
-                "dev build federated-identities-migrator",
-                "dev build principals-migrator",
+                "dev build migrator",
                 "dev build hpc-cluster-seeder",
                 "dev build models",
                 "dev build datasets",
@@ -119,7 +115,7 @@ fi
 
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertTrue(os.access(dev, os.X_OK))
-        self.assertEqual("dev build models-migrator", self._commands()[0])
+        self.assertEqual("dev build migrator", self._commands()[0])
 
     def test_missing_dev_fails_during_chmod_before_running_stage(self):
         (self.root / "dev").unlink()
@@ -136,14 +132,14 @@ fi
         self.assertEqual(0, result.returncode, result.stderr)
         commands = self._commands()
         self.assertLess(commands.index("dev start nfs -t overlay minikube"), commands.index("dev start rabbit -t overlay minikube"))
-        self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run-models migrations -t overlay minikube"))
-        self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run-deployments migrations -t overlay minikube"))
-        self.assertLess(commands.index("dev run-deployments migrations -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
-        self.assertLess(commands.index("dev run endpoints-migrator -t overlay minikube"), commands.index("dev start endpoints -t overlay minikube"))
-        self.assertLess(commands.index("dev run endpoints-migrator -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
+        self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run migrator -t overlay minikube"))
+        self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run migrator -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start endpoints -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
         self.assertLess(commands.index("dev start endpoints -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
         self.assertLess(commands.index("dev start endpoint-router -t overlay minikube"), commands.index("dev start envoy -t overlay minikube"))
-        self.assertLess(commands.index("dev run-principals migrations -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev start gatus -t overlay minikube"))
         self.assertLess(commands.index("dev start gatus -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
@@ -180,19 +176,13 @@ fi
             ),
         )
 
-        expected_migrations = [
-            "dev run-models migrations -t overlay minikube",
-            "dev run-deployments migrations -t overlay minikube",
-            "dev run endpoints-migrator -t overlay minikube",
-            "dev run-federated-identities migrations -t overlay minikube",
-            "dev run-principals migrations -t overlay minikube",
-        ]
-
-        for migration in expected_migrations:
-            self.assertEqual(1, commands.count(migration))
+        self.assertEqual(
+            1,
+            commands.count("dev run migrator -t overlay minikube"),
+        )
 
     def test_existing_job_fails_before_aggregate_start(self):
-        result = self._run("start", DEPLOYER_EXISTING_JOBS="mlhub-principals-migrator")
+        result = self._run("start", DEPLOYER_EXISTING_JOBS="mlhub-migrator")
 
         self.assertNotEqual(0, result.returncode)
         self.assertIn("already exists", result.stderr)
@@ -221,13 +211,13 @@ fi
         self.assertNotEqual(0, result.returncode)
         self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
 
-    def test_failed_job_stops_following_migrations(self):
-        result = self._run("start-migrations", DEPLOYER_FAILED_JOBS="mlhub-models-migrator")
+    def test_failed_migrator_stops_service_startup(self):
+        result = self._run("start", DEPLOYER_FAILED_JOBS="mlhub-migrator")
 
         self.assertNotEqual(0, result.returncode)
         commands = self._commands()
-        self.assertIn("dev run-models migrations -t overlay minikube", commands)
-        self.assertNotIn("dev run-federated-identities migrations -t overlay minikube", commands)
+        self.assertIn("dev run migrator -t overlay minikube", commands)
+        self.assertNotIn("dev start models -t overlay minikube", commands)
 
     def test_existing_seed_job_fails_before_migrations(self):
         result = self._run(

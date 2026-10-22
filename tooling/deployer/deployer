@@ -15,11 +15,7 @@ fi
 chmod +x "$project_root/dev"
 
 migration_jobs=(
-    mlhub-models-migrator
-    mlhub-deployments-migrator
-    mlhub-endpoints-migrator
-    mlhub-federated-identities-migrator
-    mlhub-principals-migrator
+    mlhub-migrator
 )
 
 seed_jobs=(
@@ -42,11 +38,7 @@ announce() {
 
 build_migrations() {
     announce "Building migration images"
-    run_dev build models-migrator
-    run_dev build deployments-migrator
-    run_dev build endpoints-migrator
-    run_dev build federated-identities-migrator
-    run_dev build principals-migrator
+    run_dev build migrator
 
     announce "Building seed images"
     run_dev build hpc-cluster-seeder
@@ -148,25 +140,9 @@ run_migrations() {
     run_dev run hpc-cluster-seeder -t overlay "$overlay"
     wait_for_job mlhub-hpc-cluster-seeder
 
-    announce "Running models migration"
-    run_dev run-models migrations -t overlay "$overlay"
-    wait_for_job mlhub-models-migrator
-
-    announce "Running deployments migration"
-    run_dev run-deployments migrations -t overlay "$overlay"
-    wait_for_job mlhub-deployments-migrator
-
-    announce "Running endpoints migration"
-    run_dev run endpoints-migrator -t overlay "$overlay"
-    wait_for_job mlhub-endpoints-migrator
-
-    announce "Running federated identities migration"
-    run_dev run-federated-identities migrations -t overlay "$overlay"
-    wait_for_job mlhub-federated-identities-migrator
-
-    announce "Running principals migration"
-    run_dev run-principals migrations -t overlay "$overlay"
-    wait_for_job mlhub-principals-migrator
+    announce "Running migrations"
+    run_dev run migrator -t overlay "$overlay"
+    wait_for_job mlhub-migrator
 }
 
 start_migrations() {

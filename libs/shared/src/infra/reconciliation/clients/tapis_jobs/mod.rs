@@ -454,10 +454,60 @@ impl TapisJobsModelDeploymentReconciliationClient {
 
     async fn handle_stop(
         &self,
-        _input: &ReconcileModelDeploymentInput,
+        input: &ReconcileModelDeploymentInput,
     ) -> Result<ReconciliationOutcome, ReconciliationError> {
+        let deployment = &input.deployment;
+
+        let job_uuid = Self::extract_job_uuid(deployment).ok_or_else(|| {
+            let error = InfrastructureError::new_internal();
+
+            log::error!(
+                "[{}] Cannot stop Tapis job because its identifier is unavailable; deployment_id='{}'",
+                error.error_id(),
+                deployment.id()
+            );
+
+            error
+        })?;
+
+        let service_jwt = self.generate_service_token().await?;
+
+        let target_base_url = self.get_target_base_url(deployment);
+
+        log::info!(
+            "Requesting Tapis job cancellation for model deployment '{}'; job_uuid='{}'; base_url='{}'",
+            deployment.id(),
+            job_uuid,
+            target_base_url
+        );
+
+        let jobs_client = TapisJobs::new(&target_base_url, Some(&service_jwt)).map_err(|error| {
+            let infrastructure_error = InfrastructureError::new_internal();
+
+            log::error!(
+                "[{}] Failed to initialize Tapis Jobs cancellation client; deployment_id='{}'; error={}",
+                infrastructure_error.error_id(),
+                deployment.id(),
+                error
+            );
+
+            infrastructure_error
+        })?;
+
+        with_headers(Self::obo_headers(deployment)?, async {
+            jobs_client.jobs.cancel_job(&job_uuid, None).await
+        })
+        .await
+        .map_err(|error| Self::map_job_request_error(deployment, "cancellation", error))?;
+
+        log::info!(
+            "Tapis accepted job cancellation for model deployment '{}'; job_uuid='{}'",
+            deployment.id(),
+            job_uuid
+        );
+
         Ok(ReconciliationOutcome::Stopped(StoppedOutcome {
-            message: Some("Deployment stopped successfully".to_string()),
+            message: Some("Tapis job cancellation accepted".to_string()),
             metadata: None,
             replicas: None,
             target_endpoint: Some(ModelDeploymentEndpointDelta::Delete),

@@ -319,7 +319,12 @@ impl ModelDeployment {
 
             (_, DesiredState::NotDeployed) => Some(ReconciliationRequirement::Undeploy),
 
-            (State::Running, DesiredState::Stopped) => Some(ReconciliationRequirement::Stop),
+            // A downstream deployment may still be queued or otherwise indeterminate when the
+            // user asks to stop it. Unknown and Blocked deployments must therefore reach the
+            // reconciler so the provider can cancel any in-flight work.
+            (State::Running | State::Unknown | State::Blocked, DesiredState::Stopped) => {
+                Some(ReconciliationRequirement::Stop)
+            }
 
             _ => None,
         }
@@ -1010,7 +1015,10 @@ impl<'a> ModelDeploymentDraft<'a> {
         let mut transitions = HashMap::new();
 
         transitions.insert(DesiredState::NotDeployed, vec![DesiredState::Running]);
-        transitions.insert(DesiredState::Running, vec![DesiredState::Stopped, DesiredState::NotDeployed]);
+        transitions.insert(
+            DesiredState::Running,
+            vec![DesiredState::Stopped, DesiredState::NotDeployed],
+        );
         transitions.insert(DesiredState::Stopped, vec![DesiredState::Running]);
         transitions
     }

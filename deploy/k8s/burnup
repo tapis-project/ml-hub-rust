@@ -38,27 +38,11 @@ cd "$here/seeders/hpc-cluster-seeder"
 ./burnup.sh "$overlay"
 kubectl wait --for=condition=complete job/mlhub-hpc-cluster-seeder --timeout=10m
 
-cd "$here/migrations/models-migrator"
+cd "$here/migrations/migrator"
 ./burnup.sh "$overlay"
-kubectl wait --for=condition=complete job/mlhub-models-migrator --timeout=10m
+kubectl wait --for=condition=complete job/mlhub-migrator --timeout=10m
 
-cd "$here/migrations/deployments-migrator"
-./burnup.sh "$overlay"
-kubectl wait --for=condition=complete job/mlhub-deployments-migrator --timeout=10m
-
-cd "$here/migrations/endpoints-migrator"
-./burnup.sh "$overlay"
-kubectl wait --for=condition=complete job/mlhub-endpoints-migrator --timeout=10m
-
-cd "$here/migrations/principals-migrator"
-./burnup.sh "$overlay"
-kubectl wait --for=condition=complete job/mlhub-principals-migrator --timeout=10m
-
-cd "$here/migrations/federated-identities-migrator"
-./burnup.sh "$overlay"
-kubectl wait --for=condition=complete job/mlhub-federated-identities-migrator --timeout=10m
-
-echo "All migrations started"
+echo "All migrations completed"
 
 echo "Starting APIs"
 

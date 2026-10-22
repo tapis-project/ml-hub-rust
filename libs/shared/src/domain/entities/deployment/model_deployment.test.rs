@@ -334,6 +334,32 @@ fn every_reconcilable_deployment_requires_observation() -> Result<(), Box<dyn Er
 }
 
 #[test]
+fn unknown_and_blocked_deployments_can_be_stopped() -> Result<(), Box<dyn Error>> {
+    let evaluated_at = TimeStamp::parse_string("2026-10-21T20:28:36Z")?;
+    let deployments = [
+        ModelDeploymentTestBuilder::new()
+            .state(State::Unknown)
+            .desired_state(DesiredState::Stopped)
+            .build()?,
+        ModelDeploymentTestBuilder::new()
+            .state(State::Blocked)
+            .desired_state(DesiredState::Stopped)
+            .build()?,
+    ];
+
+    for deployment in deployments {
+        assert_eq!(
+            deployment.resolve_reconciliation_requirement(&evaluated_at),
+            Some(ReconciliationRequirement::Stop)
+        );
+
+        assert!(deployment.requires_observation(&evaluated_at));
+    }
+
+    Ok(())
+}
+
+#[test]
 fn observation_tracks_active_and_in_flight_deployments() -> Result<(), Box<dyn Error>> {
     let evaluated_at = TimeStamp::parse_string("2026-10-20T12:00:00Z")?;
     let running = ModelDeploymentTestBuilder::new()
