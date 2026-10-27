@@ -24,6 +24,8 @@ spec:
           env:
             - name: ENDPOINT_ROUTER_LISTEN_ADDRESS
               value: 0.0.0.0:9000
+            - name: RUST_LOG
+              value: info,endpoint_router=debug
             - name: SITE_CONFIG_PATH
               value: /etc/mlhub/site.json
             - name: MONGO_HOST

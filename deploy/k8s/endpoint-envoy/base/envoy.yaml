@@ -18,6 +18,21 @@ static_resources:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: endpoint_envoy
                 stream_idle_timeout: 900s
+                access_log:
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+                      log_format:
+                        text_format_source:
+                          inline_string: >
+                            endpoint_envoy request_id="%REQ(X-REQUEST-ID)%"
+                            method="%REQ(:METHOD)%"
+                            status=%RESPONSE_CODE%
+                            response_code_details="%RESPONSE_CODE_DETAILS%"
+                            upstream_cluster="%UPSTREAM_CLUSTER%"
+                            upstream_host="%UPSTREAM_HOST%"
+                            transport_failure="%UPSTREAM_TRANSPORT_FAILURE_REASON%"
+                            duration_ms=%DURATION%
                 route_config:
                   name: endpoint_routes
                   virtual_hosts:
@@ -25,7 +40,7 @@ static_resources:
                       domains: ["*"]
                       routes:
                         - match:
-                            prefix: "/v3/mlhub/endpoints/"
+                            prefix: "/"
                           route:
                             cluster: dynamic_forward_proxy_cluster
                             timeout: 0s
@@ -39,10 +54,6 @@ static_resources:
                               allow_headers: "X-Tapis-Token,Content-Type,Accept,Cache-Control,Last-Event-ID"
                               expose_headers: "Content-Type,Cache-Control"
                               max_age: "86400"
-                        - match:
-                            prefix: "/"
-                          direct_response:
-                            status: 404
                 http_filters:
                   - name: envoy.filters.http.cors
                     typed_config:
@@ -63,18 +74,39 @@ static_resources:
                         response_body_mode: NONE
                         request_trailer_mode: SKIP
                         response_trailer_mode: SKIP
+                  - name: envoy.filters.http.set_filter_state
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.set_filter_state.v3.Config
+                      on_request_headers:
+                        - object_key: envoy.upstream.dynamic_host
+                          format_string:
+                            text_format_source:
+                              inline_string: "%REQ(x-mlhub-upstream-host)%"
+                        - object_key: envoy.upstream.dynamic_port
+                          format_string:
+                            text_format_source:
+                              inline_string: "%REQ(x-mlhub-upstream-port)%"
                   - name: envoy.filters.http.dynamic_forward_proxy
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.dynamic_forward_proxy.v3.FilterConfig
+                      allow_dynamic_host_from_filter_state: true
                       dns_cache_config:
                         name: endpoint_dns_cache
                         dns_lookup_family: ALL
+                  - name: envoy.filters.http.lua
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                      default_source_code:
+                        inline_string: |
+                          function envoy_on_request(request_handle)
+                            request_handle:headers():remove("x-mlhub-upstream-host")
+                            request_handle:headers():remove("x-mlhub-upstream-port")
+                          end
                   - name: envoy.filters.http.header_mutation
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.header_mutation.v3.HeaderMutation
                       mutations:
                         request_mutations:
-                          - remove: x-mlhub-upstream-host
                           - remove: authorization
                           - remove: connection
                           - remove: keep-alive

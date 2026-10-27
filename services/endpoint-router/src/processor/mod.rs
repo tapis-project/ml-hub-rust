@@ -9,6 +9,7 @@ use envoy_types::pb::envoy::{
     },
     r#type::v3::HttpStatus,
 };
+use log::{debug, error, warn};
 use moka::future::Cache;
 use shared::application::services::{
     authentication_service::{AuthenticationServiceError, authenticate_token},
@@ -28,6 +29,8 @@ use crate::{
 };
 
 const TOKEN_HEADER: &str = "x-tapis-token";
+const UPSTREAM_HOST_HEADER: &str = "x-mlhub-upstream-host";
+const UPSTREAM_PORT_HEADER: &str = "x-mlhub-upstream-port";
 
 #[derive(Clone)]
 pub struct AuthenticationDependencies {
@@ -95,23 +98,45 @@ impl EndpointExternalProcessor {
             Err(_) => return immediate_response(404, "endpoint_router_invalid_path"),
         };
 
+        debug!(
+            "Processing endpoint proxy request; tenant_id='{}'; slug='{}'; method='{}'",
+            tenant_id,
+            invocation.slug,
+            headers
+                .get(":method")
+                .map(String::as_str)
+                .unwrap_or("unknown")
+        );
+
         let context = match authenticate_token(
             token,
             &tenant_id,
             self.authentication.federated_identity_service.as_ref(),
             self.authentication.idp_registrar.as_ref(),
             self.authentication.principal_service.as_ref(),
-        )
-        .await
-        {
+        ).await {
             Ok(context) => context,
-            Err(error) => return authentication_error_response(error),
+            Err(error) => {
+                return authentication_error_response(error, &tenant_id, &invocation.slug);
+            }
         };
+
+        debug!(
+            "Authenticated endpoint proxy request; tenant_id='{}'; slug='{}'; principal_id='{}'",
+            tenant_id,
+            invocation.slug,
+            context.actor_principal_id()
+        );
 
         let cache_key = format!("{tenant_id}:{}", invocation.slug);
 
         let route = match self.route_cache.get(&cache_key).await {
             Some(route) => {
+                debug!(
+                    "Resolved endpoint proxy route from cache; tenant_id='{}'; slug='{}'; endpoint_id='{}'",
+                    tenant_id, invocation.slug, route.endpoint_id
+                );
+
                 if route.owner != *context.actor_principal_id() {
                     return immediate_response(403, "endpoint_router_forbidden");
                 }
@@ -119,13 +144,20 @@ impl EndpointExternalProcessor {
                 route
             }
             None => {
+                debug!(
+                    "Resolving endpoint proxy route from persistence; tenant_id='{}'; slug='{}'",
+                    tenant_id, invocation.slug
+                );
+
                 let resolved = match self
                     .routing_service
                     .resolve(&context, &invocation.slug)
                     .await
                 {
                     Ok(resolved) => resolved,
-                    Err(error) => return routing_error_response(error),
+                    Err(error) => {
+                        return routing_error_response(error, &tenant_id, &invocation.slug);
+                    }
                 };
 
                 let route = CachedRoute {
@@ -139,12 +171,23 @@ impl EndpointExternalProcessor {
                     return immediate_response(502, "endpoint_router_unsupported_protocol");
                 }
 
-                if validate_public_https_target(&route.target_url)
-                    .await
-                    .is_err()
-                {
+                if let Err(error) = validate_public_https_target(&route.target_url).await {
+                    warn!(
+                        "Rejected unsafe endpoint proxy target; tenant_id='{}'; slug='{}'; endpoint_id='{}'; reason='{}'",
+                        tenant_id, invocation.slug, route.endpoint_id, error
+                    );
+
                     return immediate_response(502, "endpoint_router_invalid_target");
                 }
+
+                debug!(
+                    "Resolved and validated endpoint proxy route; tenant_id='{}'; slug='{}'; endpoint_id='{}'; target_host='{}'; target_port={}",
+                    tenant_id,
+                    invocation.slug,
+                    route.endpoint_id,
+                    route.target_url.host_str().unwrap_or("unknown"),
+                    route.target_url.port_or_known_default().unwrap_or_default()
+                );
 
                 self.route_cache.insert(cache_key, route.clone()).await;
 
@@ -152,17 +195,31 @@ impl EndpointExternalProcessor {
             }
         };
 
+        let target_host = route.target_url.host_str().unwrap_or_default();
+        let target_port = route.target_url.port_or_known_default().unwrap_or(443);
+
         let authority = match route.target_url.port() {
-            Some(port) => format!("{}:{port}", route.target_url.host_str().unwrap_or_default()),
-            None => route.target_url.host_str().unwrap_or_default().into(),
+            Some(port) => format!("{target_host}:{port}"),
+            None => target_host.into(),
         };
 
         let upstream_path = invocation.upstream_path(&route.target_url);
+
+        debug!(
+            "Forwarding endpoint proxy request; tenant_id='{}'; slug='{}'; endpoint_id='{}'; target_host='{}'; target_port={}",
+            tenant_id,
+            invocation.slug,
+            route.endpoint_id,
+            route.target_url.host_str().unwrap_or("unknown"),
+            route.target_url.port_or_known_default().unwrap_or_default()
+        );
 
         continue_response(vec![
             replacement_header(":authority", &authority),
             replacement_header(":scheme", "https"),
             replacement_header(":path", &upstream_path),
+            replacement_header(UPSTREAM_HOST_HEADER, target_host),
+            replacement_header(UPSTREAM_PORT_HEADER, &target_port.to_string()),
         ])
     }
 }
@@ -239,8 +296,8 @@ fn replacement_header(name: &str, value: &str) -> HeaderValueOption {
     HeaderValueOption {
         header: Some(HeaderValue {
             key: name.into(),
-            value: value.into(),
-            raw_value: Vec::new(),
+            value: String::new(),
+            raw_value: value.as_bytes().to_vec(),
         }),
         append: None,
         append_action: HeaderAppendAction::OverwriteIfExistsOrAdd as i32,
@@ -266,12 +323,13 @@ fn continue_response(headers: Vec<HeaderValueOption>) -> ProcessingResponse {
                             "trailer".into(),
                             "transfer-encoding".into(),
                             "upgrade".into(),
-                            "x-mlhub-upstream-host".into(),
                         ],
                     }),
                     body_mutation: None,
                     trailers: None,
-                    clear_route_cache: true,
+                    // The path now points at the downstream resource. Re-evaluating
+                    // routes would make it miss the MLHub endpoint proxy prefix.
+                    clear_route_cache: false,
                 }),
             },
         )),
@@ -280,6 +338,21 @@ fn continue_response(headers: Vec<HeaderValueOption>) -> ProcessingResponse {
 }
 
 fn immediate_response(status: u16, details: &str) -> ProcessingResponse {
+    match status {
+        500..=599 => error!(
+            "Endpoint proxy request rejected; status={}; reason='{}'",
+            status, details
+        ),
+        400..=499 => warn!(
+            "Endpoint proxy request rejected; status={}; reason='{}'",
+            status, details
+        ),
+        _ => debug!(
+            "Endpoint proxy request completed immediately; status={}; reason='{}'",
+            status, details
+        ),
+    }
+
     ProcessingResponse {
         response: Some(processing_response::Response::ImmediateResponse(
             ImmediateResponse {
@@ -296,9 +369,20 @@ fn immediate_response(status: u16, details: &str) -> ProcessingResponse {
     }
 }
 
-fn authentication_error_response(error: AuthenticationServiceError) -> ProcessingResponse {
+fn authentication_error_response(
+    error: AuthenticationServiceError,
+    tenant_id: &str,
+    slug: &str,
+) -> ProcessingResponse {
+    let error_message = error.to_string();
+
     match error {
         AuthenticationServiceError::TenantMismatch { .. } => {
+            warn!(
+                "Endpoint proxy authentication rejected for tenant mismatch; tenant_id='{}'; slug='{}'; error='{}'",
+                tenant_id, slug, error_message
+            );
+
             immediate_response(403, "endpoint_router_tenant_mismatch")
         }
         AuthenticationServiceError::IdentityProvider(
@@ -311,32 +395,75 @@ fn authentication_error_response(error: AuthenticationServiceError) -> Processin
             ),
         )
         | AuthenticationServiceError::Principal(PrincipalServiceError::InternalError(_)) => {
+            error!(
+                "Endpoint proxy authentication dependency failed; tenant_id='{}'; slug='{}'; error='{}'",
+                tenant_id, slug, error_message
+            );
+
             immediate_response(503, "endpoint_router_authentication_unavailable")
         }
-        _ => immediate_response(401, "endpoint_router_invalid_credentials"),
+        _ => {
+            warn!(
+                "Endpoint proxy authentication rejected; tenant_id='{}'; slug='{}'; error='{}'",
+                tenant_id, slug, error_message
+            );
+
+            immediate_response(401, "endpoint_router_invalid_credentials")
+        }
     }
 }
 
-fn routing_error_response(error: EndpointRoutingServiceError) -> ProcessingResponse {
+fn routing_error_response(
+    error: EndpointRoutingServiceError,
+    tenant_id: &str,
+    slug: &str,
+) -> ProcessingResponse {
+    let error_message = error.to_string();
+
     match error {
         EndpointRoutingServiceError::EndpointNotFound => {
+            warn!(
+                "Endpoint proxy route was not found; tenant_id='{}'; slug='{}'",
+                tenant_id, slug
+            );
+
             immediate_response(404, "endpoint_router_not_found")
         }
         EndpointRoutingServiceError::Forbidden => {
+            warn!(
+                "Endpoint proxy route access was forbidden; tenant_id='{}'; slug='{}'",
+                tenant_id, slug
+            );
+
             immediate_response(403, "endpoint_router_forbidden")
         }
         EndpointRoutingServiceError::TargetUnavailable
         | EndpointRoutingServiceError::ReferencedResourceNotFound => {
+            warn!(
+                "Endpoint proxy target is unavailable; tenant_id='{}'; slug='{}'; error='{}'",
+                tenant_id, slug, error_message
+            );
+
             immediate_response(503, "endpoint_router_target_unavailable")
         }
         EndpointRoutingServiceError::DataIntegrity(_)
         | EndpointRoutingServiceError::InvalidUrn(_)
         | EndpointRoutingServiceError::InvalidTarget(_) => {
+            error!(
+                "Endpoint proxy target data is invalid; tenant_id='{}'; slug='{}'; error='{}'",
+                tenant_id, slug, error_message
+            );
+
             immediate_response(502, "endpoint_router_invalid_target")
         }
         EndpointRoutingServiceError::EndpointRepository(_)
         | EndpointRoutingServiceError::AgentRepository(_)
         | EndpointRoutingServiceError::DeploymentRepository(_) => {
+            error!(
+                "Endpoint proxy persistence lookup failed; tenant_id='{}'; slug='{}'; error='{}'",
+                tenant_id, slug, error_message
+            );
+
             immediate_response(503, "endpoint_router_persistence_unavailable")
         }
     }
