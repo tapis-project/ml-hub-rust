@@ -339,6 +339,7 @@ components:
       type: string
       enum:
         - Succeeded
+        - TimedOut
         - Cancelled
         - Failed
     BatchSchedulerQueue:

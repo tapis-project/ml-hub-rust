@@ -19,6 +19,7 @@
  */
 export enum BatchExecutionOutcome {
     Succeeded = 'Succeeded',
+    TimedOut = 'TimedOut',
     Cancelled = 'Cancelled',
     Failed = 'Failed'
 }
