@@ -5,6 +5,7 @@ use crate::{
     application::outputs::deployment_option::{
         DeploymentOptionOutput, HpcClusterQueueTargetOutput,
     },
+    domain::entities::model::external_model::ExternalModelId,
     domain::entities::{
         deployment_option::{
             DeploymentOption, DeploymentTarget, HpcClusterQueueReference, NewDeploymentOptionProps,
@@ -12,13 +13,15 @@ use crate::{
         },
         hpc_cluster::{BatchSchedulerQueueId, DataCenter, HpcClusterId},
     },
-    shared_kernel::{enums::DeploymentModality, identifiers::ExternalModelId},
+    shared_kernel::enums::DeploymentModality,
 };
 
 #[test]
 fn maps_display_ready_hpc_target() -> Result<(), Box<dyn std::error::Error>> {
     let hpc_cluster_id = HpcClusterId::new();
+
     let batch_scheduler_queue_id = BatchSchedulerQueueId::new();
+
     let deployment_option = DeploymentOption::new(NewDeploymentOptionProps {
         external_model_id: ExternalModelId::new(),
         supported_deployment_modalities: NonEmpty::new(DeploymentModality::Batch),
@@ -28,6 +31,7 @@ fn maps_display_ready_hpc_target() -> Result<(), Box<dyn std::error::Error>> {
         )),
         serving_runtime: ServingRuntime::FlexServ,
     })?;
+
     let output = DeploymentOptionOutput {
         deployment_option,
         target: HpcClusterQueueTargetOutput {

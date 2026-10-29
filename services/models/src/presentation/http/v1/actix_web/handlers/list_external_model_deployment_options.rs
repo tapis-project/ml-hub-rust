@@ -8,6 +8,7 @@ use shared::{
             DeploymentOptionQueryService, DeploymentOptionQueryServiceError,
         },
     },
+    domain::entities::model::external_model::ExternalModelId,
     presentation::http::v1::{
         contracts::responses::{self, ListExternalModelDeploymentOptionsResponse},
         requests::deployment_options::{
@@ -15,7 +16,7 @@ use shared::{
         },
         responses::deployment_options::DeploymentOption,
     },
-    shared_kernel::{context::RequestContext, identifiers::ExternalModelId},
+    shared_kernel::context::RequestContext,
 };
 use uuid::Uuid;
 

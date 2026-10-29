@@ -85,8 +85,27 @@ fn creates_cluster_and_embedded_queues_with_uuid_v7_ids() -> Result<(), Box<dyn 
 }
 
 #[test]
+fn cluster_and_queue_expose_deployment_parameters() -> Result<(), Box<dyn std::error::Error>> {
+    let cluster = HpcCluster::new(cluster_props())?;
+
+    let cluster_parameters = cluster.provide_parameters();
+
+    let queue_parameters = cluster.queues()[0].provide_parameters();
+
+    assert!(cluster_parameters.is_empty());
+    assert_eq!(queue_parameters.len(), 2);
+    assert_eq!(queue_parameters[0].name, "project_allocation");
+    assert!(queue_parameters[0].required);
+    assert_eq!(queue_parameters[1].name, "reservation");
+    assert!(!queue_parameters[1].required);
+
+    Ok(())
+}
+
+#[test]
 fn allows_an_empty_container_runtime_collection() -> Result<(), Box<dyn std::error::Error>> {
     let mut props = cluster_props();
+
     props.container_runtimes = Vec::new();
 
     let cluster = HpcCluster::new(props)?;
@@ -99,6 +118,7 @@ fn allows_an_empty_container_runtime_collection() -> Result<(), Box<dyn std::err
 #[test]
 fn rejects_duplicate_container_runtimes() {
     let mut props = cluster_props();
+
     props.container_runtimes = vec![ContainerRuntime::Apptainer, ContainerRuntime::Apptainer];
 
     let result = HpcCluster::new(props);
@@ -135,6 +155,7 @@ fn reports_persisted_duplicate_container_runtimes_as_data_integrity_error() {
 #[test]
 fn rejects_invalid_new_cluster_fields() {
     let mut props = cluster_props();
+
     props.name = String::new();
 
     assert!(matches!(
@@ -143,6 +164,7 @@ fn rejects_invalid_new_cluster_fields() {
     ));
 
     let mut props = cluster_props();
+
     props.host = String::new();
 
     assert!(matches!(
@@ -151,6 +173,7 @@ fn rejects_invalid_new_cluster_fields() {
     ));
 
     let mut props = cluster_props();
+
     props.port = 0;
 
     assert!(matches!(
@@ -162,7 +185,9 @@ fn rejects_invalid_new_cluster_fields() {
 #[test]
 fn rejects_duplicate_queue_names() -> Result<(), Box<dyn std::error::Error>> {
     let id = HpcClusterId::new();
+
     let first = BatchSchedulerQueue::new(id, queue_props("normal"))?;
+
     let second = BatchSchedulerQueue::new(id, queue_props("normal"))?;
 
     let result = HpcCluster::reconstitute(ReconstituteHpcClusterProps {
@@ -189,7 +214,9 @@ fn rejects_duplicate_queue_names() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn rejects_duplicate_queue_ids() -> Result<(), Box<dyn std::error::Error>> {
     let cluster_id = HpcClusterId::new();
+
     let queue_id = BatchSchedulerQueueId::new();
+
     let first = BatchSchedulerQueue::reconstitute(ReconstituteBatchSchedulerQueueProps {
         id: queue_id,
         cluster_id,
@@ -200,6 +227,7 @@ fn rejects_duplicate_queue_ids() -> Result<(), Box<dyn std::error::Error>> {
         scheduling_policy: scheduling_policy(),
         billing_policy: None,
     })?;
+
     let second = BatchSchedulerQueue::reconstitute(ReconstituteBatchSchedulerQueueProps {
         id: queue_id,
         cluster_id,
@@ -235,6 +263,7 @@ fn rejects_duplicate_queue_ids() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn rejects_queue_belonging_to_another_cluster() -> Result<(), Box<dyn std::error::Error>> {
     let id = HpcClusterId::new();
+
     let queue = BatchSchedulerQueue::new(HpcClusterId::new(), queue_props("normal"))?;
 
     let result = HpcCluster::reconstitute(ReconstituteHpcClusterProps {
@@ -262,7 +291,9 @@ fn rejects_queue_belonging_to_another_cluster() -> Result<(), Box<dyn std::error
 fn resolves_gpu_fields_and_returns_undefined_for_cpu_queues(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let cluster_id = HpcClusterId::new();
+
     let gpu_queue = BatchSchedulerQueue::new(cluster_id, queue_props("gpu"))?;
+
     let mut cpu_props = queue_props("cpu");
 
     cpu_props.hardware_profile = HardwareProfile::new(
@@ -276,12 +307,14 @@ fn resolves_gpu_fields_and_returns_undefined_for_cpu_queues(
     );
 
     let cpu_queue = BatchSchedulerQueue::new(cluster_id, cpu_props)?;
+
     let gpu_path = || {
         Some(FieldPath::new(vec![
             "hardware_profile".into(),
             "gpu".into(),
         ]))
     };
+
     let gpu_memory_path = || {
         Some(FieldPath::new(vec![
             "hardware_profile".into(),
@@ -306,6 +339,7 @@ fn resolves_gpu_fields_and_returns_undefined_for_cpu_queues(
     );
 
     let missing_gpu = cpu_queue.resolve_value(gpu_path())?;
+
     let missing_gpu_memory = cpu_queue.resolve_value(gpu_memory_path())?;
 
     assert!(matches!(&missing_gpu, FieldValue::Undefined));
@@ -356,7 +390,9 @@ fn evaluates_has_gpus_for_gpu_and_cpu_queues() -> Result<(), Box<dyn std::error:
     });
 
     let temp_dir = std::env::temp_dir();
+
     let config_name = format!("hpc-cluster-has-gpus-{}.json", Uuid::now_v7());
+
     let config_path = temp_dir.join(config_name);
 
     fs::write(&config_path, serde_json::to_vec(&config)?)?;
@@ -364,6 +400,7 @@ fn evaluates_has_gpus_for_gpu_and_cpu_queues() -> Result<(), Box<dyn std::error:
     let evaluator = Evaluator::load(&config_path)?;
 
     let cluster_id = HpcClusterId::new();
+
     let gpu_queue = BatchSchedulerQueue::new(cluster_id, queue_props("gpu"))?;
 
     let mut cpu_props = queue_props("cpu");
@@ -399,7 +436,9 @@ fn evaluates_has_gpus_for_gpu_and_cpu_queues() -> Result<(), Box<dyn std::error:
 fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::error::Error>> {
     let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../deploy/k8s/site-configs/base/evaluations.json");
+
     let evaluator = Evaluator::load(config_path)?;
+
     let metadata = DerivedMetadata::new(
         Some("model".into()),
         Some("Qwen".into()),
@@ -413,8 +452,11 @@ fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::err
         None,
         None,
     )?;
+
     let locator = HuggingFaceRepoLocator::new("owner/repo".into(), "sha".into())?;
+
     let mut canonical = Map::new();
+
     canonical.insert("id".into(), Value::String("Qwen/model".into()));
     canonical.insert("tags".into(), Value::Array(Vec::new()));
     canonical.insert("author".into(), Value::String("Qwen".into()));
@@ -426,7 +468,9 @@ fn evaluates_real_model_and_queue_compatibility() -> Result<(), Box<dyn std::err
         ModelLocator::HuggingFace(locator),
         ModelMetadata::new(metadata, canonical),
     )?;
+
     let queue = BatchSchedulerQueue::new(HpcClusterId::new(), queue_props("gpu"))?;
+
     let mut arguments: Arguments = HashMap::new();
 
     arguments.insert("model".into(), Rc::new(model));

@@ -2,37 +2,95 @@ use std::sync::Arc;
 
 // Application layer
 use crate::application::inputs::deployment::{FilterInput, ReconcileModelDeploymentInput};
-use crate::application::workflows::reconciliation::{ReconcilerError, ReconciliationOutcome};
+use crate::application::workflows::reconciliation::{
+    ObservedOutcome, ReconcilerError, ReconciliationOutcome,
+};
 
 // Domain layer
 use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::deployment::ModelDeployment;
+use crate::domain::entities::deployment::argument::Argument;
+use crate::domain::entities::deployment::{
+    DeploymentOptionSnapshot, ModelDeployment, ModelDeploymentId,
+};
 use crate::domain::entities::site::SiteContext;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 use async_trait::async_trait;
-use platforms::Platform;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentRepositoryError {
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),
+
+    #[error("Model deployment revision changed before the update could be applied")]
+    RevisionConflict,
 }
 
 #[async_trait]
 pub trait ModelDeploymentRepository: Send + Sync {
+    async fn find_by_id_and_tenant(
+        &self,
+        tenant_id: &str,
+        deployment_id: &ModelDeploymentId,
+    ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+
+    async fn find_by_ids_and_tenant(
+        &self,
+        tenant_id: &str,
+        deployment_ids: &[ModelDeploymentId],
+    ) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError> {
+        let mut deployments = Vec::with_capacity(deployment_ids.len());
+
+        for deployment_id in deployment_ids {
+            if let Some(deployment) = self.find_by_id_and_tenant(tenant_id, deployment_id).await? {
+                deployments.push(deployment);
+            }
+        }
+
+        Ok(deployments)
+    }
+
     async fn save(
         &self,
         deployment: &ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError>;
+
+    async fn save_with_arguments(
+        &self,
+        deployment: &ModelDeployment,
+        arguments: &[Argument],
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+
     async fn update(
         &self,
         deployment: &ModelDeployment,
     ) -> Result<(), ModelDeploymentRepositoryError>;
+
+    async fn update_at_revision(
+        &self,
+        deployment: &ModelDeployment,
+        expected_revision: u32,
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+
+    async fn record_observation(
+        &self,
+        deployment_id: &ModelDeploymentId,
+        observed_at: &TimeStamp,
+    ) -> Result<(), ModelDeploymentRepositoryError>;
+
     async fn find(
         &self,
         input: &FilterInput,
     ) -> Result<Option<ModelDeployment>, ModelDeploymentRepositoryError>;
+
+    async fn find_reconcilable(
+        &self,
+    ) -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
+
+    async fn find_observable(&self)
+        -> Result<Vec<ModelDeployment>, ModelDeploymentRepositoryError>;
+
     async fn find_by_owner(
         &self,
         tenant_id: &str,
@@ -41,28 +99,26 @@ pub trait ModelDeploymentRepository: Send + Sync {
 }
 
 #[async_trait]
-pub trait ModelDeploymentPlatformReconciliationClient: Send + Sync {
+pub trait ModelDeploymentReconciliationClient: Send + Sync {
     async fn reconcile(&self, input: ReconcileModelDeploymentInput) -> ReconciliationOutcome;
+    async fn observe(&self, deployment: ModelDeployment) -> ObservedOutcome;
     fn get_site_context(&self) -> &SiteContext;
 }
 
-#[derive(Debug, Error)]
-pub enum ModelDeploymentPlatformReconcilerProviderError {
+#[derive(Clone, Debug, Error)]
+pub enum ModelDeploymentReconcilerProviderError {
     #[error("{0}")]
-    PlatformClientNotFound(String),
+    ClientNotFound(String),
 
     #[error("{0}")]
     ClientInitializationError(#[from] ReconcilerError),
 }
 
 #[async_trait]
-pub trait ModelDeploymentPlatformReconcilerProvider: Send + Sync {
+pub trait ModelDeploymentReconcilerProvider: Send + Sync {
     async fn provide(
         &self,
-        platform: &Platform,
+        deployment_option_snapshot: &DeploymentOptionSnapshot,
         site_context: &SiteContext,
-    ) -> Result<
-        Arc<dyn ModelDeploymentPlatformReconciliationClient>,
-        ModelDeploymentPlatformReconcilerProviderError,
-    >;
+    ) -> Result<Arc<dyn ModelDeploymentReconciliationClient>, ModelDeploymentReconcilerProviderError>;
 }

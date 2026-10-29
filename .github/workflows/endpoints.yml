@@ -1,0 +1,41 @@
+name: Endpoints API
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  build-push-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.CIC_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CIC_DOCKERHUB_ACCESS_TOKEN }}
+      - uses: actions/checkout@v4
+      - name: Build Image
+        run: docker buildx build --platform linux/x86_64 --no-cache --progress=plain -f services/endpoints/Dockerfile -t ${{ inputs.image_name }}:${{ inputs.image_tag }} --build-arg SERVICE_NAME=endpoints .
+      - name: Push Image
+        run: docker push --all-tags ${{ inputs.image_name }}
+
+  generate-openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Generate OpenAPI
+        run: cargo run --bin endpoints-openapi > endpoints-openapi.json
+      - name: Upload OpenAPI
+        uses: actions/upload-artifact@v4
+        with:
+          name: endpoints-openapi
+          path: endpoints-openapi.json
+          retention-days: 1

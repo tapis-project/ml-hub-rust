@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 use mongodb::{
-    bson::{doc, to_bson},
+    bson::{doc, to_bson, Uuid as BsonUuid},
     Client, Collection,
 };
+use uuid::Uuid;
 
 use crate::application::ports::agent::AgentRepositoryError;
 use crate::application::ports::errors::InfrastructureError;
@@ -55,6 +56,52 @@ impl AgentRepository {
 
 #[async_trait]
 impl crate::application::ports::agent::AgentRepository for AgentRepository {
+    async fn find_by_id(
+        &self,
+        tenant_id: &str,
+        id: &Uuid,
+    ) -> Result<Option<entities::agent::Agent>, AgentRepositoryError> {
+        let id = BsonUuid::from_bytes(*id.as_bytes());
+
+        let document = self
+            .read_collection
+            .find_one(doc! { "tenant_id": tenant_id, "id": id })
+            .await
+            .map_err(log_persistence_error)?;
+
+        document
+            .map(entities::agent::Agent::try_from)
+            .transpose()
+            .map_err(|error| {
+                let infrastructure_error = InfrastructureError::new_internal();
+
+                log::error!(
+                    "[{}] Agent data integrity error: {}",
+                    infrastructure_error.error_id(),
+                    error
+                );
+
+                infrastructure_error.into()
+            })
+    }
+
+    async fn find_by_ids(
+        &self,
+        tenant_id: &str,
+        ids: &[Uuid],
+    ) -> Result<Vec<entities::agent::Agent>, AgentRepositoryError> {
+        let ids = ids
+            .iter()
+            .map(|id| BsonUuid::from_bytes(*id.as_bytes()))
+            .collect::<Vec<_>>();
+
+        self.list(doc! {
+            "tenant_id": tenant_id,
+            "id": { "$in": ids },
+        })
+        .await
+    }
+
     async fn save(&self, agent: &entities::agent::Agent) -> Result<(), AgentRepositoryError> {
         self.write_collection
             .insert_one(Agent::from(agent))

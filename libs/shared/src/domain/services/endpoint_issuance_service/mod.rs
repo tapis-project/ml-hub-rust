@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use thiserror::Error;
 
 use crate::domain::entities::endpoint::{Endpoint, NetworkAddressableResource};
+use crate::domain::entities::principal::Kind;
 use crate::shared_kernel::context::Actor;
 
 pub struct EndpointIssuanceService;
@@ -14,7 +15,7 @@ impl EndpointIssuanceService {
     ) -> Result<Vec<Endpoint>, EndpointIssuanceServiceError> {
         let resource_tenant_id = resource.tenant_id();
 
-        if actor.tenant_id() != &resource_tenant_id {
+        if actor.kind() != &Kind::System && actor.tenant_id() != &resource_tenant_id {
             return Err(EndpointIssuanceServiceError::TenantMismatch {
                 actor_tenant_id: actor.tenant_id().clone(),
                 resource_tenant_id,

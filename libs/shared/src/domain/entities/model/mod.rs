@@ -4,13 +4,13 @@ pub mod external_model;
 #[cfg(test)]
 pub mod fixtures;
 
-use thiserror::Error;
 use uuid::Uuid;
 
+use thiserror::Error;
+
 use crate::impl_urn_generator;
-use crate::shared_kernel::{
-    enums::Visibility, identifiers::ExternalModelId, value_objects::TimeStamp,
-};
+use crate::shared_kernel::{enums::Visibility, value_objects::TimeStamp};
+use external_model::ExternalModelId;
 
 #[derive(Debug, Clone)]
 pub struct Model {

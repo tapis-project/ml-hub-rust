@@ -20,6 +20,14 @@ spec:
         - env:
             - name: RUST_LOG
               value: debug
+            - name: RECONCILIATION_RETRY_INITIAL_SECONDS
+              value: "30"
+            - name: RECONCILIATION_RETRY_MULTIPLIER
+              value: "2"
+            - name: RECONCILIATION_RETRY_MAXIMUM_SECONDS
+              value: "900"
+            - name: RECONCILIATION_MAXIMUM_RETRIES
+              value: "5"
             - name: MONGO_HOST
               value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.**-K8S_NAMESPACE-**.svc.cluster.local
             - name: MONGO_PORT
@@ -57,22 +65,25 @@ spec:
             - name: MLHUB_SERVICE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mlhub-secrets
+                  name: mlhub-secrets-staging
                   key: service-password
           image: tapis/mlhub-model-deployment-controller:local
           imagePullPolicy: Never
           name: model-deployment-controller
+          ports:
+            - containerPort: 8000
+              name: healthcheck
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            initialDelaySeconds: 2
+            periodSeconds: 5
           resources: {}
           tty: true
           volumeMounts:
               - name: nfs-server-mount
                 mountPath: /srv/mlhub/
-              - name: site-config
-                mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
-                subPath: tapis-pods-deployment-strategies.json
-              - name: site-config
-                mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
-                subPath: tapis-jobs-deployment-strategies.json
               - name: site-config
                 mountPath: /etc/mlhub/site.json
                 subPath: site.json

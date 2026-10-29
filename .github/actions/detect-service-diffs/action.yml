@@ -48,14 +48,14 @@ runs:
           models
           deployments
           model-deployment-controller
-          models-migrator
-          deployments-migrator
+          migrator
+          endpoint-router
+          endpoints
           hpc-cluster-seeder
-          principals-migrator
-          federated-identities-migrator
           hf-dataset-etl
           hf-model-etl
           datasets
+          agents
         )
 
         JSON=$(jq -n '{services: []}')

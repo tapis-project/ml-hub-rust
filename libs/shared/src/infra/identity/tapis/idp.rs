@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use jsonwebtoken::Algorithm;
 use serde::Deserialize;
 use tapis_tenants::{models::Tenant, TapisTenants};
@@ -10,8 +12,9 @@ use crate::application::ports::identity::{
 // Domain
 use crate::domain::entities::identity::{FederatedIdentity, NewFederatedIdentityProps};
 
+// Infrastructure
 use crate::infra::configuration::SiteConfiguration;
-// Infra
+use crate::infra::error_chain::format_error_chain;
 use crate::infra::identity::helpers::{token_from_string, validate_claims, Token as Jwt};
 use crate::infra::identity::Idp;
 
@@ -87,25 +90,54 @@ impl FederatedIdentityProvider {
     pub async fn new(
         site_configuration: SiteConfiguration,
     ) -> Result<Self, FederatedIdentityProviderError> {
-        Ok(Self {
-            tenants: TapisTenants::new(site_configuration.base_url.clone().as_str(), None)
-                .map_err(|err| {
-                    FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string())
-                })?
-                .tenants
-                .list_tenants(None, None)
-                .await
-                .map_err(|err| {
-                    FederatedIdentityProviderError::InitializationError(Idp::Tapis, err.to_string())
-                })?
-                .result
-                .ok_or_else(|| {
-                    FederatedIdentityProviderError::InitializationError(
-                        Idp::Tapis,
-                        "Tenants data missing".into(),
-                    )
-                })?,
-        })
+        let base_url = site_configuration.base_url;
+
+        let client = TapisTenants::new(base_url.as_str(), None).map_err(|error| {
+            Self::initialization_error(
+                "constructing the Tapis Tenants client",
+                &base_url,
+                error.as_ref(),
+            )
+        })?;
+
+        let response = client
+            .tenants
+            .list_tenants(None, None)
+            .await
+            .map_err(|error| {
+                Self::initialization_error("loading the Tapis tenant catalog", &base_url, &error)
+            })?;
+
+        let tenants = response.result.ok_or_else(|| {
+            let message = "Tapis tenant catalog response did not contain result data";
+
+            log::error!(
+                "Failed to initialize Tapis identity provider while loading the tenant catalog; base_url='{}'; error='{}'",
+                base_url,
+                message
+            );
+
+            FederatedIdentityProviderError::InitializationError(Idp::Tapis, message.into())
+        })?;
+
+        Ok(Self { tenants })
+    }
+
+    fn initialization_error(
+        operation: &str,
+        base_url: &str,
+        error: &(dyn Error + 'static),
+    ) -> FederatedIdentityProviderError {
+        let error_chain = format_error_chain(error);
+
+        log::error!(
+            "Failed to initialize Tapis identity provider while {}; base_url='{}'; error_chain='{}'",
+            operation,
+            base_url,
+            error_chain
+        );
+
+        FederatedIdentityProviderError::InitializationError(Idp::Tapis, error_chain)
     }
 }
 

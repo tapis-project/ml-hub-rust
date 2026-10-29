@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './ArtifactsApi';
 export * from './ExternalModelsApi';
+export * from './HealthApi';
 export * from './IngestionsApi';
 export * from './ModelsApi';
 export * from './PlatformsApi';

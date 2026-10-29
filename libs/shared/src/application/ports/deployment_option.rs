@@ -4,11 +4,13 @@ use thiserror::Error;
 use crate::{
     application::inputs::deployment_option::ListDeploymentOptionsInput,
     application::ports::errors::InfrastructureError,
-    domain::entities::deployment_option::DeploymentOption,
-    shared_kernel::identifiers::ExternalModelId,
+    domain::entities::{
+        deployment_option::{DeploymentOption, DeploymentOptionId},
+        model::external_model::ExternalModelId,
+    },
 };
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum DeploymentOptionRepositoryError {
     #[error("Invalid deployment option cursor")]
     InvalidCursor,
@@ -26,6 +28,11 @@ pub struct DeploymentOptionPage {
 
 #[async_trait]
 pub trait DeploymentOptionRepository: Send + Sync {
+    async fn find_by_id(
+        &self,
+        id: &DeploymentOptionId,
+    ) -> Result<Option<DeploymentOption>, DeploymentOptionRepositoryError>;
+
     async fn find_by_external_model_id(
         &self,
         external_model_id: &ExternalModelId,

@@ -1,0 +1,64 @@
+metrics: false
+
+storage:
+  type: sqlite
+  path: /data/gatus.db
+  maximum-number-of-results: 2880
+  maximum-number-of-events: 100
+
+ui:
+  title: MLHub Status
+  header: MLHub Status
+  default-sort-by: group
+
+endpoints:
+  - name: Models API
+    group: MLHub APIs
+    url: "${MODELS_HEALTH_URL}"
+    interval: 30s
+    client:
+      timeout: 5s
+    conditions:
+      - "[STATUS] == 200"
+    ui: &public-ui
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+  - name: Datasets API
+    group: MLHub APIs
+    url: "${DATASETS_HEALTH_URL}"
+    interval: 30s
+    client:
+      timeout: 5s
+    conditions:
+      - "[STATUS] == 200"
+    ui: *public-ui
+  - name: Deployments API
+    group: MLHub APIs
+    url: "${DEPLOYMENTS_HEALTH_URL}"
+    interval: 30s
+    client:
+      timeout: 5s
+    conditions:
+      - "[STATUS] == 200"
+    ui: *public-ui
+  - name: Agents API
+    group: MLHub APIs
+    url: "${AGENTS_HEALTH_URL}"
+    interval: 30s
+    client:
+      timeout: 5s
+    conditions:
+      - "[STATUS] == 200"
+    ui: *public-ui
+  - name: Endpoints API
+    group: MLHub APIs
+    url: "${ENDPOINTS_HEALTH_URL}"
+    interval: 30s
+    client:
+      timeout: 5s
+    conditions:
+      - "[STATUS] == 200"
+    ui: *public-ui

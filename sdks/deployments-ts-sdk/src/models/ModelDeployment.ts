@@ -14,22 +14,30 @@
 
 import { exists, mapValues } from '../runtime';
 import {
+    BatchExecutionOutcome,
+    BatchExecutionOutcomeFromJSON,
+    BatchExecutionOutcomeFromJSONTyped,
+    BatchExecutionOutcomeToJSON,
+    DeploymentModality,
+    DeploymentModalityFromJSON,
+    DeploymentModalityFromJSONTyped,
+    DeploymentModalityToJSON,
     DesiredState,
     DesiredStateFromJSON,
     DesiredStateFromJSONTyped,
     DesiredStateToJSON,
-    ModelDeploymentInterface,
-    ModelDeploymentInterfaceFromJSON,
-    ModelDeploymentInterfaceFromJSONTyped,
-    ModelDeploymentInterfaceToJSON,
-    ModelReference,
-    ModelReferenceFromJSON,
-    ModelReferenceFromJSONTyped,
-    ModelReferenceToJSON,
-    Platform,
-    PlatformFromJSON,
-    PlatformFromJSONTyped,
-    PlatformToJSON,
+    Endpoint,
+    EndpointFromJSON,
+    EndpointFromJSONTyped,
+    EndpointToJSON,
+    ModelDeploymentEndpoint,
+    ModelDeploymentEndpointFromJSON,
+    ModelDeploymentEndpointFromJSONTyped,
+    ModelDeploymentEndpointToJSON,
+    ReconciliationStatus,
+    ReconciliationStatusFromJSON,
+    ReconciliationStatusFromJSONTyped,
+    ReconciliationStatusToJSON,
     ReplicaGroup,
     ReplicaGroupFromJSON,
     ReplicaGroupFromJSONTyped,
@@ -52,22 +60,28 @@ import {
 export interface ModelDeployment {
     /**
      * 
+     * @type {BatchExecutionOutcome}
+     * @memberof ModelDeployment
+     */
+    batch_execution_outcome?: BatchExecutionOutcome;
+    /**
+     * 
      * @type {string}
      * @memberof ModelDeployment
      */
     created_at: string;
     /**
      * 
-     * @type {ModelDeploymentInterface}
+     * @type {DeploymentModality}
      * @memberof ModelDeployment
      */
-    deployment_interface?: ModelDeploymentInterface;
+    deployment_modality: DeploymentModality;
     /**
      * 
      * @type {string}
      * @memberof ModelDeployment
      */
-    deployment_strategy?: string | null;
+    deployment_option_id: string;
     /**
      * 
      * @type {string}
@@ -80,6 +94,24 @@ export interface ModelDeployment {
      * @memberof ModelDeployment
      */
     desired_state: DesiredState;
+    /**
+     * 
+     * @type {Endpoint}
+     * @memberof ModelDeployment
+     */
+    endpoint?: Endpoint;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    expires_at?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    external_model_id: string;
     /**
      * 
      * @type {string}
@@ -109,6 +141,12 @@ export interface ModelDeployment {
      * @type {string}
      * @memberof ModelDeployment
      */
+    last_observed?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
     last_state_change: string;
     /**
      * 
@@ -116,12 +154,6 @@ export interface ModelDeployment {
      * @memberof ModelDeployment
      */
     metadata?: { [key: string]: any; } | null;
-    /**
-     * 
-     * @type {ModelReference}
-     * @memberof ModelDeployment
-     */
-    model: ModelReference;
     /**
      * 
      * @type {string}
@@ -136,16 +168,28 @@ export interface ModelDeployment {
     owner: string;
     /**
      * 
-     * @type {Platform}
+     * @type {ReconciliationStatus}
      * @memberof ModelDeployment
      */
-    platform: Platform;
+    reconciliation_status?: ReconciliationStatus;
     /**
      * 
      * @type {ReplicaGroup}
      * @memberof ModelDeployment
      */
     replicas: ReplicaGroup;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelDeployment
+     */
+    retries: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    retry_after?: string | null;
     /**
      * 
      * @type {number}
@@ -158,6 +202,18 @@ export interface ModelDeployment {
      * @memberof ModelDeployment
      */
     state: State;
+    /**
+     * 
+     * @type {ModelDeploymentEndpoint}
+     * @memberof ModelDeployment
+     */
+    target_endpoint?: ModelDeploymentEndpoint;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelDeployment
+     */
+    tenant_id: string;
     /**
      * 
      * @type {Visibility}
@@ -176,24 +232,32 @@ export function ModelDeploymentFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'batch_execution_outcome': !exists(json, 'batch_execution_outcome') ? undefined : BatchExecutionOutcomeFromJSON(json['batch_execution_outcome']),
         'created_at': json['created_at'],
-        'deployment_interface': !exists(json, 'deployment_interface') ? undefined : ModelDeploymentInterfaceFromJSON(json['deployment_interface']),
-        'deployment_strategy': !exists(json, 'deployment_strategy') ? undefined : json['deployment_strategy'],
+        'deployment_modality': DeploymentModalityFromJSON(json['deployment_modality']),
+        'deployment_option_id': json['deployment_option_id'],
         'description': !exists(json, 'description') ? undefined : json['description'],
         'desired_state': DesiredStateFromJSON(json['desired_state']),
+        'endpoint': !exists(json, 'endpoint') ? undefined : EndpointFromJSON(json['endpoint']),
+        'expires_at': !exists(json, 'expires_at') ? undefined : json['expires_at'],
+        'external_model_id': json['external_model_id'],
         'id': json['id'],
         'last_desired_state_change': json['last_desired_state_change'],
         'last_message': !exists(json, 'last_message') ? undefined : json['last_message'],
         'last_modified': json['last_modified'],
+        'last_observed': !exists(json, 'last_observed') ? undefined : json['last_observed'],
         'last_state_change': json['last_state_change'],
         'metadata': !exists(json, 'metadata') ? undefined : json['metadata'],
-        'model': ModelReferenceFromJSON(json['model']),
         'name': json['name'],
         'owner': json['owner'],
-        'platform': PlatformFromJSON(json['platform']),
+        'reconciliation_status': !exists(json, 'reconciliation_status') ? undefined : ReconciliationStatusFromJSON(json['reconciliation_status']),
         'replicas': ReplicaGroupFromJSON(json['replicas']),
+        'retries': json['retries'],
+        'retry_after': !exists(json, 'retry_after') ? undefined : json['retry_after'],
         'revision': json['revision'],
         'state': StateFromJSON(json['state']),
+        'target_endpoint': !exists(json, 'target_endpoint') ? undefined : ModelDeploymentEndpointFromJSON(json['target_endpoint']),
+        'tenant_id': json['tenant_id'],
         'visibility': VisibilityFromJSON(json['visibility']),
     };
 }
@@ -207,24 +271,32 @@ export function ModelDeploymentToJSON(value?: ModelDeployment | null): any {
     }
     return {
         
+        'batch_execution_outcome': BatchExecutionOutcomeToJSON(value.batch_execution_outcome),
         'created_at': value.created_at,
-        'deployment_interface': ModelDeploymentInterfaceToJSON(value.deployment_interface),
-        'deployment_strategy': value.deployment_strategy,
+        'deployment_modality': DeploymentModalityToJSON(value.deployment_modality),
+        'deployment_option_id': value.deployment_option_id,
         'description': value.description,
         'desired_state': DesiredStateToJSON(value.desired_state),
+        'endpoint': EndpointToJSON(value.endpoint),
+        'expires_at': value.expires_at,
+        'external_model_id': value.external_model_id,
         'id': value.id,
         'last_desired_state_change': value.last_desired_state_change,
         'last_message': value.last_message,
         'last_modified': value.last_modified,
+        'last_observed': value.last_observed,
         'last_state_change': value.last_state_change,
         'metadata': value.metadata,
-        'model': ModelReferenceToJSON(value.model),
         'name': value.name,
         'owner': value.owner,
-        'platform': PlatformToJSON(value.platform),
+        'reconciliation_status': ReconciliationStatusToJSON(value.reconciliation_status),
         'replicas': ReplicaGroupToJSON(value.replicas),
+        'retries': value.retries,
+        'retry_after': value.retry_after,
         'revision': value.revision,
         'state': StateToJSON(value.state),
+        'target_endpoint': ModelDeploymentEndpointToJSON(value.target_endpoint),
+        'tenant_id': value.tenant_id,
         'visibility': VisibilityToJSON(value.visibility),
     };
 }

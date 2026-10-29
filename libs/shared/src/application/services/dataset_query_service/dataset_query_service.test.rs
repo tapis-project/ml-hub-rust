@@ -100,7 +100,7 @@ impl TestRepository {
 async fn missing_dataset_returns_not_found() {
     let repository = Arc::new(TestRepository::default());
     let service = DatasetQueryService::new(repository);
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let result = service.get_dataset(&context, Uuid::now_v7()).await;
 
@@ -115,7 +115,7 @@ async fn inaccessible_private_dataset_is_concealed_as_not_found(
         ..Default::default()
     });
     let service = DatasetQueryService::new(repository);
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let result = service.get_dataset(&context, Uuid::now_v7()).await;
 
@@ -131,7 +131,7 @@ async fn public_dataset_is_visible_to_a_non_owner() -> Result<(), Box<dyn std::e
         ..Default::default()
     });
     let service = DatasetQueryService::new(repository);
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let dataset = service.get_dataset(&context, Uuid::now_v7()).await?;
 
@@ -145,7 +145,7 @@ async fn huggingface_snapshot_lookup_derives_tenant_and_owner_from_context(
 ) -> Result<(), DatasetQueryServiceError> {
     let repository = Arc::new(TestRepository::default());
     let service = DatasetQueryService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let dataset = service
         .find_by_huggingface_repo_locator(&context, "owner/repo", "abc")
@@ -172,7 +172,7 @@ async fn huggingface_snapshot_lookup_derives_tenant_and_owner_from_context(
 async fn list_methods_forward_pagination_options() -> Result<(), DatasetQueryServiceError> {
     let repository = Arc::new(TestRepository::default());
     let service = DatasetQueryService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
     let input = ListDatasetsInput::new(Some(25), Some("cursor".into()), Some(true));
 
     let owned = service.list_for_user(&context, &input).await?;

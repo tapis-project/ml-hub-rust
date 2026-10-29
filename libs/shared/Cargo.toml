@@ -23,7 +23,6 @@ chrono = { version = "0.4.41", features = ["serde"] }
 futures-util = "0.3"
 log = "0.4"
 once_cell = "1.21.3"
-openapiv3 = "2.0.0"
 rand = { version = "0.9.1", features = ["thread_rng"] }
 tokio = { version = "1.45.1", features = ["time"] }
 tokio-retry = "0.3.0"
@@ -44,6 +43,7 @@ base64 = "0.23.0"
 reqwest = { version = "0.12", features = ["json"] }
 # flexserv-deployer = { git = "https://github.com/tapis-project/FlexServ-Deployer.git", rev = "1d0fc84" }
 url-parse = "1.0.10"
+url = "2"
 derive_more = { version = "2.1.1", features = ["as_ref"] }
 nonempty = { version = "0.12.0", features = ["serialize"] }
 kube = { version = "4.2.0", features = ["client", "rustls-tls"] }

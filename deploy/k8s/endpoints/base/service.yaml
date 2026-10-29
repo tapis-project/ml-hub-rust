@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlhub-endpoints-api-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mlhub-endpoints-api
+  ports:
+    - port: 8000
+      targetPort: 8000

@@ -1,0 +1,54 @@
+use async_trait::async_trait;
+use mongodb::Database;
+use shared::infra::_common::mongo::Index;
+use shared::infra::principal::mongo::indexes::PrincipalIdTenantIdIndexUnique;
+use tfiala_mongodb_migrator::{migration::Migration, migrator::Env};
+
+pub fn get_migrations() -> Vec<Box<dyn Migration>> {
+    vec![Box::new(CreatePrincipalIdTenantIdIndexUniqueMigration)]
+}
+
+pub struct CreatePrincipalIdTenantIdIndexUniqueMigration;
+
+#[async_trait]
+impl Migration for CreatePrincipalIdTenantIdIndexUniqueMigration {
+    async fn up(&self, env: Env) -> anyhow::Result<()> {
+        let database = env
+            .db
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Migration database is not configured"))?;
+
+        PrincipalIdTenantIdIndexUnique::ensure_collection(database).await?;
+
+        database
+            .collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(
+                PrincipalIdTenantIdIndexUnique::collection_name(),
+            )
+            .create_index(PrincipalIdTenantIdIndexUnique::index())
+            .await?;
+
+        Ok(())
+    }
+
+    async fn down(&self, env: Env) -> anyhow::Result<()> {
+        let database: &Database = env
+            .db
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Migration database is not configured"))?;
+
+        PrincipalIdTenantIdIndexUnique::ensure_collection(database).await?;
+
+        database
+            .collection::<<PrincipalIdTenantIdIndexUnique as Index>::Collection>(
+                PrincipalIdTenantIdIndexUnique::collection_name(),
+            )
+            .drop_index(PrincipalIdTenantIdIndexUnique::INDEX_NAME)
+            .await?;
+
+        Ok(())
+    }
+
+    fn get_id(&self) -> &str {
+        "CreatePrincipalIdTenantIdIndexUniqueMigration"
+    }
+}

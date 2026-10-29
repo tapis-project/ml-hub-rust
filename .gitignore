@@ -2,4 +2,6 @@ target
 .env
 .idea
 .vscode
+.codex*
+outputs
 .!*

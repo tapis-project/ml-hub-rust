@@ -1,0 +1,26 @@
+resources:
+  - ../../base
+  - ../../../site-configs/overlays/tapisprod
+
+images:
+  - name: tapis/mlhub-endpoints-api
+    newTag: 26Q3.1
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-endpoints-api-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-endpoints-api-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: endpoints-api
+                imagePullPolicy: Always
+                env:
+                  - name: MONGO_HOST
+                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisprod.svc.cluster.local

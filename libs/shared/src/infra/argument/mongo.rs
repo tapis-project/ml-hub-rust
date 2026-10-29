@@ -2,13 +2,15 @@ use async_trait::async_trait;
 use mongodb::Client;
 use mongodb::{bson::doc, Collection};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::application::ports::deployment_argument::{
     DeploymentArgumentRepository, DeploymentArgumentRepositoryError,
 };
 use crate::application::ports::errors::InfrastructureError;
-use crate::domain::entities::deployment::argument::{Argument, ArgumentData};
+use crate::domain::entities::deployment::{
+    argument::{Argument, ArgumentData},
+    ModelDeploymentId,
+};
 use crate::infra::persistence::mongo::database::DEPLOYMENT_ARGUMENT_COLLECTION;
 use crate::shared_kernel::security::value_objects::{KeyId, Nonce};
 use crate::shared_kernel::security::{EncryptionEnvelope, EncryptionEnvelopeMetadata};
@@ -16,23 +18,23 @@ use crate::shared_kernel::value_objects::Base64EncodedString;
 
 /// MongoDB persistence model. `deployment_id` is stored as a string so this
 /// repository does not depend on a particular BSON UUID representation.
-#[derive(Debug, Serialize, Deserialize)]
-struct DeploymentArgumentsDocument {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct DeploymentArgumentsDocument {
     #[serde(rename = "_id")]
-    deployment_id: String,
+    pub(crate) deployment_id: String,
     arguments: Vec<StoredArgument>,
 }
 
 /// An array is used instead of a BSON document keyed by `parameter_name`.
 /// That means parameter names containing `.` or `$` remain safe to persist.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct StoredArgument {
     parameter_name: String,
     #[serde(flatten)]
     payload: MongoArgumentPayload,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 enum MongoArgumentPayload {
     PlainText {
@@ -62,6 +64,7 @@ impl MongoDeploymentArgumentRepository {
 
     fn internal_error(context: &str, error: impl std::fmt::Display) -> InfrastructureError {
         let repository_error = InfrastructureError::new_internal();
+
         log::error!("[{}] {}: {}", repository_error.error_id(), context, error);
         repository_error
     }
@@ -97,6 +100,21 @@ impl MongoDeploymentArgumentRepository {
         })
     }
 
+    pub(crate) fn document_from_domain(
+        deployment_id: &ModelDeploymentId,
+        arguments: &[Argument],
+    ) -> Result<DeploymentArgumentsDocument, DeploymentArgumentRepositoryError> {
+        let arguments = arguments
+            .iter()
+            .map(Self::to_stored_argument)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(DeploymentArgumentsDocument {
+            deployment_id: deployment_id.to_string(),
+            arguments,
+        })
+    }
+
     fn to_domain_argument(
         stored: StoredArgument,
     ) -> Result<Argument, DeploymentArgumentRepositoryError> {
@@ -127,6 +145,7 @@ impl MongoDeploymentArgumentRepository {
                 })?;
 
                 let metadata = EncryptionEnvelopeMetadata::new_aes_gcm(key_id, nonce);
+
                 Ok(Argument::new_encrypted(
                     stored.parameter_name,
                     EncryptionEnvelope::new(payload, metadata),
@@ -140,22 +159,11 @@ impl MongoDeploymentArgumentRepository {
 impl DeploymentArgumentRepository for MongoDeploymentArgumentRepository {
     async fn save_all(
         &self,
-        deployment_id: &Uuid,
+        deployment_id: &ModelDeploymentId,
         arguments: &[Argument],
     ) -> Result<(), DeploymentArgumentRepositoryError> {
-        log::debug!("Start save arguments");
-        let arguments = arguments
-            .iter()
-            .map(Self::to_stored_argument)
-            .collect::<Result<Vec<_>, _>>()?;
-        log::debug!("Arguments converted to stored arguments");
+        let document = Self::document_from_domain(deployment_id, arguments)?;
 
-        let document = DeploymentArgumentsDocument {
-            deployment_id: deployment_id.to_string(),
-            arguments,
-        };
-
-        log::debug!("Start Write");
         self.write_collection
             .replace_one(doc! { "_id": &document.deployment_id }, document)
             .upsert(true)
@@ -164,14 +172,12 @@ impl DeploymentArgumentRepository for MongoDeploymentArgumentRepository {
                 Self::internal_error("Could not save deployment arguments to MongoDB", error)
             })?;
 
-        log::debug!("Written");
-
         Ok(())
     }
 
     async fn find_all_for_deployment(
         &self,
-        deployment_id: &Uuid,
+        deployment_id: &ModelDeploymentId,
     ) -> Result<Vec<Argument>, DeploymentArgumentRepositoryError> {
         let document = self
             .read_collection

@@ -15,12 +15,12 @@ use crate::{
             model::{ModelPage, ModelRepository as ModelRepositoryPort, ModelRepositoryError},
         },
     },
+    domain::entities::model::external_model::ExternalModelId,
     domain::entities::model::Model as DomainModel,
     infra::{
         _common::mongo::is_duplicate_key_error,
         persistence::mongo::{database::MODEL_COLLECTION, documents::model::Model},
     },
-    shared_kernel::identifiers::ExternalModelId,
 };
 
 pub struct ModelRepository {
@@ -64,6 +64,7 @@ impl ModelRepository {
             doc! { "$sort": { "_id": 1 } },
             doc! { "$limit": i64::from(input.limit()) + 1 },
         ];
+
         let mut cursor = self
             .collection
             .aggregate(pipeline)

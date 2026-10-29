@@ -21,6 +21,10 @@ mod endpoint_test {
     }
 
     impl NetworkAddressableResource for TestResource {
+        fn owner(&self) -> &str {
+            "owner-a"
+        }
+
         fn network_target_names(&self) -> Vec<String> {
             vec!["rest".into()]
         }
@@ -36,6 +40,7 @@ mod endpoint_test {
 
         assert_eq!(endpoint.id().get_version_num(), 7);
         assert_eq!(endpoint.tenant_id(), "tenant-a");
+        assert_eq!(endpoint.owner(), "owner-a");
         assert_eq!(
             endpoint.target_resource_urn().as_str(),
             "urn:mlhub:v1:tenant-a:agent:agent-a"
@@ -58,6 +63,7 @@ mod endpoint_test {
         let endpoint = Endpoint::reconstitute(ReconstituteEndpointProps {
             id,
             tenant_id: "tenant-a".into(),
+            owner: "owner-a".into(),
             target_resource_urn: Urn::new("urn:mlhub:v1:tenant-a:agent:agent-a".into()),
             target_name: "rest".into(),
             slug: "abc123def4".into(),
@@ -65,6 +71,7 @@ mod endpoint_test {
 
         assert_eq!(endpoint.id(), &id);
         assert_eq!(endpoint.tenant_id(), "tenant-a");
+        assert_eq!(endpoint.owner(), "owner-a");
         assert_eq!(
             endpoint.target_resource_urn().as_str(),
             "urn:mlhub:v1:tenant-a:agent:agent-a"

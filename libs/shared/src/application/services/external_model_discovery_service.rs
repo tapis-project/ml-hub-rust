@@ -11,7 +11,7 @@ use crate::{
         ports::model::{ExternalModelRepository, ExternalModelRepositoryError},
     },
     domain::entities::model::external_model::ExternalModel,
-    shared_kernel::identifiers::ExternalModelId,
+    domain::entities::model::external_model::ExternalModelId,
 };
 
 #[derive(Debug, Error)]

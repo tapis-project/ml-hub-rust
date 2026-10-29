@@ -3,7 +3,7 @@ http:
     tapis-rewrite-host:
       headers:
         customRequestHeaders:
-          Host: "tacc.develop.tapis.io"
+          Host: "tacc.staging.tapis.io"
     cors:
       headers:
         accessControlAllowOriginList:
@@ -20,39 +20,67 @@ http:
           - X-Tapis-Token
         accessControlAllowCredentials: true
   routers:
+    gatus-public:
+      rule: "Host(`mlhub-status.local.staging.tapis.io`)"
+      service: gatus-public
+
+    endpoint-envoy:
+      rule: "Host(`tacc.local.staging.tapis.io`) && PathPrefix(`/v3/mlhub/endpoints/`)"
+      priority: 100
+      service: endpoint-envoy
+
+    endpoints-api:
+      rule: "Host(`tacc.local.staging.tapis.io`) && PathPrefix(`/endpoints-api`)"
+      service: endpoints-api
+      middlewares:
+        - tapis-rewrite-host
+        - cors
+
     dashboard:
       rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       service: api@internal
 
     models-api:
-      rule: "Host(`tacc.local.develop.tapis.io`) && PathPrefix(`/models-api`)"
+      rule: "Host(`tacc.local.staging.tapis.io`) && PathPrefix(`/models-api`)"
       service: models-api
       middlewares:
         - tapis-rewrite-host
         - cors
-    
+
     datasets-api:
-      rule: "HostRegexp(`tacc.local.develop.tapis.io`) && PathPrefix(`/datasets-api`)"
+      rule: "HostRegexp(`tacc.local.staging.tapis.io`) && PathPrefix(`/datasets-api`)"
       service: datasets-api
       middlewares:
         - tapis-rewrite-host
         - cors
 
     deployments-api:
-      rule: "Host(`tacc.local.develop.tapis.io`) && PathPrefix(`/deployments-api`)"
+      rule: "Host(`tacc.local.staging.tapis.io`) && PathPrefix(`/deployments-api`)"
       service: deployments-api
       middlewares:
         - tapis-rewrite-host
         - cors
 
     agents-api:
-      rule: "Host(`tacc.local.develop.tapis.io`) && PathPrefix(`/agents-api`)"
+      rule: "Host(`tacc.local.staging.tapis.io`) && PathPrefix(`/agents-api`)"
       service: agents-api
       middlewares:
         - tapis-rewrite-host
         - cors
 
   services:
+    gatus-public:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-gatus-public-service:8080
+    endpoint-envoy:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-endpoint-envoy-service:8080
+    endpoints-api:
+      loadBalancer:
+        servers:
+        - url: http://mlhub-endpoints-api-service:8000
     models-api:
       loadBalancer:
         servers:

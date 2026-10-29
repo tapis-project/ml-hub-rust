@@ -8,13 +8,12 @@ use crate::{
         ports::errors::InfrastructureError,
     },
     domain::entities::model::{
-        external_model::{ExternalModel, ModelLocator, ModelProvider},
+        external_model::{ExternalModel, ExternalModelId, ModelLocator, ModelProvider},
         Model,
     },
-    shared_kernel::identifiers::ExternalModelId,
 };
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelRepositoryError {
     #[error("Model already in your collection")]
     ModelAlreadyInCollection,
@@ -26,7 +25,7 @@ pub enum ModelRepositoryError {
     Persistence(#[from] InfrastructureError),
 }
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ExternalModelRepositoryError {
     #[error(transparent)]
     Persistence(#[from] InfrastructureError),

@@ -1,108 +1,109 @@
+use std::collections::HashSet;
+use std::sync::Arc;
+
+use log::{error, warn};
+use once_cell::sync::Lazy;
+use retry_utils::{retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy};
+use thiserror::Error;
+
 use crate::application::inputs::deployment::{
-    DeployWithStrategyInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput,
+    DeployWithOptionInput, FilterInput, FindForReconciliationInput, StartModelDeploymentInput,
     StopModelDeploymentInput, UndeployModelDeploymentInput, UpdateModelDeploymentInput,
 };
 use crate::application::outputs::deployment::{
-    DeployModelWithStrategyOutput, StartModelDeploymentOutput, StopModelDeploymentOutput,
+    DeployModelWithOptionOutput, StartModelDeploymentOutput, StopModelDeploymentOutput,
     UndeployModelDeploymentOutput,
 };
-use crate::application::ports::artifacts::ArtifactRepository;
-use crate::application::ports::cipher::{Cipher, CipherError};
 use crate::application::ports::deployment::{
     ModelDeploymentRepository, ModelDeploymentRepositoryError,
 };
-use crate::application::ports::deployment_strategy::{
-    DeploymentStrategyProvider, GetStrategyByPlatformAndNameInput,
+use crate::application::ports::deployment_option::{
+    DeploymentOptionRepository, DeploymentOptionRepositoryError,
 };
-use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
+use crate::application::ports::events::payloads::ModelDeploymentStartedPayload;
 use crate::application::ports::events::{Event, EventPublisher, Payload};
-use crate::application::ports::model::{
-    ExternalModelRepository, ExternalModelRepositoryError, ModelRepository, ModelRepositoryError,
-};
+use crate::application::ports::hpc_cluster::{HpcClusterRepository, HpcClusterRepositoryError};
+use crate::application::ports::model::{ExternalModelRepository, ExternalModelRepositoryError};
 use crate::application::workflows::deployment::{
     UpdateDesiredStateWorkflow, UpdateDesiredStateWorkflowInput,
 };
 use crate::application::workflows::Workflow;
 use crate::domain::entities::deployment::{
-    DeployWithStrategyProps, DesiredState, ModelDeployment, ModelDeploymentError, ModelReference,
+    CreateFromOptionProps, DeploymentOptionSnapshot, DeploymentTargetSnapshot, DesiredState,
+    HpcClusterQueueSnapshot, ModelDeployment, ModelDeploymentError, ModelDeploymentId,
     ReplicaGroup,
 };
-use crate::domain::entities::deployment_strategy::strategy::StrategyError;
+use crate::domain::entities::deployment_option::deployment_parameters::DeploymentParameterError;
+use crate::domain::entities::deployment_option::DeploymentTarget;
 use crate::domain::services::{
     ModelDeploymentDomainServiceError, ModelDeploymentService as ModelDeploymentDomainService,
 };
 use crate::shared_kernel::context::RequestContext;
 use crate::shared_kernel::enums::Visibility;
-use log::error;
-use once_cell::sync::Lazy;
-use retry_utils::{retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy};
-use std::sync::Arc;
-use thiserror::Error;
-use uuid::Uuid;
+use crate::shared_kernel::value_objects::TimeStamp;
 
 use super::deployment_argument_service::{
     DeploymentArgumentService, DeploymentArgumentServiceError,
 };
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum ModelDeploymentServiceError {
     #[error("Revision mismatch: Expected to find revision `{0}` but found `{1}`")]
     RevisionMismatch(String, String),
 
-    #[error("State mismatch: Expected to find state `{0}` but found `{1}`")]
-    StateMismatch(String, String),
-
-    #[error("Desired state mismatch: Expected to find desired state `{0}` but found `{1}`")]
-    DesiredStateMismatch(String, String),
-
-    #[error("Model repository error: {0}")]
-    ModelRepositoryError(#[from] ModelRepositoryError),
-
     #[error("Model Deployment repository error: {0}")]
     ModelDeploymentRepoError(#[from] ModelDeploymentRepositoryError),
+
+    #[error("DeploymentOption repository error: {0}")]
+    DeploymentOptionRepositoryError(#[from] DeploymentOptionRepositoryError),
+
+    #[error("HPC cluster repository error: {0}")]
+    HpcClusterRepositoryError(#[from] HpcClusterRepositoryError),
+
+    #[error("ExternalModel repository error: {0}")]
+    ExternalModelRepositoryError(#[from] ExternalModelRepositoryError),
 
     #[error("Argument persistence error: {0}")]
     ArgumentPersistenceError(#[from] DeploymentArgumentServiceError),
 
+    #[error("Invalid deployment parameters: {0}")]
+    InvalidParameters(DeploymentParameterError),
+
     #[error("Model Deployment not found: {0}")]
     DeploymentNotFound(String),
+
+    #[error("DeploymentOption not found: {0}")]
+    MissingDeploymentOption(String),
+
+    #[error("ExternalModel not found: {0}")]
+    MissingExternalModel(String),
+
+    #[error("HPC cluster not found: {0}")]
+    MissingHpcCluster(String),
+
+    #[error("Batch scheduler queue not found: {0}")]
+    MissingBatchSchedulerQueue(String),
+
+    #[error("Deployment option is currently unavailable")]
+    DeploymentOptionUnavailable,
+
+    #[error("Model deployment has expired")]
+    DeploymentExpired,
 
     #[error("Model deployment error: {0}")]
     ModelDeploymentError(#[from] ModelDeploymentError),
 
     #[error("Model deployment domain error: {0}")]
     ModelDeploymentDomainError(#[from] ModelDeploymentDomainServiceError),
-
-    #[error("Invalid Strategy: {0}")]
-    InvalidStrategy(String),
-
-    #[error("Invalid arguments: {0}")]
-    InvalidArguments(#[from] StrategyError),
-
-    #[error("Argument encryption error: {0}")]
-    ArgumentEncryptionError(#[from] CipherError),
-
-    #[error("Model not found: {0}")]
-    MissingModel(String),
-
-    #[error("ExternalModel not found: {0}")]
-    MissingExternalModel(String),
-
-    #[error("ExternalModel repository error: {0}")]
-    ExternalModelRepositoryError(#[from] ExternalModelRepositoryError),
 }
 
 pub struct ModelDeploymentService {
     deployment_argument_service: DeploymentArgumentService,
-    model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
-    model_repo: Arc<dyn ModelRepository>,
-    external_model_repo: Arc<dyn ExternalModelRepository>,
-    // TODO Leave _artifact_repo unused for now. See the link below
-    // https://github.com/tapis-project/ml-hub-rust/issues/73
-    _artifact_repo: Arc<dyn ArtifactRepository>,
+    model_deployment_repository: Arc<dyn ModelDeploymentRepository>,
+    deployment_option_repository: Arc<dyn DeploymentOptionRepository>,
+    external_model_repository: Arc<dyn ExternalModelRepository>,
+    hpc_cluster_repository: Arc<dyn HpcClusterRepository>,
     event_publisher: Arc<dyn EventPublisher>,
-    deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
-    cipher: Arc<dyn Cipher>,
 }
 
 impl ModelDeploymentService {
@@ -125,24 +126,40 @@ impl ModelDeploymentService {
 
     pub fn new(
         deployment_argument_service: DeploymentArgumentService,
-        model_deployment_repo: Arc<dyn ModelDeploymentRepository>,
-        model_repo: Arc<dyn ModelRepository>,
-        external_model_repo: Arc<dyn ExternalModelRepository>,
-        artifact_repo: Arc<dyn ArtifactRepository>,
+        model_deployment_repository: Arc<dyn ModelDeploymentRepository>,
+        deployment_option_repository: Arc<dyn DeploymentOptionRepository>,
+        external_model_repository: Arc<dyn ExternalModelRepository>,
+        hpc_cluster_repository: Arc<dyn HpcClusterRepository>,
         event_publisher: Arc<dyn EventPublisher>,
-        deployment_strategy_provider: Arc<dyn DeploymentStrategyProvider>,
-        cipher: Arc<dyn Cipher>,
     ) -> Self {
         Self {
             deployment_argument_service,
-            model_deployment_repo,
-            model_repo,
-            external_model_repo,
-            _artifact_repo: artifact_repo,
+            model_deployment_repository,
+            deployment_option_repository,
+            external_model_repository,
+            hpc_cluster_repository,
             event_publisher,
-            deployment_strategy_provider,
-            cipher,
         }
+    }
+
+    pub async fn find_by_id(
+        &self,
+        deployment_id: &ModelDeploymentId,
+    ) -> Result<Option<ModelDeployment>, ModelDeploymentServiceError> {
+        let filter = FilterInput {
+            deployment_id: Some(*deployment_id),
+            state: None,
+            revision: None,
+        };
+
+        let deployment = retry_async(
+            || self.model_deployment_repository.find(&filter),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(deployment)
     }
 
     pub async fn list_by_owner(
@@ -150,21 +167,19 @@ impl ModelDeploymentService {
         input: ListModelDeploymentsByOwnerInput,
         ctx: &RequestContext,
     ) -> Result<Vec<ModelDeployment>, ModelDeploymentServiceError> {
-        let find_deployments = || {
-            self.model_deployment_repo
-                .find_by_owner(&ctx.actor_tenant_id(), &input.owner)
-        };
-
-        let deployments = retry_async(find_deployments, &Self::REPO_RETRY_POLICY, None).await?;
+        let deployments = retry_async(
+            || {
+                self.model_deployment_repository
+                    .find_by_owner(ctx.actor_tenant_id(), &input.owner)
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
 
         Ok(deployments)
     }
 
-    /// Fetches a model deployment only if its current `revision`, `state`, and
-    /// `desired_state` match the expected values provided in `input`.
-    ///
-    /// Returns an error if the deployment does not exist or if any of the expected
-    /// values differ from those stored.
     pub async fn find_for_reconciliation(
         &self,
         input: FindForReconciliationInput,
@@ -175,286 +190,326 @@ impl ModelDeploymentService {
             revision: None,
         };
 
-        let find_model_deployment = || self.model_deployment_repo.find(&filter);
-
-        // Fetch the deployment
-        let maybe_model_deployment =
-            retry_async(find_model_deployment, &Self::REPO_RETRY_POLICY, None).await?;
-
-        let deployment = match maybe_model_deployment {
-            Some(d) => d,
-            None => {
-                return Err(ModelDeploymentServiceError::DeploymentNotFound(
-                    input.deployment_id.to_string(),
-                ))
-            }
-        };
+        let deployment = retry_async(
+            || self.model_deployment_repository.find(&filter),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?
+        .ok_or_else(|| {
+            ModelDeploymentServiceError::DeploymentNotFound(input.deployment_id.to_string())
+        })?;
 
         if deployment.revision() != &input.revision {
             return Err(ModelDeploymentServiceError::RevisionMismatch(
-                input.revision.clone().to_string(),
+                input.revision.to_string(),
                 deployment.revision().to_string(),
-            ));
-        }
-
-        if deployment.state != input.state {
-            return Err(ModelDeploymentServiceError::StateMismatch(
-                String::from(input.state),
-                String::from(deployment.state.clone()),
-            ));
-        }
-
-        if deployment.desired_state != input.desired_state {
-            return Err(ModelDeploymentServiceError::DesiredStateMismatch(
-                String::from(input.desired_state),
-                String::from(deployment.desired_state.clone()),
             ));
         }
 
         Ok(deployment)
     }
 
-    pub async fn deploy_model_with_strategy(
+    pub async fn find_control_loop_candidates(
         &self,
         ctx: &RequestContext,
-        input: DeployWithStrategyInput,
-    ) -> Result<DeployModelWithStrategyOutput, ModelDeploymentServiceError> {
-        // Find the strategy by platform and name
-        let maybe_strategy = self
-            .deployment_strategy_provider
-            .get_strategy_by_platform_and_name(GetStrategyByPlatformAndNameInput {
-                platform: input.platform.clone(),
-                name: input.strategy_name.clone(),
+    ) -> Result<ControlLoopCandidates, ModelDeploymentServiceError> {
+        let observable_candidates = retry_async(
+            || self.model_deployment_repository.find_observable(),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        let reconcilable_candidates = retry_async(
+            || self.model_deployment_repository.find_reconcilable(),
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        let evaluated_at = TimeStamp::now();
+
+        // Repository filters deliberately identify candidates. Reapply the domain predicate
+        // here so persistence-query drift can never schedule invalid observation work.
+        let mut observable = observable_candidates
+            .into_iter()
+            .filter(|deployment| {
+                let is_observable = deployment.requires_observation(&evaluated_at);
+
+                if !is_observable {
+                    warn!(
+                        "Discarding false-positive observable model deployment candidate; deployment_id='{}'; request_id='{}'",
+                        deployment.id(),
+                        ctx.request_id()
+                    );
+                }
+
+                is_observable
             })
-            .await;
+            .collect::<Vec<_>>();
 
-        let strategy = match maybe_strategy {
-            Some(s) => s,
-            None => {
-                return Err(ModelDeploymentServiceError::InvalidStrategy(format!(
-                    "Strategy with name '{}' does not exist",
-                    &input.strategy_name
-                )))
+        // Delayed retries are evaluated at their persisted deadline. They are reconcilable
+        // work even though they are not eligible for immediate dispatch at startup.
+        let reconcilable = reconcilable_candidates
+            .into_iter()
+            .filter(|deployment| {
+                let reconciliation_at = deployment
+                    .retry_after()
+                    .cloned()
+                    .unwrap_or_else(|| evaluated_at.clone());
+                let is_reconcilable = deployment
+                    .resolve_reconciliation_requirement(&reconciliation_at)
+                    .is_some();
+
+                if !is_reconcilable {
+                    warn!(
+                        "Discarding false-positive reconcilable model deployment candidate; deployment_id='{}'; request_id='{}'",
+                        deployment.id(),
+                        ctx.request_id()
+                    );
+                }
+
+                is_reconcilable
+            })
+            .collect::<Vec<_>>();
+
+        let mut observable_ids = observable
+            .iter()
+            .map(|deployment| *deployment.id())
+            .collect::<HashSet<_>>();
+
+        // Invariant: every reconcilable deployment must also be observable. Repair an
+        // infrastructure-query false negative in memory so control-plane work is not lost.
+        for deployment in &reconcilable {
+            if observable_ids.insert(*deployment.id()) {
+                warn!(
+                    "Reconcilable model deployment was absent from observable candidates; adding it to observation; deployment_id='{}'; request_id='{}'",
+                    deployment.id(),
+                    ctx.request_id()
+                );
+
+                observable.push(deployment.clone());
             }
-        };
-
-        let find_model = || {
-            self.model_repo
-                .find_by_id(ctx.actor_tenant_id(), input.model_id)
-        };
-
-        // Fetch the model for this deployment.
-        let maybe_model = retry_async(find_model, &Self::REPO_RETRY_POLICY, None).await?;
-
-        let model = match maybe_model {
-            Some(mm) => mm,
-            None => {
-                return Err(ModelDeploymentServiceError::MissingModel(
-                    input.model_id.to_string(),
-                ))
-            }
-        };
-
-        if model.owner() != ctx.actor_principal_id()
-            && !matches!(model.visibility(), Visibility::Public)
-        {
-            return Err(ModelDeploymentServiceError::MissingModel(
-                input.model_id.to_string(),
-            ));
         }
 
-        let external_model = retry_async(
+        Ok(ControlLoopCandidates {
+            observable,
+            reconcilable,
+        })
+    }
+
+    pub async fn deploy_model_with_option(
+        &self,
+        ctx: &RequestContext,
+        input: DeployWithOptionInput,
+    ) -> Result<DeployModelWithOptionOutput, ModelDeploymentServiceError> {
+        let deployment_option = retry_async(
             || {
-                self.external_model_repo
-                    .find_by_id(model.external_model_id())
+                self.deployment_option_repository
+                    .find_by_id(&input.deployment_option_id)
             },
             &Self::REPO_RETRY_POLICY,
             None,
         )
         .await?
         .ok_or_else(|| {
-            ModelDeploymentServiceError::MissingExternalModel(model.external_model_id().to_string())
+            ModelDeploymentServiceError::MissingDeploymentOption(
+                input.deployment_option_id.to_string(),
+            )
         })?;
 
-        let supports_strategy = external_model
-            .metadata()
-            .derived()
-            .deployment_strategies()
-            .iter()
-            .any(|reference| {
-                reference.name() == strategy.name && reference.platform() == &input.platform
-            });
+        retry_async(
+            || {
+                self.external_model_repository
+                    .find_by_id(deployment_option.external_model_id())
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?
+        .ok_or_else(|| {
+            ModelDeploymentServiceError::MissingExternalModel(
+                deployment_option.external_model_id().to_string(),
+            )
+        })?;
 
-        if !supports_strategy {
-            return Err(ModelDeploymentServiceError::InvalidStrategy(format!(
-                "Strategy '{}' is not supported by this ExternalModel",
-                input.strategy_name
-            )));
+        let target_reference = match deployment_option.deployment_target() {
+            DeploymentTarget::HpcClusterQueue(reference) => reference,
+        };
+
+        let cluster = retry_async(
+            || {
+                self.hpc_cluster_repository
+                    .find_by_id(target_reference.hpc_cluster_id())
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?
+        .ok_or_else(|| {
+            ModelDeploymentServiceError::MissingHpcCluster(
+                target_reference.hpc_cluster_id().to_string(),
+            )
+        })?;
+
+        let queue = cluster
+            .queues()
+            .iter()
+            .find(|queue| queue.id() == target_reference.batch_scheduler_queue_id())
+            .ok_or_else(|| {
+                ModelDeploymentServiceError::MissingBatchSchedulerQueue(
+                    target_reference.batch_scheduler_queue_id().to_string(),
+                )
+            })?;
+
+        if !cluster.enabled() || !queue.enabled() {
+            return Err(ModelDeploymentServiceError::DeploymentOptionUnavailable);
         }
 
-        // TODO Uncomment when ready. Details found in the issue below
-        // https://github.com/tapis-project/ml-hub-rust/issues/73
-        // let artifact_id = model.artifact_id
-        //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(String::from("The model for this deployment is missing the artifact id.")))?;
+        let snapshot = DeploymentOptionSnapshot {
+            deployment_option_id: *deployment_option.id(),
+            external_model_id: *deployment_option.external_model_id(),
+            serving_runtime: *deployment_option.serving_runtime(),
+            target: DeploymentTargetSnapshot::HpcClusterQueue(HpcClusterQueueSnapshot {
+                hpc_cluster_id: *cluster.id(),
+                batch_scheduler_queue_id: *queue.id(),
+                cluster_host: cluster.host().into(),
+                queue_name: queue.name().into(),
+            }),
+        };
 
-        // let artifact = retry_async(|| self.artifact_repo.get_by_id(&artifact_id), &Self::REPO_RETRY_POLICY, None)
-        //     .await?
-        //     .ok_or_else(|| ApplicationError::ModelDeploymentFailed(format!("Artifact not found for model. Artifact required for deployment")))?;
-
-        let replica_group = ReplicaGroup {
+        let replicas = ReplicaGroup {
             count: input.replicas.unwrap_or(1),
-            parallelism_strategies: input.parallelism_strategies.unwrap_or(vec![]),
+            parallelism_strategies: input.parallelism_strategies.unwrap_or_default(),
         };
 
-        // Initialize props to deploy with strategy
-        let props = DeployWithStrategyProps {
-            id: Uuid::now_v7(),
-            name: input.name,
-            description: input.description,
-            tenant_id: ctx.actor_tenant_id().clone(),
-            platform: input.platform.clone(),
-            owner: ctx.actor_principal_id().clone(),
-            model: ModelReference {
-                model_id: *model.id(),
+        let supplied_parameters = input
+            .arguments
+            .iter()
+            .map(|argument| (argument.parameter_name.clone(), argument.value.clone()))
+            .collect::<Vec<_>>();
+
+        let deployment_result = ModelDeploymentDomainService::deploy_with_option(
+            CreateFromOptionProps {
+                name: input.name,
+                description: input.description,
+                tenant_id: ctx.actor_tenant_id().clone(),
+                owner: ctx.actor_principal_id().clone(),
+                last_message: Some("Model deployment request received".into()),
+                visibility: Visibility::Private,
+                deployment_modality: input.deployment_modality,
+                target_endpoint: None,
+                replicas,
+                metadata: None,
             },
-            deployment_modality: input.deployment_modality.clone(),
-            last_message: Some("Model deployment request recieved".into()),
-            visibility: Visibility::Private,
-            deployment_interface: None,
-            replicas: replica_group,
-            metadata: None,
-        };
+            &deployment_option,
+            snapshot,
+            &cluster,
+            queue,
+            &supplied_parameters,
+        )
+        .map_err(|error| match error {
+            ModelDeploymentDomainServiceError::DeploymentParameterError(error) => {
+                ModelDeploymentServiceError::InvalidParameters(error)
+            }
+            error => ModelDeploymentServiceError::ModelDeploymentDomainError(error),
+        })?;
 
-        // Validate invariants for domain deployment
-        let deployment = ModelDeploymentDomainService::new(self.cipher.clone())
-            .deploy_model_with_strategy(&external_model, props, &strategy)
+        let prepared_arguments = self
+            .deployment_argument_service
+            .prepare_arguments(&deployment_result.resolved_parameters)
             .await?;
 
-        // Save the deployment
+        let deployment = deployment_result.deployment;
+
         retry_async(
-            || self.model_deployment_repo.save(&deployment),
+            || {
+                self.model_deployment_repository
+                    .save_with_arguments(&deployment, &prepared_arguments)
+            },
             &Self::REPO_RETRY_POLICY,
             None,
         )
         .await?;
 
-        // Save the arguments
-        self.deployment_argument_service
-            .save(&deployment, &strategy, &input.arguments)
-            .await?;
-
-        // Build state drift event payload
-        let payload = ModelDeploymentStateDriftDetectedPayload {
-            deployment_id: deployment.id,
-            message: Some("Model deployment initiated with StateDriftDetected event".into()),
-            deployment_revision: deployment.revision().clone(),
-            desired_state: deployment.desired_state.clone(),
-            actual_state: deployment.state.clone(),
+        let payload = ModelDeploymentStartedPayload {
+            deployment_id: *deployment.id(),
+            message: Some("Model deployment start request reciceved".into()),
+            deployment_revision: *deployment.revision(),
         };
 
-        // Build the event from the payload
-        let event = Event::from_payload(
-            &Payload::ModelDeploymentStateDriftDetectedPayload(payload),
-            None,
-        );
+        let event =
+            Event::from_payload(&Payload::ModelDeploymentStartedPayload(payload), None, None);
 
-        // Closure for publishing model deployment
-        let publish_state_drift_event = || self.event_publisher.publish(&event);
-
-        // Publish the state drift event
-        match retry_async(
-            publish_state_drift_event,
+        if let Err(publish_error) = retry_async(
+            || self.event_publisher.publish(&event),
             &Self::EVENT_PUBLISHER_RETRY_POLICY,
             None,
         )
         .await
         {
-            Ok(_) => (),
-            Err(e) => {
-                error!(
-                    "Failed to publish state drift event for deployment {}: {}",
-                    &deployment.id,
-                    e.to_string()
-                );
-            }
-        };
+            error!(
+                "Failed to publish state drift event for deployment {}: {}",
+                deployment.id(),
+                publish_error
+            );
+        }
 
-        Ok(DeployModelWithStrategyOutput { deployment })
+        Ok(DeployModelWithOptionOutput { deployment })
     }
 
     pub async fn start_model_deployment(
         &self,
         input: StartModelDeploymentInput,
     ) -> Result<StartModelDeploymentOutput, ModelDeploymentServiceError> {
-        let workflow = UpdateDesiredStateWorkflow::new(
-            self.model_deployment_repo.clone(),
-            self.event_publisher.clone(),
-        );
-
-        let modified_deployment = workflow
-            .run(UpdateDesiredStateWorkflowInput {
-                deployment_id: input.deployment_id.clone(),
-                desired_state: DesiredState::Running,
-                last_message: Some("Requested model deployment start".into()),
-            })
+        let deployment = self
+            .update_desired_state(
+                input.deployment_id,
+                DesiredState::Running,
+                "Requested model deployment start",
+            )
             .await?;
 
-        Ok(StartModelDeploymentOutput {
-            deployment: modified_deployment,
-        })
+        Ok(StartModelDeploymentOutput { deployment })
     }
 
     pub async fn stop_model_deployment(
         &self,
         input: StopModelDeploymentInput,
     ) -> Result<StopModelDeploymentOutput, ModelDeploymentServiceError> {
-        let workflow = UpdateDesiredStateWorkflow::new(
-            self.model_deployment_repo.clone(),
-            self.event_publisher.clone(),
-        );
-
-        let modified_deployment = workflow
-            .run(UpdateDesiredStateWorkflowInput {
-                deployment_id: input.deployment_id.clone(),
-                desired_state: DesiredState::Stopped,
-                last_message: Some("Requested model deployment start".into()),
-            })
+        let deployment = self
+            .update_desired_state(
+                input.deployment_id,
+                DesiredState::Stopped,
+                "Requested model deployment stop",
+            )
             .await?;
 
-        Ok(StopModelDeploymentOutput {
-            deployment: modified_deployment,
-        })
+        Ok(StopModelDeploymentOutput { deployment })
     }
 
     pub async fn undeploy_model_deployment(
         &self,
         input: UndeployModelDeploymentInput,
     ) -> Result<UndeployModelDeploymentOutput, ModelDeploymentServiceError> {
-        let workflow = UpdateDesiredStateWorkflow::new(
-            self.model_deployment_repo.clone(),
-            self.event_publisher.clone(),
-        );
-
-        let modified_deployment = workflow
-            .run(UpdateDesiredStateWorkflowInput {
-                deployment_id: input.deployment_id.clone(),
-                desired_state: DesiredState::NotDeployed,
-                last_message: Some("Requested model deployment start".into()),
-            })
+        let deployment = self
+            .update_desired_state(
+                input.deployment_id,
+                DesiredState::NotDeployed,
+                "Requested model undeployment",
+            )
             .await?;
 
-        Ok(UndeployModelDeploymentOutput {
-            deployment: modified_deployment,
-        })
+        Ok(UndeployModelDeploymentOutput { deployment })
     }
 
     pub async fn update(
         &self,
         input: UpdateModelDeploymentInput,
     ) -> Result<(), ModelDeploymentServiceError> {
-        // Update the deployment
         retry_async(
-            || self.model_deployment_repo.update(&input.deployment),
+            || self.model_deployment_repository.update(&input.deployment),
             &Self::REPO_RETRY_POLICY,
             None,
         )
@@ -462,6 +517,69 @@ impl ModelDeploymentService {
 
         Ok(())
     }
+
+    pub async fn update_at_revision(
+        &self,
+        input: UpdateModelDeploymentInput,
+        expected_revision: u32,
+    ) -> Result<(), ModelDeploymentServiceError> {
+        retry_async(
+            || {
+                self.model_deployment_repository
+                    .update_at_revision(&input.deployment, expected_revision)
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn record_observation(
+        &self,
+        _ctx: &RequestContext,
+        deployment_id: &ModelDeploymentId,
+        observed_at: &TimeStamp,
+    ) -> Result<(), ModelDeploymentServiceError> {
+        retry_async(
+            || {
+                self.model_deployment_repository
+                    .record_observation(deployment_id, observed_at)
+            },
+            &Self::REPO_RETRY_POLICY,
+            None,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    async fn update_desired_state(
+        &self,
+        deployment_id: ModelDeploymentId,
+        desired_state: DesiredState,
+        message: &str,
+    ) -> Result<ModelDeployment, ModelDeploymentServiceError> {
+        let workflow = UpdateDesiredStateWorkflow::new(
+            self.model_deployment_repository.clone(),
+            self.event_publisher.clone(),
+        );
+
+        workflow
+            .run(UpdateDesiredStateWorkflowInput {
+                deployment_id,
+                desired_state,
+                last_message: Some(message.into()),
+            })
+            .await
+            .map_err(Into::into)
+    }
+}
+
+pub struct ControlLoopCandidates {
+    pub observable: Vec<ModelDeployment>,
+    pub reconcilable: Vec<ModelDeployment>,
 }
 
 pub struct ListModelDeploymentsByOwnerInput {

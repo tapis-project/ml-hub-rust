@@ -4,9 +4,11 @@ use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    domain::entities::{deployment_option as domain, hpc_cluster},
+    domain::entities::{
+        deployment_option as domain, hpc_cluster, model::external_model::ExternalModelId,
+    },
     infra::persistence::mongo::documents::deployment::DeploymentModality,
-    shared_kernel::{identifiers::ExternalModelId, value_objects::TimeStamp},
+    shared_kernel::value_objects::TimeStamp,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

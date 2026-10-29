@@ -1,0 +1,20 @@
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-endpoint-envoy-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-endpoint-envoy-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: envoy
+                env:
+                  - name: ALLOWED_ORIGIN_REGEX
+                    value: ^https://([a-z0-9-]+\.)?staging\.tapis\.io$

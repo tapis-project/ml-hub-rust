@@ -11,6 +11,7 @@ fn endpoint_response_derives_the_target_base_url_from_the_agent(
     let endpoint = DomainEndpoint::reconstitute(ReconstituteEndpointProps {
         id: uuid::Uuid::now_v7(),
         tenant_id: "test-tenant".into(),
+        owner: "owner-a".into(),
         target_resource_urn: agent.urn(),
         target_name: "default".into(),
         slug: "abc123def4".into(),
@@ -19,7 +20,12 @@ fn endpoint_response_derives_the_target_base_url_from_the_agent(
     let response = Endpoint::try_from((endpoint, &agent))?;
 
     assert_eq!(response.target_name, "default");
-    assert_eq!(response.target_base_url, "https://example.test");
+    assert_eq!(response.owner, "owner-a");
+    assert!(response.available);
+    assert_eq!(
+        response.target_base_url.as_deref(),
+        Some("https://example.test")
+    );
 
     Ok(())
 }
@@ -30,6 +36,7 @@ fn endpoint_response_rejects_an_unresolvable_target() -> Result<(), Box<dyn std:
     let endpoint = DomainEndpoint::reconstitute(ReconstituteEndpointProps {
         id: uuid::Uuid::now_v7(),
         tenant_id: "test-tenant".into(),
+        owner: "owner-a".into(),
         target_resource_urn: Urn::new("urn:mlhub:v1:test-tenant:agent:agent-a".into()),
         target_name: "missing".into(),
         slug: "abc123def4".into(),

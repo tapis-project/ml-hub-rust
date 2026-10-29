@@ -7,7 +7,14 @@ use crate::presentation::http::v1::responses::ModelDeployment;
 use actix_web::{post, web, Responder};
 use serde_json::to_value;
 use shared::application::inputs::deployment::StopModelDeploymentInput;
-use shared::application::services::model_deployment_service::ModelDeploymentService;
+use shared::application::services::endpoint_query_service::EndpointQueryService;
+use shared::application::services::model_deployment_service::{
+    ModelDeploymentService, ModelDeploymentServiceError,
+};
+use shared::domain::entities::deployment::ModelDeploymentId;
+use shared::domain::entities::endpoint::NetworkAddressableResource;
+use shared::infra::configuration::SiteConfiguration;
+use shared::shared_kernel::context::RequestContext;
 
 #[utoipa::path(
     post,
@@ -38,6 +45,11 @@ use shared::application::services::model_deployment_service::ModelDeploymentServ
             body = contracts::responses::NotFoundResponse
         ),
         (
+            status = 409,
+            description = "Model deployment has expired",
+            body = contracts::responses::ConflictResponse
+        ),
+        (
             status = 500,
             description = "Not found",
             body = contracts::responses::ServerErrorResponse
@@ -48,18 +60,43 @@ use shared::application::services::model_deployment_service::ModelDeploymentServ
 async fn stop_model_deployment(
     path: web::Path<StopModelDeploymentPathParams>,
     service: web::Data<ModelDeploymentService>,
+    endpoint_query_service: web::Data<EndpointQueryService>,
+    site_configuration: web::Data<SiteConfiguration>,
+    ctx: RequestContext,
 ) -> impl Responder {
     let input = StopModelDeploymentInput {
         owner: "mlhub".into(),
-        deployment_id: path.deployment_id,
+        deployment_id: ModelDeploymentId::reconstitute(path.deployment_id),
     };
 
     let output = match service.stop_model_deployment(input).await {
         Ok(output) => output,
+        Err(ModelDeploymentServiceError::DeploymentExpired) => {
+            return build_error_response(409, "Model deployment has expired".into())
+        }
         Err(err) => return build_error_response(500, err.to_string()),
     };
 
-    let resp = match to_value(ModelDeployment::from(output.deployment)) {
+    let endpoints = if output.deployment.network_target_names().is_empty() {
+        Vec::new()
+    } else {
+        match endpoint_query_service
+            .find_by_network_addressable_resource(&ctx, &output.deployment)
+            .await
+        {
+            Ok(endpoints) => endpoints,
+            Err(error) => return build_error_response(500, error.to_string()),
+        }
+    };
+
+    let mut response = match ModelDeployment::try_from((output.deployment, endpoints)) {
+        Ok(response) => response,
+        Err(error) => return build_error_response(500, error.to_string()),
+    };
+
+    response.populate_endpoint_proxy_url(&site_configuration.endpoint_router);
+
+    let resp = match to_value(response) {
         Ok(r) => r,
         Err(err) => return build_error_response(500, err.to_string()),
     };

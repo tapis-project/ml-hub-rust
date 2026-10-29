@@ -124,7 +124,7 @@ async fn create_agent_record_derives_owner_and_tenant_from_context(
         shared_list_calls: Mutex::new(Vec::new()),
     });
     let service = AgentRecordService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
     let created = service.create_agent_record(&context, input()).await?;
     let saved = match repository.saved.lock() {
         Ok(saved) => saved,
@@ -175,7 +175,7 @@ async fn list_for_user_uses_context_tenant_and_principal() -> Result<(), AgentRe
         shared_list_calls: Mutex::new(Vec::new()),
     });
     let service = AgentRecordService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let agent_records = service.list_for_user(&context).await?;
 
@@ -203,7 +203,7 @@ async fn list_shared_with_user_uses_context_tenant_and_principal(
         shared_list_calls: Mutex::new(Vec::new()),
     });
     let service = AgentRecordService::new(repository.clone());
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let agent_records = service.list_shared_with_user(&context).await?;
 

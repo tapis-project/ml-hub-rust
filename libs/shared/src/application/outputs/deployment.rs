@@ -1,6 +1,6 @@
 use crate::domain::entities::deployment::ModelDeployment;
 
-pub struct DeployModelWithStrategyOutput {
+pub struct DeployModelWithOptionOutput {
     pub deployment: ModelDeployment,
 }
 
