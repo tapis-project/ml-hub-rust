@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source ../../utils.sh
+source ../utils.sh
 
 overlay=${1:-minikube}
 

@@ -3,7 +3,7 @@ resources:
 
 images:
   - name: tapis/mlhub-migrator
-    newTag: 26Q2.3
+    newTag: 26Q3.1
 
 patches:
   - target:

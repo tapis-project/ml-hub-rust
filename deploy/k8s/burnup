@@ -38,7 +38,7 @@ cd "$here/seeders/hpc-cluster-seeder"
 ./burnup.sh "$overlay"
 kubectl wait --for=condition=complete job/mlhub-hpc-cluster-seeder --timeout=10m
 
-cd "$here/migrations/migrator"
+cd "$here/migrator"
 ./burnup.sh "$overlay"
 kubectl wait --for=condition=complete job/mlhub-migrator --timeout=10m
 
