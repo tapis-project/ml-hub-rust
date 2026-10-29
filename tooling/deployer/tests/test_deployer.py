@@ -88,22 +88,21 @@ fi
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual(
             [
-                "dev buildl models-migrator",
-                "dev buildl deployments-migrator",
-                "dev buildl federated-identities-migrator",
-                "dev buildl principals-migrator",
-                "dev buildl hpc-cluster-seeder",
-                "dev buildl models",
-                "dev buildl datasets",
-                "dev buildl deployments",
-                "dev buildl agents",
-                "dev buildl artifact-ingester",
-                "dev buildl artifact-publisher",
-                "dev buildl model-deployment-controller",
-                "dev buildl-extract hf-model-etl",
-                "dev buildl-transform-load hf-model-etl",
-                "dev buildl-extract hf-dataset-etl",
-                "dev buildl-transform-load hf-dataset-etl",
+                "dev build migrator",
+                "dev build hpc-cluster-seeder",
+                "dev build models",
+                "dev build datasets",
+                "dev build deployments",
+                "dev build agents",
+                "dev build endpoints",
+                "dev build endpoint-router",
+                "dev build artifact-ingester",
+                "dev build artifact-publisher",
+                "dev build model-deployment-controller",
+                "dev build-extract hf-model-etl",
+                "dev build-transform-load hf-model-etl",
+                "dev build-extract hf-dataset-etl",
+                "dev build-transform-load hf-dataset-etl",
             ],
             self._commands(),
         )
@@ -116,7 +115,7 @@ fi
 
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertTrue(os.access(dev, os.X_OK))
-        self.assertEqual("dev buildl models-migrator", self._commands()[0])
+        self.assertEqual("dev build migrator", self._commands()[0])
 
     def test_missing_dev_fails_during_chmod_before_running_stage(self):
         (self.root / "dev").unlink()
@@ -133,20 +132,78 @@ fi
         self.assertEqual(0, result.returncode, result.stderr)
         commands = self._commands()
         self.assertLess(commands.index("dev start nfs -t overlay minikube"), commands.index("dev start rabbit -t overlay minikube"))
-        self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run-models migrations -t overlay minikube"))
-        self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run-deployments migrations -t overlay minikube"))
-        self.assertLess(commands.index("dev run-deployments migrations -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
-        self.assertLess(commands.index("dev run-principals migrations -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
+        self.assertLess(commands.index("dev start traefik -t overlay minikube"), commands.index("dev run migrator -t overlay minikube"))
+        self.assertLess(commands.index("dev run hpc-cluster-seeder -t overlay minikube"), commands.index("dev run migrator -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start deployments -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start endpoints -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
+        self.assertLess(commands.index("dev start endpoints -t overlay minikube"), commands.index("dev start endpoint-router -t overlay minikube"))
+        self.assertLess(commands.index("dev start endpoint-router -t overlay minikube"), commands.index("dev start envoy -t overlay minikube"))
+        self.assertLess(commands.index("dev run migrator -t overlay minikube"), commands.index("dev start models -t overlay minikube"))
         self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
+        self.assertLess(commands.index("dev start model-deployment-controller -t overlay minikube"), commands.index("dev start gatus -t overlay minikube"))
+        self.assertLess(commands.index("dev start gatus -t overlay minikube"), commands.index("dev run hf-model-etl -t overlay minikube"))
         self.assertLess(commands.index("dev run hf-model-etl -t overlay minikube"), commands.index("dev run hf-dataset-etl -t overlay minikube"))
         self.assertIn("kubectl rollout status statefulset/mlhub-mongo-stateful-set --timeout=0s", commands)
 
+        expected_components = [
+            "models",
+            "datasets",
+            "deployments",
+            "agents",
+            "endpoints",
+            "endpoint-router",
+            "envoy",
+            "gatus",
+        ]
+
+        for component in expected_components:
+            self.assertEqual(
+                1,
+                commands.count(f"dev start {component} -t overlay minikube"),
+            )
+
+        self.assertEqual(
+            1,
+            commands.count(
+                "kubectl rollout status deployment/mlhub-gatus-public-deployment --timeout=0s"
+            ),
+        )
+        self.assertEqual(
+            1,
+            commands.count(
+                "kubectl rollout status deployment/mlhub-gatus-internal-deployment --timeout=0s"
+            ),
+        )
+
+        self.assertEqual(
+            1,
+            commands.count("dev run migrator -t overlay minikube"),
+        )
+
     def test_existing_job_fails_before_aggregate_start(self):
-        result = self._run("start", DEPLOYER_EXISTING_JOBS="mlhub-principals-migrator")
+        result = self._run("start", DEPLOYER_EXISTING_JOBS="mlhub-migrator")
 
         self.assertNotEqual(0, result.returncode)
         self.assertIn("already exists", result.stderr)
         self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
+
+    def test_stop_services_stops_gatus_before_monitored_services(self):
+        result = self._run("stop-services")
+
+        self.assertEqual(0, result.returncode, result.stderr)
+
+        commands = self._commands()
+
+        self.assertEqual("dev stop gatus -t overlay minikube", commands[0])
+        self.assertLess(
+            commands.index("dev stop gatus -t overlay minikube"),
+            commands.index("dev stop model-deployment-controller -t overlay minikube"),
+        )
+        self.assertLess(
+            commands.index("dev stop gatus -t overlay minikube"),
+            commands.index("dev stop models -t overlay minikube"),
+        )
 
     def test_existing_job_fails_before_grouped_job_stage(self):
         result = self._run("start-jobs", DEPLOYER_EXISTING_JOBS="mlhub-hf-model-etl")
@@ -154,13 +211,13 @@ fi
         self.assertNotEqual(0, result.returncode)
         self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
 
-    def test_failed_job_stops_following_migrations(self):
-        result = self._run("start-migrations", DEPLOYER_FAILED_JOBS="mlhub-models-migrator")
+    def test_failed_migrator_stops_service_startup(self):
+        result = self._run("start", DEPLOYER_FAILED_JOBS="mlhub-migrator")
 
         self.assertNotEqual(0, result.returncode)
         commands = self._commands()
-        self.assertIn("dev run-models migrations -t overlay minikube", commands)
-        self.assertNotIn("dev run-federated-identities migrations -t overlay minikube", commands)
+        self.assertIn("dev run migrator -t overlay minikube", commands)
+        self.assertNotIn("dev start models -t overlay minikube", commands)
 
     def test_existing_seed_job_fails_before_migrations(self):
         result = self._run(
@@ -172,12 +229,12 @@ fi
         self.assertFalse(any(command.startswith("dev ") for command in self._commands()))
 
     def test_failed_build_stops_following_builds(self):
-        result = self._run("build-services", DEPLOYER_FAIL_DEV_MATCH="buildl deployments")
+        result = self._run("build-services", DEPLOYER_FAIL_DEV_MATCH="build deployments")
 
         self.assertNotEqual(0, result.returncode)
         commands = self._commands()
-        self.assertIn("dev buildl deployments", commands)
-        self.assertNotIn("dev buildl agents", commands)
+        self.assertIn("dev build deployments", commands)
+        self.assertNotIn("dev build agents", commands)
 
 
 if __name__ == "__main__":

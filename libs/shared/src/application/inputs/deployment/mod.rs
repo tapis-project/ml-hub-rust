@@ -1,43 +1,34 @@
 use crate::application::workflows::reconciliation::ReconciliationAction;
 use crate::domain::entities::deployment::{
-    DesiredState, ModelDeployment, ParallelismStrategy, State,
+    ModelDeployment, ModelDeploymentId, ParallelismStrategy, State,
 };
-use crate::domain::entities::deployment_strategy::strategy::Strategy;
 use crate::domain::entities::{
-    deployment_strategy::client_strategy::ClientStrategy, model::external_model::ExternalModel,
+    deployment_option::DeploymentOptionId, model::external_model::ExternalModel,
 };
-use platforms::Platform;
-use uuid::Uuid;
-
 use crate::shared_kernel::enums::DeploymentModality;
 
 pub struct ClientModelDeploymentRequest {
     pub deployment: ModelDeployment,
     pub external_model: ExternalModel,
-    pub strategy: Option<ClientStrategy>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FindForReconciliationInput {
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
     pub revision: u32,
-    pub desired_state: DesiredState,
-    pub state: State,
 }
 
 pub struct FilterInput {
-    pub deployment_id: Option<Uuid>,
+    pub deployment_id: Option<ModelDeploymentId>,
     pub revision: Option<u32>,
     pub state: Option<State>,
 }
 
 #[derive(Debug, Clone)]
-pub struct DeployWithStrategyInput {
+pub struct DeployWithOptionInput {
     pub name: String,
     pub description: Option<String>,
-    pub platform: Platform,
-    pub model_id: Uuid,
-    pub strategy_name: String,
+    pub deployment_option_id: DeploymentOptionId,
     pub deployment_modality: DeploymentModality,
     pub replicas: Option<u8>,
     pub parallelism_strategies: Option<Vec<ParallelismStrategy>>,
@@ -53,26 +44,25 @@ pub struct Argument {
 #[derive(Debug)]
 pub struct StartModelDeploymentInput {
     pub owner: String,
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
 }
 
 #[derive(Debug)]
 pub struct StopModelDeploymentInput {
     pub owner: String,
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
 }
 
 #[derive(Debug)]
 pub struct UndeployModelDeploymentInput {
     pub owner: String,
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
 }
 
 pub struct ReconcileModelDeploymentInput {
     pub action: ReconciliationAction,
     pub deployment: ModelDeployment,
     pub external_model: ExternalModel,
-    pub strategy: Option<Strategy>,
 }
 
 #[derive(Clone)]

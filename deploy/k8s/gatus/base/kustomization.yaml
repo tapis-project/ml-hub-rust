@@ -1,0 +1,15 @@
+resources:
+  - public-deployment.yaml
+  - public-service.yaml
+  - public-pvc.yaml
+  - internal-deployment.yaml
+  - internal-service.yaml
+  - internal-pvc.yaml
+
+configMapGenerator:
+  - name: mlhub-gatus-public-config
+    files:
+      - config.yaml=public-config.yaml
+  - name: mlhub-gatus-internal-config
+    files:
+      - config.yaml=internal-config.yaml

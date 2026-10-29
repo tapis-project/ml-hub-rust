@@ -73,12 +73,6 @@ spec:
             - name: nfs-server-mount
               mountPath: /srv/mlhub/
             - name: site-config
-              mountPath: /etc/mlhub/deployment-strategies.d/tapis-pods-deployment-strategies.json
-              subPath: tapis-pods-deployment-strategies.json
-            - name: site-config
-              mountPath: /etc/mlhub/deployment-strategies.d/tapis-jobs-deployment-strategies.json
-              subPath: tapis-jobs-deployment-strategies.json
-            - name: site-config
               mountPath: /etc/mlhub/site.json
               subPath: site.json
             - name: site-config

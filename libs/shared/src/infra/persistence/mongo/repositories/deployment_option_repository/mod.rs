@@ -18,11 +18,13 @@ use crate::{
             errors::InfrastructureError,
         },
     },
-    domain::entities::deployment_option::DeploymentOption as DomainDeploymentOption,
+    domain::entities::{
+        deployment_option::{DeploymentOption as DomainDeploymentOption, DeploymentOptionId},
+        model::external_model::ExternalModelId,
+    },
     infra::persistence::mongo::{
         database::DEPLOYMENT_OPTION_COLLECTION, documents::deployment_option::DeploymentOption,
     },
-    shared_kernel::identifiers::ExternalModelId,
 };
 
 pub struct DeploymentOptionRepository {
@@ -43,6 +45,21 @@ impl DeploymentOptionRepository {
 
 #[async_trait]
 impl DeploymentOptionRepositoryPort for DeploymentOptionRepository {
+    async fn find_by_id(
+        &self,
+        id: &DeploymentOptionId,
+    ) -> Result<Option<DomainDeploymentOption>, DeploymentOptionRepositoryError> {
+        let id = mongodb::bson::Uuid::from_bytes(*id.as_uuid().as_bytes());
+
+        self.collection
+            .find_one(doc! { "id": id })
+            .await
+            .map_err(map_error)?
+            .map(TryInto::try_into)
+            .transpose()
+            .map_err(map_error)
+    }
+
     async fn find_by_external_model_id(
         &self,
         external_model_id: &ExternalModelId,
@@ -71,7 +88,9 @@ impl DeploymentOptionRepositoryPort for DeploymentOptionRepository {
         input: &ListDeploymentOptionsInput,
     ) -> Result<DeploymentOptionPage, DeploymentOptionRepositoryError> {
         let filter = list_filter(external_model_id, input)?;
+
         let count_filter = external_model_filter(external_model_id);
+
         let pipeline = list_pipeline(filter, input);
 
         let mut cursor = self
@@ -129,12 +148,14 @@ impl DeploymentOptionRepositoryPort for DeploymentOptionRepository {
                 *external_model_id.as_uuid().as_bytes(),
             ),
         };
+
         let documents = deployment_options
             .iter()
             .map(DeploymentOption::from)
             .collect::<Vec<_>>();
 
         let collection = self.collection.clone();
+
         let mut session = self.client.start_session().await.map_err(map_error)?;
 
         session
@@ -198,8 +219,11 @@ fn documents_to_page(
     limit: u16,
 ) -> Result<(Vec<DomainDeploymentOption>, Option<String>), DeploymentOptionRepositoryError> {
     let limit = usize::from(limit);
+
     let has_next_page = documents.len() > limit;
+
     let mut last_id = None;
+
     let mut deployment_options = Vec::with_capacity(documents.len().min(limit));
 
     for document in documents.into_iter().take(limit) {

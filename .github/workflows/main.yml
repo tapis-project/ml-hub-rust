@@ -123,28 +123,16 @@ jobs:
       image_name: tapis/mlhub-model-deployment-controller
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
-  models-migrator:
-    if: contains(fromJson(needs.diffs.outputs.services), 'models-migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+  migrator:
+    if: contains(fromJson(needs.diffs.outputs.services), 'migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
       - tests
     secrets: inherit
-    uses: ./.github/workflows/models-migrator.yml
+    uses: ./.github/workflows/migrator.yml
     with:
-      image_name: tapis/mlhub-models-migrator
-      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
-
-  deployments-migrator:
-    if: contains(fromJson(needs.diffs.outputs.services), 'deployments-migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
-    needs:
-      - resolve_image_tag
-      - diffs
-      - tests
-    secrets: inherit
-    uses: ./.github/workflows/deployments-migrator.yml
-    with:
-      image_name: tapis/mlhub-deployments-migrator
+      image_name: tapis/mlhub-migrator
       image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
 
   hpc-cluster-seeder:
@@ -159,29 +147,29 @@ jobs:
       image_name: tapis/mlhub-hpc-cluster-seeder
       image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
 
-  federated-identities-migrator:
-    if: contains(fromJson(needs.diffs.outputs.services), 'federated-identities-migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+  endpoint-router:
+    if: contains(fromJson(needs.diffs.outputs.services), 'endpoint-router') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
       - tests
     secrets: inherit
-    uses: ./.github/workflows/federated-identities-migrator.yml
+    uses: ./.github/workflows/endpoint-router.yml
     with:
-      image_name: tapis/mlhub-federated-identities-migrator
-      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
-  
-  principals-migrator:
-    if: contains(fromJson(needs.diffs.outputs.services), 'principals-migrator') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
+      image_name: tapis/mlhub-endpoint-router
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
+
+  endpoints:
+    if: contains(fromJson(needs.diffs.outputs.services), 'endpoints') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'
     needs:
       - resolve_image_tag
       - diffs
       - tests
     secrets: inherit
-    uses: ./.github/workflows/principals-migrator.yml
+    uses: ./.github/workflows/endpoints.yml
     with:
-      image_name: tapis/mlhub-principals-migrator
-      image_tag:  ${{ needs.resolve_image_tag.outputs.image_tag }}
+      image_name: tapis/mlhub-endpoints-api
+      image_tag: ${{ needs.resolve_image_tag.outputs.image_tag }}
 
   hf-model-etl:
     if: contains(fromJson(needs.diffs.outputs.services), 'hf-model-etl') || needs.diffs.outputs.has_lib_diff == 'true' || github.event.inputs.force_rebuild_all == 'true'

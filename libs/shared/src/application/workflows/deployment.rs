@@ -1,15 +1,17 @@
 use crate::application::inputs::deployment::FilterInput;
 use crate::application::ports::deployment::ModelDeploymentRepository;
-use crate::application::ports::events::payloads::ModelDeploymentStateDriftDetectedPayload;
+use crate::application::ports::events::payloads::{
+    ModelDeploymentDeletedPayload, ModelDeploymentStartedPayload, ModelDeploymentStoppedPayload,
+};
 use crate::application::ports::events::{Event, EventPublisher, Payload};
 use crate::application::services::model_deployment_service::ModelDeploymentServiceError;
 use crate::application::workflows::Workflow;
-use crate::domain::entities::deployment::{DesiredState, ModelDeployment};
+use crate::domain::entities::deployment::{DesiredState, ModelDeployment, ModelDeploymentId};
+use crate::shared_kernel::value_objects::TimeStamp;
 use log::error;
 use once_cell::sync::Lazy;
 use retry_utils::{retry_async, ExponentialBackoff, FixedBackoff, Jitter, Retry, RetryPolicy};
 use std::sync::Arc;
-use uuid::Uuid;
 
 impl UpdateDesiredStateWorkflow {
     const REPO_RETRY_POLICY: Lazy<RetryPolicy> = Lazy::new(|| {
@@ -69,16 +71,34 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
             }
         };
 
+        if deployment.is_expired(&TimeStamp::now()) {
+            return Err(ModelDeploymentServiceError::DeploymentExpired);
+        }
+
         // If the user is request that the deployment move to a state that it is already in
-        // we essentially noop and return the same deployment without revision
-        if deployment.desired_state == input.desired_state {
+        // we noop and return the same deployment without revision
+        let restart_existing_execution = deployment.desired_state == DesiredState::Running
+            && input.desired_state == DesiredState::Running
+            && (matches!(
+                deployment.reconciliation_status(),
+                Some(crate::domain::entities::deployment::ReconciliationStatus::Failed)
+            ) || deployment.is_completed_batch_execution());
+
+        if deployment.desired_state == input.desired_state && !restart_existing_execution {
             return Ok(deployment);
         }
 
-        let modified_deployment = deployment
-            .revise()
-            .transition_to_desired(input.desired_state, input.last_message)?
-            .finish();
+        let modified_deployment = if restart_existing_execution {
+            deployment
+                .revise()
+                .restart_reconciliation(input.last_message)
+                .finish()
+        } else {
+            deployment
+                .revise()
+                .transition_to_desired(input.desired_state, input.last_message)?
+                .finish()
+        };
 
         // Update the deployment
         retry_async(
@@ -88,35 +108,46 @@ impl Workflow<UpdateDesiredStateWorkflowInput, ModelDeployment, ModelDeploymentS
         )
         .await?;
 
-        let payload = ModelDeploymentStateDriftDetectedPayload {
-            deployment_id: modified_deployment.id,
-            message: Some("Requested desired state change of Model Deployment. Initiating reconciliation via with StateDriftDetected event".into()),
-            deployment_revision: modified_deployment.revision().clone(),
-            desired_state: modified_deployment.desired_state.clone(),
-            actual_state: modified_deployment.state.clone(),
+        let event = match modified_deployment.desired_state {
+            DesiredState::Running => {
+                let payload = ModelDeploymentStartedPayload {
+                    deployment_id: *modified_deployment.id(),
+                    message: Some("Model deployment start requested".into()),
+                    deployment_revision: modified_deployment.revision().clone(),
+                };
+
+                Event::from_payload(&Payload::ModelDeploymentStartedPayload(payload), None, None)
+            }
+            DesiredState::Stopped => {
+                let payload = ModelDeploymentStoppedPayload {
+                    deployment_id: *modified_deployment.id(),
+                    message: Some("Model deployment stop requested".into()),
+                    deployment_revision: modified_deployment.revision().clone(),
+                };
+
+                Event::from_payload(&Payload::ModelDeploymentStoppedPayload(payload), None, None)
+            }
+            DesiredState::NotDeployed => {
+                let payload = ModelDeploymentDeletedPayload {
+                    deployment_id: *modified_deployment.id(),
+                    message: Some("Model deployment deletion requested".into()),
+                    deployment_revision: modified_deployment.revision().clone(),
+                };
+
+                Event::from_payload(&Payload::ModelDeploymentDeletedPayload(payload), None, None)
+            }
         };
 
-        let event = Event::from_payload(
-            &Payload::ModelDeploymentStateDriftDetectedPayload(payload),
-            None,
-        );
-
         // Closure for publishing model deployment
-        let publish_state_drift_event = || self.event_publisher.publish(&event);
+        let publish_event = || self.event_publisher.publish(&event);
 
         // Publish the state drift event event
-        match retry_async(
-            publish_state_drift_event,
-            &Self::EVENT_PUBLISHER_RETRY_POLICY,
-            None,
-        )
-        .await
-        {
+        match retry_async(publish_event, &Self::EVENT_PUBLISHER_RETRY_POLICY, None).await {
             Ok(_) => (),
             Err(err) => {
                 error!(
                     "Failed to publish state drift event for deployment {}: {}",
-                    &deployment.id,
+                    deployment.id(),
                     err.to_string()
                 );
             }
@@ -132,7 +163,7 @@ pub struct UpdateDesiredStateWorkflow {
 }
 
 pub struct UpdateDesiredStateWorkflowInput {
-    pub deployment_id: Uuid,
+    pub deployment_id: ModelDeploymentId,
     pub desired_state: DesiredState,
     pub last_message: Option<String>,
 }

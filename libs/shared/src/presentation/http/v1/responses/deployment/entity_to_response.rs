@@ -1,5 +1,7 @@
 use crate::domain::entities::deployment as entities;
+use crate::domain::entities::endpoint;
 use crate::presentation::http::v1::responses::deployment as responses;
+use crate::presentation::http::v1::responses::endpoints;
 use crate::presentation::http::v1::responses::visibility::Visibility;
 
 impl From<entities::State> for responses::State {
@@ -25,10 +27,11 @@ impl From<entities::DesiredState> for responses::DesiredState {
     }
 }
 
-impl From<entities::ModelReference> for responses::ModelReference {
-    fn from(value: entities::ModelReference) -> Self {
-        Self {
-            model_id: value.model_id,
+impl From<crate::shared_kernel::enums::DeploymentModality> for responses::DeploymentModality {
+    fn from(value: crate::shared_kernel::enums::DeploymentModality) -> Self {
+        match value {
+            crate::shared_kernel::enums::DeploymentModality::Batch => Self::Batch,
+            crate::shared_kernel::enums::DeploymentModality::Service => Self::Service,
         }
     }
 }
@@ -68,18 +71,20 @@ impl From<entities::ReplicaGroup> for responses::ReplicaGroup {
     }
 }
 
-impl From<entities::RestApi> for responses::RestApi {
-    fn from(value: entities::RestApi) -> Self {
-        Self { spec: value.spec }
+impl From<entities::ModelDeploymentEndpoint> for responses::ModelDeploymentEndpoint {
+    fn from(value: entities::ModelDeploymentEndpoint) -> Self {
+        Self {
+            name: value.name().map(String::from),
+            protocol: responses::Protocol::from(value.protocol().clone()),
+            base_url: value.base_url().map(String::from),
+        }
     }
 }
 
-impl From<entities::ModelDeploymentInterface> for responses::ModelDeploymentInterface {
-    fn from(value: entities::ModelDeploymentInterface) -> Self {
+impl From<entities::Protocol> for responses::Protocol {
+    fn from(value: entities::Protocol) -> Self {
         match value {
-            entities::ModelDeploymentInterface::RestApi(r) => {
-                responses::ModelDeploymentInterface::RestApi(responses::RestApi::from(r))
-            }
+            entities::Protocol::RestHttp => Self::RestHttp,
         }
     }
 }
@@ -87,31 +92,88 @@ impl From<entities::ModelDeploymentInterface> for responses::ModelDeploymentInte
 impl From<entities::ModelDeployment> for responses::ModelDeployment {
     fn from(value: entities::ModelDeployment) -> Self {
         Self {
-            id: value.id.clone(),
+            id: value.id().into_uuid(),
             name: value.name.clone(),
             description: value.description.clone(),
-            platform: value.platform.clone(),
+            tenant_id: value.tenant_id.clone(),
             owner: value.owner.clone(),
-            model: responses::ModelReference::from(value.model.clone()),
+            external_model_id: *value.external_model_id.as_uuid(),
+            deployment_option_id: *value.deployment_option_id.as_uuid(),
+            deployment_modality: responses::DeploymentModality::from(
+                value.deployment_modality.clone(),
+            ),
             state: responses::State::from(value.state.clone()),
+            batch_execution_outcome: value
+                .batch_execution_outcome()
+                .cloned()
+                .map(responses::BatchExecutionOutcome::from),
             desired_state: responses::DesiredState::from(value.desired_state.clone()),
             created_at: String::from(value.created_at.clone()),
             last_desired_state_change: String::from(value.last_desired_state_change.clone()),
             last_state_change: String::from(value.last_state_change.clone()),
+            last_observed: value.last_observed().cloned().map(String::from),
+            expires_at: value.expires_at().cloned().map(String::from),
+            reconciliation_status: value
+                .reconciliation_status()
+                .cloned()
+                .map(responses::ReconciliationStatus::from),
+            retries: value.retries(),
+            retry_after: value.retry_after().cloned().map(String::from),
             last_modified: String::from(value.last_modified.clone()),
             replicas: responses::ReplicaGroup::from(value.replicas.clone()),
             last_message: value.last_message.clone(),
             visibility: Visibility::from(value.visibility.clone()),
             revision: value.revision().clone(),
-            deployment_strategy: value.deployment_strategy.clone(),
-            deployment_interface: value
-                .deployment_interface
-                .clone()
-                .and_then(|mdi| Some(responses::ModelDeploymentInterface::from(mdi))),
+            target_endpoint: value
+                .target_endpoint()
+                .cloned()
+                .map(responses::ModelDeploymentEndpoint::from),
+            endpoint: None,
             metadata: value
                 .metadata
                 .clone()
-                .and_then(|m| Some(m.into_inner().clone())),
+                .map(|metadata| metadata.into_inner().clone()),
         }
+    }
+}
+
+impl From<entities::BatchExecutionOutcome> for responses::BatchExecutionOutcome {
+    fn from(value: entities::BatchExecutionOutcome) -> Self {
+        match value {
+            entities::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            entities::BatchExecutionOutcome::TimedOut => Self::TimedOut,
+            entities::BatchExecutionOutcome::Cancelled => Self::Cancelled,
+            entities::BatchExecutionOutcome::Failed => Self::Failed,
+        }
+    }
+}
+
+impl From<entities::ReconciliationStatus> for responses::ReconciliationStatus {
+    fn from(value: entities::ReconciliationStatus) -> Self {
+        match value {
+            entities::ReconciliationStatus::Pending => Self::Pending,
+            entities::ReconciliationStatus::Starting => Self::Starting,
+            entities::ReconciliationStatus::Stopping => Self::Stopping,
+            entities::ReconciliationStatus::Undeploying => Self::Undeploying,
+            entities::ReconciliationStatus::Retrying => Self::Retrying,
+            entities::ReconciliationStatus::Synchronized => Self::Synchronized,
+            entities::ReconciliationStatus::Failed => Self::Failed,
+        }
+    }
+}
+
+impl From<(entities::ModelDeployment, Vec<endpoint::Endpoint>)> for responses::ModelDeployment {
+    fn from(value: (entities::ModelDeployment, Vec<endpoint::Endpoint>)) -> Self {
+        let (deployment, endpoints) = value;
+
+        let endpoint = endpoints
+            .into_iter()
+            .find_map(|endpoint| endpoints::Endpoint::try_from((endpoint, &deployment)).ok());
+
+        let mut response = Self::from(deployment);
+
+        response.endpoint = endpoint;
+
+        response
     }
 }

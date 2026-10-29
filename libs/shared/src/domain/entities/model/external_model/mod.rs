@@ -1,13 +1,15 @@
-use evaluations::{FieldPath, FieldValue, ResolveValue, ValueResolutionError};
-use platforms::Platform;
+use std::fmt;
 
 use serde_json::{Map, Value};
 use thiserror::Error;
+use uuid::Uuid;
+
+use evaluations::{FieldPath, FieldValue, ResolveValue, ValueResolutionError};
 
 use crate::shared_kernel::{
     constants::GLOBAL_TENANT,
     enums::Task,
-    identifiers::{traits::UrnGenerator, urn::Urn, ExternalModelId},
+    identifiers::{traits::UrnGenerator, urn::Urn},
     value_objects::{Tags, TagsError, TimeStamp},
 };
 
@@ -66,12 +68,6 @@ impl ExternalModel {
 
     pub fn update_metadata(&mut self, metadata: ModelMetadata) {
         self.metadata = metadata;
-
-        self.updated_at = TimeStamp::now();
-    }
-
-    pub fn replace_deployment_strategies(&mut self, strategies: Vec<DeploymentStrategyReference>) {
-        self.metadata.derived.deployment_strategies = strategies;
 
         self.updated_at = TimeStamp::now();
     }
@@ -201,6 +197,39 @@ impl ResolveValue for ExternalModel {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ExternalModelId(Uuid);
+
+impl ExternalModelId {
+    pub fn new() -> Self {
+        Self(Uuid::now_v7())
+    }
+
+    pub fn reconstitute(value: Uuid) -> Self {
+        Self(value)
+    }
+
+    pub fn as_uuid(&self) -> &Uuid {
+        &self.0
+    }
+
+    pub fn into_uuid(self) -> Uuid {
+        self.0
+    }
+}
+
+impl Default for ExternalModelId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl fmt::Display for ExternalModelId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ReconstituteExternalModelProps {
     pub id: ExternalModelId,
@@ -254,7 +283,6 @@ impl ModelMetadata {
 pub struct DerivedMetadata {
     name: Option<String>,
     author: Option<String>,
-    deployment_strategies: Vec<DeploymentStrategyReference>,
     inference_runtimes: Vec<String>,
     tags: Tags,
     task_types: Vec<Task>,
@@ -284,7 +312,6 @@ impl DerivedMetadata {
         Self::build(
             name,
             author,
-            Vec::new(),
             inference_runtimes,
             tags,
             task_types,
@@ -302,7 +329,6 @@ impl DerivedMetadata {
     pub fn reconstitute(
         name: Option<String>,
         author: Option<String>,
-        deployment_strategies: Vec<DeploymentStrategyReference>,
         inference_runtimes: Vec<String>,
         tags: Vec<String>,
         task_types: Vec<Task>,
@@ -316,7 +342,6 @@ impl DerivedMetadata {
         Self::build(
             name,
             author,
-            deployment_strategies,
             inference_runtimes,
             tags,
             task_types,
@@ -334,7 +359,6 @@ impl DerivedMetadata {
     fn build(
         name: Option<String>,
         author: Option<String>,
-        deployment_strategies: Vec<DeploymentStrategyReference>,
         inference_runtimes: Vec<String>,
         tags: Vec<String>,
         task_types: Vec<Task>,
@@ -360,7 +384,6 @@ impl DerivedMetadata {
         Ok(Self {
             name,
             author,
-            deployment_strategies,
             inference_runtimes,
             tags,
             task_types,
@@ -379,10 +402,6 @@ impl DerivedMetadata {
 
     pub fn author(&self) -> Option<&str> {
         self.author.as_deref()
-    }
-
-    pub fn deployment_strategies(&self) -> &[DeploymentStrategyReference] {
-        &self.deployment_strategies
     }
 
     pub fn inference_runtimes(&self) -> &[String] {
@@ -515,26 +534,6 @@ fn ensure_not_empty(field: &'static str, value: &str) -> Result<(), ModelLocator
     }
 
     Ok(())
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct DeploymentStrategyReference {
-    name: String,
-    platform: Platform,
-}
-
-impl DeploymentStrategyReference {
-    pub fn new(name: String, platform: Platform) -> Self {
-        Self { name, platform }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn platform(&self) -> &Platform {
-        &self.platform
-    }
 }
 
 #[derive(Clone, Debug, Error)]

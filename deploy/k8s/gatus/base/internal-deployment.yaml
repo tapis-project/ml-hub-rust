@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlhub-gatus-internal-deployment
+  labels:
+    app: mlhub-gatus-internal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlhub-gatus-internal
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlhub-gatus-internal
+    spec:
+      containers:
+        - name: gatus
+          image: ghcr.io/twin/gatus:v5.37.0
+          env:
+            - name: GATUS_CONFIG_PATH
+              value: /config/config.yaml
+            - name: TRAEFIK_ADDRESS
+              value: tcp://mlhub-traefik-web-service:80
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: config
+          configMap:
+            name: mlhub-gatus-internal-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: mlhub-gatus-internal-pvc

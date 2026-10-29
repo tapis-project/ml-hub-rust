@@ -32,8 +32,15 @@ impl HpcClusterRepository for EmptyHpcClusterRepository {
 
     async fn find_by_id(
         &self,
-        _data_center: &DataCenter,
         _id: &HpcClusterId,
+    ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
+        Ok(None)
+    }
+
+    async fn find_by_id_and_data_center(
+        &self,
+        _id: &HpcClusterId,
+        _data_center: &DataCenter,
     ) -> Result<Option<HpcCluster>, HpcClusterRepositoryError> {
         Ok(None)
     }
@@ -68,6 +75,9 @@ fn openapi_contains_hpc_cluster_routes_and_schemas() -> Result<(), Box<dyn std::
     let document = serde_json::to_value(ApiDoc::openapi())?;
 
     assert!(document
+        .pointer("/paths/~1deployments-api~1healthcheck/get")
+        .is_some());
+    assert!(document
         .pointer("/paths/~1deployments-api~1data-centers~1{data_center}~1hpc-clusters/get")
         .is_some());
     assert!(document
@@ -82,14 +92,122 @@ fn openapi_contains_hpc_cluster_routes_and_schemas() -> Result<(), Box<dyn std::
 }
 
 #[test]
+fn openapi_exposes_option_based_deployment_without_strategy_routes(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    let operation = document
+        .pointer("/paths/~1deployments-api~1deployments/post")
+        .ok_or_else(|| std::io::Error::other("deployment creation should be documented"))?;
+
+    assert_eq!(
+        operation.pointer("/operationId"),
+        Some(&serde_json::json!("deploy_model_with_option"))
+    );
+    assert!(document
+        .pointer("/components/schemas/DeployModelWithOptionBody/properties/deployment_option_id")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/DeployModelWithOptionBody/properties/model_id")
+        .is_none());
+    assert!(document
+        .pointer("/components/schemas/ModelDeployment/properties/target_endpoint")
+        .is_some());
+    assert!(document
+        .pointer("/components/schemas/ModelDeployment/properties/endpoint")
+        .is_some());
+    assert_eq!(
+        document.pointer("/components/schemas/Protocol/enum/0"),
+        Some(&serde_json::json!("RestHttp"))
+    );
+    assert!(document
+        .pointer("/paths/~1deployments-api~1models~1{model_id}~1strategies")
+        .is_none());
+
+    Ok(())
+}
+
+#[test]
+fn openapi_exposes_deployment_expiration_and_conflicts() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert_eq!(
+        document.pointer("/components/schemas/ModelDeployment/properties/expires_at/type"),
+        Some(&serde_json::json!(["string", "null"]))
+    );
+
+    for operation in ["start", "stop", "undeploy"] {
+        let pointer = format!(
+            "/paths/~1deployments-api~1deployments~1{{deployment_id}}~1{operation}/post/responses/409/content/application~1json/schema/$ref"
+        );
+
+        assert_eq!(
+            document.pointer(&pointer),
+            Some(&serde_json::json!("#/components/schemas/ConflictResponse"))
+        );
+    }
+
+    Ok(())
+}
+
+#[test]
+fn openapi_exposes_reconciliation_workflow_state() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    for field in ["reconciliation_status", "retries", "retry_after"] {
+        let pointer = format!("/components/schemas/ModelDeployment/properties/{field}");
+
+        assert!(document.pointer(&pointer).is_some(), "missing {field}");
+    }
+
+    assert_eq!(
+        document.pointer("/components/schemas/ReconciliationStatus/enum"),
+        Some(&serde_json::json!([
+            "Pending",
+            "Starting",
+            "Stopping",
+            "Undeploying",
+            "Retrying",
+            "Synchronized",
+            "Failed"
+        ]))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn openapi_exposes_batch_execution_outcome() -> Result<(), Box<dyn std::error::Error>> {
+    let document = serde_json::to_value(ApiDoc::openapi())?;
+
+    assert!(document
+        .pointer("/components/schemas/ModelDeployment/properties/batch_execution_outcome")
+        .is_some());
+
+    assert_eq!(
+        document.pointer("/components/schemas/BatchExecutionOutcome/enum"),
+        Some(&serde_json::json!([
+            "Succeeded",
+            "TimedOut",
+            "Cancelled",
+            "Failed"
+        ]))
+    );
+
+    Ok(())
+}
+
+#[test]
 fn openapi_inlines_data_center_path_enum() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
+
     let parameters = document
         .pointer(
             "/paths/~1deployments-api~1data-centers~1{data_center}~1hpc-clusters/get/parameters",
         )
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| std::io::Error::other("List operation should define parameters"))?;
+
     let data_center = parameters
         .iter()
         .find(|parameter| parameter.get("name") == Some(&serde_json::json!("data_center")))
@@ -106,12 +224,14 @@ fn openapi_inlines_data_center_path_enum() -> Result<(), Box<dyn std::error::Err
 #[test]
 fn openapi_documents_hpc_cluster_pagination_limits() -> Result<(), Box<dyn std::error::Error>> {
     let document = serde_json::to_value(ApiDoc::openapi())?;
+
     let parameters = document
         .pointer(
             "/paths/~1deployments-api~1data-centers~1{data_center}~1hpc-clusters/get/parameters",
         )
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| std::io::Error::other("List operation should define parameters"))?;
+
     let limit = parameters
         .iter()
         .find(|parameter| parameter.get("name") == Some(&serde_json::json!("limit")))
@@ -248,7 +368,7 @@ async fn list_rejects_an_unsupported_data_center() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -270,7 +390,7 @@ async fn detail_rejects_a_malformed_cluster_id() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -295,7 +415,7 @@ async fn detail_returns_not_found_within_the_data_center() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 
@@ -317,7 +437,7 @@ async fn list_returns_scoped_count_metadata() {
 
     request
         .extensions_mut()
-        .insert(RequestContext::system(None));
+        .insert(RequestContext::system(None, None, None));
 
     let response = actix_test::call_service(&app, request).await;
 

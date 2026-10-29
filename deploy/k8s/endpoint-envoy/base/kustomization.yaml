@@ -1,0 +1,9 @@
+resources:
+  - deployment.yaml
+  - network-policy.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: mlhub-endpoint-envoy-config
+    files:
+      - envoy.yaml

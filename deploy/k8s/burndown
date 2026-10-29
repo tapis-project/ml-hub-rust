@@ -4,6 +4,9 @@ here=$(pwd)
 
 overlay="{{ mlhub_env }}"
 
+cd "$here/gatus"
+./burndown.sh "$overlay"
+
 cd "$here/traefik"
 ./burndown.sh "$overlay"
 
@@ -29,4 +32,19 @@ cd "$here/artifact-publisher"
 ./burndown.sh "$overlay"
 
 cd "$here/model-deployment-controller"
+./burndown.sh "$overlay"
+
+cd "$here/endpoint-envoy"
+./burndown.sh "$overlay"
+
+cd "$here/endpoint-router"
+./burndown.sh "$overlay"
+
+cd "$here/endpoints"
+./burndown.sh "$overlay"
+
+cd "$here/agents"
+./burndown.sh "$overlay"
+
+cd "$here/datasets"
 ./burndown.sh "$overlay"

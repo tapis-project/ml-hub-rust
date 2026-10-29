@@ -3,15 +3,12 @@ use serde_json::{Map, Value};
 use crate::{
     domain::entities::model::{
         external_model::{
-            DerivedMetadata, ExternalModel, HuggingFaceRepoLocator, ModelLocator, ModelMetadata,
-            ModelProvider,
+            DerivedMetadata, ExternalModel, ExternalModelId, HuggingFaceRepoLocator, ModelLocator,
+            ModelMetadata, ModelProvider,
         },
         Model,
     },
-    shared_kernel::{
-        enums::{Task, Visibility},
-        identifiers::ExternalModelId,
-    },
+    shared_kernel::enums::{Task, Visibility},
 };
 
 pub fn full_external_model() -> ExternalModel {

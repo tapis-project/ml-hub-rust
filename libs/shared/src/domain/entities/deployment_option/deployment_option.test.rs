@@ -33,6 +33,7 @@ fn creates_uuid_v7_deployment_option() -> Result<(), DeploymentOptionError> {
 #[test]
 fn rejects_duplicate_modalities() {
     let mut props = props();
+
     props.supported_deployment_modalities =
         nonempty![DeploymentModality::Batch, DeploymentModality::Batch];
 
@@ -76,7 +77,9 @@ fn persisted_duplicate_modalities_are_data_integrity_errors(
 fn replacing_supported_deployment_modalities_preserves_identity_and_creation_time(
 ) -> Result<(), DeploymentOptionError> {
     let mut option = DeploymentOption::new(props())?;
+
     let id = *option.id();
+
     let created_at = option.created_at().clone();
 
     option.replace_supported_deployment_modalities(nonempty![DeploymentModality::Batch])?;

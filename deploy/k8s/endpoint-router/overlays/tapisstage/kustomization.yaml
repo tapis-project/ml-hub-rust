@@ -1,0 +1,26 @@
+resources:
+  - ../../base
+  - ../../../site-configs/overlays/tapisstage
+
+images:
+  - name: tapis/mlhub-endpoint-router
+    newTag: staging
+
+patches:
+  - target:
+      kind: Deployment
+      name: mlhub-endpoint-router-deployment
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: mlhub-endpoint-router-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - name: endpoint-router
+                imagePullPolicy: Always
+                env:
+                  - name: MONGO_HOST
+                    value: mlhub-mongo-stateful-set-0.mlhub-mongo-headless-service.tapisstage.svc.cluster.local

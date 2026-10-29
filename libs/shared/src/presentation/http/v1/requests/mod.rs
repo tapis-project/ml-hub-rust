@@ -5,6 +5,7 @@ pub mod common;
 pub mod datasets;
 pub mod deployment;
 pub mod deployment_options;
+pub mod endpoints;
 pub mod hpc_clusters;
 pub mod models;
 

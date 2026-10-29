@@ -4,9 +4,11 @@ use mongodb::bson::{oid::ObjectId, DateTime, Uuid};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    domain::entities::model::{Model as DomainModel, ReconstituteModelProps},
+    domain::entities::model::{
+        external_model::ExternalModelId, Model as DomainModel, ReconstituteModelProps,
+    },
     infra::persistence::mongo::documents::visibility::Visibility,
-    shared_kernel::{identifiers::ExternalModelId, value_objects::TimeStamp},
+    shared_kernel::value_objects::TimeStamp,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlhub-model-deployment-controller-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mlhub-model-deployment-controller-deployment
+  ports:
+    - name: healthcheck
+      port: 8000
+      targetPort: healthcheck

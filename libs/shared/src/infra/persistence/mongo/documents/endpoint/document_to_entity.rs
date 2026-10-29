@@ -7,6 +7,7 @@ impl From<documents::Endpoint> for entities::Endpoint {
         entities::Endpoint::reconstitute(entities::ReconstituteEndpointProps {
             id: uuid::Uuid::from_bytes(value.id.bytes()),
             tenant_id: value.tenant_id,
+            owner: value.owner,
             target_resource_urn: Urn::new(value.target_resource_urn),
             target_name: value.target_name,
             slug: value.slug,

@@ -1,5 +1,6 @@
 use actix_web::{get, web, Responder};
 use serde_json::to_value;
+use shared::infra::configuration::SiteConfiguration;
 use shared::{
     application::services::agent_service::AgentService,
     application::services::endpoint_query_service::EndpointQueryService,
@@ -38,15 +39,18 @@ pub async fn list_agents(
     ctx: RequestContext,
     agent_service: web::Data<AgentService>,
     endpoint_query_service: web::Data<EndpointQueryService>,
+    site_configuration: web::Data<SiteConfiguration>,
 ) -> impl Responder {
     let agents = match query.scope {
         Scope::Owned => agent_service.list_for_user(&ctx).await,
         Scope::Shared => agent_service.list_shared_with_user(&ctx).await,
     };
+
     let agents = match agents {
         Ok(agents) => agents,
         Err(error) => return build_error_response(500, error.to_string()),
     };
+
     let response_agents = if query.include_endpoints {
         let mut response_agents = Vec::with_capacity(agents.len());
 
@@ -58,6 +62,11 @@ pub async fn list_agents(
                 Ok(endpoints) => endpoints
                     .into_iter()
                     .filter_map(|endpoint| Endpoint::try_from((endpoint, &agent)).ok())
+                    .map(|mut endpoint| {
+                        endpoint.populate_proxy_url(&site_configuration.endpoint_router);
+
+                        endpoint
+                    })
                     .collect(),
                 Err(error) => return build_error_response(500, error.to_string()),
             };
@@ -74,6 +83,7 @@ pub async fn list_agents(
         Ok(response) => response,
         Err(error) => return build_error_response(500, error.to_string()),
     };
+
     build_success_response(
         Some(response),
         Some("Successfully listed agents".into()),

@@ -1,43 +1,167 @@
-use crate::domain::entities::deployment::{self as entities, ModelDeploymentMetadata};
+use std::time::Duration;
+
+use crate::domain::entities::{
+    deployment::{self as entities, ModelDeploymentId, ModelDeploymentMetadata},
+    deployment_option::{DeploymentOptionId, ServingRuntime},
+    hpc_cluster::{BatchSchedulerQueueId, HpcClusterId},
+    model::external_model::ExternalModelId,
+};
 use crate::infra::persistence::mongo::documents::deployment as documents;
-use crate::shared_kernel::enums::DeploymentModality;
-use crate::shared_kernel::enums::Visibility;
+use crate::shared_kernel::enums::{DeploymentModality, Visibility};
 use crate::shared_kernel::value_objects::TimeStamp;
 use uuid::Uuid;
 
-impl From<&documents::ModelDeployment> for entities::ModelDeployment {
-    fn from(value: &documents::ModelDeployment) -> Self {
+impl TryFrom<&documents::ModelDeployment> for entities::ModelDeployment {
+    type Error = String;
+
+    fn try_from(value: &documents::ModelDeployment) -> Result<Self, Self::Error> {
+        let external_model_id =
+            ExternalModelId::reconstitute(Uuid::from_bytes(value.external_model_id.bytes()));
+
+        let deployment_option_id =
+            DeploymentOptionId::reconstitute(Uuid::from_bytes(value.deployment_option_id.bytes()));
+
+        let deployment_option_snapshot =
+            entities::DeploymentOptionSnapshot::try_from(value.deployment_option_snapshot.clone())?;
+
+        if deployment_option_snapshot.external_model_id != external_model_id
+            || deployment_option_snapshot.deployment_option_id != deployment_option_id
+        {
+            return Err(
+                "Deployment option snapshot identifiers do not match the deployment".into(),
+            );
+        }
+
+        let state = entities::State::from(value.state.clone());
+        let desired_state = entities::DesiredState::from(value.desired_state.clone());
+
+        let reconciliation_status = value
+            .reconciliation_status
+            .clone()
+            .map(entities::ReconciliationStatus::from)
+            .or_else(|| {
+                (state == desired_state).then_some(entities::ReconciliationStatus::Synchronized)
+            });
+
         let props = entities::ReconstituteModelDeploymentProps {
-            id: Uuid::from_bytes(value.id.bytes()),
+            id: ModelDeploymentId::reconstitute(Uuid::from_bytes(value.id.bytes())),
             name: value.name.clone(),
             description: value.description.clone(),
             tenant_id: value.tenant_id.clone(),
-            platform: value.platform.clone(),
             deployment_modality: DeploymentModality::from(value.deployment_modality.clone()),
-            revision: value.revision.clone(),
+            revision: value.revision,
             owner: value.owner.clone(),
-            model: entities::ModelReference::from(value.model.clone()),
-            state: entities::State::from(value.state.clone()),
-            desired_state: entities::DesiredState::from(value.desired_state.clone()),
-            last_message: value.last_message.clone(),
-            visibility: Visibility::from(value.visibility.clone()),
-            deployment_interface: value
-                .deployment_interface
+            external_model_id,
+            state,
+            batch_execution_outcome: value
+                .batch_execution_outcome
                 .clone()
-                .and_then(|di| Some(entities::ModelDeploymentInterface::from(di))),
-            deployment_strategy: value.deployment_strategy.clone(),
+                .map(entities::BatchExecutionOutcome::from),
+            desired_state,
+            last_message: value.last_message.clone(),
+            deployment_option_id,
+            deployment_option_snapshot,
+            visibility: Visibility::from(value.visibility.clone()),
+            target_endpoint: value
+                .target_endpoint
+                .clone()
+                .map(entities::ModelDeploymentEndpoint::try_from)
+                .transpose()?,
             replicas: entities::ReplicaGroup::from(value.replicas.clone()),
             last_modified: TimeStamp::from(value.last_modified.to_chrono()),
             last_desired_state_change: TimeStamp::from(value.last_desired_state_change.to_chrono()),
             last_state_change: TimeStamp::from(value.last_state_change.to_chrono()),
+            last_observed: value
+                .last_observed
+                .map(|last_observed| TimeStamp::from(last_observed.to_chrono())),
+            maximum_runtime: value.maximum_runtime_seconds.map(Duration::from_secs),
+            expires_at: value
+                .expires_at
+                .map(|expires_at| TimeStamp::from(expires_at.to_chrono())),
             created_at: TimeStamp::from(value.created_at.to_chrono()),
-            metadata: value
-                .metadata
-                .clone()
-                .and_then(|m| Some(ModelDeploymentMetadata(m))),
+            metadata: value.metadata.clone().map(ModelDeploymentMetadata),
+            reconciliation_status,
+            retries: value.retries,
+            retry_after: value
+                .retry_after
+                .map(|retry_after| TimeStamp::from(retry_after.to_chrono())),
         };
 
-        entities::ModelDeployment::reconstitute(props)
+        entities::ModelDeployment::reconstitute(props).map_err(|error| error.to_string())
+    }
+}
+
+impl From<documents::BatchExecutionOutcome> for entities::BatchExecutionOutcome {
+    fn from(value: documents::BatchExecutionOutcome) -> Self {
+        match value {
+            documents::BatchExecutionOutcome::Succeeded => Self::Succeeded,
+            documents::BatchExecutionOutcome::TimedOut => Self::TimedOut,
+            documents::BatchExecutionOutcome::Cancelled => Self::Cancelled,
+            documents::BatchExecutionOutcome::Failed => Self::Failed,
+        }
+    }
+}
+
+impl From<documents::ReconciliationStatus> for entities::ReconciliationStatus {
+    fn from(value: documents::ReconciliationStatus) -> Self {
+        match value {
+            documents::ReconciliationStatus::Pending => Self::Pending,
+            documents::ReconciliationStatus::Starting => Self::Starting,
+            documents::ReconciliationStatus::Stopping => Self::Stopping,
+            documents::ReconciliationStatus::Undeploying => Self::Undeploying,
+            documents::ReconciliationStatus::Retrying => Self::Retrying,
+            documents::ReconciliationStatus::Synchronized => Self::Synchronized,
+            documents::ReconciliationStatus::Failed => Self::Failed,
+        }
+    }
+}
+
+impl TryFrom<documents::DeploymentOptionSnapshot> for entities::DeploymentOptionSnapshot {
+    type Error = String;
+
+    fn try_from(value: documents::DeploymentOptionSnapshot) -> Result<Self, Self::Error> {
+        let target = match (value.target_type, value.hpc_cluster_queue) {
+            (documents::DeploymentTargetType::HpcClusterQueue, Some(target)) => {
+                entities::DeploymentTargetSnapshot::HpcClusterQueue(target.into())
+            }
+            (documents::DeploymentTargetType::HpcClusterQueue, None) => {
+                return Err("Deployment target discriminator requires hpc_cluster_queue".into());
+            }
+        };
+
+        Ok(Self {
+            deployment_option_id: DeploymentOptionId::reconstitute(Uuid::from_bytes(
+                value.deployment_option_id.bytes(),
+            )),
+            external_model_id: ExternalModelId::reconstitute(Uuid::from_bytes(
+                value.external_model_id.bytes(),
+            )),
+            serving_runtime: ServingRuntime::from(value.serving_runtime),
+            target,
+        })
+    }
+}
+
+impl From<documents::ServingRuntime> for ServingRuntime {
+    fn from(value: documents::ServingRuntime) -> Self {
+        match value {
+            documents::ServingRuntime::FlexServ => Self::FlexServ,
+        }
+    }
+}
+
+impl From<documents::HpcClusterQueueSnapshot> for entities::HpcClusterQueueSnapshot {
+    fn from(value: documents::HpcClusterQueueSnapshot) -> Self {
+        Self {
+            hpc_cluster_id: HpcClusterId::reconstitute(Uuid::from_bytes(
+                value.hpc_cluster_id.bytes(),
+            )),
+            batch_scheduler_queue_id: BatchSchedulerQueueId::reconstitute(Uuid::from_bytes(
+                value.batch_scheduler_queue_id.bytes(),
+            )),
+            cluster_host: value.cluster_host,
+            queue_name: value.queue_name,
+        }
     }
 }
 
@@ -47,8 +171,8 @@ impl From<documents::ReplicaGroup> for entities::ReplicaGroup {
             count: value.count,
             parallelism_strategies: value
                 .parallelism_strategies
-                .iter()
-                .map(|ps| entities::ParallelismStrategy::from(ps.clone()))
+                .into_iter()
+                .map(entities::ParallelismStrategy::from)
                 .collect(),
         }
     }
@@ -57,8 +181,8 @@ impl From<documents::ReplicaGroup> for entities::ReplicaGroup {
 impl From<documents::DeploymentModality> for DeploymentModality {
     fn from(value: documents::DeploymentModality) -> Self {
         match value {
-            documents::DeploymentModality::Batch => DeploymentModality::Batch,
-            documents::DeploymentModality::Service => DeploymentModality::Service,
+            documents::DeploymentModality::Batch => Self::Batch,
+            documents::DeploymentModality::Service => Self::Service,
         }
     }
 }
@@ -66,21 +190,11 @@ impl From<documents::DeploymentModality> for DeploymentModality {
 impl From<documents::ParallelismStrategy> for entities::ParallelismStrategy {
     fn from(value: documents::ParallelismStrategy) -> Self {
         match value {
-            documents::ParallelismStrategy::PipelineParallelism => {
-                entities::ParallelismStrategy::PipelineParallelism
-            }
-            documents::ParallelismStrategy::TensorParallelism => {
-                entities::ParallelismStrategy::TensorParallelism
-            }
-            documents::ParallelismStrategy::SequenceParallelism => {
-                entities::ParallelismStrategy::SequenceParallelism
-            }
-            documents::ParallelismStrategy::ContextParallelism => {
-                entities::ParallelismStrategy::ContextParallelism
-            }
-            documents::ParallelismStrategy::ExpertParallelism => {
-                entities::ParallelismStrategy::ExpertParallelism
-            }
+            documents::ParallelismStrategy::PipelineParallelism => Self::PipelineParallelism,
+            documents::ParallelismStrategy::TensorParallelism => Self::TensorParallelism,
+            documents::ParallelismStrategy::SequenceParallelism => Self::SequenceParallelism,
+            documents::ParallelismStrategy::ContextParallelism => Self::ContextParallelism,
+            documents::ParallelismStrategy::ExpertParallelism => Self::ExpertParallelism,
         }
     }
 }
@@ -88,12 +202,12 @@ impl From<documents::ParallelismStrategy> for entities::ParallelismStrategy {
 impl From<documents::State> for entities::State {
     fn from(value: documents::State) -> Self {
         match value {
-            documents::State::Blocked => entities::State::Blocked,
-            documents::State::Failed => entities::State::Failed,
-            documents::State::NotDeployed => entities::State::NotDeployed,
-            documents::State::Running => entities::State::Running,
-            documents::State::Stopped => entities::State::Stopped,
-            documents::State::Unknown => entities::State::Unknown,
+            documents::State::Blocked => Self::Blocked,
+            documents::State::Failed => Self::Failed,
+            documents::State::NotDeployed => Self::NotDeployed,
+            documents::State::Running => Self::Running,
+            documents::State::Stopped => Self::Stopped,
+            documents::State::Unknown => Self::Unknown,
         }
     }
 }
@@ -101,33 +215,26 @@ impl From<documents::State> for entities::State {
 impl From<documents::DesiredState> for entities::DesiredState {
     fn from(value: documents::DesiredState) -> Self {
         match value {
-            documents::DesiredState::NotDeployed => entities::DesiredState::NotDeployed,
-            documents::DesiredState::Running => entities::DesiredState::Running,
-            documents::DesiredState::Stopped => entities::DesiredState::Stopped,
+            documents::DesiredState::NotDeployed => Self::NotDeployed,
+            documents::DesiredState::Running => Self::Running,
+            documents::DesiredState::Stopped => Self::Stopped,
         }
     }
 }
 
-impl From<documents::ModelReference> for entities::ModelReference {
-    fn from(value: documents::ModelReference) -> Self {
-        Self {
-            model_id: uuid::Uuid::from_bytes(value.model_id.bytes()),
-        }
+impl TryFrom<documents::ModelDeploymentEndpoint> for entities::ModelDeploymentEndpoint {
+    type Error = String;
+
+    fn try_from(value: documents::ModelDeploymentEndpoint) -> Result<Self, Self::Error> {
+        Self::reconstitute(value.name, value.protocol.into(), value.base_url)
+            .map_err(|error| error.to_string())
     }
 }
 
-impl From<documents::RestApi> for entities::RestApi {
-    fn from(value: documents::RestApi) -> Self {
-        Self { spec: value.spec }
-    }
-}
-
-impl From<documents::ModelDeploymentInterface> for entities::ModelDeploymentInterface {
-    fn from(value: documents::ModelDeploymentInterface) -> Self {
+impl From<documents::Protocol> for entities::Protocol {
+    fn from(value: documents::Protocol) -> Self {
         match value {
-            documents::ModelDeploymentInterface::RestApi(i) => {
-                entities::ModelDeploymentInterface::RestApi(entities::RestApi::from(i))
-            }
+            documents::Protocol::RestHttp => Self::RestHttp,
         }
     }
 }

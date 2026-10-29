@@ -5,6 +5,21 @@ http:
         prefixes:
           - "/v3/mlhub"
   routers:
+    gatus-public:
+      rule: "Host(`mlhub-status.staging.tapis.io`)"
+      service: gatus-public
+
+    endpoint-envoy:
+      rule: "PathPrefix(`/v3/mlhub/endpoints/`)"
+      priority: 100
+      service: endpoint-envoy
+
+    endpoints-api:
+      rule: "PathPrefix(`/v3/mlhub/endpoints-api`)"
+      middlewares:
+        - "path-strip-v3"
+      service: endpoints-api
+
     dashboard:
       #rule: (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       rule: "PathPrefix(`/v3/mlhub/dashboard`)"
@@ -37,6 +52,18 @@ http:
       service: agents-api
 
   services:
+    gatus-public:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-gatus-public-service:8080
+    endpoint-envoy:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-endpoint-envoy-service:8080
+    endpoints-api:
+      loadBalancer:
+        servers:
+          - url: http://mlhub-endpoints-api-service:8000
     models-api:
       loadBalancer:
         servers:

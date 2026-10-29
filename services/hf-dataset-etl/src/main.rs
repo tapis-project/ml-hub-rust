@@ -54,7 +54,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         dataset_registration_service_factory(dataset_repository.clone());
     let dataset_query_service = dataset_query_service_factory(dataset_repository);
 
-    let context = RequestContext::system(None);
+    let context = RequestContext::system(None, None, None);
 
     let summary = process_inbox(
         Path::new(&inbox_path),

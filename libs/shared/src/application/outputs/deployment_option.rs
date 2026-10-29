@@ -1,5 +1,5 @@
 use crate::domain::entities::{
-    deployment_option::DeploymentOption,
+    deployment_option::{deployment_parameters::Parameter, DeploymentOption},
     hpc_cluster::{BatchSchedulerQueueId, DataCenter, HpcClusterId},
 };
 
@@ -8,6 +8,12 @@ pub struct DeploymentOptionListOutput {
     pub deployment_options: Vec<DeploymentOptionOutput>,
     pub cursor: Option<String>,
     pub count: Option<u64>,
+}
+
+#[derive(Debug)]
+pub struct DeploymentOptionDetailOutput {
+    pub deployment_option: DeploymentOptionOutput,
+    pub parameters: Vec<Parameter>,
 }
 
 #[derive(Debug)]

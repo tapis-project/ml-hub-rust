@@ -1,0 +1,76 @@
+metrics: true
+
+storage:
+  type: sqlite
+  path: /data/gatus.db
+  maximum-number-of-results: 2880
+  maximum-number-of-events: 100
+
+ui:
+  title: MLHub Internal Status
+  header: MLHub Internal Status
+  default-sort-by: group
+
+default-endpoint: &http-check
+  interval: 30s
+  client:
+    timeout: 5s
+  conditions:
+    - "[STATUS] == 200"
+
+default-tcp-endpoint: &tcp-check
+  interval: 30s
+  client:
+    timeout: 5s
+  conditions:
+    - "[CONNECTED] == true"
+
+endpoints:
+  - name: Models API
+    group: MLHub APIs
+    url: http://mlhub-models-api-service:8000/models-api/healthcheck
+    <<: *http-check
+  - name: Datasets API
+    group: MLHub APIs
+    url: http://mlhub-datasets-api-service:8000/datasets-api/healthcheck
+    <<: *http-check
+  - name: Deployments API
+    group: MLHub APIs
+    url: http://mlhub-deployments-api-service:8000/deployments-api/healthcheck
+    <<: *http-check
+  - name: Agents API
+    group: MLHub APIs
+    url: http://mlhub-agents-api-service:8000/agents-api/healthcheck
+    <<: *http-check
+  - name: Endpoints API
+    group: MLHub APIs
+    url: http://mlhub-endpoints-api-service:8000/endpoints-api/healthcheck
+    <<: *http-check
+  - name: Model Deployment Controller
+    group: Control Plane
+    url: http://mlhub-model-deployment-controller-service:8000/healthcheck
+    <<: *http-check
+  - name: MongoDB Reachability
+    group: Infrastructure Reachability
+    url: tcp://mlhub-mongo-headless-service:27017
+    <<: *tcp-check
+  - name: RabbitMQ Reachability
+    group: Infrastructure Reachability
+    url: tcp://mlhub-rabbit-service:5672
+    <<: *tcp-check
+  - name: NFS Reachability
+    group: Infrastructure Reachability
+    url: tcp://mlhub-nfs-server-service:2049
+    <<: *tcp-check
+  - name: Traefik Reachability
+    group: Infrastructure Reachability
+    url: "${TRAEFIK_ADDRESS}"
+    <<: *tcp-check
+  - name: Envoy Reachability
+    group: Infrastructure Reachability
+    url: tcp://mlhub-endpoint-envoy-service:8080
+    <<: *tcp-check
+  - name: Endpoint Router Reachability
+    group: Infrastructure Reachability
+    url: tcp://mlhub-endpoint-router-service:9000
+    <<: *tcp-check

@@ -21,10 +21,28 @@ import { exists, mapValues } from '../runtime';
 export interface Endpoint {
     /**
      * 
+     * @type {boolean}
+     * @memberof Endpoint
+     */
+    available: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof Endpoint
      */
     id: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Endpoint
+     */
+    owner: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Endpoint
+     */
+    proxy_url: string;
     /**
      * 
      * @type {string}
@@ -36,7 +54,7 @@ export interface Endpoint {
      * @type {string}
      * @memberof Endpoint
      */
-    target_base_url: string;
+    target_base_url?: string | null;
     /**
      * 
      * @type {string}
@@ -67,9 +85,12 @@ export function EndpointFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
+        'available': json['available'],
         'id': json['id'],
+        'owner': json['owner'],
+        'proxy_url': json['proxy_url'],
         'slug': json['slug'],
-        'target_base_url': json['target_base_url'],
+        'target_base_url': !exists(json, 'target_base_url') ? undefined : json['target_base_url'],
         'target_name': json['target_name'],
         'target_resource_urn': json['target_resource_urn'],
         'tenant_id': json['tenant_id'],
@@ -85,7 +106,10 @@ export function EndpointToJSON(value?: Endpoint | null): any {
     }
     return {
         
+        'available': value.available,
         'id': value.id,
+        'owner': value.owner,
+        'proxy_url': value.proxy_url,
         'slug': value.slug,
         'target_base_url': value.target_base_url,
         'target_name': value.target_name,

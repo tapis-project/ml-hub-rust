@@ -18,6 +18,7 @@ to work with models, datasets, deployments, and AI agents across platforms and e
 
 ## Learn more
 
+- [Use MLHub](./docs/USER_GUIDE.md)
 - [Deploy MLHub locally](./docs/DEPLOYMENT.md)
 - [Developer guide](./docs/DEVELOPERS_GUIDE.md)
 - [API development playbook](./docs/API_DEVELOPMENT_PLAYBOOK.md)

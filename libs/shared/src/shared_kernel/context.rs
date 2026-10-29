@@ -10,23 +10,31 @@ pub struct RequestContext {
     actor: Actor,
     token: String,
     request_id: Uuid,
+    correlation_id: Option<Uuid>,
+    causation_id: Option<Uuid>,
 }
 
 impl RequestContext {
-    pub fn new(actor: Actor, token: String, request_id: Option<Uuid>) -> Self {
+    pub fn new(actor: Actor, token: String, request_id: Option<Uuid>, correlation_id: Option<Uuid>, causation_id: Option<Uuid>) -> Self {
+        let id = request_id.unwrap_or_else(|| Self::generate_request_id());
         Self {
             actor,
             token,
-            request_id: request_id.unwrap_or_else(|| Self::generate_request_id()),
+            request_id: id.clone(),
+            correlation_id,
+            causation_id,
         }
     }
 
     // Creates a service account identity context
-    pub fn system(request_id: Option<Uuid>) -> Self {
+    pub fn system(request_id: Option<Uuid>, correlation_id: Option<Uuid>, causation_id: Option<Uuid>) -> Self {
+        let id = request_id.unwrap_or_else(|| Self::generate_request_id());
         Self {
             actor: Actor::system(),
             token: "".into(),
-            request_id: request_id.unwrap_or_else(|| Self::generate_request_id()),
+            request_id: id.clone(),
+            correlation_id,
+            causation_id,
         }
     }
 
@@ -56,6 +64,14 @@ impl RequestContext {
 
     fn generate_request_id() -> Uuid {
         Uuid::now_v7()
+    }
+
+    pub fn correlation_id(&self) -> Option<&Uuid> {
+        self.correlation_id.as_ref()
+    }
+
+    pub fn causation_id(&self) -> Option<&Uuid> {
+        self.causation_id.as_ref()
     }
 }
 

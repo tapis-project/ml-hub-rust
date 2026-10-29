@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::application::ports::events::{self, EventMetadata};
-use crate::domain::entities::deployment::{DesiredState, State};
+use crate::domain::entities::deployment::{DesiredState, ModelDeploymentId, State};
 use crate::infra::messaging::errors::SerializationError;
 use crate::infra::messaging::messages;
 use crate::shared_kernel::value_objects::TimeStamp;
@@ -29,14 +29,6 @@ impl TryFrom<messages::EventEnvelope> for events::Event {
                     &messages::ModelDeploymentStartedPayload::try_from(payload)?,
                 )?,
             },
-            events::Kind::ModelDeploymentStateDriftDetected => {
-                events::Event::ModelDeploymentStateDriftDetected {
-                    metadata,
-                    payload: events::payloads::ModelDeploymentStateDriftDetectedPayload::try_from(
-                        &messages::ModelDeploymentStateDriftDetectedPayload::try_from(payload)?,
-                    )?,
-                }
-            }
             events::Kind::ModelDeploymentStopped => events::Event::ModelDeploymentStopped {
                 metadata,
                 payload: events::payloads::ModelDeploymentStoppedPayload::try_from(
@@ -54,8 +46,8 @@ impl TryFrom<(&events::Kind, messages::EventMetadata)> for events::EventMetadata
         Ok(EventMetadata::rehydrate(
             value.1.id,
             value.0.clone(),
-            value.1.correlation_id,
-            value.1.causation_id,
+            Some(value.1.correlation_id),
+            Some(value.1.causation_id),
             TimeStamp::parse_string(value.1.timestamp.as_str())
                 .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
         ))
@@ -71,8 +63,10 @@ impl TryFrom<&messages::ModelDeploymentStateDriftDetectedPayload>
         value: &messages::ModelDeploymentStateDriftDetectedPayload,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            deployment_id: ModelDeploymentId::reconstitute(
+                Uuid::parse_str(value.deployment_id.as_str())
+                    .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            ),
             actual_state: State::try_from(value.actual_state.as_str())
                 .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
             desired_state: DesiredState::try_from(value.desired_state.as_str())
@@ -90,8 +84,10 @@ impl TryFrom<&messages::ModelDeploymentDeletedPayload>
 
     fn try_from(value: &messages::ModelDeploymentDeletedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
-            deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            deployment_id: ModelDeploymentId::reconstitute(
+                Uuid::parse_str(value.deployment_id.as_str())
+                    .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            ),
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })
@@ -105,8 +101,10 @@ impl TryFrom<&messages::ModelDeploymentStartedPayload>
 
     fn try_from(value: &messages::ModelDeploymentStartedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
-            deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            deployment_id: ModelDeploymentId::reconstitute(
+                Uuid::parse_str(value.deployment_id.as_str())
+                    .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            ),
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })
@@ -120,8 +118,10 @@ impl TryFrom<&messages::ModelDeploymentStoppedPayload>
 
     fn try_from(value: &messages::ModelDeploymentStoppedPayload) -> Result<Self, Self::Error> {
         Ok(Self {
-            deployment_id: Uuid::parse_str(value.deployment_id.as_str())
-                .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            deployment_id: ModelDeploymentId::reconstitute(
+                Uuid::parse_str(value.deployment_id.as_str())
+                    .map_err(|err| SerializationError::DeserializationFailed(err.to_string()))?,
+            ),
             deployment_revision: value.deployment_revision,
             message: value.message.clone(),
         })
